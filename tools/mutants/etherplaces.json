@@ -1,0 +1,344 @@
+[
+  {
+    "name": "PLACE-lane",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const ETHER_PLACE_SALT = 0xe7;",
+    "new": "export const ETHER_PLACE_SALT = 7;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-base",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const ETHER_PLACE_BASE = 500000;",
+    "new": "export const ETHER_PLACE_BASE = 400000;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-id-cell",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const etherPlaceId = (isle) =>\n  ((ETHER_PLACE_SALT << 20) | (ETHER_PLACE_BASE + isle.cy * CELLS_W + isle.cx)) >>> 0;",
+    "new": "export const etherPlaceId = (isle) => ((ETHER_PLACE_SALT << 20) | (ETHER_PLACE_BASE + isle.cy + isle.cx)) >>> 0;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-index-offset",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const etherLocationIndex = (isle) => -(1000 + isle.cy * CELLS_W + isle.cx);",
+    "new": "export const etherLocationIndex = (isle) => -(1 + isle.cy * CELLS_W + isle.cx);",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-is-below-base",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const isEtherPlaceId = (id) =>\n  ((Number(id) >>> 20) & 0xfff) === ETHER_PLACE_SALT && ((Number(id) >>> 0) & 0xfffff) >= ETHER_PLACE_BASE;",
+    "new": "export const isEtherPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === ETHER_PLACE_SALT;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-town-one-block",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([6, 12]) });",
+    "new": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([1, 6]), haven: Object.freeze([6, 12]) });",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-haven-blocks",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([6, 12]) });",
+    "new": "export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([10, 12]) });",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-town-dungeon",
+    "file": "src/world/etherPlaces.js",
+    "old": "      (l) =>\n        !l.hasDungeon &&\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.port),",
+    "new": "      (l) =>\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.port),",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-haven-hamlet",
+    "file": "src/world/etherPlaces.js",
+    "old": "    .filter(\n      (l) =>\n        !l.hasDungeon &&\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.haven),\n    )",
+    "new": "    .filter((l) => !l.hasDungeon && type(l) === LOCATION_TYPES.TownVillage && within(l, TOWN_BLOCKS.haven))",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-spawn-template",
+    "file": "src/world/etherPlaces.js",
+    "old": "  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !isMain(idOf(l)));",
+    "new": "  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.ether && !isMain(idOf(l)));",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-main-template",
+    "file": "src/world/etherPlaces.js",
+    "old": "  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !isMain(idOf(l)));",
+    "new": "  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether);",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-towns-unsorted",
+    "file": "src/world/etherPlaces.js",
+    "old": "  const towns = list\n    .filter(\n      (l) =>\n        !l.hasDungeon &&\n        (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n        within(l, TOWN_BLOCKS.port),\n    )\n    .sort(byId);",
+    "new": "  const towns = list.filter(\n    (l) =>\n      !l.hasDungeon &&\n      (type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) &&\n      within(l, TOWN_BLOCKS.port),\n  );",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-ruins-any",
+    "file": "src/world/etherPlaces.js",
+    "old": "  const ruins = (small.length ? small : dungeons).sort(byId);",
+    "new": "  const ruins = dungeons.sort(byId);",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-pick-first",
+    "file": "src/world/etherPlaces.js",
+    "old": "  return list?.length ? list[etherHash(isle.seed, 11) % list.length] : null;",
+    "new": "  return list?.length ? list[0] : null;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-haven-no-fallback",
+    "file": "src/world/etherPlaces.js",
+    "old": "        ? isle.haven && templates.havens?.length",
+    "new": "        ? isle.haven",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-wild-town",
+    "file": "src/world/etherPlaces.js",
+    "old": "        : null;",
+    "new": "        : templates.towns;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-name-template",
+    "file": "src/world/etherPlaces.js",
+    "old": "    name: isle.name,",
+    "new": "    name: template.name,",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-region-template",
+    "file": "src/world/etherPlaces.js",
+    "old": "    regionIndex: where.regionIndex ?? ETHER_REGION,",
+    "new": "    regionIndex: where.regionIndex ?? template.regionIndex,",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-region-12",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const ETHER_REGION = 19;",
+    "new": "export const ETHER_REGION = 12;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-index-shared",
+    "file": "src/world/etherPlaces.js",
+    "old": "    locationIndex: etherLocationIndex(isle),",
+    "new": "    locationIndex: -1,",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-lonlat-cell",
+    "file": "src/world/etherPlaces.js",
+    "old": "  const ll = mapPixelToLongitudeLatitude(isle.px, isle.py);",
+    "new": "  const ll = mapPixelToLongitudeLatitude(isle.cx, isle.cy);",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-exterior-id",
+    "file": "src/world/etherPlaces.js",
+    "old": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: port ? 1 : 0 },",
+    "new": "      exteriorData: { ...template.exterior?.exteriorData, mapId, portTownAndUnknown: port ? 1 : 0 },",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-no-harbour",
+    "file": "src/world/etherPlaces.js",
+    "old": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: port ? 1 : 0 },",
+    "new": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: 0 },",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-dungeon-id",
+    "file": "src/world/etherPlaces.js",
+    "old": "  if (template.dungeon)",
+    "new": "  if (false)",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-elite-any",
+    "file": "src/world/etherPlaces.js",
+    "old": "  if (isle.kind === 'ruin' && ELITE_BANDS.includes(etherBandOf(etherDepthAt(isle.px)).id)) loc.elite = true;",
+    "new": "  if (isle.kind === 'ruin') loc.elite = true;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-elite-abyss",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const ELITE_BANDS = Object.freeze(['deep', 'abyss']);",
+    "new": "export const ELITE_BANDS = Object.freeze(['abyss']);",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-host-build",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "    if (etherSea && inEther(px, py)) return etherPlaceAt(px, py);   // ETHER-PLACES",
+    "new": "    if (false) return etherPlaceAt(px, py);   // ETHER-PLACES",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-host-restood",
+    "file": "src/scenes/world.js",
+    "old": "    if (had?.ether) return had;\n",
+    "new": "",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-host-any-pixel",
+    "file": "src/scenes/world.js",
+    "old": "    if (!isle || isle.px !== px || isle.py !== py) return null;",
+    "new": "    if (!isle) return null;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-host-templates",
+    "file": "src/scenes/world.js",
+    "old": "  const _etherTemplates = etherSea ? etherTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;",
+    "new": "  const _etherTemplates = null;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-host-far-spawn",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "params.has('online') && !inEtherLaw(x, y) && spawnsDungeon(_spawnSalt, x, y)",
+    "new": "params.has('online') && spawnsDungeon(_spawnSalt, x, y)",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PLACE-host-wake",
+    "file": "src/scenes/world.js",
+    "old": "const wake = inEther(from.x, from.y) || !onTheBay(from.x, from.y) ? { kind: 'dungeon', mapPixel: { x: from.x, y: from.y } } : undergroundWakeSpot",
+    "new": "const wake = undergroundWakeSpot",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PORT-deeds",
+    "file": "src/scenes/world.js",
+    "old": "    if (etherSea && inEther(x, y)) return !!etherPortAt(x, y);   // ETHER-PORTS",
+    "new": "    if (false) return !!etherPortAt(x, y);   // ETHER-PORTS",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PORT-crown",
+    "file": "src/scenes/world.js",
+    "old": "region: ETHER_REGION, crown: null, ether: true });",
+    "new": "region: ETHER_REGION, crown: 'Daggerfall', ether: true });",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PORT-centre",
+    "file": "src/scenes/world.js",
+    "old": "    return i && i.kind === 'port' && i.px === x && i.py === y ? i : null;",
+    "new": "    return i && i.kind === 'port' ? i : null;",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PORT-harbour",
+    "file": "src/scenes/harbourHost.js",
+    "old": "      if (loc?.exterior?.exteriorData)\n        add({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH }); // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town",
+    "new": "      // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PORT-here",
+    "file": "src/scenes/world.js",
+    "old": "      _navalPortHereAt = { key, port: isle ? etherPortOf(isle) : null };",
+    "new": "      _navalPortHereAt = { key, port: null };",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  },
+  {
+    "name": "PORT-crown-waters",
+    "file": "src/scenes/world.js",
+    "old": "etherSea && inEther(p.x, p.y) ? null : navalCrownOf(",
+    "new": "false ? null : navalCrownOf(",
+    "tests": [
+      "test/world/etherplaces.test.js"
+    ]
+  }
+]

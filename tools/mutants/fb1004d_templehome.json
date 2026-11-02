@@ -1,0 +1,42 @@
+[
+  {
+    "name": "TEMPLE-HOME-the-key-unasked",
+    "file": "src/systems/layoutPins.js",
+    "old": "    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null; // TEMPLE-HOME: by the town's key",
+    "new": "    let out = null;",
+    "tests": [
+      "test/systems/fb1004d_templehome.test.js"
+    ],
+    "note": "the fault itself: the 34 temples stand the mod's TEMPASA2, where a quest person's local home finds no house"
+  },
+  {
+    "name": "TEMPLE-HOME-the-key-asked-only-once-a-type-is-known",
+    "file": "src/systems/layoutPins.js",
+    "old": "    if (type == null) return out;",
+    "new": "    if (type == null) return null;",
+    "tests": [
+      "test/systems/fb1004d_templehome.test.js"
+    ],
+    "note": "world.js fills its index before the pins know a town's type or grid: the temple would be indexed as the mod's, and building it once the pins answer would ask for a TEMPASA2 the door no longer serves"
+  },
+  {
+    "name": "TEMPLE-HOME-a-temple-dropped",
+    "file": "src/systems/layoutPins.js",
+    "old": "      4401, 4501, 6442, 6801, 7001, 7842, 10142, 10801, 17760, 19442, 20301, 20701, 22901, 26201, 27201, 28560, 29401,\n      31360, 35801, 41901, 43660, 46060, 46101, 46801, 48201, 51501, 51901, 57801, 62601, 63001, 67301, 85801, 88701,\n      89701,",
+    "new": "      4501, 6442, 6801, 7001, 7842, 10142, 10801, 17760, 19442, 20301, 20701, 22901, 26201, 27201, 28560, 29401, 31360,\n      35801, 41901, 43660, 46060, 46101, 46801, 48201, 51501, 51901, 57801, 62601, 63001, 67301, 85801, 88701, 89701,",
+    "tests": [
+      "test/systems/fb1004d_templehome.test.js"
+    ],
+    "note": "the list is every temple the pack lays out on TEMPASA2 alone"
+  },
+  {
+    "name": "TEMPLE-HOME-the-wrong-mod",
+    "file": "src/systems/layoutPins.js",
+    "old": "  Object.freeze({\n    vendor: 'beautiful-villages',\n    why: 'a temple with no house',",
+    "new": "  Object.freeze({\n    vendor: 'beautiful-cities',\n    why: 'a temple with no house',",
+    "tests": [
+      "test/systems/fb1004d_templehome.test.js"
+    ],
+    "note": "the mod kept out is the one whose location files the 34 are"
+  }
+]

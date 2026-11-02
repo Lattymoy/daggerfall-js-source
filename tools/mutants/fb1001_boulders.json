@@ -1,0 +1,435 @@
+[
+  {
+    "name": "ROCK-FOOT-the-ground-unasked",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "  for (let i = 0; i < n; i++) if (above[i] >= 0) add(w[i * 3], w[i * 3 + 1], w[i * 3 + 2]);",
+    "new": "  for (let i = 0; i < n; i++) add(w[i * 3], w[i * 3 + 1], w[i * 3 + 2]);",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-FOOT-the-cut-at-the-ground-left-out",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "      if ((above[a] >= 0) === (above[b] >= 0)) continue;",
+    "new": "      continue;",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-FOOT-the-whole-box-carried",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "{ const foot = rockFootprint(cpu.positions, cpu.indices, m.matrix, samples); if (foot) pixelRocks.push(foot); }",
+    "new": "pixelRocks.push(box);",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-FOOT-one-piece-asked",
+    "file": "src/scenes/mineHost.js",
+    "old": "    for (const { i } of order) {\n      for (const [tx, tz] of footTargets(pieces[i], x, z)) {",
+    "new": "    for (const { i } of order.slice(0, 1)) {\n      for (const [tx, tz] of footTargets(pieces[i], x, z)) {",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-FOOT-one-side-asked",
+    "file": "src/scenes/mineHost.js",
+    "old": "  return [[x, z], ...sides.map(({ a }) => [cx + Math.cos(a) * far, cz + Math.sin(a) * far])];",
+    "new": "  return [[x, z]];",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-FOOT-the-sides-unordered",
+    "file": "src/scenes/mineHost.js",
+    "old": "  sides.sort((p, q) => p.off - q.off || p.a - q.a);\n",
+    "new": "",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-FOOT-the-boulders-after-the-veins-in-the-list",
+    "file": "src/scenes/mineHost.js",
+    "old": "  out.push(...stones);",
+    "new": "  out.unshift(...stones);",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-SAID-the-plan-never-asks",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (where) return { ...plan, ready: false, rest: where };\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1001_settlesaid.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-SAID-the-dungeon-vein-asked-too",
+    "file": "src/scenes/mineHost.js",
+    "old": "(n.what === 'dvein' ? null : actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS))",
+    "new": "(actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS))",
+    "tests": [
+      "test/scenes/fb1001_settlesaid.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-SAID-no-ground-asked",
+    "file": "src/net/professionLaw.js",
+    "old": "export const GROUND_WHERE = Object.freeze(['town']);",
+    "new": "export const GROUND_WHERE = Object.freeze([]);",
+    "tests": [
+      "test/scenes/fb1001_settlesaid.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-SAID-the-patch-never-asks",
+    "file": "src/scenes/herbHost.js",
+    "old": "    where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS), // SETTLE-SAID\n    /** PROF-MENU: the menu's title - the patch's herb. */",
+    "new": "    /** PROF-MENU: the menu's title - the patch's herb. */",
+    "tests": [
+      "test/scenes/fb1001_settlesaid.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-SAID-the-tree-never-asks",
+    "file": "src/scenes/treeHost.js",
+    "old": "    where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS),   // SETTLE-SAID\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1001_settlesaid.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-SHARE-the-spacing-unasked",
+    "file": "src/scenes/mineHost.js",
+    "old": "        if (taken.some((t) => Math.hypot(t[0] - foot[0], t[1] - foot[1]) < NODE_SPACING_M)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-SHARE-the-foot-never-taken",
+    "file": "src/scenes/mineHost.js",
+    "old": "        taken.push(foot);\n",
+    "new": "",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "BOULDERS-the-woods-one-again",
+    "file": "src/net/nodeLaw.js",
+    "old": "  [CLIMATES.Woodlands]: counts(12, 8, 4, 3),",
+    "new": "  [CLIMATES.Woodlands]: counts(12, 8, 4, 1),",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "BOULDERS-the-mountains-three-again",
+    "file": "src/net/nodeLaw.js",
+    "old": "  [CLIMATES.Mountain]: counts(4, 4, 12, 5),",
+    "new": "  [CLIMATES.Mountain]: counts(4, 4, 12, 3),",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "CAST-LOOK-the-cast-under-the-eye",
+    "file": "src/scenes/fishHost.js",
+    "old": "      return [{ key: c.key, at: () => castAt(host.eye()), lift: 0, reach: CAST_REACH_M, yields: true }];",
+    "new": "      return [\n        {\n          key: c.key,\n          at: () => {\n            const { pos, dir } = host.eye();\n            const l = Math.hypot(dir[0], dir[2]) || 1;\n            return [pos[0] + (dir[0] / l) * CAST_AHEAD_M, pos[1] - 0.6, pos[2] + (dir[2] / l) * CAST_AHEAD_M];\n          },\n          lift: 0,\n          reach: CAST_REACH_M,\n          yields: true,\n        },\n      ];",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js",
+      "test/world/terrain/prof8_client.test.js"
+    ]
+  },
+  {
+    "name": "CAST-LOOK-the-rise-unheld",
+    "file": "src/scenes/fishHost.js",
+    "old": "  const rise = Math.max(-CAST_RISE_M, Math.min(CAST_RISE_M, (dir[1] / l) * CAST_AHEAD_M));",
+    "new": "  const rise = (dir[1] / l) * CAST_AHEAD_M;",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "CAST-LOOK-the-cast-first",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    seen.sort((a, b) => Number(a.yields) - Number(b.yields) || a.ang - b.ang);",
+    "new": "    seen.sort((a, b) => a.ang - b.ang);",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "CAST-LOOK-the-cast-yields-nothing",
+    "file": "src/scenes/fishHost.js",
+    "old": "      return [{ key: c.key, at: () => castAt(host.eye()), lift: 0, reach: CAST_REACH_M, yields: true }];",
+    "new": "      return [{ key: c.key, at: () => castAt(host.eye()), lift: 0, reach: CAST_REACH_M }];",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-STAND-the-world-unasked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (deps.settled) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-STAND-every-node-asked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "rec.nodes.filter((n) => !kindOf(n)?.where || !deps.settled(",
+    "new": "rec.nodes.filter((n) => !deps.settled(",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-STAND-the-block-forgotten",
+    "file": "src/scenes/professionsHost.js",
+    "old": "inLocationRect: isInLocationRect(wc.x, wc.z, locationWorldRect(loc, p.x, p.y)), inside: false }); },   // SETTLE-STAND",
+    "new": "inLocationRect: (() => { const r = locationWorldRect(loc, p.x, p.y); return wc.x >= r.minX && wc.x <= r.maxX && wc.z >= r.minZ && wc.z <= r.maxZ; })(), inside: false }); },   // SETTLE-STAND",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "SETTLE-STAND-every-location-a-settlement",
+    "file": "src/scenes/professionsHost.js",
+    "old": "isPlayerInTown(loc.mapTableData?.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z",
+    "new": "isPlayerInTown(0, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "CAST-E-the-cast-takes-the-press",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (t.node.yields === true && ready.length) { passedCast = t; passedCastAt = deps.nowMs(); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "CAST-E-the-hand-back-unbounded",
+    "file": "src/scenes/gatherHost.js",
+    "old": "cast = deps.nowMs() - passedCastAt <= CAST_HANDBACK_MS ? passedCast : null;",
+    "new": "cast = passedCast;",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ]
+  },
+  {
+    "name": "CAST-E-never-handed-back",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        if (plan?.ready) return start(cast, plan) || true;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js",
+      "test/systems/fb0930b_fishtired.test.js"
+    ]
+  },
+  {
+    "name": "CAST-E-the-plaque-over-the-ray",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (target.node.yields === true && ray && ray.distance <= ray.reach) return null;",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ],
+    "note": "MERGE of PROF-MENU: the plaque lists the cast over a door, the crew or a chest in reach - their plaque lost on any pier."
+  },
+  {
+    "name": "CAST-E-the-lit-cast-passed-on",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (chosen) return pressRow(t, chosen);\n",
+    "new": "      if (chosen && t.node.yields !== true) return pressRow(t, chosen);\n",
+    "tests": [
+      "test/scenes/fb1001_lifeskills.test.js"
+    ],
+    "note": "MERGE of PROF-MENU: a cast the plaque lit (nothing else under the look) is passed on as if unlit."
+  },
+  {
+    "name": "FOOT-IN-the-pixel-unasked",
+    "file": "src/scenes/mineHost.js",
+    "old": "        if (!onPixel(foot[0], foot[1]) || insideRocks(solid, foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR\n",
+    "new": "        if (insideRocks(solid, foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR\n",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "FOOT-IN-the-far-edges-unasked",
+    "file": "src/scenes/mineHost.js",
+    "old": "x <= TERRAIN_SIZE - FOOT_INSET_M && z >= FOOT_INSET_M && z <= TERRAIN_SIZE - FOOT_INSET_M;",
+    "new": "z >= FOOT_INSET_M;",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-worked-node-counted",
+    "file": "src/scenes/gatherHost.js",
+    "old": "              if (!k || !(k.mark ? k.mark(n, markCtx) : !k.gone(n))) continue;\n",
+    "new": "              if (!k) continue;\n",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-never-read-again",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (!(groupsAt !== null && now - groupsAt < GROUP_REFRESH_MS && now >= groupsAt)) {",
+    "new": "if (!(groupsAt !== null)) {",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-read-every-frame",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (!(groupsAt !== null && now - groupsAt < GROUP_REFRESH_MS && now >= groupsAt)) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-middle-the-sum",
+    "file": "src/scenes/gatherHost.js",
+    "old": "            for (const n of g.nodes) { const e = Math.hypot(n.local[0] - cx, n.local[2] - cz); if (e < best) { best = e; at = n; } }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-reach-unasked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "            if (!(d <= GROUP_M)) continue;\n            all.push(",
+    "new": "            all.push(",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-cap-unasked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "groupsKept = [...all.slice(0, GROUP_MAX), ...ones",
+    "new": "groupsKept = [...all, ...ones",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-shut-and-the-dungeon-unasked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (book.state.open === true && isVec3(pos) && !dungeon) {",
+    "new": "if (isVec3(pos)) {",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-never-filtered",
+    "file": "src/systems/travel/travelViewFilters.js",
+    "old": "  if (k === 'gather') return 'gathering'; // GATHER-OW\n  return null; // dest, target, party - always drawn",
+    "new": "  return null; // dest, target, party - always drawn",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-dot",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "  if (k === 'gather') return k;   // GATHER-OW: a profession's group of nodes\n",
+    "new": "",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-brass",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party'",
+    "new": "const color = look === 'gather' ? C.brass : look === 'party'",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-world-asks-none",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": " for (const g of host.gatherHost?.overworldGroups(walkMode ? player.pos : cam.pos) ?? []) marks.push(g);",
+    "new": "",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "MORE-NODES-the-woods-as-they-were",
+    "file": "src/net/nodeLaw.js",
+    "old": "  [CLIMATES.Woodlands]: counts(12, 8, 4, 3),",
+    "new": "  [CLIMATES.Woodlands]: counts(6, 4, 2, 3),",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/systems/prof1_client.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "MORE-NODES-the-mountain-veins-as-they-were",
+    "file": "src/net/nodeLaw.js",
+    "old": "  [CLIMATES.Mountain]: counts(4, 4, 12, 5),",
+    "new": "  [CLIMATES.Mountain]: counts(4, 4, 6, 5),",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-placed-once-at-the-read",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        g.mark.at[0] = g.local[0] + tr[0]; g.mark.at[1] = g.local[1] + tr[1] + GROUP_LIFT_M; g.mark.at[2] = g.local[2] + tr[2];\n",
+    "new": "        if (!g.placed) { g.placed = true; g.mark.at[0] = g.local[0] + tr[0]; g.mark.at[1] = g.local[1] + tr[1] + GROUP_LIFT_M; g.mark.at[2] = g.local[2] + tr[2]; }\n",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-a-torn-down-pixel-s-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        if (stood.get(pixelKey(g.s.entry.px, g.s.entry.py)) !== g.s) continue;   // its pixel torn down or stood again since\n",
+    "new": "",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  },
+  {
+    "name": "GATHER-OW-the-view-drops-the-colour",
+    "file": "src/scenes/travelView.js",
+    "old": "        ...(m.color ? { color: m.color } : {}),\n        badge: m.badge ?? null,",
+    "new": "        badge: m.badge ?? null,",
+    "tests": [
+      "test/scenes/gatherow.test.js"
+    ]
+  }
+]

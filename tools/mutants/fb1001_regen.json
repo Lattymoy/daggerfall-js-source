@@ -1,0 +1,128 @@
+[
+  {
+    "name": "CURE-ALL-the-old-lifes-buffs-ended-again",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  fillVitalSigns(entity);\n}",
+    "new": "  fillVitalSigns(entity);\n  for (const a of entity.activeEffects ?? []) if (a.kind !== 'disease' && a.kind !== 'poison') a.ended = true;\n}",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "CURE-ALL-no-pool-filled",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  fillVitalSigns(entity);\n}",
+    "new": "}",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "CURE-ALL-the-poison-left",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  cureAllPoisons(entity);\n  cureAllDiseases(entity);",
+    "new": "  cureAllDiseases(entity);",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "CURE-ALL-the-disease-left",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  cureAllDiseases(entity);\n  cureAllAttributes(entity);",
+    "new": "  cureAllAttributes(entity);",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "CURE-ALL-the-drain-left",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);",
+    "new": "  fillVitalSigns(entity);",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-SELF-the-burst-lands-it-again-saved",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const gift = caster?.entity === playerEntity && allyCastable(spell);",
+    "new": "      const gift = false;",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-SELF-a-blast-with-harm-passes-her-by",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const gift = caster?.entity === playerEntity && allyCastable(spell);",
+    "new": "      const gift = caster?.entity === playerEntity;",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-SELF-a-foes-gift-taken-as-her-own",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const gift = caster?.entity === playerEntity && allyCastable(spell);",
+    "new": "      const gift = allyCastable(spell);",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-CASTER-the-caster-never-given-it",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!allyCastable(sp)) return;\n    const r = applySpellToPlayer({ ...sp, rangeType: 0 }",
+    "new": "    return;\n    const r = applySpellToPlayer({ ...sp, rangeType: 0 }",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-CASTER-given-it-saved",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    const r = applySpellToPlayer({ ...sp, rangeType: 0 }, castingLevel(playerEntity), playerCaster(cast));",
+    "new": "    const r = applySpellToPlayer(sp, castingLevel(playerEntity), playerCaster(cast));",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-CASTER-given-a-blast-with-harm",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!allyCastable(sp)) return;\n    const r = applySpellToPlayer({ ...sp, rangeType: 0 }",
+    "new": "    if (false) return;\n    const r = applySpellToPlayer({ ...sp, rangeType: 0 }",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-CASTER-around-caster-passes-her-by",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      giveAreaToCaster(sp, cast);   // AREA-CASTER: and me, when it is all gifts",
+    "new": "      // gone   // AREA-CASTER: and me, when it is all gifts",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-CASTER-at-range-only-at-its-burst",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (sp.rangeType === 4) giveAreaToCaster(sp, cast);",
+    "new": "    if (false) giveAreaToCaster(sp, cast);",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  },
+  {
+    "name": "AREA-CASTER-no-healed-line",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (r.healed > 0) say(`You are healed ${r.healed} points.`);\n  }\n  function explodeAt",
+    "new": "  }\n  function explodeAt",
+    "tests": [
+      "test/systems/fb1001_regen.test.js"
+    ]
+  }
+]

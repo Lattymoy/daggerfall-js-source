@@ -1,0 +1,1109 @@
+[
+  {
+    "name": "compass-N-bit",
+    "file": "src/world/road/pathData.js",
+    "old": "export const N = 128;",
+    "new": "export const N = 129;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "compass-NW-bit",
+    "file": "src/world/road/pathData.js",
+    "old": "export const NW = 1;",
+    "new": "export const NW = 2;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "tile-size",
+    "file": "src/world/road/pathData.js",
+    "old": "export const T_SIZE = MP_WORLD_UNITS / 128; // 256 - one terrain tile",
+    "new": "export const T_SIZE = MP_WORLD_UNITS / 64; // 256 - one terrain tile",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "path-width",
+    "file": "src/world/road/pathData.js",
+    "old": "export const P_SIZE = T_SIZE * 2; // 512 - a path's width",
+    "new": "export const P_SIZE = T_SIZE; // 512 - a path's width",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "ang-unit",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "export const ANG_UNIT = 22.5;",
+    "new": "export const ANG_UNIT = 20;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "direction-N-exclusive",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "  if ((yaw >= 360 - ANG_UNIT && yaw <= 360) || (yaw >= 0 && yaw <= ANG_UNIT)) return N;",
+    "new": "  if ((yaw >= 360 - ANG_UNIT && yaw < 360) || (yaw >= 0 && yaw < ANG_UNIT)) return N;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "direction-diagonals-inclusive",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "  if (yaw > 45 - ANG_UNIT && yaw < 45 + ANG_UNIT) return NE;",
+    "new": "  if (yaw >= 45 - ANG_UNIT && yaw <= 45 + ANG_UNIT) return NE;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ],
+    "equivalent": true,
+    "why": "the four diagonal bands are only reached when no CARDINAL matched, and every diagonal boundary (22.5, 67.5, 112.5, ...) is claimed by a cardinal tested before it - so the open interval and the closed one answer the same for every degree. Kept as written because it is the mod's own spelling"
+  },
+  {
+    "name": "target-pixel-north-inverted",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "      return { x: mapPixelX, y: mapPixelY - 1 };",
+    "new": "      return { x: mapPixelX, y: mapPixelY + 1 };",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "target-pixel-default-moves",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "      return { x: mapPixelX, y: mapPixelY };",
+    "new": "      return { x: mapPixelX + 1, y: mapPixelY };",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "on-path-south-symmetric",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "  if ((data & S) !== 0 && posInMpX > MID_LO && posInMpX < MID_HI && posInMpZ < MID_HI) onPath |= S;",
+    "new": "  if ((data & S) !== 0 && posInMpX > MID_LO && posInMpX < MID_HI && posInMpZ < MID_LO) onPath |= S;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "on-path-diagonal-side-dropped",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "  if ((data & SE) !== 0 && Math.abs(posInMpX - (MP_WORLD_UNITS - posInMpZ)) < P_SIZE && posInMpX > MID_LO) onPath |= SE;",
+    "new": "  if ((data & SE) !== 0 && Math.abs(posInMpX - (MP_WORLD_UNITS - posInMpZ)) < P_SIZE) onPath |= SE;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "paths-point-roads-only",
+    "file": "src/world/road/pathData.js",
+    "old": "  return (dataPoint(net, PATH_ROADS, mapPixelX, mapPixelY) | dataPoint(net, PATH_TRACKS, mapPixelX, mapPixelY)) & 0xff;",
+    "new": "  return dataPoint(net, PATH_ROADS, mapPixelX, mapPixelY) & 0xff;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "data-point-unchecked",
+    "file": "src/world/road/pathData.js",
+    "old": "  if (!onTable(mapPixelX, mapPixelY))\n    return pathType === PATH_ROADS || pathType === PATH_TRACKS\n      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff\n      : 0;",
+    "new": "  if (false) return 0;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "next-path-no-recovery",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "  while (countSetBits(dir) !== 1 && sc < 9) {",
+    "new": "  while (false) {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "next-path-facing-ignored",
+    "file": "src/systems/travel/travelPaths.js",
+    "old": "  let dir = data & playerDirection;\n  if (dir !== 0) return dir;",
+    "new": "  let dir = 0;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "arrival-buffer",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "export const ARRIVAL_BUFFER = 800;",
+    "new": "export const ARRIVAL_BUFFER = 0;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "overshoot-degrees",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "export const OVERSHOOT_YAW_DEGREES = 5;",
+    "new": "export const OVERSHOOT_YAW_DEGREES = 180;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "yaw-arguments-swapped",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "  const angleRad = Math.atan2(fromX - toX, fromZ - toZ);",
+    "new": "  const angleRad = Math.atan2(toX - fromX, toZ - fromZ);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "rect-contains-inclusive-max",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "  return x >= rect.xMin && x < rect.xMax && z >= rect.zMin && z < rect.zMax;",
+    "new": "  return x >= rect.xMin && x <= rect.xMax && z >= rect.zMin && z <= rect.zMax;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "rect-centre-rounded",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "    x: Math.trunc((rect.xMin + rect.xMax) / 2),",
+    "new": "    x: Math.round((rect.xMin + rect.xMax) / 2),",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "autopilot-reaims-every-frame",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "    if (mapPixelX !== this.lastPlayerMapPixel.x || mapPixelY !== this.lastPlayerMapPixel.y) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "autopilot-forward-fixed",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "    return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier, arrived: false };",
+    "new": "    return { yaw: this.yaw, pitch: this.pitch, forward: 1, arrived: false };",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "speed-penalty-absolute",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    cautiousTravelMultiplier: 1 - (speedPenalty / 100),",
+    "new": "    cautiousTravelMultiplier: speedPenalty / 100,",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "fatigue-floor-no-plus-one",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    cautiousFatigueMin: (get('CautiousTravel.FatigueMinimumValue') | 0) + 1,",
+    "new": "    cautiousFatigueMin: get('CautiousTravel.FatigueMinimumValue') | 0,",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "roads-integration-ungated",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  const roadsIntegration = !!get('RoadsIntegration.Enable') && roadsModEnabled;",
+    "new": "  const roadsIntegration = !!get('RoadsIntegration.Enable');",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "waterways-ignore-rivers-switch",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  const waterwaysEnabled = roadsIntegration ? (!!get('RoadsIntegration.EnableWaterways') && riversStreams) : false;",
+    "new": "  const waterwaysEnabled = roadsIntegration ? !!get('RoadsIntegration.EnableWaterways') : false;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "follow-key-custom-no-fallback",
+    "file": "src/systems/inputActions.js",
+    "old": "        name = i < row.options.length ? row.options[i] : (String(storedModSetting(vendor, row.choice) ?? '').trim() || null);",
+    "new": "        name = row.options[i] ?? null;",
+    "tests": [
+      "test/ui/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "avoid-offset",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "export const AVOID_ENCOUNTER_OFFSET = 50;",
+    "new": "export const AVOID_ENCOUNTER_OFFSET = 20;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "avoid-uncapped",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  return Math.min(luck + stealth - AVOID_ENCOUNTER_OFFSET, maxAvoidChance);",
+    "new": "  return luck + stealth - AVOID_ENCOUNTER_OFFSET;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "city-border-same-as-town",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "export const LOCATION_BORDER_TILES_CITY = 1.5;",
+    "new": "export const LOCATION_BORDER_TILES_CITY = 1;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "circumnavigate-yaw-window",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  if (rectContains(corners.ne, worldX, worldZ)) return (yaw > 45 && yaw < 225) ? 'se' : 'nw';",
+    "new": "  if (rectContains(corners.ne, worldX, worldZ)) return (yaw > 135 && yaw < 315) ? 'se' : 'nw';",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "circumnavigate-no-bail",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  return null;\n}\n\n/** The mod, as a host builds it.",
+    "new": "  return 'ne';\n}\n\n/** The mod, as a host builds it.",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "follow-keeps-destination",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "        st.road = (roadDataPt & playerDirection) !== 0;\n        st.destinationName = null;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
+    "new": "        st.road = (roadDataPt & playerDirection) !== 0;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "follow-ignores-from-direction",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      const fromDirection = directionOfYaw(yawDeg(true));",
+    "new": "      const fromDirection = directionOfYaw(yawDeg());",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "junction-threshold",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      if (countSetBits(pathsDataPt) === 2) {",
+    "new": "      if (countSetBits(pathsDataPt) >= 2) {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "cautious-watch-always",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      if (st.destinationCautious) {\n        const e = deps.entity?.() ?? {};",
+    "new": "      if (true) {\n        const e = deps.entity?.() ?? {};",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "fatigue-multiplier-dropped",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "        if ((e.fatigue ?? 0) < FATIGUE_MULTIPLIER * st.settings.cautiousFatigueMin) {",
+    "new": "        if ((e.fatigue ?? 0) < st.settings.cautiousFatigueMin) {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "paused-does-not-return",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      if (frame.gamePaused) return { drive, handled: true };",
+    "new": "      if (false) return { drive, handled: true };",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "other-window-does-not-stop",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      if (frame.isPlayerOnHUD || !(frame.topWindowIsTravelUI || frame.topWindowAllowsTravel)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "interrupt-clears-destination",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  function interruptTravel() {\n    setTimeScale(1);",
+    "new": "  function interruptTravel() {\n    st.destinationName = null;\n    setTimeScale(1);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "avoid-does-not-resume",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      else if (st.destinationName != null) resumeTravel();\n      else followPath();",
+    "new": "      else if (false) resumeTravel();",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "ignore-encounters-seconds",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "export const IGNORE_ENCOUNTERS_SECONDS = 15;",
+    "new": "export const IGNORE_ENCOUNTERS_SECONDS = 5;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "ports-mask",
+    "file": "src/systems/travel/travelPorts.js",
+    "old": "  return (mapId | 0) & 0x000fffff;",
+    "new": "  return mapId | 0;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "ports-null-is-a-port",
+    "file": "src/systems/travel/travelPorts.js",
+    "old": "export function hasPort(mapId) {\n  if (mapId == null || !Number.isFinite(mapId)) return false;",
+    "new": "export function hasPort(mapId) {\n  if (mapId == null || !Number.isFinite(mapId)) return true;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "draw-path-centre-only",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "    buf[offset + width * 2 + 4] = px;\n  } // E",
+    "new": "  } // E",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "draw-path-diagonal-straight",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "    buf[offset + width * 4 + 4] = px;",
+    "new": "    buf[offset + width * 4 + 3] = px;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "dot-small-always",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "  const st = large ? 0 : 1;\n  const en = large ? 5 : 4;",
+    "new": "  const st = 1;\n  const en = 4;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "large-dots-inverted",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "  return locationType === LOCATION_TYPES.TownCity || locationType === LOCATION_TYPES.TownHamlet || !!onlyLargeDots;",
+    "new": "  return locationType === LOCATION_TYPES.TownCity || locationType === LOCATION_TYPES.TownHamlet || !onlyLargeDots;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "here-pt",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "  JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25 - 3 * JUNCTION_MAP_WIDTH * 5 + JUNCTION_MAP_W2 * 5 + 2;",
+    "new": "  JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25 - 2 * JUNCTION_MAP_WIDTH * 5 + JUNCTION_MAP_W2 * 5 + 2;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "direction-index-north-down",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "      return here + w5; // N",
+    "new": "      return here - w5; // N",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "map-section-no-circle",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "        circular &&",
+    "new": "        false &&",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "map-section-roads-under-tracks",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "      if (showPaths[1]) drawPath(buf, offset5, width5, pathsAt(mpX, mpY, 1), trackPx);\n      if (showPaths[0]) drawPath(buf, offset5, width5, pathsAt(mpX, mpY, 0), roadPx);",
+    "new": "      if (showPaths[0]) drawPath(buf, offset5, width5, pathsAt(mpX, mpY, 0), roadPx);\n      if (showPaths[1]) drawPath(buf, offset5, width5, pathsAt(mpX, mpY, 1), trackPx);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ],
+    "equivalent": false,
+    "why": "AUDIT-TO1: NOT equivalent - a pixel carrying both a road and a track shows the ROAD at the centre texel (tracks first, :786-787); the pin now shares one pixel"
+  },
+  {
+    "name": "ports-bar-no-shuffle",
+    "file": "src/ui/travel/travelMapOptions.js",
+    "old": "  return paging\n    ? { ports: PORT_FILTER_MOVED, horizontalArrow: HORIZ_ARROW_MOVED, verticalArrow: VERT_ARROW_MOVED }\n    : { ports: PORT_FILTER_POS, horizontalArrow: HORIZ_ARROW_POS, verticalArrow: VERT_ARROW_POS };",
+    "new": "  return { ports: PORT_FILTER_POS, horizontalArrow: HORIZ_ARROW_POS, verticalArrow: VERT_ARROW_POS };",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "ports-filter-passes-all",
+    "file": "src/ui/travel/travelMapOptions.js",
+    "old": "  return !portsFilter || hasPort(mapId);",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "info-refuses-nothing",
+    "file": "src/ui/travel/travelMapOptions.js",
+    "old": "  if (INFO_REFUSED_TYPES.includes(locationType)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "guild-halls-counted",
+    "file": "src/ui/travel/travelMapOptions.js",
+    "old": "      continue; // :404-406 - a guild hall is named, never counted",
+    "new": "      // counted too",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "teleport-free-rank",
+    "file": "src/ui/travel/travelMapOptions.js",
+    "old": "export const TELEPORT_RANK_FREE = 8;",
+    "new": "export const TELEPORT_RANK_FREE = 6;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "teleport-cost-per-rank",
+    "file": "src/ui/travel/travelMapOptions.js",
+    "old": "export const TELEPORT_COST_PER_RANK = 200;",
+    "new": "export const TELEPORT_COST_PER_RANK = 100;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "time-scale-unbounded",
+    "file": "src/systems/timeScale.js",
+    "old": "  _scale = Number.isFinite(v) ? Math.max(0.01, Math.min(MAX_TIME_SCALE, v)) : 1;",
+    "new": "  _scale = Number.isFinite(v) ? v : 1;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "motor-clamp-scaled",
+    "file": "src/player/motor.js",
+    "old": "    const frameDt = Math.min(dt, MAX_FRAME_DT) * scale;",
+    "new": "    const frameDt = Math.min(dt * scale, MAX_FRAME_DT);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "motor-step-unscaled",
+    "file": "src/player/motor.js",
+    "old": "    const step = FIXED_DT * scale;",
+    "new": "    const step = FIXED_DT;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "cancel-does-not-close",
+    "file": "src/ui/travel/travelControlUI.js",
+    "old": "    this.deps.onCancel?.();\n    this.deps.onClose?.();\n  }",
+    "new": "    this.deps.onCancel?.();\n  }",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "message-never-clears",
+    "file": "src/ui/travel/travelControlUI.js",
+    "old": "export const MESSAGE_SECONDS = 3;",
+    "new": "export const MESSAGE_SECONDS = 3000;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "map-button-rect",
+    "file": "src/ui/travel/travelControlUI.js",
+    "old": "  map: [183, 3, 45, 21],",
+    "new": "  map: [183, 3, 40, 21],",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "junction-redraw-every-frame",
+    "file": "src/ui/travel/travelJunctionMap.js",
+    "old": "    if (\n      this.lastDrawn &&\n      this.lastDrawn.x === mapPixel.x &&\n      this.lastDrawn.y === mapPixel.y &&\n      this.lastDrawn.direction === direction\n    )\n      return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "junction-trilinear-is-nearest",
+    "file": "src/ui/travel/travelJunctionMap.js",
+    "old": "export const filterModeName = (i) => (i === 0 ? 'nearest' : 'linear');",
+    "new": "export const filterModeName = () => 'nearest';",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "eta-hours-dropped",
+    "file": "src/ui/enhanced/enhancedTravelControl.js",
+    "old": "  return h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;",
+    "new": "  return `${m}m`;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "color-key-alpha-dropped",
+    "file": "src/systems/modSettings.js",
+    "old": "  else if (s.length === 6) s += 'ff';",
+    "new": "  else if (s.length === 6) s += '00';",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "color-key-bad-value-kept",
+    "file": "src/systems/modSettings.js",
+    "old": "    const hex = colorKeyHex(v);\n    return hex ?? def.default;",
+    "new": "    return v;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "travel-options-off-by-default",
+    "file": "src/systems/modSettings.js",
+    "old": "    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: true,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
+    "new": "    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: false,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "roads-source-generated",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "    this._roadsSource = net.source ?? 'basic-roads';",
+    "new": "    this._roadsSource = 'generated';",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "world-follows-any-network",
+    "file": "src/scenes/world.js",
+    "old": "    roads: () => { const net = terrainGen.roads(); return net?.source === 'basic-roads' ? net : null; },",
+    "new": "    roads: () => terrainGen.roads(),",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "to-online-the-journey-stands-down-again",
+    "file": "src/scenes/world.js",
+    "old": "    if (!travelOptions) return false;\n    // OW-ONLY",
+    "new": "    if (!travelOptions || sharedClockOn()) return false;\n    // OW-ONLY",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "world-calendar-unscaled",
+    "file": "src/scenes/world.js",
+    "old": "      if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult * travelScale, {",
+    "new": "      if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult, {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "a1-hud-flag-back-to-gamepaused-complement",
+    "file": "src/scenes/world.js",
+    "old": "isPlayerOnHUD: !townTalk.overlayActive && !(modes?.overlayHeld ?? false) && !travelControlUI?.isShowing,",
+    "new": "isPlayerOnHUD: !townTalk.overlayActive && !(modes?.overlayHeld ?? false),",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "a1-interrupt-arm-dropped",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      if (frame.isPlayerOnHUD || !(frame.topWindowIsTravelUI || frame.topWindowAllowsTravel)) {",
+    "new": "      if (!(frame.topWindowIsTravelUI || frame.topWindowAllowsTravel)) {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "m1-detach-latch-never-set",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (st.settings.locationPause === LOC_PAUSE_ENTER) st.enterRectDetached = true;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "m1-detach-latch-ignored",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (st.enterRectDetached) return;   // AUDIT-TO1 M1: the mod's `-=` at :994-996",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "k1-yaw-zeroed-on-reinit",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "    this.pitch = 0; // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame\n    // ...and NOT the yaw: see the constructor (AUDIT-TO1 K1).",
+    "new": "    this.pitch = 0;\n    this.yaw = 0;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "l5-minutes-left-not-clamped",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    return Math.max(0, st.estimateMinutes - elapsed);",
+    "new": "    return st.estimateMinutes - elapsed;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "l5-estimate-kept-on-clear",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    st.estimateMinutes = null;   // AUDIT-TO1 L5",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "d1-not-at-port-ignores-location",
+    "file": "src/ui/travel/travelPopUp.js",
+    "old": "  return currentLocationMapId == null || !hasPort(currentLocationMapId);",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "d2-onpush-guard-not-called-site-a",
+    "file": "src/ui/travel/travelMapWindow.js",
+    "old": "    this.popUp.enforceShipRestriction();\n    this.popUp.refresh();\n  }\n\n  /** TO1 (:505-530 and TravelOptionsPopUp.cs:151-163): the popup on",
+    "new": "    this.popUp.refresh();\n  }\n\n  /** TO1 (:505-530 and TravelOptionsPopUp.cs:151-163): the popup on",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "d4-wheel-refusal-dropped",
+    "file": "src/ui/travel/travelPopUp.js",
+    "old": "        if (refusal) { this._click(); this.top = refusal; return; }\n      }\n      this._click(); this.travelShip = !this.travelShip; this.refresh();",
+    "new": "      }\n      this._click(); this.travelShip = !this.travelShip; this.refresh();",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "d3-campout-click-keeps-ship",
+    "file": "src/ui/travel/travelPopUp.js",
+    "old": "      if (this._to?.settings?.shipTravelPortsOnly && this.shipTravelRefusal()) this.travelShip = false;\n      this.refresh(); return true;",
+    "new": "      this.refresh(); return true;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "d3-campout-wheel-over-inns-too",
+    "file": "src/ui/travel/travelPopUp.js",
+    "old": "      if (this._to?.settings?.shipTravelPortsOnly && inRect(POPUP_RECTS.campout, vx, vy)) this.travelShip = false;",
+    "new": "      if (this._to?.settings?.shipTravelPortsOnly) this.travelShip = false;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "c1-enhanced-map-never-player-controlled",
+    "file": "src/ui/heldMap.js",
+    "old": "      playerControlled: st.it ? false : isPlayerControlledTravel(st.to?.settings, st.opts),",
+    "new": "      playerControlled: false,",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js",
+      "test/ui/heldmap.test.js"
+    ],
+    "note": "IT1 (PIN MOVED): re-aimed by content - Immersive Travel’s arm sits beside the line this record mutates."
+  },
+  {
+    "name": "g4-mark-per-window-again",
+    "file": "src/systems/travel/travelMapState.js",
+    "old": "  _markedMapId = Number.isFinite(id) ? id : -1;",
+    "new": "  _markedMapId = id;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "e3-filter-back-in-src-slot",
+    "file": "src/ui/travel/travelJunctionMap.js",
+    "old": "      renderer.drawScreenQuad?.(this._tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });",
+    "new": "      renderer.drawScreenQuad?.(\n        this._tex,\n        { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },\n        { filter: 'nearest' },\n      );",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "f1-junction-disc-gated-on-panel-again",
+    "file": "src/scenes/world.js",
+    "old": "        travelJunctionMap.enabled = _junctionUp;",
+    "new": "        travelJunctionMap.enabled = _junctionUp && !!travelControlUI?.isShowing;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "f1-enhanced-mount-torn-down-with-bar",
+    "file": "src/ui/enhanced/enhancedTravelControl.js",
+    "old": "  if (!state.showing && !junctionOnly) {",
+    "new": "  if (!state.showing) {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "g1-load-keeps-the-journey",
+    "file": "src/scenes/world.js",
+    "old": "    travelOptions?.clearTravelDestination();\n    if (worldTimeScale() !== 1) resetTimeScale();",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "g2-frame-net-below-the-gate",
+    "file": "src/scenes/world.js",
+    "old": "    if (travelControlUI?.isShowing && (modes?.mode ?? 'exterior') !== 'exterior') travelControlUI.closeWindow();\n    if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale() && !tvWalkHoldsTimeScale()) resetTimeScale();   // CSA-G: a scale the helm's time keys set has no panel behind it either; TV-WASD: nor the Overworld keys' travel",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "i2-click-router-without-cursor",
+    "file": "src/scenes/world.js",
+    "old": "locked: document.pointerLockElement === canvas,\n      button: e.button,",
+    "new": "locked: false,\n      button: e.button,",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js",
+      "test/ui/travel/disc22e_travel_click.test.js"
+    ]
+  },
+  {
+    "name": "to-online-the-follow-key-stands-down-again",
+    "file": "src/scenes/world.js",
+    "old": "  function travelFollowPressed() { return !naval?.aboard?.() && pressed(latch.edge, keys, 'FollowPaths'); }",
+    "new": "  function travelFollowPressed() { if (sharedClockOn()) return false; return !naval?.aboard?.() && pressed(latch.edge, keys, 'FollowPaths'); }",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "i6-discovery-by-map-id-again",
+    "file": "src/scenes/world.js",
+    "old": "        return loc?.name ? discoveredBuildings(townBookOf(loc)) : [];   // BAY-LEFT-MAPS (C7 = E2): the one key-maker",
+    "new": "        return discoveredBuildings(summary.mapID ?? -1);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "j1-rain-falls-through-the-journey",
+    "file": "src/scenes/world.js",
+    "old": "        if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {\n          precip.drawFall(precipShown, proj, view, wxEye32, camRight, now / 1000);",
+    "new": "        if (!_dwPrecipOff) {\n          precip.drawFall(precipShown, proj, view, wxEye32, camRight, now / 1000);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "j1-riding-loop-at-full-volume",
+    "file": "src/scenes/world.js",
+    "old": "    ridingVolumeScale: () => (_travelSoundsOff ? 0 : 1),",
+    "new": "    ridingVolumeScale: () => 1,",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "h2-exit-binding-off-the-store",
+    "file": "src/scenes/world.js",
+    "old": "      const code = action === 'TravelExit' ? sequenceString(shortcutBinding('TravelExit')) : getBinding(bindings(), action);",
+    "new": "      const code = getBinding(bindings(), action);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "b1-rect-off-the-summary-not-the-terrain",
+    "file": "src/scenes/world.js",
+    "old": "      const r = built.get(`${pixel.x},${pixel.y}`)?.locationRect ?? null;",
+    "new": "      const r = { xMin: 56, yMin: 56, xMax: 72, yMax: 72 };",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "b3-map-pixel-hook-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      travelOptions.onMapPixelChanged(playerTravelPixel());",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "b3-encounter-hook-unwired",
+    "file": "src/scenes/questWorld.js",
+    "old": "    raiseOnEncounterEvent: () => { host.travelOptions?.onEncounter(); host.modes?.raiseOnEncounterEvent?.(); },",
+    "new": "    raiseOnEncounterEvent: () => { host.modes?.raiseOnEncounterEvent?.(); },",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "g3-resume-no-closes-the-map",
+    "file": "src/ui/travel/travelMapWindow.js",
+    "old": "      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; }\n      return;\n    }\n    // TO1 (:477-497): the teleport fee",
+    "new": "      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; this.closeTravelWindows(true); }\n      return;\n    }\n    // TO1 (:477-497): the teleport fee",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "c3-fee-never-deducted",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (fee && !fee.paid) { fee.paid = true; this.deps.payTeleport?.(fee.cost); }",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "i1-follow-key-back-on-f",
+    "file": "src/systems/modSettings.js",
+    "old": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 3,",
+    "new": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 1,",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js",
+      "test/systems/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "i1-follow-key-on-x-handheld-torches-throw",
+    "file": "src/systems/modSettings.js",
+    "old": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 3,",
+    "new": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 5,",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js",
+      "test/systems/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "l6-containment-back-on-the-mods-page",
+    "file": "src/ui/travel/travelMapOptions.js",
+    "old": "      const summary = summaryAt(mpX, mpY);",
+    "new": "      if (deps.politicAt(mpX, mpY) - 128 !== selectedRegion) continue;\n      const summary = summaryAt(mpX, mpY);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "travel-options-declared-late",
+    "file": "src/scenes/world.js",
+    "old": "  let travelOptions = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "region-seen-declared-late",
+    "file": "src/scenes/world.js",
+    "old": "  let _travelRegionSeen = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "holder-declared-late",
+    "file": "src/scenes/world.js",
+    "old": "  const _travelUIHolder = { ui: null };\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "hook-asks-the-pixel-first",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    if (host.travelOptions && dfLocation) {\n      const here = playerTravelPixel();\n      if (px === here.x && py === here.y) host.travelOptions.initLocationRects(here);\n    }\n",
+    "new": "    if (dfLocation && px === playerTravelPixel().x && py === playerTravelPixel().y) host.travelOptions?.initLocationRects(playerTravelPixel());\n",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "TOFIELD3-the-journey-is-sat-as-resting-again",
+    "file": "src/scenes/world.js",
+    "old": "    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),",
+    "new": "    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null)\n      : worldTimeScale() > 1 ? { ...survivalEnvNow(), resting: true }\n        : survivalEnvNow()),",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "follow-key-unsaid",
+    "file": "src/ui/heldMap.js",
+    "old": "        card.append(el('p', 'hmmeta', `On the road, press ${_fk} to follow it.`));\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "travel-drive-ungated",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "  return !standing && streaming ? 0 : forward;",
+    "new": "  return forward;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "travel-lookahead-behind",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "  const ahead = [feet[0] + Math.sin(yaw) * lookahead, feet[2] + Math.cos(yaw) * lookahead];",
+    "new": "  const ahead = [feet[0] - Math.sin(yaw) * lookahead, feet[2] - Math.cos(yaw) * lookahead];",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "travel-lookahead-underfoot-only",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "  const ahead = [feet[0] + Math.sin(yaw) * lookahead, feet[2] + Math.cos(yaw) * lookahead];",
+    "new": "  const ahead = [feet[0], feet[2]];",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "travel-drive-holds-for-ever",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "  return !standing && streaming ? 0 : forward;",
+    "new": "  return !standing ? 0 : forward;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "travel-lookahead-is-only-the-floor",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "  return Math.max(floor, speed * Math.min(dt, maxFrameDt) * Math.max(1, scale) * margin);",
+    "new": "  return floor;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "travel-lookahead-uncapped-frame",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "  return Math.max(floor, speed * Math.min(dt, maxFrameDt) * Math.max(1, scale) * margin);",
+    "new": "  return Math.max(floor, speed * dt * Math.max(1, scale) * margin);",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "to-online-the-coordinates-door-stands-down-again",
+    "file": "src/scenes/world.js",
+    "old": "      coordsAllowed: () => !!travelOptions,",
+    "new": "      coordsAllowed: () => !!travelOptions && !sharedClockOn(),",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "to-online-the-teleport-line-sits-over-a-walked-ride",
+    "file": "src/ui/travel/travelPopUp.js",
+    "old": "    if (this.noWorldTime() && !this.walkedTrip) ONLINE_TRAVEL_ROWS.forEach(",
+    "new": "    if (this.noWorldTime()) ONLINE_TRAVEL_ROWS.forEach(",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "to-online-the-teleport-line-sits-over-a-walked-ride-on-the-held-map",
+    "file": "src/ui/heldMap.js",
+    "old": "      if (t?.online && !t.walked) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));",
+    "new": "      if (t?.online) card.append(el('p', 'hmmeta', ONLINE_TRAVEL_LINE));",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  }
+]

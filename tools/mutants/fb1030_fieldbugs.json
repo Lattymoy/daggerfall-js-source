@@ -1,0 +1,418 @@
+[
+  {
+    "name": "WALLTOUCH-no-touch",
+    "file": "src/scenes/homeYards.js",
+    "old": "some(meets) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
+    "new": "some(meets)) return YARD_IN_HOUSE;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "WALLTOUCH-touch-unbounded",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (d <= DECOR_WALL_CLIP + 1e-3) return false;",
+    "new": "if (d <= 1) return false;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "WALLTOUCH-the-measured-ground-judged-as-the-wall",
+    "file": "src/scenes/homeYards.js",
+    "old": "if ((!solid && deck === Infinity) || !pastWalls(g.walls, x, z, true, near.walls)) return false;",
+    "new": "if (!solid && deck === Infinity) return false;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y1-a-lot-unmeasured-let-through",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if (!lot.grounds) return true;",
+    "new": "  if (!lot.grounds) return false;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js",
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y2-a-step-judged-by-the-walls",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (lot.loose.some(meets) || lot.grounds.some((g) => g.loose.some(meets))) return true;",
+    "new": "if (lot.loose.some(meets)) return true;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y2-a-mate-judged-by-the-walls",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (lot.loose.some(meets) || lot.grounds.some((g) => g.loose.some(meets))) return true;",
+    "new": "if (lot.grounds.some((g) => g.loose.some(meets))) return true;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y2-a-step-outside-the-walls-inner",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (!high) { hit[k] = 1; if (!out[k] && !(walls.length && inside(k, x, z))) out[k] = 1; continue; }",
+    "new": "if (!high) { hit[k] = 1; continue; }",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y4-the-near-walls-alone-measured-wrong",
+    "file": "src/scenes/homeYards.js",
+    "old": "const linesNear = (ls, b) => ls.filter((l) => Math.min(l[0], l[2]) <= b[2] + CELL_REACH",
+    "new": "const linesNear = (ls, b) => ls.filter((l) => Math.min(l[0], l[2]) <= b[0] - CELL_REACH",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "WALLTOUCH-the-diagonal-foot",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const r = (p.flatSize?.w > 0 ? p.flatSize.w / 2 : p.radius ?? 0) * s;",
+    "new": "const r = (p.radius ?? 0) * s;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "WALLTOUCH-a-flip-refused",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "if (why && (next.model != null || why !== whyNotHere({ piece: cur, radius }))) {",
+    "new": "if (why) {",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-M3-a-refused-model-turns-free",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "if (why && (next.model != null || why !== whyNotHere({ piece: cur, radius }))) {",
+    "new": "if (why && why !== whyNotHere({ piece: cur, radius })) {",
+    "tests": [
+      "test/net/yardheight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y8-a-flat-a-square",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "return r > 0 ? Array.from({ length: 8 }, (_, i) => [r * Math.cos((i * Math.PI) / 4), r * Math.sin((i * Math.PI) / 4)]) : [];",
+    "new": "return r > 0 ? [[-r, -r], [r, -r], [r, r], [-r, r]] : [];",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y5-the-foot-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))",
+    "new": "yardInHouse(lot, pos, ground, pos[1])",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y5-the-tool-sends-no-foot",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "return Object.assign(corners, { bottom: m.box[1] * s });",
+    "new": "return corners;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "YARDDECK-no-decks",
+    "file": "src/scenes/homeYards.js",
+    "old": "decks: cellRects(W, H, x0, z0, x1, z1, cell, (i) => (Number.isNaN(deck[i]) ? null : deck[i])),",
+    "new": "decks: [],",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "YARDDECK-the-storey-unasked",
+    "file": "src/scenes/homeYards.js",
+    "old": "return k >= 0 && pastWalls(g.storeys[k][1], x, z, false, near.storeys[k]);",
+    "new": "return false;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "YARDDECK-a-parapet-a-storey",
+    "file": "src/scenes/homeYards.js",
+    "old": "crossingLines(ups, y + YARD_STOREY_RISE)",
+    "new": "crossingLines(ups, y + 0.5)",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y3-the-storeys-foot-asked",
+    "file": "src/scenes/homeYards.js",
+    "old": "    ups.push([ax, ay, az, bx, by, bz, cx, cy, cz]);",
+    "new": "    if (Math.min(ay, by, cy) >= YARD_ROOF_Y) ups.push([ax, ay, az, bx, by, bz, cx, cy, cz]);",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y3-the-highest-roof",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (level && !(deck[k] <= y)) deck[k] = y;",
+    "new": "if (level && !(deck[k] >= y)) deck[k] = y;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y3-a-storeys-cell-unjudged",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (deck === Infinity) return k < 0 || pastWalls(g.storeys[k][1], x, z, true, near.storeys[k]);",
+    "new": "if (deck === Infinity) return true;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "YARDDECK-the-height-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (deck !== Infinity && deck > foot) return true;",
+    "new": "if (deck !== Infinity && deck > Infinity) return true;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Y6-a-tread-a-deck",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (part.length * cell * cell < YARD_DECK_MIN) for (const c of part) deck[c] = NaN;",
+    "new": "if (part.length * cell * cell < 0) for (const c of part) deck[c] = NaN;",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "YARDDECK-the-frame-drops-them",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "rects, grounds: [ground], type:",
+    "new": "rects, type:",
+    "tests": [
+      "test/world/fb1009_yardfoot.test.js",
+      "test/scenes/fb1012b_yardline.test.js"
+    ]
+  },
+  {
+    "name": "YARDDECK-a-downward-face",
+    "file": "src/scenes/homeYards.js",
+    "old": "const level = high && up > 0 &&",
+    "new": "const level = high &&",
+    "tests": [
+      "test/world/fb1030_yarddeck.test.js"
+    ]
+  },
+  {
+    "name": "CASTLETALK-the-relay-boxed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "actions.addRelay(ns, position, action, person ? null : aabb, [x, y, z]);",
+    "new": "actions.addRelay(ns, position, action, aabb, [x, y, z]);",
+    "tests": [
+      "test/scenes/fb1030_castletalk.test.js"
+    ]
+  },
+  {
+    "name": "CASTLETALK-every-person-unboxed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f.archive, f.record, true, !!pn && !showsText(pn));",
+    "new": "f.archive, f.record, true, !!pn);",
+    "tests": [
+      "test/scenes/fb1030_castletalk.test.js"
+    ]
+  },
+  {
+    "name": "ZONEBANK-the-zone-shut",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "=> !inZone || isSettlement(locAt(px.x, px.y));",
+    "new": "=> !inZone;",
+    "tests": [
+      "test/systems/wild/fb1030_zonebank.test.js"
+    ]
+  },
+  {
+    "name": "ZONEBANK-a-wild-bank-open",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "=> !inZone || isSettlement(locAt(px.x, px.y));",
+    "new": "=> true;",
+    "tests": [
+      "test/systems/wild/fb1030_zonebank.test.js"
+    ]
+  },
+  {
+    "name": "ZONEBANK-the-old-words",
+    "file": "src/scenes/world.js",
+    "old": "townTalk.say(ZONE_SAFE_TEXT.bank); return true; },",
+    "new": "townTalk.say('There are no banks in the mountains.'); return true; },",
+    "tests": [
+      "test/systems/wild/fb1030_zonebank.test.js"
+    ]
+  },
+  {
+    "name": "SPAWNPLATE-platted-twice",
+    "file": "src/scenes/world.js",
+    "old": "if (!summary || summary.loc?.wildHall || summary.loc?.spawned) continue;",
+    "new": "if (!summary || summary.loc?.wildHall) continue;",
+    "tests": [
+      "test/scenes/fb1030_spawnplate.test.js"
+    ]
+  },
+  {
+    "name": "INDOORFLOOR-never-said",
+    "file": "src/net/peer/indoorFloor.js",
+    "old": "if (f != null) pose.fy = Math.round(f * 100) / 100;",
+    "new": "",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "INDOORFLOOR-the-wire-drops-it",
+    "file": "src/net/wire.js",
+    "old": "...(finite(fy) && Math.abs(fy) <= POSE_Y_BOUND ? { fy } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "INDOORFLOOR-the-ease-drops-it",
+    "file": "src/net/online.js",
+    "old": "...(Number.isFinite(to.fy) ? { fy: to.fy } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "INDOORFLOOR-the-reader-ignores-it",
+    "file": "src/net/peer/indoorFloor.js",
+    "old": "return f != null ? p.y - p.fy + f + comp : p.y + comp;",
+    "new": "return p.y + comp;",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "INDOORFLOOR-the-origin-unshed",
+    "file": "src/net/peer/indoorFloor.js",
+    "old": "return o && Number.isFinite(o[1]) ? o[1] - comp : null;",
+    "new": "return o && Number.isFinite(o[1]) ? o[1] : null;",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "RECORDSSAID-the-old-words",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const HALL_OF_RECORDS_EMPTY =\n  'No guild has held this seat yet. Its claims, sieges and holders are written here.';",
+    "new": "export const HALL_OF_RECORDS_EMPTY = 'Nothing is written here yet.';",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "TALLDOOR-the-centre-law-alone",
+    "file": "src/player/enterExit.js",
+    "old": "  return Math.min(repositionFeetY(terrain, y), Math.max(floor, Number.isFinite(terrain) ? terrain + 0.15 : -Infinity));",
+    "new": "  return repositionFeetY(terrain, y);",
+    "tests": [
+      "test/player/fb1030_talldoor.test.js"
+    ]
+  },
+  {
+    "name": "TALLDOOR-the-floor-unread",
+    "file": "src/player/enterExit.js",
+    "old": "  const floor = floorLanding(collider, landing.pos)[1];",
+    "new": "  const floor = y;",
+    "tests": [
+      "test/player/fb1030_talldoor.test.js"
+    ]
+  },
+  {
+    "name": "TALLDOOR-the-host-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "player.spawn(landing.pos[0], dungeonExitFeet(player.collider, landing), landing.pos[2]);",
+    "new": "player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);",
+    "tests": [
+      "test/player/enterexit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-Z1-a-found-spawn-capped",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  const inGrid = (g) => (!g.found || g.spawn) && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;",
+    "new": "  const inGrid = (g) => !g.found && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;",
+    "tests": [
+      "test/scenes/fb1030_spawnplate.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-N1-the-corpse-drops-it",
+    "file": "src/net/remotePlayers.js",
+    "old": "pose: { x: pose.x, y: pose.y, z: pose.z, ...(Number.isFinite(pose.fy) ? { fy: pose.fy } : {}) }, room,",
+    "new": "pose: { x: pose.x, y: pose.y, z: pose.z }, room,",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-N1-the-party-mark-drops-it",
+    "file": "src/net/wire.js",
+    "old": "...(finite(p.dd.fy) && Math.abs(p.dd.fy) <= POSE_Y_BOUND ? { fy: p.dd.fy } : {}), at:",
+    "new": "at:",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-N1-the-host-marks-none",
+    "file": "src/net/peer/indoorFloor.js",
+    "old": "(Number.isFinite(pose?.fy) ? { ...o, fy: pose.fy } : o);",
+    "new": "o;",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-N2-the-blow-point-drops-it",
+    "file": "src/net/peer/peerFx.js",
+    "old": "        const at = hp ? toScene?.({ x: hp[0], y: hp[1], z: hp[2], fy: pose.fy }) : null; // AUDIT FB1030 N2: over the sender's room floor, as its body",
+    "new": "        const at = hp ? toScene?.({ x: hp[0], y: hp[1], z: hp[2] }) : null; // AUDIT FB1030 N2: over the sender's room floor, as its body",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-N3-poseChanged-blind-to-it",
+    "file": "src/net/wire.js",
+    "old": "    || (a.fy ?? null) !== (b.fy ?? null)",
+    "new": "    || false",
+    "tests": [
+      "test/net/fb1030_indoorfloor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1030-D1-a-chains-head-dropped",
+    "file": "src/world/capitalCastles.js",
+    "old": "linked.has(o.position) || chainHead(o) || castleKeeps(o)",
+    "new": "linked.has(o.position) || castleKeeps(o)",
+    "tests": [
+      "test/scenes/fb1030_castletalk.test.js"
+    ]
+  }
+]

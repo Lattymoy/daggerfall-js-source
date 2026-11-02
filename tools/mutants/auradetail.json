@@ -1,0 +1,200 @@
+[
+  {
+    "name": "AURA-DETAIL-the-seams-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "seamHeat * 0.55 +",
+    "new": "0.0 * 0.55 +",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-licks-within",
+    "file": "src/render/auraRing.js",
+    "old": "step(0.0, out1 + 0.3) * (1.0 - smoothstep(0.0, 1.0, out1));",
+    "new": "(1.0 - smoothstep(0.0, 1.0, out1));",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-a-spark-falling",
+    "file": "src/render/auraRing.js",
+    "old": "(v - mv * 0.85) * uFlameH * 0.6)",
+    "new": "(v - (1.0 - mv) * 0.85) * uFlameH * 0.6)",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-flare-at-no-place",
+    "file": "src/render/auraRing.js",
+    "old": "flare = max(flare, beat * exp(-du * du * 900.0));",
+    "new": "flare = max(flare, beat);",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-ribbons-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "col += (RAD_HEART * 0.6 + RAD_GOLD * 0.5) * ribbon",
+    "new": "col += 0.0 * ribbon",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-ribbons-straight",
+    "file": "src/render/auraRing.js",
+    "old": "float wind = fract(u * 2.0 + v * ",
+    "new": "float wind = fract(u * 2.0 + 0.0 * v * ",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-suns-points-flat",
+    "file": "src/render/auraRing.js",
+    "old": "float points = pow(0.5 + 0.5 * cos(",
+    "new": "float points = 0.0 * pow(0.5 + 0.5 * cos(",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-caustics-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "col += mix(MS_TIDE, MS_FOAM, 0.35) * caus * open * 0.3 * breath;",
+    "new": "",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-eyes-rim-off-it",
+    "file": "src/render/auraRing.js",
+    "old": "float er = (r - ${MAELSTROM_EYE_R.toFixed(3)}) / 0.012;",
+    "new": "float er = (r - ${MAELSTROM_EYE_R.toFixed(3)} - 0.05) / 0.012;",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-every-beam-as-high",
+    "file": "src/render/auraRing.js",
+    "old": "float reach = ${g3(BEACON_BEAM.up)} * (0.25 + 0.75 * lit);",
+    "new": "float reach = ${g3(BEACON_BEAM.up)};",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-light-passing-backward",
+    "file": "src/render/auraRing.js",
+    "old": "float behind = fract(fract(uTime ${hzGlsl(BEACON_HZ.kindle)}) - turn);",
+    "new": "float behind = fract(turn - fract(uTime ${hzGlsl(BEACON_HZ.kindle)}));",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-tongues-one-height",
+    "file": "src/render/auraRing.js",
+    "old": "float tall = 0.05 + 0.13 * heat;",
+    "new": "float tall = 0.18;",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-tongues-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "col += fireRamp(0.35 + 0.5 * heat * (1.0 - v * uFlameH / max(tall, 0.01))) * tongue * 0.9 * flare;",
+    "new": "",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-eternal-ring-at-the-feet",
+    "file": "src/render/auraRing.js",
+    "old": "float rd = (r - ${g3(ETERNAL_POOL_R * 0.62)}) / (0.03 + 0.05 * tn);",
+    "new": "float rd = r / (0.03 + 0.05 * tn);",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-star-to-the-next-candle",
+    "file": "src/render/auraRing.js",
+    "old": "a1 = float(j + 3) / ${WITCH_CANDLES.toFixed(1)} * TAU;",
+    "new": "a1 = float(j + 1) / ${WITCH_CANDLES.toFixed(1)} * TAU;",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-flames-off-their-candles",
+    "file": "src/render/auraRing.js",
+    "old": "float cu = (fract(q.x - kc / ${WITCH_CANDLES.toFixed(1)} + 0.5) - 0.5) * circ, cy",
+    "new": "float cu = (fract(q.x - kc / ${WITCH_CANDLES.toFixed(1)}) - 0.5) * circ, cy",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-a-rate-that-does-not-close",
+    "file": "src/render/auraRing.js",
+    "old": "export const MAELSTROM_FLOW = Object.freeze({ caustic: 0.5, lace: 1 });",
+    "new": "export const MAELSTROM_FLOW = Object.freeze({ caustic: 0.513, lace: 1 });",
+    "tests": [
+      "test/render/auradetail.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-cap-never-held",
+    "file": "src/render/auraRing.js",
+    "old": "    top = Math.max(top, resonanceLevel(k, at) * kk - (s > P.hold ? P.fall * (s - P.hold) ** 2 : 0));\n",
+    "new": "",
+    "tests": [
+      "test/net/crystalfist.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-cap-a-whole-square",
+    "file": "src/render/auraRing.js",
+    "old": "vec2(RES_SQ, RES_SQ * ${RESONANCE_CAP_H})",
+    "new": "vec2(RES_SQ)",
+    "tests": [
+      "test/net/crystalfist.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-ripple-never-run",
+    "file": "src/render/auraRing.js",
+    "old": "if (onRip) c = max(c, ",
+    "new": "if (false) c = max(c, ",
+    "tests": [
+      "test/net/crystalfist.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-ripple-off-the-beat",
+    "file": "src/render/auraRing.js",
+    "old": "float e = fract(uTime + uSeed * ${AURA_CLOCK_PERIOD.toFixed(1)})",
+    "new": "float e = fract(uTime)",
+    "tests": [
+      "test/net/crystalfist.test.js"
+    ]
+  },
+  {
+    "name": "AURA-DETAIL-the-caps-not-handed",
+    "file": "src/render/auraRing.js",
+    "old": "gl.uniform1fv(U.uResCap, resonanceCapInto(this._resCap, t, kin));",
+    "new": "",
+    "tests": [
+      "test/net/crystalfist.test.js"
+    ]
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "name": "AUDIT-RPT1026-M5-the-joiner-keeps-the-literal",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "!(full === XF_STANDING && f.dead)",
+    "new": "!(full === 2 && f.dead)",
+    "tests": ["test/net/audit_rpt1026_m_xf.test.js"]
+  }
+]

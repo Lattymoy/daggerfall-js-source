@@ -1,0 +1,178 @@
+[
+  {
+    "name": "COMPANION-DROP-the-sworns-state-unread",
+    "file": "src/systems/wild/wildLeaf.js",
+    "old": "    .filter((r) => !!r && !!r.sworn && !r.defeated && !r.gone && (r.companion?.state ?? 'with') === 'with')",
+    "new": "    .filter((r) => !!r && !!r.sworn && !r.defeated && !r.gone)",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-every-sworn-at-the-side",
+    "file": "src/systems/wild/wildLeaf.js",
+    "old": "  (Array.isArray(list) ? list : [])\n    .filter((r) => !!r && !!r.sworn && !r.defeated && !r.gone && (r.companion?.state ?? 'with') === 'with')\n    .slice(0, WILD_REVENANTS_MAX);",
+    "new": "  (Array.isArray(list) ? list : []).filter(\n    (r) => !!r && !!r.sworn && !r.defeated && !r.gone && (r.companion?.state ?? 'with') === 'with',\n  );",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-kit-unread",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "    if (r.companion?.gear && typeof r.companion.gear === 'object')\n      out.push(kitPack(WILD_PACK.kit(r.id), r.companion.gear));\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-crew-unread",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  for (const c of Array.isArray(party) ? party : [])\n    if (c && Array.isArray(c.items)) out.push({ f: WILD_PACK.crew(c.boat, c.name), items: c.items });\n  for (const r of wildSwornAtSide(revenants)) {",
+    "new": "  for (const r of wildSwornAtSide(revenants)) {",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-sworns-pack-unread",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "    if (Array.isArray(r.companion?.items)) out.push({ f: WILD_PACK.sworn(r.id), items: r.companion.items });\n    if (r.companion?.gear && typeof r.companion.gear === 'object')",
+    "new": "    if (r.companion?.gear && typeof r.companion.gear === 'object')",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-kit-put-backwards",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "        if (gear[k] && typeof gear[k] === 'object' && !left.includes(gear[k])) delete gear[k];",
+    "new": "        if (gear[k] && typeof gear[k] === 'object' && left.includes(gear[k])) delete gear[k];",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-a-pack-piece-from-the-bag",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "    const list =\n      s?.f === 'cart' ? entity?.wagonItems : s?.f === 'bag' ? entity?.items : packs.find((p) => p.f === s?.f)?.items;",
+    "new": "    const list = s?.f === 'cart' ? entity?.wagonItems : entity?.items;",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js",
+      "test/net/int9_wild_ref.test.js",
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-live-coin-left",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "    if (c) c.stackCount = Math.max(0, Math.floor(c.stackCount ?? 1) - n);\n    p.put?.(p.items);",
+    "new": "    p.put?.(p.items);",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-live-kit-left",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "    p.put?.(p.items);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-took-default-none",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "export function wildTakeTook(entity, took, gold, before = (/** @type {any} */ _it) => {}, packs = wildPacksOf(entity)) {",
+    "new": "export function wildTakeTook(entity, took, gold, before = (/** @type {any} */ _it) => {}, packs = []) {",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-records-companions-misread",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  wildPacks(save?.modData?.[NAVAL_VENDOR]?.party?.party, save?.modData?.[REVENANT_VENDOR]?.list);",
+    "new": "  wildPacks(save?.modData?.[NAVAL_VENDOR]?.party, save?.modData?.[REVENANT_VENDOR]?.list);",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-services-shares-unsaid",
+    "file": "server-account/src/wild.js",
+    "old": "  const packs = tk?.gold?.packs && typeof tk.gold.packs === 'object' ? { packs: tk.gold.packs } : {}; // COMPANION-DROP: each pack's coin share, by its word",
+    "new": "  const packs = {}; // COMPANION-DROP: each pack's coin share, by its word",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-side-unsliced-in-the-zone",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "export const swornAtYourSide = () => (wildHere() ? wildSwornAtSide(revenantsWithYou()) : revenantsWithYou());",
+    "new": "export const swornAtYourSide = () => revenantsWithYou();",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-party-off-the-law",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "      return swornAtYourSide()\n        .filter((r) => list.includes(r))\n        .map(memberOf);",
+    "new": "      return list.map(memberOf);",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js",
+      "test/systems/revenant/revenant_audit.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-hand-back-destroys",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  for (const it of items) {\n    if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1);\n    else addItem(_player.items, it);\n  }",
+    "new": "  void items;",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js",
+      "test/systems/revenant/revenant_audit.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-DROP-the-game-takes-nothing-from-its-companions",
+    "file": "src/scenes/wildDropHost.js",
+    "old": ", wildPacks(host.naval?.companions?.party, revenantsWithYou()));   // COMPANION-DROP",
+    "new": ");   // COMPANION-DROP",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1019f-B3-the-oath-unread",
+    "file": "src/systems/wild/wildLeaf.js",
+    "old": "    .filter((r) => !!r && !!r.sworn && !r.defeated && !r.gone && (r.companion?.state ?? 'with') === 'with')",
+    "new": "    .filter((r) => !!r && !r.defeated && !r.gone && (r.companion?.state ?? 'with') === 'with')",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1019f-B5-the-risen-word-blind-to-a-packs-coin",
+    "file": "src/systems/wild/wildDeath.js",
+    "old": "  Object.values(gold?.packs ?? {}).some((n) => n > 0) ||\n  Object.values(gold?.letters ?? {}).some((n) => n > 0); // LETTERS-TENTH: a letter's share alone is said too",
+    "new": "  Object.values(gold?.letters ?? {}).some((n) => n > 0); // LETTERS-TENTH: a letter's share alone is said too",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): a letter's share said beside a pack's coin"
+  },
+  {
+    "name": "AUDIT-FB1019f-B5-the-host-asks-the-old-question",
+    "file": "src/scenes/wildDropHost.js",
+    "old": "    else if (wildTookAny(out, d.gold)) townTalk.say(",
+    "new": "    else if (out.length || d.gold?.purse || d.gold?.cart) townTalk.say(",
+    "tests": [
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
+  }
+]

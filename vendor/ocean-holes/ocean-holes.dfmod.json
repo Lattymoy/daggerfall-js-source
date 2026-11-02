@@ -1,0 +1,21 @@
+{
+    "ModTitle": "There's a Hole in the Bottom of the Ocean",
+    "ModVersion": "1.1.0",
+    "ModAuthor": "jet082",
+    "ContactInfo": "",
+    "DFUnity_Version": "1.1.1",
+    "ModDescription": "Adds deterministic blue holes in the deep ocean leading to flooded abyssal dungeons with stronger loot.",
+    "GUID": "e16033ea-15c5-430b-a042-4a6192acb7ed",
+    "Files": [
+        "Assets/Game/Mods/ocean-holes/ocean-holes.dfmod.json",
+        "Assets/Game/Mods/ocean-holes/modsettings.json",
+        "Assets/Game/Mods/ocean-holes/Scripts/OceanHoles.cs"
+    ],
+    "Dependencies": [
+        {
+            "Name": "iliac puddle no more",
+            "IsOptional": false,
+            "IsPeer": false
+        }
+    ]
+}

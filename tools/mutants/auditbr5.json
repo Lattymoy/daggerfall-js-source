@@ -1,0 +1,244 @@
+[
+  {
+    "name": "AUDITBR5-the-alias-step-gone",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "      - name: Copies under the names older copies ask for\n        run: node scripts/desktopRelease.mjs alias release\n",
+    "new": "      - name: Copies under the names older copies ask for\n        run: echo skipped\n",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): a release published without the old names: every pre-BR5 Mac and portable copy meets a 404"
+  },
+  {
+    "name": "AUDITBR5-the-set-asks-no-alias",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  ...ALIAS_COPIES.map(([, to]) => to),\n  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of",
+    "new": "  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): the check passes a set with no old-name copies"
+  },
+  {
+    "name": "AUDITBR5-an-alias-under-anothers-name",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])),",
+    "new": "  Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES.winSetup])),",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): every old name serves the Windows installer"
+  },
+  {
+    "name": "AUDITBR5-the-alias-copies-nothing",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "    for (const [from, to] of ALIAS_COPIES) copyFileSync(join(a, from), join(a, to));\n    console.log(`${ALIAS_COPIES.length} downloads copied under their names from before BR5`);",
+    "new": "    console.log(`${ALIAS_COPIES.length} downloads copied under their names from before BR5`);",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): the step reports copies it never made"
+  },
+  {
+    "name": "AUDITBR5-an-old-name-moved",
+    "file": "app/lib/downloads.cjs",
+    "old": "  mac: 'DaggerfallOnline-mac-arm64.dmg',\n",
+    "new": "  mac: 'DaggerfallOnline-mac-x64.dmg',\n",
+    "tests": [
+      "test/ui/brand.test.js",
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): a name no pre-BR5 copy asks for"
+  },
+  {
+    "name": "AUDITBR5-a-new-name-back-to-the-old",
+    "file": "app/lib/downloads.cjs",
+    "old": "  winPortable: 'DFO-Online-win-x64-portable.exe',\n",
+    "new": "  winPortable: 'DaggerfallOnline-win-x64-portable.exe',\n",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): the old name published as a download in its own right - the sweep's exemption is four lines and no more"
+  },
+  {
+    "name": "AUDITBR5-any-host-followed",
+    "file": "app/lib/downloads.cjs",
+    "old": "a.browser_download_url.startsWith(`${RELEASES_URL}/download/`)",
+    "new": "a.browser_download_url.startsWith('https://')",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): a link read off the network sends the player anywhere"
+  },
+  {
+    "name": "AUDITBR5-the-own-name-not-first",
+    "file": "app/lib/downloads.cjs",
+    "old": "  if (exact) return link(exact);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): the platform match takes whichever copy is listed first - the alias over the real name"
+  },
+  {
+    "name": "AUDITBR5-a-blockmap-taken",
+    "file": "app/lib/downloads.cjs",
+    "old": "a.name.endsWith(tail)",
+    "new": "a.name.includes(tail)",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): a renamed release's blockmap is downloaded as the installer"
+  },
+  {
+    "name": "AUDITBR5-the-notice-ignores-the-listing",
+    "file": "app/main.cjs",
+    "old": "download: file ? listed ?? latestDownloadUrl(file) : url",
+    "new": "download: file ? latestDownloadUrl(file) : url",
+    "tests": [
+      "test/tooling/da8_launcher.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): a later rename strands a BR5 copy again"
+  },
+  {
+    "name": "AUDITBR5-reinstall-ignores-the-listing",
+    "file": "app/main.cjs",
+    "old": "  if (listedDownload) return listedDownload;\n",
+    "new": "",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): Reinstall asks for the name the copy was built with"
+  },
+  {
+    "name": "AUDITBR5-the-site-wordmark-type-again",
+    "file": "index.html",
+    "old": "<h1 class=\"wordmark\"><img src=\"./src/assets/branding/dfo-online.png\" alt=\"DFO Online\" width=\"1232\" height=\"1034\" /></h1>",
+    "new": "<h1 class=\"wordmark\">DFO<small>Online</small></h1>",
+    "tests": [
+      "test/ui/enhanced/landing.test.js",
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): Mac's call: the logo, not the type; BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
+  },
+  {
+    "name": "AUDITBR5-the-site-logo-a-second-size",
+    "file": "index.html",
+    "old": ".wordmark img { display: block; width: min(234px, 46.7vw);",
+    "new": ".wordmark img { display: block; width: min(321px, 46.7vw);",
+    "tests": [
+      "test/ui/enhanced/landing.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): the site's logo drawn at a width the door does not use; BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
+  },
+  {
+    "name": "AUDITBR5-the-site-logo-wrong-box",
+    "file": "index.html",
+    "old": "alt=\"DFO Online\" width=\"1232\" height=\"1034\" />",
+    "new": "alt=\"DFO Online\" width=\"1232\" height=\"754\" />",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): the page reserves a box the file does not fill, and moves as it loads; BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
+  },
+  {
+    "name": "AUDITBR5-the-launcher-wordmark-type-again",
+    "file": "app/launcher/index.html",
+    "old": "<h1 class=\"wordmark\"><img src=\"dfo-online.png\" alt=\"DFO Online\" width=\"1232\" height=\"1034\"></h1>",
+    "new": "<h1 class=\"wordmark\">DFO<small>Online</small></h1>",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): Mac's call: the logo, not the type; BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
+  },
+  {
+    "name": "AUDITBR5-the-launcher-csp-refuses-it",
+    "file": "app/launcher/index.html",
+    "old": "font-src 'self' data:; img-src 'self'\">",
+    "new": "font-src 'self' data:\">",
+    "tests": [
+      "test/tooling/da8_launcher.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): the launcher's own policy blocks its logo"
+  },
+  {
+    "name": "AUDITBR5-the-launcher-logo-forbidden",
+    "file": "app/main.cjs",
+    "old": "if (p !== MENU_PAD && p !== LAUNCHER_LOGO && !p.startsWith(LAUNCHER_DIR + path.sep))",
+    "new": "if (p !== MENU_PAD && !p.startsWith(LAUNCHER_DIR + path.sep))",
+    "tests": [
+      "test/tooling/da8_launcher.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): unpacked, the logo is outside the launcher's folder and answers 403"
+  },
+  {
+    "name": "AUDITBR5-the-launcher-logo-unpacked",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "{ from: 'src/assets/branding/dfo-online.png', to: 'app/launcher/dfo-online.png' }",
+    "new": "{ from: 'src/assets/branding/dfo-online.png', to: 'app/branding/dfo-online.png' }",
+    "tests": [
+      "test/tooling/da8_launcher.test.js"
+    ],
+    "note": "Re-aimed by content: the logo is staged into app/launcher/ (scripts/desktopRelease.mjs DESKTOP_STAGED) rather than packed from ../ - packaged, it would not be where the launcher serves it from."
+  },
+  {
+    "name": "AUDITBR5-the-potion-maker-named",
+    "file": "src/ui/professions/profPages.js",
+    "old": "Elsewhere, a potion maker earns no",
+    "new": "Elsewhere, Daggerfall\\'s own potion maker earns no",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): A-2 back"
+  },
+  {
+    "name": "AUDITBR5-the-stats-card-named",
+    "file": "src/ui/statsCard.js",
+    "old": "      : t(\n          'stats.rules.classic',\n          'Rules: the original game\\u2019s combat formulas. Damage is before any armor effects.',\n        ),",
+    "new": "      : t('stats.rules.classic', 'Rules: Daggerfall\\u2019s combat formulas. Damage is before any armor effects.'),",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): a drawn line the producer walk never read"
+  },
+  {
+    "name": "AUDITBR5-the-decor-line-named",
+    "file": "src/ui/decorPanel.js",
+    "old": "can each take another look from the original game.",
+    "new": "can each take another look from Daggerfall.",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): a drawn line the producer walk never read"
+  },
+  {
+    "name": "AUDITBR5-an-owed-line-gone",
+    "file": "src/scenes/dataSource.js",
+    "old": "Pick the ARENA2 folder inside your Daggerfall install",
+    "new": "Pick the ARENA2 folder inside your game install",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): the walk can no longer prove it sees the files it reads"
+  },
+  {
+    "name": "AUDITBR5-the-coast-says-nothing",
+    "file": "src/systems/features.js",
+    "old": "joined to the Bay’s own coast.",
+    "new": "joined to the classic coast.",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): A-4 back"
+  },
+  {
+    "name": "AUDITBR5-the-cries-this-games",
+    "file": "src/systems/features.js",
+    "old": "The sounds are in the original game but '",
+    "new": "The sounds ship with the game but '",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "AUDIT BR5 (2026-10-11): A-5 back: \"the game\" reads as this one"
+  }
+]

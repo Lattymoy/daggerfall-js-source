@@ -1,0 +1,19 @@
+-- DECOR2a (2026-09-25) - THE OWNER'S OWN THINGS IN AN ONLINE HOME.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI).
+--
+-- Mac: an item of the player's own - "rare misc artifacts and other
+-- items in the world" - can stand in a room too, "Free and can be picked
+-- back up". The ITEM itself stays the owner's save's (what it is in full:
+-- its condition, its enchantments), exactly as what a storage piece
+-- holds does; what the room keeps here is only how every visitor sees
+-- it - its flat, where it stands, and `item`: the game's own numbers for
+-- WHICH item it is (src/net/decorLaw.js decorItemOf - a template, and
+-- the material, variant, artifact and message that make it that one), so
+-- each client names it from its own data and no player writes free text
+-- into another's room. NULL for a catalogue piece. Part of WHAT a piece
+-- is, beside `model` and the flat's columns: no move rewrites it.
+ALTER TABLE home_decor ADD COLUMN item TEXT;

@@ -1,0 +1,13 @@
+-- ARMORY (2026-10-28, the owner: "Aura armory ... customize your character without changing your overall sprite";
+-- bible/04-Characters/Aura-Armory.md) - THE AURA ARMORY: the kit worn.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), before the Worker that
+-- serves /v1/account/armory. SQLite has no ADD COLUMN IF NOT EXISTS, so a second run errors harmlessly.
+--
+-- What is HELD needs no column of its own: the Sigil Broker's Dagonfire pieces are insignia (`insignia`, 0040 - their
+-- ids `armory:<piece>`, src/net/insignia.js), the shop's Eternal pieces and set are wares' bits (`shop_wares`, 0189).
+-- THE KIT WORN: five characters, a slot each (armoryLaw.js armoryKitOk), NULL for none. Read against what is held at
+-- every ask (titles.js armoryWorn), so a piece refunded is signed for no more.
+ALTER TABLE players ADD COLUMN armory TEXT;

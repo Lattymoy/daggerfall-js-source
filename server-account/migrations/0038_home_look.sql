@@ -1,0 +1,16 @@
+-- HOME-LOOK (2026-09-30) - AN ONLINE HOME'S OUTSIDE, AS ITS OWNER PAINTS IT.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI).
+--
+-- Asked: "The introduction of exterior customization. The ability to choose
+-- the texture for the roof, walls, door, windows, etc". `look` is the JSON
+-- src/net/homeLaw.js homeLookOf projects - for each part the owner changed
+-- (walls, windows, roof, door), the texture family and climate it wears -
+-- or NULL, the town's own. Read with the town's homes (homes.js
+-- homesInTown), so every client draws the same house; written by its owner.
+-- It goes with the home (the row's own column): the next owner buys the
+-- house as Daggerfall built it.
+ALTER TABLE homes ADD COLUMN look TEXT;

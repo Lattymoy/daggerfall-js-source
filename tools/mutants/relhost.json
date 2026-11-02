@@ -1,0 +1,134 @@
+[
+  {
+    "name": "RELHOST-publish-goes-back-to-this-repository",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "          gh api -X PATCH \"repos/$RELEASE_REPO/releases/$RELEASE_ID\" -F draft=false -f make_latest=\"$MAKE_LATEST\" --silent\n",
+    "new": "          gh api -X PATCH \"repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID\" -F draft=false -f make_latest=\"$MAKE_LATEST\" --silent\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ],
+    "note": "The draft staged on the host would be looked for here: a private repository's 404, and no update for any copy."
+  },
+  {
+    "name": "RELHOST-the-tag-here-on-every-run",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "        if: steps.host.outputs.elsewhere == 'true'\n",
+    "new": "        if: always()\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ]
+  },
+  {
+    "name": "RELHOST-the-host-tag-at-a-commit-it-lacks",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "          echo \"target=$BRANCH\" >> \"$GITHUB_OUTPUT\"\n",
+    "new": "          echo \"target=$GITHUB_SHA\" >> \"$GITHUB_OUTPUT\"\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ],
+    "note": "GitHub refuses a release whose target commit the host repository does not have."
+  },
+  {
+    "name": "RELHOST-no-token-check",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "          [ -n \"$GH_TOKEN\" ] || { echo \"::error::releases go to $RELEASE_REPO, and secrets.RELEASE_TOKEN is not set\"; exit 1; }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ]
+  },
+  {
+    "name": "RELHOST-renote-with-this-repository-token",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "          GH_TOKEN=\"$HOST_TOKEN\" gh api -X PATCH \"repos/$RELEASE_REPO/releases/$ID\" -F body=@release-notes.md --silent\n",
+    "new": "          gh api -X PATCH \"repos/$RELEASE_REPO/releases/$ID\" -F body=@release-notes.md --silent\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ]
+  },
+  {
+    "name": "RELHOST-copy-into-a-repository-whose-actions-run",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "          [ \"$(gh api \"repos/$TO/actions/permissions\" --jq .enabled)\" = false ] || { echo \"::error::turn Actions off on $TO first\"; exit 1; }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ],
+    "note": "main and app-v tags pushed there would start its own deploy and release workflows."
+  },
+  {
+    "name": "RELHOST-every-copied-release-takes-latest",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "            if [ \"$TAG\" = \"$NEWEST\" ]; then LATEST=true; fi\n",
+    "new": "            LATEST=true\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ]
+  },
+  {
+    "name": "RELHOST-seed-keeps-the-history",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "          COMMIT=$(git commit-tree \"$(git write-tree)\" \"${PARENT[@]}\" -m \"DFO Online, open-source edition ($DAY)\")\n",
+    "new": "          COMMIT=$(git commit-tree \"$(git write-tree)\" -p HEAD -m \"DFO Online, open-source edition ($DAY)\")\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ],
+    "note": "Every file left out would still be one click away in an older commit."
+  },
+  {
+    "name": "RELHOST-seed-keeps-the-bible-files-that-are-not-markdown",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "          git ls-files -z -- '*.md' '.claude' 'bible' \\\n",
+    "new": "          git ls-files -z -- '*.md' '.claude' \\\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ]
+  },
+  {
+    "name": "RELHOST-seed-drops-the-third-party-credits",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "            | grep -zv -e '^vendor/' -e '^SECURITY\\.md$' -e '^SUPPORT\\.md$' -e '^public/sfx/SOURCES\\.md$' \\\n",
+    "new": "            | grep -zv -e '^SECURITY\\.md$' -e '^SUPPORT\\.md$' -e '^public/sfx/SOURCES\\.md$' \\\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ],
+    "note": "vendor/ holds the permission records the shipped mods and assets are redistributed under."
+  },
+  {
+    "name": "RELHOST-seed-forced-over-a-seeded-copy",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "          far push --quiet \"https://github.com/$TO.git\" \"$COMMIT:refs/heads/main\"\n",
+    "new": "          far push --quiet \"https://github.com/$TO.git\" \"+$COMMIT:refs/heads/main\"\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ]
+  },
+  {
+    "name": "RELHOST-seed-without-its-readme",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "          git update-index --add --cacheinfo \"100644,$(git hash-object -w \"$RUNNER_TEMP/README.md\"),README.md\"\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ]
+  },
+  {
+    "name": "RELHOST-seed-on-top-of-any-history",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "            if [ -n \"$(git log -1 --format=%P \"$BASE\")\" ] || [ -n \"$EXTRA\" ]; then\n",
+    "new": "            if false; then\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ],
+    "note": "A copy seeded over another's work, or over itself, would carry that history under the open edition."
+  },
+  {
+    "name": "RELHOST-seed-on-top-of-a-creation-commit-with-more-files",
+    "file": ".github/workflows/public-copy.yml",
+    "old": "            EXTRA=$(git ls-tree --name-only \"$BASE\" | grep -vx -e LICENSE -e README.md -e .gitignore || true)\n",
+    "new": "            EXTRA=$(git ls-tree --name-only \"$BASE\" | grep -vx -e LICENSE -e README.md -e .gitignore -e x.js || true)\n",
+    "tests": [
+      "test/tooling/releasehost.test.js"
+    ]
+  }
+]

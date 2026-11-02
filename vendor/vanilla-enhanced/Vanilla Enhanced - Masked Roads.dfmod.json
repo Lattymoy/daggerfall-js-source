@@ -1,0 +1,44 @@
+{
+    "ModTitle": "Vanilla Enhanced - Masked Roads",
+    "ModVersion": "3.4.7",
+    "ModAuthor": "carademono & Kokey",
+    "ContactInfo": "Lysandus' Tomb",
+    "DFUnity_Version": "1.0.0",
+    "ModDescription": "Vanilla Enhanced base textures with masked roads",
+    "GUID": "37276007-3b76-41bf-b70b-b045921ff5cf",
+    "Files": [
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/104-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/302-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/402-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/304-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/003-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/303-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/403-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/004-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/002-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/102-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/103-TexArray.asset",
+        "Assets/Game/Mods/vanilla-enhanced/Vanilla Enhanced - Masked Roads.dfmod.json",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/303_47-0.png",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/403_46-0.png",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/403_47-0.png",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/103_46-0.png",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/303_55-0.png",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/103_55-0.png",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/303_46-0.png",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/103_47-0.png",
+        "Assets/Game/Mods/vanilla-enhanced/Textures/Terrain - Masked Roads/403_55-0.png"
+    ],
+    "Dependencies": [
+        {
+            "Name": "world of daggerfall - biomes",
+            "IsOptional": true,
+            "IsPeer": false
+        },
+        {
+            "Name": "vanilla enhanced - base",
+            "IsOptional": false,
+            "IsPeer": false
+        }
+    ]
+}

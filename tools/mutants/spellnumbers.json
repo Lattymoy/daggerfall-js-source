@@ -1,0 +1,20 @@
+[
+  {
+    "name": "spellnumbers-unsaid",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (dealt > 0) reportPlayerAttack({ hit: true, damage: Math.round(dealt), target: foe.entity });",
+    "new": "",
+    "tests": [
+      "test/scenes/spellnumbers.test.js"
+    ]
+  },
+  {
+    "name": "spellnumbers-peer",
+    "file": "src/scenes/hostMagic.js",
+    "old": "if (mine && !o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS",
+    "new": "if (!o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS",
+    "tests": [
+      "test/scenes/spellnumbers.test.js"
+    ]
+  }
+]

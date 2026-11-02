@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Soulbound regression fixture</title></head><body style="margin:0;background:#17181d"><div id="inventory"></div><script type="module">
+import { mountEnhancedInventory } from '/src/ui/enhanced/enhancedInventory.js';
+import { ENCHANTMENT_TYPES as T, setDefaultEnchantCtx } from '/src/systems/enchantments.js';
+import { lowerCondition } from '/src/systems/equip.js';
+import { snapshotPlayer, restorePlayer } from '/src/systems/save/save.js';
+const item = { name: 'Soulbound Blade', group: 'Weapons', templateIndex: 119, material: 2, currentCondition: 1, maxCondition: 100, isIdentified: true, enchantments: [{ type: T.SoulBound, param: 28 }] };
+const plain = { name: 'Ordinary Blade', group: 'Weapons', templateIndex: 119, material: 2, currentCondition: 1, maxCondition: 100 };
+const entity = { name:'Tester', gender:'male', race:0, isPlayer:true, level:5, career:{}, items:[item,plain], stats:{strength:50}, skills:[], spells:[], activeEffects:[] };
+let spawns = 0;
+setDefaultEnchantCtx({ spawnFoe: () => spawns++, allowMagicRepairs: true });
+window.fixture = { item, plain, entity, spawns: () => spawns,
+  breakRepeatedly() { for(let i=0;i<100;i++) lowerCondition(item, 1, entity); },
+  reloadAndBreak() { const restored = {}; restorePlayer(restored,JSON.parse(JSON.stringify(snapshotPlayer(entity)))); restored.items[0].currentCondition=100; lowerCondition(restored.items[0],100,restored); return restored.items[0].soulBoundReleased; }
+};
+window.view = mountEnhancedInventory(document.querySelector('#inventory'), { entity, items:()=>entity.items,
+  rows: id => id === 1016 ? [{text:'Item powers:',center:true},{text:'%mpw',center:true}] : [], onExit:()=>{} });
+</script></body></html>

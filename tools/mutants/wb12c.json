@@ -1,0 +1,174 @@
+[
+  {
+    "name": "WB12c-the-generator-left-moved",
+    "file": "src/systems/portBooks.js",
+    "old": "    setSeed(seed);",
+    "new": "    void seed;",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-title-unknown",
+    "file": "src/systems/books.js",
+    "old": "  return BOOK_ID_TITLES.get(key) ?? portBookTitle(id);",
+    "new": "  return BOOK_ID_TITLES.get(key) ?? null;",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-price-the-template-s",
+    "file": "src/systems/books.js",
+    "old": "export const bookFilePrice = (id) =>\n  isPortBook(id) ? portBookPrice(id) : (_bookPrices.get(id === 10000 ? 5 : id) ?? null); // WB12c: a port book's is its own bytes'",
+    "new": "export const bookFilePrice = (id) => (false ? portBookPrice(id) : (_bookPrices.get(id === 10000 ? 5 : id) ?? null)); // WB12c: a port book's is its own bytes'",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-no-name-for-a-port-book",
+    "file": "src/systems/books.js",
+    "old": "  return BOOK_ID_TITLES.has(key) || isPortBook(key) ? messageToBookFilename(key) : null; // WB12c: a port book's name is its id's own",
+    "new": "  return BOOK_ID_TITLES.has(key) ? messageToBookFilename(key) : null; // WB12c: a port book's name is its id's own",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-a-centred-row-left",
+    "file": "src/systems/portBooks.js",
+    "old": "      out.push(row.center ? RSC.JustifyCenter : RSC.JustifyLeft);",
+    "new": "      out.push(RSC.JustifyLeft);",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-a-page-left-open",
+    "file": "src/systems/portBooks.js",
+    "old": "    out.push(RSC.EndOfPage);",
+    "new": "    void RSC.EndOfPage;",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-title-in-the-body-s-face",
+    "file": "src/systems/portBooks.js",
+    "old": "      if (row.font) out.push(RSC.FontPrefix, row.font);\n      textBytes(out, row.text);",
+    "new": "      textBytes(out, row.text);",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-a-word-off-the-bible",
+    "file": "src/systems/portBooks.js",
+    "old": "          'No Prince walks through such a wound himself. He sends a lord of his house to hold it, a Dremora of the rank they call valkynaz, and the one who answers most often in our Bay names himself Ruhn. Among the faithful he is the Warden of the Burning Gate. I have spoken with three who stood before him and lived. They agree that he is very large, that he burns, and that he does not tire.',",
+    "new": "          'No Prince walks through such a wound himself. He sends a lord of his house to hold it, a Dremora of the rank they call valkynaz, and the one who answers most often in our Bay names himself Ruin. Among the faithful he is the Warden of the Burning Gate. I have spoken with three who stood before him and lived. They agree that he is very large, that he burns, and that he does not tire.',",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-port-books-off-the-shelf",
+    "file": "src/systems/books.js",
+    "old": "export const SHELF_BOOK_IDS = Object.freeze([...BOOK_IDS, ...PORT_BOOK_IDS]);",
+    "new": "export const SHELF_BOOK_IDS = Object.freeze([...BOOK_IDS]);",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-shop-s-draw-classic",
+    "file": "src/systems/shopStock.js",
+    "old": "        add(createShelfBook(rolls));",
+    "new": "        add(createRandomBook(rolls));",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-house-s-the-shelf-s",
+    "file": "src/systems/shopStock.js",
+    "old": "        item = createRandomBook(rolls); // A2: the book FILE's price, same member as the shelf",
+    "new": "        item = createShelfBook(rolls); // A2: the book FILE's price, same member as the shelf",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-library-s-classic",
+    "file": "src/systems/bookshelf.js",
+    "old": "import { getShelfBookID, bookTitle } from './books.js'; // WB12c: the shelf's draw - the port's own books among the classic ones",
+    "new": "import { getRandomBookID as getShelfBookID, bookTitle } from './books.js'; // WB12c: the shelf's draw - the port's own books among the classic ones",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-registry-unread",
+    "file": "src/ui/bookDoor.js",
+    "old": "    const port = openPortBook(item?.message ?? -1);",
+    "new": "    const port = null;",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-handed-over-inside-the-hand-off",
+    "file": "src/ui/bookDoor.js",
+    "old": "      if (bookFile) await null;",
+    "new": "      if (bookFile) void 0;",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-given-at-every-ember",
+    "file": "src/systems/breachBook.js",
+    "old": "  if (book) _given = true;",
+    "new": "  if (book) void 0;",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-given-for-any-piece",
+    "file": "src/systems/breachBook.js",
+    "old": "  if (_given || !isSigilStone(item)) return null;",
+    "new": "  if (_given || !item) return null;",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-record-not-kept",
+    "file": "src/systems/breachBook.js",
+    "old": "  restoreSaveData: (r) => {\n    _given = r?.given === true;\n  },",
+    "new": "  restoreSaveData: () => {},",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-court-s-spoils-past-it",
+    "file": "src/scenes/world.js",
+    "old": "    take: takeGateSpoil,\n",
+    "new": "    take: takeSpoil,\n",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ]
+  },
+  {
+    "name": "WB12c-the-crash-s-spoils-past-it",
+    "file": "src/scenes/world.js",
+    "old": "recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec)",
+    "new": "recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec)",
+    "tests": [
+      "test/systems/wb12c_burning_doors.test.js"
+    ],
+    "note": "SERPENT-SET (MUT-AIM): the serpent's crash door takes the ember's door too - aimed at the gate's by its pool."
+  }
+]

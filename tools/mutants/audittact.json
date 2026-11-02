@@ -1,0 +1,430 @@
+[
+  {
+    "name": "ATACT-A1-kite-in-band",
+    "file": "src/ai/tactics.js",
+    "old": "    if (s.kiting ? dist < TACT.KITE_OUT : dist < TACT.KITE_IN) {",
+    "new": "    if (dist < 5) {",
+    "tests": [
+      "test/scenes/audittact.test.js",
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A1-cornered-stands",
+    "file": "src/ai/tactics.js",
+    "old": "      if (ai._tacBlocked || now >= s.kiteUntil) {",
+    "new": "      if (now >= s.kiteUntil) {",
+    "tests": [
+      "test/scenes/audittact.test.js",
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A1-blocked-unheard",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "        if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; this.moving = false; }",
+    "new": "        if (this._tacDir) { this._tacDir = null; this.moving = false; }",
+    "tests": [
+      "test/scenes/audittact.test.js",
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A2-shot-keeps-token",
+    "file": "src/ai/tactics.js",
+    "old": "      if (b.ranged.delete(ai)) b.waiting.set(ai, now);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A2-shot-uncounted",
+    "file": "src/characters/enemy/enemyAttack.js",
+    "old": "if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; this._held = false; ai._tacShot = (ai._tacShot ?? 0) + 1; ai._blowShot = null; }   // AUDIT TACT A2",
+    "new": "if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; this._held = false; ai._blowShot = null; }   // AUDIT TACT A2",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A3-skip-unflagged",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    if (!this.canAct || paused) this._tacSkipped = true;",
+    "new": "    if (paused) this._tacSkipped = true;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A3-wall-clock",
+    "file": "src/ai/tacticsClock.js",
+    "old": "export const tacticsNow = () => (_override ? _override() : _t);",
+    "new": "export const tacticsNow = () => (_override ? _override() : performance.now() / 1000);",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A3-held-ticks",
+    "file": "src/ai/tacticsClock.js",
+    "old": "  if (dt > 0 && Number.isFinite(dt)) _t += dt;",
+    "new": "  _t += Math.abs(dt) || 0.016;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A4-shoots-mid-windup",
+    "file": "src/ai/tactics.js",
+    "old": "  ai._tacShoot = false;\n  ai.moving = false; // AUDIT TACT A4: no shot, no spell, mid-wind-up",
+    "new": "  ai.moving = false; // AUDIT TACT A4: no shot, no spell, mid-wind-up",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A4-swing-parked",
+    "file": "src/characters/enemy/enemyAttack.js",
+    "old": "        if (ai._blowAt != null && tacticsNow() - ai._blowAt > BLOW_SWING_LATE) { ai._blowVerdict = null; ai._blowMult = undefined; this._held = false; }",
+    "new": "        if (ai._blowAt != null && tacticsNow() - ai._blowAt > 1e9) { ai._blowVerdict = null; ai._blowMult = undefined; this._held = false; }",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A4-verdict-no-clock",
+    "file": "src/ai/foeBlows.js",
+    "old": "export function blowConnects(ai, classic, now = tacticsNow()) {",
+    "new": "export function blowConnects(ai, classic, now = null) {",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D6-verdict-on-others",
+    "file": "src/ai/tactics.js",
+    "old": "const judgedHere = (ai, key) => (key === LOCAL ? !!_me : !ai?.target?.isPeer);",
+    "new": "const judgedHere = (ai, key) => !!_me;",
+    "tests": [
+      "test/scenes/audittact.test.js",
+      "test/ai/tell8_online.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content to judgedHere - AUDIT ARENA-LADDER's bout-mate verdict and TELL8's peer gate are one law there. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
+  },
+  {
+    "name": "ATACT-A5-backoff-ring",
+    "file": "src/ai/tactics.js",
+    "old": "  const hold = s.state === 'backoff' ? ring + TACT.BACKOFF_GAP : ring;",
+    "new": "  const hold = ring;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A6-detour-walks",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    if (_took && (!detouring || this.fleeLeft > 0 || this._tac?.state === 'windup' || this._tac?.state === 'dash')) return;",
+    "new": "    if (_took && !detouring) return;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-A7-boards-kept",
+    "file": "src/ai/tactics.js",
+    "old": "    if (k !== LOCAL && !b.melee.size && !b.ranged.size && !b.waiting.size) _boards.delete(k); // AUDIT TACT A7: no dead target held",
+    "new": "    void k; // AUDIT TACT A7: no dead target held",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D2-note-late",
+    "file": "src/scenes/exterior.js",
+    "old": "    noteLocalPlayer(walkMode ? player.pos : cam.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // TACT2: where I stand and face - AUDIT TACT D2: before the building's and the dungeon's frames too\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D3-blows-unshifted",
+    "file": "src/ai/foeBlows.js",
+    "old": "  for (const b of [..._live.values(), ..._shards.map((x) => x.blow)]) {\n    b.origin[0] += offset[0];\n    b.origin[1] += offset[1];\n    b.origin[2] += offset[2];\n  } // AUDIT TELL: a shattering one too",
+    "new": "  void offset; // AUDIT TELL: a shattering one too",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D3-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      offsetTactics(r.offset);   // AUDIT TACT D3: the noted player and every live wind-up move with the world\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D4-dead-blocks",
+    "file": "src/ai/foeBlows.js",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // A cut feint is no wind-up",
+    "new": "    if (ai === except || b.cut != null) continue; // A cut feint is no wind-up",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D4-dead-drawn",
+    "file": "src/ai/foeBlows.js",
+    "old": "    if (!phase || (now < b.land && gone(ai, now))) {",
+    "new": "    if (!phase) {",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D8-flat",
+    "file": "src/ai/foeBlows.js",
+    "old": "  b.slope = [hw == null ? 0 : clamp((hw - h0) / 2), hf == null ? 0 : clamp((hf - h0) / far)];",
+    "new": "  b.slope = [0, 0];",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D8-unclamped",
+    "file": "src/ai/foeBlows.js",
+    "old": "  const clamp = (v) => Math.max(-1, Math.min(1, v));",
+    "new": "  const clamp = (v) => v;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D9-unfogged",
+    "file": "src/render/foeTelegraph.js",
+    "old": "  float fogK = max(fogFactorAt(vWorld), uNearFloor);",
+    "new": "  float fogK = 1.0;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B1-felled-stands",
+    "file": "src/ai/cover.js",
+    "old": "  if (FELLED.has(c0) || c0.noCover) return Infinity;",
+    "new": "  if (c0.noCover) return Infinity;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B1-unflagged",
+    "file": "src/scenes/treeHost.js",
+    "old": "      if (felled) FELLED.add(c); else FELLED.delete(c);",
+    "new": "      void felled;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B2-one-way",
+    "file": "src/ai/cover.js",
+    "old": "  if (endAt != null) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B2-fat-trunk",
+    "file": "src/ai/cover.js",
+    "old": "    { c: base, r: Math.min(size.w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h: from, lift: 0, _mark: 0 },",
+    "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: from, lift: 0, _mark: 0 },",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B2-crown-grounded",
+    "file": "src/ai/cover.js",
+    "old": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from, _mark: 0 },",
+    "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: 0, _mark: 0 },",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B2-sight-not-sight",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "  return coverDistance(collider, eye, [ux, uy, uz], el, true) < el - 1e-3;",
+    "new": "  return coverDistance(collider, eye, [ux, uy, uz], el) < el - 1e-3;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B3-people-cover",
+    "file": "src/ai/cover.js",
+    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue; // AUDIT TACT B3: a person is no cover",
+    "new": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c) continue; // AUDIT TACT B3: a person is no cover",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B5-whole-step",
+    "file": "src/ai/cover.js",
+    "old": "  return { stop: Infinity, advance: stepLen > 1e-9 ? Math.min(1, (cov - radius) / stepLen) : 1 };",
+    "new": "  return { stop: cov, advance: 1 };",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-B5-arrow-ignores",
+    "file": "src/combat/arrowFlight.js",
+    "old": "      const adv = cs ? step * cs.advance : step;",
+    "new": "      const adv = step;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C1-puppet-hostile",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (foe.puppet) return !!foe._pupMine;",
+    "new": "  if (foe.puppet) return !!foe.ai?.isHostile;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C1-plaque-puppet",
+    "file": "src/player/activate.js",
+    "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
+    "new": "      ...(f.ai && !f.ai.isHostile && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C3-unfloored",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (Number.isFinite(down)) spot[1] = spot[1] + 0.1 - down;",
+    "new": "    void down;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C4-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (_tactDoorGen !== doorGeneration) { _tactDoorGen = doorGeneration; _tactDoorWorld = doorSpotsNear(buildingDoors, null, Infinity, shiftedDoor); }",
+    "new": "    { _tactDoorGen = doorGeneration; _tactDoorWorld = doorSpotsNear(buildingDoors, null, Infinity, shiftedDoor); }",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C5-companion-passed",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
+    "new": "  if (!foe || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C5-steal-passed",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
+    "new": "  if (!foe || foe.companion != null) return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C5-any-target-door",
+    "file": "src/player/activate.js",
+    "old": "  const doors = (targets ?? []).filter((t) => t?.door === true);",
+    "new": "  const doors = targets ?? [];",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C5-plaque-steal",
+    "file": "src/player/activate.js",
+    "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE))\n    return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
+    "new": "  if (!foeHit || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE)) return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C6-levers-doors",
+    "file": "src/characters/foeSpacing.js",
+    "old": "    if (o?.kind !== 'door' || !o.cpu?.positions || !o.base) continue;",
+    "new": "    if (!o.cpu?.positions || !o.base) continue;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-C6-wrong-axis",
+    "file": "src/characters/foeSpacing.js",
+    "old": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [1, 0, 0] : [0, 0, 1] }); // a door is thin across its doorway",
+    "new": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [0, 0, 1] : [1, 0, 0] }); // a door is thin across its doorway",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D-depth-left-off",
+    "file": "src/render/foeTelegraph.js",
+    "old": "    gl.depthMask(true);\n    gl.disable(gl.BLEND);",
+    "new": "    gl.disable(gl.BLEND);",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D-cull-left-off",
+    "file": "src/render/foeTelegraph.js",
+    "old": "    gl.enable(gl.CULL_FACE);\n    gl.depthMask(true);",
+    "new": "    gl.depthMask(true);",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D-blend-left-on",
+    "file": "src/render/foeTelegraph.js",
+    "old": "    gl.disable(gl.BLEND);\n    return this.drawn;",
+    "new": "    return this.drawn;",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D-watch-unweighed",
+    "file": "src/scenes/cityGuards.js",
+    "old": "          const dmg = blowScaled(g.ai, calculateAttackDamage(g.entity, playerEntity, {",
+    "new": "          const dmg = ((_a, d) => d)(g.ai, calculateAttackDamage(g.entity, playerEntity, {",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  },
+  {
+    "name": "ATACT-D-slope-unhanded",
+    "file": "src/render/foeTelegraph.js",
+    "old": "      gl.uniform2f(U.uSlope, b.slope?.[0] ?? 0, b.slope?.[1] ?? 0);",
+    "new": "      gl.uniform2f(U.uSlope, 0, 0);",
+    "tests": [
+      "test/scenes/audittact.test.js"
+    ]
+  }
+]

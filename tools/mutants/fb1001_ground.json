@@ -1,0 +1,194 @@
+[
+  {
+    "name": "GROUND-STALE-the-answer-never-marks",
+    "file": "src/net/profBook.js",
+    "old": "      staleGround(h.node);   // GROUND-STALE: this harvest may be the witness that confirmed its ground\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "GROUND-STALE-the-refusal-never-marks",
+    "file": "src/net/profBook.js",
+    "old": "    staleGround(h.node);   // GROUND-STALE: a refusal",
+    "new": "    // staleGround(h.node);   // GROUND-STALE: a refusal",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "GROUND-STALE-the-book-asks-past-the-stale",
+    "file": "src/net/profBook.js",
+    "old": "return !(p && p.day >= held) || p.stale === true; }).slice(0, PROF_PIXELS_MAX);",
+    "new": "return !(p && p.day >= held); }).slice(0, PROF_PIXELS_MAX);",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "GROUND-STALE-the-host-never-asks-a-known-pixel",
+    "file": "src/scenes/gatherHost.js",
+    "old": "(book.pixelWanted ? book.pixelWanted(x, y) : !book.pixel(x, y))",
+    "new": "!book.pixel(x, y)",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "GROUND-STALE-the-dungeon-never-asked-again",
+    "file": "src/net/profBook.js",
+    "old": "!this.dungeonWanted(id)) return false;",
+    "new": "this.dungeon(id)) return false;",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "GROUND-STALE-the-host-never-asks-the-dungeon-again",
+    "file": "src/scenes/gatherHost.js",
+    "old": "(book.dungeonWanted ? book.dungeonWanted(dungeon.id) : !book.dungeon(dungeon.id))",
+    "new": "!book.dungeon(dungeon.id)",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "GROUND-MIDNIGHT-yesterday-as-today",
+    "file": "src/net/profBook.js",
+    "old": "if (!before || before.day !== day || before.state !== p.state) changed.push(p);",
+    "new": "if (!before || before.state !== p.state) changed.push(p);",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "GROUND-MIDNIGHT-the-dungeon-yesterday-as-today",
+    "file": "src/net/profBook.js",
+    "old": "return !before || before.day !== day || before.state !== (d?.state ?? 'none') ? [id] : [];",
+    "new": "return !before || before.state !== (d?.state ?? 'none') ? [id] : [];",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "STORES-ROOM-the-room-read-off-held",
+    "file": "src/net/professionLaw.js",
+    "old": "  const s = book.store?.(material) ?? { own: book.held(material) };",
+    "new": "  const s = { own: book.held(material) };",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "STORES-ROOM-the-vein-reads-held",
+    "file": "src/scenes/mineHost.js",
+    "old": "storesFull: (key) => storesFullIn(book, key), fullWords: fullWordsIn(book),   // STORES-ROOM",
+    "new": "storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000), fullWords: fullWordsIn(book),   // STORES-ROOM",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "STORES-ROOM-the-patch-reads-held",
+    "file": "src/scenes/herbHost.js",
+    "old": "      storesFull: (key) => storesFullIn(book, key),",
+    "new": "      storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "STORES-ROOM-the-tree-reads-held",
+    "file": "src/scenes/treeHost.js",
+    "old": "storesFull: (key) => storesFullIn(book, key),",
+    "new": "storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "STORES-ROOM-the-body-reads-held",
+    "file": "src/scenes/huntHost.js",
+    "old": "storesFull: (key) => storesFullIn(book, key),",
+    "new": "storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "STORES-ROOM-the-net-reads-held",
+    "file": "src/scenes/fishHost.js",
+    "old": "        storesFull: storesFullIn(book, FISH_KEY) /* STORES-ROOM: every origin, as the service counts */,",
+    "new": "        storesFull:\n          book.held(FISH_KEY) >=\n          (book.state.caps?.stores ?? 5000) /* STORES-ROOM: every origin, as the service counts */,",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "REFUSALS-LEARNED-the-account-cap-learned-again",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.error === 'prof-deep-cap') state.closed.set('deep', dayOf(now()));",
+    "new": "    if (r?.error === 'prof-account-cap') state.closed.set('account:mining', dayOf(now()));\n    if (r?.error === 'prof-deep-cap') state.closed.set('deep', dayOf(now()));",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the account's day in a craft is gone and the pin turned - an old service's `prof-account-cap` closes nothing. The mutant closes the craft again. It was the mutant that forgot it."
+  },
+  {
+    "name": "REFUSALS-LEARNED-the-deep-cap-forgotten",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.error === 'prof-deep-cap') state.closed.set('deep', dayOf(now()));",
+    "new": "",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "REFUSALS-LEARNED-the-state-never-read-again",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;",
+    "new": "",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the Stores' refusals alone read the state again."
+  },
+  {
+    "name": "REFUSALS-LEARNED-stale-never-asks-it",
+    "file": "src/net/profBook.js",
+    "old": "      if (state.reread && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS) return true;   // REFUSALS-LEARNED\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "REFUSALS-LEARNED-the-host-never-asks-the-book",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (!plan?.ready || typeof book.closed !== 'function') return plan;",
+    "new": "    if (true) return plan;",
+    "tests": [
+      "test/net/fb1001_ground.test.js",
+      "test/systems/fb1001_audit.test.js"
+    ]
+  },
+  {
+    "name": "REFUSALS-LEARNED-the-host-never-asks-the-deep-cap",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (t.node.what === 'dvein' && book.closed('deep')) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "RATE-KEPT-the-hour-lets-it-go",
+    "file": "src/net/profBook.js",
+    "old": "    if (keptAnswer(r) || r?.error === 'prof-rate' || r?.error === 'progress-play' || seatHeld) {",
+    "new": "    if (keptAnswer(r) || r?.error === 'progress-play' || seatHeld) {",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "name": "FB-two-again",
+    "file": "src/systems/revenant/revenantFeud.js",
+    "old": "export const WILL_STAGGERS = 1;",
+    "new": "export const WILL_STAGGERS = 2;",
+    "tests": [
+      "test/systems/revenant/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-perfect-uncounted",
+    "file": "src/systems/revenant/revenantFeud.js",
+    "old": "export const willBroken = (ledger) =>\n  !!ledger && ((ledger.weak | 0) > 0 || (ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS);",
+    "new": "export const willBroken = (ledger) => !!ledger && ((ledger.weak | 0) > 0 || (ledger.staggers | 0) >= WILL_STAGGERS);",
+    "tests": [
+      "test/systems/revenant/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-stand-rank3",
+    "file": "src/systems/revenant/revenantFeud.js",
+    "old": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.4 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
+    "new": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.35, 4: 0.35, 5: 0.4 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
+    "tests": [
+      "test/systems/revenant/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-stand-rank5",
+    "file": "src/systems/revenant/revenantFeud.js",
+    "old": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.4 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
+    "new": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.55 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
+    "tests": [
+      "test/systems/revenant/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-page-old-words",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "  willMatters(r?.rank)\n    ? 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.'\n    : ''; // FEUD BALANCE (Feud-Arc.md OPEN 22)",
+    "new": "  willMatters(r?.rank) ? 'Its will must be broken. Strike its weakness, or stagger it twice.' : ''; // FEUD BALANCE (Feud-Arc.md OPEN 22)",
+    "tests": [
+      "test/systems/revenant/feudbalance.test.js"
+    ]
+  },
+  {
+    "name": "FB-harness-time-unread",
+    "file": "tools/tellDuel.mjs",
+    "old": "      held:\n        at(ref, 'dodge', false).raw.hitsOnMe <= T.DODGE_SPARES * at(ref, 'trade', false).raw.hitsOnMe &&\n        at(ref, 'dodge', false).raw.mean <= at(ref, 'trade', false).raw.mean,",
+    "new": "      held: at(ref, 'dodge', false).raw.hitsOnMe <= T.DODGE_SPARES * at(ref, 'trade', false).raw.hitsOnMe,",
+    "tests": [
+      "test/systems/revenant/feudbalance.test.js"
+    ]
+  }
+]

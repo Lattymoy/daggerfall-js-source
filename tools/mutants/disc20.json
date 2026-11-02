@@ -1,0 +1,299 @@
+[
+  {
+    "name": "DISC20-A-the-blend-dropped",
+    "file": "src/render/labGrass.js",
+    "old": "  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(",
+    "new": "  c = c;   // DISC20-A\\n  c = dwWaterFog(",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-A-the-fog-factor-inverted",
+    "file": "src/render/labGrass.js",
+    "old": "  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(",
+    "new": "  c = mix(c, uFogColor, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-A-the-world-point-not-handed-down",
+    "file": "src/render/labGrass.js",
+    "old": "  vWorld = p;   // DISC20-A\\n",
+    "new": "  vWorld = vec3(0.0);   // DISC20-A\\n",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-A-no-fog-handed-reads-a-fog",
+    "file": "src/render/labGrass.js",
+    "old": "gl.uniform1i(u.uFogMode, fog ? fog.mode : 0);",
+    "new": "gl.uniform1i(u.uFogMode, fog ? fog.mode : 2);",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-A-the-host-hands-no-fog",
+    "file": "src/scenes/world.js",
+    "old": "{ fog: { mode: renderer._fogMode, density:",
+    "new": "{ fog: null, _f: { mode: renderer._fogMode, density:",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-switch-without-its-fade",
+    "file": "src/systems/music.js",
+    "old": "    if (this.playing && this._current !== null) {",
+    "new": "    if (false && this.playing && this._current !== null) {",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-start-without-its-rise",
+    "file": "src/systems/music.js",
+    "old": "    if (ok && fresh) {\n      player.fadeTo?.(0, 0);\n      player.fadeTo?.(1, MUSIC_FADE_IN_S);",
+    "new": "    if (ok && fresh) {\n      player.fadeTo?.(1, 0);",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-pack-s-start-without-its-rise",
+    "file": "src/systems/music.js",
+    "old": "    if (player.play(buffer)) {\n      player.fadeTo?.(0, 0);\n      player.fadeTo?.(1, MUSIC_FADE_IN_S);\n    } // DISC20-B: it rises in",
+    "new": "    player.play(buffer); // DISC20-B: it rises in",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-flip-back-dropped",
+    "file": "src/systems/music.js",
+    "old": "      if (name === this._switch.from) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-stop-leaves-the-switch-armed",
+    "file": "src/systems/music.js",
+    "old": "    this._cancelSwitch(); // DISC20-B: a stop mid-fade starts nothing after it\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-a-song-that-will-not-start-claims-it",
+    "file": "src/systems/music.js",
+    "old": "      if (!this._start(sw.to) && this._current === sw.to) this._current = null; // a song that will not start leaves nothing claimed",
+    "new": "      this._start(sw.to); // a song that will not start leaves nothing claimed",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-latest-request-lost",
+    "file": "src/systems/music.js",
+    "old": "      this._switch.to = name;\n      this._current = name;",
+    "new": "      this._current = name;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-synth-bypasses-the-fader",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      const to = this._level ?? this._fader ?? this._master; // DISC20-B: through the fader; WBX9: and the song's own level before it",
+    "new": "      const to = this._master; // DISC20-B: through the fader; WBX9: and the song's own level before it",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-pack-bypasses-the-fader",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    src.connect(this._fader ?? this._master); // DISC20-B: through the fader",
+    "new": "    src.connect(this._master); // DISC20-B: through the fader",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-ramp-jumps-from-its-old-start",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "  if (typeof g.cancelAndHoldAtTime === 'function') g.cancelAndHoldAtTime(now);\n  else {\n    const v = g.value;\n    g.cancelScheduledValues(now);\n    g.setValueAtTime(v, now);\n  }",
+    "new": "  g.cancelScheduledValues(now);",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-fade-rides-the-volume",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "\n  /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */\n  fadeTo(level, seconds) {\n    rampFader(this.ctx, this._fader, level, seconds);\n  }\n\n  /** The MusicVolume setting moved (2026-08-27): follow it now, not at",
+    "new": "\n  /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */\n  fadeTo(level, seconds) {\n    rampFader(this.ctx, this._master, level, seconds);\n  }\n\n  /** The MusicVolume setting moved (2026-08-27): follow it now, not at",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-no-grounding",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      groundPeer(p);   // DISC20-C: a parked wagon and a standing horse, on MY ground\n",
+    "new": "",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-no-retry",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "g.due = missing ? now() + GROUND_RETRY_SECONDS : null;",
+    "new": "g.due = null;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-a-walking-horse-grounded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (h && !h.walking && g.dh === null) {",
+    "new": "if (h && g.dh === null) {",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-a-moving-wagon-grounded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (w?.kind === HCC_WIRE_KIND.Deployed && !g.dw) {",
+    "new": "if (w && !g.dw) {",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-stand-not-applied-to-the-horse",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (p.horse && g.dh !== null) { const q = p.horse.position; p.horse.position = [q[0], q[1] + g.dh, q[2]]; }",
+    "new": "",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-re-stand-never-reaches-the-runtime",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    runtime?.regroundStanding?.(within);\n",
+    "new": "",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-peers-not-re-stood",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    for (const p of _peers.values()) if (p.ground && (within(p.wagon?.position) || within(p.horse?.position))) p.ground = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-margin-dropped",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const M = 6;\n",
+    "new": "    const M = 0;\n",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-orphaned-box",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (_bucketKey) collider()?.removeBucket?.(WAGON_BUCKET);\n",
+    "new": "",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-runtime-re-stand-leaves-the-wagon",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (deployedVisual?.isAlive && within(deployedVisual.position)) {\n      deployedVisual.grounded = false;\n      deployedVisual.nextGroundRetryTime = 0;",
+    "new": "    if (deployedVisual?.isAlive && within(deployedVisual.position)) {\n      deployedVisual.nextGroundRetryTime = 0;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-runtime-re-stand-leaves-the-horse",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "      stationaryHorseVisual.hasRequestedPose = false;",
+    "new": "      stationaryHorseVisual.hasRequestedPose = true;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-host-never-binds-the-hook",
+    "file": "src/scenes/world.js",
+    "old": "  hccGroundMoved = hcc.groundMoved;   // DISC20-C\n",
+    "new": "  hccGroundMoved = null;   // DISC20-C\n",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-D-the-clip-gate-dropped",
+    "file": "src/systems/distantStorms.js",
+    "old": "          if (!insideClip(s, px, pz)) continue;\n          if (ground && !strikesAt(ground, px, pz, minutes)) continue;",
+    "new": "          if (ground && !strikesAt(ground, px, pz, minutes)) continue;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-D-the-strike-point-s-ground-unread",
+    "file": "src/systems/distantStorms.js",
+    "old": "          if (ground && !strikesAt(ground, px, pz, minutes)) continue;\n          bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds, strike };",
+    "new": "          bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds, strike };",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-E-no-reset",
+    "file": "src/systems/modSettings.js",
+    "old": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;\n    delete held[key];\n    changed = true;",
+    "new": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;\n    changed = true;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-E-the-reset-every-load",
+    "file": "src/systems/modSettings.js",
+    "old": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;",
+    "new": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === 'never') continue;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-E-the-stamp-never-written",
+    "file": "src/systems/modSettings.js",
+    "old": "  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true; // DISC20-E: chosen after the reset - kept\n  save();",
+    "new": "  save();",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  }
+]

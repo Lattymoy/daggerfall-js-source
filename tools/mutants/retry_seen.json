@@ -1,0 +1,33 @@
+[
+ {
+  "name": "RETRYSEEN-overload-unexposed",
+  "file": "server-account/src/index.js",
+  "old": "  res.headers.append('access-control-expose-headers', 'retry-after');   // RETRY-SEEN: unexposed",
+  "new": "  // RETRY-SEEN: unexposed",
+  "tests": [
+   "test/net/busy_gate.test.js",
+   "test/server/keep_mark.test.js"
+  ],
+  "note": "a page's fetch reads the overload's Retry-After as null"
+ },
+ {
+  "name": "RETRYSEEN-queue-unexposed",
+  "file": "server-account/src/index.js",
+  "old": "        res.headers.append('access-control-expose-headers', 'retry-after');   // RETRY-SEEN: as the overload's",
+  "new": "        // RETRY-SEEN: as the overload's",
+  "tests": [
+   "test/server/admitline.test.js"
+  ],
+  "note": "the sign-in line's wait unread by the page"
+ },
+ {
+  "name": "RETRYSEEN-set-not-append",
+  "file": "server-account/src/index.js",
+  "old": "if (marked) { out.headers.set('x-d1-bookmark', mark); out.headers.append('access-control-expose-headers', 'x-d1-bookmark'); }",
+  "new": "if (marked) { out.headers.set('x-d1-bookmark', mark); out.headers.set('access-control-expose-headers', 'x-d1-bookmark'); }",
+  "tests": [
+   "test/server/keep_mark.test.js"
+  ],
+  "note": "the bookmark's exposure overwrites the Retry-After's"
+ }
+]

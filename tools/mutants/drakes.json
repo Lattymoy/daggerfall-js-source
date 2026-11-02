@@ -1,0 +1,93 @@
+[
+  {
+    "name": "DRAKES-the-old-name-back",
+    "file": "src/net/marksLaw.js",
+    "old": "toLocaleString('en-US')} silver`;",
+    "new": "toLocaleString('en-US')} ${n === 1 ? 'Mark' : 'Marks'}`;",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  },
+  {
+    "name": "DRAKES-one-drakes",
+    "file": "src/net/marksLaw.js",
+    "old": "toLocaleString('en-US')} silver`;",
+    "new": "toLocaleString('en-US')} ${n === 1 ? 'silver' : 'silvers'}`;",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  },
+  {
+    "name": "DRAKES-the-bank-button-old",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "'Sell silver'",
+    "new": "'Sell Marks'",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  },
+  {
+    "name": "DRAKES-the-account-card-old",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "row(t('account.card.silver', 'Silver'), marksText",
+    "new": "row(t('account.card.silver', 'Marks'), marksText",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  },
+  {
+    "name": "DRAKES-the-treasury-old",
+    "file": "src/ui/socialPanel.js",
+    "old": "'dfsocial-sec', 'Silver treasury'",
+    "new": "'dfsocial-sec', 'Marks treasury'",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  },
+  {
+    "name": "DRAKES-a-refusal-old",
+    "file": "src/net/accountClient.js",
+    "old": "'marks-short': () => t('account.refusal.marksShort', 'You do not hold that much silver.'),",
+    "new": "'marks-short': () => t('account.refusal.marksShort', 'You do not hold that many Marks.'),",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  },
+  {
+    "name": "DRAKES-a-market-label-old",
+    "file": "src/ui/marketTab.js",
+    "old": "    const unitWord = gold ? 'gold' : 'silver';",
+    "new": "    const unitWord = gold ? 'gold' : 'Marks';",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  },
+  {
+    "name": "DRAKES-a-work-label-old",
+    "file": "src/ui/workTab.js",
+    "old": "      ...(q ? [labelled(t('prof.work.label.leastQuality', 'Least quality'), q)] : []), labelled(t('prof.work.label.paySilver', 'Pay (silver)'), pay), go);",
+    "new": "      ...(q ? [labelled(t('prof.work.label.leastQuality', 'Least quality'), q)] : []), labelled(t('prof.work.label.paySilver', 'Pay (Marks)'), pay), go);",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  },
+  {
+    "name": "DRAKES-a-host-line-old",
+    "file": "src/scenes/world.js",
+    "old": "counter for ${r.data.marks} silver.` } : { ok: false, text: accountRefusalText(r?.error) };\n      },\n    } : null;",
+    "new": "counter for ${r.data.marks} Marks.` } : { ok: false, text: accountRefusalText(r?.error) };\n      },\n    } : null;",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ],
+    "note": "PROF12 (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "DRAKES-the-gate-line-old",
+    "file": "src/net/marksBook.js",
+    "old": "  capped: `No silver for this breach. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,",
+    "new": "  capped: `No silver for this breach. You can earn at most Marks a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,",
+    "tests": [
+      "test/ui/drakes.test.js"
+    ]
+  }
+]

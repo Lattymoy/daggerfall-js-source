@@ -1,0 +1,74 @@
+[
+  {
+    "name": "PERFURL-memo-dropped",
+    "file": "src/systems/pageQuery.js",
+    "old": "if (_params === null || search !== _search) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "PERFURL-memo-latched",
+    "file": "src/systems/pageQuery.js",
+    "old": "if (_params === null || search !== _search) {",
+    "new": "if (_params === null) {",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "PERFURL-online-door-parses-again",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "export const isOnlinePage = (search = globalThis.location?.search ?? '') => pageHas('online', search); // PERF-URL: parsed once a search (systems/pageQuery.js)",
+    "new": "export const isOnlinePage = (search = globalThis.location?.search ?? '') => new URLSearchParams(search).has('online'); // PERF-URL: parsed once a search (systems/pageQuery.js)",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "PERFURL-skin-door-parses-again",
+    "file": "src/systems/uiSkin.js",
+    "old": "  return clean(pageParam('skin', search)); // PERF-URL",
+    "new": "  return clean(new URLSearchParams(search).get('skin')); // PERF-URL",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "PERFURL-air-door-parses-again",
+    "file": "src/render/airPass.js",
+    "old": "  return pageParam('air', search) !== 'off'; // PERF-URL",
+    "new": "  return new URLSearchParams(search).get('air') !== 'off'; // PERF-URL",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "PERFURL-world-grass-door-parses-again",
+    "file": "src/scenes/world.js",
+    "old": "grassDensity > 0 && pageParam('grass') !== 'off'",
+    "new": "grassDensity > 0 && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "PERFURL-allowance-gone-stale",
+    "file": "src/main.js",
+    "old": "const params = new URLSearchParams(location.search);",
+    "new": "const params = new URLSearchParams(globalThis.location.search);",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "PERFURL-motion-reads-the-page-not-the-window",
+    "file": "src/ui/windowMotion.js",
+    "old": "  const search = win.location?.search ?? ''; // PERF-URL: the page query's one parse, keyed on this window's search",
+    "new": "  const search = globalThis.location?.search ?? ''; // PERF-URL: the page query's one parse, keyed on this window's search",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  }
+]

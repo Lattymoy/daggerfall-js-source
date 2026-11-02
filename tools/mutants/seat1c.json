@@ -1,0 +1,530 @@
+[
+  {
+    "name": "SEAT1c-law-palace-line",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const CLAIM_THRESHOLD = Object.freeze({ palace: 6000, crown: 30000 });",
+    "new": "export const CLAIM_THRESHOLD = Object.freeze({ palace: 5000, crown: 30000 });",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-crown-line",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const CLAIM_THRESHOLD = Object.freeze({ palace: 6000, crown: 30000 });",
+    "new": "export const CLAIM_THRESHOLD = Object.freeze({ palace: 6000, crown: 6000 });",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-fee",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const CLAIM_FEE = Object.freeze({ palace: 8000, crown: 80000 });",
+    "new": "export const CLAIM_FEE = Object.freeze({ palace: 800, crown: 80000 });",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-margin",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const CONTESTED_MARGIN = 0.1;",
+    "new": "export const CONTESTED_MARGIN = 0.2;",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-standing-above",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  s >= STANDING_START ? (s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.01;",
+    "new": "  s >= STANDING_START ? (s - STANDING_START) * 0.01 : (s - STANDING_START) * 0.01;",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-standing-below",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  s >= STANDING_START ? (s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.01;",
+    "new": "  s >= STANDING_START ? (s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.005;",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-claim-no-legacy",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const claimTotal = (g) => amountOf(g.influence) + amountOf(g.legacy);",
+    "new": "export const claimTotal = (g) => amountOf(g.influence);",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-tie-pledge-order",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  (a.pledgedAt ?? Infinity) - (b.pledgedAt ?? Infinity) ||",
+    "new": "  (b.pledgedAt ?? Infinity) - (a.pledgedAt ?? Infinity) ||",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-tie-legacy",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  (b.legacy ?? 0) - (a.legacy ?? 0) ||\n  (a.pledgedAt ?? Infinity) - (b.pledgedAt ?? Infinity) ||",
+    "new": "  (a.pledgedAt ?? Infinity) - (b.pledgedAt ?? Infinity) ||",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-defence-no-legacy",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  Math.max(0, own?.legacy ?? 0);",
+    "new": "  0;",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-defence-no-standing",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  Math.floor(\n    Math.max(0, own?.influence ?? 0) *\n      (1 + standingModifier(standing)) *\n      overreachDefence(extra) *\n      (held ? SIEGE_DEFENCE_BONUS : 1) +\n      1e-9,\n  ) +",
+    "new": "  Math.floor(Math.max(0, own?.influence ?? 0) * overreachDefence(extra) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9) +",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-legacy-share",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      const amount = Math.floor(Math.max(0, g.influence) * SEAT_LEGACY_SHARE);",
+    "new": "      const amount = Math.floor(Math.max(0, g.influence) * 0.2);",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-purse-not-spent",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    purse.set(taker.guild, (purse.get(taker.guild) ?? 0) - fee);\n    claims.push({ key: s.key, guild: taker.guild, fee, total: claimTotal(taker) });",
+    "new": "    claims.push({ key: s.key, guild: taker.guild, fee, total: claimTotal(taker) });",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-contested-below-line",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const passed = s.guilds.filter((g) => claimTotal(g) >= CLAIM_THRESHOLD[s.tier]).sort(bySeatStanding);",
+    "new": "    const passed = s.guilds.filter(() => true).sort(bySeatStanding);",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-no-fee-pass",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const taker = passed.find((g) => (purse.get(g.guild) ?? 0) >= fee);",
+    "new": "    const taker = (purse.get(passed[0].guild) ?? 0) >= fee ? passed[0] : null;",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-truce-ignored",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (!keeps(s) || s.holder.truceWeek === week) continue;",
+    "new": "    if (!keeps(s)) continue;",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-defence-not-beaten",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      if (total >= CLAIM_THRESHOLD[s.tier] && total > defence)\n        candidates.push({ ...risen, key: s.key, total, defence });",
+    "new": "      if (total >= CLAIM_THRESHOLD[s.tier]) candidates.push({ ...risen, key: s.key, total, defence });",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-two-rights-a-guild",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (seatTaken.has(c.key) || guildTaken.has(c.guild)) continue;",
+    "new": "    if (seatTaken.has(c.key)) continue;",
+    "tests": [
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-two-rights-a-seat",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (seatTaken.has(c.key) || guildTaken.has(c.guild)) continue;",
+    "new": "    if (guildTaken.has(c.guild)) continue;",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-standing-uncapped",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return { standing: Math.max(0, Math.min(STANDING_MAX, standing + sum)), changes };",
+    "new": "  return { standing: Math.max(0, standing + sum), changes };",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-holder-line",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    ? `Held by ${guildWords(holder.guild)} since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
+    "new": "    ? `Held since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-mark-no-fill",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const fill = h ? heraldryHex(h.field) : null;",
+    "new": "  const fill = null;",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-mark-no-split",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const split =\n    !seat.holder && b?.kind === 'tourney'\n      ? [\n          heraldryHex(b.guild?.heraldry?.field) ?? SEAT_RING_UNHELD,\n          heraldryHex(b.against?.heraldry?.field) ?? SEAT_RING_UNHELD,\n        ]\n      : null;",
+    "new": "  const split = false\n    ? [\n        heraldryHex(b.guild?.heraldry?.field) ?? SEAT_RING_UNHELD,\n        heraldryHex(b.against?.heraldry?.field) ?? SEAT_RING_UNHELD,\n      ]\n    : null;",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-banner-plain-always",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const seatBannerOf = (seat) => seat?.holder?.guild?.heraldry ?? seatPlainBanner(seat);",
+    "new": "export const seatBannerOf = (seat) => seatPlainBanner(seat);",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-settle-ignores-the-key",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  const stmts = [db.prepare('INSERT INTO town_seat_weeks (week, settled_at) VALUES (?, ?)').bind(week, nowS)];",
+    "new": "  const stmts = [db.prepare('INSERT OR IGNORE INTO town_seat_weeks (week, settled_at) VALUES (?, ?)').bind(week, nowS)];",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-settle-held-at-once",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      .bind(c.key, c.guild, registry.get(c.key).region, registry.get(c.key).tier, next, STANDING_START, next, nowS));",
+    "new": "      .bind(c.key, c.guild, registry.get(c.key).region, registry.get(c.key).tier, week, STANDING_START, next, nowS));",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-settle-no-truce",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      .bind(c.key, c.guild, registry.get(c.key).region, registry.get(c.key).tier, next, STANDING_START, next, nowS));",
+    "new": "      .bind(c.key, c.guild, registry.get(c.key).region, registry.get(c.key).tier, next, STANDING_START, null, nowS));",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-settle-legacy-same-week",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    stmts.push(db.prepare('INSERT INTO town_seat_legacy (week, key, guild_id, amount) VALUES (?, ?, ?, ?)').bind(next, l.key, l.guild, l.amount));",
+    "new": "    stmts.push(db.prepare('INSERT INTO town_seat_legacy (week, key, guild_id, amount) VALUES (?, ?, ?, ?)').bind(week + 2, l.key, l.guild, l.amount));",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-settle-standing-kept",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    stmts.push(db.prepare('UPDATE town_seat_holds SET standing = ? WHERE key = ? AND guild_id = ?').bind(ending ? seasonStanding(w.standing) : w.standing, w.key, w.guild));",
+    "new": "    stmts.push(db.prepare('SELECT ?, ?, ?').bind(w.standing, w.key, w.guild));",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-due-settles-nothing-before",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  const from = Math.max(last == null ? current - 1 : Number(last) + 1, current - SETTLE_WEEKS_MAX);",
+    "new": "  const from = current;",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-relinquish-any-rank",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  if (Number(a.me.rank) !== GUILD_RANK_MASTER) return { error: 'guild-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-holder-pledges-elsewhere",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (await db.prepare('SELECT 1 FROM town_seat_holds WHERE guild_id = ? AND region = ?').bind(gid, seat.region).first()) return { error: 'seat-held-here' };",
+    "new": "",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-holder-unpledged",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (held) return Number(held.key);\n",
+    "new": "",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-holder-not-standing",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (held && !out.has(held.guild_id)) out.set(held.guild_id, Number(held.at));",
+    "new": "",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-guild-goes-holding",
+    "file": "server-account/src/guilds.js",
+    "old": "`EXISTS (SELECT 1 FROM town_seat_holds WHERE guild_id = ${p})`",
+    "new": "`0`",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-list-undressed",
+    "file": "server-account/src/index.js",
+    "old": "            return { ...r, ...board, ...(domains?.rule",
+    "new": "            return { ...r, ...(domains?.rule",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the list's board read once, and marked for the region law. PRIMARY-TRIPS (re-aimed by content): the list's line is seatsBoard's"
+  },
+  {
+    "name": "SEAT1c-no-settle-on-read",
+    "file": "server-account/src/index.js",
+    "old": "        if (seatsOpenFor(who.player, env) && (await settleDueOnce(ctx.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))).pending && !SEAT_READS.has(path)) return no('seats-settling', 503, origin);   // SEASON1: a Season's end at its Turning\n",
+    "new": "",
+    "tests": [
+      "test/net/seat1c_service.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the Turning is handed the region law's first week beside Season 0's."
+  },
+  {
+    "name": "SEAT1c-book-undressed",
+    "file": "src/net/townSeatBook.js",
+    "old": "      const out = { ...seat, holder: d?.holder ?? null, battle: d?.battle ?? null, forts: d?.forts ?? null }; // SEAT2b part two: and its works",
+    "new": "      const out = { ...seat, holder: null, battle: null, forts: d?.forts ?? null }; // SEAT2b part two: and its works",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the dress is a function of its own now, a holding dressed in its Charter after."
+  },
+  {
+    "name": "SEAT1c-tab-relinquish-unarmed",
+    "file": "src/ui/seatTab.js",
+    "old": "              if (!armed()) {\n                armedAt = ui.nowS() * 1000;\n                ui.rerender();\n                disarmLater();\n                return null;\n              }\n              armedAt = -Infinity;",
+    "new": "              armedAt = -Infinity;",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-tab-relinquish-any-rank",
+    "file": "src/ui/seatTab.js",
+    "old": "        if (ruling && data.mine.rank === GUILD_RANK_MASTER) {",
+    "new": "        if (ruling) {",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-tab-no-chronicle",
+    "file": "src/ui/seatTab.js",
+    "old": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean); // SEASON1 part three: in its Season's words",
+    "new": "      const lines = []; // SEASON1 part three: in its Season's words",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-ink-no-fill",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  } else if (mark.fill) {",
+    "new": "  } else if (false) {",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-ink-no-siege-edge",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  ctx.strokeStyle = mark.siege ? SEAT_RING_SIEGE : mark.ring;",
+    "new": "  ctx.strokeStyle = mark.ring;",
+    "tests": [
+      "test/ui/seat1c_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-token-seat-title-bare",
+    "file": "src/net/identityToken.js",
+    "old": "  if (titleClaimed(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;",
+    "new": "  if (!titleClaimed(c.t) && c.ts !== undefined) return false;",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-token-claim-anywhere",
+    "file": "src/net/identityToken.js",
+    "old": "  if (titleClaimed(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;",
+    "new": "  if (titleClaimed(c.t) && !seatTitleClaimOk(c.ts)) return false;",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-token-claim-unbounded",
+    "file": "src/net/identityToken.js",
+    "old": "  ts[1] >= 0 &&\n  ts[1] <= 9999;",
+    "new": "  ts[1] >= 0;",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-wire-claim-unstamped",
+    "file": "src/net/wire.js",
+    "old": "  if (typeof t === 'string' && titleClaimed(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
+    "new": "",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-wire-claim-anywhere",
+    "file": "src/net/wire.js",
+    "old": "  if (typeof t === 'string' && titleClaimed(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
+    "new": "  if (from?.ts) row.ts = from.ts;",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-wire-reader-drops-claim",
+    "file": "src/net/wire.js",
+    "old": "  return ts ? { title, glyphs, ts } : { title, glyphs };",
+    "new": "  return { title, glyphs };",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-relay-no-claim",
+    "file": "server/src/index.js",
+    "old": "title: c.t, ts: c.ts, glyphs: c.g,",
+    "new": "title: c.t, glyphs: c.g,",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-crown-not-first",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (crown) return { title: 'protector', ts: [crown.key, season] };",
+    "new": "",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-law-crown-glyph-tower",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (h.tier === 'crown') {\n      const g = SEAT_CROWN_GLYPHS[CROWN_SEAT_REGIONS[h.region]];\n      if (g) out.add(g);\n    } else out.add('tower');",
+    "new": "    out.add('tower');",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-mint-title-for-any-character",
+    "file": "server-account/src/index.js",
+    "old": ": SEAT_TITLES.includes(wornT) ? (seatBadge?.title === wornT ? { t: wornT, ts: seatBadge.ts } : {})\n",
+    "new": ": SEAT_TITLES.includes(wornT) ? { t: wornT, ts: seatBadge?.ts ?? [0, 0] }\n",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-member-no-glyph",
+    "file": "server-account/src/index.js",
+    "old": "          g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),",
+    "new": "          g: glyphsInOrder(glyphsOf(who.player, env, nowS)),",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-wardrobe-no-seat-titles",
+    "file": "server-account/src/titles.js",
+    "old": "  if (Array.isArray(player?.seatTitles))\n    for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);",
+    "new": "",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-badge-member-title",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  const t = Number(m.rank) === GUILD_RANK_MASTER ? seatTitleOf(holds, season) : null;",
+    "new": "  const t = seatTitleOf(holds, season);",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1c-client-plain-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "    (SEAT_TITLES.includes(key)\n      ? seatTitleText(key, peer?.ts, _seatPlace)\n      : CHAPTER_TITLES.includes(key)\n        ? chapterTitleText(key, peer?.ts)\n        : null) ?? TITLE_TEXT[key];",
+    "new": "    (SEAT_TITLES.includes(key) ? null : CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ??\n    TITLE_TEXT[key];",
+    "tests": [
+      "test/net/seat1c_titles.test.js"
+    ]
+  }
+]

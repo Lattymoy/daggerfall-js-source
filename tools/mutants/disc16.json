@@ -1,0 +1,70 @@
+[
+  {
+    "name": "DISC16-A-the-point-floor",
+    "file": "src/player/collider.js",
+    "old": "    const floor = this.restFloor(feet[0], feet[2]);",
+    "new": "    const floor = this.heightAt(feet[0], feet[2]);",
+    "tests": [
+      "test/combat/disc16.test.js",
+      "test/player/mac3_downhill.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-the-rest-as-one-less-cos",
+    "file": "src/player/collider.js",
+    "old": "    return h + r * (Math.sqrt(1 + gx * gx + gz * gz) - 1);",
+    "new": "    return h + r * (1 - 1 / Math.sqrt(1 + gx * gx + gz * gz));",
+    "tests": [
+      "test/combat/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-one-axis-of-the-grade",
+    "file": "src/player/collider.js",
+    "old": "    const gx = minmod((hx1 - h) / r, (h - hx0) / r), gz = minmod((hz1 - h) / r, (h - hz0) / r);",
+    "new": "    const gx = 0, gz = minmod((hz1 - h) / r, (h - hz0) / r);",
+    "tests": [
+      "test/combat/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-the-edge-lifts",
+    "file": "src/player/collider.js",
+    "old": "    if (!(Number.isFinite(hx0) && Number.isFinite(hx1) && Number.isFinite(hz0) && Number.isFinite(hz1))) return h;",
+    "new": "",
+    "tests": [
+      "test/combat/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-B-the-preset-left-on",
+    "file": "src/systems/modSettings.js",
+    "old": "        default: false, // DISC16-B (2026-09-24, Mac: \"I just want it how it was before diverse weapons\"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP (\"mod should be defaulted on\") had it on, DISC14-B off with two departures of its own",
+    "new": "        default: true, // DISC16-B (2026-09-24, Mac: \"I just want it how it was before diverse weapons\"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP (\"mod should be defaulted on\") had it on, DISC14-B off with two departures of its own",
+    "tests": [
+      "test/combat/disc16.test.js",
+      "test/combat/weapon/dw1_diverseweapons.test.js",
+      "test/combat/weapon/auditdw.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-B-DoubleScaleTextures-at-DISC14-B",
+    "file": "src/systems/modSettings.js",
+    "old": "      'Modules.DoubleScaleTextures': Object.freeze({\n        default: false,",
+    "new": "      'Modules.DoubleScaleTextures': Object.freeze({\n        default: true,",
+    "tests": [
+      "test/combat/disc16.test.js",
+      "test/combat/weapon/ww1_weaponwidget.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-B-Inertia-Scale-at-DISC14-B",
+    "file": "src/systems/modSettings.js",
+    "old": "            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',\n          );\n        },\n      }),\n      'Inertia.Scale': Object.freeze({\n        default: 1.0,\n        min: 0.0,\n        max: 2.0,\n        float: true,\n        step: 0.1,",
+    "new": "            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',\n          );\n        },\n      }),\n      'Inertia.Scale': Object.freeze({\n        default: 0,\n        min: 0.0,\n        max: 2.0,\n        float: true,\n        step: 0.1,",
+    "tests": [
+      "test/combat/disc16.test.js",
+      "test/combat/weapon/ww1_weaponwidget.test.js"
+    ]
+  }
+]

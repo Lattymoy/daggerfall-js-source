@@ -1,0 +1,22 @@
+-- FIELD BUGS 2026-10-04d KNIGHT-HOUSE (the Discord: "Houses earned through Knightly Orders still possibly purchaseable?
+-- ... I don't want to risk my Knight House being bought out from under me") - A DEED THE REALM GAVE, HELD.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). One column.
+--
+-- homes.deed: 1 on a row that is no home bought at a door but a
+-- Daggerfall DEED its character's realm record holds - the house a
+-- Knightly Order gives a knight of rank 9 (KnightlyOrder.ReceiveHouse,
+-- DaggerfallBankManager.AllocateHouseToPlayer into the region's slot).
+-- The service never heard of one, so every other door read the building
+-- as nobody's and offered it for sale, and a claim took it from under its
+-- knight. The row HOLDS the building so no one else may claim it
+-- (src/homes.js holdDeed, read against the record). To its own character
+-- it is Daggerfall's house, never an online home (the town's answer
+-- leaves it out); nothing was paid for it (price and paid 0); it neither
+-- costs nor counts against the homes a character may buy (the claim's cap
+-- counts `deed = 0`); and it goes when its deed is sold at the bank
+-- (releaseHome, `deed`).
+ALTER TABLE homes ADD COLUMN deed INTEGER NOT NULL DEFAULT 0;

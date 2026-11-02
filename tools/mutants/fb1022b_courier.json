@@ -1,0 +1,56 @@
+[
+  {
+    "name": "FB1022B-CREATE-HOME-the-repair-reads-place-actions-alone",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "const PLACEMENTS = Object.freeze({\n  PlaceNpc: 'npcSymbol',\n  PlaceItem: 'itemSymbol',\n  PlaceFoe: 'foeSymbol',\n  CreateNpc: 'npcSymbol',\n});",
+    "new": "const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-CREATE-HOME-a-questor-homed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "const homeOf = (person) =>\n  person?.isPerson && !person.isQuestor && !person.isIndividualNPC ? (person.getHomePlace?.() ?? null) : null;",
+    "new": "const homeOf = (person) => (person?.isPerson && !person.isIndividualNPC ? (person.getHomePlace?.() ?? null) : null);",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-CREATE-HOME-an-individual-homed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "const homeOf = (person) =>\n  person?.isPerson && !person.isQuestor && !person.isIndividualNPC ? (person.getHomePlace?.() ?? null) : null;",
+    "new": "const homeOf = (person) => (person?.isPerson && !person.isQuestor ? (person.getHomePlace?.() ?? null) : null);",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-CREATE-HOME-the-assignment-left-empty",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (it.res.isPerson && !it.res.assignedPlaceSymbol) it.res.setAssignedPlaceSymbol?.(it.place.symbol); // CREATE-HOME: where the talk's Where is looks for them (topicTree.js assembleTopicListPerson)",
+    "new": "    // CREATE-HOME: where the talk's Where is looks for them (topicTree.js assembleTopicListPerson)",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-create-npc-places-nobody",
+    "file": "src/systems/quest/actions.js",
+    "old": "    person.placeAtHome();",
+    "new": "    void person;",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-the-talk-names-him-in-any-town",
+    "file": "src/systems/topicTree.js",
+    "old": "            if (assignedPlace.siteDetails.mapId === (this.deps.currentMapId?.() ?? 0)) isPlayerInSameLocationWorldCell = true;",
+    "new": "            isPlayerInSameLocationWorldCell = true;",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  }
+]

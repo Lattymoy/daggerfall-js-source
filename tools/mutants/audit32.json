@@ -1,0 +1,668 @@
+[
+  {
+    "name": "AUDIT32-L2-state-counts-bodies",
+    "file": "server-account/src/professions.js",
+    "old": "SELECT COALESCE(SUM(qty), 0) AS n, COALESCE(SUM(CASE WHEN tier >= ?3 THEN qty ELSE 0 END), 0) AS high",
+    "new": "SELECT COUNT(*) AS n, COALESCE(SUM(CASE WHEN tier >= ?3 THEN qty ELSE 0 END), 0) AS high",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-L2-state-high-counts-bodies",
+    "file": "server-account/src/professions.js",
+    "old": "COALESCE(SUM(CASE WHEN tier >= ?3 THEN qty ELSE 0 END), 0) AS high",
+    "new": "COALESCE(SUM(CASE WHEN tier >= ?3 THEN 1 ELSE 0 END), 0) AS high",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-L2-decision-counts-bodies",
+    "file": "server-account/src/professions.js",
+    "old": "const huntedHigh = \"COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6 AND tier >= ?20), 0)\";",
+    "new": "const huntedHigh = \"COALESCE((SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6 AND tier >= ?20), 0)\";",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the day's hides of any tier are counted no more, so the decision's count in hides is the rare hides' alone."
+  },
+  {
+    "name": "AUDIT32-L2-day-room-cut-again",
+    "file": "server-account/src/professions.js",
+    "old": "          CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END),",
+    "new": "          CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END, CASE WHEN ?9 = 'hunting' THEN 30 - COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6), 0) ELSE ?10 END),",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the day's room of thirty hides is gone and L2's pin turned (a clean pelt at 29 is whole) - the mutant cuts the last skinning to the thirty again. It was the mutant that left the room uncut."
+  },
+  {
+    "name": "AUDIT32-L2-high-room-uncut",
+    "file": "server-account/src/professions.js",
+    "old": "CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END",
+    "new": "?10",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?19 to ?21 now."
+  },
+  {
+    "name": "AUDIT32-S2-body-slots-read",
+    "file": "server-account/src/professions.js",
+    "old": "if (!deep && !isBody && !isHaul && n.slot >= nodeSlots(",
+    "new": "if (!deep && !isHaul && n.slot >= nodeSlots(",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): a body's unchecked ground read for its slots, through nodeSlots."
+  },
+  {
+    "name": "AUDIT32-S3-second-find-all-or-nothing",
+    "file": "server-account/src/professions.js",
+    "old": "CASE WHEN ${storedExtra} < ?26 THEN ?18 END",
+    "new": "CASE WHEN ${storedExtra} + ?22 <= ?26 THEN ?18 END",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?18 and ?22 now. BUTCHER-STORES (PIN MOVED): ?26, the second find's own room, re-aimed by content."
+  },
+  {
+    "name": "AUDIT32-S3-second-find-uncut",
+    "file": "server-account/src/professions.js",
+    "old": "CASE WHEN ${storedExtra} < ?26 THEN MIN(?22, ?26 - ${storedExtra}) ELSE 1 END",
+    "new": "?22",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?22 now. BUTCHER-STORES (PIN MOVED): ?26, the second find's own room, re-aimed by content."
+  },
+  {
+    "name": "AUDIT32-S4-foe-after-the-hour",
+    "file": "server-account/src/professions.js",
+    "old": "  if (isBody && !hide) return { error: 'prof-foe' };\n  // THE GROUND, as the witnesses say it is - a pixel's, or a dungeon's; a body's none\n  const wkind = deep ? 'dungeon' : 'pixel';\n  const key = deep ? String(n.dungeon) : isBody ? null : pixelKey(n.x, n.y);\n  const profession = law.profession;\n  // GATHER-SPEED: the hour's acts counted, the ground and the track read, and (SEAT1d) the Levy's seat asked - AT ONCE,\n  // three asks in flight together where they were four trips in a row. None reads what another writes; the hour's\n  // refusal still comes first, and a refused harvest's reads are only read\n  // FIRM1: and the character's Firmament beside its track (firmament.js firmStatement) - its yield and XP the service's\n  const [over, [factRows, trackRows, firmRows], levyKey] = await Promise.all([\n    overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S),\n    readAll(db, [...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)])\n      .then((rows) => (key === null ? [[], ...rows] : rows)),\n    // A dungeon's vein and a body name no ground of a town\n    !deep && !isBody && seatsOpenFor(player, env) ? levyAt(db, nowS, region, [n.x, n.y], env) : null,\n  ]);\n  if (over) return { error: 'prof-rate' };\n",
+    "new": "  // THE GROUND, as the witnesses say it is - a pixel's, or a dungeon's; a body's none\n  const wkind = deep ? 'dungeon' : 'pixel';\n  const key = deep ? String(n.dungeon) : isBody ? null : pixelKey(n.x, n.y);\n  const profession = law.profession;\n  // GATHER-SPEED: the hour's acts counted, the ground and the track read, and (SEAT1d) the Levy's seat asked - AT ONCE,\n  // three asks in flight together where they were four trips in a row. None reads what another writes; the hour's\n  // refusal still comes first, and a refused harvest's reads are only read\n  // FIRM1: and the character's Firmament beside its track (firmament.js firmStatement) - its yield and XP the service's\n  const [over, [factRows, trackRows, firmRows], levyKey] = await Promise.all([\n    overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S),\n    readAll(db, [...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)])\n      .then((rows) => (key === null ? [[], ...rows] : rows)),\n    // A dungeon's vein and a body name no ground of a town\n    !deep && !isBody && seatsOpenFor(player, env) ? levyAt(db, nowS, region, [n.x, n.y], env) : null,\n  ]);\n  if (over) return { error: 'prof-rate' };\n  if (isBody && !hide) return { error: 'prof-foe' };\n",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the harvest hands the Levy the region law's week (`env`). GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "AUDIT32-S5-weave-answers-smithing",
+    "file": "server-account/src/professions.js",
+    "old": "const prof = r.xp ?? r.more?.profession ?? null;",
+    "new": "const prof = r.xp ?? r.more?.profession ?? 'smithing';",
+    "tests": [
+      "test/net/audit32_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-L1-far-never-moves",
+    "file": "src/systems/traceAct.js",
+    "old": "      st.far = hi;\n    }",
+    "new": "    }",
+    "tests": [
+      "test/net/audit32_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-L1-clock-at-the-press",
+    "file": "src/systems/traceAct.js",
+    "old": "          st.t0 = null;",
+    "new": "          st.t0 = st.t;",
+    "tests": [
+      "test/net/audit32_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-L5-any-bearing",
+    "file": "src/systems/traceAct.js",
+    "old": "      const aim = given && Number.isFinite(given.yaw) && Number.isFinite(given.pitch) ? given : null;",
+    "new": "      const aim = given;",
+    "tests": [
+      "test/net/audit32_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-L5-chord-past-the-line",
+    "file": "src/systems/traceAct.js",
+    "old": "    const hi = Math.min(b.yaw, endYaw);",
+    "new": "    const hi = b.yaw;",
+    "tests": [
+      "test/net/audit32_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-L3-shirts-undyed",
+    "file": "src/net/recipeLaw.js",
+    "old": "        dyes: true,",
+    "new": "        dyes: ![178, 179, 214, 215].includes(/** @type {number} */ (t)),",
+    "tests": [
+      "test/net/audit32_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-B1-no-lapse",
+    "file": "src/scenes/huntHost.js",
+    "old": "return s && s.key.startsWith(`body:${utcDayOfMs(nowMs())}:`) ? s : null;",
+    "new": "return s;",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-B2-cap-refusal-learned-again",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.error === 'prof-hunt-high') state.hunt",
+    "new": "    if (r?.error === 'prof-hunt-cap') state.hunt = { ...(state.hunt ?? { hides: 0, high: 0 }), hides: 30 };\n    if (r?.error === 'prof-hunt-high') state.hunt",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the day's thirty is gone, and B2's pin turned - an old service's `prof-hunt-cap` raises nothing. The mutant learns it again. It was the mutant that never heard it."
+  },
+  {
+    "name": "AUDIT32-B2-high-refusal-unheard",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.error === 'prof-hunt-high') state.hunt",
+    "new": "    if (false) state.hunt",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-B5-harvest-elsewhere-applied",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.ok && !here) { drop(h.rid, key); return { ok: true, data: r.data, elsewhere: true }; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-B5-craft-elsewhere-minted",
+    "file": "src/net/profBook.js",
+    "old": "    if (key !== slot()) return { ok: false, error: 'elsewhere', kept: true };\n    const kept = keptOf(key);",
+    "new": "    const kept = keptOf(key);",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H2-identity-required",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (dungeon) this.leaveDungeon();\n      if (!d) return;\n",
+    "new": "      if (dungeon) this.leaveDungeon();\n      if (!d || !Number.isSafeInteger(d.id)) return;\n",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H3-corpse-floats",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    f.corpsePos = p;   // AUDIT 32 H3",
+    "new": "    // AUDIT 32 H3",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H4-ground-unasked",
+    "file": "src/scenes/huntHost.js",
+    "old": "  if (where) return { harvest, verb, rest: where, ready: false };\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H5-click-through-the-act",
+    "file": "src/scenes/world.js",
+    "old": "if (((_act.activate && !gatherHost?.acting() && !_actClick && !nodeClicked) || (useEdge && !nodeTook)) && !modes.transitioning && !_holdFire) {",
+    "new": "if ((_act.activate || (useEdge && !nodeTook)) && !modes.transitioning && !_holdFire) {",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H5-dungeon-click-through",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!interact && (actClick || host.profActing?.())) return true;\n    // QG1: the quest-resource click arm runs FIRST and does not",
+    "new": "    // QG1: the quest-resource click arm runs FIRST and does not",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H6-dungeon-foes-unasked",
+    "file": "src/scenes/world.js",
+    "old": ": areEnemiesNearby(modes?.insideFoes?.() ?? [], { resting: true }),",
+    "new": ": false,",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H7-reach-by-eye-height",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (s.loose ? Math.hypot(dx, dy, dz) > reach :",
+    "new": "if (false ? Math.hypot(dx, dy, dz) > reach :",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H7-no-step-back",
+    "file": "src/scenes/huntHost.js",
+    "old": "  if (steep) return { harvest, verb, rest: 'step back', ready: false };\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H8-search-by-the-ray",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (plan?.open) { plan.open(); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H8-search-of-nothing",
+    "file": "src/scenes/huntHost.js",
+    "old": "const searchable = (b) => !openLoot || !!b?.lootKey?.();",
+    "new": "const searchable = () => true;",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H9-dungeon-ground",
+    "file": "src/scenes/gatherHost.js",
+    "old": "places.push({ nodes, entry: null, info: null, loose: true, at: looseAt });",
+    "new": "places.push({ nodes, entry: null, info: under ? dungeon.info : null, loose: true, at: looseAt });",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H10-under-the-travel-view",
+    "file": "src/scenes/professionsHost.js",
+    "old": " && !host.modes?.transitioning && !host.travelView?.active,   // AUDIT 32 H10",
+    "new": ",   // AUDIT 32 H10",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-H2-world-tells-known-alone",
+    "file": "src/scenes/world.js",
+    "old": "      if (!gatherHost) return;\n      const id = ctx?.profIdentity?.();\n",
+    "new": "      const id = ctx?.profIdentity?.();\n      if (!gatherHost || !id) return;\n",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-R1-label-herbs-alone",
+    "file": "src/systems/inputActions.js",
+    "old": "'Next action at a profession node'",
+    "new": "'Next action'",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-S6-route-table-stale",
+    "file": "server-account/src/index.js",
+    "old": "act, at, rid, foe? }",
+    "new": "act, at, rid }",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-B3-market-untold",
+    "file": "src/scenes/world.js",
+    "old": "{ marksBook?.set(balance); marketBook?.told(balance); }",
+    "new": "{ marksBook?.set(balance); }",
+    "tests": [
+      "test/net/audit30_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-B4-anvil-busy-everywhere",
+    "file": "src/scenes/professionsHost.js",
+    "old": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
+    "new": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : r?.error === 'prof-busy' ? 'The anvil is still ringing from your last work.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
+    "tests": [
+      "test/net/audit30_client.test.js",
+      "test/systems/prof3_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P10-trace-end-unsaid",
+    "file": "src/scenes/huntHost.js",
+    "old": "      if (rep.torn) return ' (a torn pelt, its part lost)';\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P10-host-cleannote-only",
+    "file": "src/scenes/gatherHost.js",
+    "old": "const note = a && k?.actNote ? k.actNote(a.report) : a?.clean",
+    "new": "const note = a?.clean",
+    "tests": [
+      "test/scenes/audit32_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P1-stitch-at-the-frame",
+    "file": "src/systems/stitchAct.js",
+    "old": "      const at = st.t + Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const at = st.t;",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P1-strike-at-the-frame",
+    "file": "src/systems/heatAct.js",
+    "old": "      const at = st.t + Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const at = st.t;",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P1-click-a-second-press",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  b.onclick = (e) => { if (pointed) { pointed = false; return; } press(e); };",
+    "new": "  b.onclick = (e) => { press(e); };",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P1-own-button-ignored",
+    "file": "src/ui/professions/profPages.js",
+    "old": "(isDomControlTarget(e.target) && e.target !== ownButton)",
+    "new": "isDomControlTarget(e.target)",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P2-loom-beside-the-heat",
+    "file": "src/ui/professions/profPages.js",
+    "old": "!_loom.busy && !_loom.crafting && !_loom.act && !elsewhere && !short",
+    "new": "!_loom.busy && !_loom.crafting && !_loom.act && !short",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P4-repeats-pressed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (!e.repeat) press(e);",
+    "new": "  press(e);",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P5-cures-live-while-sewing",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    b.disabled = state.busy || hold || most < 1 || !!short;",
+    "new": "    b.disabled = state.busy || most < 1 || !!short;",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P5-loom-one-flag",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      _loom.crafting = true; rerender();",
+    "new": "      _loom.busy = true; rerender();",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P6-weavers-unheld",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  buy.disabled = state.busy || shortOf;",
+    "new": "  buy.disabled = state.busy;",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P6-weavers-when-shut",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (!p.stock || p.marksOpen?.() === false) return;",
+    "new": "  if (!p.stock) return;",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P8-silk-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (r.cloth === STANDARD_SILK.key) box.append(",
+    "new": "    if (false) box.append(",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-R4-skins-at-ten",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  outfitting: () => [[t('prof.page.unlocks.outfitting1', 'Linen clothing; the Rat\\'s skins; the Fishing-Net'), 1],",
+    "new": "  outfitting: () => [[t('prof.page.unlocks.outfitting1', 'Linen clothing; the Fishing-Net'), 1],",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P11-no-line",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "  const guide = k.svg('polyline', { class: 'trace-guide', points: '' }, art); // the scored line: the face's first polyline",
+    "new": "  const guide = k.svg('path', { class: 'trace-guide', points: '' }, art); // the scored line: the face's first polyline",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P11-first-unmarked",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "        setClass(\n          n,\n          st.tracing && i <= st.reached\n            ? `prof-glint${ctx.reduced ? ' still' : ''}`\n            : i === 0\n              ? 'prof-point first'\n              : 'prof-point',\n        );",
+    "new": "        setClass(n, st.tracing && i <= st.reached ? `prof-glint${ctx.reduced ? ' still' : ''}` : 'prof-point');",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P11-degrees-unequal",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "  return [focal * Math.tan(Math.max(-lim, Math.min(lim, dy))), -focal * Math.tan(Math.max(-lim, Math.min(lim, dp)))];",
+    "new": "  return [\n    focal * 0.6 * Math.tan(Math.max(-lim, Math.min(lim, dy))),\n    -focal * Math.tan(Math.max(-lim, Math.min(lim, dp))),\n  ];",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P10-slip-unsaid",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "          : s.slips > 0\n            ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key })\n            : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });",
+    "new": "          : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P12-escape-closes-the-window",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    : profActUnderWay() ? () => { setDownProfAct(); render(); }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P12-set-down-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (_loom.act) { _loom.act.cancel(); endStitch(); _loom.word = needleDownLine(); return true; }",
+    "new": "  if (_loom.act) { _loom.act.cancel(); endStitch(); return true; }",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P3-focus-given-back-never",
+    "file": "src/ui/domRepaint.js",
+    "old": "  if (kept) giveFocus(host, kept);\n  if (!saved.length || !host) return;",
+    "new": "  if (!saved.length || !host) return;",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P3-menu-keeps-no-focus",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "repaintKeepingScroll(app, () => renderInto(), { focus: true });",
+    "new": "repaintKeepingScroll(app, () => renderInto());",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P3-words-unread",
+    "file": "src/ui/domRepaint.js",
+    "old": "    if (k.words != null && (!n || n.textContent !== k.words))\n      n = [...host.querySelectorAll(k.tag)].find((x) => x.textContent === k.words) ?? null;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P7-rows-flowed",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".prof-smelt .act { grid-column: 3; grid-row: 1; }",
+    "new": ".prof-smelt .act { }",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-P9-prompt-nowrap",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "width: max-content; max-width: calc(100vw - 24px); box-sizing: border-box; white-space: normal; text-align: center;",
+    "new": "white-space: nowrap;",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-S1-service-always-pays",
+    "file": "server-account/src/professions.js",
+    "old": "  const pays = counterMade(r) ? `CASE WHEN ${silverHeld} THEN 0 ELSE 1 END` : '1';",
+    "new": "  const pays = '1';",
+    "tests": [
+      "test/net/audit32_service.test.js",
+      "test/net/prof7_service.test.js",
+      "test/net/clothgems_service.test.js"
+    ],
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the decision's `p` reads the cloth's silver count (`silverHeld`). PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+  },
+  {
+    "name": "AUDIT32-S1-service-pays-inverted",
+    "file": "server-account/src/professions.js",
+    "old": "CASE WHEN ${silverHeld} THEN 0 ELSE 1 END` : '1';",
+    "new": "CASE WHEN ${silverHeld} THEN 1 ELSE 0 END` : '1';",
+    "tests": [
+      "test/net/audit32_service.test.js",
+      "test/net/prof7_service.test.js",
+      "test/net/clothgems_service.test.js"
+    ],
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the decision's `p` reads the cloth's silver count (`silverHeld`). PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+  },
+  {
+    "name": "AUDIT32-S1-law-any-counter-input",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
+    "new": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.some((i) => COUNTER_ONLY.includes(i.key));",
+    "tests": [
+      "test/net/audit32_law.test.js",
+      "test/net/audit32_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT32-S1-law-empty-guard-lost",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
+    "new": "export const counterMade = (r) => !!r && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
+    "tests": [
+      "test/net/audit32_law.test.js",
+      "test/net/clothgems_law.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+  },
+  {
+    "name": "AUDIT32-S1-law-null-guard-lost",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const firstCraftPays = (r, own = false) => !!r && (!counterMade(r) || own === true);",
+    "new": "export const firstCraftPays = (r, own = false) => !counterMade(r) || own === true;",
+    "tests": [
+      "test/net/audit32_law.test.js",
+      "test/net/clothgems_law.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+  },
+  {
+    "name": "AUDIT32-S1-law-pays-all",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const firstCraftPays = (r, own = false) => !!r && (!counterMade(r) || own === true);",
+    "new": "export const firstCraftPays = (r, own = false) => !!r || !counterMade(r) || own === true;",
+    "tests": [
+      "test/net/audit32_law.test.js",
+      "test/net/audit32_service.test.js",
+      "test/net/clothgems_law.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+  },
+  {
+    "name": "AUDIT32-S1-wool-not-counter-only",
+    "file": "src/net/professionLaw.js",
+    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
+    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
+    "tests": [
+      "test/net/audit32_law.test.js",
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "PROF12 (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "AUDIT32-S1-cured-leather-counter-only",
+    "file": "src/net/professionLaw.js",
+    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
+    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, CURED_LEATHER.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
+    "tests": [
+      "test/net/audit32_law.test.js",
+      "test/net/audit32_service.test.js"
+    ],
+    "note": "PROF12 (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "AUDIT32-R13-one-drakes",
+    "file": "src/ui/professions/profPages.js",
+    "old": "t('prof.page.buy.hold', 'you hold {balance}', { balance: marksText(balance) })",
+    "new": "t('prof.page.buy.hold', 'you hold {balance} Drakes', { balance })",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  }
+]

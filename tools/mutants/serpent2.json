@@ -1,0 +1,447 @@
+[
+  {
+    "name": "SERPENT2-gate-role-over-own",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "export const serpentHeraldRole = (own, gate) => heraldRole(own) ?? heraldRole(gate);",
+    "new": "export const serpentHeraldRole = (own, gate) => heraldRole(gate) ?? heraldRole(own);",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-bells-ping-nobody",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "    role,\n    title: `A great serpent is sighted ${off ? `off ${off}` : 'on the packet lanes'}`,",
+    "new": "    title: `A great serpent is sighted ${off ? `off ${off}` : 'on the packet lanes'}`,",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-bells-every-mention",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "  const body = { embeds: [embed], allowed_mentions: r ? { roles: [r] } : { parse: [] } };",
+    "new": "  const body = { embeds: [embed], allowed_mentions: { parse: ['everyone', 'roles', 'users'] } };",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-dive-said-as-rising",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "      ['Dives', heraldStamp(t.soundAt, 't')],",
+    "new": "      ['Dives', heraldStamp(t.riseAt, 't')],",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-kill-pings",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "    title: `${boss.name} is slain`,",
+    "new": "    role: '1555589839825670258',\n    title: `${boss.name} is slain`,",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-others-miscounted",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)],",
+    "new": "      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n + 1)],",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-name-taken-raw",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "  const shown = (Array.isArray(names) ? names : []).map(heraldName).filter(Boolean);",
+    "new": "  const shown = (Array.isArray(names) ? names : []).map(String).filter(Boolean);",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-names-unbounded",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)],",
+    "new": "      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, 8), n)],",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-bells-after-rising",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "    if (t.riseAt <= nowMs) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-bells-twice",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "    if (!isSerpentDay(d) || d <= posted) continue;",
+    "new": "    if (!isSerpentDay(d)) continue;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-bells-instant-ignored",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "    return { day: d, at: Math.max(nowMs, t.omenAt) };",
+    "new": "    return { day: d, at: nowMs };",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-quiet-day-owed",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "    if (!isSerpentDay(d) || d <= posted) continue;",
+    "new": "    if (d <= posted) continue;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-future-day-posted",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "  const posted = Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1; // a day not yet come is no post made",
+    "new": "  const posted = Number.isSafeInteger(postedDay) ? postedDay : -1; // a day not yet come is no post made",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-kill-news-for-ever",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "export const serpentHeraldFellLive = (day, nowMs) =>\n  isSerpentDay(day) && nowMs < serpentTimes(day).soundAt + SERPENT_DIVE_MS + HERALD_FELL_KEEP_MS;",
+    "new": "export const serpentHeraldFellLive = (day, nowMs) => isSerpentDay(day) && nowMs < Infinity;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-no-skew",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "export const serpentSiteDayOk = (day, nowMs) =>\n  Number.isSafeInteger(day) && (day === serpentAt(nowMs).day || day === serpentAt(nowMs + GATE_SITE_SKEW_MS).day);",
+    "new": "export const serpentSiteDayOk = (day, nowMs) => Number.isSafeInteger(day) && day === serpentAt(nowMs).day;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-any-site-kill",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "  const f = site ? (Array.isArray(fells.list) ? fells.list : []).find((g) => sameSerpentSite(g, site)) : null;",
+    "new": "  const f = site ? (Array.isArray(fells.list) ? fells.list : []).find(() => true) : null;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-kill-posted-twice",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "  if (!fells || !Number.isSafeInteger(fells.d) || fells.d <= postedDay || !serpentHeraldFellLive(fells.d, nowMs))\n    return null;",
+    "new": "  if (!fells || !Number.isSafeInteger(fells.d) || !serpentHeraldFellLive(fells.d, nowMs)) return null;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-stale-kill",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "  if (!fells || !Number.isSafeInteger(fells.d) || fells.d <= postedDay || !serpentHeraldFellLive(fells.d, nowMs))\n    return null;",
+    "new": "  if (!fells || !Number.isSafeInteger(fells.d) || fells.d <= postedDay) return null;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-site-place-raw",
+    "file": "src/net/wire.js",
+    "old": "return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, sx:",
+    "new": "return m.pl ? { k: 'site', d: m.d, sx:",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-site-fractional",
+    "file": "src/net/wire.js",
+    "old": "!Number.isSafeInteger(m.sx) || !Number.isSafeInteger(m.sz) || Math.abs(m.sx) > POSE_BOUND",
+    "new": "!Number.isFinite(m.sx) || !Number.isFinite(m.sz) || Math.abs(m.sx) > POSE_BOUND",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-site-unbounded",
+    "file": "src/net/wire.js",
+    "old": "Math.abs(m.sx) > POSE_BOUND || Math.abs(m.sz) > POSE_BOUND || typeof m.pl !== 'string') return null;",
+    "new": "typeof m.pl !== 'string') return null;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-version-floor-off",
+    "file": "src/net/wire.js",
+    "old": "return !!m && Number(m[1]) >= SERPENT_SITE_RELAY_MIN; };",
+    "new": "return !!m; };",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-alarm-left-at-sweep",
+    "file": "server/src/index.js",
+    "old": "    await this._serpentHeraldArm(now);\n",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-beat-off-alarm",
+    "file": "server/src/index.js",
+    "old": "await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); await this._ktHeraldBeat(Date.now()); return; }",
+    "new": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); await this._ktHeraldBeat(Date.now()); return; }",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-own-role-unread",
+    "file": "server/src/index.js",
+    "old": "serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole'))",
+    "new": "serpentRole: heraldRole(role('gateRole'))",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ],
+    "note": "SCALE5b (re-aimed by content): the roles through relayCfgValue."
+  },
+  {
+    "name": "SERPENT2-bells-ping-gate-role",
+    "file": "server/src/index.js",
+    "old": "role: h.serpentRole }), 'serpent')) st.omen = due.day;",
+    "new": "role: h.role }), 'serpent')) st.omen = due.day;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-bells-refusal-posted",
+    "file": "server/src/index.js",
+    "old": "if (await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole }), 'serpent')) st.omen = due.day;",
+    "new": "if ((await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole }), 'serpent'), true)) st.omen = due.day;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-bells-place-lost",
+    "file": "server/src/index.js",
+    "old": "serpentOmenPost({ day: due.day, place: site?.place ?? null,",
+    "new": "serpentOmenPost({ day: due.day, place: null,",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-kill-refusal-posted",
+    "file": "server/src/index.js",
+    "old": "if (await this._heraldSend(serpentFellPost(kill), 'serpent')) st.fell = kill.day;",
+    "new": "if ((await this._heraldSend(serpentFellPost(kill), 'serpent'), true)) st.fell = kill.day;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-wait-never-rearmed",
+    "file": "server/src/index.js",
+    "old": "if (kill?.wait) retry = now + HERALD_RETRY_MS;",
+    "new": "if (kill?.wait) retry = null;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-any-day-site-kept",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "export const serpentSiteWordOk = (m, nowMs) => m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs);",
+    "new": "export const serpentSiteWordOk = (m, nowMs) => m?.sl === SERPENT_SITE_LAW;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE E3): the hub's day check is serpentHerald.js serpentSiteWordOk's, with the site law."
+  },
+  {
+    "name": "SERPENT2-site-axes-swapped",
+    "file": "server/src/index.js",
+    "old": "foldGateSite(had, m.d, sub, m.sx, m.sz, m.pl)",
+    "new": "foldGateSite(had, m.d, sub, m.sz, m.sx, m.pl)",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-cell-takes-site",
+    "file": "server/src/index.js",
+    "old": "if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._serpentSite(",
+    "new": "if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._serpentSite(",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-kill-not-armed",
+    "file": "server/src/index.js",
+    "old": "      if (this._heraldOf()) await this._hubArm(now);   // SERPENT2",
+    "new": "      // SERPENT2",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-said-every-frame",
+    "file": "src/net/online.js",
+    "old": "if (this._serpentSiteSaid && this._serpentSiteSaid.ws === this._ws && this._serpentSiteSaid.d === day) return true;",
+    "new": "if (false) return true;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-said-to-old-relay",
+    "file": "src/net/online.js",
+    "old": "if (!this.acct || !this.serpentSiteOk || ",
+    "new": "if (!this.acct || ",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-said-to-any-relay",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.serpentSiteOk = relaySupportsSerpentSite(relayV);",
+    "new": "if (primary) this.serpentSiteOk = true;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-place-sent-raw",
+    "file": "src/net/online.js",
+    "old": "sz: Math.round(sz), pl: gatePlaceWire(place), sl: SERPENT_SITE_LAW }",
+    "new": "sz: Math.round(sz), pl: place, sl: SERPENT_SITE_LAW }",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE E3): the word carries its site law."
+  },
+  {
+    "name": "SERPENT2-point-unrounded",
+    "file": "src/net/online.js",
+    "old": "sx: Math.round(sx), sz: Math.round(sz),",
+    "new": "sx, sz,",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-ahead-before-settled",
+    "file": "src/systems/serpent/serpentOmen.js",
+    "old": "      if (!settled) return null;",
+    "new": "      if (false) return null;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-scene-says-nothing",
+    "file": "src/scenes/world.js",
+    "old": "if (a && !a.site.told) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near);",
+    "new": "void a;",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-timers-place-the-full-name",
+    "file": "src/scenes/world.js",
+    "old": "serpent: { place: serpentOmen?.current?.()?.site?.near ?? null",
+    "new": "serpent: { place: serpentOmen?.current?.()?.site?.place ?? null",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-timers-place-before-bells",
+    "file": "src/systems/eventTimers.js",
+    "old": "    coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, null, 'The harbor bells ring 15 minutes before');",
+    "new": "    coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, off, 'The harbor bells ring 15 minutes before');",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-timers-hunt-to-storm",
+    "file": "src/systems/eventTimers.js",
+    "old": "      s.soundAt,",
+    "new": "      s.sealAt,",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-timers-late-row-dropped",
+    "file": "src/systems/eventTimers.js",
+    "old": "  else if (sPhase === 'rising' || sPhase === 'hunt' || sPhase === 'late')",
+    "new": "  else if (sPhase === 'rising' || sPhase === 'hunt')",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-timers-no-next",
+    "file": "src/systems/eventTimers.js",
+    "old": "  if (sPhase !== 'quiet') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-timers-kill-ignored",
+    "file": "src/systems/eventTimers.js",
+    "old": "  const sPhase = serpentPhase(s, now, src?.serpent?.fellAt?.(s.day) ?? null);",
+    "new": "  const sPhase = serpentPhase(s, now, null);",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT2-timers-kind-missing",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "  'serpent',\n  'super',",
+    "new": "  'super',",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ],
+    "note": "SD2c (re-aimed by content): the Super dungeon's kind stands after the serpent's."
+  },
+  {
+    "name": "SERPENT2-timers-colour-missing",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } ",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent2_herald.test.js"
+    ]
+  }
+]

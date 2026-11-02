@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AUDIT-HERB-CURSOR-A1-relock-inside-the-escape",
+    "file": "src/scenes/professionsHost.js",
+    "old": "if (!off()) return; if (host.backButtonHeld) host.escRelock = relock; else relock(); };",
+    "new": "if (!off()) return; relock(); };",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-A1-keyup-never-asks",
+    "file": "src/scenes/world.js",
+    "old": "if (e.code === 'Escape' && escRelock) { const r = escRelock; escRelock = null; r(); }",
+    "new": "if (e.code === 'Escape' && escRelock) { escRelock = null; }",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-A1-keyup-ungated",
+    "file": "src/scenes/professionsHost.js",
+    "old": "if (host.backButtonHeld) host.escRelock = relock; else relock(); };",
+    "new": "if (host.backButtonHeld) host.escRelock = () => requestLook(canvas); else relock(); };",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-A2-toggle-under-a-hold",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (_cursorHolds.size) return;\n    // PL1: \"Don't allow activate cursor for 0.3 seconds after closing",
+    "new": "    // PL1: \"Don't allow activate cursor for 0.3 seconds after closing",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-A3-frame-start-unsynced",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      syncPointer();   // AUDIT HERB-CURSOR A3/B1: before anything of the frame can throw\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-A4-look-ungated",
+    "file": "src/scenes/professionsHost.js",
+    "old": "if (cursorActive()) { setCursorActive(false); relock(); } return null; }",
+    "new": "if (cursorActive()) { setCursorActive(false); requestLook(canvas); } return null; }",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-C8-hold-whatever-the-hand",
+    "file": "src/scenes/professionsHost.js",
+    "old": "if (controllerLook()) return null; const off = holdCursor();",
+    "new": "const off = holdCursor();",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-B2-node-click-ungated",
+    "file": "src/scenes/world.js",
+    "old": "!gatherHost?.acting() && !_actClick && !naval?.takesActivate?.() && profClickPress();",
+    "new": "!gatherHost?.acting() && !naval?.takesActivate?.() && profClickPress();",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-C1-net-unlisted",
+    "file": "src/scenes/gatherHost.js",
+    "old": "export const ACT_POINTER = Object.freeze({ basket: 'cursor', mine: 'look', trace: 'look', fish: 'look' });",
+    "new": "export const ACT_POINTER = Object.freeze({ basket: 'cursor', mine: 'look', trace: 'look' });",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-C2-gentle-unread",
+    "file": "src/scenes/gatherHost.js",
+    "old": "export const actPointer = (st) => (st?.gentle === true && st.kind !== 'fish' ? null : ACT_POINTER[st?.kind] ?? null);",
+    "new": "export const actPointer = (st) => (ACT_POINTER[st?.kind] ?? null);",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-C2-net-gentle-unaimed",
+    "file": "src/scenes/gatherHost.js",
+    "old": "export const actPointer = (st) => (st?.gentle === true && st.kind !== 'fish' ? null : ACT_POINTER[st?.kind] ?? null);",
+    "new": "export const actPointer = (st) => (st?.gentle === true ? null : ACT_POINTER[st?.kind] ?? null);",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-C2-herb-act-unsaid",
+    "file": "src/systems/herbAct.js",
+    "old": "    window,\n    gentle, // AUDIT HERB-CURSOR C2: said, as the mine's and the trace's are",
+    "new": "    window, // AUDIT HERB-CURSOR C2: said, as the mine's and the trace's are",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-C3-the-old-words",
+    "file": "src/scenes/herbHost.js",
+    "old": "        label: plan.harvest === 'food' ? 'click the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
+    "new": "        label: plan.harvest === 'food' ? 'tap the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HERB-CURSOR-C3-gentle-hint",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "    hint: (st, label) =>\n      st.gentle\n        ? t('prof.reticle.basket.searching', 'searching...')\n        : label || t('prof.reticle.basket.glint', 'click the glint'), // AUDIT HERB-CURSOR C3: the cursor is free to click it; a gentle search has nothing to press",
+    "new": "    hint: (st, label) => label || t('prof.reticle.basket.glint', 'click the glint'), // AUDIT HERB-CURSOR C3: the cursor is free to click it; a gentle search has nothing to press",
+    "tests": [
+      "test/systems/fb1002_herbcursor_audit.test.js"
+    ]
+  }
+]

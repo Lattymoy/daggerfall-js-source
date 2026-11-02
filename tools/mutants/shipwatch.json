@@ -1,0 +1,488 @@
+[
+  {
+    "name": "SW-sleep-and",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "export const asleepHour = (hour) => Number.isFinite(hour) && (hour >= SLEEP_FROM_HOUR || hour < SLEEP_TO_HOUR);",
+    "new": "export const asleepHour = (hour) => Number.isFinite(hour) && hour >= SLEEP_FROM_HOUR && hour < SLEEP_TO_HOUR;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SW-watch-half",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "export const watchCount = (n) => (n > 0 ? Math.max(1, Math.ceil(n / 3)) : 0);",
+    "new": "export const watchCount = (n) => (n > 0 ? Math.max(1, Math.ceil(n / 2)) : 0);",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SW-sight-swapped",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "  return Math.min(range, lit ? NIGHT_LIT_SIGHT : NIGHT_DARK_SIGHT);",
+    "new": "  return Math.min(range, lit ? NIGHT_DARK_SIGHT : NIGHT_LIT_SIGHT);",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SW-sight-past-day",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "  return Math.min(range, lit ? NIGHT_LIT_SIGHT : NIGHT_DARK_SIGHT);",
+    "new": "  return lit ? NIGHT_LIT_SIGHT : NIGHT_DARK_SIGHT;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SW-struck-pirate-dark",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "  if (!afloat) return false;\n  if (faction === 'pirate') return true;",
+    "new": "  if (faction === 'pirate') return true;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SW-merchant-lit-running",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "  return faction === 'merchant' && mode === 'flee';",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SW-lamp-near",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "export const lampAlpha = (dist) => Math.min(1, Math.max(0, (dist - LAMP_NEAR_M) / LAMP_FADE_M));",
+    "new": "export const lampAlpha = (dist) => Math.min(1, Math.max(0, dist / LAMP_FADE_M));",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SW-lamp-fixed-size",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "export const lampSize = (dist) => Math.max(LAMP_MIN_M, dist * LAMP_ANGLE);",
+    "new": "export const lampSize = (dist) => LAMP_MIN_M;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SW-lamp-every-lantern",
+    "file": "src/systems/naval/shipWatch.js",
+    "old": "  if (points.length <= LAMP_MAX) return points.slice();",
+    "new": "  return points.slice();",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-nobody-below",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (asleep) turnIn(fresh); else allUp(battle || struck);",
+    "new": "if (!asleep) allUp(battle || struck);",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-station-turns-in",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const keep = new Set(crew.filter((m) => m.station));",
+    "new": "const keep = new Set();",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-below-steps",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "      if (m.gone || m.below) continue;\n      if (m.line && (m.line.t -= dt) <= 0) m.line = null;",
+    "new": "      if (m.gone) continue;\n      if (m.line && (m.line.t -= dt) <= 0) m.line = null;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-song-at-night",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (!battle && !muster && !struck && !asleep) {",
+    "new": "if (!battle && !muster && !struck) {",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-calm-words-at-night",
+    "file": "src/systems/naval/crewLife.js",
+    "old": ": asleep ? CREW_BLURBS.night : CREW_BLURBS.calm",
+    "new": ": CREW_BLURBS.calm",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-fight-leaves-them-below",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const sleep = !!ctx.asleep && !battle && !struck && ctx.order !== 'repair';",
+    "new": "const sleep = !!ctx.asleep && ctx.order !== 'repair';",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-no-cry",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (asleep) turnIn(fresh); else allUp(battle || struck);",
+    "new": "if (asleep) turnIn(fresh); else allUp(false);",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-taken-where-he-slept",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "        if (m.below) { m.below = false; m.pos = [...(hatch ?? m.post)]; }   // SHIP-WATCH: up out of her hatch\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-ashore-below",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "m.ashore = true; m.below = false;",
+    "new": "m.ashore = true;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-bard-lookout",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "!m.station && m.mobile !== MOBILE.Bard && m.state !== 'turnIn';",
+    "new": "!m.station && m.state !== 'turnIn';",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-no-post",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (m === lookout && bow) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-call-by-first",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const by = pickLookout() ?? live()[0];",
+    "new": "const by = live()[0];",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-no-work",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "(work > 0 ? WORK_SHARE * Math.min(1, work) : 0) + (asleep ? 0 : CHORE_SHARE)",
+    "new": "(asleep ? 0 : CHORE_SHARE)",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-no-chores",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "+ (asleep ? 0 : CHORE_SHARE);",
+    "new": "+ (asleep || !(work > 0) ? 0 : CHORE_SHARE);",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-no-swing",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if ((m.swingT -= dt) <= 0) { m.swing = true;",
+    "new": "if ((m.swingT -= dt) <= 0) { m.swing = false;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-swing-held",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "      m.moving = false;\n      m.swing = false;\n",
+    "new": "      m.moving = false;\n",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-work-through-guns",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "          if (quiet || asleep && !(work > 0)) { m.state = 'idle'; m.t = within(rng, CREW_IDLE_S) * 0.3; break; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "CL-no-hatch",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (!now && hatch && walkTo(m, hatch)) m.state = 'turnIn';",
+    "new": "if (false) m.state = 'turnIn';",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "NC-sleepers-drawn",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "    for (const ship of ships.values())\n      for (const [m, s] of ship.sprites) if (s?.batch && s.unit && !m.below) out.push(s.batch); // SHIP-WATCH: none below her deck",
+    "new": "    for (const ship of ships.values()) for (const [m, s] of ship.sprites) if (s?.batch && s.unit) out.push(s.batch); // SHIP-WATCH: none below her deck",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "NC-sleepers-posed",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "        if (member.below || !s.unit || !s.batch) continue; // SHIP-WATCH: turned in below her deck - kept, not drawn",
+    "new": "        if (!s.unit || !s.batch) continue; // SHIP-WATCH: turned in below her deck - kept, not drawn",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "NC-no-attack",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "        _motion.striking = !!member.swing; // SHIP-WATCH: a swing at his work - his class's attack",
+    "new": "        _motion.striking = false; // SHIP-WATCH: a swing at his work - his class's attack",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "AI-night-unread",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const see = nightSight(sight, { night: !!world.night, lit }); // SHIP-WATCH: by night, by her lanterns (or her guns)",
+    "new": "    const see = sight; // SHIP-WATCH: by night, by her lanterns (or her guns)",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "AI-lanterns-unread",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const lit = !!c.lit || !!flashed?.has(c.id);",
+    "new": "    const lit = !!flashed?.has(c.id);",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "AI-flashes-unread",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const lit = !!c.lit || !!flashed?.has(c.id);",
+    "new": "    const lit = !!c.lit;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "AI-flashes-forever",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const flashed = world.night\n    ? new Set((world.gunfire ?? []).filter((g) => world.now - g.at <= GUNS_SEEN_S).map((g) => g.by))\n    : null;",
+    "new": "  const flashed = world.night ? new Set((world.gunfire ?? []).filter((g) => true).map((g) => g.by)) : null;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "AI-flee-by-day",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      dist < nightSight(FLEE_RANGE, { night: !!world.night, lit }) &&",
+    "new": "      dist < FLEE_RANGE &&",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SL-merchant-sails-at-night",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      if (ship.clock >= e.until && !(ctx.night && ship.cls?.faction === 'merchant')) {",
+    "new": "      if (ship.clock >= e.until) {",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SL-navy-waits",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      if (ship.clock >= e.until && !(ctx.night && ship.cls?.faction === 'merchant')) {",
+    "new": "      if (ship.clock >= e.until && !ctx.night) {",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SL-lurk-unmoved",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      const at = night\n        ? [hb.mouth[0] + (e.at[0] - hb.mouth[0]) * NIGHT_LURK_K, hb.mouth[1] + (e.at[1] - hb.mouth[1]) * NIGHT_LURK_K]\n        : e.at;",
+    "new": "      const at = e.at;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "SL-ring-kept",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      if (e.night !== night) {\n        e.night = night;\n        e.path = null;\n      }\n      const at = night",
+    "new": "      const at = night",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-every-ship-lit",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const lit = shipLit(e);\n",
+    "new": "    const lit = !!where().cityLights;\n",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-contacts-unlit",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "yaw: e.ship.yaw, hull: e.ship.hull, ship: e.ship, lit: shipLit(e) });",
+    "new": "yaw: e.ship.yaw, hull: e.ship.hull, ship: e.ship });",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-my-lanterns-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "lit: !!boat.LightOn && carriesLanterns(boat, boat.hull),",
+    "new": "lit: carriesLanterns(boat, boat.hull),",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-night-untold",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const night = !!where().night;   // SHIP-WATCH: the dark hours",
+    "new": "    const night = false;   // SHIP-WATCH: the dark hours",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-hail-night-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "d > nightSight(SAIL_HO_RANGE * sight, { night, lit: showsLight(e) })",
+    "new": "d > SAIL_HO_RANGE * sight",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-cry-never-handed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (deck?.crewed) hailCalls.set(",
+    "new": "if (false) hailCalls.set(",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-cry-every-frame",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (call) hailCalls.delete(boat);\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-work-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const work = boat.crewed && st.crew.order === CREW_ORDERS.repair ? 1 : workOf(st.damage);",
+    "new": "const work = 0;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-lamps-by-day",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!where().cityLights) return;\n    const eye = deps.look?.()?.origin ?? deps.feet();\n    const boats = [];",
+    "new": "    const eye = deps.look?.()?.origin ?? deps.feet();\n    const boats = [];",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-no-lamps",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    lampsInto(particles);",
+    "new": "    void lampsInto;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-dark-lamps",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (e.boat?.LightOn && (e.fade ?? 1) >= FADE_FLATS) boats.push(e.boat);",
+    "new": "if (e.boat && (e.fade ?? 1) >= FADE_FLATS) boats.push(e.boat);",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-near-lamps",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        if (d <= LAMP_NEAR_M) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "H-sea-work-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "work: st === SHIP_STATES.afloat ? workOf(e.ship.damage) : 0 });",
+    "new": "work: 0 });",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "W-night-untold",
+    "file": "src/scenes/world.js",
+    "old": "const asleep = asleepHour(hourOf(minuteNow()));",
+    "new": "const asleep = false;",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "W-cry-kept",
+    "file": "src/scenes/world.js",
+    "old": "      if (ship.mine) ship.mine.call = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  }
+]

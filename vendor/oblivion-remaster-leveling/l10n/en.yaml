@@ -1,0 +1,36 @@
+name: "Oblivion Remaster Like Leveling"
+description: "Allows the players to allocate a defined amount of points to increase the attributes they want in the level up dialog, in the same philosophy as in Oblivion remastered."
+
+levelUpSettingsTitle: "Level Up Settings"
+levelUpSettingsDescription: "Settings to be applied at level up"
+
+attributePointsName: "Attribute Points"
+attributePointsDescription: "Amount of points for increasing attributes"
+
+maxUpdatableAttributeName: "Maximum leveled attributes"
+maxUpdatableAttributeDescription: "The number of attributes to be increased in one level up"
+
+allowLuckIncreaseName: "Allow Luck Increase"
+allowLuckIncreaseDescription: "Allow Luck to be increased by more than one point"
+
+luckIncreaseCostName: "Luck Increase Cost"
+luckIncreaseCostDescription: "Cost to upgrade Luck by one point"
+
+skillSettingsTitle: "Skills Settings"
+skillSettingsDescription: "Settings concerning skills"
+
+majorSkillsImpactName: "Major Skills Impact"
+majorSkillsImpactDescription: "Points given by a Major Skill level up (100 points required to level up)"
+
+minorSkillsImpactName: "Minor Skills Impact"
+minorSkillsImpactDescription: "Points given by a Minor Skill level up (100 points required to level up)"
+
+miscSkillsImpactName: "Misc Skills Impact"
+miscSkillsImpactDescription: "Points given by a Misc Skill level up (100 points required to level up)"
+
+yes: "Yes"
+no: "No"
+
+remaining_points_error: "You must distribute all your points to continue."
+choose_attributes_label: "Choose {count} Attributes to increase"
+remaining_points_label: "Virtues left"

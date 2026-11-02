@@ -1,0 +1,32 @@
+[
+ {
+  "name": "MINTGATE-seats-never",
+  "file": "server-account/src/index.js",
+  "old": "let worn = seats && SEAT_TITLES.includes(chosen) ?",
+  "new": "let worn = false ?",
+  "tests": [
+   "test/server/mint_title_gate.test.js"
+  ],
+  "note": "a seat title worn and never read: its claim unsigned"
+ },
+ {
+  "name": "MINTGATE-seats-always",
+  "file": "server-account/src/index.js",
+  "old": "let worn = seats && SEAT_TITLES.includes(chosen) ?",
+  "new": "let worn = seats ?",
+  "tests": [
+   "test/server/mint_title_gate.test.js"
+  ],
+  "note": "two statements on every mint again"
+ },
+ {
+  "name": "MINTGATE-marks-always",
+  "file": "server-account/src/index.js",
+  "old": "if (CHAPTER_TITLES.includes(chosen) || MASTERY_MARKS.includes(chosen)) worn =",
+  "new": "if (true) worn =",
+  "tests": [
+   "test/server/mint_title_gate.test.js"
+  ],
+  "note": "the marks read on every registered mint again"
+ }
+]

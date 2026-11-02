@@ -1,0 +1,501 @@
+[
+  {
+    "name": "AG3-W1-an-open-writ-its-own-escrow",
+    "file": "server-account/src/guilds.js",
+    "old": "FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0",
+    "new": "FROM guild_writs WHERE guild_id = ${p} AND +returned = 0",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W1-an-open-contract-its-own-escrow",
+    "file": "server-account/src/guilds.js",
+    "old": "FROM guild_contracts WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0",
+    "new": "FROM guild_contracts WHERE guild_id = ${p} AND +returned = 0",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-S2-the-realm-unreturned-index",
+    "file": "server-account/src/guilds.js",
+    "old": "FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0",
+    "new": "FROM guild_writs WHERE guild_id = ${p} AND state <> 'open' AND returned = 0",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-S3-the-room-unread",
+    "file": "server-account/src/guilds.js",
+    "old": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) + COALESCE((SELECT balance FROM marks WHERE account = ?2), 0) > ${MARKS_MAX} AS marks_full`;",
+    "new": "        AND 0 AS marks_full`;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-S3-the-view-asks-no-account",
+    "file": "server-account/src/guilds.js",
+    "old": "keeps: (await guildHolds(db, guildId, me.player)) ?? []",
+    "new": "keeps: (await guildHolds(db, guildId, null)) ?? []",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-S3-the-leave-asks-no-account",
+    "file": "server-account/src/guilds.js",
+    "old": "whyNotGone(db, a.me.guild_id, { alone: true, account: player.id })",
+    "new": "whyNotGone(db, a.me.guild_id, { alone: true })",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-S3-the-disband-asks-no-account",
+    "file": "server-account/src/guilds.js",
+    "old": "whyNotGone(db, a.me.guild_id, { account: player.id })",
+    "new": "whyNotGone(db, a.me.guild_id, {})",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-S4-any-guild-source-out",
+    "file": "server-account/src/guilds.js",
+    "old": "out: l.src_kind === 'guild' && String(l.src_id) === String(guildId),",
+    "new": "out: l.src_kind === 'guild',",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T1-an-empty-store-holds",
+    "file": "server-account/src/guilds.js",
+    "old": "guild_prof_stores WHERE guild_id = ${p} AND qty > 0)",
+    "new": "guild_prof_stores WHERE guild_id = ${p} AND qty >= 0)",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T1-a-contract-of-any-state-holds",
+    "file": "server-account/src/guilds.js",
+    "old": "`EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state = 'open')`",
+    "new": "`EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p})`",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T1-a-decided-bid-holds",
+    "file": "server-account/src/guilds.js",
+    "old": "`EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p} AND state = 'open')`",
+    "new": "`EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p})`",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T1-a-battle-past-holds",
+    "file": "server-account/src/guilds.js",
+    "old": "(guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING})`",
+    "new": "(guild_id = ${p} OR against = ${p}))`",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T1-an-empty-escrow-holds",
+    "file": "server-account/src/guilds.js",
+    "old": "FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow > 0)",
+    "new": "FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow >= 0)",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T1-a-contract-escrow-unread",
+    "file": "server-account/src/guilds.js",
+    "old": "AND +returned = 0 AND escrow > 0)`],   // SILVER-WAYS: or a closed one's escrow not yet home",
+    "new": "AND +returned = 0 AND escrow > 0 AND 0)`],   // SILVER-WAYS: or a closed one's escrow not yet home",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T1-said-twice",
+    "file": "server-account/src/guilds.js",
+    "old": "if (Number(yes) > 0 && !keeps.includes(code)) keeps.push(code);",
+    "new": "if (Number(yes) > 0) keeps.push(code);",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T4-the-hand-over-alone",
+    "file": "server-account/src/guilds.js",
+    "old": "  keeps.push(...held);\n",
+    "new": "  if (!keeps.length) keeps.push(...held);\n",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T5-an-officer-asked",
+    "file": "server-account/src/guilds.js",
+    "old": "...(me.rank === GUILD_RANK_MASTER ? { keeps:",
+    "new": "...(me.rank <= 1 ? { keeps:",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W2-the-label-its-subject",
+    "file": "src/ui/socialPanel.js",
+    "old": "return `${GUILD_SILVER_MEMBER_KINDS.includes(l.raw) ? l.who : 'The guild'} ${words} ${amount}`;",
+    "new": "return `${l.who} ${words} ${amount}`;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W2-a-member-kind-the-guild",
+    "file": "src/ui/socialPanel.js",
+    "old": "'contract-escrow', 'tribute', 'patron-escrow', 'guild-rename',",
+    "new": "'contract-escrow', 'patron-escrow', 'guild-rename',",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W5-fealty-a-tribute",
+    "file": "src/ui/socialPanel.js",
+    "old": "in: 'received a vassal\\'s fealty share of', out: 'paid its liege a fealty share of'",
+    "new": "in: 'received a vassal\\'s tribute of', out: 'paid its liege tribute of'",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W6-heraldry-again",
+    "file": "src/ui/socialPanel.js",
+    "old": "heraldry: 'changed the guild\\'s arms for', 'guild-deed'",
+    "new": "heraldry: 'changed the heraldry for', 'guild-deed'",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-R1-steady-falls-too",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (chapterBandOf(prev).band !== 'failing') return s;",
+    "new": "  if (chapterBandOf(prev).band === 'ascendant') return s;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-R1-the-fall-one",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const CHAPTER_FAILING_FALL = 2;",
+    "new": "export const CHAPTER_FAILING_FALL = 1;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-R1-the-meet-strict",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return Number(merit) >= CHAPTER_FAILING_MEETS * Math.max(1, Number(target) || 0)",
+    "new": "  return Number(merit) > CHAPTER_FAILING_MEETS * Math.max(1, Number(target) || 0)",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-R1-no-floor",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return Number(merit) >= CHAPTER_FAILING_MEETS * Math.max(1, Number(target) || 0)\n    ? s\n    : Math.max(STRENGTH_MIN, s - CHAPTER_FAILING_FALL);",
+    "new": "  return Number(merit) >= CHAPTER_FAILING_MEETS * Math.max(1, Number(target) || 0) ? s : s - CHAPTER_FAILING_FALL;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-R1-the-service-steps-alone",
+    "file": "server-account/src/npcChapters.js",
+    "old": "c.s = failingWeekAfter(c.prev, strengthAfter(c.prev, c.merit, target), c.merit, target);",
+    "new": "c.s = strengthAfter(c.prev, c.merit, target);",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-R1-the-card-silent",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  const fall =\n    b.band === 'failing'\n      ? `it loses ${CHAPTER_FAILING_FALL} Strength more each week its members' Merit lifts it by less than ${CHAPTER_FAILING_MEETS}`\n      : null;",
+    "new": "  const fall = false\n    ? `it loses ${CHAPTER_FAILING_FALL} Strength more each week its members' Merit lifts it by less than ${CHAPTER_FAILING_MEETS}`\n    : null;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-L2-merit-at-the-cap",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  !!m && m.from == null && !m.elsewhere && Number(m.merit) < Number(m.max);",
+    "new": "  !!m && m.from == null && !m.elsewhere && Number(m.merit) <= Number(m.max);",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-L2-merit-always-promised",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return `${member ? 'Duties here' : \"Its members' duties here\"}: ${said.join(', ')} - ${earned}${!member || meritEarnsOf(merit) ? ', and Merit' : ''}.`;",
+    "new": "  return `${member ? 'Duties here' : \"Its members' duties here\"}: ${said.join(', ')} - ${earned}${', and Merit'}.`;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-L2-the-card-no-merit",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    const duties = chapterDutiesLine(c.faction, writs?.receipts, merit); // AUDIT GUILD3 L2: Merit promised where the reader earns it",
+    "new": "    const duties = chapterDutiesLine(c.faction, writs?.receipts, null); // AUDIT GUILD3 L2: Merit promised where the reader earns it",
+    "tests": [
+      "test/net/audit_guild3.test.js",
+      "test/net/chap2b_receipts.test.js",
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-L3-shut-sells-on",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (shut) return fall || high ? `${cap(/** @type {string} */ (fall ?? high))}.` : null;",
+    "new": "  if (false) return fall || high ? `${cap(/** @type {string} */ (fall ?? high))}.` : null;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-L3-the-card-unshut",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    const band = chapterBandEffectsLine(c.strength, c.faction, { shut: !!chapterSeasonOf(c)?.shut });",
+    "new": "    const band = chapterBandEffectsLine(c.strength, c.faction, { shut: false });",
+    "tests": [
+      "test/net/audit_guild3.test.js",
+      "test/net/chap3b_strength.test.js"
+    ]
+  },
+  {
+    "name": "AG3-L4-a-shelf-it-has-not",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    const kept = [sells ? 'prices' : null, sold.includes('shelf') ? 'shelf' : null, 'chapter writs'].filter(Boolean); // W12: the chapter's writs - a Court's move by no band",
+    "new": "    const kept = ['prices', 'shelf', 'chapter writs'].filter(Boolean); // W12: the chapter's writs - a Court's move by no band",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-L6-the-patronage-unpriced",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  const priced = faction != null && chapterDoctrinesFor(faction).includes('training');",
+    "new": "  const priced = false;",
+    "tests": [
+      "test/net/chap7b_patrons_client.test.js"
+    ]
+  },
+  {
+    "name": "AG3-L6-an-order-priced",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  const priced = faction != null && chapterDoctrinesFor(faction).includes('training');",
+    "new": "  const priced = faction != null;",
+    "tests": [
+      "test/net/chap7b_patrons_client.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W8-the-roll-a-Master",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    master\n      ? `${chapterBandOf(chapter?.strength).band === 'ascendant' ? 'High Master' : 'Master'} of the chapter: ${master.name}.`\n      : \"The Master's chair stands empty.\",",
+    "new": "    master ? `${'Master'} of the chapter: ${master.name}.` : \"The Master's chair stands empty.\",",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W7-the-Master-a-rank",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    ? `The ${hallPosterName(/** @type {number} */ (faction))} chapter's Master asks for ${focus} this week.`",
+    "new": "    ? `The ${hallPosterName(/** @type {number} */ (faction))}'s Master asks for ${focus} this week.`",
+    "tests": [
+      "test/net/chap4d_focus.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W12-any-writs",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    b.writs > 1 ? 'half again the chapter writs' : b.writs < 1 ? 'half the chapter writs' : null, // AUDIT GUILD3 W12",
+    "new": "    b.writs > 1 ? 'half again the writs' : b.writs < 1 ? 'half the writs' : null, // AUDIT GUILD3 W12",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-C1-a-told-word-locks",
+    "file": "src/ui/socialPanel.js",
+    "old": "    const listed = seen.length > 0;",
+    "new": "    const listed = holding.length > 0;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-C8-settings-unread",
+    "file": "src/ui/socialPanel.js",
+    "old": "        if (id === 'settings') guild?.refresh?.();",
+    "new": "        if (id === 'settings') void 0;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-S3-the-room-the-refusals-word",
+    "file": "src/ui/socialPanel.js",
+    "old": "'guild-patron', 'guild-logo', 'marks-full']);",
+    "new": "'guild-patron', 'guild-logo']);",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-S3-the-room-in-general-words",
+    "file": "src/ui/socialPanel.js",
+    "old": "list.append(el('li', null, GUILD_KEEPS_WORDS[k] ?? accountRefusalText(k)));",
+    "new": "list.append(el('li', null, accountRefusalText(k)));",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-C10-the-hand-over-listed",
+    "file": "src/ui/socialPanel.js",
+    "old": "    ['guild-master-leaves', false],",
+    "new": "",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-C10-a-hall-held-buys-one",
+    "file": "src/ui/socialPanel.js",
+    "old": "${hall ? 'pay for a new name or tag' : 'buy a hall, or a new name or tag'}",
+    "new": "${'buy a hall, or a new name or tag'}",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W15-the-hall-its-own-words",
+    "file": "src/ui/socialPanel.js",
+    "old": "export const guildHallGoldText = (hallGold, treasury) => guildRealmGoldText(hallGold, treasury, false);",
+    "new": "export const guildHallGoldText = (hallGold, treasury) => (Number.isFinite(hallGold) ? `${hallGold} can buy a hall` : null);",
+    "tests": [
+      "test/ui/fb1003_hallgold.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W3-an-officer-fills-its-own",
+    "file": "src/net/guild/guildPowers.js",
+    "old": "  Object.freeze({ rule: 'deliver', words: \"fill the guild's own writs for their pay\" }),\n  Object.freeze({ rule: 'paid', words: \"be paid by the guild's own contracts\" }),",
+    "new": "  Object.freeze({ rule: 'paid', words: \"be paid by the guild's own contracts\" }),",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W3-the-rule-unread",
+    "file": "src/net/guild/guildPowers.js",
+    "old": "    return typeof may === 'function' ? all.filter((r) => may(r)) : [];",
+    "new": "    return typeof may === 'function' ? [...all] : [];",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W3-no-except",
+    "file": "src/net/guild/guildPowers.js",
+    "old": "      else if (less.length <= EXCEPT_MAX && more.length)\n        text = `Everything ${them} may except ${less.join(' or ')}, and: ${more.join('; ')}.`;",
+    "new": "      else if (false) text = `Everything ${them} may except ${less.join(' or ')}, and: ${more.join('; ')}.`;",
+    "tests": [
+      "test/net/guild3_plain.test.js",
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-C5-a-lesser-take-holds-a-greater",
+    "file": "src/net/guild/guildPowers.js",
+    "old": "const covers = (/** @type {Act} */ a, /** @type {Act} */ b) =>\n  a.key === b.key && (a.key !== 'vault-out' || a.limit === 0 || (b.limit !== 0 && Number(a.limit) >= Number(b.limit)));",
+    "new": "const covers = (/** @type {Act} */ a, /** @type {Act} */ b) => a.key === b.key && true;",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W4-the-sellswords-unsaid",
+    "file": "src/net/guild/guildPowers.js",
+    "old": "  Object.freeze({ master: true, words: \"hire Sellswords for the guild's battles\" }),\n  Object.freeze({ master: true, words: 'give a held Charter up' }),",
+    "new": "  Object.freeze({ master: true, words: 'give a held Charter up' }),",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-W4-any-writ-unsaid",
+    "file": "src/net/guild/guildPowers.js",
+    "old": "  Object.freeze({ master: true, words: 'withdraw any guild writ or contract' }),\n  Object.freeze({ table: 'seat', power: 'tribute', words: 'pay Tribute at the seat the guild pledged' }),",
+    "new": "  Object.freeze({ table: 'seat', power: 'tribute', words: 'pay Tribute at the seat the guild pledged' }),",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-C7-an-article-guessed",
+    "file": "src/net/guild/guildPowers.js",
+    "old": "const theRank = (/** @type {string} */ name) => (/^the\\s/i.test(name) ? name : `the ${name}`);",
+    "new": "const theRank = (/** @type {string} */ name) => `a ${name}`;",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-C5-the-vault-unsaid",
+    "file": "src/net/guild/guildPowers.js",
+    "old": "  Object.freeze({ vault: true }),\n  Object.freeze({ any: true, words: \"pin notes on the guild's board\" }),",
+    "new": "  Object.freeze({ any: true, words: \"pin notes on the guild's board\" }),",
+    "tests": [
+      "test/net/guild3_plain.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T11-every-ascendant-row",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE strength >= ?1 AND (faction, region) IN\n        (SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?2))`).bind(CHAPTER_ASCENDANT_FROM, JSON.stringify(led))",
+    "new": "WHERE strength >= ?1`).bind(CHAPTER_ASCENDANT_FROM)",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  },
+  {
+    "name": "AG3-T11-asked-for-none",
+    "file": "server-account/src/npcChapters.js",
+    "old": "const { results: rising = [] } = led.length\n    ?",
+    "new": "const { results: rising = [] } = true\n    ?",
+    "tests": [
+      "test/net/audit_guild3.test.js"
+    ]
+  }
+]

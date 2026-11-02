@@ -1,0 +1,47 @@
+[
+  {
+    "name": "CUSTOMS-ELSEWHERE-the-other-account-unread",
+    "file": "server-account/src/realm.js",
+    "old": "      return other ? (other.spent ? 'customs-already' : 'customs-other-account') : 'customs-never-online';",
+    "new": "      return 'customs-never-online';",
+    "tests": [
+      "test/net/fb0930_customselsewhere.test.js"
+    ]
+  },
+  {
+    "name": "CUSTOMS-ELSEWHERE-a-spent-row-read-as-waiting",
+    "file": "server-account/src/realm.js",
+    "old": "      return other ? (other.spent ? 'customs-already' : 'customs-other-account') : 'customs-never-online';",
+    "new": "      return other ? 'customs-other-account' : 'customs-never-online';",
+    "tests": [
+      "test/net/fb0930_customselsewhere.test.js"
+    ]
+  },
+  {
+    "name": "CUSTOMS-ELSEWHERE-another-character-read",
+    "file": "server-account/src/realm.js",
+    "old": "      const other = await db.prepare('SELECT spent FROM realm_census WHERE char_id = ? LIMIT 1').bind(originId).first();",
+    "new": "      const other = await db\n        .prepare('SELECT spent FROM realm_census WHERE char_id <> ? LIMIT 1')\n        .bind(originId)\n        .first();",
+    "tests": [
+      "test/net/fb0930_customselsewhere.test.js"
+    ]
+  },
+  {
+    "name": "CUSTOMS-ELSEWHERE-the-status-unsaid",
+    "file": "server-account/src/index.js",
+    "old": " 'customs-other-account': 403,",
+    "new": "",
+    "tests": [
+      "test/net/fb0930_customselsewhere.test.js"
+    ]
+  },
+  {
+    "name": "CUSTOMS-ELSEWHERE-the-refusal-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "  'customs-other-account': () => t('account.refusal.customsOtherAccount', 'This character belongs to another account, the one you played it online with. Sign in with that account to bring it in.'),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb0930_customselsewhere.test.js"
+    ]
+  }
+]

@@ -1,0 +1,59 @@
+[
+  {
+    "name": "FIND-FOUND-the-lair-lane-unread",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "if (((v >>> 20) & 0xfff) !== LAIR_LANE || (v & 0x80000) === 0) return null;",
+    "new": "if ((v & 0x80000) === 0) return null;",
+    "tests": ["test/ui/findfound.test.js"]
+  },
+  {
+    "name": "FIND-FOUND-the-lair-its-cell",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  return { x: s.px, y: s.py };\n}",
+    "new": "  return { x: (v & 0x7ffff) % LAIR_COLS, y: s.py };\n}",
+    "tests": ["test/ui/findfound.test.js"]
+  },
+  {
+    "name": "FIND-FOUND-the-store-any-id",
+    "file": "src/systems/discovery.js",
+    "old": "if (isMadePlaceId(key) && v.locationName) out.push",
+    "new": "if (v.locationName) out.push",
+    "tests": ["test/ui/findfound.test.js"]
+  },
+  {
+    "name": "FIND-FOUND-the-store-nameless",
+    "file": "src/systems/discovery.js",
+    "old": "if (isMadePlaceId(key) && v.locationName) out.push",
+    "new": "if (isMadePlaceId(key)) out.push",
+    "tests": ["test/ui/findfound.test.js"]
+  },
+  {
+    "name": "FIND-FOUND-the-rows-in-the-bay",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    if (!p || inBay(p.x, p.y)) continue;\n    out.push({ name: f.locationName",
+    "new": "    if (!p) continue;\n    out.push({ name: f.locationName",
+    "tests": ["test/ui/findfound.test.js"]
+  },
+  {
+    "name": "FIND-FOUND-the-rows-no-lairs",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const p = countryPixelOfId(f.mapId) ?? lairPixelOfId(f.mapId);",
+    "new": "const p = countryPixelOfId(f.mapId);",
+    "tests": ["test/ui/findfound.test.js"]
+  },
+  {
+    "name": "FIND-FOUND-the-box-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "    for (const row of ink ? tamrielFoundRows(foundMadePlaces()) : []) {",
+    "new": "    for (const row of []) {",
+    "tests": ["test/ui/findfound.test.js"],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
+  },
+  {
+    "name": "FIND-FOUND-the-index-kept-across-a-find",
+    "file": "src/ui/heldMap.js",
+    "old": "this._searchIndex.ink === ink && this._searchIndex.gen === gen) return this._searchIndex;",
+    "new": "this._searchIndex.ink === ink) return this._searchIndex;",
+    "tests": ["test/ui/findfound.test.js"]
+  }
+]

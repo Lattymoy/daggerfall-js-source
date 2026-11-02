@@ -1,0 +1,227 @@
+[
+  {
+    "name": "AUDIT-PM-C1-the-first-effects-kind-everywhere",
+    "file": "src/combat/pvpPotions.js",
+    "old": "  const landed = whole ? effects : effects.slice(0, 1);",
+    "new": "  const landed = effects.slice(0, 1);",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C1-one-kinds-clock-started",
+    "file": "src/combat/pvpPotions.js",
+    "old": "  for (const k of kinds) last.set(k, now);",
+    "new": "  last.set(kinds[0], now);",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C2-the-door-never-told",
+    "file": "src/combat/pvpPotions.js",
+    "old": "      toldHere?.(kinds);",
+    "new": "      void kinds;",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C2-another-kind-told",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "kinds.includes('health')) o.sendEg?.('pot');",
+    "new": "kinds.includes('magicka')) o.sendEg?.('pot');",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C2-the-rooms-clock-unkept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!m || !m.in || !m.alive || m.home || B.end || now - (m.pot ?? -Infinity) < PVP_VITALS.potionMs) return 0;",
+    "new": "  if (!m || !m.in || !m.alive || m.home || B.end) return 0;",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C2-a-fallen-member-healed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!m || !m.in || !m.alive || m.home || B.end || now - (m.pot ?? -Infinity) < PVP_VITALS.potionMs) return 0;",
+    "new": "  if (!m || !m.in || m.home || B.end || now - (m.pot ?? -Infinity) < PVP_VITALS.potionMs) return 0;",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C2-half-a-heal",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "potionHealAt(m.lv) / healRef(m.lv) / egCountWhole(m.vs)",
+    "new": "potionHealAt(m.lv) / healRef(m.lv) / egCountWhole(m.vs) / 2",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C2-the-relay-deaf",
+    "file": "server/src/index.js",
+    "old": "if (m.k === 'pot') { egPotion(B, a.sub, now, this._egLine(), EG_BODY_ENFORCE); return; }",
+    "new": "if (m.k === 'pot') { return; }",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C2-the-wire-refuses-it",
+    "file": "src/net/wire.js",
+    "old": "case 'pot': return { k: 'pot' };",
+    "new": "case 'pot': return null;",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C2-an-older-relay-told",
+    "file": "src/net/wire.js",
+    "old": "export const EG_POT_RELAY_MIN = 300;",
+    "new": "export const EG_POT_RELAY_MIN = 299;",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B2-the-breachs-whole-unset",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  e.maxHealth = e.health = EG_STAND_IN_WHOLE;\n  return e;",
+    "new": "  return e;",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B2-a-hosts-body-at-the-gates-whole",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        entity: breachStandIn(\n          hostStandIn(\n            { mobile: look.mobile, name: look.name },\n            b.i,\n            () => wordShare(d.target?.hp, d.target?.m),\n            myBlowX,\n          ),",
+    "new": "        entity: hostStandIn(\n          { mobile: look.mobile, name: look.name },\n          b.i,\n          () => wordShare(d.target?.hp, d.target?.m),\n          myBlowX,",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B2-an-object-at-the-gates-whole",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        entity: breachStandIn(crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)),",
+    "new": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B3-the-receipts-share-raw",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "return !!m && (egRefDealt(m.dc, m.mg) >= (total * EG_EARN_SHARE) / n ||",
+    "new": "return !!m && (m.dc >= (total * EG_EARN_SHARE) / n ||",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B3-the-receipts-total-raw",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "total = co.reduce((s, [, m]) => s + egRefDealt(m.dc, m.mg), 0)",
+    "new": "total = co.reduce((s, [, m]) => s + m.dc, 0)",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B3-a-halls-part-raw",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(m.dh > 0 && egRefDealt(m.dh, m.mg) >= even * dealt)",
+    "new": "(m.dh > 0 && m.dh >= even * dealt)",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B3-a-halls-damage-raw",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "m.in && m.dh > 0 ? egRefDealt(m.dh, m.mg) : 0",
+    "new": "m.in && m.dh > 0 ? m.dh : 0",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B5-my-might-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    return (E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1) * egPurseX(link.might?.());",
+    "new": "    return E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1;",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B5-the-tokens-might-unbounded",
+    "file": "src/net/online.js",
+    "old": "return mightIssuable(mg) ? mg : null; }",
+    "new": "return mg ?? null; }",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B5-the-links-might-dropped",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "    might,",
+    "new": "    might: () => null,",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-B5-the-session-reads-no-token",
+    "file": "src/net/online.js",
+    "old": "  get might() { return tokenMight(this._ws ? this._helloTok.get(this._ws) : undefined); }",
+    "new": "  get might() { return tokenMight(undefined); }",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-D3-the-host-hits-ungrown",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ r: m.r, q: m.q, bx, d: dm * mult }",
+    "new": "{ r: m.r, q: m.q, bx: vx.bx, d: dm * mult }",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-D3-the-seconds-rounded",
+    "file": "src/combat/pvpPotions.js",
+    "old": "  return POTION_KINDS.map((k) => /** @type {[string, number]} */ ([k, Math.ceil(leftOf(k, now) / 1000)])).filter(",
+    "new": "  return POTION_KINDS.map((k) => /** @type {[string, number]} */ ([k, Math.round(leftOf(k, now) / 1000)])).filter(",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C6-a-bare-number-back",
+    "file": "locales/ru/Port_Strings.csv",
+    "old": "madeRules.potionClock,\"Каждый вид зелья ждёт {s, plural, one {# секунду} few {# секунды} many {# секунд} other {# секунды}} после последнего.\"",
+    "new": "madeRules.potionClock,\"Каждый вид зелья ждёт {s} секунд после последнего.\"",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PM-C7-the-flight-bottle-drunk",
+    "file": "src/systems/useItem.js",
+    "old": "  else if (isPotion(item) && flightBottleRefusal(item)) out",
+    "new": "  else if (false && flightBottleRefusal(item)) out",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  }
+]

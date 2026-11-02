@@ -1,0 +1,445 @@
+[
+  {
+    "name": "SHIP-legend-level",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "export const LEGEND_LEVEL = 999;",
+    "new": "export const LEGEND_LEVEL = 99;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-legend-weight",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "    minLevel: LEGEND_LEVEL,\n    weight: 0,\n    boarders: 22,",
+    "new": "    minLevel: LEGEND_LEVEL,\n    weight: 1,\n    boarders: 22,",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-legend-flag",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "    legend: !!o.legend,",
+    "new": "    legend: false,",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-wake-slow",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "    speed: 9.4,",
+    "new": "    speed: 7.4,",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-names-swapped",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  const list = cls?.faction === 'merchant' ? ETHER_MERCHANT_NAMES : ETHER_PIRATE_NAMES;",
+    "new": "  const list = cls?.faction === 'merchant' ? ETHER_PIRATE_NAMES : ETHER_MERCHANT_NAMES;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-names-stream",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  const r = mulberry32(((seed >>> 0) ^ ETHER_NAME_SALT) >>> 0);",
+    "new": "  const r = mulberry32(1);",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-captain-region",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  const captain = shipNames(cls, seed, { regionIndex: 17 }).captain;",
+    "new": "  const captain = shipNames(cls, seed, { regionIndex: 20 }).captain;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-legend-names",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  if (legend) return { name: legend.name, captain: legend.captain, crown: null };\n  const captain = shipNames(cls, seed, { regionIndex: 17 }).captain;",
+    "new": "  const captain = shipNames(cls, seed, { regionIndex: 17 }).captain;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-flag-all",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "export const etherFlagOf = (cls) => (cls?.faction === 'merchant' ? ISLES_FLAG : null);",
+    "new": "export const etherFlagOf = (cls) => ISLES_FLAG;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-possessive",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "const own = (name) => (/s$/.test(name) ? `${name}'` : `${name}'s`);",
+    "new": "const own = (name) => `${name}'s`;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-band-weight",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  const w = { pirate: ETHER_FACTION_WEIGHTS.pirate * (band?.pirate ?? 1), merchant: ETHER_FACTION_WEIGHTS.merchant };",
+    "new": "  const w = { pirate: ETHER_FACTION_WEIGHTS.pirate, merchant: ETHER_FACTION_WEIGHTS.merchant };",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-port-weight",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  if (nearPort) {\n    w.merchant += ETHER_PORT_WEIGHTS.merchant;\n    w.pirate *= ETHER_PORT_WEIGHTS.pirateK;\n  }\n  return w;",
+    "new": "  return w;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-haunt-band",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  const i = BANDS.findIndex((b) => b.id === legend.band);",
+    "new": "  const i = 1;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-haunt-reach",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "    if (d <= HAUNT_PX && d < bd) {",
+    "new": "    if (d < HAUNT_PX && d < bd) {",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-rise-edge",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  !Number.isFinite(endedDay) || (day | 0) - (endedDay | 0) >= LEGEND_RISE_DAYS;",
+    "new": "  !Number.isFinite(endedDay) || (day | 0) - (endedDay | 0) > LEGEND_RISE_DAYS;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-night-any",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "export const legendAbroad = (legend, { night = false } = {}) => legend?.trait !== 'night' || !!night;",
+    "new": "export const legendAbroad = (legend, { night = false } = {}) => true;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-rumour-way",
+    "file": "src/world/ethericSea.js",
+    "old": "  const a = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;",
+    "new": "  const a = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;",
+    "tests": [
+      "test/systems/naval/ethership.test.js",
+      "test/systems/naval/ethercross.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-rumour-days",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "    return `${legend.name} went down ${ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago} days ago`}; they say the aether will raise it again.`;",
+    "new": "    return `${legend.name} went down ${ago === 0 ? 'yesterday' : ago === 1 ? 'today' : `${ago} days ago`}; they say the aether will raise it again.`;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-rumour-night",
+    "file": "src/systems/naval/etherShips.js",
+    "old": "  const night = legend.trait === 'night' ? ' By night.' : '';",
+    "new": "  const night = '';",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-dir-factions",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      const faction = weightedPick(\n        ether",
+    "new": "      const faction = weightedPick(\n        false",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-dir-level",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      let cls = classFor(faction, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ether?.band?.level ?? 0), rng());",
+    "new": "      let cls = classFor(faction, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0), rng());",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-dir-spec",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "        out.spawn = {\n          seed,\n          classId: cls.id,\n          variant,\n          pos,\n          yaw,\n          hunter,\n          ...(deep ? { deep: true } : {}),\n          ...(ether ? { ether: ether.band.id } : {}),\n        }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean",
+    "new": "        out.spawn = { seed, classId: cls.id, variant, pos, yaw, hunter, ...(deep ? { deep: true } : {}) }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-dir-patrol",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "    const kind = ctx.ether ? 'plunder' : drawn; // ETHER-SEA: no crown's ship past the Veil - a corsair on a trader",
+    "new": "    const kind = drawn; // ETHER-SEA: no crown's ship past the Veil - a corsair on a trader",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-dir-relief",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      const distress = Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil",
+    "new": "      const distress = Array.isArray(ctx.distress) && !ctx.relieving ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-dir-legend-chance",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "    if (!(r() < LEGEND_CHANCE)) return null;",
+    "new": "    if (!(r() < 1)) return null;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-dir-legend-twice",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "    if (\n      !want?.classId ||\n      ctx.nearPort ||\n      (ctx.legends ?? []).length ||\n      (ctx.ships ?? []).some((s) => s.classId === want.classId)\n    )\n      return null;",
+    "new": "    if (!want?.classId || ctx.nearPort || (ctx.legends ?? []).length) return null;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-dir-legend-yaw",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "        yaw: Math.atan2(ctx.player[0] - pos[0], ctx.player[2] - pos[2]),",
+    "new": "        yaw: 0,",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-names",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const area = namesArea(spec, w), names = ether ? etherShipNames(cls, spec.seed) : watersShipNames(cls, spec.seed, region, crown, area);",
+    "new": "    const area = namesArea(spec, w), names = watersShipNames(cls, spec.seed, region, crown, area);",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground. Re-aimed again (AUDIT TESA II K7): the names built by the module's watersShipNames. Re-aimed again (WW7-8): the area named first, kept on her entry for the wire."
+  },
+  {
+    "name": "SHIP-host-flag",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    ship.flag = ether ? etherFlagOf(cls) : flagOf(cls, spec.seed, region);",
+    "new": "    ship.flag = flagOf(cls, spec.seed, region);",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-unannounced",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (legend && !heard) deps.mid?.(",
+    "new": "    if (false) deps.mid?.(",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-law",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (entry.ether) { chargeEther(act, entry); return; }   // ETHER-SEA",
+    "new": "    if (false) { chargeEther(act, entry); return; }   // ETHER-SEA",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-trade",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    cap.deed?.(act, s.cls, { trade: legend ? 'legend' : 'ether', legend: legend?.name ?? null });",
+    "new": "    cap.deed?.(act, s.cls, { trade: 'ether', legend: legend?.name ?? null });",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-unpaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (legend) legendTidemail(legend, s.seed, deps.ether?.legendEnded?.(legend.id, act),",
+    "new": "    if (false) legendTidemail(legend, s.seed, deps.ether?.legendEnded?.(legend.id, act),",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-papers-any",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    else if (s.cls.faction === 'pirate') { const w = where(); deps.ether?.papers",
+    "new": "    else { const w = where(); deps.ether?.papers",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-mend-rate",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    s.damage.repair({ hull: s.damage.maxHull * LEGEND_MEND_PER_S * d, sail: 0, crew: 0 });",
+    "new": "    s.damage.repair({ hull: 0, sail: 0, crew: 0 });",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-mend-quiet",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (clock - s.damage.lastHitAt < LEGEND_MEND_QUIET_S || s.damage.hull >= s.damage.maxHull) return;",
+    "new": "    if (s.damage.hull >= s.damage.maxHull) return;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-mend-trait",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (legendOfClass(s.cls.id)?.trait !== 'mends' || s.damage.state",
+    "new": "    if (legendOfClass(s.cls.id)?.trait === 'mends' || s.damage.state",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-veil",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "? { far: reach.far * LEGEND_VEIL_K, near: reach.near * LEGEND_VEIL_K, eye: reach.eye * LEGEND_VEIL_K, lookout: reach.lookout * LEGEND_VEIL_K } : reach);",
+    "new": "? reach : reach);",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-strand-kind",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(site.kind === 'salvage' || site.kind === 'cache' || site.kind === 'strand') && site.n > 0",
+    "new": "(site.kind === 'salvage' || site.kind === 'cache') && site.n > 0",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-strand-branch",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (isSiteLot(e.lot) && e.lot.startsWith(SITE_LOT + STRAND_SITE)) { pickStrand(e, boat, swim); return; }",
+    "new": "",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-strand-ungiven",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (r.items.length) { deps.board?.giveItems?.(r.items, boat ?? null); crewEvent(boat, 'plunder'); }",
+    "new": "    if (r.items.length) { crewEvent(boat, 'plunder'); }",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-tier",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const etherTier = (entry) => (entry.ether ? BANDS.find((b) => b.id === entry.ether)?.tier ?? 0 : 0);",
+    "new": "  const etherTier = (entry) => 0;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-distress",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const distress = relieving || w.ether ? null : distressAt(crown.name);",
+    "new": "      const distress = relieving ? null : distressAt(crown.name);",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-ctx-legend",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    return { band, legend: l ? { id: l.id, classId: l.classId } : null };",
+    "new": "    return { band, legend: null };",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-bold",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    else if (ether && cls.faction === 'pirate') ship.temper = temperOf(cls, spec.seed, { bold: etherBold(ether) });",
+    "new": "",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-host-legend-bold",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (legend) ship.temper = TEMPERS.bold;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-plate-words",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "          model.ether",
+    "new": "          false",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-plate-anchors",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "        anchors: model.ether ? 0 : model.notoriety.level,",
+    "new": "        anchors: model.notoriety.level,",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-plate-league",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    : `${String(e.bandName ?? '').replace(/^./, (c) => c.toUpperCase())}, ${Math.max(0, Math.round(Number(e.depth) || 0))} ${Math.round(Number(e.depth) || 0) === 1 ? 'league' : 'leagues'} past the Veil`;",
+    "new": "    : `${String(e.bandName ?? '').replace(/^./, (c) => c.toUpperCase())}, ${Math.max(0, Math.round(Number(e.depth) || 0))} ${'leagues'} past the Veil`;",
+    "tests": [
+      "test/systems/naval/ethership.test.js"
+    ]
+  }
+]

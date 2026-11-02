@@ -1,0 +1,468 @@
+# The DOWNLOADABLE build (Desktop-App.md). Pushing a tag shaped
+# app-v* builds the desktop shell's installers on all three OSes and
+# attaches them to a GitHub Release at that tag - which is where the
+# landing page's "On your desktop" section points. workflow_dispatch
+# builds the same installers as run artifacts, for trying a build
+# without cutting a release.
+#
+# The house gate rides in front: the `gate` job runs the whole check,
+# and every OS leg `needs` it (a red suite never ships an installer any
+# more than it ships the site). AUDIT 68: it was a step inside the
+# ubuntu leg, and the windows/macos legs never waited for it.
+# REL-FAST (2026-10-15, Mac: "Yes, thats insanely slow" - a release took
+# 33 minutes, 27.4 of them `npm run check` in series on one runner): the
+# gate is verify.yml, the check the PR's and the deploy's run - lint and
+# the types, every test file in four balanced shards, the build - its
+# jobs at once, on the release's own commit. `npm run check` is exactly
+# those four parts, so nothing is skipped and nothing is weaker.
+#
+# Doctrine unchanged: the installers carry the built site and the
+# shell, NO game data - the app asks for the player's own ARENA2
+# folder on first run, exactly as the website does.
+name: release-desktop
+
+# REL3 (2026-09-21, Mac: "is there a way to auto push a release on each
+# merge?"): EVERY MAIN PUSH CUTS A RELEASE, from the same commit the
+# site deploys. The version is DERIVED, never bumped by hand: MAJOR.MINOR
+# from app/package.json's committed base, PATCH the count of commits on
+# main - monotonic, reproducible from the commit, and no file to remember
+# to touch. The marker file that used to name the tag and the REL1 gate
+# that held it to the package version are retired with it: ONE shell
+# variable names the number, and both the tag and the stamp electron-
+# builder bakes in read it, which is the whole of REL1's lesson.
+# A pushed app-v* tag and a dispatch with release_tag remain as manual
+# doors (a hotfix off a branch - at a NEW tag: a published release is
+# never re-cut in place, AUDIT INSTALL L3-2) and take their version from
+# the tag they name.
+#
+# REL4 (2026-09-29, Mac: "drastically improve the install experience"):
+# THE RELEASE IS PUBLISHED WHOLE, ONCE. Each OS leg used to create-or-
+# update the release itself, so the release went live when the FIRST leg
+# finished (app-v0.1.4605: eighty-five seconds as `latest` with no
+# Windows installer and no latest.yml), every leg appended its own copy
+# of the generated notes (two or three per release, one sometimes lost
+# to a race), and a leg dying after the gate would have left a partial
+# `latest` standing. Now: `version` resolves REL3's one number once and
+# every job reads it; the legs only BUILD and hand their files on; and
+# `publish` - which runs only when every leg passed - checks the set is
+# complete, writes the player-facing notes (REL6: the `## Patch notes`
+# section of every pull request the release brings, read off GitHub by
+# scripts/desktopRelease.mjs), stages a DRAFT carrying every file, and
+# publishes it in one step. `latest` never names a release that is half
+# there.
+on:
+  push:
+    tags:
+      - 'app-v*'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag to create a Release at (app-v*); empty = run artifacts only'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+# One MAIN release at a time, never cancelled once it runs: a release half
+# uploaded is worse than one late. GitHub keeps ONE run waiting per group
+# and cancels an older waiting run when a newer one queues - so of several
+# merges that land during a release, the newest is cut next, carrying the
+# others' commits under a higher number. A manual door (a pushed tag, a
+# dispatch) is a group of its own, so the next merge never cancels it.
+# AUDIT INSTALL L3-6: "runs queue rather than cancel" was true of one
+# waiting run only, and a dispatch waiting behind a release was cancelled
+# by the next merge without a word.
+concurrency:
+  group: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'release-desktop-main' || format('release-desktop-{0}', github.run_id) }}
+  cancel-in-progress: false
+
+jobs:
+  # REL3: ONE NUMBER. The dispatch input or the pushed tag names it
+  # outright; a main push derives it - MAJOR.MINOR from the committed
+  # base, PATCH from `git rev-list --count HEAD`. A dispatch with no
+  # tag is artifacts-only, as before. Both the release tag and the
+  # version electron-builder stamps come from this one VERSION.
+  # AUDIT 68: the dispatch input is READ from the environment, never
+  # pasted into the script - a quote in it is text, not bash.
+  # REL4: resolved ONCE, here, and read by every job below - three legs
+  # and the publish job cannot disagree about a number none of them
+  # computes.
+  # AUDIT INSTALL L1-5: and it is app-v<n>.<n>.<n> EXACTLY, or the run
+  # fails here. A tag name may carry quotes and `$` (git accepts
+  # app-v1.2.3";touch${IFS}x;"), and the number is written into scripts
+  # below - read from the environment there, and never anything but digits.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.reltag.outputs.tag }}
+      version: ${{ steps.reltag.outputs.version }}
+      update: ${{ steps.reltag.outputs.update }}
+      shell: ${{ steps.reltag.outputs.shell }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # REL3: the version is the commit count, which needs the whole history
+          persist-credentials: false   # AUDIT INSTALL L1-1: nothing here pushes; no token is left in .git/config
+
+      - name: Resolve release version
+        id: reltag
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          TAG="$RELEASE_TAG"
+          if [ -z "$TAG" ] && [[ "$GITHUB_REF" == refs/tags/app-v* ]]; then TAG="$GITHUB_REF_NAME"; fi
+          if [ -z "$TAG" ] && [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF" = refs/heads/main ]; then
+            BASE=$(node -p "require('./app/package.json').version.split('.').slice(0,2).join('.')")
+            TAG="app-v${BASE}.$(git rev-list --count HEAD)"
+          fi
+          if [ -n "$TAG" ] && ! [[ "$TAG" =~ ^app-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::release tag must be app-v<major>.<minor>.<patch>, digits only"
+            exit 1
+          fi
+          VERSION="${TAG#app-v}"
+          # REL8: the player's update number - derived here, where the history is whole, and read by every job below
+          # (the legs' clones are depth 1); digits only, or none
+          UPDATE=$(node scripts/updateNumber.mjs)
+          if [ -n "$UPDATE" ] && ! [[ "$UPDATE" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::the update number must be <major>.<minor>.<patch>, digits only"
+            exit 1
+          fi
+          # DA13: the shell's id - its sources' git objects at this commit, so every runner reads the same one - which the
+          # bundled game's index and the release's game manifest both name: a copy built for another fetches nothing
+          SHELL_ID=$(node scripts/desktopRelease.mjs shell)
+          if ! [[ "$SHELL_ID" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::the shell id must be 64 hex digits"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "update=$UPDATE" >> "$GITHUB_OUTPUT"
+          echo "shell=$SHELL_ID" >> "$GITHUB_OUTPUT"
+          echo "release tag: '${TAG:-<none - artifacts only>}'"
+
+  # REL-FAST: the whole check before any leg packages - verify.yml's
+  # parallel jobs, pinned to the commit the legs build
+  gate:
+    uses: ./.github/workflows/verify.yml
+    with:
+      ref: ${{ github.sha }}
+
+  build:
+    needs: [version, gate]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      # No signing identities exist; without this electron-builder
+      # hunts for one on macOS and fails the build looking.
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      # REL9: the site build outgrew V8's default heap on the Mac leg. The
+      # default is sized off the runner's memory - macos-latest has 7GB and
+      # stopped at ~2GB, ubuntu/windows have 16GB and passed - so from
+      # app-v0.1.8020 on every Mac leg died in `vite build` (JavaScript heap
+      # out of memory), the publish job (REL4: only when the whole matrix
+      # passed) never ran, and no copy had an update to take. 4GB on every
+      # leg: what the 16GB legs already had, inside the Mac runner's 7GB.
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install site dependencies
+        run: npm ci
+
+      - name: Build the site
+        env:
+          DFO_UPDATE: ${{ needs.version.outputs.update }}   # REL8: the version job's number, stamped into the game this leg packs
+        run: npm run build
+
+      - name: Install shell dependencies
+        run: npm ci
+        working-directory: app
+
+      # REL3: the stamp. app.getVersion() and the installers' own metadata
+      # read package.json's version, so the release's number is written
+      # there before electron-builder runs - from the SAME output the
+      # tag is cut from. Not committed: the working tree is the runner's.
+      # AUDIT INSTALL R2-B1: in bash on EVERY leg. A step with no `shell`
+      # runs in PowerShell on windows-latest, where "$VERSION" is an unset
+      # PowerShell variable, not the environment - the Windows stamp failed
+      # and no release was published. Any step here that reads a variable
+      # names its shell (test/tooling/audit_install.test.js holds the whole file to it).
+      - name: Stamp the version
+        if: needs.version.outputs.version != ''
+        shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+        working-directory: app
+
+      # AUDIT INSTALL L3-4: a build that is not a release carries NO update
+      # metadata. With the provider in app/package.json every build wrote
+      # app-update.yml, and the launcher installs what that names BEFORE
+      # play (DA8) - so a dispatched "try this build" replaced itself with
+      # the public release before it ever ran. publish must be null
+      # EXPLICITLY: absent, electron-builder derives GitHub from
+      # `repository` and writes it anyway (PublishManager), and a CLI
+      # -c.publish=null stays the string "null". Without the file the shell
+      # takes the notice transport (lib/autoUpdate.cjs `configured`).
+      - name: No updater in a build that is not a release
+        if: needs.version.outputs.tag == ''
+        run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.build.publish=null;fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+        working-directory: app
+
+      # DA13: the index of the game this leg bundles - every file of dist/, its size and sha256 - packed into the shell
+      # (app/package.json build.files) with the version and the shell it was built for, so a copy fetches only the
+      # files a release changed. Only on a release: a build that is not one follows no channel (L3-4's law).
+      - name: Index the bundled game
+        if: needs.version.outputs.tag != ''
+        shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          DFO_SHELL: ${{ needs.version.outputs.shell }}
+        run: node scripts/desktopRelease.mjs seed dist app/game-seed.json
+
+      # DA7: `--publish never` uploads nothing (the publish job attaches
+      # the files), but with a publish PROVIDER in app/package.json
+      # electron-builder still writes the updater's metadata - latest.yml
+      # / latest-linux.yml and the blockmaps beside the installers, and
+      # app-update.yml inside them - which is what electron-updater in
+      # the shell reads back from the release at that tag. The
+      # metadata rides the release with the installers, or the updater
+      # finds nothing and every copy falls back to the notice.
+      # The shell packs the game's pad loop, its logo and the built site from the repo's own tree. electron-builder's
+      # asarUnpack (the private server's runtime binary) holds every packed file to app/, so they are copied in first.
+      - name: Stage the shell's files inside app/
+        run: node scripts/desktopRelease.mjs stage
+
+      - name: Build installers
+        run: npx electron-builder --publish never
+        working-directory: app
+
+      # DA13: the game a file at a time - each file of dist/ compressed on its own, laid end to end, and the manifest of
+      # where each stands - cut ONCE, by the leg whose dist/ the Linux copy bundles, beside its installer.
+      - name: Pack the game
+        if: needs.version.outputs.tag != '' && matrix.os == 'ubuntu-latest'
+        shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          DFO_UPDATE: ${{ needs.version.outputs.update }}
+          DFO_SHELL: ${{ needs.version.outputs.shell }}
+        run: node scripts/desktopRelease.mjs pack dist app/release
+
+      # REL4: a leg hands its files on and publishes nothing. When a
+      # release follows, the publish job takes them within minutes and
+      # the release holds them for good, so a day is kept (a re-run of a
+      # failed publish); an artifacts-only run keeps its installers two
+      # weeks for whoever asked for them.
+      - name: Hand the installers on
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: |
+            app/release/*.AppImage
+            app/release/*.exe
+            app/release/*.dmg
+            app/release/latest*.yml
+            app/release/*.blockmap
+            app/release/DFO-Online-game.*
+          if-no-files-found: error
+          retention-days: ${{ needs.version.outputs.tag != '' && 1 || 14 }}
+
+  # REL4: ONE publish, and only when every leg passed - `needs: build`
+  # waits for the whole matrix, and a failed leg skips this job, so no
+  # partial release is ever cut.
+  publish:
+    needs: [version, build]
+    if: needs.version.outputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read   # REL6: the notes are the merged pull requests' own
+    env:
+      # The public repository installed copies read their releases from. Unset, it is this one.
+      # Set (vars.RELEASE_REPO), releases go there with secrets.RELEASE_TOKEN, so this repository
+      # can be private while every copy players hold still finds its updates.
+      RELEASE_REPO: ${{ vars.RELEASE_REPO || github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the notes read the merges since the previous release's tag
+          # AUDIT INSTALL L1-1: this job holds contents: write, and checkout writes its token into .git/config.
+          # Nothing in this job uses git auth, and nothing it publishes is read from the working tree.
+          persist-credentials: false
+
+      # Where a new release tag is cut. Here, at the commit the files were built from. On another
+      # repository that commit does not exist, so the tag goes on its default branch, and this
+      # repository keeps the real one (the last step).
+      - name: The release host
+        id: host
+        env:
+          GH_TOKEN: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
+        run: |
+          [[ "$RELEASE_REPO" =~ ^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$ ]] || { echo "::error::vars.RELEASE_REPO must be owner/name"; exit 1; }
+          if [ "${RELEASE_REPO,,}" = "${GITHUB_REPOSITORY,,}" ]; then
+            echo "target=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [ -n "$GH_TOKEN" ] || { echo "::error::releases go to $RELEASE_REPO, and secrets.RELEASE_TOKEN is not set"; exit 1; }
+          BRANCH=$(gh api "repos/$RELEASE_REPO" --jq .default_branch)
+          [ -n "$BRANCH" ] || { echo "::error::$RELEASE_REPO named no default branch"; exit 1; }
+          echo "target=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "elsewhere=true" >> "$GITHUB_OUTPUT"
+          echo "releases go to $RELEASE_REPO, tagged at its $BRANCH; this repository keeps the tag at $GITHUB_SHA"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Collect every leg's files
+        uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: release
+          merge-multiple: true
+
+      # BR5: a copy built before the rename asks for its download by the
+      # name it was built with (app/lib/downloads.cjs LEGACY_DOWNLOAD_FILES),
+      # so each download is published under that name too - none meets a
+      # dead link. No manifest names them; an updater reads the new name.
+      - name: Copies under the names older copies ask for
+        run: node scripts/desktopRelease.mjs alias release
+
+      # REL5: every download the site links and every manifest an updater
+      # reads, by the names app/lib/downloads.cjs promises - a set short
+      # of any one publishes nothing.
+      - name: The set is whole
+        run: node scripts/desktopRelease.mjs check release
+
+      # DA13: the update a player of the release players have now takes to this one, measured - and a release whose
+      # update is no longer the files that changed (most of the game again, or the shell's id moved with no shell file
+      # changed: every update the installer's) is not published. The first release with a game has nothing before it.
+      - name: The game's update is the files that changed
+        env:
+          GH_TOKEN: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
+        run: |
+          if PREV=$(gh api "repos/$RELEASE_REPO/releases/latest" --jq .tag_name 2>prev-error.txt); then :
+          elif grep -q 'HTTP 404' prev-error.txt; then PREV=''
+          else cat prev-error.txt >&2; exit 1
+          fi
+          if [ -n "$PREV" ] && gh api "repos/$RELEASE_REPO/releases/tags/$PREV" --jq '.assets[].name' | grep -qx 'DFO-Online-game.json.gz'; then
+            gh release download "$PREV" --repo "$RELEASE_REPO" --pattern 'DFO-Online-game.json.gz' --dir previous
+            node scripts/desktopRelease.mjs delta previous/DFO-Online-game.json.gz release/DFO-Online-game.json.gz "$PREV"
+          else
+            echo "no game on the release before (${PREV:-none}) - nothing to measure against"
+          fi
+
+      # REL6: each merged pull request's `## Patch notes`, read with this
+      # job's token. A read that fails fails the step - notes are never
+      # published as notes there were none of.
+      - name: Write the notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: node scripts/desktopRelease.mjs notes "$TAG" > release-notes.md
+
+      # AUDIT INSTALL L3-2: a tag that already has a PUBLISHED release is
+      # never re-cut in place. softprops updates an existing release rather
+      # than staging a draft (its `draft` input is ignored there) and
+      # deletes and re-uploads each file on the LIVE release - `latest`'s
+      # downloads and latest.yml gone while they upload, and an updater
+      # meeting the manifest before its installer. A draft is not published
+      # (the API answers 404 by tag).
+      # AUDIT INSTALL R2-C2: and a draft a failed run LEFT at the tag is
+      # deleted, never reused. softprops 2.6.2 cannot find a draft by tag,
+      # stages a second one, then keeps the LOWEST-id draft for the tag and
+      # deletes its own - so the old run's body and the old commit it was
+      # staged at (where publishing cuts the tag) would ship with this run's
+      # files. A draft is invisible to players; this run stages it afresh.
+      - name: The tag has no published release, and no draft left over
+        env:
+          GH_TOKEN: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          if gh api "repos/$RELEASE_REPO/releases/tags/$TAG" --silent 2>lookup-error.txt; then
+            echo "::error::$TAG is already published - a release is never re-cut in place; cut a new tag"
+            exit 1
+          fi
+          grep -q 'HTTP 404' lookup-error.txt || { cat lookup-error.txt >&2; exit 1; }
+          LEFT=$(gh api --paginate "repos/$RELEASE_REPO/releases?per_page=100" --jq '.[] | select(.draft and .tag_name == env.TAG) | .id')
+          for ID in $LEFT; do
+            gh api -X DELETE "repos/$RELEASE_REPO/releases/$ID" --silent
+            echo "deleted draft $ID, left at $TAG by an earlier run"
+          done
+
+      # AUDIT 68: target_commitish cuts a NEW tag at the commit these
+      # installers were built from. Without it GitHub cuts it at the
+      # default branch's head at upload time - main has moved on by
+      # then, and a dispatched hotfix branch's tag lands on main.
+      # REL4: a DRAFT, so nothing is visible while the files upload.
+      # The body is the patch notes; GitHub appends its generated list
+      # of merged changes beneath them, once.
+      # AUDIT INSTALL R2-B4: pinned to the commit, not a tag that can move -
+      # this is the one job holding contents: write, the builds are unsigned,
+      # and the launcher installs what the release carries before play.
+      # 3bb12739 is what v2 and v2.6.2 both named (git ls-remote, 2026-09-29).
+      - name: Stage the release as a draft, every file attached
+        id: release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          # REL8: the release is the player's update by name (the launcher's news reads it); the tag keeps the
+          # installer's number, which the updater compares
+          name: ${{ needs.version.outputs.update != '' && format('Update {0}', needs.version.outputs.update) || needs.version.outputs.tag }}
+          target_commitish: ${{ steps.host.outputs.target }}
+          repository: ${{ env.RELEASE_REPO }}
+          token: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
+          draft: true
+          body_path: release-notes.md
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: release/*
+
+      # One step from nothing to everything. It takes `latest` unless a
+      # newer release already holds it - a hand re-cut of an old build
+      # must not move every download link and updater back to it.
+      - name: Publish it whole
+        env:
+          GH_TOKEN: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+          RELEASE_ID: ${{ steps.release.outputs.id }}
+        run: |
+          # AUDIT INSTALL L3-5: only a 404 means "nothing is latest yet" - any other failure (a 5xx, a rate
+          # limit) fails the step, rather than letting a re-cut of an old build take `latest` by default
+          if CURRENT=$(gh api "repos/$RELEASE_REPO/releases/latest" --jq .tag_name 2>latest-error.txt); then :
+          elif grep -q 'HTTP 404' latest-error.txt; then CURRENT=''
+          else cat latest-error.txt >&2; exit 1
+          fi
+          MAKE_LATEST=$(node scripts/desktopRelease.mjs latest "$TAG" "$CURRENT")
+          gh api -X PATCH "repos/$RELEASE_REPO/releases/$RELEASE_ID" -F draft=false -f make_latest="$MAKE_LATEST" --silent
+          echo "published $TAG (latest: $MAKE_LATEST)"
+
+      # The next release's notes and a renote both find a release by its tag in this repository's
+      # history, so a release published elsewhere leaves its tag here too, at the commit its files
+      # were built from. A tag already here (a pushed tag started this run) is kept as it is.
+      - name: The tag here too, when the release went elsewhere
+        if: steps.host.outputs.elsewhere == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --silent 2>here-error.txt; then
+            echo "$TAG is already tagged here"
+            exit 0
+          fi
+          grep -q 'HTTP 404' here-error.txt || { cat here-error.txt >&2; exit 1; }
+          gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA" --silent
+          echo "tagged $TAG here at $GITHUB_SHA"

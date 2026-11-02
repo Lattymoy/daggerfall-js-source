@@ -1,0 +1,294 @@
+[
+  {
+    "name": "WILD-range-unscaled",
+    "file": "src/systems/wild/wildAlert.js",
+    "old": "  const d = Math.max(0, distM) * (STEALTH_MAX_DISTANCE / reachM);",
+    "new": "  const d = Math.max(0, distM);",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-complement-dropped",
+    "file": "src/systems/wild/wildAlert.js",
+    "old": "  return 100 - Math.min(100, stealthChance(d, Math.max(0, stealth | 0)));",
+    "new": "  return Math.min(100, stealthChance(d, Math.max(0, stealth | 0)));",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-edge-counted-out",
+    "file": "src/systems/wild/wildAlert.js",
+    "old": "  if (!(reachM > 0) || !(distM <= reachM)) return 0;",
+    "new": "  if (!(reachM > 0) || !(distM < reachM)) return 0;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-first-check-delayed",
+    "file": "src/systems/wild/wildAlert.js",
+    "old": "        s = { alerted: false, clock: WILD_ROLL_S, at: 0 };",
+    "new": "        s = { alerted: false, clock: 0, at: 0 };",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-clock-not-reset-out-of-reach",
+    "file": "src/systems/wild/wildAlert.js",
+    "old": "      if (!(distM <= reachM)) {\n        if (s) s.clock = WILD_ROLL_S;\n        return { alerted: false, noticed: false };\n      }",
+    "new": "      if (!(distM <= reachM)) return { alerted: false, noticed: false };",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-alert-forgotten-far",
+    "file": "src/systems/wild/wildAlert.js",
+    "old": "      if (s?.alerted) return { alerted: true, noticed: false };\n      if (!(distM <= reachM)) {",
+    "new": "      if (!(distM <= reachM)) {",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-alert-other-way-ignored",
+    "file": "src/systems/wild/wildAlert.js",
+    "old": "      const s = get(k);\n      if (s) {\n        if (!s.alerted) {\n          s.alerted = true;\n          s.at = now;\n        }\n      } else st.set(k, { alerted: true, clock: 0, at: now });",
+    "new": "      void k;\n      void now;",
+    "tests": [
+      "test/scenes/wildalert.test.js",
+      "test/systems/wild/encounterplace.test.js"
+    ]
+  },
+  {
+    "name": "WILD-checked-rolls-at-once",
+    "file": "src/systems/wild/wildAlert.js",
+    "old": "      if (!get(k)) st.set(k, { alerted: false, clock: 0, at: 0 });",
+    "new": "      if (!get(k)) st.set(k, { alerted: false, clock: WILD_ROLL_S, at: 0 });",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-stub-has-noticed",
+    "file": "src/systems/encounters.js",
+    "old": "  return foeHostile(f) && f.ai.targetIsLocalPlayer === true && (!!f.ai.detected || (f.ai.giveUpTimer ?? 0) > 0);",
+    "new": "  return foeHostile(f) && f.ai.targetIsLocalPlayer !== false && (!!f.ai.detected || (f.ai.giveUpTimer ?? 0) > 0);",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-blind-pursuit-dropped",
+    "file": "src/systems/encounters.js",
+    "old": "  return foeHostile(f) && f.ai.targetIsLocalPlayer === true && (!!f.ai.detected || (f.ai.giveUpTimer ?? 0) > 0);",
+    "new": "  return foeHostile(f) && f.ai.targetIsLocalPlayer === true && !!f.ai.detected;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-puppet-gated",
+    "file": "src/scenes/world.js",
+    "old": "  const wildGated = (f) => _wildGate && !f.puppet && !wildFoes.alerted(f)",
+    "new": "  const wildGated = (f) => _wildGate && !wildFoes.alerted(f)",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-town-foe-gated",
+    "file": "src/scenes/world.js",
+    "old": "&& !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet, f.bountyPlace);",
+    "new": "&& !!f.ai?.feet;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-stops-count-the-unaware",
+    "file": "src/scenes/world.js",
+    "old": "  const wildSeen = (foes) => (_wildGate ? foes.filter((f) => !wildGated(f)) : foes);",
+    "new": "  const wildSeen = (foes) => foes;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-on-me-not-alerted",
+    "file": "src/scenes/world.js",
+    "old": "      if (isLocalPlayerTarget(f.ai.target)) { wildFoes.alert(f, now); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-gate-always-on",
+    "file": "src/scenes/world.js",
+    "old": "    _wildGate = wildTravelling() && (modes?.mode ?? 'exterior') === 'exterior' && walkMode && playerSpawned;",
+    "new": "    _wildGate = (modes?.mode ?? 'exterior') === 'exterior' && walkMode && playerSpawned;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-reach-unbounded",
+    "file": "src/scenes/world.js",
+    "old": "reachM: f.ai.sightRadius ?? SIGHT_RADIUS, stealth, scaledDt: sdt, now, seesThrough:",
+    "new": "reachM: Infinity, stealth, scaledDt: sdt, now, seesThrough:",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-cadence-real-time",
+    "file": "src/scenes/world.js",
+    "old": "    const fx = player.feetAt(), stealth = wildStealth(), hid = concealmentFlags(playerEntity), sdt = gamePaused() ? 0 : dt * worldTimeScale(), now = performance.now() / 1000;",
+    "new": "    const fx = player.feetAt(), stealth = wildStealth(), hid = concealmentFlags(playerEntity), sdt = gamePaused() ? 0 : dt, now = performance.now() / 1000;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-band-chases-on-sight",
+    "file": "src/scenes/world.js",
+    "old": "      if (!wildBands.step(b.id, { distM: d, reachM: sight, stealth, scaledDt: sdt, now: now / 1000 }).alerted) continue;",
+    "new": "      if (d > sight) continue;",
+    "tests": [
+      "test/scenes/wildalert.test.js",
+      "test/systems/travel/tv7_bands.test.js"
+    ]
+  },
+  {
+    "name": "WILD-band-stealth-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const sdt = dt * worldTimeScale(), stealth = wildStealth();",
+    "new": "    const sdt = dt * worldTimeScale(), stealth = 0;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-unaware-foe-holds",
+    "file": "src/scenes/world.js",
+    "old": "      if (!foeAlerted(f) || !f.ai.feet || f.ai.unreachable) continue;",
+    "new": "      if (!foeHostile(f) || !f.ai.feet || f.ai.unreachable) continue;",
+    "tests": [
+      "test/systems/travel/ow6_slowdown.test.js",
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-camp-key-wrong",
+    "file": "src/scenes/world.js",
+    "old": "else if (f.campId != null) out.add(`me:${f.campId}`);",
+    "new": "else if (f.campId != null) out.add(`me:${f.id}`);",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-camp-puppet-unread",
+    "file": "src/scenes/world.js",
+    "old": "      if (f.puppet) { if (f._pupCamp) out.add(`${f.puppet}:${f._pupCamp.id}`); }",
+    "new": "      if (f.puppet) { /* unread */ }",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-mark-gone-in-travel",
+    "file": "src/scenes/world.js",
+    "old": "        if (!_wildGate && t - _wildMarkAt.get(f) > WILD_MARK_S) continue;",
+    "new": "        if (t - _wildMarkAt.get(f) > WILD_MARK_S) continue;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-mark-kept-in-play",
+    "file": "src/scenes/world.js",
+    "old": "        if (!_wildGate && t - _wildMarkAt.get(f) > WILD_MARK_S) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-mark-over-a-town-foe",
+    "file": "src/scenes/world.js",
+    "old": "        if (_inAnyLocationRect(f.ai.feet, f.bountyPlace)) continue;   // FB1029 GRAVE-PACK: a graveyard's pack is wild\n        const head = ",
+    "new": "        const head = ",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-wanderer-met-unnoticed",
+    "file": "src/scenes/world.js",
+    "old": "    if (noticed) journeyMet();",
+    "new": "    journeyMet();",
+    "tests": [
+      "test/systems/wild/encounterplace.test.js"
+    ]
+  },
+  {
+    "name": "WILD-wanderer-never-rolls",
+    "file": "src/scenes/world.js",
+    "old": "    const noticed = !fast || noticeRoll(",
+    "new": "    const noticed = true || noticeRoll(",
+    "tests": [
+      "test/systems/wild/encounterplace.test.js"
+    ]
+  },
+  {
+    "name": "WILD-pool-gate-dropped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          dropLocal: wildUnaware,",
+    "new": "          dropLocal: false,",
+    "tests": [
+      "test/scenes/wildalert.test.js",
+      "test/systems/camp1_groups.test.js"
+    ]
+  },
+  {
+    "name": "WILD-marks-uncapped",
+    "file": "src/ui/wild/wildMarks.js",
+    "old": "        .sort((a, b) => a.distance - b.distance)\n        .slice(0, WILD_MARKS_MAX);",
+    "new": "        .sort((a, b) => a.distance - b.distance);",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-mark-slot-shared",
+    "file": "src/ui/wild/wildMarks.js",
+    "old": "    if (slot.k.key != null && wantKeys.has(slot.k.key) && !held.has(slot.k.key)) held.set(slot.k.key, slot);",
+    "new": "    if (false) held.set(slot.k.key, slot);",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-marks-frame-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      wildMarksFrame(proj, view, mwv.eye);   // WILD-ALERT: the \"!\" over an alerted foe\n",
+    "new": "",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  },
+  {
+    "name": "WILD-marks-watchdog-unarmed",
+    "file": "src/ui/wild/wildMarks.js",
+    "old": "  watch(want.length > 0, timers);\n  if (!root) {",
+    "new": "  if (!root) {",
+    "tests": [
+      "test/scenes/wildalert.test.js"
+    ]
+  }
+]

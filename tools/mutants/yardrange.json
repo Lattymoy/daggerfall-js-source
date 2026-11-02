@@ -1,0 +1,102 @@
+[
+  {
+    "name": "YARD-RANGE-default",
+    "file": "src/net/yardRange.js",
+    "old": "export const YARD_RANGE_DEFAULT = YARD_DRAW_M;",
+    "new": "export const YARD_RANGE_DEFAULT = 150;",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "the default nearer than every yard was drawn"
+  },
+  {
+    "name": "YARD-RANGE-tiers",
+    "file": "src/net/yardRange.js",
+    "old": "[0, 75, 150, YARD_DRAW_M]",
+    "new": "[75, 150, YARD_DRAW_M]",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "no Off"
+  },
+  {
+    "name": "YARD-RANGE-angle",
+    "file": "src/scenes/homeYards.js",
+    "old": "export const YARD_MIN_ANGLE = 1 / 300;",
+    "new": "export const YARD_MIN_ANGLE = 1 / 30;",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "pieces cut while plainly seen"
+  },
+  {
+    "name": "YARD-RANGE-comparison",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  return half >= d * minAngle;",
+    "new": "  return half > d * minAngle * 1.5;",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "the bound moved"
+  },
+  {
+    "name": "YARD-RANGE-flats-uncut",
+    "file": "src/scenes/homeYards.js",
+    "old": "      for (const y of yards.values()) if (nearEye(y, eye)) y.pool.batchesSeen(",
+    "new": "      for (const y of yards.values()) if (true) y.pool.batchesSeen(",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "every standing yard's flats, as before"
+  },
+  {
+    "name": "YARD-RANGE-stranger-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "y.kept ? YARD_DRAW_M : range());",
+    "new": "y.kept ? YARD_DRAW_M : YARD_DRAW_M);",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "the choice never read"
+  },
+  {
+    "name": "YARD-RANGE-own-cut",
+    "file": "src/scenes/homeYards.js",
+    "old": "y.kept ? YARD_DRAW_M : range());",
+    "new": "range());",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "my own yard cut by the choice"
+  },
+  {
+    "name": "YARD-RANGE-size-uncut",
+    "file": "src/scenes/homeYards.js",
+    "old": "const seenCull = (box) => (_eye && !decorBoxSeen(box, _eye, YARD_MIN_ANGLE) ? DECOR_SKIP :",
+    "new": "const seenCull = (box) => (false ? DECOR_SKIP :",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "a cup drawn at any distance"
+  },
+  {
+    "name": "YARD-RANGE-off-stands",
+    "file": "src/scenes/homeYards.js",
+    "old": "        if (!homeOutsideKept(home) && range() === 0) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "Off still stands a stranger's yard (solid, lit)"
+  },
+  {
+    "name": "YARD-RANGE-sig-remade",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (pieces && pieces !== y.src) {",
+    "new": "if (pieces) {",
+    "tests": [
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "every piece of every town stringified every sync, as before"
+  }
+]

@@ -1,0 +1,439 @@
+// ═══════════════════════════════════════════════════════════════════
+// U57 — THE OTHER SIDE OF THE PACK: which list is the remote one,
+// what opening the window decides, and what closing it owes the
+// world.
+//
+// U56 took DFU's TransferItem out of the classic window because a
+// second screen needed the same rungs. This is the rest of that
+// sentence: a transfer needs somewhere to transfer TO, and choosing
+// that is its own small pile of DaggerfallInventoryWindow members -
+// OnPush's default target, SetChooseOne, CheckWagonAccess, ShowWagon,
+// WagonButton_OnMouseClick, OnPop - every one of which the enhanced
+// pack's remote pane needs and none of which it should read twice.
+//
+// ── WHAT IS LAW HERE AND WHAT IS NOT ─────────────────────────────
+//
+// Where a button sits, what the pane looks like, whether the wagon is
+// a tab or a toggle: not law, and not here. What IS: the ORDER of the
+// remote target's three claims, the two refusals the wagon button can
+// give and which comes first, the on-open arm that lands a dungeon
+// player straight on their cart, and the fact that closing MINTS the
+// session's drop pile.
+//
+// ROAD-G G5 added the DROP ICON to that list: which flat the pile you
+// are filling will wear, the three clicks that cycle it, and the fact
+// that changing it on a pile you own re-mints that pile.
+//
+// That last one is here for AUDIT B-C1's reason. Handing off to
+// another window replaces the port's single overlay slot WITHOUT
+// closing the inventory, so the port skipped both effects and a
+// session drop was silently LOST - items gone from the bag and never
+// on the ground. A screen that forgets this does not look broken; it
+// looks like the player misremembered picking something up.
+// ═══════════════════════════════════════════════════════════════════
+
+import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './loot/lootDataTables.js';
+import { STORAGE_CONTEXT } from './horse/horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
+import { localizedText, t } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { BAG_CAPACITY, BAG_WORDS, hasBag } from '../net/bagLaw.js';   // BAG1: the Materials Bag, a second list as the wagon is
+import { activeWagonItem } from './wagon/wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
+import { wildStoreRefusal } from './wild/wildStoreLock.js';   // AUDIT PVP-EASE L2-1: the combat lock on storing (a leaf - the account Worker bundles this law)
+
+/** ItemGroups.Transportation.Small_cart's template index. */
+export const SMALL_CART_TEMPLATE = 93;
+/** DungeonWagonAccessProximityCheck's radius (:1102). */
+export const WAGON_ACCESS_DISTANCE = 5;
+/** Internal_Strings "noWagon" (:1237). */
+export const NO_WAGON_TEXT = "You don't own a wagon.";
+/** `exitTooFar` (:1239) - Internal_Strings.csv:847, verbatim. */
+export const EXIT_TOO_FAR_TEXT = 'The exit is too far away for you to access your wagon.';
+
+/** Why the wagon did not open. Same shape as itemTransfer's REFUSAL
+ *  so one renderer answers both, and separate from it because these
+ *  are a BUTTON's refusals rather than a transfer's - DFU has them in
+ *  different members and they refuse different things. L10N3d: each
+ *  `text` is read in the player's language when the box asks for it. */
+export const WAGON_REFUSAL = Object.freeze({
+  noWagon: { reason: 'noWagon', get text() { return localizedText('noWagon', NO_WAGON_TEXT); } },
+  exitTooFar: { reason: 'exitTooFar', get text() { return localizedText('exitTooFar', EXIT_TOO_FAR_TEXT); } },
+});
+
+/** RPT1026-CHESTGOLD (a private report): A WINDOW OVER A STORE THAT SETTLES ITS OWN PIECES SHOWS THAT STORE ALONE - the
+ *  shared chest's (`loot.commit`, systems/decor/decorGrants.js openSharedChest), whose pack is the window's own copy until
+ *  the close. The wagon and the Materials Bag are the character's lists: a piece moved between them and that copy was in
+ *  the pack and in the bag (or the wagon) at once, and a move through the chest's door parked one of the chest's own rows
+ *  on the pack. Refused in both skins' ladders until the chest is shut. */
+export const settlesOwnPieces = (deps = {}) => typeof deps.loot?.commit === 'function';
+export const CHEST_ALONE_REFUSAL = Object.freeze({ reason: 'chestAlone', get text() { return t('inventory.store.chestAlone', 'Shut the chest before you open your wagon or your bag.'); } });
+/** AUDIT RPT1026 B1: AND ITS PACK CHANGES BY THE CHEST'S DOOR ALONE. The window's pack is its copy until the close, and the
+ *  chest's list the window's until the settle, so an act that took a piece out of either - a Use (a potion drunk, a meal
+ *  eaten), a Salvage, the batch's, a Dismantle - took it out of that list alone: the character's pack (or the chest's bin)
+ *  kept it, and what the act gave landed in the copy, onto a stack the character's pack shares (a salvage's shards). Any
+ *  consumable used for free, and shards and stones out of nothing, at every opening of a chest the player shares even
+ *  with nobody. AUDIT RPT1026 B4: and a piece taken this window is not worn from the pack either - the Equip-mode take's
+ *  law, which a Remove and then a Wear walked round: the doll wore a piece the chest still held. Refused in both skins
+ *  until the chest is shut; `wear` asks of one piece, and the character's own may be worn. */
+export const CHEST_ACT_REFUSAL = Object.freeze({ reason: 'chestAct', get text() { return t('inventory.store.chestAct', 'Shut the chest before you do that.'); } });
+export function chestActRefusal(deps = {}, { wear = false, item = null } = {}) {
+  if (!settlesOwnPieces(deps)) return null;
+  return wear && (deps.entity?.items ?? []).includes(item) ? null : CHEST_ACT_REFUSAL;
+}
+
+/** Items.Contains(Transportation, Small_cart) (:1236). The CART IS IN
+ *  THE BAG, which is why AUDIT 24 ui matters: dropping it into its own
+ *  wagon would lock the player out of the wagon now holding it, and
+ *  itemTransfer's transport block is what stops that. */
+export const hasCart = (items = []) =>
+  (items ?? []).some((it) => it?.templateIndex === SMALL_CART_TEMPLATE);
+
+/** ItemGroups.Transportation.Horse's template index. */
+export const TRANSPORT_HORSE_TEMPLATE = 94;
+
+/** PX21a: the same question for a mount. There was no law for this
+ *  because nothing asked before - the travel law takes `hasHorse` as an
+ *  OPTION its caller works out, and the pack had no place for a horse
+ *  at all. One home for both, so the pack, the travel card and anything
+ *  after them read the same answer. */
+export const hasHorse = (items = []) =>
+  (items ?? []).some((it) => it?.templateIndex === TRANSPORT_HORSE_TEMPLATE);
+
+/** The ITEM behind either answer, for a window that wants to draw it -
+ *  its name, its icon. Null when there is none. `kind` is 'mount' or
+ *  'cart', the words the UI uses; the template indices stay here.
+ *  CART-SLOT (FIELD BUGS 2026-10-11b, the Discord's "The caravan became a
+ *  cart after the update"): the cart is the wagon DRIVEN (wagonKinds.js
+ *  activeWagonItem, the best owned) - every wagon is the Small Cart's
+ *  template, and the first of them was a Small Cart kept beside a Caravan
+ *  bought after it (WAGONS1), so the cell named the cart the world did not
+ *  drive. */
+export function transportItem(items = [], kind) {
+  if (kind !== 'mount') return activeWagonItem(items ?? []);
+  return (items ?? []).find((it) => it?.templateIndex === TRANSPORT_HORSE_TEMPLATE) ?? null;
+}
+
+/**
+ * What OPENING the window decides, before the player touches
+ * anything. Pure: it reads the hook bag and answers, so a screen can
+ * seed itself from this rather than re-deriving three flags.
+ *
+ * @returns {{mode:'remove'|'equip', usingWagon:boolean,
+ *            allowDungeonWagonAccess:boolean, chooseOne:object|null}}
+ */
+export function openState(deps = {}) {
+  const chooseOne = deps.chooseOne ?? null;
+  // selectedActionMode: Remove for loot targets, Equip otherwise -
+  // and a reward list is a Remove target too, because taking is the
+  // only thing that list is for (SetChooseOne :259-264).
+  let mode = deps.loot || chooseOne ? 'remove' : 'equip';
+  // CheckWagonAccess (:1082-1097): the cart in the bag AND the player
+  // within WAGON_ACCESS_DISTANCE of an exit door. Decided ON OPEN, so
+  // walking away from the door mid-window does not revoke it.
+  // NT3 (F161): CheckWagonAccess has TWO branches and only the first
+  // selects Remove - the arm where the flag was PRE-SET by the
+  // EXIT-DOOR PROMPT flow (:1084-1088; AUDIT 28 W2c landed that
+  // producer: PlayerActivate's "access the wagon?" box at a dungeon
+  // exit, whose Yes calls AllowDungeonWagonAccess() and opens the
+  // inventory). Mere PROXIMITY (:1089-1096) only shows the wagon and
+  // leaves the action mode at OnPush's default, so a plain F6 near the
+  // exit with a cart still EQUIPS on a local click. A loot target
+  // outranks the wagon show: the corpse you just opened is what you meant.
+  // HCC: TrailingWagonInventoryWindow.OnPush / ApplyOpeningAccess [IL_abb8, IL_ac9c] - with Horse Cart and Cargo on,
+  // the runtime decides whether the wagon may show: a dungeon-exit request asks CanAccessWagonFromDungeonExit and a
+  // refusal is a message box over the window; a selection request (a physical activation of the wagon) or a plain
+  // open asks CanAccessWagonInventory; DFU's own dungeon-wagon path is closed (`allowDungeonWagonAccess = false`).
+  // AUDIT HCC I1: OnPush [IL_abb8-IL_abcf] reads the exit request as `IsPlayerInsideDungeon && allowDungeonWagonAccess`
+  // - the flag alone is not one. Eye Of The Beholder's cart raises the same flag OUTDOORS (EOTB_WAGON_PACK), and
+  // read as an exit request it asked CanAccessWagonFromDungeonExit on open ground: "Your wagon is too far from the
+  // entrance." and no wagon. DFU's own OnPush runs FIRST (base.OnPush, CheckWagonAccess) and shows the wagon when
+  // the flag is set; ApplyOpeningAccess [IL_ac9c] then keeps it only if the runtime allows, selects it for a
+  // selection or an exit request with no loot open, and boxes the refusal of an exit request alone.
+  const rt = deps.horseCart?.() ?? null;
+  const selectWagon = !!rt?.consumeWagonSelectionRequest?.();
+  if (rt) {
+    const exitRequest = !!(deps.dungeon?.wagonPrompt && deps.dungeon?.inside);
+    const d = rt.canAccessWagonStorage(exitRequest ? STORAGE_CONTEXT.DungeonExitSelection : STORAGE_CONTEXT.NormalInventory);
+    if (exitRequest && !d.allowed) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };
+    const baseShown = !!deps.dungeon?.wagonPrompt;   // CheckWagonAccess's show, before the mod's pass
+    const usingWagon = d.allowed && (baseShown || ((selectWagon || exitRequest) && !deps.loot));
+    return { mode: usingWagon ? 'remove' : mode, usingWagon, allowDungeonWagonAccess: false, dungeonExitAccessGranted: exitRequest && d.allowed, chooseOne };
+  }
+  if (deps.dungeon?.wagonPrompt) return { mode: 'remove', usingWagon: true, allowDungeonWagonAccess: true, chooseOne };
+  const allowDungeonWagonAccess = !!(
+    deps.dungeon?.inside && hasCart(deps.items?.() ?? []) && deps.dungeon?.nearExit?.()
+  );
+  let usingWagon = false;
+  if (allowDungeonWagonAccess && !deps.loot) usingWagon = true;
+  return { mode, usingWagon, allowDungeonWagonAccess, chooseOne };
+}
+
+/**
+ * WHICH LIST IS THE REMOTE ONE, in DFU's order of claims. The port
+ * derives it rather than storing it, so DFU's lastRemoteItems
+ * save/restore around ShowWagon collapses into this read.
+ *
+ * The order is the law: the WAGON outranks everything while it is
+ * showing (that is what the toggle means), a choose-one reward list
+ * outranks the ground, and OnPush's default target is the session's
+ * dropped items when no container opened the window.
+ */
+export function remoteTarget(deps = {}, state = {}) {
+  // BAG1: the Materials Bag outranks everything while it is showing, as the wagon does - the two never show together
+  // (planBagToggle hides the wagon, planWagonToggle's caller hides the bag)
+  if (state.usingBag) return deps.bagItems?.() ?? [];
+  if (state.usingWagon) return deps.wagonItems?.() ?? state.wagonLocal ?? [];
+  if (state.chooseOne) return state.chooseOne.items;
+  return deps.loot ? deps.loot.items() : state.dropped;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ROAD-G G5 - THE DROP ICON: which flat the pile you are filling will
+// wear, and the three clicks that change it.
+//
+// AUDIT 58 shipped the two target-icon panels and RECORDED these arms
+// as unreachable, because the port's loot hook was `{ items() }` and
+// carried no flat identity. It carries one now (playerOwned,
+// textureArchive, textureRecord, pos - DaggerfallLoot's own fields),
+// so the whole of UpdateRemoteTargetIcon (:865-890), the three cycling
+// handlers (:2104-2146) and OnPop's icon arm (:689-712) are law here.
+// ═══════════════════════════════════════════════════════════════════
+
+/** HOUSE-DROP (2026-09-27, Mac relaying reports: "In houses, players can drop items and the owner cannot see them";
+ *  asked, "Block visitor drops"): the host's word against a drop, asked only when the destination IS the ground - the
+ *  session's dropped list, or a pile the player dropped before (DaggerfallLoot.playerOwned) - never a wagon, a chest, a
+ *  corpse or a merchant. Null: the ground takes it. */
+export function groundRefusalOf(deps = {}, state = {}) {
+  if (state.usingWagon || state.usingBag || state.chooseOne) return null;   // BAG1: the bag is no floor
+  if (deps.loot && !deps.loot.playerOwned) return null;
+  return deps.dropRefusal?.() ?? null;
+}
+
+/** AUDIT PVP-EASE L2-1 (the owner chose "Combat lock"): the word against STORING, asked only when the destination is
+ *  storage no death in the open zone takes - the wagon, or a list the host marks `storage` (a companion's pack, a ship's
+ *  hold, a chest) - never the ground, a corpse, a merchant or a choose-one list; the host's own word if it has one, else
+ *  the zone's combat lock (systems/wild/wildStoreLock.js wildStoreRefusal). Taking out is never asked. Null: stored. */
+export function storeRefusalOf(deps = {}, state = {}) {
+  if (state.chooseOne || (!state.usingWagon && deps.loot?.storage !== true)) return null;
+  return deps.storeRefusal ? deps.storeRefusal() ?? null : wildStoreRefusal();
+}
+
+/** COMPANION-WEIGHT (2026-10-01): the destination's own weight limit when it is a storage with one - a companion's pack
+ *  carries what a person of his strength can (the host's `loot.capacity`) - asked only when the remote list IS that
+ *  storage, never the wagon (WagonCanHoldAmount's own 750), the ground or a choose-one list. Null: no limit.
+ *  `{ kg, name }` - the limit, and whose it is for the refusal's words. */
+export function storeCapacityOf(deps = {}, state = {}) {
+  if (state.usingBag) return BAG_CAPACITY;   // BAG1: the bag's own limit, under the companion's pack's law
+  if (state.usingWagon || state.chooseOne || !deps.loot) return null;
+  const cap = deps.loot.capacity?.();
+  return cap && Number.isFinite(cap.kg) ? cap : null;
+}
+
+/** RemoteTargetTypes (:213-219), in the enum's own order. */
+export const REMOTE_TARGET_TYPES = Object.freeze({
+  Dropped: 0, Wagon: 1, Loot: 2, Merchant: 3,
+  Bag: 4,   // BAG1: the port's own, after DFU's four (Ledger A) - the Materials Bag
+});
+
+/** The port derives `remoteTargetType` from the same three claims
+ *  `remoteTarget` derives the LIST from, and in the same order:
+ *  ShowWagon assigns Wagon (:1047-1055), SetChooseOne's remote list is
+ *  the Merchant one (:259-264 with :595-598), a lootTarget is Loot
+ *  (:609-613) and OnPush's default is Dropped (:601-606). */
+export function remoteTargetType(deps = {}, state = {}) {
+  if (state.usingBag) return REMOTE_TARGET_TYPES.Bag;   // BAG1
+  if (state.usingWagon) return REMOTE_TARGET_TYPES.Wagon;
+  if (state.chooseOne) return REMOTE_TARGET_TYPES.Merchant;
+  return deps.loot ? REMOTE_TARGET_TYPES.Loot : REMOTE_TARGET_TYPES.Dropped;
+}
+
+/** STOLEN-GOODS (FIELD BUGS 2026-10-16b): THE OWNER'S KEEPING while the remote list showing is someone else's goods - the
+ *  host's `loot.stolenFrom`, the Set of the records the target held as its window opened (a shut shop's shelf, a
+ *  stranger's cupboard: scenes/worldModes.js; a robbed caravan's goods: scenes/world.js) - asked only while that list IS
+ *  the loot target, never the wagon, the bag or a reward tray; else null. A take of the owner's piece from it is a theft
+ *  (itemTransfer.js applyTransfer's `stolenFrom`), the owner's piece put back is theirs again (`returnTo`) - AUDIT S1: the
+ *  player's own piece through it is neither (systems/stolenGoods.js takenFromKeeping). */
+export function theftTarget(deps = {}, state = {}) {
+  const keeping = deps.loot?.stolenFrom;
+  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot && keeping instanceof Set ? keeping : null;
+}
+
+/** dropIconIdxs[archive][texture] - the RECORD a cycling index names.
+ *  Null for an archive with no list and for the -1 "no chosen icon"
+ *  index, which is what OnPush leaves when nothing was picked. */
+export function dropIconRecord(archive, texture) {
+  const idxs = DROP_ICON_IDXS.get(archive);
+  if (!idxs || texture < 0 || texture >= idxs.length) return null;
+  return idxs[texture];
+}
+
+/** GetNextArchive (:2148-2157), verbatim including its wrap: walk the
+ *  keys, answer the one AFTER the current archive, and fall out of the
+ *  loop to `.Keys.First()` - which is what the LAST archive gets, and
+ *  what an archive that is not a key at all gets. */
+export function nextDropArchive(archive) {
+  let next = false;
+  for (const ai of DROP_ICON_IDXS.keys()) {
+    if (next) return ai;
+    next = (ai === archive);
+  }
+  return DROP_ICON_IDXS.keys().next().value;
+}
+
+/** OnPush's drop-icon seed (:593-631). The chooseOne arm picks the
+ *  combat archive's twelfth icon; everything else starts on the random
+ *  treasure archive with NO chosen icon (-1); and a playerOwned loot
+ *  target with a flat of its own then overrides the archive and hunts
+ *  its record down the list to recover the index the player last
+ *  picked. A record the list does not carry leaves the index where the
+ *  arm above put it - DFU's own fall-through. */
+export function openDropIcon(deps = {}, chooseOne = null) {
+  let archive, texture;
+  if (chooseOne) { archive = DROP_ICON_ARCHIVES.combat; texture = 11; }
+  else { archive = RANDOM_TREASURE_ARCHIVE; texture = -1; }
+  const loot = deps.loot;
+  if (loot && loot.playerOwned && (loot.textureArchive ?? 0) > 0) {
+    archive = loot.textureArchive;
+    const idxs = DROP_ICON_IDXS.get(archive);
+    if (idxs) {
+      for (let i = 0; i < idxs.length; i++) {
+        if (idxs[i] === loot.textureRecord) { texture = i; break; }
+      }
+    }
+  }
+  return { archive, texture };
+}
+
+/** CanChangeDropIcon (:2140-2144): the session's own dropped pile, or
+ *  a loot target the player owns. A shop shelf, a corpse, someone
+ *  else's furniture and the wagon all refuse. */
+export function canChangeDropIcon(deps = {}, state = {}) {
+  const t = remoteTargetType(deps, state);
+  return t === REMOTE_TARGET_TYPES.Dropped
+    || (t === REMOTE_TARGET_TYPES.Loot && !!deps.loot?.playerOwned);
+}
+
+/** The three cycling handlers' arithmetic (:2104-2138). `by` is +1 for
+ *  the left click, -1 for the right; 0 is the MIDDLE click, which
+ *  takes the next archive and resets the icon to its first. */
+export function cycleDropIcon({ archive, texture }, by) {
+  if (by === 0) return { archive: nextDropArchive(archive), texture: 0 };
+  const len = DROP_ICON_IDXS.get(archive)?.length ?? 0;
+  let t = texture + by;
+  if (by > 0 && t >= len) t = 0;
+  if (by < 0 && t < 0) t = len - 1;
+  return { archive, texture: t };
+}
+
+/**
+ * WagonButton_OnMouseClick's ladder (:1234-1243), minus its sound -
+ * which is the CALLER's, once, whichever arm ran. AUDIT 24 ui: the
+ * port used to play a second click inside the toggle arm, so the
+ * wagon button fired two overlapping ButtonClicks where every other
+ * button fires one.
+ *
+ * @returns {{ok:true, usingWagon:boolean}|{ok:false, refusal:object}}
+ */
+export function planWagonToggle(deps = {}, state = {}) {
+  if (!state.usingWagon && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD
+  // HCC: TrailingWagonInventoryWindow.WagonButton_OnMouseClick [IL_ad28] - showing, the click hides; hidden, the
+  // runtime's CanAccessWagonFromDungeonExit (a granted dungeon-exit request) or CanAccessWagonInventory decides,
+  // and a refusal is its own message. DFU's noWagon / exitTooFar ladder is the runtime's now.
+  const rt = deps.horseCart?.() ?? null;
+  if (rt) {
+    if (state.usingWagon) return { ok: true, usingWagon: false };
+    const d = rt.canAccessWagonStorage(state.dungeonExitAccessGranted && deps.dungeon?.inside ? STORAGE_CONTEXT.DungeonExitSelection : STORAGE_CONTEXT.NormalInventory);
+    if (!d.allowed) return { ok: false, refusal: { reason: 'horseCart', text: d.denialMessage } };
+    return { ok: true, usingWagon: true };
+  }
+  if (!hasCart(deps.items?.() ?? [])) return { ok: false, refusal: WAGON_REFUSAL.noWagon };
+  // The proximity check only speaks INSIDE a dungeon; outdoors the
+  // cart is simply there.
+  if (deps.dungeon?.inside && !state.allowDungeonWagonAccess) {
+    return { ok: false, refusal: WAGON_REFUSAL.exitTooFar };
+  }
+  return { ok: true, usingWagon: !state.usingWagon };
+}
+
+/** BAG1: whether a pack holds a Materials Bag (net/bagLaw.js hasBag, the one spelling). */
+export const hasMaterialsBag = (items = []) => hasBag(items);
+/** BAG1: THE BAG BUTTON's ladder - the wagon button's, for the bag: no bag refuses in its words; showing, the click hides
+ *  it; hidden, it shows - anywhere: the bag is on the player's back, not parked at a door. Showing it hides the wagon.
+ *  @returns {{ok:true, usingBag:boolean, usingWagon:boolean}|{ok:false, refusal:object}} */
+export function planBagToggle(deps = {}, state = {}) {
+  if (!hasMaterialsBag(deps.items?.() ?? [])) return { ok: false, refusal: { reason: 'noBag', text: BAG_WORDS.none } };
+  if (!state.usingBag && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD
+  // AUDIT BAG1 H1: never over a reward tray - a choice up makes every piece taken from the side window the claim, and a
+  // log taken out of the bag was the smith's gift chosen
+  if (state.chooseOne && !state.usingBag) return { ok: false, refusal: { reason: 'reward', text: BAG_WORDS.reward } };
+  const usingBag = !state.usingBag;
+  return { ok: true, usingBag, usingWagon: usingBag ? false : !!state.usingWagon };
+}
+
+/**
+ * OnPop, the part that is not presentation: the session's dropped
+ * items mint their world pile and the container releases. AUDIT B-C1
+ * is the whole reason this is a function rather than two lines at the
+ * end of a close handler - it has to run on a HAND-OFF too, where the
+ * window is being replaced rather than closed.
+ */
+/** The chest's own save, if closing it has to wait for the service. Null when the window can go at once. */
+export function lootFinish(loot) {
+  const pending = loot?.finish?.();
+  return pending && typeof pending.then === 'function' ? pending : null;
+}
+
+/** A veil over the game until `lootFinish` settles. Returns the remover. */
+export function chestSaveVeil(text) {
+  if (typeof document === 'undefined' || !document.body) return () => {};
+  const veil = document.createElement('div');
+  veil.setAttribute('data-chest-save', '');
+  veil.textContent = text || 'Saving...';
+  veil.style.cssText = 'position:fixed;inset:0;z-index:39;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#e8dcc0;font:18px serif;pointer-events:all';
+  document.body.append(veil);
+  return () => veil.remove();
+}
+
+/** A second close while the chest is saving does nothing. The real close runs once the save has answered. */
+export function holdChestSave(gate, loot, again) {
+  if (gate?.saving) return true;
+  if (gate?.saved) return false;
+  const pending = lootFinish(loot);
+  if (!pending) return false;
+  gate.saving = true;
+  const clear = chestSaveVeil(loot?.busy);
+  pending.finally(() => { clear(); gate.saving = false; gate.saved = true; again(); });
+  return true;
+}
+
+export function closeSession(deps = {}, state = {}) {
+  const loot = deps.loot;
+  const icon = state.dropIcon ?? null;
+  // OnPop's icon arm (:689-694): "If icon has changed move items to
+  // dropped list so this loot is removed and a new one created."
+  // ItemCollection.TransferAll EMPTIES the source, which is what makes
+  // the old pile release and a new one mint at the same spot below.
+  // With NO icon chosen (texture -1) dropIconRecord answers null and
+  // the comparison is true - DFU indexes `[-1]` here and would throw;
+  // an icon that is not in the archive's list cannot be "unchanged".
+  if (loot && loot.playerOwned && (loot.textureArchive ?? 0) > 0 && icon
+    && (loot.textureArchive !== icon.archive
+      || loot.textureRecord !== dropIconRecord(icon.archive, icon.texture))) {
+    const from = loot.items();
+    state.dropped.push(...from);
+    from.length = 0;
+  }
+  if (state.dropped?.length) {
+    // CreateDroppedLootContainer's two calls (:700-707): the chosen
+    // archive/record when one was picked, and the bare call - which
+    // rolls a randomTreasureIconIndices record - when none was. And
+    // (:710-714) a container minted over a loot target keeps that
+    // target's x and z, taking only its own y.
+    const record = icon ? dropIconRecord(icon.archive, icon.texture) : null;
+    deps.onDrop?.(state.dropped,
+      record == null ? null : { archive: icon.archive, record },
+      loot?.pos ?? null);
+  }
+  // OUTDOOR-LOOT (DESIGN 3.6): and a container that shares its list is told its window is gone - once, on a hand-off as on a
+  // close, both skins (ui/inventoryDoor.js tells it the window stood). It reads what the window moved and composes again.
+  try { loot?.closed?.(); } catch (e) { console.warn(`[loot] a container's close threw: ${e?.message ?? e}`); }   // the window is gone whatever it says: onClose below always runs
+  deps.onClose?.();
+}

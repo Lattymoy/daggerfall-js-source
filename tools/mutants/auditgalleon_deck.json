@@ -1,0 +1,426 @@
+[
+  {
+    "name": "AUDIT-GALLEON-D1-any-piece-floor",
+    "file": "src/scenes/world.js",
+    "old": "deck.keep(local[0], local[2], was ? was[1] : local[1], piece, local);",
+    "new": "if (Number.isNaN(floor)) deck.clamp(local[0], local[2], local); else local[1] = floor;",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "the floor nearest its height at any distance from any piece again: a boarder on the port flight dropped onto her great cabin's floor, a foe in her cabin lifted onto a tread or her castle's roof"
+  },
+  {
+    "name": "AUDIT-GALLEON-D1-piece-filter-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "        if (p >= 0 && more.piece[n] !== p) continue;\n        const e = Math.abs(more.y[n] - h);",
+    "new": "        const e = Math.abs(more.y[n] - h);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/auditnav2_deck.test.js",
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "heightAt asked for a piece's floor answers any piece's - the leash sets a body on another piece's floor"
+  },
+  {
+    "name": "AUDIT-GALLEON-D1-open-deck-in-every-piece",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "    let best = p > 0 ? NaN : y[j],",
+    "new": "    let best = y[j],",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/auditnav2_deck.test.js",
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "her open deck's floor read as her cabin's - a foe in her cabin snapped up onto the tread or the roof over him"
+  },
+  {
+    "name": "AUDIT-GALLEON-D2-rail-at-no-level",
+    "file": "src/scenes/world.js",
+    "old": "const at = deck.rail(side, t[2] + (i - (k - 1) / 2) * NAVAL_RAIL_GAP, undefined, mainLevel(deck)), cell",
+    "new": "const at = deck.rail(side, t[2] + (i - (k - 1) / 2) * NAVAL_RAIL_GAP), cell",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a party abeam her castle over her flights' treads and her castle's roof again"
+  },
+  {
+    "name": "AUDIT-GALLEON-D2-landing-a-clamp",
+    "file": "src/scenes/world.js",
+    "old": "    return navalDeckPoint(boat, deck, deck.land(local[0], local[2], local[1]));",
+    "new": "    return navalDeckPoint(boat, deck, deck.clamp(local[0], local[2]));",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "the landing her deck's nearest cell at any level again - a tread, her castle's roof, the Carrack's forecastle"
+  },
+  {
+    "name": "AUDIT-GALLEON-D2-land-any-level",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "          if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue; // (NaN off her deck: never within)",
+    "new": "          if (Number.isNaN(y[c])) continue; // (NaN off her deck: never within)",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GALLEON-D2-land-fallback-any-level",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      if (j < 0) j = nearestCell(x, z, 0, lv, DECK_FLOOR);",
+    "new": "      if (j < 0) j = nearestCell(x, z, 0);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a landing where his row holds no main-deck cell (abeam her castle) the nearest cell of any level - her castle's roof, a flight's tread"
+  },
+  {
+    "name": "AUDIT-GALLEON-D2-land-a-step-band",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "          if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue; // (NaN off her deck: never within)",
+    "new": "          if (!(Math.abs(y[c] - lv) <= DECK_STEP)) continue; // (NaN off her deck: never within)",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "her main deck's band, a step: her flights' foot tread (0.29 m up) in it - a landing aft of it set down on her second tread"
+  },
+  {
+    "name": "AUDIT-GALLEON-D2-own-floor-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      if (Math.abs(on - h) <= DECK_STEP) {\n        out[0] = x;\n        out[1] = on;\n        out[2] = z;\n        return out;\n      }\n      const lv = mainLevel(deck),",
+    "new": "      const lv = mainLevel(deck),",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a body already on her castle's roof or a tread put down on her main deck"
+  },
+  {
+    "name": "AUDIT-GALLEON-D2-ring-level-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "    if (Number.isNaN(h) || Math.abs(h - ringLevel) > ringBand) return; // (no level asked: NaN, never over)",
+    "new": "    if (Number.isNaN(h)) return; // (no level asked: NaN, never over)",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "the nearest cell at any level: the landing and the lookout's bow off her main deck"
+  },
+  {
+    "name": "AUDIT-GALLEON-D3-feet-own-cell",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "DECK_REACH_M : CAPSULE_RADIUS);",
+    "new": "DECK_REACH_M : 0);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "under her main deck the feet's own cell alone: a man between her guns, on a gun, on her mast's step ashore"
+  },
+  {
+    "name": "AUDIT-GALLEON-D3-twice-a-body",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "DECK_REACH_M : CAPSULE_RADIUS);",
+    "new": "DECK_REACH_M : 2 * CAPSULE_RADIUS);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a reach past the body's own reads the water and a quay round her hull aboard"
+  },
+  {
+    "name": "AUDIT-GALLEON-D4-bow-whole-deck",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "deck.nearest(0, mainExt[1] - LOOKOUT_BACK, main)",
+    "new": "deck.nearest(0, deckExtentZ(deck)[1] - LOOKOUT_BACK)",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "her whole deck's stem: the Carrack's lookout on her forecastle"
+  },
+  {
+    "name": "AUDIT-GALLEON-D4-bow-any-level",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "deck.nearest(0, mainExt[1] - LOOKOUT_BACK, main)",
+    "new": "deck.nearest(0, mainExt[1] - LOOKOUT_BACK)",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "her main deck's stem's nearest cell at any level: the Carrack's stair, 5.59 m up"
+  },
+  {
+    "name": "AUDIT-GALLEON-D4-nearest-level-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      const j = nearestCell(x, z, 0, level);",
+    "new": "      const j = nearestCell(x, z, 0);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GALLEON-D4-onto-a-man-at-her-bow",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "        if (members.some((o) => o !== m && !o.gone && !o.below && Math.hypot(o.pos[0] - bow[0], o.pos[2] - bow[2]) < 0.6)) { m.t = within(rng, CREW_IDLE_S) * 0.25; return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/auditnav2_crew.test.js"
+    ],
+    "why": "her lookout walks onto a hand standing at her bow, now her main deck's"
+  },
+  {
+    "name": "AUDIT-GALLEON-D5-corner-steps",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "    [0, -1],\n    [-1, 0],\n    [1, 0],\n    [0, 1],",
+    "new": "    [-1, -1],\n    [0, -1],\n    [1, -1],\n    [-1, 0],\n    [1, 0],\n    [-1, 1],\n    [0, 1],\n    [1, 1],",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a corner step in keepFlights' search again: a flight turning on its landing kept as nodes of no piece's"
+  },
+  {
+    "name": "AUDIT-GALLEON-D5-flight-unlinked",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "          const b = joined(kk * nx + ii, h, all, j);",
+    "new": "          const b = joined(kk * nx + ii, h, all);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a kept way's step read without its tread: the new galleon's castle apart from her open deck"
+  },
+  {
+    "name": "AUDIT-GALLEON-D7-cover-a-floor",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "          if (moves) {\n            lids[k * nx + i].push(y);\n            continue;\n          }",
+    "new": "          if (moves) lids[k * nx + i].push(y);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a part that opens a floor again: her hatch covers 44 cells of deck over her hatchways"
+  },
+  {
+    "name": "AUDIT-GALLEON-D7-unmarked",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      meshes.push({ positions: out, indices: g.indices, moves: opens(node) });",
+    "new": "      meshes.push({ positions: out, indices: g.indices });",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GALLEON-D7-every-door-out",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      if (c.m_IsTrigger || c.m_Enabled === false) continue;",
+    "new": "      if (c.m_IsTrigger || c.m_Enabled === false || opens(node)) continue;",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "every part that opens left out whole: her doors' leaves no wall, her great cabin and the Carrack's rooms joined to her open deck"
+  },
+  {
+    "name": "AUDIT-GALLEON-D8-underside",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      if (isFlat && nY > 0 && !moves) {",
+    "new": "      if (isFlat && !moves) {",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a face looking down a tread again"
+  },
+  {
+    "name": "AUDIT-GALLEON-D9-looked-up-never",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      let made = kept.get(n);\n      if (made) return made;",
+    "new": "      let made;",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GALLEON-D9-kept-by-count",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      const kept = level == null ? spotsMade : (spotsAt.get(level) ?? spotsAt.set(level, new Map()).get(level));",
+    "new": "      const kept = spotsMade;",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a level's spots kept by the count alone: another level's answered"
+  },
+  {
+    "name": "AUDIT-GALLEON-D10-walk-down-unasked",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    if (offMain(m)) { const s = freeSpot(); if (s && walkTo(m, s)) return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a hand on her castle works and talks up there"
+  },
+  {
+    "name": "AUDIT-GALLEON-D10-talk-end-idles",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (offMain(x) || onAMan(x)) x.t = 0;",
+    "new": "if (onAMan(x)) x.t = 0;",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "his talk with her officer over, a hand idles on her castle"
+  },
+  {
+    "name": "AUDIT-GALLEON-D10-castle-hand-sought",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "|| o === lookout || offMain(o) || atPost(o)) continue;   // AUDIT GN-D10: never a hand off her main deck",
+    "new": "|| o === lookout || atPost(o)) continue;",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a hand on her castle sought for a talk",
+    "note": "GALLEON'S MERGE of main (PIN MOVED): HOLDINGS' atPost joins the line; the mutant drops offMain alone."
+  },
+  {
+    "name": "AUDIT-GALLEON-D10-flight-walk-idles",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "|| offMain(m) || onAMan(m) ? 0 : 1); }",
+    "new": "|| onAMan(m) ? 0 : 1); }",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a walk given up on her flight leaves him idling on a tread"
+  },
+  {
+    "name": "AUDIT-GALLEON-T2-walk-ends-on-a-man",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "|| offMain(m) || onAMan(m) ? 0 : 1); }",
+    "new": "|| offMain(m) ? 0 : 1); }",
+    "tests": [
+      "test/systems/naval/auditnav2_crew.test.js"
+    ],
+    "why": "a walk ended on a man who stopped beside its end: the two stand merged (AUDIT NAV2 F41's law)"
+  },
+  {
+    "name": "AUDIT-GALLEON-T4-musters-at-no-level",
+    "file": "src/scenes/world.js",
+    "old": "      for (const at of deck.spots(n, mainLevel(deck))) {",
+    "new": "      for (const at of deck.spots(n)) {",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a boarding's musters over her whole deck: on her castle's roof and the Carrack's forecastle"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-whole-triangle",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "        into[k * nx + i].push(bottom, top);",
+    "new": "        into[k * nx + i].push(Math.min(ay, by, cy), Math.max(ay, by, cy));",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/auditnav2_deck.test.js"
+    ],
+    "why": "each cell a wall stands over walled with its whole triangle's height again - the same face cut two ways two decks, the galleon's castle front walling her flight's tread"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-near-side-cell-x",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      const i0 = Math.max(0, Math.floor((lo - minX) / cell)),",
+    "new": "      const i0 = Math.max(0, Math.floor((lo - minX) / cell) - 1),",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a face on the line between two cells walls the nearer one too - the grid's own rule (a point on the line the farther cell's) unread across x"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-near-side-cell-z",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "    const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell)),",
+    "new": "    const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell) - 1),",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a face on the line between two rows walls the nearer row too - the grid's own rule unread across z"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-cut-row",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      const n = cutTo(R, cutTo(T, 3, R, 2, z0, 1), U, 2, z1, -1);",
+    "new": "      const n = cutTo(T, 3, U, 2, z0, 1);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a row's part of a face never cut at the row's far side - a face running fore and aft walls a cell with its height a row on"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-cut-column",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "        const m = cutTo(C, cutTo(U, n, C, 0, x0, 1), D, 0, x1, -1);",
+    "new": "        const m = cutTo(U, n, D, 0, x0, 1);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a cell's part of a face never cut at the cell's far side - the castle front's high end walls the flight's cell over its low one"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-floors-any-way-up",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "    for (const q of cand[j])\n      for (let n = 0; n < up.length; n++)\n        if (Math.abs(up[n] - q) < 1e-3) {\n          floorY.push(q);\n          break;\n        }",
+    "new": "    for (const q of cand[j]) floorY.push(q);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a face looking down a floor to stand aboard on again - her bottom's and her flare's undersides stand the water round her aboard"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-cells-apart-kept",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "    for (let j = 0; j < N; j++)\n      if (comp[j] >= 0 && comp[j] !== big) {\n        y[j] = NaN;\n        top[j] = -1;\n      }\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "cells of her open deck no walk reaches kept in it - the room under the Carrack's forecastle, her lookout's bow out of every walk"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-landing-nearest",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      if (k >= 0 && k < nz) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/livingcrew.test.js"
+    ],
+    "why": "a landing the nearest main-deck point of all again - a man off her side drawn along it to her entry port's corner"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-clamp-level-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      const j = nearestCell(x, z, piece, level);",
+    "new": "      const j = nearestCell(x, z, piece);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "clamp at a level answers any level - a talk's place up the Carrack's forecastle stair beside a hand at its foot"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-talk-any-level",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const p = deck?.clamp?.(tx, tz, undefined, 0, o.station || offMain(o) ? o.pos[1] : main) ?? deck?.clamp?.(tx, tz);",
+    "new": "const p = deck?.clamp?.(tx, tz);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a talk's place at any level - a hand walks two and three treads up a flight to talk with one at its foot"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-talk-at-his-level",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "o.station || offMain(o) ? o.pos[1] : main) ?? deck?.clamp?.(tx, tz);",
+    "new": "o.pos[1]) ?? deck?.clamp?.(tx, tz);",
+    "tests": [
+      "test/systems/naval/auditgalleon_deck.test.js"
+    ],
+    "why": "a talk's place within a step of the man talked to, never her main deck - one on a flight's foot tread draws the other a tread higher"
+  },
+  {
+    "name": "AUDIT-GALLEON-DWALL-talk-end-on-a-man",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (offMain(x) || onAMan(x)) x.t = 0;",
+    "new": "if (offMain(x)) x.t = 0;",
+    "tests": [
+      "test/systems/naval/auditnav2_crew.test.js"
+    ],
+    "why": "a talk ended while one walked past his mate leaves the two standing merged (the Carrack's 5.8 s, AUDIT NAV2 F41)"
+  }
+]

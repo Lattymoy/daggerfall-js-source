@@ -1,0 +1,182 @@
+[
+  {
+    "name": "DECK-CAMP-never-on-her",
+    "file": "src/scenes/camps.js",
+    "old": "    if (on?.m && on.ref) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-posed-once",
+    "file": "src/scenes/camps.js",
+    "old": "        c.rec.pos = outOfDeck(at.m, d.local, c.rec.pos);",
+    "new": "        if (!c.deckM) c.rec.pos = outOfDeck(at.m, d.local, c.rec.pos);",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-heading-world",
+    "file": "src/scenes/camps.js",
+    "old": "        c.rec.yaw = wrapAngle(deckYaw(at.m) + d.yaw);",
+    "new": "        c.rec.yaw = wrapAngle(d.yaw);",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-flame-left",
+    "file": "src/scenes/camps.js",
+    "old": "        if (c.batch) c.batch.origin = [c.rec.pos[0], c.rec.pos[1], c.rec.pos[2]];\n        continue;",
+    "new": "        continue;",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-seen-hidden",
+    "file": "src/scenes/camps.js",
+    "old": "  const visible = (c) => !c.hidden;",
+    "new": "  const visible = (c) => true;",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-packed-at-once",
+    "file": "src/scenes/camps.js",
+    "old": "      if (c.goneFor < DECK_GONE_S) continue;",
+    "new": "      if (c.goneFor < 0) continue;",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-peer-struck",
+    "file": "src/scenes/camps.js",
+    "old": "      if (!at.gone || !mine(c)) { c.goneFor = 0; continue; }",
+    "new": "      if (!at.gone) { c.goneFor = 0; continue; }",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-gear-lost",
+    "file": "src/scenes/camps.js",
+    "old": "      if (r.item && entity) (entity.items ??= []).push(r.item);\n      say(CAMP_TEXT.packedWithBoat);",
+    "new": "      say(CAMP_TEXT.packedWithBoat);",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-tent-world-yaw",
+    "file": "src/scenes/camps.js",
+    "old": "    if (d && c.deckM) {\n      // her node's rotation alone",
+    "new": "    if (false) {\n      // her node's rotation alone",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-tent-scaled",
+    "file": "src/scenes/camps.js",
+    "old": "        const n = Math.hypot(m[4 * k], m[4 * k + 1], m[4 * k + 2]) || 1;",
+    "new": "        const n = 1;",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-pixel-swept",
+    "file": "src/scenes/camps.js",
+    "old": "pixelKey: rec.deck ? null : pixelKeyAt?.(rec.pos) ?? null,",
+    "new": "pixelKey: pixelKeyAt?.(rec.pos) ?? null,",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-offset-rebuilds",
+    "file": "src/scenes/camps.js",
+    "old": "      if (c.rec.deck) { if (c.batch) c.batch.origin = [c.rec.pos[0], c.rec.pos[1], c.rec.pos[2]]; }",
+    "new": "      if (c.rec.deck) { if (c.batch) remount(c); }",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-restore-drops-deck",
+    "file": "src/scenes/camps.js",
+    "old": "...(deckAt ? { deck: deckAt } : {}) });",
+    "new": "});",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-peer-moves-restand",
+    "file": "src/scenes/camps.js",
+    "old": "    const moved = (r, rec) => (r.deck || rec.deck",
+    "new": "    const moved = (r, rec) => (false",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-wire-silent",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (d) out.d = [d.mine ? '' : d.peer, d.uid, q3(d.local[0]), q3(d.local[1]), q3(d.local[2]), q3(d.yaw)];",
+    "new": "  if (false) out.d = [d.mine ? '' : d.peer, d.uid, q3(d.local[0]), q3(d.local[1]), q3(d.local[2]), q3(d.yaw)];",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-wire-bad-kept",
+    "file": "src/systems/survival/camp.js",
+    "old": "    if (\n      !validDeck({\n        ...(a[0] === '' ? { mine: true } : { peer: a[0] }),\n        uid: a[1],\n        local: [a[2], a[3], a[4]],\n        yaw: a[5],\n      })\n    )\n      return null;",
+    "new": "    if (false) return null;",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-sender-boat-mine",
+    "file": "src/systems/survival/camp.js",
+    "old": "    const ref = who === '' ? { peer: owner } : selfId != null && who === selfId ? { mine: true } : { peer: who };",
+    "new": "    const ref = who === '' ? { mine: true } : selfId != null && who === selfId ? { mine: true } : { peer: who };",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-uid-zero",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (!Number.isSafeInteger(d.uid) || d.uid < 1) return null;",
+    "new": "  if (!Number.isSafeInteger(d.uid) || d.uid < 0) return null;",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-world-gone-on-load",
+    "file": "src/scenes/world.js",
+    "old": "return !csaRuntime || (!_loading && !csaRuntime.pendingRestore) ? { gone: true } : { hidden: true };",
+    "new": "return { gone: true };",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  },
+  {
+    "name": "DECK-CAMP-world-no-ride",
+    "file": "src/scenes/world.js",
+    "old": "    if (_mode() === 'exterior') camps.ride(dt);",
+    "new": "    if (false) camps.ride(dt);",
+    "tests": [
+      "test/systems/survival/deckcamp.test.js"
+    ]
+  }
+]

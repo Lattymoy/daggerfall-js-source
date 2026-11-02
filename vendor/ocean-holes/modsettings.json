@@ -1,0 +1,75 @@
+{
+	"Version": "1.0.0",
+	"Sections": [
+		{
+			"Name": "General",
+			"Description": "Ocean hole placement and appearance settings",
+			"IsAdvanced": false,
+			"Keys": [
+				{
+					"Min": 0.0,
+					"Max": 1.0,
+					"Value": 0.5,
+					"Name": "PitSpawnRate",
+					"Description": "Pit spawn rate (off at 0, one in 48 at middle, one in 24 at maximum)",
+					"$version": "v1",
+					"$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+				},
+				{
+					"Min": 0.0,
+					"Max": 1.0,
+					"Value": 0.5,
+					"Name": "SurfaceHoleSize",
+					"Description": "Surface hole size",
+					"$version": "v1",
+					"$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+				},
+				{
+					"Min": 0.0,
+					"Max": 1.0,
+					"Value": 0.5,
+					"Name": "SeafloorHoleSize",
+					"Description": "Sea floor hole size",
+					"$version": "v1",
+					"$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+				},
+				{
+					"Min": 0.0,
+					"Max": 1.0,
+					"Value": 0.5,
+					"Name": "MiasmaParticleCount",
+					"Description": "Miasma particle amount",
+					"$version": "v1",
+					"$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+				},
+				{
+					"Min": 0.0,
+					"Max": 1.0,
+					"Value": 0.5,
+					"Name": "MiasmaHeight",
+					"Description": "Miasma plume height",
+					"$version": "v1",
+					"$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+				},
+				{
+					"Min": 0.0,
+					"Max": 1.0,
+					"Value": 0.5,
+					"Name": "DungeonVisualIntensity",
+					"Description": "Underwater dungeon fog intensity",
+					"$version": "v1",
+					"$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+				},
+				{
+					"Min": 0.0,
+					"Max": 1.0,
+					"Value": 0.5,
+					"Name": "DungeonVisualDarkness",
+					"Description": "Underwater dungeon fog and ambient darkness",
+					"$version": "v1",
+					"$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+				}
+			]
+		}
+	]
+}

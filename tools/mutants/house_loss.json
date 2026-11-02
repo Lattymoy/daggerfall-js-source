@@ -1,0 +1,161 @@
+[
+  {
+    "name": "HOUSE-LOSS-the-delete-takes-the-house",
+    "file": "server-account/src/realm.js",
+    "old": "  if (row.origin_id && !(row.bytes > 0)) return undoCustoms({ db, bucket }, playerId, id, row.origin_id);\n  const master = await db",
+    "new": "  const master = await db",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-undo-carries-nothing-back",
+    "file": "server-account/src/realm.js",
+    "old": "      ...customsCarry(db, playerId, id, originId), // the carry, run back: from the realm's id to the offline one\n      // the pass's census row (a pass is spent only where this account's census counted no such character), asked before",
+    "new": "      // the pass's census row (a pass is spent only where this account's census counted no such character), asked before",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-undo-leaves-the-census-spent",
+    "file": "server-account/src/realm.js",
+    "old": "      db\n        .prepare(\n          'UPDATE realm_census SET spent = 0 WHERE char_id = ? AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)',\n        )\n        .bind(originId, originId),\n    ]);",
+    "new": "    ]);",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-undo-without-its-guard",
+    "file": "server-account/src/realm.js",
+    "old": "      db.prepare('DELETE FROM realm_characters WHERE id = ? AND player = ? AND bytes = 0').bind(id, playerId),",
+    "new": "      db.prepare('DELETE FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId),",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-undo-keeps-the-pass-spent",
+    "file": "server-account/src/realm.js",
+    "old": "      db\n        .prepare(\n          'UPDATE realm_passes SET origin_id = NULL, spent_at = NULL WHERE player = ? AND origin_id = ?' +\n            ' AND NOT EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)',\n        )\n        .bind(playerId, originId, playerId),\n      db.prepare('DELETE FROM realm_passes WHERE player = ? AND origin_id = ?').bind(playerId, originId),",
+    "new": "      db.prepare('DELETE FROM realm_passes WHERE player = ? AND origin_id = ?').bind(playerId, originId),",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ],
+    "note": "CUSTOMS-PASS (at the merge with main, which retired CUSTOMS-GRANT's grant for the pass): the undone customs' pass stays spent - the account's one character through customs lost to a customs that never stood."
+  },
+  {
+    "name": "HOUSE-LOSS-undo-opens-a-second-pass",
+    "file": "server-account/src/realm.js",
+    "old": "        .prepare(\n          'UPDATE realm_passes SET origin_id = NULL, spent_at = NULL WHERE player = ? AND origin_id = ?' +\n            ' AND NOT EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)',\n        )\n        .bind(playerId, originId, playerId),",
+    "new": "        .prepare('UPDATE realm_passes SET origin_id = NULL, spent_at = NULL WHERE player = ? AND origin_id = ?' + '')\n        .bind(playerId, originId),",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ],
+    "note": "CUSTOMS-PASS: reopened beside the open pass a developer granted since - the partial unique index refuses it and the whole undo with it."
+  },
+  {
+    "name": "HOUSE-LOSS-undo-keeps-a-spent-record-that-never-stood",
+    "file": "server-account/src/realm.js",
+    "old": "      db.prepare('DELETE FROM realm_passes WHERE player = ? AND origin_id = ?').bind(playerId, originId),\n      db",
+    "new": "      db",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ],
+    "note": "CUSTOMS-PASS: beside a newer open pass, the undone customs' spent row stays - a record of a character let in that is not in."
+  },
+  {
+    "name": "HOUSE-LOSS-undo-keeps-the-pass-census-row",
+    "file": "server-account/src/realm.js",
+    "old": "          'DELETE FROM realm_census WHERE player = ? AND char_id = ? AND EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND origin_id = ?)',\n        )\n        .bind(playerId, originId, playerId, originId),\n      db\n        .prepare(\n          'UPDATE realm_passes SET origin_id = NULL, spent_at = NULL WHERE player = ? AND origin_id = ?' +",
+    "new": "          'UPDATE realm_passes SET origin_id = NULL, spent_at = NULL WHERE player = ? AND origin_id = ?' +",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ],
+    "note": "CUSTOMS-PASS: the census row the pass wrote stays, unspent after the undo - the character would come in on the census and the pass again."
+  },
+  {
+    "name": "HOUSE-LOSS-undo-unspends-under-a-character",
+    "file": "server-account/src/realm.js",
+    "old": "      db\n        .prepare(\n          'UPDATE realm_census SET spent = 0 WHERE char_id = ? AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)',\n        )\n        .bind(originId, originId),",
+    "new": "      db.prepare('UPDATE realm_census SET spent = 0 WHERE char_id = ?').bind(originId),",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: customs lets at most one realm character stand on an origin (the census's once), and the undo's own DELETE of that one runs first in the same batch - no reachable state puts a second there. Kept so a future path that broke the once could never have an undo reopen a character for a second customs."
+  },
+  {
+    "name": "HOUSE-LOSS-undo-for-any-character",
+    "file": "server-account/src/realm.js",
+    "old": "  if (!row.origin_id) return { error: 'body' };\n  if (row.dead_at != null) return { error: 'dead' }; // AUDIT LEGACY III O7: undone, a tombstone is deleted too",
+    "new": "  if (row.dead_at != null) return { error: 'dead' }; // AUDIT LEGACY III O7: undone, a tombstone is deleted too",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-undo-leaves-stray-bytes",
+    "file": "server-account/src/realm.js",
+    "old": "  await dropCharacterObjects(bucket, playerId, id, []);\n  return { ok: true, undone: true };",
+    "new": "  return { ok: true, undone: true };",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-the-undo-route-deletes",
+    "file": "server-account/src/index.js",
+    "old": "if (path === '/v1/realm/undo') return answer(await undoRealm(rctx, me, body.id));",
+    "new": "if (path === '/v1/realm/undo') return answer(await deleteRealm(rctx, me, body.id));",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-no-undo-route",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/realm/undo',\n  // LEGACY7: Project Legacy's lines (legacy.js) - listed, written past their rev - and a fallen character's tombstone",
+    "new": "  // LEGACY7: Project Legacy's lines (legacy.js) - listed, written past their rev - and a fallen character's tombstone",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-the-door-deletes",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "realmAct(() => realmUndo(realmIoNow(), row.id)",
+    "new": "realmAct(() => realmDelete(realmIoNow(), row.id)",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-the-door-never-undoes",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "row.customs && save.unfinished ? { label: t('menu.realm.undo', 'Undo bringing in')",
+    "new": "false ? { label: t('menu.realm.undo', 'Undo bringing in')",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-the-undo-posts-a-delete",
+    "file": "src/systems/realmSaves.js",
+    "old": "realmAsk(io, '/v1/realm/undo', { method: 'POST', json: { id } });",
+    "new": "realmAsk(io, '/v1/realm/delete', { method: 'POST', json: { id } });",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-LOSS-never-saved-says-delete",
+    "file": "src/systems/realmSaves.js",
+    "old": "  if (error === 'no-data') return 'That online character was never saved. If you brought it in, press Bring online on it again or undo it. If you made it online, delete it and make it again.';",
+    "new": "  if (error === 'no-data') return 'That online character was never saved. Delete it and make it again.';",
+    "tests": [
+      "test/systems/house_loss.test.js"
+    ]
+  }
+]

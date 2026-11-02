@@ -1,0 +1,222 @@
+[
+  {
+    "name": "WBX1-the-widening-dropped",
+    "file": "src/render/renderer.js",
+    "old": "buf(gl.ELEMENT_ARRAY_BUFFER, model.indices instanceof Uint32Array ? model.indices : Uint32Array.from(model.indices));",
+    "new": "buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX1-the-gate-on-sixteen-bits",
+    "file": "src/world/gate/gateModel.js",
+    "old": "  const indices = new Uint32Array(count); // WBX1: the renderer's one index type (renderer.createMesh) - a Uint16Array under it drew nothing",
+    "new": "  const indices = new Uint16Array(count); // WBX1: the renderer's one index type (renderer.createMesh) - a Uint16Array under it drew nothing",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX2-the-portal-at-the-heart",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    const at = bossPlace(s, s.fell.at);\n    portal = {",
+    "new": "    const at = [0, 0];\n    portal = {",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX2-the-door-every-frame",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (!portalLaid) { portalLaid = true; layPortalDoor(portalDoor(at)); }",
+    "new": "    layPortalDoor(portalDoor(at));",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX3-the-take-at-once",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "        if (f.taken || !f.left || !f.fly.rest) return;",
+    "new": "        if (f.taken || !f.left) return;",
+    "tests": [
+      "test/scenes/wb9f_gate_spoils.test.js"
+    ],
+    "why": "GATE-UX: the walk-over's wait is gone - a piece is no target until it rests"
+  },
+  {
+    "name": "WBX3-the-line-from-the-floor",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "root: [f.fly.pos[0], f.fly.pos[1] + f.h, f.fly.pos[2]]",
+    "new": "root: [f.fly.pos[0], f.fly.pos[1], f.fly.pos[2]]",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX3-the-pile-for-every-piece",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    const icon = f.sprite && typeof f.sprite === 'object';",
+    "new": "    const icon = false;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX4-the-base-dropped",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "export const strikeDamage = (pct, maxHealth, base = 0) =>\n  Math.max(1, Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base)));",
+    "new": "export const strikeDamage = (pct, maxHealth, base = 0) => Math.max(1, Math.round(pct * Math.max(1, maxHealth)));",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js",
+      "test/net/gate/wb4_gate_boss.test.js"
+    ]
+  },
+  {
+    "name": "WBX4-the-chevron-behind-him",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "      const fx = Math.sin(sh.yaw),\n        fz = Math.cos(sh.yaw),",
+    "new": "      const fx = -Math.sin(sh.yaw),\n        fz = -Math.cos(sh.yaw),",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX4-the-mark-after-his-fall",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      if (s.fell || s.wrath != null || bossAct(s, t, hurtAt).act === 'gone') mark = null;",
+    "new": "      if (s.wrath != null) mark = null;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-nova-at-the-roar",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  2: Object.freeze([\n    Object.freeze({ a: 'cross', court: 1 }),\n    Object.freeze({ wait: 'arrive' }),\n    Object.freeze({ a: 'nova' }),\n  ]),",
+    "new": "  2: Object.freeze([Object.freeze({ a: 'nova' })]),",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js",
+      "test/net/gate/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-spokes-in-phase-two",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    el: 'fire',\n    aim: 'self',\n    phase: 3,\n    range: 40,",
+    "new": "    el: 'fire',\n    aim: 'self',\n    phase: 2,\n    range: 40,",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js",
+      "test/net/gate/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-a-spoke-off-its-angle",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "    const a = atk.yw + (k * 2 * Math.PI) / A.n;",
+    "new": "    const a = atk.yw + (k * Math.PI) / A.n;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-a-bite-at-once",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (!inFire) { inFire = true; if (t - outAt >= POOL_TICK_MS) { burnAt = t; return; } }",
+    "new": "    if (!inFire) { inFire = true; burnAt = -Infinity; }",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-pool-outliving-its-span",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  for (const p of pools ?? []) if (now >= p.from && now < p.until && Math.hypot(px - p.x, pz - p.z) <= p.r) return p;",
+    "new": "  for (const p of pools ?? []) if (now >= p.from && Math.hypot(px - p.x, pz - p.z) <= p.r) return p;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-leap-drawn-at-its-landing",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  return [atk.x + (e[0] - atk.x) * k, atk.z + (e[1] - atk.z) * k];",
+    "new": "  return [e[0], e[1]];",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX5-the-turn-unsaid",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": " const c = courtPhaseCard(s.phase, s.pt); if (c && !(s.phase === 3 && rjCarded)) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...c }; }",
+    "new": " }",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX6-the-switch-ignored",
+    "file": "src/systems/courtRules.js",
+    "old": "  if (!_on || !(n > 0)) return n;",
+    "new": "  if (true || !_on || !(n > 0)) return n;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX6-the-spare-for-everyone",
+    "file": "src/combat/formulas.js",
+    "old": "  if (target?.spareGear) return;",
+    "new": "  if (target) return;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX6-the-stand-in-unflagged",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  e.spareGear = true; // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)",
+    "new": "  e.spareGear = false; // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX7-a-spent-trap-rolled",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (trapMark && s.fell.at < trapMark.until) soulTrap(",
+    "new": "    if (trapMark) soulTrap(",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX7-the-roll-every-frame",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (!s.fell || trapJudged === s.day) return;",
+    "new": "    if (!s.fell) return;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "WBX7-the-recast-takes-its-chance",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      if (trapMark && t < trapMark.until) trapMark.until = Math.max(trapMark.until, t + rounds * COURT_ROUND_MS);",
+    "new": "      if (trapMark && t < trapMark.until) trapMark = { chance, until: Math.max(trapMark.until, t + rounds * COURT_ROUND_MS) };",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "SS3-the-court-handed-a-way-home-again",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "  portalDoor: layPortalDoor = () => {}, soulTrap = () => {},",
+    "new": "  wayHome = () => {}, portalDoor: layPortalDoor = () => {}, soulTrap = () => {},",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  }
+]

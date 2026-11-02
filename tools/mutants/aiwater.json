@@ -1,0 +1,110 @@
+[
+  {
+    "name": "WATER-BACK-the-spawn-skip-returns-to-the-quad-build",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (b.layout.waterLevel !== 10000) {",
+    "new": "    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {",
+    "tests": [
+      "test/scenes/aiwater.test.js"
+    ]
+  },
+  {
+    "name": "WATER-BACK-the-spawn-skip-returns-to-the-level-door",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  function blockWaterLevelAt(x, z) {",
+    "new": "  function blockWaterLevelAt(x, z) {\n    if (dfLocation?.spawned) return 10000;   // water",
+    "tests": [
+      "test/scenes/aiwater.test.js"
+    ]
+  },
+  {
+    "name": "WATER-BACK-every-dry-block-floods",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (b.layout.waterLevel !== 10000) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/scenes/aiwater.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-the-degenerate-bake-is-cached-anyway",
+    "file": "src/ai/nav/navClient.js",
+    "old": "    if (\n      input.tris >= DEGENERATE_MIN_TRIS &&\n      (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE)\n    ) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-an-honestly-small-dungeon-is-refused-the-cache",
+    "file": "src/ai/nav/navClient.js",
+    "old": "    if (\n      input.tris >= DEGENERATE_MIN_TRIS &&\n      (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE)\n    ) {",
+    "new": "    if (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE) {",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-the-guard-measures-the-voxelizer-instead-of-the-input",
+    "file": "src/ai/nav/navClient.js",
+    "old": "    const polys = result.stats?.polys ?? 0;",
+    "new": "    const polys = result.stats?.boxes ?? result.stats?.polys ?? 0;",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-a-degenerate-bake-is-silent",
+    "file": "src/ai/nav/navClient.js",
+    "old": "      console.warn(\n        `[enhanced-ai] navmesh bake looks degenerate (${polys} polys from ${input.tris} triangles) - not caching, so the next entry gets a fresh retry instead of being stuck with this one`,\n      );\n    } else if (this._store) {",
+    "new": "    } else if (this._store) {",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-a-REAL-dungeon-is-told-it-was-spawned",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  if (dfLocation?.spawned) opts.onDungeonSpawned?.();",
+    "new": "  opts.onDungeonSpawned?.();",
+    "tests": [
+      "test/scenes/aiwater.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-the-clear-notice-is-told-every-frame-after",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "            _clearedSent = true;",
+    "new": "",
+    "tests": [
+      "test/scenes/aiwater.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-a-dungeon-still-being-looted-counts-as-cleared",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          if (foes.every((f) => f.dead) && lootPiles.every((p) => p.items.length === 0)) {",
+    "new": "          if (foes.every((f) => f.dead)) {",
+    "tests": [
+      "test/scenes/aiwater.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-the-clear-scan-sits-behind-the-automap-s-early-return",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!_clearedSent && opts.onDungeonCleared) {\n        _clearedCheckT += dt;\n        if (_clearedCheckT >= CLEARED_CHECK_INTERVAL_S) {\n          _clearedCheckT = 0;\n          if (foes.every((f) => f.dead) && lootPiles.every((p) => p.items.length === 0)) {\n            _clearedSent = true;\n            opts.onDungeonCleared();\n          }\n        }\n      }\n      automapScanT += dt;\n      if (automapScanT < SCAN_INTERVAL_S) return;",
+    "new": "      automapScanT += dt;\n      if (automapScanT < SCAN_INTERVAL_S) return;\n      if (!_clearedSent && opts.onDungeonCleared) {\n        _clearedCheckT += dt;\n        if (_clearedCheckT >= CLEARED_CHECK_INTERVAL_S) {\n          _clearedCheckT = 0;\n          if (foes.every((f) => f.dead) && lootPiles.every((p) => p.items.length === 0)) {\n            _clearedSent = true;\n            opts.onDungeonCleared();\n          }\n        }\n      }",
+    "tests": [
+      "test/scenes/aiwater.test.js"
+    ]
+  },
+  {
+    "name": "AIWATER-the-spawn-rate-drifts-from-what-the-test-measures",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "export const SPAWN_CHANCE = 0.30;",
+    "new": "export const SPAWN_CHANCE = 0.1;",
+    "tests": [
+      "test/world/spawneddungeons.test.js"
+    ]
+  }
+]

@@ -1,0 +1,306 @@
+# ONLINE1 (2026-09-12): THE RELAY. A Cloudflare Worker whose one Durable
+# Object class, Room, holds the WebSockets of every player in one room
+# and fans each pose out to the peers in range. It stored nothing past
+# the connection until WORLD1 (2026-09-12): a world room keeps its
+# host's snapshot of the place in the object's storage; the save stays
+# on the player's machine.
+#
+# THE DEPLOY IS AUTOMATIC, and has been since SRV-N/CI (PR #209):
+# `.github/workflows/relay-deploy.yml` runs on EVERY PUSH TO MAIN. It
+# reads RELAY_VERSION out of src/net/wire.js, asks the live /health, and
+# deploys only when the two differ - then POLLS /health until it names
+# the version the run built, because a wrangler exit code of 0 over an
+# unchanged Worker is a green deploy that did not happen. The token
+# lives in the repo's secrets, so nobody has to hold it, and a
+# workflow_dispatch forces a run.
+#
+# ═══ AND A DEPLOY DROPS EVERY CONNECTED PLAYER ════════════════════
+# Every Durable Object restarts and every socket in the game closes at
+# once: peers vanish, chat goes quiet. That is the cost of merging a
+# relay-changing slice, and it is paid the moment the merge lands
+# rather than whenever somebody gets round to it.
+#
+# (This block claimed the opposite until 2026-09-21, fifteen weeks after
+# #209 made that false, and Mac had to be the one to notice.
+# test/server/relaydeploy.test.js reads the workflow's OWN TRIGGER now and
+# holds every live comment to it - the claim is derived from the
+# workflow rather than retyped beside it, which is what let the old
+# sentence rot in place.)
+name = "daggerfall-online"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "a27adccb38c8e8b82fa32e5736274a94"
+workers_dev = true
+
+# ═══ ACC1d: THE KEY THE RELAY VERIFIES NAMES WITH ══════════════════
+#
+# A VAR AND NOT A SECRET, deliberately: a public key can verify and
+# cannot mint, so there is nothing here to hide. The account service
+# publishes the same value at /v1/pubkey and that copy is the
+# authority; this one is the relay's, and `account-deploy.yml` checks
+# the two against each other, because a mismatch means every verify
+# fails silently - the worst failure mode this seam has and the
+# easiest one to catch at deploy time.
+#
+# EMPTY IS A LEGAL STATE. A relay with no key vouches for nobody and
+# admits everybody, which is what it did before this slice; it does not
+# refuse the room and it does not pretend it checked.
+[vars]
+IDENTITY_PUBLIC_KEY = "2ZbUhjpY80Hne60_ucjzCZMF0i5DsarfaWW9SDU5ei4"
+# The lifetime ceiling this relay will honour, beside the key it
+# belongs with (AUDIT-ACC F8, bible ACC1d D3). `MAX_TTL_S` in
+# src/net/identityToken.js is the hard ceiling the module itself
+# refuses past; this may only TIGHTEN it, never widen it.
+IDENTITY_MAX_TTL_S = "300"
+# ═══ RAID-ROLL: THE TOWNS TABLE THE RELAY WILL KEEP ════════════════
+#
+# The SHA-256 of the towns table (src/net/raid/raidLaw.js raidTownsCanon) -
+# `node tools/raidTowns.mjs --arena2 <your ARENA2 folder>` says it, and
+# the game says it once in the browser console when a hub asks. The
+# relay always reads a raid word against the day's own draws (its
+# start, party and target - no game data); with this set, the hub asks
+# every hello for the table by it, keeps the first that hashes to it,
+# and every cell then reads each word against the day's WHOLE roll (its
+# town, key and pixel too). The table is the player's game data, so the
+# repository holds only its hash. EMPTY IS A LEGAL STATE: the draws
+# alone are read, as the relay did before it held a table.
+RAID_TOWNS_SHA256 = ""
+# ═══ COST-1: THE REGIONS WHOSE CHANNEL STAYS SPLIT ═════════════════
+#
+# Region numbers separated by commas ("0,23"), or "all" - each named
+# region's channel is split in four shards as SCALE5c part two split it
+# (src/net/hubShards.js regionsSharded). EMPTY IS THE DEFAULT: every
+# region's channel is whole, so a quiet region sleeps (bible/
+# 11-Multiplayer/Scale-Arc.md COST-1). Name a region here only if its
+# reconnect wave through its one hello gate shows (the relay's metrics,
+# `chat` busy refusals) - a split region keeps up to five objects awake.
+REGION_SHARDS = ""
+# ═══ DISCORD-GATES: THE ROLE THE OMEN PINGS ════════════════════════
+#
+# The Discord id of the opt-in role the hub pings on each gate's omen
+# (src/net/gate/gateHerald.js) - Server Settings > Roles, right-click the
+# role, Copy Role ID (Developer Mode on), with "Allow anyone to
+# @mention this role" turned on, or Discord shows the ping and notifies
+# nobody. An id is no secret. EMPTY IS A LEGAL STATE: the posts go out
+# pinging nobody.
+#
+# THE WEBHOOK IS A SECRET, NEVER A VAR: GATE_DISCORD_WEBHOOK, the
+# channel's webhook URL (Edit Channel > Integrations > Webhooks) - its
+# URL is the key to post in the channel, so the repository never holds
+# it. Put it on the Worker (the dashboard's Settings > Variables and
+# Secrets, type Secret; or `npx wrangler secret put
+# GATE_DISCORD_WEBHOOK` here) - that redeploys the Worker and drops
+# every player once. WITHOUT IT THE RELAY POSTS NOTHING and keeps
+# nothing for it.
+# SCALE5b: each role here is also a setting a developer changes at run
+# time, with no deploy: `/relay gateRole <id>`, `/relay serpentRole <id>`,
+# `/relay sdRole <id>` (src/net/relayCfg.js); the var is the role while
+# the hub holds none.
+# The role: its id handed over 2026-10-02, before the WB12/WB13 merge (it was
+# 1554215379817988167, World Events, from 2026-09-28).
+GATE_DISCORD_ROLE = "1555589839825670258"
+# ═══ SERPENT2: THE ROLE THE SERPENT'S BELLS PING ═══════════════════
+#
+# The Discord id of the opt-in role the hub pings on each sea serpent's
+# bells, fifteen minutes before it rises (net/serpent/serpentHerald.js) - posted
+# to the gate's channel, through the gate's webhook above. EMPTY IS A
+# LEGAL STATE: the bells ping the gate's role (GATE_DISCORD_ROLE); name
+# one here to give the serpent its own.
+SERPENT_DISCORD_ROLE = ""
+# ═══ SD-HERALD: THE ROLE AN ABYSS DUNGEON'S RISE AND FIND PING ══════
+#
+# The Discord id of the opt-in role the hub pings when an Abyss
+# Dungeon rises and when it is found (net/superDungeon/sdHerald.js) - posted to the
+# gate's channel, through the gate's webhook above; its fall and its
+# fade ping nobody. EMPTY IS A LEGAL STATE: the posts ping the gate's
+# role (GATE_DISCORD_ROLE); name one here to give the Abyss Dungeon
+# its own.
+SD_DISCORD_ROLE = ""
+# ═══ KETCH: THE ROLE THE SKY-KETCH'S SIGHTING PINGS ══════════════════
+#
+# The Discord id of the opt-in role the hub pings when the Sky-Ketch is
+# sighted over Daggerfall (src/net/ketch/ketchHerald.js) - once a week,
+# two hours before she keeps station; her arrival and her weighing
+# anchor ping nobody. EMPTY IS A LEGAL STATE: the gate's role
+# (GATE_DISCORD_ROLE) is pinged; name one here to give the Ketch its own.
+KT_DISCORD_ROLE = ""
+# ═══ HERALD-CARDS: THE THREAD EACH EVENT POSTS TO ═══════════════════
+#
+# Every herald post is a card (src/net/herald/heraldCard.js) - Dagon's
+# Breach, the Sea Serpent, the Abyss Dungeon and the Battlespire each in
+# its own colour. Name a thread of the gate's channel for a family and
+# its cards go there: a forum channel with one post a family (every
+# gate's cards in the gate's post), or a text channel's threads -
+# right-click the thread or the post and copy its ID (Developer Mode
+# on). A family with no thread of its own posts to the gate's thread;
+# with none set at all, everything goes to the channel itself, as
+# before. A thread Discord refuses (no thread of this channel, deleted,
+# locked) is said in the log and the card goes to the channel instead.
+# A FORUM CHANNEL NEEDS GATE_DISCORD_THREAD at least: Discord refuses a
+# forum post with no thread, and a refused post is let go.
+# Each is also a setting a developer changes at run time, with no
+# deploy: `/relay gateThread <id>`, `/relay serpentThread <id>`,
+# `/relay sdThread <id>`, `/relay egThread <id>`, `/relay ktThread <id>`
+# (src/net/relayCfg.js - KETCH: the Sky-Ketch's cards).
+# EMPTY IS A LEGAL STATE: one channel, as before.
+GATE_DISCORD_THREAD = ""
+SERPENT_DISCORD_THREAD = ""
+SD_DISCORD_THREAD = ""
+EG_DISCORD_THREAD = ""
+KT_DISCORD_THREAD = ""
+# ═══ SAFE5: THE REVIEWER'S FEED ═════════════════════════════════════
+#
+# Where the public channels' lines are posted for the account service's
+# reviewer to read (src/net/safety/chatFeed.js; bible/11-Multiplayer/
+# Chat-Safety-Arc.md section 6) - World, Region, a language, Trade and
+# LFG, never a party's, a guild's or a place's talk. Each batch is
+# signed with GATE_SIGNING_KEY, the key the receipts are signed with, so
+# nobody but the relay can feed it. Never awaited by a line, never
+# retried: a batch the service does not take is dropped. EMPTY IS A
+# LEGAL STATE: nothing is kept and nothing is posted. The service drops
+# what it is fed while its reviewer is off (MOD_AI, or no key).
+MOD_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/feed"
+# ═══ GRANT2: THE SPAWN GRANTS' MEASURE ═══════════════════════════════
+#
+# Where each cell posts its window of spawn grant asks for the account
+# service to keep (src/net/grantMeasure.js; bible/11-Multiplayer/
+# Spawn-Grants.md section 12) - per account and kind, the asks, the
+# members, and what the buckets and the cell's ceiling would have
+# refused; read with `node tools/realmReview.mjs grants`. Signed with
+# GATE_SIGNING_KEY, the chat feed's door: never awaited by an ask, never
+# retried. EMPTY IS A LEGAL STATE: nothing is posted. The law's mode is
+# the relay setting `grantMode` (GRANT_MODE; unset: measure). GRANT8 and
+# GRANT9 (Spawn-Grants.md section 16) are the settings `grantRoll` (an
+# encounter's species its grant's seed's) and `grantStrip` (the relay
+# drops a record its grant does not stand - FOE-BOUNDS, section 19: and
+# one no builder could give, counted under the relay's own name) -
+# GRANT_ROLL and GRANT_STRIP, each off while unset, set with /relay.
+# GRANT-DOOR (section 20): `grantDoor` (GRANT_DOOR, off unset) turns away
+# a foes room's hello that says no spawn grants - off until the site
+# serves the build that says them, since the relay deploys first.
+# LEASE1 (src/net/roomLease.js): `leaseDoor` (LEASE_DOOR, off unset) -
+# a lease room turns away a hello that hands on no lease, and hears a
+# bound socket in nothing but its ping while it holds no live lease.
+# Off until the site serves the build that hands leases on, for the same
+# reason; once it does, set it here as well as at the hub, so a room just
+# woken (or one whose hub did not answer) never reads it off. Leases are
+# signed with a key derived from GATE_SIGNING_KEY; no new secret.
+GRANT_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/grant-feed"
+# COST-2 part two (bible/11-Multiplayer/Scale-Arc.md): THE CELL TREE MOVES.
+# The setting `cellSeed` (CELL_SEED, off unset) is the level the cell
+# directory seeds its tree at - 2 is 64-pixel cells. It stays off until the
+# site serves the build that says `cv` (a coarse node refuses a cell's
+# hello without it), since the relay deploys first: set it at the hub
+# (`/relay cellSeed 2`), never here, and `/relay cellSeed off` is the way
+# back. Once seeded, a node past CELL_SPLIT_AT named sockets for
+# CELL_SPLIT_DWELL_MS splits into its four children, and four sibling
+# nodes under CELL_MERGE_AT together for CELL_MERGE_DWELL_MS merge
+# (server/src/cellMoves.js; a merge not under the split is read as the
+# defaults below).
+CELL_SPLIT_AT = "150"
+CELL_SPLIT_DWELL_MS = "60000"
+CELL_MERGE_AT = "40"
+CELL_MERGE_DWELL_MS = "600000"
+# ═══ STAFF-PANEL5-HIDDEN: A HIDDEN STAFF MEMBER IN A PRIVATE HOME ═══════
+#
+# Where the relay reports a hidden staff socket entering a private home
+# (src/net/hiddenSeen.js HIDDEN_SEEN_PATH) for the account service's
+# staff audit log (design doc "DFO Staff Panel: design": "Entering a
+# private home is allowed and written to the audit log"). Signed with
+# GATE_SIGNING_KEY, through the ACCOUNTS binding below, the feed's door.
+# EMPTY (or no GATE_SIGNING_KEY) CLOSES EVERY PRIVATE HOME TO A HIDDEN
+# SOCKET (server/src/staffHidden.js hiddenSeenOn): an entry the log
+# would not hold is never made.
+HIDDEN_SEEN_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/hidden-seen"
+# ═══ STAFF-PANEL5-FEEDS: THE STAFF PANEL'S NET AND BOT-CHECK FEEDS ═════
+#
+# . Where
+# the relay posts the players over a network limit and each live monster
+# count (STAFF_NET_FEED_URL: the panel's Network bursts and Monster watch)
+# and a natural encounter's reaction episodes (REACTION_FEED_URL: Bot
+# check) - server/src/staffFeeds.js, its law server/src/staffFeedLaw.js.
+# Sealed with the relay's receipt key (GATE_SIGNING_KEY), proven by the
+# service with the gate's public key: the grant feed's door; no new
+# secret. Posted through the ACCOUNTS binding below. EMPTY IS OFF: nothing
+# is counted and nothing is posted. STAFF-PANEL5-MONSTERS (world249):
+# the monster counts are read whatever grantStrip (GRANT9) says - a
+# separate switch, not set here, that stays off; the count reads a full
+# foes frame as it fans and never changes it.
+# Only these vars change, so RELAY_VERSION does not move: the relay deploy
+# is a manual run of the relay's deploy with `redeploy` ticked (a plain
+# dispatch deploys only on drift), which drops every connected player once.
+STAFF_NET_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/staff/net-feed"
+REACTION_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/reaction-feed"
+# ═══ INT11-INT14: THE LINE THE BOSS FIGHTS' COUNT RUNS BY ════════════
+#
+# The relay counts each fighter's body in a gate, an Abyss Dungeon and
+# a serpent's fight (src/net/bossBody.js), and believes the healing a
+# client says it did out of a budget. MEASURE FIRST (Mac, 2026-10-10:
+# "Measure, then enforce"): EMPTY IS THE DEFAULT LINE, which ENFORCES
+# NOTHING - each boss receipt carries the count's measure and the
+# account service keeps it (`node tools/realmReview.mjs bodies 7`).
+# Staff set the line here once the measure says where, as JSON:
+#   {"enforce": true, "body": {"depth": 1, "perS": 0.05},
+#    "hull": {"depth": 0.15, "perS": 0.012}}
+# (bodyConfig: anything it cannot read whole is the default, which
+# enforces nothing). Changing it here redeploys this Worker and drops
+# every connected player once - SCALE5b: a developer sets it at run time
+# instead, in game: `/relay bossBody <json>` (src/net/relayCfg.js), which
+# the hub keeps and every boss's room reads within a minute; this var is
+# the line while the hub holds none (`/relay bossBody -` hands it back).
+BOSS_BODY = ""
+
+# ═══ WB3: THE RELAY'S ONE SECRET ═══════════════════════════════════
+#
+# GATE_SIGNING_KEY is a Worker SECRET, never a var: the Ed25519 PRIVATE
+# key (PKCS8, base64) the relay signs an Oblivion Gate's kill receipts
+# with (src/net/gate/gateReceipt.js) - and, since RAID3 (2026-09-27), a
+# town raid's receipts (src/net/raid/raidReceipt.js, `w1`: the version is
+# inside the signed bytes, so neither passes as the other). GATE-KEYS
+# (2026-09-26): the ACCOUNT deploy mints the pair once and puts it here
+# (.github/workflows/account-deploy.yml, "Mint the gate receipt pair") -
+# that one `secret put` redeploys this Worker and drops every player
+# once. Its public half is the account service's to hold (WB5), which is
+# the only party that honours a receipt. A relay WITHOUT it still runs the fight and
+# the spoils: the receipts go out unsigned, the players' loot rolls the
+# same, and the account service declines to record the kill.
+
+# AUDIT ONLINE A17: an uncaught error in the object is logged, not lost
+[observability]
+enabled = true
+
+# SCALE2b (2026-10-04): the relay's metrics - one Analytics Engine point per
+# room per five minutes in which anything happened (server/src/relayScale.js
+# RoomMetrics says every field, and how to query it). The dataset is created
+# by its first write; no player is identified in any point (the room's kind,
+# the relay's version and counts). A relay without the binding serves exactly
+# as before.
+[[analytics_engine_datasets]]
+binding = "METRICS"
+dataset = "daggerfall_relay"
+
+# ═══ AUDIT SAFE RELAY S1: THE ACCOUNT SERVICE, BOUND ═══════════════
+#
+# The reviewer's feed (MOD_FEED_URL, above) is this Worker posting to
+# the account service's - and one Worker fetching another's
+# workers.dev address on the same account may be refused outright
+# (Cloudflare's error 1042), which a post that is never retried and
+# never awaited would never say. A SERVICE BINDING is the door between
+# two Workers of one account: the feed posts through it
+# (server/src/index.js `_feedFlush`), MOD_FEED_URL naming the path
+# alone, and fetches the address only where it is not bound (a test, a
+# local run). It names the account Worker by its own `name`
+# (server-account/wrangler.toml), which binds this one back as RELAY
+# for the law door (SAFE_LAW_PATH). Nothing is read through it but the
+# feed's answer.
+[[services]]
+binding = "ACCOUNTS"
+service = "daggerfall-accounts"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

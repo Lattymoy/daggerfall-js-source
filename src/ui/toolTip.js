@@ -1,0 +1,232 @@
+// U37: THE TOOLTIP - ToolTip.cs (MIT, Daggerfall Workshop) on the
+// native idiom, and with it THE HOVER SEAM the port has been missing
+// since U25 flagged it on the inventory's info panel.
+//
+// DFU's tooltip is a shared BaseScreenComponent every window's buttons
+// point at: a component sets ToolTipText, the UI update draws the box
+// at the cursor when the pointer has rested long enough. The port has
+// no retained widget tree, so the shape here is the immediate-mode
+// equivalent: a window holds one ToolTip, tells it the hovered text
+// each frame (`show(text)` / `hide()`), and draws it LAST so it lands
+// over everything else - DFU's own draw order, where the tooltip is
+// the final component in the canvas.
+//
+// The law, line for line:
+// - defaultMarginSize 2 on all four sides (:30, :108).
+// - the box is (widestRow + left + right) x
+//   (glyphHeight * rows + top + bottom - 1) (:158-160). The -1 is
+//   DFU's, and it is not a rounding artefact: it tightens every
+//   tooltip by one pixel regardless of row count.
+// - the position is the cursor plus MouseOffset (:163), whose default
+//   is (0, 4) (:33) - DFU recomputes it from the OS cursor height at
+//   runtime (:128-135), which a browser page cannot ask for, so the
+//   declared default stands (Ledger A).
+// - EDGE FLIPPING (:166-177) is a SHIFT, not a flip: a box past the
+//   right or bottom edge is pushed back by exactly the overflow, so
+//   it ends flush against the edge rather than jumping to the other
+//   side of the cursor.
+// - rows split on \r, with the literal two-character "\\r" collapsed
+//   first (:243-245) - text read from a plain-text file carries the
+//   escape, not the control character.
+// - the colours are DaggerfallUI's own (:68-69), and the port reads
+//   them from the four GUI/ToolTip* settings, which ship those exact
+//   values and were stored-tier with no consumer until now.
+import { drawRect, NATIVE_W, NATIVE_H } from './native/nativePanel.js'; // ONE home for the virtual canvas size
+import { drawText, measureText } from './text.js';
+import { getBool, getFloat, getString } from '../systems/settings/settings.js';
+import { processGrammar } from '../systems/textManager.js'; // L10N3g: each row through the grammar as it is drawn (:215)
+
+/** defaultMarginSize (:30). */
+export const TOOLTIP_MARGIN = 2;
+/** MouseOffset's default (:33). */
+export const TOOLTIP_MOUSE_OFFSET = Object.freeze([0, 4]);
+/** "RRGGBBAA" -> [r,g,b,a] in 0..1. The alpha is load-bearing: the
+ *  background ships D2 (210/255), a deliberate translucency. */
+export function parseHexColor(hex, fallback) {
+  if (!/^[0-9A-Fa-f]{8}$/.test(String(hex ?? ''))) return fallback;
+  const n = (i) => parseInt(hex.slice(i, i + 2), 16) / 255;
+  return [n(0), n(2), n(4), n(6)];
+}
+
+export const DEFAULT_TOOLTIP_TEXT_BG = Object.freeze([64 / 255, 64 / 255, 64 / 255, 210 / 255]);
+export const DEFAULT_TOOLTIP_TEXT_FG = Object.freeze([230 / 255, 230 / 255, 200 / 255, 1]);
+
+/** UpdateTextRows (:238-256): the escaped-\r collapse, then the split. */
+export const toolTipRows = (text) => String(text).replace(/\\r/g, '\r').split('\r');
+
+/**
+ * AUDIT SET U2: THE WIDEST ROW OF THE PORT'S OWN A TOOLTIP DRAWS, in native px. DFU never wraps a tooltip row - the
+ * edge shift (:166-177) is its whole answer to a wide one, and its own rows stand as DFU draws them. The port's own
+ * lines under an item's name - its tier's, its sigil's, its set's ("4 pieces - Bloodfury: Your weapon blows deal +4%
+ * damage, +8% below half health (1 more)", systems/sigil/sigilSets.js setLines) - ran past the 320px screen, and the shift
+ * pushed their first words off its left edge. So a tooltip that carries them (the item lists' - itemScroller.js
+ * makeSlotToolTip) wraps the rows from `wrapFrom` on: a row wider than this at its spaces, each continuation indented
+ * two. A RECORDED departure (the Port-Ledger's Sigil Sets row); every row of DFU's own, the item's name included, is
+ * drawn exactly as DFU draws it.
+ */
+export const TOOLTIP_WRAP_W = 240;
+const WRAP_INDENT = '  ';
+/** The rows, each from `from` on wider than `maxW` (by `measure`) wrapped at its spaces; a word wider than the whole
+ *  stands alone; a row before `from` is never touched. */
+export function wrapToolTipRows(rows, measure, maxW = TOOLTIP_WRAP_W, from = 0) {
+  const out = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (i < from || !(measure(row) > maxW)) {
+      out.push(row);
+      continue;
+    }
+    const lead = /^ */.exec(row)[0];
+    let line = '';
+    for (const word of row.slice(lead.length).split(/ +/)) {
+      if (!word) continue;
+      const next = line ? `${line} ${word}` : `${lead}${word}`;
+      if (!line || measure(next) <= maxW) {
+        line = next;
+        continue;
+      }
+      out.push(line);
+      line = `${lead}${WRAP_INDENT}${word}`;
+    }
+    if (line) out.push(line);
+  }
+  return out;
+}
+
+/** Draw's sizing (:158-160) - the -1 is DFU's own. */
+export function toolTipSize(rows, widest, glyphHeight) {
+  return [widest + TOOLTIP_MARGIN * 2, glyphHeight * rows.length + TOOLTIP_MARGIN * 2 - 1];
+}
+
+/** Draw's placement + the two edge shifts (:163-177). Native coords. */
+export function toolTipPosition(mouseX, mouseY, w, h) {
+  let x = mouseX + TOOLTIP_MOUSE_OFFSET[0];
+  let y = mouseY + TOOLTIP_MOUSE_OFFSET[1];
+  if (x + w > NATIVE_W) x -= x + w - NATIVE_W;
+  if (y + h > NATIVE_H) y -= y + h - NATIVE_H;
+  return [x, y];
+}
+
+/** GUI/EnableToolTips - the master switch (stored-tier until now). */
+export const toolTipsEnabled = () => getBool('GUI', 'EnableToolTips');
+/** GUI/ToolTipDelayInSeconds - how long the pointer must REST. */
+export const toolTipDelay = () => getFloat('GUI', 'ToolTipDelayInSeconds', 0, 10);
+
+/**
+ * One tooltip, owned by one window. The window calls `show(text, x, y)`
+ * every frame the pointer rests on something with a tip and `hide()`
+ * otherwise; `draw` renders it last.
+ *
+ * THE DELAY IS A REST, NOT A DWELL: moving the pointer to a DIFFERENT
+ * tip restarts the clock (DFU's tooltip belongs to the component under
+ * the cursor, so crossing to another component starts its timer from
+ * zero), but re-entering the same tip after a twitch does not.
+ */
+export class ToolTip {
+  /** AUDIT 58: `delaySeconds` is DFU's per-component ToolTipDelay
+   *  (ToolTip.cs:44), which a window may override on the shared
+   *  defaultToolTip - the quest journal does exactly that
+   *  (DaggerfallQuestJournalWindow.cs:103-104,
+   *  `defaultToolTip.ToolTipDelay = 1`), the same idiom the automap's
+   *  own clock below carries. Null means the GUI setting. */
+  constructor(delaySeconds = null, { wrapFrom = null } = {}) {
+    this.delaySeconds = delaySeconds;
+    this.wrapFrom = wrapFrom; // AUDIT SET U2: the first row of the port's own that may wrap (null: none - DFU's tooltip)
+    this.text = null;
+    this._pending = null;
+    this._elapsed = 0;
+    this.x = 0;
+    this.y = 0;
+  }
+
+  /** Called each frame with the hovered text, or via hide(). */
+  show(text, vx, vy) {
+    if (!text) {
+      this.hide();
+      return;
+    }
+    if (text !== this._pending) {
+      this._pending = text;
+      this._elapsed = 0;
+    }
+    this.x = vx;
+    this.y = vy;
+  }
+
+  hide() {
+    this._pending = null;
+    this._elapsed = 0;
+    this.text = null;
+  }
+
+  /** The rest clock. dt in seconds. */
+  update(dt) {
+    if (!this._pending) {
+      this.text = null;
+      return;
+    }
+    this._elapsed += dt;
+    this.text = this._elapsed >= (this.delaySeconds ?? toolTipDelay()) ? this._pending : null;
+  }
+
+  /** Drawn LAST by its window (DFU's final-component order). */
+  draw(renderer, m, font) {
+    if (!this.text) return;
+    drawToolTipBox(renderer, m, font, this.text, this.x, this.y, { wrapFrom: this.wrapFrom });
+  }
+}
+
+/**
+ * ToolTip.Draw's BODY, with the rest clock left to the caller (:158-217).
+ * The ToolTip class above owns DFU's per-component clock; ROAD-C c2/S5's
+ * automap window owns a DIFFERENT one - ui/automap/automapChrome.js's, which is
+ * the only clock that knows about SuppressToolTip and about the automap's
+ * own ToolTipDelay of 1 second (DaggerfallAutomapWindow.cs:22, :492-502).
+ * Both draw the SAME box, so the box lives here once. EnableToolTips is
+ * checked here because it is the master switch for every SHARED tooltip.
+ *
+ * `ignoreEnableSetting` is the one exception DFU itself carries, and it
+ * has exactly one caller: the EXTERIOR automap's building nameplates.
+ * That tooltip is not the window's shared `defaultToolTip` - which
+ * DaggerfallBaseWindow.cs:50-56 only builds when the setting is on -
+ * but a private `nameplateToolTip`, constructed bare
+ * (DaggerfallExteriorAutomapWindow.cs:870-871) and drawn
+ * unconditionally in that window's Draw() (:571-572). Turning tooltips
+ * off in DFU does not silence the town map's plate names.
+ */
+export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSetting = false, wrapFrom = null } = {}) {
+  if (!text || (!ignoreEnableSetting && !toolTipsEnabled())) return;
+  const rows =
+    wrapFrom == null
+      ? toolTipRows(text)
+      : wrapToolTipRows(toolTipRows(text), (r) => measureText(font.fnt, r), TOOLTIP_WRAP_W, wrapFrom); // AUDIT SET U2: the port's own rows may wrap
+  // DaggerfallFont.GlyphHeight - the port's own fixedHeight, the
+  // same reader messageBox's rowH uses.
+  const glyph = font?.fnt?.fixedHeight ?? 6;
+  let widest = 0;
+  for (const r of rows) widest = Math.max(widest, measureText(font.fnt, r));
+  const [w, h] = toolTipSize(rows, widest, glyph);
+  const [x, y] = toolTipPosition(vx, vy, w, h);
+  const bg = parseHexColor(getString('GUI', 'ToolTipBackgroundColor'), DEFAULT_TOOLTIP_TEXT_BG);
+  const fg = parseHexColor(getString('GUI', 'ToolTipTextColor'), DEFAULT_TOOLTIP_TEXT_FG);
+  drawRect(renderer, m, x, y, w, h, bg);
+  // NO SHADOW: DFU draws the tooltip with a bare font.DrawText
+  // (:213-217), unlike every labelled button in the UI.
+  // L10N3g: `font.DrawText(ProcessGrammar(textRows[i]), ...)` (:215) -
+  // each row is processed AS IT IS DRAWN, every frame (no cache: the
+  // French rules carry a gender from one text to the next), while the
+  // box above was sized off the rows as they stand, which is DFU's own
+  // order (UpdateTextRows measures them, :257-264, before Draw runs the
+  // grammar). English is the identity.
+  rows.forEach((r, i) =>
+    drawText(
+      renderer,
+      font,
+      processGrammar(r),
+      m.ox + (x + TOOLTIP_MARGIN) * m.s,
+      m.oy + (y + TOOLTIP_MARGIN + i * glyph) * m.s,
+      m.s,
+      fg,
+    ),
+  );
+}

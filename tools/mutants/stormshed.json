@@ -1,0 +1,322 @@
+[
+  {
+    "name": "STORM-SHED-mint-unheld",
+    "file": "src/net/accountClient.js",
+    "old": "    if (cool.secret === session.secret && now() < cool.until) { minter.lastWhy = cool.why; return null; }\n",
+    "new": "",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a failed mint asked again by every room at once"
+  },
+  {
+    "name": "STORM-SHED-mint-hold-any-signin",
+    "file": "src/net/accountClient.js",
+    "old": "    if (cool.secret === session.secret && now() < cool.until) { minter.lastWhy = cool.why; return null; }",
+    "new": "    if (now() < cool.until) { minter.lastWhy = cool.why; return null; }",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "another sign-in held by this one's failure"
+  },
+  {
+    "name": "STORM-SHED-mint-undoubled",
+    "file": "src/net/accountClient.js",
+    "old": "Math.min(MINT_COOL_MAX_MS, MINT_COOL_MS * 2 ** (fails - 1))",
+    "new": "Math.min(MINT_COOL_MAX_MS, MINT_COOL_MS)",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the hold never grows"
+  },
+  {
+    "name": "STORM-SHED-mint-uncapped",
+    "file": "src/net/accountClient.js",
+    "old": "Math.min(MINT_COOL_MAX_MS, MINT_COOL_MS * 2 ** (fails - 1))",
+    "new": "MINT_COOL_MS * 2 ** (fails - 1)",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the hold grows past its cap"
+  },
+  {
+    "name": "STORM-SHED-mint-kept-past-token",
+    "file": "src/net/accountClient.js",
+    "old": "        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), sent, rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n        cool = { secret: null, fails: 0, until: -Infinity, why: null };\n",
+    "new": "        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), sent, rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a token leaves the failures counted"
+  },
+  {
+    "name": "STORM-SHED-coolms-any-signin",
+    "file": "src/net/accountClient.js",
+    "old": "return session && cool.secret === session.secret ? Math.max(0, cool.until - now()) : 0;",
+    "new": "return session ? Math.max(0, cool.until - now()) : 0;",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "another sign-in told it is held"
+  },
+  {
+    "name": "STORM-SHED-room-marked-at-mint",
+    "file": "src/net/accountClient.js",
+    "old": "at: now(), sent, rooms: new Set() };   // STORM-SHED",
+    "new": "at: now(), sent, rooms: new Set(room != null ? [room] : []) };   // STORM-SHED",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the room marked as the token's at the mint - a late token's room mints again"
+  },
+  {
+    "name": "STORM-SHED-opened-unheard",
+    "file": "src/net/accountClient.js",
+    "old": "      if (held && room != null && held.token === token) held.rooms.add(room);\n",
+    "new": "",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a hello's word never heard - a token sent twice into one room"
+  },
+  {
+    "name": "STORM-SHED-any-token-word",
+    "file": "src/net/accountClient.js",
+    "old": "if (held && room != null && held.token === token) held.rooms.add(room);",
+    "new": "if (held && room != null) held.rooms.add(room);",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "another token's hello taken as this one's"
+  },
+  {
+    "name": "STORM-SHED-hello-unsaid",
+    "file": "src/net/online.js",
+    "old": "this.mintToken?.opened?.(room, frame.tok); this._helloTok",
+    "new": "this._helloTok",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "SCALE5a (re-aimed by content): the hello remembers its token by its socket beside it (`_helloTok`). the session never says which room a token opened"
+  },
+  {
+    "name": "STORM-SHED-primary-unheld",
+    "file": "src/net/online.js",
+    "old": " this._scheduleRetry(); this._retryAt = this._afterMintHold(this._retryAt); this._tokenRetry = true; return; }",
+    "new": " this._scheduleRetry(); this._tokenRetry = true; return; }",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the primary's tokenless hello said again inside the minter's hold - PIN MOVED (FIELD BUGS 2026-10-16b DOOR-TOKEN): re-aimed by content past the line's new `this._tokenRetry = true;`"
+  },
+  {
+    "name": "STORM-SHED-halo-unheld",
+    "file": "src/net/online.js",
+    "old": "        if (noToken) h.retryAt = this._afterMintHold(h.retryAt);   // STORM-SHED: not before the page's next mint may be asked\n",
+    "new": "",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a halo's tokenless hello said again inside the minter's hold"
+  },
+  {
+    "name": "STORM-SHED-watch-no-wait",
+    "file": "src/net/townSeatBook.js",
+    "old": "        watchRetryAt =\n          nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);\n      }",
+    "new": "      }",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a failed claim claimed again the frame after its answer"
+  },
+  {
+    "name": "STORM-SHED-watch-frame-unheld",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false; // STORM-SHED: a failed claim's wait",
+    "new": "      if (watchBusy || open !== true) return false; // STORM-SHED: a failed claim's wait",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the frame's test asks inside the wait"
+  },
+  {
+    "name": "STORM-SHED-watch-claim-unheld",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (!force && nowMs() < watchRetryAt) return null; // STORM-SHED: a failed claim's wait\n      const who = me();",
+    "new": "      const who = me();",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the claim itself asks inside the wait"
+  },
+  {
+    "name": "STORM-SHED-watch-undoubled",
+    "file": "src/net/townSeatBook.js",
+    "old": "        watchRetryAt =\n          nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);",
+    "new": "        watchRetryAt = nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS), rand);",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the wait never grows"
+  },
+  {
+    "name": "STORM-SHED-watch-uncapped",
+    "file": "src/net/townSeatBook.js",
+    "old": "        watchRetryAt =\n          nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);",
+    "new": "        watchRetryAt = nowMs() + jittered(SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1), rand);",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the wait grows past the claim's own ten minutes"
+  },
+  {
+    "name": "STORM-SHED-watch-kept-past-answer",
+    "file": "src/net/townSeatBook.js",
+    "old": "        watchFails = 0;\n        watchRetryAt = -Infinity;\n      } else {",
+    "new": "      } else {",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "an answer leaves the failures counted"
+  },
+  {
+    "name": "STORM-SHED-seat-rows-unkept",
+    "file": "server-account/src/townSeats.js",
+    "old": "  if (kept && nowS - kept.at < SEAT_ROWS_KEPT_S) return kept.rows;",
+    "new": "  if (kept && nowS - kept.at < 0) return kept.rows;",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "every list, claim and report reads every seat's witnesses"
+  },
+  {
+    "name": "STORM-SHED-seat-rows-unshared",
+    "file": "server-account/src/townSeats.js",
+    "old": "  if (asking) return asking;",
+    "new": "  if (asking && false) return asking;",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "asks of one moment each read"
+  },
+  {
+    "name": "STORM-SHED-developer-kept",
+    "file": "server-account/src/townSeats.js",
+    "old": "  const { seats, ignored } = dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
+    "new": "  const { seats, ignored } = await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a developer's audit a minute behind"
+  },
+  {
+    "name": "STORM-SHED-claim-unkept",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "const seats = await confirmedSeats(db, nowS);   // STORM-SHED: the isolate's kept witness rows",
+    "new": "const seats = await confirmedSeats(db, nowS, { fresh: true });   // STORM-SHED: the isolate's kept witness rows",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "every Watch claim reads every seat's witnesses"
+  },
+  {
+    "name": "STORM-SHED-report-unforgotten",
+    "file": "server-account/src/townSeats.js",
+    "old": "  if (Number(put?.meta?.changes) !== 0) forgetSeatRows(db, nowS);\n  return { ok: true, counted: true };",
+    "new": "  return { ok: true, counted: true };",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a report written here unseen for a minute"
+  },
+  {
+    "name": "STORM-SHED-strike-unforgotten",
+    "file": "server-account/src/townSeats.js",
+    "old": "  forgetSeatRows(db, nowS); // STORM-SHED: the struck seat's reports are gone - asked afresh here\n  return { ok: true, key, reports: Number(late?.meta?.changes ?? 0) + Number(rest?.meta?.changes ?? 0) };",
+    "new": "  return { ok: true, key, reports: Number(late?.meta?.changes ?? 0) + Number(rest?.meta?.changes ?? 0) };",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a strike written here unseen for a minute"
+  },
+  {
+    "name": "STORM-SHED-write-unasked",
+    "file": "server-account/src/townSeats.js",
+    "old": "        if ((seatRowWrites.get(root) ?? 0) === gen) {",
+    "new": "        if (true) {",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a read begun before a write kept after it"
+  },
+  {
+    "name": "STORM-SHED-proxy-nameless",
+    "file": "server-account/src/metrics.js",
+    "old": "      if (key === DB_ROOT) return Reflect.get(target, DB_ROOT) ?? target;\n      if (key === 'prepare')",
+    "new": "      if (key === 'prepare')",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "each request's Proxy its own key - nothing kept across requests"
+  },
+  {
+    "name": "STORM-SHED-index-unwritten",
+    "file": "server-account/migrations/0085_storm_shed.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_node_harvests_char_day ON node_harvests (player, char_id, day, node, kind);",
+    "new": "",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a character's harvests today read off every player's"
+  },
+  {
+    "name": "TOKEN-STRETCH-never-stretched",
+    "file": "src/net/accountClient.js",
+    "old": " || (stretching(secret) && t - held.sent < TOKEN_STRETCH_MS))",
+    "new": ")",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a failed mint's retry mints again into the overload, the held token idle"
+  },
+  {
+    "name": "TOKEN-STRETCH-stretched-while-well",
+    "file": "src/net/accountClient.js",
+    "old": "(cool.secret === secret && (cool.fails > 0 || cool.why === 'queue')) || Date.now() < busyUntil()",
+    "new": "true",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the token's claims four minutes old with the service well"
+  },
+  {
+    "name": "TOKEN-STRETCH-counted-from-the-answer",
+    "file": "src/net/accountClient.js",
+    "old": "t - held.sent < TOKEN_STRETCH_MS",
+    "new": "t - held.at < TOKEN_STRETCH_MS",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a slow mint's token handed on past the relay's margin"
+  },
+  {
+    "name": "TOKEN-STRETCH-the-gate-unread",
+    "file": "src/net/accountClient.js",
+    "old": " || Date.now() < busyUntil();",
+    "new": ";",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "the first new room past the minute mints into an overload the page already heard"
+  },
+  {
+    "name": "TOKEN-STRETCH-ahead-unstretched",
+    "file": "src/net/accountClient.js",
+    "old": " && lives(by, session.secret) && ",
+    "new": " && by - held.at < TOKEN_REUSE_MS && ",
+    "tests": [
+      "test/net/stormshed.test.js"
+    ],
+    "note": "a door mints into the overload though the held token opens its room"
+  }
+]

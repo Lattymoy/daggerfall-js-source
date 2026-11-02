@@ -1,0 +1,85 @@
+[
+  {
+    "name": "STACK-CAP-renew-adds",
+    "file": "src/systems/effects.js",
+    "old": "  if (fresh > inc.roundsRemaining) inc.roundsRemaining = fresh;",
+    "new": "  inc.roundsRemaining += fresh;",
+    "tests": [
+      "test/systems/stackcap.test.js"
+    ]
+  },
+  {
+    "name": "STACK-CAP-renew-shortens",
+    "file": "src/systems/effects.js",
+    "old": "  if (fresh > inc.roundsRemaining) inc.roundsRemaining = fresh;",
+    "new": "  inc.roundsRemaining = fresh;",
+    "tests": [
+      "test/systems/stackcap.test.js"
+    ]
+  },
+  {
+    "name": "STACK-CAP-buff-arm-stacks",
+    "file": "src/systems/effects.js",
+    "old": "        if (inc) renewRounds(inc, rounds - 1);             // incumbent RENEWED (STACK-CAP; ConcealmentEffect.AddState stacks, F12)",
+    "new": "        if (inc) inc.roundsRemaining += rounds;             // incumbent RENEWED (STACK-CAP; ConcealmentEffect.AddState stacks, F12)",
+    "tests": [
+      "test/systems/stackcap.test.js"
+    ]
+  },
+  {
+    "name": "STACK-CAP-chain-arm-stacks",
+    "file": "src/systems/effects.js",
+    "old": "          renewRounds(inc, rounds - 1);   // rounds renewed (STACK-CAP); the incumbent's chance stands -",
+    "new": "          inc.roundsRemaining += rounds;   // rounds renewed (STACK-CAP); the incumbent's chance stands -",
+    "tests": [
+      "test/systems/stackcap.test.js"
+    ]
+  },
+  {
+    "name": "STACK-CAP-shield-renews-past-a-fresh-cast",
+    "file": "src/systems/effects.js",
+    "old": "          renewRounds(inc, rounds - 1);\n          inc.shieldRemaining",
+    "new": "          renewRounds(inc, rounds);\n          inc.shieldRemaining",
+    "tests": [
+      "test/systems/stackcap.test.js"
+    ]
+  },
+  {
+    "name": "STACK-CAP-torch-light-stacks",
+    "file": "src/scenes/droppedTorches.js",
+    "old": "      if (inc) renewRounds(inc, st.fireDuration);",
+    "new": "      if (inc) inc.roundsRemaining += st.fireDuration;",
+    "tests": [
+      "test/systems/stackcap.test.js",
+      "test/systems/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "STACK-CAP-court-trap-stacks",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      if (trapMark && t < trapMark.until) trapMark.until = Math.max(trapMark.until, t + rounds * COURT_ROUND_MS);",
+    "new": "      if (trapMark && t < trapMark.until) trapMark.until += rounds * COURT_ROUND_MS;",
+    "tests": [
+      "test/systems/stackcap.test.js",
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STACK-CAP-tail-round-never-run",
+    "file": "src/systems/effects.js",
+    "old": "  if (inc.roundsRemaining <= 0) runEffectRound(inc, target, sinks, rolls);",
+    "new": "",
+    "tests": [
+      "test/systems/stackcap.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STACK-CAP-round-run-on-every-renewal",
+    "file": "src/systems/effects.js",
+    "old": "  if (inc.roundsRemaining <= 0) runEffectRound(inc, target, sinks, rolls);",
+    "new": "  runEffectRound(inc, target, sinks, rolls);",
+    "tests": [
+      "test/systems/stackcap.test.js"
+    ]
+  }
+]

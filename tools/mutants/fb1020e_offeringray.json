@@ -1,0 +1,57 @@
+[
+  {
+    "name": "OFFERING-RAY-the-six-array-back",
+    "file": "src/scenes/witchesHost.js",
+    "old": "aabb: { min: [x[0] + tr[0], x[1] + tr[1], x[2] + tr[2]], max: [x[3] + tr[0], x[4] + tr[1], x[5] + tr[2]] }",
+    "new": "aabb: [x[0] + tr[0], x[1] + tr[1], x[2] + tr[2], x[3] + tr[0], x[4] + tr[1], x[5] + tr[2]]",
+    "tests": [
+      "test/scenes/fb1020e_offeringray.test.js",
+      "test/scenes/witch1_host.test.js"
+    ]
+  },
+  {
+    "name": "OFFERING-RAY-corners-crossed",
+    "file": "src/scenes/witchesHost.js",
+    "old": "aabb: { min: [x[0] + tr[0], x[1] + tr[1], x[2] + tr[2]], max: [x[3] + tr[0], x[4] + tr[1], x[5] + tr[2]] }",
+    "new": "aabb: { min: [x[3] + tr[0], x[4] + tr[1], x[5] + tr[2]], max: [x[0] + tr[0], x[1] + tr[1], x[2] + tr[2]] }",
+    "tests": [
+      "test/scenes/fb1020e_offeringray.test.js"
+    ]
+  },
+  {
+    "name": "OFFERING-RAY-min-in-the-pixel",
+    "file": "src/scenes/witchesHost.js",
+    "old": "min: [x[0] + tr[0], x[1] + tr[1], x[2] + tr[2]]",
+    "new": "min: [x[0], x[1], x[2]]",
+    "tests": [
+      "test/scenes/fb1020e_offeringray.test.js"
+    ]
+  },
+  {
+    "name": "OFFERING-RAY-max-in-the-pixel",
+    "file": "src/scenes/witchesHost.js",
+    "old": "max: [x[3] + tr[0], x[4] + tr[1], x[5] + tr[2]]",
+    "new": "max: [x[3], x[4], x[5]]",
+    "tests": [
+      "test/scenes/fb1020e_offeringray.test.js"
+    ]
+  },
+  {
+    "name": "OFFERING-RAY-the-foot-unmoved",
+    "file": "src/scenes/witchesHost.js",
+    "old": "min: [x[0] + tr[0], x[1] + tr[1],",
+    "new": "min: [x[0] + tr[0], x[1],",
+    "tests": [
+      "test/scenes/fb1020e_offeringray.test.js"
+    ]
+  },
+  {
+    "name": "OFFERING-RAY-the-top-unmoved",
+    "file": "src/scenes/witchesHost.js",
+    "old": "x[4] + tr[1]",
+    "new": "x[4]",
+    "tests": [
+      "test/scenes/fb1020e_offeringray.test.js"
+    ]
+  }
+]

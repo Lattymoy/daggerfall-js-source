@@ -1,0 +1,531 @@
+[
+  {
+    "name": "PROF1-1-rank-rounds",
+    "file": "src/net/professionLaw.js",
+    "old": "  return Math.floor(Math.sqrt(x / 10));",
+    "new": "  return Math.round(Math.sqrt(x / 10));",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-2-xp-to-rank-linear",
+    "file": "src/net/professionLaw.js",
+    "old": "export const xpForRank = (n) => 10 * n * n;",
+    "new": "export const xpForRank = (n) => 100 * n;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-3-the-tier-ladder-shifted",
+    "file": "src/net/professionLaw.js",
+    "old": "export const TIER_RANKS = Object.freeze([0, 10, 25, 40, 55, 70, 90]);",
+    "new": "export const TIER_RANKS = Object.freeze([0, 10, 20, 40, 55, 70, 90]);",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-4-clean-gives-nothing",
+    "file": "src/net/professionLaw.js",
+    "old": "  if (clean) xp = Math.floor((xp * 3) / 2);",
+    "new": "",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-5-no-quarter-far-below",
+    "file": "src/net/professionLaw.js",
+    "old": "  if (tier < topTierOf(rank) - 2) xp = Math.floor(xp / 4);",
+    "new": "",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-6-a-writ-its-pay-in-xp",
+    "file": "src/net/professionLaw.js",
+    "old": "export const writXp = (pay) => 2 * pay;",
+    "new": "export const writXp = (pay) => pay;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-7-the-day-exported-again",
+    "file": "src/net/professionLaw.js",
+    "old": "export const DEEP_UNCONFIRMED_PER_DAY = 4;",
+    "new": "export const HARVESTS_PER_DAY = 60;\nexport const DEEP_UNCONFIRMED_PER_DAY = 4;",
+    "tests": [
+      "test/net/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the law exports no day's cap - the mutant exports the sixty again. It was the mutant that made the day seventy."
+  },
+  {
+    "name": "PROF1-8-the-stores-unbounded",
+    "file": "src/net/professionLaw.js",
+    "old": "export const STORES_MAX = 5000;",
+    "new": "export const STORES_MAX = 50000;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-9-dev-opens-to-all",
+    "file": "src/net/professionLaw.js",
+    "old": "export const profSwitchOf = (v) => (PROF_SWITCH.includes(v) ? v : 'off');",
+    "new": "export const profSwitchOf = (v) => (PROF_SWITCH.includes(v) ? v : 'on');",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-10-the-south-is-north",
+    "file": "src/net/professionLaw.js",
+    "old": "export const regionPlantGroup = (region) => (REGION_RACES[region] === 1 ? 'p2' : 'p1');",
+    "new": "export const regionPlantGroup = (region) => (REGION_RACES[region] === 0 ? 'p2' : 'p1');",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-11-a-one-group-plant-anywhere",
+    "file": "src/net/professionLaw.js",
+    "old": "  if (PLANT_GROUP_TEMPLATES[g].includes(templateIndex)) return g;",
+    "new": "  return g;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-12-the-writs-do-not-grow",
+    "file": "src/net/professionLaw.js",
+    "old": "export const courtWritCount = (active) => 6 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
+    "new": "export const courtWritCount = (active) => 6;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-13-writ-pay-x1-5",
+    "file": "src/net/professionLaw.js",
+    "old": "export const writPay = (units, value) => (units * value * 6) / 5;",
+    "new": "export const writPay = (units, value) => (units * value * 3) / 2;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-14-respec-free",
+    "file": "src/net/professionLaw.js",
+    "old": "    out[row.respec_rank] = row.respec_to;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-15-basket-two-is-nothing",
+    "file": "src/net/professionLaw.js",
+    "old": "export const basketStep = (finds) => (finds >= 3 ? 1.5 : finds === 2 ? 1.25 : 1);",
+    "new": "export const basketStep = (finds) => (finds >= 3 ? 1.5 : 1);",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-16-an-herb-its-rarest-place",
+    "file": "src/net/nodeLaw.js",
+    "old": "    for (let t = 0; t < table.length; t++) if (table[t].includes(templateIndex) && (best === null || t + 1 < best)) best = t + 1;",
+    "new": "    for (let t = 0; t < table.length; t++) if (table[t].includes(templateIndex) && (best === null || t + 1 > best)) best = t + 1;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-17-winter-bares-nothing",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const herbInSeason = (templateIndex, season) => season !== SEASONS.Winter || !WINTER_BARE.includes(templateIndex);",
+    "new": "export const herbInSeason = (templateIndex, season) => true;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-18-unconfirmed-shows-rare",
+    "file": "src/net/nodeLaw.js",
+    "old": "drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
+    "new": "drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-19-the-seasonal-eye-sees-nothing",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (seasonalEye) return { slot, u, v, tier, herb: first, offSeason: true };",
+    "new": "",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-20-a-bruise-takes-the-last",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (bruised) y = Math.max(1, y - 1);",
+    "new": "  if (bruised) y = y - 1;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-21-a-fraction-is-lost",
+    "file": "src/net/nodeLaw.js",
+    "old": "  return whole + (chance < y - whole - 1e-9 ? 1 : 0);",
+    "new": "  return whole;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-22-two-confirm",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const WITNESS = Object.freeze({ ageS: 7 * 86_400, confirm: 3, dispute: 2 });",
+    "new": "export const WITNESS = Object.freeze({ ageS: 7 * 86_400, confirm: 2, dispute: 2 });",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-23-a-dispute-overturns",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (confirmed) return { state: disputed ? 'disputed' : 'confirmed', ...parse(confirmed) };",
+    "new": "  if (confirmed && !disputed) return { state: 'confirmed', ...parse(confirmed) };",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-24-unconfirmed-ground-asks-rares",
+    "file": "src/net/nodeLaw.js",
+    "old": "    const upTo = p.confirmed ? HERB_TIERS : 2;",
+    "new": "    const upTo = HERB_TIERS;",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-25-the-first-writ-ordinary",
+    "file": "src/net/nodeLaw.js",
+    "old": "    if (slot === 0 || !low.length) tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
+    "new": "    if (!low.length) tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
+    "tests": [
+      "test/systems/foraging/prof1_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-26-professions-dev-for-all",
+    "file": "server-account/src/professions.js",
+    "old": "  return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
+    "new": "  return s !== 'off';",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-27-guests-gather",
+    "file": "server-account/src/professions.js",
+    "old": "  if (accountKind(player) !== 'linked') return { error: 'prof-need-account' };",
+    "new": "",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-28-a-harvest-asked-twice-twice",
+    "file": "server-account/src/professions.js",
+    "old": "  if (prior) return repeatAnswer(db, player, env, prior, nowS, body);   // before the switch: a harvest made is a harvest answered",
+    "new": "  if (false) return repeatAnswer(db, player, env, prior, nowS, body);   // before the switch: a harvest made is a harvest answered",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ],
+    "note": "SILVER-FINDS (PIN MOVED): a harvest asked again says its find too (gatherMarksOf) - re-aimed by content. GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "PROF1-29-yesterdays-node-counts",
+    "file": "server-account/src/professions.js",
+    "old": "  if (n.day !== day) return { error: 'prof-day' };   // PROF0 19: a node whose UTC day has ended lapses",
+    "new": "",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-30-the-late-act-counts",
+    "file": "server-account/src/professions.js",
+    "old": "  if (!Number.isSafeInteger(at) || at < nowS - HARVEST_LATE_S || at > nowS + HARVEST_EARLY_S || utcDay(at) !== day) return { error: 'prof-late' };",
+    "new": "  if (!Number.isSafeInteger(at)) return { error: 'prof-late' };",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-32-a-lie-on-a-confirmed-pixel",
+    "file": "server-account/src/professions.js",
+    "old": "  if (confirmed && (fact.climate !== climate || fact.region !== region || (fact.jungle === true) !== jungleSaid)) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-33-any-rank-picks-rares",
+    "file": "server-account/src/professions.js",
+    "old": "      tier = patch.tier;\n      if (!tierOpen(rank, tier)) return { error: 'prof-rank' };",
+    "new": "      tier = patch.tier;",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-34-a-bruise-is-clean",
+    "file": "server-account/src/professions.js",
+    "old": "    clean = !common && act?.clean === true && !bruised;",
+    "new": "    clean = !common && act?.clean === true;",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-35-the-day-capped-again",
+    "file": "server-account/src/professions.js",
+    "old": "      WHERE (?15 = 0 OR",
+    "new": "      WHERE (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND char_id = ?4 AND profession = ?9 AND day = ?6) < 60\n        AND (?15 = 0 OR",
+    "tests": [
+      "test/net/prof1_service.test.js",
+      "test/net/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the character's day of sixty is gone and the pin turned (the sixty-first credited) - the mutant asks the sixty again. It was the mutant that uncapped the day."
+  },
+  {
+    "name": "PROF1-36-the-stores-overflow",
+    "file": "server-account/src/professions.js",
+    "old": "SELECT ?6, ?7, ?8, ?1, ?4, ?9, ?5, MIN(?10, ?11 - ${stored},\n",
+    "new": "SELECT ?6, ?7, ?8, ?1, ?4, ?9, ?5, MIN(?10, ?10,\n",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-37-a-new-account-witnesses",
+    "file": "server-account/src/professions.js",
+    "old": "  const witness = !isBody && Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - WITNESS.ageS ? 1 : 0;",
+    "new": "  const witness = 1;",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-38-withdraw-own-first",
+    "file": "server-account/src/professions.js",
+    "old": "    db.prepare(`UPDATE prof_stores SET qty = qty - MAX(0, ${qtySql} - ${bought})",
+    "new": "    db.prepare(`UPDATE prof_stores SET qty = qty - MIN(qty, ${qtySql})",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-39-a-writ-filled-twice",
+    "file": "server-account/src/professions.js",
+    "old": "      WHERE id = ?5 AND filled_by IS NULL AND expires_at > ?3",
+    "new": "      WHERE id = ?5 AND expires_at > ?3",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-40-writs-uncapped",
+    "file": "server-account/src/professions.js",
+    "old": "        AND (SELECT COUNT(*) FROM writs WHERE filled_by = ?1 AND day = ?7) < ?8",
+    "new": "        AND 1 = 1",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-41-a-writ-from-empty-stores",
+    "file": "server-account/src/professions.js",
+    "old": "        AND ${spendableSql('?1', '?2', 'writs.material')} >= writs.qty",
+    "new": "        AND 1 = 1",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-42-the-pay-not-struck",
+    "file": "server-account/src/professions.js",
+    "old": "      SELECT 'mint', NULL, 'account', ?1, 'writ', pay, ?7, ?3, ?1, NULL, 'writ:' || id FROM writs WHERE id = ?5 AND n = ?6`)",
+    "new": "      SELECT 'mint', NULL, 'account', ?1, 'writ', pay, ?7, ?3, ?1, NULL, 'writ:' || id FROM writs WHERE id = ?5 AND n = 'none'`)",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-43-writs-post-on-bare-ground",
+    "file": "server-account/src/professions.js",
+    "old": "  if (!table.length) return;\n  const active",
+    "new": "  const active",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-44-a-respec-is-free",
+    "file": "server-account/src/professions.js",
+    "old": "      WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?4\n        AND NOT EXISTS",
+    "new": "      WHERE 1 = 1\n        AND NOT EXISTS",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-45-a-kept-harvest-a-new-id",
+    "file": "src/net/profBook.js",
+    "old": "      character: h.character, node: h.node, kind: h.kind, climate: h.climate, region: h.region, act: h.act, at: h.at, rid: h.rid,",
+    "new": "      character: h.character, node: h.node, kind: h.kind, climate: h.climate, region: h.region, act: h.act, at: h.at, rid: `${h.rid}x${Date.now()}`,",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-46-a-kept-harvest-never-lapses",
+    "file": "src/net/profBook.js",
+    "old": "          if (lapsed) {",
+    "new": "          if (false) {",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ],
+    "note": "AUDIT BAG1 + GUILD2 (PIN MOVED): re-aimed by content - a lapse is a block now (a carried harvest is asked once first, B1)."
+  },
+  {
+    "name": "PROF1-47-a-withdrawal-minted-on-silence",
+    "file": "src/net/profBook.js",
+    "old": "    if (keptAnswer(r)) return { ok: false, kept: true, text: t('prof.page.stores.withdrawKept', 'The Stores have your order and will send it when the counting-house answers.') };",
+    "new": "    if (keptAnswer(r)) { mint(w.material, w.qty); return { ok: false, kept: true, text: '' }; }",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-48-a-delivery-forgets-its-id",
+    "file": "src/net/profBook.js",
+    "old": "        const r = await ask(() => door.deliver(c, writId, m.id));\n        m.promise = null;\n        if (!keptAnswer(r)) ids.delete(key);",
+    "new": "        const r = await ask(() => door.deliver(c, writId, m.id));\n        m.promise = null;\n        ids.delete(key);",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-49-letting-go-finishes",
+    "file": "src/systems/herbAct.js",
+    "old": "        if (!held) {\n          st.cancelled = true;\n          return st;\n        } // let go before the end: nothing lost\n        st.from ??= { yaw: view.yaw, pitch: view.pitch, x: pos.x, z: pos.z };",
+    "new": "        st.from ??= { yaw: view.yaw, pitch: view.pitch, x: pos.x, z: pos.z };",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-50-gentle-bruises",
+    "file": "src/systems/herbAct.js",
+    "old": "        if (!gentle && (turned > st.window || moved > HERB_ACT.moveM)) st.bruised = true;",
+    "new": "        if (turned > st.window || moved > HERB_ACT.moveM) st.bruised = true;",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-51-a-turn-the-long-way",
+    "file": "src/systems/herbAct.js",
+    "old": "const turnDeg = (a, b) => {\n  let d = (a - b) % 360;\n  if (d > 180) d -= 360;\n  if (d < -180) d += 360;\n  return Math.abs(d);\n};",
+    "new": "const turnDeg = (a, b) => Math.abs(a - b);",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-52-a-sickle-never-asked",
+    "file": "src/scenes/herbHost.js",
+    "old": "  if (patch.tier > 1 && !sickle) return { kind, verb: `Pick ${name}`, rest: 'needs a Sickle', ready: false, both };",
+    "new": "",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-53-the-basket-first",
+    "file": "src/scenes/herbHost.js",
+    "old": "  let kind = basket ? 'food' : 'herbs';",
+    "new": "  let kind = basket ? 'herbs' : 'food';",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-54-online-the-foods-shelve-too",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  return isOnlinePage() ? [...TOOL_TEMPLATES] : [];",
+    "new": "  return isOnlinePage() ? FORAGING_TEMPLATES.map((t) => t.index) : [];",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-55-online-nothing-shelves",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  return isOnlinePage() ? [...TOOL_TEMPLATES] : [];",
+    "new": "  return [];",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-56-patches-in-towns",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "  if (locationRect && natureCleared(locationRect, x, y)) return null;",
+    "new": "  if (false && locationRect && natureCleared(locationRect, x, y)) return null;",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-57-take-without-the-stores",
+    "file": "src/ui/noticeWindow.js",
+    "old": "      b.disabled = busy || workBusy || held < w.qty || full; // AUDIT 31 B10: nor while a guild writ's or a commission's act is out",
+    "new": "      b.disabled = busy || workBusy || full; // AUDIT 31 B10: nor while a guild writ's or a commission's act is out",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF1-58-the-food-ignores-cc",
+    "file": "src/systems/professions/profItems.js",
+    "old": "  if (key === 'food:apple') return fruitTemplate('Apple', cc);",
+    "new": "  if (key === 'food:apple') return fruitTemplate('Apple', false);",
+    "tests": [
+      "test/systems/prof1_client.test.js"
+    ]
+  }
+]

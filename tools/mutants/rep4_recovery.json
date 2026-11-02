@@ -1,0 +1,83 @@
+[
+  {
+    "name": "REP4-DFU's-112-day-recovery",
+    "file": "src/systems/worldTick.js",
+    "old": "    } else if (ownArms && i % RECOVERY_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  },
+  {
+    "name": "REP4-the-week-wearing-the-good-down",
+    "file": "src/systems/worldTick.js",
+    "old": "      normalizeReputations(entity, entity.factionRep ?? null, { recoveryOnly: true });\n    }",
+    "new": "      normalizeReputations(entity, entity.factionRep ?? null);\n    }",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  },
+  {
+    "name": "REP4-the-boundary-paying-twice",
+    "file": "src/systems/worldTick.js",
+    "old": "    } else if (ownArms && i % RECOVERY_INTERVAL_MINUTES === 0",
+    "new": "    } if (ownArms && i % RECOVERY_INTERVAL_MINUTES === 0",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  },
+  {
+    "name": "REP4-the-absence-on-DFU's-112-days",
+    "file": "src/systems/worldTick.js",
+    "old": "Math.floor((b - 1) / RECOVERY_INTERVAL_MINUTES) - Math.floor((a - 1) / RECOVERY_INTERVAL_MINUTES)",
+    "new": "Math.floor((b - 1) / NORMALIZE_INTERVAL_MINUTES) - Math.floor((a - 1) / NORMALIZE_INTERVAL_MINUTES)",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  },
+  {
+    "name": "REP4-past-zero",
+    "file": "src/systems/standing.js",
+    "old": "  const points = rep < 0 ? Math.min(PENANCE_POINTS, -rep) : 0;",
+    "new": "  const points = rep < 0 ? PENANCE_POINTS : 0;",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  },
+  {
+    "name": "REP4-the-price-flat",
+    "file": "src/systems/standing.js",
+    "old": "  return PENANCE_BASE_PRICE * ((standingOf(player).penance[regionIndex] ?? 0) + 1);",
+    "new": "  return PENANCE_BASE_PRICE;",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  },
+  {
+    "name": "REP4-the-offer-never-paid",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "const points = doPenance(entity, regionIndex);",
+    "new": "const points = 0;",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  },
+  {
+    "name": "REP4-the-thanks-never-paid",
+    "file": "src/scenes/bountyHost.js",
+    "old": "    if (Number.isInteger(region) && region >= 0 && entity) rewardContract(entity, region);\n",
+    "new": "",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  },
+  {
+    "name": "REP4-the-contract-past-100",
+    "file": "src/systems/standing.js",
+    "old": "  const points = Math.max(0, Math.min(CONTRACT_LEGAL_GAIN, LEGAL_REP_MAX - rep));",
+    "new": "  const points = CONTRACT_LEGAL_GAIN;",
+    "tests": [
+      "test/systems/rep4_recovery.test.js"
+    ]
+  }
+]

@@ -1,0 +1,380 @@
+[
+  {
+    "name": "TRADE-good-count",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  return (items ?? []).reduce((n, it) => n + (it?.templateIndex === t ? Math.max(1, it.stackCount | 0) : 0), 0);",
+    "new": "  return (items ?? []).reduce((n, it) => n + (it?.templateIndex === t ? 1 : 0), 0);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-take-whole-stack",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "    if (have > left) {\n      it.stackCount = have - left;\n      left = 0;\n    } else {\n      items.splice(i, 1);\n      left -= have;\n    }",
+    "new": "    items.splice(i, 1);\n    left -= have;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-weight-unit",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "    return kg + (g ? g.kg * Math.max(1, it.stackCount | 0) : 0);",
+    "new": "    return kg + (g ? g.kg : 0);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-twist-unread",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  if (free.length) (h & 1 ? makes : wants).push(free[(h >>> 1) % free.length]);",
+    "new": "  if (false) (h & 1 ? makes : wants).push(free[(h >>> 1) % free.length]);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-twist-same",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  const h = hashKey(`${port?.key ?? ''}:trade`);",
+    "new": "  const h = hashKey(`${port?.crown ?? ''}:trade`);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-isle-wants",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "    return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) };",
+    "new": "    return { makes: [...ETHER, own], wants: [] };",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-exotic-unwanted",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  if (t.wants.includes(id) || (g.ether && !port?.ether)) return 'wants';",
+    "new": "  if (t.wants.includes(id)) return 'wants';",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-made-k",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;",
+    "new": "  const mood = stand === 'makes' ? 1 : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-want-k",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;",
+    "new": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? EXOTIC_K : 1;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-exotic-k",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;",
+    "new": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? WANT_K : 1;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-drift-day",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  const r = mulberry32((hashKey(`${port?.key ?? ''}:${id}`) ^ Math.imul((day | 0) + 1, 0x85ebca6b)) >>> 0);",
+    "new": "  const r = mulberry32(hashKey(`${port?.key ?? ''}:${id}`) >>> 0);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-drift-wide",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  const mid = g.base * mood * (1 - PRICE_DRIFT + 2 * PRICE_DRIFT * r());",
+    "new": "  const mid = g.base * mood * (1 - 2 * PRICE_DRIFT + 4 * PRICE_DRIFT * r());",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-spread-sell",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  return {\n    id,\n    stand,\n    mid,\n    sell: Math.max(1, Math.round(mid * (1 + SPREAD))),\n    buy: Math.max(1, Math.round(mid * (1 - SPREAD))),\n  };",
+    "new": "  return { id, stand, mid, sell: Math.max(1, Math.round(mid)), buy: Math.max(1, Math.round(mid * (1 - SPREAD))) };",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-spread-buy",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  return {\n    id,\n    stand,\n    mid,\n    sell: Math.max(1, Math.round(mid * (1 + SPREAD))),\n    buy: Math.max(1, Math.round(mid * (1 - SPREAD))),\n  };",
+    "new": "  return { id, stand, mid, sell: Math.max(1, Math.round(mid * (1 + SPREAD))), buy: Math.max(1, Math.round(mid)) };",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-exotic-sold",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "      sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)),",
+    "new": "      sells: Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)),",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-dealt-sides",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "      sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)),\n      buys: Math.max(0, stock.buy - (dealt.sold?.[g.id] | 0)),",
+    "new": "      sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.sold?.[g.id] | 0)),\n      buys: Math.max(0, stock.buy - (dealt.bought?.[g.id] | 0)),",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TRADE-other-sea-listed",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "    if (other && stand === 'neither') continue; // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)",
+    "new": "    if (other && stand !== 'wants') continue; // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "OFFICE-buy-unpaid",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    deps.pay?.(k * r.sell);\n    const goods = mintGood(id, k);",
+    "new": "    const goods = mintGood(id, k);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "OFFICE-buy-past-stock",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    const k = Math.min(asked(n), r.sells, Math.floor((deps.gold?.() ?? 0) / r.sell), fit);",
+    "new": "    const k = Math.min(asked(n), Math.floor((deps.gold?.() ?? 0) / r.sell), fit);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "OFFICE-buy-undealt",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    L.deal(port.key, day, id, k, 'bought');\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "OFFICE-sell-past-stock",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    const k = takeGood(hold, id, Math.min(asked(n), have, r.buys));",
+    "new": "    const k = takeGood(hold, id, Math.min(asked(n), have));",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "OFFICE-sell-unlogged",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    L.note('traded', k * r.buy);\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "OFFICE-sell-all-one",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "  const asked = (n) => Math.max(1, Number.isFinite(n) ? Math.floor(n) : Number.MAX_SAFE_INTEGER);",
+    "new": "  const asked = (n) => Math.max(1, n | 0);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "LEDGER-dealt-any-day",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      const at =\n        dealt && dealt.day === day && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;",
+    "new": "      const at = dealt && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "LEDGER-dealt-unsaved",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      dealt: dealt ? JSON.parse(JSON.stringify(dealt)) : null,",
+    "new": "      dealt: null,",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "CHART-trade-any",
+    "file": "src/systems/naval/treasureCharts.js",
+    "old": "  if (cls?.faction !== 'pirate') return null;\n  const r = mulberry32(((seed >>> 0) ^ CHART_SALT) >>> 0);",
+    "new": "  const r = mulberry32(((seed >>> 0) ^ CHART_SALT) >>> 0);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "CHART-deep-unread",
+    "file": "src/systems/naval/treasureCharts.js",
+    "old": "  const p = cls.flagship ? CHART_CHANCE.flagship : deep ? CHART_CHANCE.deep : CHART_CHANCE.pirate;",
+    "new": "  const p = cls.flagship ? CHART_CHANCE.flagship : CHART_CHANCE.pirate;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "CHART-flagship-unread",
+    "file": "src/systems/naval/treasureCharts.js",
+    "old": "  const p = cls.flagship ? CHART_CHANCE.flagship : deep ? CHART_CHANCE.deep : CHART_CHANCE.pirate;",
+    "new": "  const p = deep ? CHART_CHANCE.deep : CHART_CHANCE.pirate;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "CHART-band-unread",
+    "file": "src/systems/naval/treasureCharts.js",
+    "old": "    const site = siteFor(port, r, seaAt, CHART_PX);",
+    "new": "    const site = siteFor(port, r, seaAt);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "CHART-gold-level",
+    "file": "src/systems/naval/treasureCharts.js",
+    "old": "  return Math.round((CACHE_GOLD.base + CACHE_GOLD.level * Math.max(1, level | 0)) * (0.8 + 0.4 * r()));",
+    "new": "  return Math.round(CACHE_GOLD.base * (0.8 + 0.4 * r()));",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "LEDGER-chart-twice",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX)\n        return false;",
+    "new": "      if (!c || typeof c.id !== 'string' || charts.length >= CHARTS_MAX) return false;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "LEDGER-chart-uncapped",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX)\n        return false;",
+    "new": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id)) return false;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "LEDGER-chart-unlogged",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      ledger.note('maps');\n      return c;",
+    "new": "      return c;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "OFFICE-cache-unpaid",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    deps.credit?.(g);\n    return g;",
+    "new": "    return g;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "OFFICE-cache-unsited",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    sites: () => [\n      ...contractSites(L.contracts()),\n      ...L.charts().map((c) => ({ id: c.id, kind: 'cache', px: c.px, py: c.py, seed: c.seed, n: 1 })),\n    ],",
+    "new": "    sites: () => [...contractSites(L.contracts())],",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "HOST-chart-ungiven",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "deps.board?.giveItems?.([chart], boatInPlay() ?? null, { force: true });",
+    "new": "void chart;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "HOST-cache-one-lot",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    for (let i = 0; i < CACHE_LOTS; i++) for (const it of deps.hold?.(STRONGBOX_KEY, STRONGBOX_RARITY_TIER) ?? []) items.push(it);",
+    "new": "    for (const it of deps.hold?.(STRONGBOX_KEY, STRONGBOX_RARITY_TIER) ?? []) items.push(it);",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "HOST-cache-unraised",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const gold = deps.captain?.raiseCache?.(e.lot.slice(SITE_LOT.length)) ?? 0;",
+    "new": "    const gold = 0;",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "HOST-cache-unstood",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      } else if ((site.kind === 'salvage' || site.kind === 'cache' || site.kind === 'strand') && site.n > 0) {",
+    "new": "      } else if ((site.kind === 'salvage' || site.kind === 'strand') && site.n > 0) {",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TAB-trade-unbought",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "      mk('Buy 1', r.canBuy, () => press(x.buy(r.id, 1)));",
+    "new": "      mk('Buy 1', r.canBuy, () => press(null));",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "TAB-trade-stand-unsaid",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "  const STAND = { makes: 'Made here: cheap', wants: 'Wanted here: dear', neither: '' };",
+    "new": "  const STAND = { makes: '', wants: '', neither: '' };",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-chart-unspent",
+    "file": "src/scenes/world.js",
+    "old": "    if (i >= 0) collection.splice(i, 1);\n    return { kind: 'treasureChart', text: r.text };",
+    "new": "    return { kind: 'treasureChart', text: r.text };",
+    "tests": [
+      "test/systems/naval/capttrade.test.js"
+    ]
+  }
+]

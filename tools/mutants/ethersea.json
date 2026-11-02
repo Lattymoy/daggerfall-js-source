@@ -1,0 +1,470 @@
+[
+  {
+    "name": "SEA-box-north",
+    "file": "src/world/ethericSea.js",
+    "old": "y0: -7680, y1: -2688 }",
+    "new": "y0: -8128, y1: -2688 }",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-margin",
+    "file": "src/world/ethericSea.js",
+    "old": "export const ETHER_MARGIN = 64;",
+    "new": "export const ETHER_MARGIN = 4;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-law-no-margin",
+    "file": "src/world/ethericSea.js",
+    "old": "export const inEtherLaw = (x, y) => x >= ETHER_BOX.x0 - ETHER_MARGIN && x < ETHER_BOX.x1 + ETHER_MARGIN",
+    "new": "export const inEtherLaw = (x, y) => x >= ETHER_BOX.x0 && x < ETHER_BOX.x1",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-veil-width",
+    "file": "src/world/ethericSea.js",
+    "old": "export const VEIL_PX = 16;",
+    "new": "export const VEIL_PX = 8;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-veil-past-box",
+    "file": "src/world/ethericSea.js",
+    "old": "export const inVeil = (x, y) => inEther(x, y) && x >= VEIL_X;",
+    "new": "export const inVeil = (x, y) => x >= VEIL_X;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-depth-in-veil",
+    "file": "src/world/ethericSea.js",
+    "old": "export const etherDepthAt = (x) => Math.max(0, VEIL_X - x) / LEAGUE_PX;",
+    "new": "export const etherDepthAt = (x) => (VEIL_X - x) / LEAGUE_PX;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-reaches-bound",
+    "file": "src/world/ethericSea.js",
+    "old": "id: 'reaches', name: 'the Reaches', from: 12,",
+    "new": "id: 'reaches', name: 'the Reaches', from: 10,",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-abyss-bound",
+    "file": "src/world/ethericSea.js",
+    "old": "id: 'abyss', name: 'the Abyss', from: 140,",
+    "new": "id: 'abyss', name: 'the Abyss', from: 150,",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-band-edge",
+    "file": "src/world/ethericSea.js",
+    "old": "  for (const x of BANDS) if (leagues >= x.from) b = x;",
+    "new": "  for (const x of BANDS) if (leagues > x.from) b = x;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-hash-salt",
+    "file": "src/world/ethericSea.js",
+    "old": "  let h = 0x811c9dc5 ^ ETHER_SALT;",
+    "new": "  let h = 0x811c9dc5;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-hash-mix",
+    "file": "src/world/ethericSea.js",
+    "old": "    h = Math.imul(h, 0x01000193);\n    h ^= h >>> 15;",
+    "new": "    h ^= h >>> 15;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-rng-step",
+    "file": "src/world/ethericSea.js",
+    "old": "    a = (a + 0x6d2b79f5) >>> 0;",
+    "new": "    a = (a + 1) >>> 0;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-cell-size",
+    "file": "src/world/ethericSea.js",
+    "old": "export const ISLE_CELL_PX = 10;",
+    "new": "export const ISLE_CELL_PX = 12;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-chance-unread",
+    "file": "src/world/ethericSea.js",
+    "old": "  if (!haven && !(r() < band.chance)) return null;",
+    "new": "  if (!haven && !(r() < 0.9)) return null;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-kinds-shallows",
+    "file": "src/world/ethericSea.js",
+    "old": "  const kind = haven ? 'port' : pick(band.kinds, r());",
+    "new": "  const kind = haven ? 'port' : pick(BANDS[0].kinds, r());",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-margin-no-spill",
+    "file": "src/world/ethericSea.js",
+    "old": "  const margin = Math.ceil(radius) + 1;",
+    "new": "  const margin = Math.ceil(radius);",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-radius-range",
+    "file": "src/world/ethericSea.js",
+    "old": "  const radius = haven ? 1 : lerp(k.r[0], k.r[1], r());",
+    "new": "  const radius = haven ? 1 : lerp(k.r[0], k.r[1] + 1, r());",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-port-lifted",
+    "file": "src/world/ethericSea.js",
+    "old": "(kind === 'port' ? 1 : 1 + band.lift)",
+    "new": "(1 + band.lift)",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-good-every-isle",
+    "file": "src/world/ethericSea.js",
+    "old": "  const good = kind === 'wild' ? ETHER_GOODS[Math.floor(r() * ETHER_GOODS.length) % ETHER_GOODS.length] : null;",
+    "new": "  const good = ETHER_GOODS[Math.floor(r() * ETHER_GOODS.length) % ETHER_GOODS.length];",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-veil-strip",
+    "file": "src/world/ethericSea.js",
+    "old": "|| cx > VEILHAVEN_CELL[0];",
+    "new": "|| cx > VEILHAVEN_CELL[0] + 2;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-edge-cells",
+    "file": "src/world/ethericSea.js",
+    "old": "export const EDGE_CELLS = 1;",
+    "new": "export const EDGE_CELLS = 0;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-haven-cell",
+    "file": "src/world/ethericSea.js",
+    "old": "Math.floor((VEIL_X - ETHER_BOX.x0) / ISLE_CELL_PX) - 4,",
+    "new": "Math.floor((VEIL_X - ETHER_BOX.x0) / ISLE_CELL_PX) - 6,",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-haven-peak",
+    "file": "src/world/ethericSea.js",
+    "old": "  const peak = haven ? 12 :",
+    "new": "  const peak = haven ? 22 :",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-cache-unkept",
+    "file": "src/world/ethericSea.js",
+    "old": "  _isles.set(key, isle);\n",
+    "new": "",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-name-middle-rare",
+    "file": "src/world/ethericSea.js",
+    "old": "(r() < 0.5 ? draw(NAME_MIDS, r) : '')",
+    "new": "(r() < 0.1 ? draw(NAME_MIDS, r) : '')",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-ruin-rootless",
+    "file": "src/world/ethericSea.js",
+    "old": "(n, w) => `the ${w.ruin} of ${n}`]),",
+    "new": "(n, w) => `the ${w.adj} ${w.ruin}`]),",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-fall-unread",
+    "file": "src/world/ethericSea.js",
+    "old": "  const h = isle.peak * Math.pow(1 - t * t, isle.fall)",
+    "new": "  const h = isle.peak * Math.pow(1 - t * t, 1.5)",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-rim-unkept",
+    "file": "src/world/ethericSea.js",
+    "old": "  if (t >= 1) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-noise-wide",
+    "file": "src/world/ethericSea.js",
+    "old": "(lattice(x, y, 0x51) - 0.5) * 2 * HEIGHT_NOISE",
+    "new": "(lattice(x, y, 0x51) - 0.5) * 6 * HEIGHT_NOISE",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-detail-sea",
+    "file": "src/world/ethericSea.js",
+    "old": "  const top = land ? 10 : 2;",
+    "new": "  const top = land ? 10 : 7;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-detail-land",
+    "file": "src/world/ethericSea.js",
+    "old": "  const top = land ? 10 : 2;",
+    "new": "  const top = land ? 2 : 2;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-climate-reach",
+    "file": "src/world/ethericSea.js",
+    "old": "Math.hypot(x - isle.lx, y - isle.ly) <= isle.r + CLIMATE_REACH_PX ? isle.climate",
+    "new": "Math.hypot(x - isle.lx, y - isle.ly) <= isle.r ? isle.climate",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-compose-height",
+    "file": "src/world/ethericSea.js",
+    "old": "  ground.getHeightMapValue = function (x, y) { return inEtherLaw(x, y) ? etherHeightByte(x, y) : woods.getHeightMapValue(x, y); };",
+    "new": "  ground.getHeightMapValue = function (x, y) { return woods.getHeightMapValue(x, y); };",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-compose-large",
+    "file": "src/world/ethericSea.js",
+    "old": "  ground.getLargeMapData = function (x, y) { return inEtherLaw(x, y) ? etherLargeMap(x, y) : woods.getLargeMapData(x, y); };",
+    "new": "  ground.getLargeMapData = function (x, y) { return woods.getLargeMapData(x, y); };",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-compose-climate",
+    "file": "src/world/ethericSea.js",
+    "old": "  return (x, y) => (inEtherLaw(x, y) ? etherClimateAt(x, y) : climateIndex(x, y));",
+    "new": "  return (x, y) => climateIndex(x, y);",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-politic-band",
+    "file": "src/world/ethericSea.js",
+    "old": "  return (x, y) => (inEtherLaw(x, y) ? 128 + region : politicIndex(x, y));",
+    "new": "  return (x, y) => (inEtherLaw(x, y) ? region : politicIndex(x, y));",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-cross-west",
+    "file": "src/world/ethericSea.js",
+    "old": "!inEtherLaw(x, y) && x < CROSS_X && typeof landPx",
+    "new": "!inEtherLaw(x, y) && x <= CROSS_X && typeof landPx",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-cross-land",
+    "file": "src/world/ethericSea.js",
+    "old": "typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx",
+    "new": "typeof landPx === 'number' && landPx > CROSS_LAND_PX && seaPx",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-cross-in-box",
+    "file": "src/world/ethericSea.js",
+    "old": "export const crossingWaters = (x, y, landPx, seaPx) => !inEtherLaw(x, y) && x < CROSS_X",
+    "new": "export const crossingWaters = (x, y, landPx, seaPx) => x < CROSS_X",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-cross-infinity",
+    "file": "src/world/ethericSea.js",
+    "old": "typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx",
+    "new": "Number.isFinite(landPx) && landPx >= CROSS_LAND_PX && seaPx",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-landfall-off",
+    "file": "src/world/ethericSea.js",
+    "old": "export const LANDFALL_OFF_PX = 4;",
+    "new": "export const LANDFALL_OFF_PX = 2;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-light-none-made",
+    "file": "src/world/ethericSea.js",
+    "old": "  if (!(w > 0) && rgb instanceof Float32Array) return rgb;\n",
+    "new": "",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-light-unclamped",
+    "file": "src/world/ethericSea.js",
+    "old": "  const k = Math.max(0, Math.min(1, w || 0));",
+    "new": "  const k = Math.max(0, w || 0);",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-light-tint",
+    "file": "src/world/ethericSea.js",
+    "old": "export const ETHER_LIGHT_TINT = Object.freeze([0.88, 0.9, 1.14]);",
+    "new": "export const ETHER_LIGHT_TINT = Object.freeze([0.88, 0.9, 1.04]);",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-streams-frames",
+    "file": "src/world/streamingWorld.js",
+    "old": "    return StreamingWorldState.frames.some((b) => px >= b.x0 && px < b.x0 + b.w && py >= b.y0 && py < b.y0 + b.h);",
+    "new": "    return false;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-streams-edge",
+    "file": "src/world/streamingWorld.js",
+    "old": "    return StreamingWorldState.frames.some((b) => px >= b.x0 && px < b.x0 + b.w && py >= b.y0 && py < b.y0 + b.h);",
+    "new": "    return StreamingWorldState.frames.some((b) => px >= b.x0 && px <= b.x0 + b.w && py >= b.y0 && py <= b.y0 + b.h);",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-ring-climate-clamped",
+    "file": "src/render/farRing.js",
+    "old": "    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? climateAt(x, y) : climatePast(x, y))",
+    "new": "    ? (x, y) => climateAt(clampX(x), clampY(y))",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-client-unsaid",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "    this._ether = !!woods?.isEtherGround;",
+    "new": "    this._ether = false;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-worker-uncomposed",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "      if (m.ether) woods = etherWoods(woods);",
+    "new": "      if (false) woods = etherWoods(woods);",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-host-politic",
+    "file": "src/scenes/world.js",
+    "old": "    maps.getPoliticIndex = etherPoliticIndex(maps.getPoliticIndex.bind(maps), ETHER_REGION);",
+    "new": "",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-host-frames",
+    "file": "src/scenes/world.js",
+    "old": "  StreamingWorldState.frames = etherSea ? [etherFrame()] : [];",
+    "new": "  StreamingWorldState.frames = [];",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  },
+  {
+    "name": "SEA-host-light-gate",
+    "file": "src/scenes/world.js",
+    "old": "    const etherAirW = etherPx && inEther(etherPx.x, etherPx.y) ? 1 : 0;",
+    "new": "    const etherAirW = etherPx ? 1 : 0;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ]
+  }
+]

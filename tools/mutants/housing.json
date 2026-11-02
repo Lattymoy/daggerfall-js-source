@@ -1,0 +1,689 @@
+[
+  {
+    "name": "HOME-DOORS-the-jamb-unhalved",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "        for (let i = 0; i < 4; i++) {",
+    "new": "        for (let i = 0; i < 0; i++) {",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-wall-going-on-unasked",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "    if (!goesOn(tr, r, 1) || !goesOn(tl, l, -1)) return rays;",
+    "new": "    if (false) return rays;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-depth-bound",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "    if (far - near > DOORWAY_DEPTH_MAX || far < near - DOORWAY_STEP) return rays;",
+    "new": "    if (far < near - DOORWAY_STEP) return rays;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ],
+    "equivalent": true,
+    "why": "The room finder (systems/decor/decorRooms.js) makes the inside of any wall deeper than a cell its own room, so a link never spans more than DOORWAY_DEPTH_MAX of wall and the back-cast always meets the far face within it - a 1.5 m and a 2 m wall each gave their two mouths, with or without the bound. Kept as the back-cast's own bound, belt and braces."
+  },
+  {
+    "name": "HOME-DOORS-the-lintel-unread",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "    const height = Number.isFinite(lintel) ? lintel - floor : DOORWAY_HEIGHT_MAX;",
+    "new": "    const height = DOORWAY_HEIGHT_MAX;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-a-doorway-twice",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "    if (!found.some((d) => same(d, c))) found.push(c);",
+    "new": "    found.push(c);",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-near-door-unasked",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "          Math.hypot(d[0] - w.center[0], d[2] - w.center[2]) < DOORWAY_NEAR_DOOR &&\n          Math.abs(d[1] - w.center[1]) < DOORWAY_HEIGHT_MIN,",
+    "new": "          Math.hypot(d[0] - w.center[0], d[2] - w.center[2]) < 0 && Math.abs(d[1] - w.center[1]) < DOORWAY_HEIGHT_MIN,",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-behind-the-eye",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "    if (!(t > 0) || t > reach) continue;",
+    "new": "    if (t > reach) continue;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-flip-unread",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "  if (flip) yaw += Math.PI;",
+    "new": "  if (false) yaw += Math.PI;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-width-axis",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "  const alongX = wx >= wz;",
+    "new": "  const alongX = true;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-scale-not-the-tighter",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "  const fit = Math.min(doorway.width / wide, (doorway.height - DOOR_FIT_GAP) / high);",
+    "new": "  const fit = doorway.width / wide;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-modulo",
+    "file": "src/systems/decor/decorCatalogue.js",
+    "old": "        add({ model: DOOR_MODEL_BASE_ID + (idx % DOOR_MODEL_COUNT), flat: null });",
+    "new": "        add({ model: DOOR_MODEL_BASE_ID + idx, flat: null });",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-hand-off",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "        if (decorIsDoor(piece) && doors && m.cpu?.positions && m.cpu?.indices) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-bucket-left",
+    "file": "src/world/actionSystem.js",
+    "old": "    this.collider.removeBucket(key);\n    return true;\n  }",
+    "new": "    return true;\n  }",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-taken-doorway-offered",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    return decorDoorwaysFree(list, [...(deps.doorsHere?.() ?? []), ...placed]);",
+    "new": "    return decorDoorwaysFree(list, [...placed]);",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-fit-skipped",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    const fit = aimed && m ? decorDoorFit(aimed, m.box, p.flip) : null;",
+    "new": "    const fit = null;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-rooms-kept",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "  function forgetRooms(keepDoorways = false) {\n    rooms = null;\n    roomsFor = null;\n",
+    "new": "  function forgetRooms(keepDoorways = false) {\n",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-renewal-from-now",
+    "file": "src/net/homeLaw.js",
+    "old": "  const from = Number.isSafeInteger(until) && until > nowS ? until : nowS;",
+    "new": "  const from = nowS;",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-cap-unread",
+    "file": "src/net/homeLaw.js",
+    "old": "  return end - nowS <= RENT_DAYS_MAX * RENT_DAY_S ? end : null;",
+    "new": "  return end;",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-days-rounded-down",
+    "file": "src/net/homeLaw.js",
+    "old": "  Number.isSafeInteger(until) && until > nowS ? Math.ceil((until - nowS) / RENT_DAY_S) : 0;",
+    "new": "  Number.isSafeInteger(until) && until > nowS ? Math.floor((until - nowS) / RENT_DAY_S) : 0;",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-tenant-shut-out",
+    "file": "src/net/homeLaw.js",
+    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
+    "new": "  if (false) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-price-unchecked",
+    "file": "server-account/src/rent.js",
+    "old": "  if (row.price !== price) return { error: 'rent-price', price: row.price };\n",
+    "new": "",
+    "tests": [
+      "test/server/homerent.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT: the rent's own write guards the price too (`AND price = ?`), and a write refused by it is answered by roomMovedOf - `rent-price` with the price that stands, nothing paid. The early check spares the record's write; belt and braces."
+  },
+  {
+    "name": "HOME-RENT-the-owner-renting",
+    "file": "server-account/src/rent.js",
+    "old": "  if (row.owner === player.id) return { error: 'rent-own' };\n",
+    "new": "",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-hold-unmoved",
+    "file": "server-account/src/rent.js",
+    "old": "      db.prepare('UPDATE homes SET rent_due = rent_due + ? WHERE map_id = ? AND building_key = ?').bind(cost, mapId, buildingKey),",
+    "new": "      db.prepare('UPDATE homes SET rent_due = rent_due + 0 WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey),",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-held-cap-unread",
+    "file": "server-account/src/rent.js",
+    "old": "    if ((held?.n ?? 0) >= RENT_HELD_MAX) return { error: 'rent-held' };",
+    "new": "    if (false) return { error: 'rent-held' };",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-withdraw-deleting-a-tenancy",
+    "file": "server-account/src/rent.js",
+    "old": "AND room = ? AND (tenant IS NULL OR until <= ?) AND ${OWNS} RETURNING room`)",
+    "new": "AND room = ? AND (tenant IS NULL OR until <= ? OR 1) AND ${OWNS} RETURNING room`)",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-sale-unguarded",
+    "file": "server-account/src/homes.js",
+    "old": ".bind(mapId, buildingKey, ctx.nowS ?? Math.floor(Date.now() / 1000)).first())?.n ?? 0) > 0) return { error: 'home-tenants' };",
+    "new": ".bind(mapId, buildingKey, ctx.nowS ?? Math.floor(Date.now() / 1000)).first())?.n ?? 0) > 1e9) return { error: 'home-tenants' };",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-rent-lost-at-the-sale",
+    "file": "server-account/src/homes.js",
+    "old": "  const back = refund + decorBack + rentDue;",
+    "new": "  const back = refund + decorBack;",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-delete-unguarded",
+    "file": "server-account/src/realm.js",
+    "old": "    if (Number((await db.prepare(HOME_TENANTS_SQL).bind(playerId, id, nowS).first())?.n ?? 0) > 0)\n      return { error: 'home-tenants' };\n    if (Number((await db.prepare(HOME_RENT_DUE_SQL).bind(playerId, id).first())?.due ?? 0) > 0)",
+    "new": "    if (Number((await db.prepare(HOME_RENT_DUE_SQL).bind(playerId, id).first())?.due ?? 0) > 0)",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-character-unsent",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "      .then(() => api.town(id, as === undefined ? character() : as)) // HOME-RENT: the playing character's own tenancies ride the answer",
+    "new": "      .then(() => api.town(id, as === undefined ? null : as)) // HOME-RENT: the playing character's own tenancies ride the answer",
+    "tests": [
+      "test/server/homerent.test.js",
+      "test/systems/online/bootoverlap.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-the-tapestry-painted",
+    "file": "src/world/homeLook.js",
+    "old": "  if (family === HOME_LOOK_DOORS) return record === HOME_LOOK_DOOR_KEPT ? null : 'door';",
+    "new": "  if (family === HOME_LOOK_DOORS) return 'door';",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-a-flat-archive-a-wall",
+    "file": "src/world/homeLook.js",
+    "old": "  if (!HOME_LOOK_BASES.has(archive - family)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-the-base-dropped",
+    "file": "src/world/homeLook.js",
+    "old": "    const swapped = base?.get?.(key);",
+    "new": "    const swapped = null;",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-the-owner-unchecked",
+    "file": "server-account/src/homes.js",
+    "old": "  const r = await db.prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character).run();",
+    "new": "  const r = await db.prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey).run();",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-the-home-merged",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) {",
+    "new": "          if (!isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) {",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-the-older-ask-landing",
+    "file": "src/scenes/world.js",
+    "old": ".then((map) => { if (m._home.seq === seq) m.texRemap = map; }",
+    "new": ".then((map) => { m.texRemap = map; }",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-one-s-own-item-outside",
+    "file": "src/net/decorLaw.js",
+    "old": "  return p && !p.item && decorYardPlaceOf(p) ? p : null;",
+    "new": "  return p && decorYardPlaceOf(p) ? p : null;",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-the-house-let-in",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
+    "new": "  if (false) return YARD_IN_HOUSE;",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-another-building-s-ground-let-in",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if ((others ?? []).some(meets)) return YARD_ON_OTHER;",
+    "new": "  if (false) return YARD_ON_OTHER;",
+    "tests": [
+      "test/scenes/homeyard.test.js",
+      "test/scenes/fb1011b_homeline.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-the-room-listing-the-yard",
+    "file": "server-account/src/decor.js",
+    "old": "FROM ${S.table} WHERE map_id = ? AND building_key = ? AND yard = 0",
+    "new": "FROM ${S.table} WHERE map_id = ? AND building_key = ?",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-one-cap-for-both",
+    "file": "server-account/src/decor.js",
+    "old": "...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : roomCap),",
+    "new": "...countBinds, roomCap,",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "HOME-YARD-the-flag-unsent",
+    "file": "src/scenes/homeYards.js",
+    "old": "    place: async (a) => wrote(a, await deps.api.place({ ...a, yard: true })),",
+    "new": "    place: async (a) => wrote(a, await deps.api.place({ ...a })),",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-rent-lost-in-the-tab",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "        credit(sold.refund + sold.decorBack + rent);",
+    "new": "        credit(sold.refund + sold.decorBack);",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-a-withdrawn-room-renewed",
+    "file": "server-account/src/rent.js",
+    "old": "  if (row.listed !== 1) return { error: 'no-rent-room' };",
+    "new": "  if (row.listed !== 1 && !renewing) return { error: 'no-rent-room' };",
+    "tests": [
+      "test/server/homerent.test.js"
+    ],
+    "equivalent": true,
+    "why": "The rent's own write guards the offer too (`AND listed = 1`), and a write refused by it is answered by roomMovedOf - `no-rent-room`, nothing paid. The early check spares the record's write; belt and braces."
+  },
+  {
+    "name": "HOME-RENT-every-race-said-taken",
+    "file": "server-account/src/rent.js",
+    "old": "|| (await roomMovedOf(db, mapId, buildingKey, room, price));",
+    "new": "|| { error: 'rent-taken' };",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-price-race-unsaid",
+    "file": "server-account/src/rent.js",
+    "old": "  if (now.price !== price) return { error: 'rent-price', price: now.price };\n",
+    "new": "",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-collection-unrated",
+    "file": "server-account/src/rent.js",
+    "old": "  if (await overRate({ db, nowS: ctx.nowS }, `rent:${player.id}`, RENT_WRITES_MAX, RENT_WRITES_WINDOW_S)) return { error: 'rent-rate' };   // a collection counts, as the law says\n",
+    "new": "",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-yours-to-the-account",
+    "file": "server-account/src/rent.js",
+    "old": "    const theirs = running && r.tenant === player.id && me != null && r.tenant_char === me;",
+    "new": "    const theirs = running && r.tenant === player.id;",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-an-offer-with-no-save",
+    "file": "server-account/src/rent.js",
+    "old": "  if (!(Number(rec?.bytes) > 0)) return { error: 'realm-needed' };",
+    "new": "  if (false) return { error: 'realm-needed' };",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-refused-delete-withdrawing",
+    "file": "server-account/src/realm.js",
+    "old": "  const held = await homeHeld();\n  if (held) return held;\n  await db",
+    "new": "  await db",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-offer-by-the-finders-number",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "        res = await door.offer({ room: row.number, anchor, price });",
+    "new": "        res = await door.offer({ room: row.id, anchor, price });",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-orphans-number-taken",
+    "file": "src/systems/homeRent.js",
+    "old": "    const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
+    "new": "    const number = o ? o.room : f.id;",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-a-leftover-offered",
+    "file": "src/systems/homeRent.js",
+    "old": "  if (!o.listed) return 'No longer offered to rent'; // AUDIT: a room taken off the offer whose tenancy ran out (it said \"Offered\")",
+    "new": "  if (false) return 'No longer offered to rent'; // AUDIT: a room taken off the offer whose tenancy ran out (it said \"Offered\")",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-renting-from-oneself",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  if (!home.rent || home.mine) return offer.length ? offer : null;",
+    "new": "  if (!home.rent) return offer.length ? offer : null;",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-the-tenancy-past-its-end",
+    "file": "src/net/homeLaw.js",
+    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
+    "new": "  if (home.tenant) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-RENT-a-withdrawn-room-offered-to-renew",
+    "file": "src/systems/homeRent.js",
+    "old": "export const rentable = (rooms) => (rooms ?? []).filter((r) => r.listed && (!r.taken || r.yours)); // one's own renewed while it is still offered (AUDIT: as the service allows)",
+    "new": "export const rentable = (rooms) => (rooms ?? []).filter((r) => (r.listed && !r.taken) || r.yours); // one's own renewed while it is still offered (AUDIT: as the service allows)",
+    "tests": [
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-early-record-dropped",
+    "file": "src/world/actionSystem.js",
+    "old": "      if (!o) { this._keepEarly(remote ? withoutLock(sa) : sa); return; }",
+    "new": "      if (!o) return;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-early-record-unsaved",
+    "file": "src/world/actionSystem.js",
+    "old": "    })).concat([...this._early.values()]);",
+    "new": "    }));",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-any-early-key-kept",
+    "file": "src/world/actionSystem.js",
+    "old": "    if (typeof rec?.key !== 'string' || !rec.key.startsWith(EARLY_KEY_PREFIX)) return;",
+    "new": "    if (typeof rec?.key !== 'string') return;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-a-door-made-a-light",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (decorIsDoor(piece) && (what === 'light' || what === 'storage' || (typeof what === 'string' && what.startsWith('station:')))) return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-a-door-offered-a-light",
+    "file": "src/ui/decorPanel.js",
+    "old": "    lightBtn.disabled = !it || door;",
+    "new": "    lightBtn.disabled = !it;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-placed-doors-walled-in",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (skip.length) {\n      const sig = skip.join('|');",
+    "new": "    if (false) {\n      const sig = skip.join('|');",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-unseen-aimed-at",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "    if (seen && !seen(m, Math.hypot(v[0], v[1], v[2]))) continue;\n    bestD = off;",
+    "new": "    bestD = off;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-corner-unasked",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "    const goesOn = (t, j, side) => Math.abs(t - j.t) <= DOORWAY_STEP * 2 || cornered(j, side);",
+    "new": "    const goesOn = (t, j, side) => Math.abs(t - j.t) <= DOORWAY_STEP * 2 || (side && false);",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-lintel-from-inside-the-step",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "        const sideFloor = Number.isFinite(sd) ? h - sd : floor;",
+    "new": "        const sideFloor = floor;",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-DOORS-the-arch-filled",
+    "file": "src/systems/decor/decorDoorways.js",
+    "old": "    fills: doorway.width - wide * scale <= DOOR_FILL_SLACK,",
+    "new": "    fills: true,",
+    "tests": [
+      "test/scenes/decor/homedoors.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-the-dead-yard-held",
+    "file": "src/scenes/homeYards.js",
+    "old": "    else if (cur && yards.get(cur.yard.key) !== cur.yard) {",
+    "new": "    else if (false) {",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-the-recentre-late",
+    "file": "src/scenes/homeYards.js",
+    "old": "    if (syncIn > 0) for (const y of yards.values()) {",
+    "new": "    if (false) for (const y of yards.values()) {",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-a-yard-drawn-afar",
+    "file": "src/scenes/homeYards.js",
+    "old": "        if (!nearEye(y, eye)) continue;   // YARD-RANGE: the player's distance for a stranger's, YARD_DRAW_M for one's own\n",
+    "new": "",
+    "tests": [
+      "test/scenes/homeyard.test.js",
+      "test/scenes/yardrange.test.js"
+    ],
+    "note": "Re-aimed by content at YARD-RANGE / HANDLE-EMAIL (2026-10-11)."
+  },
+  {
+    "name": "HOME-YARD-the-lot-by-its-middle",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const points = [[x, z], ...corners];",
+    "new": "  const points = [[x, z]];",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-a-full-yard-a-room",
+    "file": "src/ui/decorPanel.js",
+    "old": "  if (count >= cap) return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`;",
+    "new": "  if (count >= cap) return `This room already holds ${cap} pieces.`;",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-YARD-a-swipe-under-the-flight",
+    "file": "src/scenes/world.js",
+    "old": "        if (yards?.flying()) { swipeHeld = false; return; }",
+    "new": "        // (the swipe unguarded)",
+    "tests": [
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-the-preview-rebuilding",
+    "file": "src/scenes/world.js",
+    "old": "((row?.look && homeDecorShownHere(row, p.homeTown)) || row?.mine || row?.keeper)) merged = true;",
+    "note": "HOME-VOTE (PIN MOVED): a look counts only where it is shown - a shunned home's stays in the merge FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew.",
+    "new": "lookOfHome(p.homeTown, bk, row)) merged = true;",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-the-unpainted-unmerged",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          if (homeRow && (homeLook || homeRow.mine || homeRow.keeper)) {",
+    "new": "          if (homeRow) {",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-the-builds-version-spent",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    if (homeTown) host._homeLookV = -1;",
+    "new": "    if (homeTown) void 0;",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  },
+  {
+    "name": "HOME-LOOK-every-style-offered",
+    "file": "src/ui/decorPanel.js",
+    "old": "r <= 15 && (have == null || r < have); r++)",
+    "new": "r <= 15; r++)",
+    "tests": [
+      "test/net/homelook.test.js"
+    ]
+  }
+]

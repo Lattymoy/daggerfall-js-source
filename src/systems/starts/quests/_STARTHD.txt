@@ -1,0 +1,101 @@
+-- START2 (2026-10-24; bible/06-Systems/Alternate-Starts-Arc.md section 9): THE EMPEROR'S COMMISSION, IN HAND - the
+-- start of a character born at no start (a family's heir at its seat, LEGACY1; the fixed city's bench): the commission
+-- is in their pack from the first moment (`get item`, GetItem.cs: no reward's window, no wait for the town). Under the
+-- contract every start keeps: it is opened when the player chooses, and _BRISIEN begins in the city of Daggerfall.
+Quest: _STARTHD
+DisplayName: The Emperor's Commission
+-- Message panels
+QRC:
+
+RumorsDuringQuest:  [1005]
+The Emperor's couriers are on every road this season. Something is stirring in the Iliac Bay.
+<--->
+They say the old King of Daggerfall walks his city at night. Dead men should stay dead.
+<--->
+An Imperial courier came through asking for someone by name. He seemed in a hurry.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A courier in the Emperor's colors found me today
+ and put an oilskin case into my hands. Inside is
+ a commission from Uriel Septim VII himself, its
+ seal unbroken. I can break it whenever I am
+ ready.
+
+Message:  1012
+%qdt:
+ I broke the Emperor's seal. He charges me to lay
+ the shade of King Lysandus to rest, and to learn
+ what became of a letter he sent to the Queen of
+ Daggerfall. I am to make for the city of
+ Daggerfall in the Iliac Bay, where his agent will
+ find me. His writ pays my passage on any ship
+ bound there.
+
+Message:  1020
+<ce>      A courier in the Emperor's colors found
+<ce>       you today and pressed an oilskin case
+<ce>       into your hands. Inside it is a sealed
+<ce>     commission from Uriel Septim VII himself.
+<ce>
+<ce>     He would not say what it holds, only that
+<ce>      it is for your eyes alone. It is in your
+<ce>       pack. When you break the seal is yours
+<ce>                     to choose.
+
+Message:  1023
+<ce>         You have reached Daggerfall, as the
+<ce>        Emperor's orders bade you, and as they
+<ce>       also bade you, you burn them. His agent
+<ce>                here will find you.
+
+Message:  1030
+<ce>            By the Hand of Uriel Septim VII
+ 
+%pcn,
+ 
+     The shade of King Lysandus walks the streets
+ of Daggerfall by night. Learn what torments him,
+ and lay his spirit to rest. Learn also whether
+ Our letter to the Queen of Daggerfall reached
+ her, and what became of it.
+ 
+     The Iliac Bay is rife with rebels against Our
+ throne. Speak of this to no one. Make for the
+ city of Daggerfall, and burn this letter there.
+ Our agent will find you.
+ 
+     This letter is Our writ of passage. Any master
+ in a harbor of the Empire will carry you to
+ Daggerfall at Our expense.
+ 
+<ce>                    Uriel Septim VII
+
+-- Symbols used in the QRC file:
+--
+--              %pcn occurs 1 time.
+--              %qdt occurs 2 times.
+
+QBN:
+Item _commission_ letter used 1030
+
+Place _daggerfall_ permanent DaggerfallCity1
+
+--	Quest start-up:
+	get item _commission_
+	pc at _daggerfall_ set _incity_
+	_commission_ used do _opened_
+	log 1010 step 0
+	say 1020
+
+_opened_ task:
+	log 1012 step 2
+	remove log step 0
+	reveal _daggerfall_
+
+variable _incity_
+
+_reported_ task:
+	when _opened_ and _incity_
+	start quest _BRISIEN
+	end quest saying 1023

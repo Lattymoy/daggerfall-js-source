@@ -1,0 +1,47 @@
+[
+  {
+    "name": "OWBK-a-kind-more",
+    "file": "src/systems/discovery.js",
+    "old": "LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips,\n]));",
+    "new": "LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips, LOCATION_TYPES.Graveyard,\n]));",
+    "tests": [
+      "test/systems/travel/owbeyondknown.test.js"
+    ]
+  },
+  {
+    "name": "OWBK-a-kind-less",
+    "file": "src/systems/discovery.js",
+    "old": "LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips,\n]));",
+    "new": "LOCATION_TYPES.ReligionCult,\n]));",
+    "tests": [
+      "test/systems/travel/owbeyondknown.test.js"
+    ]
+  },
+  {
+    "name": "OWBK-the-rows-kind-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "(named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))",
+    "new": "(named || hasDiscoveredLocationId(row.mapId))",
+    "tests": [
+      "test/systems/travel/owbeyondknown.test.js"
+    ]
+  },
+  {
+    "name": "OWBK-the-standing-kind-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "(named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id))",
+    "new": "(named || hasDiscoveredLocationId(id))",
+    "tests": [
+      "test/systems/travel/owbeyondknown.test.js"
+    ]
+  },
+  {
+    "name": "OWBK-every-slice-a-town",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "BAKED_KNOWN_TYPES.has(type) && !capitalStreet({ mapId });",
+    "new": "BAKED_KNOWN_TYPES.has(type);",
+    "tests": [
+      "test/systems/travel/owbeyondknown.test.js"
+    ]
+  }
+]

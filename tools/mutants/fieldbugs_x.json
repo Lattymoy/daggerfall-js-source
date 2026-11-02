@@ -1,0 +1,65 @@
+[
+  {
+    "name": "X1-menu-guard-removed",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (!app) return;\n  repaintKeepingScroll(app, () => renderInto(), { focus: true });",
+    "new": "  repaintKeepingScroll(app, () => renderInto(), { focus: true });",
+    "tests": [
+      "test/systems/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X2-map-macro-dropped",
+    "file": "src/systems/useItem.js",
+    "old": "{ kind: 'map', textId: MAP_TEXT_ID, revealed, macros: { map: revealed } }",
+    "new": "{ kind: 'map', textId: MAP_TEXT_ID, revealed }",
+    "tests": [
+      "test/systems/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X2-inventory-drops-the-macro",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "else if (r.textId) { out.textId = r.textId; if (r.macros) out.macros = r.macros; }",
+    "new": "else if (r.textId) out.textId = r.textId;",
+    "tests": [
+      "test/systems/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X2-rows-shape-lost",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "    typeof row === 'string' ? one(row) : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row,",
+    "new": "    typeof row === 'string' ? one(row) : row && typeof row === 'object' ? one(row.text ?? '') : row,",
+    "tests": [
+      "test/systems/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X2-world-hook-unanswered",
+    "file": "src/scenes/world.js",
+    "old": "    _locationRevealedByMapItem = shown;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X3-fon-dropped",
+    "file": "src/systems/guild/guildServiceActions.js",
+    "old": "    fon: factionName,\n    kno: factionName,\n  });",
+    "new": "  });",
+    "tests": [
+      "test/systems/fieldbugs_x.test.js"
+    ]
+  },
+  {
+    "name": "X3-join-rows-verbatim-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], guildMacros);",
+    "new": "const rows = (id) => townTalk?.lines?.(id) ?? [];",
+    "tests": [
+      "test/systems/fieldbugs_x.test.js"
+    ]
+  }
+]

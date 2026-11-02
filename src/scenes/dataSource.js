@@ -1,0 +1,1690 @@
+// ARENA2 data source (production data integration). Port-Doctrine:
+// the game data is freeware but NOT redistributable - it never enters
+// the repo or the build. Readers load user-supplied data at runtime.
+// This module is that runtime path:
+//
+//   getBytes(name): memory cache -> IndexedDB -> network ./arena2/*
+//   ensureArena2(): boot gate - if no source can serve, a DOM overlay
+//     asks for the local ARENA2 folder (directory input or drag-drop)
+//     and persists it into IndexedDB, so the pick happens ONCE.
+//
+// The network fallback keeps the dev middleware path (vite serves
+// /arena2/* from ARENA2_PATH) working unchanged; on the deployed site
+// it 404s and the picker is the source. Names are normalized to
+// UPPERCASE basenames - real ARENA2 ships uppercase, user folders vary.
+
+import { isTouchDevice } from '../ui/touch/touchDevice.js';   // TI3
+import { isEnhanced } from '../systems/uiSkin.js';   // FONT3: the asset picker's face follows the skin
+import { PIXEL_FONT_CSS } from '../ui/pixelifyFive.js';   // FONT3
+import { optionPath } from '../ui/settings/settingsMap.js';   // ORG2
+
+const DB_NAME = 'project-dagger';
+const STORE = 'arena2';
+/** M-EXT: user-supplied music lives in its OWN store, and that is not
+ *  tidiness. The ARENA2 store is filtered by KEEP - the download diet -
+ *  which rejects every audio extension by design and is guarded by a
+ *  pin that fails if the filter moves without a MANIFEST_V bump. Music
+ *  replacements are not game data, have their own lifecycle (re-pick
+ *  the pack without re-picking the game), and must not be swept by
+ *  clearStoredData's recovery wipe. */
+const MUSIC_STORE = 'music';
+/** M-TEX: the same reasoning as the music store, one domain over. */
+const TEXTURE_STORE = 'textures';
+/** MW-IMPORT: user-supplied Morrowind data (Morrowind.bsa, expansions,
+ *  Morrowind.esm) for the opt-in 3D asset layer. Same doctrine as
+ *  ARENA2 - actively-sold game data, never in the repo or build, lives
+ *  only in the player's browser. Its lifecycle is its own: attaching
+ *  or clearing it never touches the ARENA2 set. */
+const MW_STORE = 'morrowind';
+/** DERIVED artifacts - bytes the game GENERATED from the player's own
+ *  data, rather than bytes the player supplied. It is a store of its
+ *  own for the reason the others are, plus one more: a derived artifact
+ *  is only valid FOR the data it came from, so it must die with an
+ *  ARENA2 re-pick, and clearStoredData sweeps it - the only injected
+ *  store that recovery touches, deliberately, because handing new data
+ *  an artifact derived from the old folder is worse than rebuilding.
+ *
+ *  ITS ONE CONSUMER IS MW-LOAD's arm record sets (loadMorrowindArmRecords,
+ *  below). The road network was the first consumer and, for a while,
+ *  the only one: its travel and render halves were removed on
+ *  2026-08-29 (Mac's call). ROADS 22-25 brought roads BACK on
+ *  2026-09-02 - Port-Ledger section A, the ROADS 22-25 row - and they
+ *  did NOT come back through this door: the rebuilt network bakes into
+ *  its own IndexedDB database (`src/world/roadsCache.js`, DB
+ *  'daggerfall-roads', with its own GENERATOR_VERSION). The store sat
+ *  without a caller until 2026-09-08, when the Morrowind masters'
+ *  record sets (extracted once, refused by their own envelope when
+ *  stale) became exactly the derived artifact this contract was kept
+ *  for. Said out loud here so nobody reads the roads as living here. */
+const DERIVED_STORE = 'derived';
+/** TESA1 (bible/03-World/Arena-Provinces.md): the store that held the
+ *  player's own copy of The Elder Scrolls: Arena (CITYDATA.65 and A.EXE).
+ *  TESA12 retired the attachment - the places past the Bay are the
+ *  port's own - and nothing reads it now. It stays in the schema (the
+ *  upgrade's arms are additive: version 6 made it) and among the asset
+ *  stores so a wipe still sweeps it, and the world's boot empties it once
+ *  (clearRetiredArena): no copy of Arena's files stays in a browser. */
+const ARENA_STORE = 'arena';
+/** Every injected-asset store, so the upgrade and the helpers below
+ *  cannot drift from each other - adding a domain is one entry. */
+const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE, ARENA_STORE];
+const mem = new Map(); // NAME -> Uint8Array
+/** AUDIT MEM-AUDIT M1: the names whose bytes came from IndexedDB or the network, so can be read again (forgetBytes) - a
+ *  memory-only session's picked set (the ingest's no-IDB arm, a quota's refusal too) is its only copy, and forgetting it
+ *  turned the classic sky to the gradient at its next ask. */
+const readAgain = new Set();
+
+// Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
+// but the engine reads ~155MB - TEXTURE archives, the BSAs, palettes,
+// PAKs, CFGs, fonts, WOODS.WLD, MAGIC.DEF, SPELLS.STD, IMG/CIF art,
+// RSC text, RCI, SND, the .TXT set (BIOG*.TXT biographies + FACTION.TXT)
+// and CLASSES.DAT. The other 362MB (VIDs 83, SKY/PACKED DATs 247,
+// FLCs, quest QBN/QRC) is unread by the port - ingesting it tripled
+// storage + memory pressure and quota-killed phones. When a future
+// slice needs a dropped kind: bump MANIFEST_V - stale stored sets
+// auto-wipe to the picker.
+//
+// AUDIT 18 F2: the diet outlived three slices that shipped readers for
+// kinds it drops, and each degraded SILENTLY through a warn-and-skip.
+// CLASSES.DAT (the U18 class-questions results walk, chargenSession.js),
+// FACTION.TXT (the T3a reaction layer, townTalk.js) and every BIOG*.TXT
+// (the S3e biography, biogFile.js) are fetched by LIVE code and were all
+// filtered out - so on the deployed and phone paths the whole biography
+// stage, the class-questions screen and every faction datum were simply
+// absent. Dev hid it: the vite ARENA2_PATH middleware serves the network
+// fallback, which production 404s.
+// The whole .TXT set is 19 files / 148KB, so it rides WHOLESALE rather
+// than by name - a future .TXT reader is then covered without anyone
+// remembering. CLASSES.DAT is named EXACTLY, because a bare \.DAT$ would
+// drag in the 247MB SKY/PACKED sets the diet exists to refuse.
+//
+// AUDIT 19 F8: .GFX joined the wholesale list. There are exactly TWO
+// (SCRL00I0/SCRL01I0, the U18 class-questions parchment scroll) and they
+// were STARVED - fetched in a `for (const name of [...])` loop, which the
+// F2 pin's single-literal regex could not see, so the deployed and phone
+// paths fell back to the text panel and the pin passed. The pin now scans
+// every ARENA2 filename the source NAMES, not just the ones it fetches in
+// a shape the regex recognises.
+//
+// U22: the VIDs are the same trap and CANNOT ride wholesale - the set is
+// 86MB and \.VID$ would undo the diet's single biggest saving. So they
+// are named one at a time, and ONLY when something actually plays them:
+// ANIM0001 is the splash (1.4MB) and is wired in main.js; ANIM0012 is
+// the death video (DaggerfallUI.cs:50), wired by D1 and ingested below.
+// V1 wired the two dream videos, so the rule fed them: ANIM0002 (the
+// lycanthropy dream, 1.3MB) and ANIM0004 (the vampire dream, 1.3MB)
+// now play from scenes/shared.js's wireInfectionVideos, and the fake
+// death reuses ANIM0012, already here for D1. DFU names three more -
+// ANIM0000/ANIM0011/DAG2, the new-game cinematics
+// (DaggerfallStartNewGameWizard.cs:33-35, 26.6MB between them) - and
+// none of THOSE is wired here yet, so none is ingested. (The merge audit found
+// this comment and the Ledger row it mirrors both still saying the
+// diet held ANIM0001 alone, fourteen lines above the KEEP that names
+// ANIM0012 - the exact drift the rule below exists to prevent.) Adding a file nobody plays costs every user the bytes for
+// nothing; forgetting one that IS played is the F2 silent degradation.
+// Which is why the rule is ENFORCED, not remembered - and the enforcement
+// was already here: AUDIT 18 F2's pin re-derives the fetch list from the
+// source on every run, so main.js's getBytes('ANIM0001.VID') put the
+// splash under the rule the moment it was written. Proven by mutation -
+// drop the name below and F2 fails with "desktop diet drops
+// ANIM0001.VID". Wire a video, and the pin makes you feed it.
+// AUDIT DA: the desktop shell is NEVER lean, whatever it sniffs - a
+// touch-screen Windows laptop is not a phone, and a player there who
+// fell back to the in-page picker used to ingest the sky-less lean
+// set with no way out of it from the app. The shell's presence
+// (daggerShell, the preload bridge) outranks the touch sniff.
+// TI3: ...and the touch sniff is ui/touch/touchDevice.js's law - a finger as
+// the PRIMARY pointer - so a touchscreen laptop in a browser is not lean
+// either.
+const LEAN = typeof window !== 'undefined' && !window.daggerShell && isTouchDevice();
+export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
+  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS|CFA)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three; HC1 added CFA: TR2's riding sprites (MRED00I0/MRED01I0), which the deployed site had NEVER held - the horse and cart drew nothing there
+  name === 'CLASSES.DAT' ||
+  name === 'PAINT.DAT' ||                   // AUDIT 39 F156: the painting descriptions (40-byte records, 24KB)
+  name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
+  name === 'ANIM0012.VID' ||                // D1 the death video (DaggerfallUI.cs:50), reused as V1's fake death
+  name === 'ANIM0002.VID' ||                // V1 the lycanthropy dream (LycanthropyInfection.cs:95)
+  name === 'ANIM0004.VID' ||                // V1 the vampire dream (VampirismInfection.cs:109)
+  name === 'ROGUE.CEL' || name === 'MAGE.CEL' || name === 'WARRIOR.CEL' ||   // F2 the chargen constellations
+  (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
+const MANIFEST_KEY = '__MANIFEST__';
+const MANIFEST_V = 10;   // v10 = the sets missing the .CFA riding sprites (HC1, 2026-09-14: the mount never drew on the deployed site); v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs, v7 = the sets missing U45's .BSS compass needles, v8 = the sets missing PAINT.DAT (AUDIT 39 F156) - all auto-wiped
+
+/** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
+export function normalizeName(name) {
+  const s = String(name);
+  const base = s.slice(Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\')) + 1);
+  return base.toUpperCase();
+}
+
+function openDb() {
+  return new Promise((res, rej) => {
+    // M-EXT bumped this to 2 for the music store. The handler creates
+    // whatever is MISSING rather than assuming a fresh database: an
+    // existing player arrives here at version 1 holding a full ARENA2
+    // ingest, and re-creating `arena2` would throw and take their data
+    // with it.
+    // 5 (R6): the derived store. The upgrade is ADDITIVE and every arm
+    // below is guarded by `contains`, so a player arriving at any older
+    // version gains the new store and keeps every byte of the old ones.
+    // 6 (TESA1): the Arena store, the same additive arm.
+    const req = indexedDB.open(DB_NAME, 6);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
+      for (const name of ASSET_STORES) {
+        if (!d.objectStoreNames.contains(name)) d.createObjectStore(name);
+      }
+    };
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+    // RA1: a version-bump open WAITS FOREVER while any other tab still
+    // holds the database at an older version - onblocked, not onerror -
+    // and every boot await upstream of getDb() hangs with it, wearing
+    // whatever status line was set last ("baking roads", famously).
+    // The wait itself is correct (the open proceeds the moment the old
+    // tab closes); waiting SILENTLY is the bug. Say so, in the console
+    // and on the title bar the status convention already uses.
+    req.onblocked = () => {
+      console.warn('[dataSource] database upgrade blocked - close other tabs running this game');
+      try { document.title = 'DFO Online - close other game tabs to continue'; } catch { /* no-DOM host */ }
+    };
+  });
+}
+
+function idbGet(db, key) {
+  return new Promise((res, rej) => {
+    const req = db.transaction(STORE).objectStore(STORE).get(key);
+    req.onsuccess = () => res(req.result ?? null);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+/** Is `key` stored? A count over the one key, so asking about a 10MB
+ *  BSA never reads the 10MB. */
+function idbHas(db, key) {
+  return new Promise((res, rej) => {
+    const req = db.transaction(STORE).objectStore(STORE).count(key);
+    req.onsuccess = () => res(req.result > 0);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function idbCount(db) {
+  return new Promise((res, rej) => {
+    const req = db.transaction(STORE).objectStore(STORE).count();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function idbPutBatch(db, batch) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    for (const [key, buf] of batch) store.put(buf, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+/** Store in BATCHES (mobile-safe, 2026-08-14): one transaction over
+ *  the whole ~250MB set held every buffer live at once - on phones
+ *  that peak (zip + inflated entries + IDB copies) got the tab's
+ *  WebGL context killed and the game went black after ingest. Small
+ *  batches let stored buffers release as we go. */
+async function idbPutAll(db, entries, onProgress) {
+  const BATCH = 24;
+  for (let i = 0; i < entries.length; i += BATCH) {
+    const batch = entries.slice(i, i + BATCH);
+    await idbPutBatch(db, batch);
+    for (let j = i; j < Math.min(i + BATCH, entries.length); j++) entries[j] = null;   // release
+    if (onProgress) onProgress(Math.min(i + BATCH, entries.length), entries.length);
+  }
+}
+
+let db = null;
+async function getDb() {
+  if (!db) {
+    const d = await openDb();
+    // BUILD-RETRY (bible/06-Systems/Travel-View.md LOAD-OWED): A CONNECTION THE BROWSER CLOSES IS NEVER ASKED AGAIN. It
+    // was kept for the page, and once the browser closed it under the game (its `close`: the storage failing, or the
+    // site's data cleared) every read threw on it and fell through to the server - which on the deployed site holds no
+    // game data - so every file not read yet failed for the rest of the session, a pixel build with it. The next read
+    // opens another (getBytes, idbRead)
+    d.onclose = () => { if (db === d) db = null; };
+    db = d;
+  }
+  return db;
+}
+
+/** BUILD-RETRY: one stored file's bytes - asked again once on a fresh connection when the one in hand is closing (an
+ *  InvalidStateError, raised before its `close` is heard). */
+async function idbRead(key) {
+  try { return await idbGet(await getDb(), key); } catch (e) {
+    if (e?.name !== 'InvalidStateError') throw e;
+    db = null;
+    return idbGet(await getDb(), key);
+  }
+}
+
+async function idbPut(db, key, val) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(val, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+async function idbGetManifest(db) {
+  try {
+    const m = await idbGet(db, MANIFEST_KEY);
+    return m ? JSON.parse(new TextDecoder().decode(m)) : null;
+  } catch { return null; }
+}
+
+/** Finish an ingest: batched store, MANIFEST LAST (its presence IS
+ *  the completeness proof - a mid-ingest death leaves no manifest and
+ *  the next visit auto-wipes to the picker instead of bricking).
+ *  Returns null on success, else a user-facing failure message
+ *  (quota/full device is the mobile reality) - the partial store is
+ *  wiped before returning so no poison remains. */
+async function finishIngest(entries, msg) {
+  // A2-WHOLE: an incomplete set is REFUSED here, before a byte is
+  // stored - see REQUIRED_ARENA2.
+  const missing = missingArena2(entries.map((e) => e[0]));
+  if (missing.length) return incompleteArena2Text(missing);
+  try {
+    const d = await getDb();
+    await idbPutAll(d, entries, (done, n) => { msg.textContent = `storing ${done}/${n}...`; });
+    await idbPut(d, MANIFEST_KEY, new TextEncoder().encode(JSON.stringify({ v: MANIFEST_V, diet: LEAN ? 'lean' : 'full', count: entries.length })));
+    return null;
+  } catch (err) {
+    try { await clearStoredData(); } catch { /* wipe best-effort */ }
+    // no-IDB (private mode): a memory-only session still works if the
+    // buffers survived (nothing was nulled when the FIRST write threw)
+    let kept = 0;
+    for (const e of entries) if (e) { keepOnlyInMemory(e[0], new Uint8Array(e[1])); kept++; }
+    if (kept === entries.length) return null;
+    mem.clear(); readAgain.clear();
+    return `storage failed (${err?.name || err}). Your device may be low on space. Clear some space and pick again.`;
+  }
+}
+
+/** Recovery: wipe the stored set (a mid-ingest tab death leaves a
+ *  PARTIAL store - idbCount > 0 skips the picker, then boot dies on
+ *  the first missing file with no way back). */
+export async function clearStoredData() {
+  mem.clear(); readAgain.clear();
+  const d = await getDb();
+  // The ARENA2 set AND every artifact DERIVED from it. The injected
+  // stores (music, textures, Morrowind) are the player's own packs and
+  // survive - re-picking the game files is not asking to lose them -
+  // but a road network baked from the folder being replaced is not a
+  // pack, it is an ANSWER ABOUT that folder, and keeping it would hand
+  // the new data the old map. Sweeping it costs one rebake.
+  await new Promise((res, rej) => {
+    const tx = d.transaction([STORE, DERIVED_STORE], 'readwrite');
+    tx.objectStore(STORE).clear();
+    tx.objectStore(DERIVED_STORE).clear();
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+// ---- M-EXT: the user's own music folder -----------------------------
+//
+// DFU keeps replacement songs as loose files in StreamingAssets/Sound
+// and asks for one by name before playing a built-in song. There is no
+// such folder in a browser, so the "folder" is a pick, stored the way
+// ARENA2 is, and the lookup runs over the stored names.
+//
+// NOTHING SHIPS WITH THE GAME. This reads a directory the player
+// chooses and stores it in their own browser; the repo carries no
+// audio and the deploy serves none.
+
+// ONE implementation, two domains. The music and texture ingests are
+// the same four operations over different stores and different
+// accept-filters, and writing them twice is how the second one drifts.
+
+/** Put the accepted files from a pick into `store`. `accept(name)`
+ *  answers whether a file belongs to this domain, so a pack folder
+ *  with its readme and cover art in it just works. Returns the count. */
+async function storeAssets(store, files, accept, keyOf = null) {
+  const d = await getDb();
+  let kept = 0;
+  for (const f of files) {
+    const base = f.name.slice(f.name.lastIndexOf('/') + 1);
+    if (!accept(base)) continue;
+    // MW-D40: a store may key by more than the basename - loose
+    // Morrowind files are only addressable by their RELATIVE path
+    // (meshes/maxhorse/xhorse1.nif), which the directory picker
+    // carries on webkitRelativePath. Default stays the basename law.
+    const key = keyOf ? keyOf(f, base) : base;
+    // MW-LOAD: a Morrowind file is stored as the BLOB it arrived as, not
+    // its bytes - IndexedDB keeps a Blob on disk and hands back a handle,
+    // so an archive is opened by RANGE at boot (mwBsaFile.js) instead of
+    // being cloned whole. The other stores keep their bytes: a music or
+    // texture file is read whole the one time it plays or paints.
+    const val = (store === MW_STORE || /\.dfmod$/i.test(key)) ? blobOf(f) : await f.arrayBuffer();   // DFMOD1: a bundle is hundreds of MB - kept as the Blob it arrived as
+    await new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readwrite');
+      tx.objectStore(store).put(val, key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+    kept++;
+  }
+  return kept;
+}
+
+/** Every stored filename in `store`. Empty when there is no IndexedDB
+ *  (private mode), which reads as "no pack" and plays the classics. */
+async function assetNames(store) {
+  try {
+    const d = await getDb();
+    return await new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readonly');
+      const req = tx.objectStore(store).getAllKeys();
+      req.onsuccess = () => res(req.result ?? []);
+      req.onerror = () => rej(req.error);
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** The stored value for one asset - an ArrayBuffer or, for a Morrowind
+ *  file since MW-LOAD, a Blob - or null. */
+async function assetValue(store, fileName) {
+  const d = await getDb();
+  return new Promise((res, rej) => {
+    const tx = d.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(fileName);
+    req.onsuccess = () => res(req.result ?? null);
+    req.onerror = () => rej(req.error);
+  });
+}
+const isBlob = (v) => typeof Blob !== 'undefined' && v instanceof Blob;
+/** A File from a picker is a Blob already; anything else is wrapped. */
+const blobOf = (f) => (isBlob(f) ? f : new Blob([f]));
+
+/** Bytes for one stored asset, or null - a Blob read whole. */
+async function assetBytes(store, fileName) {
+  const stored = await assetValue(store, fileName);
+  if (!stored) return null;
+  return new Uint8Array(isBlob(stored) ? await stored.arrayBuffer() : stored);
+}
+
+/** MW-LOAD: one stored asset as a Blob, or null. A value stored as bytes
+ *  by an attach from before MW-LOAD is wrapped - materialised whole this
+ *  once - and REWRITTEN as a Blob behind the read, so the next boot
+ *  opens it by range like a fresh attach. */
+async function assetBlob(store, fileName) {
+  const stored = await assetValue(store, fileName);
+  if (!stored) return null;
+  if (isBlob(stored)) return stored;
+  const blob = new Blob([stored]);
+  try {
+    const d = await getDb();
+    await new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readwrite');
+      tx.objectStore(store).put(blob, fileName);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch (e) {
+    console.warn(`[mw] ${fileName}: could not be re-stored as a Blob -`, e?.message ?? e);
+  }
+  return blob;
+}
+
+/** Drop a whole domain. Deliberately NOT part of clearStoredData: that
+ *  is ARENA2 recovery, and re-picking the game files is not asking to
+ *  lose the packs. */
+async function clearAssets(store) {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(store, 'readwrite');
+    tx.objectStore(store).clear();
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+/** DFMOD1: drop some keys of a store (a pack that shares its store with another). */
+async function deleteAssets(store, names) {
+  if (!names.length) return 0;
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(store, 'readwrite');
+    for (const n of names) tx.objectStore(store).delete(n);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+  return names.length;
+}
+
+export async function storeMusicFiles(files) {
+  const { replacementEntry } = await import('../systems/musicReplacement.js');
+  return storeAssets(MUSIC_STORE, files, (n) => !!replacementEntry(n));
+}
+export const storedMusicNames = () => assetNames(MUSIC_STORE);
+export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
+
+/** SNDREP1: a SOUND pack (DFU's StreamingAssets/Sound WAVs) rides the MUSIC store - it is audio the player supplied,
+ *  with the music pack's own lifecycle, and a store of its own would be a database version bump for two files. The
+ *  two packs cannot collide: each registration reads only the names it knows (song_*.ogg / AmbientCrickets.wav). */
+export async function storeSoundFiles(files) {
+  const { soundEntry } = await import('../systems/soundReplacer.js');
+  return storeAssets(MUSIC_STORE, files, (n) => !!soundEntry(n));
+}
+/** SNDREP1: REMOVE THE SOUND PACK - its WAVs leave the music store and the music pack beside them stays, which is
+ *  why this deletes by name rather than clearing the store. The registry is emptied with it, so the next night's
+ *  crickets are Daggerfall's own again. Answers how many files went. */
+export async function clearStoredSounds() {
+  const { soundEntry, setSoundReplacements } = await import('../systems/soundReplacer.js');
+  const names = (await storedMusicNames()).filter((n) => soundEntry(n));
+  if (names.length) {
+    const d = await getDb();
+    await new Promise((res, rej) => {
+      const tx = d.transaction(MUSIC_STORE, 'readwrite');
+      for (const n of names) tx.objectStore(MUSIC_STORE).delete(n);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+  setSoundReplacements([], null);
+  return names.length;
+}
+
+/** DFMOD1: REMOVE THE MUSIC PACK - the song files leave the music store; a sound pack stored beside them stays
+ *  (clearStoredSounds' mirror). The registry is emptied, so the next song is Daggerfall's own. */
+export async function clearStoredMusic() {
+  const { replacementEntry, setMusicReplacements } = await import('../systems/musicReplacement.js');
+  const n = await deleteAssets(MUSIC_STORE, (await storedMusicNames()).filter((k) => replacementEntry(k)));
+  setMusicReplacements([], null);
+  return n;
+}
+
+/** One derived artifact, by key. Bytes in, bytes out - this door knows
+ *  nothing about what it holds, and the artifact's OWN envelope (magic,
+ *  version, checksum, whatever its writer chose) is what decides whether
+ *  what comes back is usable. That is why there is no version here: a
+ *  stale or torn record is refused by its reader and rebuilt, which is
+ *  strictly better than a store-level stamp that can only answer
+ *  "different", never "damaged".
+ *
+ *  Callers: MW-LOAD's loadMorrowindArmRecords (this file). The removed
+ *  road bake was the first; the re-integrated roads cache into their
+ *  own DB - see DERIVED_STORE. */
+export async function storeDerived(key, bytes) {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(DERIVED_STORE, 'readwrite');
+    tx.objectStore(DERIVED_STORE).put(bytes, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+    // a commit the quota refuses aborts the transaction with no request error, so without this the write never settles
+    tx.onabort = () => rej(tx.error ?? new Error("derived store: write aborted"));
+  });
+  return true;
+}
+export const loadDerived = (key) => assetBytes(DERIVED_STORE, key);
+
+/** MW-LOAD: a derived artifact that is plain data. The envelope is the
+ *  key itself: what comes back is the value only when it was written
+ *  under this exact key, so a reader that changes its key (a version
+ *  in it) can never read an older writer's answer. Unreadable or
+ *  absent answers null - the caller rebuilds. */
+export async function storeDerivedJson(key, value) {
+  return storeDerived(key, new TextEncoder().encode(JSON.stringify({ key, value })));
+}
+export async function loadDerivedJson(key) {
+  try {
+    const bytes = await loadDerived(key);
+    if (!bytes) return null;
+    const env = JSON.parse(new TextDecoder().decode(bytes));
+    return env && env.key === key && Object.hasOwn(env, 'value') ? env.value : null;
+  } catch (e) {
+    console.warn(`[derived] ${key}: unreadable, rebuilding -`, e?.message ?? e);
+    return null;
+  }
+}
+/** FIRST-VISIT: a derived artifact kept as itself - a structured clone, so its typed arrays come back typed and no
+ *  JSON text is parsed. The envelope is the key, as storeDerivedJson's. */
+export async function storeDerivedValue(key, value) {
+  return storeDerived(key, { key, value });
+}
+export async function loadDerivedValue(key) {
+  try {
+    const env = await assetValue(DERIVED_STORE, key);
+    return env && env.key === key && Object.hasOwn(env, 'value') ? env.value : null;
+  } catch (e) {
+    console.warn(`[derived] ${key}: unreadable, rebuilding -`, e?.message ?? e);
+    return null;
+  }
+}
+
+/** MW-D40: the canonical relative path of a LOOSE Morrowind file. The
+ *  directory picker hands paths like "Pegas Horse Ranch/morrowind/Data
+ *  Files/Meshes/maxhorse/Xhorse1.nif"; every engine lookup asks in the
+ *  data-files frame ("meshes/maxhorse/xhorse1.nif"), so the key slices
+ *  from the FIRST known asset root, lowercased, slashes normalized. A
+ *  path with no known root keys by its basename (a file picked alone). */
+const MW_LOOSE_ROOTS = ['meshes/', 'textures/', 'sound/', 'icons/', 'bookart/', 'music/', 'splash/', 'video/', 'fonts/', 'animations/'];   // WS1: the bone addons' folder
+export function mwLoosePath(name) {
+  const p = String(name).replace(/\\/g, '/').toLowerCase();
+  for (const root of MW_LOOSE_ROOTS) {
+    const at = p.indexOf(root);
+    if (at !== -1) return p.slice(at);
+  }
+  return p.slice(p.lastIndexOf('/') + 1);
+}
+const MW_LOOSE_EXT = /\.(nif|kf|dds|tga|wav)$/i;
+
+/** MW-D40: the {has, get} duck the whole MW stack already speaks
+ *  (fpArm resolves everything via `archives.find((a) => a.has(path))`),
+ *  over a Map of canonical loose paths. Pure and node-testable. */
+export function makeLooseArchive(files) {
+  const norm = (p) => String(p).replace(/\\/g, '/').toLowerCase();
+  return {
+    loose: true,
+    names: [...files.keys()],
+    has: (p) => files.has(norm(p)),
+    get: (p) => files.get(norm(p)) ?? null,
+    // MW-LOAD: the lazy archive's doors, answered from the resident map
+    // - a loose file is small and already in hand
+    loaded: (p) => files.has(norm(p)),
+    load: async (p) => files.get(norm(p)) ?? null,
+  };
+}
+
+export async function storeMorrowindFiles(files) {
+  // .bsa archives + .esm/.esp records; MwBsaFile magic-checks at read,
+  // so a wrong archive fails loudly there, not silently here.
+  // MW-D40: LOOSE files join - a mod like Pegas Horse Ranch ships
+  // meshes/textures/sounds outside any .bsa, and the engine's own law
+  // is that loose data files override archived ones. Archives and
+  // plugins keep their basename keys (stable for existing attaches);
+  // loose files key by canonical relative path.
+  return storeAssets(MW_STORE, files,
+    (n) => /\.(bsa|esm|esp)$/i.test(n) || MW_LOOSE_EXT.test(n),
+    (f, base) => (MW_LOOSE_EXT.test(base) ? mwLoosePath(f.webkitRelativePath || f.name) : base));
+}
+export const storedMorrowindNames = () => assetNames(MW_STORE);
+// IG2: THE SWAP-SPEED CACHES (Mac: "load times when swapping weapons,
+// clothing, armor is really slow"). The body follows the equip table,
+// so every equip change rebuilds the arms - and every rebuild used to
+// re-read EVERY .bsa blob out of IndexedDB and re-index its directory,
+// plus every .esm, seconds per swap on retail data. The stored set
+// only changes on an ATTACH, and the attach generation below already
+// says so - so the mapped archives and the raw file bytes cache
+// against it. The cost is stated, not hidden: the archives stay
+// resident (about the size of the player's data set), which is exactly
+// what makes a swap near-instant; a new attach drops the old set.
+let _mwArchiveCache = null;   // { gen, archives }
+let _mwFileCache = null;      // { gen, files: Map<name, bytes> }
+export const loadMorrowindFile = async (fileName) => {
+  if (!_mwFileCache || _mwFileCache.gen !== _mwGeneration) _mwFileCache = { gen: _mwGeneration, files: new Map() };
+  // AUDIT 68 S18-mw-cache-stale-generation: the read lands in the cache it STARTED under. An attach (or a clear)
+  // mid-read replaced the module's cache, and the old bytes were written into the NEW generation's - or threw on
+  // the null a clear left.
+  const cache = _mwFileCache;
+  if (cache.files.has(fileName)) return cache.files.get(fileName);
+  const bytes = await assetBytes(MW_STORE, fileName);
+  if (bytes) cache.files.set(fileName, bytes);
+  return bytes;
+};
+export const clearStoredMorrowind = async () => {
+  _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null;
+  // AUDIT MW-TORCH F8 (MWA2's Remove data): the COUNT is the answer every
+  // consumer reads (the card's rows, autoBuildArms's data gate, the peer
+  // bodies' enabled), and it only ever moved in the two counting doors -
+  // so a cleared store still said "N archives attached" until the next
+  // boot. The clear is a count of zero, an unmeasured set, and a new
+  // generation (every cache keyed on the old one stands down).
+  _mwCount = 0; _mwCountedNames = null; _mwFingerprint = null; _mwGeneration += 1;
+  await clearDerivedPrefix(ARM_RECORDS_PREFIX);   // MW-LOAD: the record sets are ANSWERS ABOUT the files
+  return clearAssets(MW_STORE);
+};
+
+// MW-LOAD: THE ARM RECORDS, EXTRACTED ONCE AND KEPT.
+//
+// buildFpArm read every stored .esm whole (80 MB for Morrowind.esm, a
+// second or more out of the store) and walked it six ways for its
+// records, on every page load - the walk memo was per-session. The
+// records are a function of the bytes, so they are derived once by
+// mwFirstPerson's extractArmRecords and written to DERIVED_STORE under
+// a key that names the file, its size and a stamp over its head and
+// tail (a mod's re-export of the same size still moves the stamp; a
+// full hash would read the whole file and be the cost this removes).
+// A hit is one small get and a JSON parse, and the .esm bytes are never
+// read at all; a miss extracts, stores, and logs the cost once. The
+// answer is refused - and re-extracted - when its envelope does not
+// carry this key or the reader's own shape, so a stale set from an
+// older build can never be read as current.
+const ARM_RECORDS_PREFIX = 'mw-arm-records';
+let _mwRecordsCache = null;   // { gen, files: Map<name, records> }
+
+/** FNV-1a over the first and last 64 KB of a Blob - two range reads. */
+async function sampleStamp(blob) {
+  const span = 64 * 1024;
+  const parts = blob.size <= 2 * span
+    ? [new Uint8Array(await blob.arrayBuffer())]
+    : [new Uint8Array(await blob.slice(0, span).arrayBuffer()),
+      new Uint8Array(await blob.slice(blob.size - span, blob.size).arrayBuffer())];
+  let h = 0x811c9dc5;
+  for (const bytes of parts) {
+    for (let i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193) >>> 0; }
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+/** FIRST-VISIT: drop every derived key `stale(key)` says is stale - a kept answer's older keys, once its new one is
+ *  written (systems/firstVisit/firstVisitStore.js staleKey), so the store holds one answer a cache scope, not one an
+ *  update. */
+export async function sweepDerived(stale) {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(DERIVED_STORE, 'readwrite');
+    const os = tx.objectStore(DERIVED_STORE);
+    const req = os.getAllKeys();
+    req.onsuccess = () => { for (const k of req.result ?? []) if (stale(k)) os.delete(k); };
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+    tx.onabort = () => rej(tx.error ?? new Error("derived store: sweep aborted"));
+  });
+  return true;
+}
+
+/** Drop every derived key under a prefix (a getAllKeys sweep). */
+async function clearDerivedPrefix(prefix) {
+  try {
+    const d = await getDb();
+    await new Promise((res, rej) => {
+      const tx = d.transaction(DERIVED_STORE, 'readwrite');
+      const os = tx.objectStore(DERIVED_STORE);
+      const req = os.getAllKeys();
+      req.onsuccess = () => {
+        for (const k of req.result ?? []) if (typeof k === 'string' && k.startsWith(`${prefix}:`)) os.delete(k);
+      };
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch (e) {
+    console.warn(`[mw] derived ${prefix} sweep failed -`, e?.message ?? e);
+  }
+}
+
+/**
+ * The arm-build record set of one stored .esm/.esp, by name: the
+ * derived set if the store has one for these bytes, else extracted from
+ * the file and stored. Null when the file is not stored. Memoised per
+ * attach generation, so a rebuild within a session is a Map get.
+ * @param {string} fileName
+ * @returns {Promise<object|null>} extractArmRecords' shape
+ */
+export const loadMorrowindArmRecords = async (fileName) => {
+  if (!_mwRecordsCache || _mwRecordsCache.gen !== _mwGeneration) _mwRecordsCache = { gen: _mwGeneration, files: new Map() };
+  const cache = _mwRecordsCache;   // AUDIT 68 S18-mw-cache-stale-generation: loadMorrowindFile's law
+  if (cache.files.has(fileName)) return cache.files.get(fileName);
+  const blob = await assetBlob(MW_STORE, fileName);
+  if (!blob) return null;
+  const { extractArmRecords, isArmRecords, ARM_RECORDS_VERSION } = await import('../formats/morrowind/mwFirstPerson.js');
+  const key = `${ARM_RECORDS_PREFIX}:v${ARM_RECORDS_VERSION}:${fileName}:${blob.size}:${await sampleStamp(blob)}`;
+  const cached = await loadDerivedJson(key);
+  let records = isArmRecords(cached) ? cached : null;
+  if (!records) {
+    const t0 = performance.now();
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const t1 = performance.now();
+    records = extractArmRecords(bytes);
+    const t2 = performance.now();
+    try {
+      await storeDerivedJson(key, records);
+    } catch (e) {
+      console.warn(`[mw] ${fileName}: derived records could not be stored -`, e?.message ?? e);
+    }
+    console.info(`[mw] ${fileName}: arm records extracted in ${Math.round(t2 - t0)} ms (read ${Math.round(t1 - t0)}, walk ${Math.round(t2 - t1)}) and kept`);
+  }
+  cache.files.set(fileName, records);
+  return records;
+};
+
+export const hasStoredMorrowind = async () =>
+  (await storedMorrowindNames()).some((n) => /\.bsa$/i.test(n));
+
+/** Every stored .bsa opened, in override order: expansions and mods
+ *  answer BEFORE Morrowind.bsa, the way the engine's load order does. */
+let _mwArchivesInflight = null;   // MWBODY1 (AUDIT MWBODY B10): two builds at once - a peer's beside the player's - open every archive once, not twice
+export async function loadMorrowindArchives() {
+  if (_mwArchiveCache && _mwArchiveCache.gen === _mwGeneration) return _mwArchiveCache.archives;
+  if (_mwArchivesInflight && _mwArchivesInflight.gen === _mwGeneration) return _mwArchivesInflight.promise;
+  const gen = _mwGeneration;
+  const promise = _openMorrowindArchives(gen).finally(() => { if (_mwArchivesInflight && _mwArchivesInflight.gen === gen) _mwArchivesInflight = null; });
+  _mwArchivesInflight = { gen, promise };
+  return promise;
+}
+
+async function _openMorrowindArchives(gen) {
+  const { MwBsaFile } = await import('../formats/morrowind/mwBsaFile.js');
+  const names = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n));
+  const rank = (n) => {
+    const l = n.toLowerCase();
+    if (l.includes('morrowind')) return 3;
+    if (l.includes('tribunal')) return 2;
+    if (l.includes('bloodmoon')) return 1;
+    return 0; // unknown packs override everything
+  };
+  names.sort((a, b) => rank(a) - rank(b));
+  const archives = [];
+  // MW-D40: LOOSE FILES FIRST - the engine's own data-files-over-BSA
+  // law. Every stored non-archive asset joins one {has, get} duck
+  // ranked ahead of every .bsa, so a mod's meshes/textures/sounds
+  // (Pegas Horse Ranch's whole maxhorse tree) resolve through the
+  // exact seam fpArm already speaks, and can also OVERRIDE an
+  // archived file of the same path. Resident like the archives are -
+  // the IG2 cost statement above covers both.
+  const looseNames = (await storedMorrowindNames()).filter((n) => MW_LOOSE_EXT.test(n));
+  if (looseNames.length) {
+    const loose = new Map();
+    for (const n of looseNames) {
+      const bytes = await assetBytes(MW_STORE, n);
+      if (bytes) loose.set(n, bytes);
+    }
+    archives.push(makeLooseArchive(loose));
+  }
+  // WS1: Weapon Sheathing's vendored scabbards and bone addons, after
+  // the player's own loose files (a replacer wins) and before every
+  // .bsa (retail carries none of these names).
+  try {
+    const ws = await import('../systems/weaponSheathingAssets.js');
+    archives.push(ws.weaponSheathingArchive());
+  } catch (err) {
+    console.warn(`weapon sheathing assets: ${err.message}`);
+  }
+  // FIELD-GUN-MW2: THE PORT'S OWN Morrowind assets - the Dwarven
+  // Thunderlock's mesh and texture, which no player's archives can
+  // carry because Morrowind has no firearm. Same rank and the same
+  // reason as the line above: after the loose files, so Mac dropping
+  // his own texture in REPLACES ours without a rebuild, and before
+  // every .bsa, where these names do not exist.
+  try {
+    const own = await import('../systems/ownMwAssets.js');
+    archives.push(own.ownMwArchive());
+  } catch (err) {
+    console.warn(`own morrowind assets: ${err.message}`);
+  }
+  for (const n of names) {
+    try {
+      // MW-LOAD: opened by range off the stored Blob - the directory
+      // now, an entry's bytes when a reader loads it. Nothing of the
+      // archive's data buffer is read here.
+      const blob = await assetBlob(MW_STORE, n);
+      if (!blob) continue;
+      archives.push(await MwBsaFile.open(blob));
+    } catch (err) {
+      console.warn(`morrowind archive ${n}: ${err.message}`);
+    }
+  }
+  // AUDIT 68 S18-mw-cache-stale-generation: stamped with the generation the open began under, and kept only while
+  // that is still the live one - the live counter here made a set opened before an attach read as current.
+  if (gen === _mwGeneration) _mwArchiveCache = { gen, archives };
+  return archives;
+}
+
+/** Sync-readable state for the settings row; -1 until registered. */
+let _mwCount = -1;
+export const morrowindDataCount = () => Math.max(_mwCount, 0);
+/** AUDIT 65 XL-6: HAS THE STORE BEEN COUNTED THIS PAGE LOAD? The boot
+ *  door's gate used to be `morrowindDataFingerprint() == null`, which
+ *  was the same question only because the one counter also fingerprinted.
+ *  countMorrowindArchives deliberately leaves the fingerprint null, so
+ *  the gate asks the count's own sentinel instead - -1 is "not counted
+ *  yet", and it stays distinguishable from an empty store's 0. */
+export const morrowindDataCounted = () => _mwCount >= 0;
+/**
+ * MWFIX: the ATTACH GENERATION. The 3D first-person view is built once,
+ * at weapon-rig construction, off a `hasStoredMorrowind()` read - so
+ * attaching data to a running game changed nothing until a reload, and
+ * the bug report's "after uploading does not work at all" is that, not
+ * a bad archive. A monotonic counter is the cheapest honest signal a
+ * live consumer can poll: it moves only when the stored set is
+ * re-counted with a DIFFERENT answer, so a rig comparing integers
+ * rebuilds exactly when there is something new to build from.
+ */
+let _mwGeneration = 0;
+export const morrowindDataGeneration = () => _mwGeneration;
+/** MW-LOAD: the stored set's fingerprint (sorted names and sizes), for
+ *  a derived key that must name the SET rather than one file - the
+ *  face match's verdict is measured over every archive. Null until
+ *  registerMorrowindData has counted. */
+export const morrowindDataFingerprint = () => _mwFingerprint;
+/**
+ * MW-D40: the generation answers for the WHOLE STORED SET, never the
+ * archive count. A loose mod folder (.nif/.dds, no .bsa) or a .esm
+ * attached beside an archive that is already there leaves the archive
+ * count untouched - and this line is the only writer of the generation
+ * and the only place `_mwArchiveCache`/`_mwFileCache` are
+ * dropped, so counting archives alone left the loose override and the
+ * ESM door dead until the page was reloaded. The sorted names also
+ * move when a re-attach swaps one file for another of the same count,
+ * which a length never does.
+ *
+ * MW-LOAD: AND THE SIZES. A re-attach that swaps a file for another of
+ * the SAME NAME - a newer Morrowind.esm, a modded one, a repacked
+ * archive - moved no name, so the generation stood and every swap
+ * cache (the mapped archives, the file bytes, and now the record sets
+ * kept in the derived store) kept answering for the file that was
+ * gone. A stored Morrowind file is a Blob handle since MW-LOAD, so its
+ * size is free to ask (AUDIT 65 XL-6: a record from an attach BEFORE
+ * MW-LOAD is an ArrayBuffer and costs one materialising read until
+ * something opens it - which is why only the host bootstrap asks for
+ * sizes, and the boot menu counts names); a file of the same name and
+ * size is taken to be the same file (a same-size edit is the one case
+ * this leaves to the derived set's own sample stamp).
+ */
+let _mwFingerprint = null;   // null = THE SET HAS NOT BEEN MEASURED (since AUDIT 65 XL-6 a names-only count can have landed with this still null - `_mwCount`'s -1 is a different question)
+const mwFingerprint = (names, sizes = []) => [...names].sort().map((n, i) => `${n}\t${sizes[i] ?? ''}`).join('\n');
+/** The stored sizes, in the SORTED order mwFingerprint walks.
+ *
+ *  AUDIT 65 XL-6: A PLAIN GET, NEVER assetBlob. Measuring a set is not
+ *  using it, and assetBlob MIGRATES what it reads - it structured-clones
+ *  a pre-MW-LOAD ArrayBuffer record whole and PUTS the Blob back
+ *  (:375-381). Routed through it, a fingerprint over N legacy files was
+ *  N value reads AND N readwrite puts (every attached archive out of
+ *  the store and back) - and MAC1's boot door moved that onto the
+ *  title screen. Both shapes answer the size for free: a Blob has `.size`, an
+ *  ArrayBuffer `.byteLength`. The legacy-to-Blob migration stays where
+ *  the file is USED (assetBlob's callers - loadMorrowindArchives and the
+ *  record door), which is where MW-LOAD's range reads need it. */
+async function storedMorrowindSizes(names) {
+  const out = [];
+  for (const n of [...names].sort()) {
+    const v = await assetValue(MW_STORE, n);
+    out.push(v == null ? -1 : (v.size ?? v.byteLength ?? -1));
+  }
+  return out;
+}
+
+/** The settings row's count is ARCHIVES ("Morrowind archives attached:
+ *  N"), which a loose .dds or a .esm must not inflate - one home, so the
+ *  cheap door below and the full pass cannot drift apart. */
+const archiveCount = (names) => names.filter((n) => /\.bsa$/i.test(n)).length;
+
+/**
+ * AUDIT 65 XL-6: THE BOOT DOOR'S HALF - the archive count off the stored
+ * NAMES alone. One getAllKeys, no value read, no write: a surface that
+ * only needs to know whether anything is attached must not pay the
+ * fingerprint's per-file walk (MAC1 put that walk on the title screen).
+ *
+ * IT MUST NOT WRITE `_mwFingerprint`. A names-only print stored here
+ * would read as a CHANGED SET against the host bootstrap's names+sizes
+ * print and bump `_mwGeneration` - which is exactly the fpArm.unload()
+ * regression the MW-D9g comment below records, arriving by a new road.
+ * Counting is not fingerprinting; the fingerprint stays null until the
+ * full pass has actually measured the set.
+ */
+let _mwCountedNames = null;   // the names the cheap door counted, sorted - so a later attach still reads as a CHANGE while the print is null
+export async function countMorrowindArchives() {
+  const names = await storedMorrowindNames();
+  _mwCountedNames = [...names].sort().join('\n');
+  _mwCount = archiveCount(names);
+  return _mwCount;
+}
+
+/** Bootstrap arm (scenes/shared.js): count the stored archives once so
+ *  the settings dialog can report attachment without an async hop. */
+export async function registerMorrowindData() {
+  const names = await storedMorrowindNames();
+  const next = archiveCount(names);
+  const sizes = await storedMorrowindSizes(names);
+  const print = mwFingerprint(names, sizes);
+  // MW-D9g: `_mwFingerprint` STARTS AT null, MEANING "NOT COUNTED YET",
+  // AND LEARNING A SET IS NOT A CHANGE.
+  //
+  // Without the first term this bumped on every host's first boot, for
+  // every player, even with an empty store: -1 !== 0. And the bump is
+  // load-bearing - weaponRig latches the generation SYNCHRONOUSLY at
+  // construction while shared.js's bootstrap runs this asynchronously
+  // and does not wait, so the rig's latch is always taken BEFORE the
+  // count lands. Its first frame then saw a "change" that was really
+  // just the count arriving and called fpArm.unload(), throwing away an
+  // arm the player had already built. Measured in a browser through the
+  // real rig (tools/mwRigProbe.mjs): built, drawing, then reason
+  // "unloaded" on the first frame after boot.
+  //
+  // The generation means THE STORED SET CHANGED. It cannot mean that
+  // until there is a previous set to compare against - and since AUDIT
+  // 65 XL-6 the boot door's names-only count IS a previous set: a print
+  // still null after a count means the set was counted, not measured,
+  // so an attach that lands between the count and this pass compares
+  // against the counted NAMES (or the fpArm swap caches would keep
+  // answering for the set the count saw - MWFIX's bug by a new road).
+  const changed = _mwFingerprint !== null
+    ? print !== _mwFingerprint
+    : (_mwCountedNames !== null && [...names].sort().join('\n') !== _mwCountedNames);
+  if (changed) { _mwGeneration++; _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null; }   // IG2: a new attach drops the swap caches; MW-LOAD: and the record memo
+  _mwFingerprint = print;
+  _mwCount = next;
+  return _mwCount;
+}
+
+// ---- TESA12: Arena's store, retired --------------------------------------
+
+/** TESA12: empty the store a copy of Arena was attached to (TESA1 to TESA6) - nothing reads it since the places past the
+ *  Bay became the port's own. The world's boot asks it once; no IndexedDB (private mode), nothing to clear. */
+export async function clearRetiredArena() {
+  try { await clearAssets(ARENA_STORE); } catch { /* no IndexedDB: nothing stored */ }
+}
+
+export async function pickMorrowindFiles() {
+  return pickAssetFolder({
+    title: 'Your Morrowind data',
+    blurb: `<p>Pick your Morrowind <b>Data Files</b> folder (or just
+      <b>Morrowind.bsa</b>). Nothing is uploaded. It is stored in this
+      browser, like your ARENA2 folder.</p>
+      <p style="color:#999">Used for the optional 3D models. You need
+      to own Morrowind. Tribunal.bsa and Bloodmoon.bsa are used too if
+      they are in the folder. So are loose mod files (meshes, textures
+      and sounds, such as a Pegas Horse Ranch folder), and they take
+      priority over the archives.</p>`,
+    store: storeMorrowindFiles,
+    register: registerMorrowindData,
+  });
+}
+
+/**
+ * SIB1: THE ONE DECISION for a file the texture pick sees - the stored
+ * key it takes, or null. A DFU-named PNG (`003_5-0.png`) keys by its
+ * basename, as it always has; Seasons of the Iliac Bay's own files -
+ * its `.dfmod`, or a PNG under one of its eleven `Textures/` folders -
+ * key by the RELATIVE PATH that says what they are (the picker's
+ * webkitRelativePath; a browser File's `name` is the bare basename, so
+ * a folder decision made on the name alone answers null for every mod
+ * PNG). Exported so the pin can drive it with File-like objects.
+ */
+export function textureStoreKey(file, { textureEntry, seasonsAssetKey }) {
+  const base = String(file?.name ?? '');
+  if (textureEntry(base)) return base;
+  if (/\.dfmod$/i.test(base)) return DFMOD_KEY_OF(base);   // DFMOD1: ANY mod bundle, not only Seasons' - the generic door reads the rest
+  return seasonsAssetKey(file?.webkitRelativePath || base);
+}
+
+const DFMOD_KEY_OF = (base) => `dfmod/${String(base).split('/').pop().toLowerCase()}`;   // dfmodTextures.dfmodStoreKey's spelling, kept import-free for the pin
+
+export async function storeTextureFiles(files) {
+  const { textureEntry } = await import('../systems/textureReplacement.js');
+  const { seasonsAssetKey } = await import('../systems/seasonsIliacBayAssets.js');
+  const deps = { textureEntry, seasonsAssetKey };
+  const keyed = [...files].map((f) => [f, textureStoreKey(f, deps)]).filter(([, k]) => k);
+  const keyOf = new Map(keyed);
+  // The list is already decided above; storeAssets' own accept sees the
+  // basename only and must not re-decide.
+  return storeAssets(TEXTURE_STORE, keyed.map(([f]) => f), () => true, (f) => keyOf.get(f));
+}
+export const storedTextureNames = () => assetNames(TEXTURE_STORE);
+export const loadTextureFile = (fileName) => assetBytes(TEXTURE_STORE, fileName);
+/** DFMOD2: a stored asset as its Blob - a .dfmod is opened by range from it, never read whole. */
+export const loadTextureBlob = (fileName) => assetBlob(TEXTURE_STORE, fileName);
+
+/**
+ * The asset-pack pick, in the shape of the ARENA2 one. ONE overlay,
+ * parameterised - the music and texture picks differ only in their
+ * words and their store.
+ *
+ * DFU's equivalent is "put files in StreamingAssets/<domain>"; a
+ * browser has no such folder, so the player points at one and it is
+ * stored here. Resolves to the number of assets the pick can replace.
+ *
+ * CANCELLING IS NOT AN ERROR. The overlay has its own way out and
+ * resolves 0 - a player who opens this to see what it is and closes it
+ * has not broken anything, and the classic assets were already there.
+ */
+/**
+ * MWFIX: THE PICKER OUTRANKS WHATEVER OPENED IT.
+ *
+ * This overlay stood at z-index 11 while the enhanced shell that opens
+ * it stands at 12 - so pressing "Attach data" built the picker BEHIND
+ * an opaque full-screen pane. Nothing appeared to happen; the file
+ * input was there, unreachable, with `document.elementFromPoint` at
+ * its own centre answering a shell element. And because the only exit
+ * was a Close button under that same pane, the overlay was never
+ * removed and its promise never resolved: it lingered in the DOM and
+ * surfaced later - a flash when the shell came down at New Game, then
+ * again once chargen (14) finished - which is exactly what the bug
+ * report described.
+ *
+ * The landscape it has to clear: 12 the enhanced shell, 13 the pause /
+ * inventory / character doors, 14 chargen, 20 the top overlays. This
+ * modal is opened FROM those, so it must sit above all of them. The
+ * number is not eyeballed - test/datasourcepicker.test.js reads every
+ * z-index literal in src/ and fails if any reaches this one.
+ */
+export const ASSET_PICKER_Z = 40;
+
+/** MWFIX: is the asset picker on screen? A modal opened FROM another
+ *  overlay has to be able to say so, because the opener may own the
+ *  keyboard - the enhanced shell takes Escape on `globalThis` in
+ *  CAPTURE and stops it (ui/enhanced/enhancedMenu.js:"listenWindowKeys(owner, onKey, { types: ['keydown', 'keyup'], onCovered: () => { backArmed = null; } })"), which is right for a
+ *  screen with nothing above it and wrong the moment something is.
+ *  Its own stated law is that a modal overlay owns its input; this is
+ *  how the one above it says "that's me". */
+let _pickerOpen = false;
+export const assetPickerOpen = () => _pickerOpen;
+
+async function pickAssetFolder({ title, blurb, store, register, zip = null, directory = true, accept = '', doneText = null }) {
+  return new Promise((resolve) => {
+    const ui = document.createElement('div');
+    _pickerOpen = true;
+    // FONT3: under the enhanced skin the picker a Features tile opens (music, sounds, lighting, Morrowind) speaks the
+    // skin's face; the classic skin and the first-run picker below keep the plain monospace they always had.
+    const face = isEnhanced() ? `${PIXEL_FONT_CSS}font-size:14px;` : 'font:14px monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;';
+    ui.style.cssText = `position:fixed;inset:0;background:#111;color:#ddd;${face}display:flex;align-items:center;justify-content:center;z-index:${ASSET_PICKER_Z}`;
+    ui.innerHTML = `
+      <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px">
+        <h2 style="margin-top:0">${title}</h2>
+        ${blurb}
+        <input type="file" id="pickassets" ${directory ? 'webkitdirectory' : ''} ${accept ? `accept="${accept}"` : ''} multiple style="margin:8px">
+        ${zip ? '<p style="margin:4px 0">or its .zip: <input type="file" id="pickzip" accept=".zip,application/zip" style="margin:8px"></p>' : ''}
+        <p id="amsg" style="color:#8a8"></p>
+        <button id="adone" style="margin-top:8px">Close</button>
+      </div>`;
+    document.body.appendChild(ui);
+    const msg = ui.querySelector('#amsg');
+    let count = 0;
+    const take = async (files) => {
+      msg.textContent = `reading ${files.length} files...`;
+      try {
+        await store(files, (t) => { msg.textContent = t; });   // DFMOD1: a store may report as it goes
+        msg.textContent = 'registering...';
+        count = await register();
+        msg.textContent = (typeof doneText === 'function' ? doneText(count) : doneText) ?? (count ? `${count} files will be used` : 'nothing usable in that folder');   // IIL3: a picker that is not counting files says its own (TESA1: or says it by the count)
+      } catch (err) {
+        // NEVER TRAPS: a storage failure costs the pack, not the game.
+        msg.textContent = `could not store that: ${err?.message ?? err}`;
+      }
+    };
+    ui.querySelector('#pickassets').addEventListener('change', (e) => take([...e.target.files]));
+    // L10N3b: a pack as it was downloaded - its zip, read here with only the entries `zip` picks inflated, each handed
+    // on shaped as a picked folder's file is (its path, its bytes)
+    ui.querySelector('#pickzip')?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const entries = await readZipEntries(file, { pick: (names) => names.filter(zip) });
+        await take(entries.map((z) => ({ name: z.name.split('/').pop(), webkitRelativePath: z.name, arrayBuffer: async () => z.data })));
+      } catch (err) { msg.textContent = `could not read that zip: ${err?.message ?? err}`; }
+    });
+    // THREE WAYS OUT, because a modal that can be covered must never be
+    // a trap - the function's own contract above says cancelling is not
+    // an error, and until MWFIX that was only true of the one button.
+    // Escape and a backdrop click join it; `close` is idempotent, so
+    // whichever fires first wins and the rest are no-ops.
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      _pickerOpen = false;
+      globalThis.removeEventListener('keydown', onKey, true);
+      ui.remove();
+      resolve(count);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+    globalThis.addEventListener('keydown', onKey, true);
+    ui.addEventListener('click', (e) => { if (e.target === ui) close(); });   // the backdrop, never the card
+    ui.querySelector('#adone').addEventListener('click', close);
+  });
+}
+
+/** L10N3b: INSTALL A TRANSLATION PACK for `code` - a Daggerfall Unity translation (its folder, or its .zip), kept in
+ *  this browser and never uploaded (scenes/translationStore.js). Its string tables, quests, books, name banks and fonts
+ *  are read from the folders DFU reads them from (systems/translationPacks.js); anything else in it is left. Answers
+ *  how many of its files the game will use. */
+export async function pickTranslationPack(code, languageName = code) {
+  const [{ installTranslationPack }, { packEntriesFromFiles }, { classifyPackFile }] = await Promise.all([
+    import('./localeData.js'), import('./translationStore.js'), import('../systems/translationPacks.js'),
+  ]);
+  let used = 0;
+  return pickAssetFolder({
+    title: `A translation for ${languageName}`,
+    blurb: `<p>Pick a <b>Daggerfall Unity translation</b>: its folder, or the .zip it came in. Its text replaces
+      the machine translation wherever it can. Nothing is uploaded. It is stored in this browser.</p>
+      <p style="color:#999">As in Daggerfall Unity, the string tables, quests and books are read from <b>Text</b>,
+      and the fonts from <b>Fonts</b>.</p>`,
+    store: async (files) => {
+      const record = await installTranslationPack(code, packEntriesFromFiles(files));
+      used = Object.values(record.counts).reduce((a, b) => a + b, 0);
+    },
+    register: async () => used,
+    zip: (name) => !!classifyPackFile(name),
+  });
+}
+
+export async function pickMusicFolder() {
+  const { setMusicReplacements } = await import('../systems/musicReplacement.js');
+  return pickAssetFolder({
+    title: 'Your own music',
+    blurb: `<p>Pick a folder of audio to play instead of the original game's
+      built-in songs. Nothing is uploaded. It is stored in this
+      browser.</p>
+      <p style="color:#999">A <b>Daggerfall Unity music pack works
+      as it is</b>: its <b>song_*.ogg</b> files already have the names
+      the game looks for.</p>`,
+    store: storeMusicFiles,
+    register: async () => setMusicReplacements(await storedMusicNames(), loadMusicFile),
+  });
+}
+
+export async function pickSoundFolder() {
+  const { setSoundReplacements } = await import('../systems/soundReplacer.js');
+  return pickAssetFolder({
+    title: 'Your own sounds',
+    blurb: `<p>Pick a folder of WAVs to play instead of the original game's
+      built-in sounds. Nothing is uploaded. It is stored in this
+      browser.</p>
+      <p style="color:#999">A <b>Daggerfall Unity sound mod works
+      as it is</b>: pick its <b>StreamingAssets/Sound</b> folder. Supported
+      so far: <b>AmbientCrickets.wav</b> (the night crickets) and
+      <b>AmbientDistantHowl.wav</b> (the distant howl).</p>`,
+    store: storeSoundFiles,
+    register: async () => {
+      const n = setSoundReplacements(await storedMusicNames(), loadMusicFile);
+      if (n) (await import('../systems/audio.js')).audio.preloadReplacements?.();   // the next night's crickets are the pack's
+      return n;
+    },
+  });
+}
+
+/** DFMOD1: EVERY REGISTRY THE TEXTURE STORE FEEDS, in one place - a pick, a removal and the boot all re-register
+ *  the same way. Resolves to how many replacements the store now carries.
+ *  AUDIT VE R2: THE ONE REGISTRATION. The boot seam kept its own copy of this (scenes/shared.js ensureAudio), with its own
+ *  `?nomods` rule, and nothing else registered the store - so the enhanced main menu, which runs before any host boots,
+ *  read a texture-mod door holding the shipped mods alone: an attached DREAM read as "Classic, in use", and "Use Classic"
+ *  switched off only the shipped mods. The seam calls this now; the page's latest is kept, and the menus ask for it
+ *  (textureStoreRegistered) before they read the door. `warm` opens the attached bundles after (a host's boot). */
+let _textureStore = null;   // the page's latest registration of the store
+let _textureStoreSettled = false;
+export function registerTextureStore({ warm = true } = {}) {
+  const p = registerTextureStoreNow({ warm });
+  _textureStore = p;
+  _textureStoreSettled = false;
+  const land = () => { if (_textureStore === p) _textureStoreSettled = true; };
+  p.then(land, land);
+  return p;
+}
+/** AUDIT VE R2: the menus' door - the page's registration of the texture store, begun here (unwarmed) if no host's boot
+ *  or pick has begun one. */
+export const textureStoreRegistered = () => _textureStore ?? registerTextureStore({ warm: false });
+/** AUDIT VE R2: the page's latest registration of the store has landed - a card that reads the registered mods waits. */
+export const textureStoreSettled = () => _textureStoreSettled;
+async function registerTextureStoreNow({ warm }) {
+  const { setTextureReplacements } = await import('../systems/textureReplacement.js');
+  const { setSeasonsSources } = await import('../systems/seasonsIliacBayAssets.js');
+  const { setWeaponWidgetSources } = await import('../combat/weapon/weaponWidgetAssets.js');   // WW1
+  const { setDiverseWeaponsSources } = await import('../combat/diverseWeapons/diverseWeaponsAssets.js');   // DW1
+  const { setDfmodSources, setDfmodDetailSource } = await import('../systems/dfmodTextures.js');   // DFMOD1
+  const { installVanillaEnhancedPack } = await import('../systems/vanillaEnhanced/vanillaEnhancedPack.js');   // VE4
+  const { getPref } = await import('../systems/uiPrefs.js');
+  setDfmodDetailSource(() => getPref('dfmodTextureDetail'));   // DFMOD2: the packs card's detail choice
+  installVanillaEnhancedPack();   // VE4: the shipped mods, in one load order with the attached
+  const names = await storedTextureNames();
+  const n = setTextureReplacements(names, loadTextureFile);
+  setWeaponWidgetSources(names, loadTextureFile);   // WW1: Weapon Widget's bundle, its double-scale textures
+  setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, a sprite set per weapon
+  const seasons = setSeasonsSources(names, loadTextureFile);   // SIB1: the mod's own files (its bundle counts one)
+  const mods = await setDfmodSources(names, loadTextureFile, { saveIndex: saveTextureJson, loadBlob: loadTextureBlob, warm });   // DFMOD1: every other bundle; DFMOD2: by range, warmed at a host's boot
+  return n + seasons + mods;
+}
+/** DFMOD1: a small JSON beside the bundles (a bundle's name index), as a Blob in the texture store. */
+export async function saveTextureJson(key, json) {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(TEXTURE_STORE, 'readwrite');
+    tx.objectStore(TEXTURE_STORE).put(new Blob([json], { type: 'application/json' }), key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+/** DFMOD1: store picked `.dfmod` bundles and index each once (opened in a worker, names written beside it), so a
+ *  boot registers from the index and opens a bundle only when one of its pictures is drawn. */
+export async function storeDfmodFiles(files, progress = null) {
+  const { dfmodStoreKey, dfmodIndexKey, indexDfmodBytes, hasOwnDoor, forgetDfmodOff, noteDfmodAttached } = await import('../systems/dfmodTextures.js');
+  const picked = [...files].filter((f) => dfmodStoreKey(f.name));
+  let kept = 0;
+  for (const f of picked) {
+    const key = dfmodStoreKey(f.name);
+    progress?.(`storing ${f.name} (${(f.size / 1e6).toFixed(0)} MB)...`);
+    await storeAssets(TEXTURE_STORE, [f], () => true, () => key);
+    forgetDfmodOff(key);   // VE3: a mod attached is on, whatever an earlier copy of it was
+    if (!hasOwnDoor(key)) {
+      progress?.(`reading ${f.name}...`);
+      try {
+        const index = await indexDfmodBytes(f);   // DFMOD2: the File is a Blob - read by range in the worker, never whole
+        await saveTextureJson(dfmodIndexKey(key), JSON.stringify(index));
+        noteDfmodAttached(key, index);   // AUDIT VE R3: on - and over a shipped mod (its name or its Title), that mod's switch with it
+      } catch (e) {
+        await deleteAssets(TEXTURE_STORE, [key]);   // a bundle this reader cannot open is not kept
+        throw new Error(`${f.name}: ${e?.message ?? e}`);
+      }
+    }
+    kept++;
+  }
+  return kept;
+}
+
+/** IIL3: the packs card's "Attach lighting mod" - the same store as the texture mods, one file, and it must BE the
+ *  lighting mod: anything else is taken back out, with a word, so the button never quietly attaches a texture pack. */
+export async function pickLightingModFiles() {
+  const { dfmodStoreKey, dfmodIndexKey } = await import('../systems/dfmodTextures.js');
+  const { isIilMod } = await import('../systems/improvedInteriorLighting.js');
+  return pickAssetFolder({
+    title: 'Attach lighting mod',
+    blurb: `<p>Pick the <b>Improved Interior Lighting</b> <b>.dfmod</b> file.
+      It is in the <b>Mods</b> folder of its download (the original by
+      ShortBeard, or the fixed version by BlazeBlue32). Nothing is uploaded.
+      It is stored in this browser.</p>
+      <p style="color:#999">Then choose how it lights in ${optionPath('feat:modded-lighting').replaceAll(' \u203a ', ' &rarr; ')}
+      &rarr; Modded lighting: On, or With shadows.</p>`,   // ORG2: where the map puts it
+    store: async (files, progress) => {
+      const picked = [...files].filter((f) => dfmodStoreKey(f.name)).slice(0, 1);
+      if (!picked.length) throw new Error('that is not a .dfmod file');
+      await storeDfmodFiles(picked, progress);
+      const key = dfmodStoreKey(picked[0].name);
+      let manifest = null;
+      try { manifest = JSON.parse(new TextDecoder().decode(await loadTextureFile(dfmodIndexKey(key)))); } catch { /* read below */ }
+      if (!isIilMod({ guid: manifest?.guid, title: manifest?.title })) {
+        await deleteAssets(TEXTURE_STORE, [key, dfmodIndexKey(key)]);
+        throw new Error(`${picked[0].name} is not Improved Interior Lighting${manifest?.title ? ` (it is ${manifest.title})` : ''} - texture mods go under Add texture mods`);
+      }
+    },
+    register: registerTextureStore,
+    directory: false,
+    accept: '.dfmod',
+    doneText: `Improved Interior Lighting attached. Choose On or With shadows under Modded lighting (${optionPath('feat:modded-lighting')}).`,   // ORG2
+  });
+}
+
+export async function pickDfmodFiles() {
+  return pickAssetFolder({
+    title: 'Add texture mods',
+    blurb: `<p>Pick one or more Daggerfall Unity <b>.dfmod</b> files: texture
+      mods like <b>DREAM</b> (sprites, NPCs, monsters, paperdoll, portraits,
+      backgrounds and world textures). Nothing is uploaded. They are stored
+      in this browser.</p>
+      <p style="color:#999">Textures, sprite sizes, paperdoll pieces, heads,
+      bodies, backgrounds and talk portraits are used. Mod scripts do not
+      run, and normal, height and emission maps are skipped. Big mods take
+      a while to read the first time.</p>`,
+    store: storeDfmodFiles,
+    register: registerTextureStore,
+    directory: false,
+    accept: '.dfmod',
+  });
+}
+
+/** DFMOD1: remove one attached bundle (and its index). */
+export async function removeStoredDfmod(key) {
+  const { dfmodIndexKey, forgetDfmodOff } = await import('../systems/dfmodTextures.js');
+  await deleteAssets(TEXTURE_STORE, [key, dfmodIndexKey(key)]);
+  forgetDfmodOff(key);   // VE3: a removed mod is not remembered switched off
+  return registerTextureStore();
+}
+/** DFMOD1: remove every attached bundle, the loose texture pack beside them stays. */
+export async function clearStoredDfmods() {
+  const names = (await storedTextureNames()).filter((n) => n.startsWith('dfmod/') || n.startsWith('dfmod-index/'));
+  await deleteAssets(TEXTURE_STORE, names);
+  (await import('../systems/dfmodTextures.js')).forgetDfmodOff(names);   // VE3
+  await registerTextureStore();
+  return names.length;
+}
+/** DFMOD1: REMOVE THE TEXTURE PACK - the loose files a folder pick stored (DFU-named PNGs, a mod's Textures
+ *  folders); the attached .dfmod bundles stay (they have their own removal). */
+export async function clearStoredTexturePack() {
+  const names = (await storedTextureNames()).filter((n) => !n.startsWith('dfmod/') && !n.startsWith('dfmod-index/'));
+  await deleteAssets(TEXTURE_STORE, names);
+  await registerTextureStore();
+  return names.length;
+}
+
+export async function pickTextureFolder() {
+  return pickAssetFolder({
+    title: 'Your own textures',
+    blurb: `<p>Pick a folder of PNGs to draw instead of the original game's
+      built-in textures. Nothing is uploaded. It is stored in this
+      browser.</p>
+      <p style="color:#999">A <b>Daggerfall Unity texture pack works
+      as it is</b>: its <b>003_5-0.png</b> files already have the names
+      the game looks for. Anything you leave out keeps the classic art.</p>
+      <p style="color:#999"><b>Seasons of the Iliac Bay</b> works here
+      too: a folder with its <b>.dfmod</b> or its <b>Textures</b> folders
+      gives the woodland its autumn, spring and winter.</p>
+      <p style="color:#999"><b>Weapon Widget</b> too: a folder with
+      its <b>.dfmod</b> gives its DoubleScaleTextures module the mod's
+      own double-size weapon art.</p>
+      <p style="color:#999"><b>Diverse Weapons</b> comes with the game.
+      A folder with a newer version's <b>.dfmod</b> uses that version's
+      art instead.</p>`,
+    store: storeTextureFiles,
+    register: registerTextureStore,   // DFMOD1: one seam for every registry the store feeds
+  });
+}
+
+/** MW-D35: the same seam under the name the Morrowind lane's deps
+ *  object carries - buildFpArm reads the classic portrait archive
+ *  through `deps.fetchArena2Bytes`, and a test hands it a fixture. */
+export const fetchArena2Bytes = (name) => getBytes(name);
+
+/** MEM-AUDIT (2026-10-23): a file's bytes let go from the memory cache - its next read comes from IndexedDB (or the
+ *  network) again, the same bytes. For a file a reader keeps only while it uses it: a classic sky's SKY??.DAT, 7.8 MB
+ *  each and 32 of them, held for the session as a journey crossed climates, weathers and seasons. */
+/** AUDIT MEM-AUDIT M1: bytes this session holds and nowhere else - the ingest's no-IDB arm (private mode, a quota's
+ *  refusal): never forgotten, for nothing could read them again. */
+export function keepOnlyInMemory(name, u8) { mem.set(name, u8); readAgain.delete(name); }
+export function forgetBytes(name) { const key = normalizeName(name); if (readAgain.delete(key)) mem.delete(key); }
+
+/** The single data seam every reader goes through (via fetchBytes). */
+export async function getBytes(name) {
+  const key = normalizeName(name);
+  const hit = mem.get(key);
+  if (hit) return hit;
+  try {
+    const stored = await idbRead(key);
+    if (stored) { const u8 = new Uint8Array(stored); mem.set(key, u8); readAgain.add(key); return u8; }
+  } catch { /* no IDB (private mode etc.) - fall through to network */ }
+  const res = await fetch(`./arena2/${name}`);
+  if (!res.ok) throw new Error(`${name}: ${res.status} - not in the stored ARENA2 selection and no server copy; re-pick a complete ARENA2 folder`);
+  const u8 = new Uint8Array(await res.arrayBuffer());
+  mem.set(key, u8);
+  readAgain.add(key);
+  return u8;
+}
+
+/** Read a picked FileList into (NAME, ArrayBuffer) entries: uppercase
+ *  basenames, flat-name filter (the dev middleware's own rule).
+ *  DG-LNX: `progress(done, n)` every few files - a folder pick reads a
+ *  few hundred megabytes before a byte is stored, and a screen that
+ *  says "reading 3035 files..." for a minute reads as "doesn't work". */
+async function readPicked(files, progress = null) {
+  const entries = [];
+  let done = 0;
+  for (const f of files) {
+    done++;
+    const key = normalizeName(f.name);
+    if (!/^[A-Za-z0-9._-]+$/.test(key)) continue;
+    if (!KEEP(key)) continue;   // the engine's diet only
+    entries.push([key, await f.arrayBuffer()]);
+    if (progress && (done % 25 === 0 || done === files.length)) progress(done, files.length);
+  }
+  return entries;
+}
+
+/** DG-LNX (2026-09-16, Ember on the Discord, Linux: "Picking the arena2
+ *  folder doesn't work. Picking a zip with the game files does though."):
+ *  THE FOLDER ARM SAID NOTHING WHEN IT FAILED. The zip arm has always
+ *  been wrapped and reports `zip failed: ...`; the folder arm's ingest
+ *  was an unguarded async listener, so a read that threw (a sandboxed
+ *  browser - Snap or Flatpak Firefox and Chromium hand a folder pick
+ *  through the desktop portal, which grants FILES cleanly and a whole
+ *  DIRECTORY often not at all, or not readably) became an unhandled
+ *  rejection: the screen stayed on "reading N files..." for ever and the
+ *  boot was dead. And an EMPTY pick - the portal's other answer - said
+ *  "no usable files" with no way forward. Both now say what happened
+ *  and name the route that works on that setup: the zip, or the folder
+ *  dropped onto the screen. */
+export const FOLDER_PICK_HINT = 'Some Linux browsers (Snap or Flatpak builds) cannot hand over a whole folder. '
+  + 'Pick a .zip of the ARENA2 folder below instead, or drag the folder onto this screen.';
+
+const PROBE = 'ART_PAL.COL'; // small, universally present, first thing most scenes touch
+
+/** A2-WHOLE (Discord, 2026-09-22 - The Craziest Angel: "boot failed:
+ *  ARCH3D.BSA: 404 - not in the stored ARENA2 selection ... keep getting
+ *  this error even after uninstalling the daggerfall from steam and
+ *  reinstalling"): THE PICKER TOOK ANY FOLDER THAT HELD ONE DAGGERFALL
+ *  FILE AND STORED IT AS COMPLETE. The manifest is written last and its
+ *  presence is the completeness proof - but nothing ever asked whether
+ *  the set was complete, only whether the WRITE finished. So a folder
+ *  with the palettes and none of the BSAs (a DOS install's small ARENA2,
+ *  the CD's, a parent folder's stray files) was kept as a whole game,
+ *  the boot died on the first model it read, and the picker NEVER CAME
+ *  BACK, because the stored manifest said the set was done. Reinstalling
+ *  the game could not help: the bad copy lived in the browser.
+ *
+ *  These are the files every boot reads before a player sees a frame -
+ *  the models, the blocks, the map, the monsters, the terrain, the text
+ *  and the palette. A set without all of them is not stored, and the
+ *  picker says which are missing. */
+export const REQUIRED_ARENA2 = Object.freeze([
+  'ARCH3D.BSA', 'BLOCKS.BSA', 'MAPS.BSA', 'MONSTER.BSA', 'WOODS.WLD', 'TEXT.RSC', 'ART_PAL.COL',
+]);
+/** The required files a set of (normalized) names does not have. */
+export const missingArena2 = (names) => {
+  const have = new Set(names);
+  return REQUIRED_ARENA2.filter((n) => !have.has(n));
+};
+/** What the picker says about an incomplete folder - which files, and
+ *  the two ways to a whole one. */
+export const incompleteArena2Text = (missing) =>
+  `That is not a complete ARENA2 folder. It is missing ${missing.join(', ')}. `
+  + 'Pick the ARENA2 folder inside your Daggerfall install (on Steam it is under DF/DAGGER/ARENA2; on GOG it is in the game\'s own folder), '
+  + 'or use DaggerfallGameFiles.zip below.';
+
+// ---- ZIP ingest (mobile path, 2026-08-13) ----
+// iOS Safari has no directory picker, so phones supply the data as a
+// ZIP (the official DaggerfallGameFiles.zip or a self-zipped arena2).
+// Minimal reader, no dependency: EOCD scan -> central directory ->
+// per-entry local header -> DecompressionStream('deflate-raw') for
+// method 8, passthrough for method 0. No zip64 (the game files are
+// well under the 4GB shapes). If the archive carries an arena2/
+// folder, only those entries ingest (the full gamefiles zip ships
+// siblings we must not swallow).
+/** OT1: the central-directory walk with the entry NAMES KEPT - the
+ *  saves picker needs the `SAVE#/` segment the ARENA2 diet flattens
+ *  away. `pick` sees every file name in the archive and answers the
+ *  ones to inflate, so a caller's filter runs BEFORE any bytes are
+ *  decompressed, the skip-before-inflate readZip has always done.
+ *  Answers `[{ name, data }]` in archive order, `data` an ArrayBuffer;
+ *  directory entries and methods other than 0/8 are skipped.
+ *  AUDIT POI P5: `limit(name, size)`, when a caller gives one, bounds
+ *  what each picked entry may become - asked of every one, with the
+ *  size the directory declares, BEFORE any is inflated (a declared size
+ *  past its bound refuses the archive), and held while each inflates (an
+ *  entry that inflates past what it declared is stopped there). A
+ *  refusal throws an Error whose `code` is 'zip-too-large'. Without one,
+ *  nothing below changes. */
+export async function readZipEntries(file, { pick = (names) => names, onProgress, limit = null } = {}) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const dv = new DataView(buf.buffer);
+  // EOCD: scan the tail for PK\x05\x06 (comment can pad up to 64KB)
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 22 - 65535); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('not a ZIP (no end-of-central-directory)');
+  const count = dv.getUint16(eocd + 10, true);
+  let off = dv.getUint32(eocd + 16, true);
+  const dirs = [];
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(off, true) !== 0x02014b50) throw new Error('bad central directory');
+    const method = dv.getUint16(off + 10, true);
+    const compSize = dv.getUint32(off + 20, true);
+    const size = dv.getUint32(off + 24, true);
+    const nameLen = dv.getUint16(off + 28, true);
+    const extraLen = dv.getUint16(off + 30, true);
+    const commentLen = dv.getUint16(off + 32, true);
+    const localOff = dv.getUint32(off + 42, true);
+    const name = new TextDecoder().decode(buf.subarray(off + 46, off + 46 + nameLen));
+    if (!name.endsWith('/')) dirs.push({ name, method, compSize, size, localOff });
+    off += 46 + nameLen + extraLen + commentLen;
+  }
+  const wanted = new Set(pick(dirs.map((d) => d.name)));
+  const picked = dirs.filter((d) => wanted.has(d.name));
+  // AUDIT POI P5: every bound asked before a byte is inflated (a stored entry is its own size: one longer lies)
+  if (limit) for (const d of picked) if (!(d.size <= limit(d.name, d.size)) || (d.method === 0 && d.compSize > d.size)) throw zipTooLarge(d.name);
+  const entries = [];
+  let seen = 0;
+  for (const d of picked) {
+    if (onProgress && ++seen % 50 === 0) onProgress(seen, picked.length);
+    // Local header: its own name/extra lengths position the data
+    const lnl = dv.getUint16(d.localOff + 26, true);
+    const lel = dv.getUint16(d.localOff + 28, true);
+    const data = buf.subarray(d.localOff + 30 + lnl + lel, d.localOff + 30 + lnl + lel + d.compSize);
+    if (d.method === 0) {
+      entries.push({ name: d.name, data: data.slice().buffer });
+    } else if (d.method === 8) {
+      const ds = new DecompressionStream('deflate-raw');
+      const out = limit ? await inflatedTo(new Blob([data]).stream().pipeThrough(ds), d.size, d.name)
+        : await new Response(new Blob([data]).stream().pipeThrough(ds)).arrayBuffer();
+      entries.push({ name: d.name, data: out });
+    }
+    // other methods: skip (classic zips are 0/8 only)
+  }
+  return entries;
+}
+const zipTooLarge = (name) => Object.assign(new Error(`zip entry past its bound: ${name}`), { code: 'zip-too-large' });
+/** AUDIT POI P5: an inflating entry read to its end - and stopped, refused, the moment it passes `max` bytes. */
+async function inflatedTo(stream, max, name) {
+  const reader = stream.getReader();
+  const chunks = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    n += value.byteLength;
+    if (n > max) { await reader.cancel().catch(() => {}); throw zipTooLarge(name); }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(n);
+  let at = 0;
+  for (const c of chunks) { out.set(c, at); at += c.byteLength; }
+  return out.buffer;
+}
+
+/** The ARENA2 ingest over the walk above: the arena2/ folder alone when
+ *  the archive carries one, the engine's diet (KEEP) applied to the
+ *  canonical key BEFORE inflating - the 362MB of unread data never
+ *  touches memory - and `[key, ArrayBuffer]` pairs out, the store's
+ *  own shape. */
+export async function readZip(file, onProgress) {   // exported for the harness
+  const arena2 = (n) => /(^|\/)arena2\//i.test(n);
+  const entries = await readZipEntries(file, {
+    onProgress,
+    pick: (names) => {
+      const picked = names.some(arena2) ? names.filter(arena2) : names;
+      return picked.filter((n) => { const key = normalizeName(n); return /^[A-Za-z0-9._-]+$/.test(key) && KEEP(key); });
+    },
+  });
+  return entries.map(({ name, data }) => [normalizeName(name), data]);
+}
+
+/** AUDIT 68 S18-drop-items-after-await: a drop's FileSystemEntry roots, read NOW. A DataTransferItemList is readable
+ *  only while its drop event dispatches - past the handler's first await its length reads 0 - so both drop doors
+ *  (this picker and the classic-saves one in menu.js) walked the first dropped item and stopped. Call it before
+ *  any await. */
+export const droppedEntries = (dataTransfer) => [...(dataTransfer?.items ?? [])].map((it) => it.webkitGetAsEntry?.()).filter(Boolean);
+/** Every file under `roots`, depth first, as `onFile(file, path)` - `path` rebuilt from the walk, because a
+ *  dropped entry carries no webkitRelativePath. A browser read error REJECTS: the bare success callbacks this
+ *  replaced left a failed drop pending for ever, saying nothing. */
+export async function walkDroppedEntries(roots, onFile) {
+  const walk = async (entry, prefix) => {
+    if (entry.isFile) await onFile(await new Promise((res, rej) => entry.file(res, rej)), prefix + entry.name);
+    else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      let batch;
+      do {
+        batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+        for (const en of batch) await walk(en, prefix + entry.name + '/');
+      } while (batch.length);
+    }
+  };
+  for (const en of roots) await walk(en, '');
+}
+
+
+/** Boot gate: resolves when a data source can serve. Shows the
+ *  folder-pick overlay only when neither IndexedDB nor the network
+ *  path has data (i.e. the deployed site on first visit). */
+export async function ensureArena2() {
+  try {
+    const d = await getDb();
+    const m = await idbGetManifest(d);
+    // A2-WHOLE: a manifest is only as good as the set under it. A set
+    // stored before the completeness check could be missing the files
+    // every boot needs - it is wiped here, so the picker comes back
+    // instead of the same 404 on every launch.
+    if (m && m.v === MANIFEST_V) {
+      let whole = true;
+      for (const n of REQUIRED_ARENA2) if (!(await idbHas(d, n))) { whole = false; break; }
+      if (whole) return;   // complete, current-diet set
+      await clearStoredData();
+    }
+    if (await idbCount(d) > 0) await clearStoredData();   // partial or stale-diet: poison, wipe to the picker
+  } catch { /* no IDB */ }
+  try { const r = await fetch(`./arena2/${PROBE}`); if (r.ok) return; } catch { /* offline dev server */ }
+
+  await new Promise((resolve) => {
+    const ui = document.createElement('div');
+    ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;display:flex;align-items:center;justify-content:center;z-index:10';
+    ui.innerHTML = `
+      <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px" id="dz">
+        <h2 style="margin-top:0">DFO Online</h2>
+        <p>Daggerfall's game data is freeware but can't be bundled.</p>
+        <p>Select your <b>ARENA2</b> folder, or drop it here. It is stored
+        in your browser, so you only pick it once.</p>
+        <input type="file" id="pick" webkitdirectory multiple style="margin:8px">
+        <p style="margin:4px 0">On a phone, pick a <b>.zip</b> instead
+        (DaggerfallGameFiles.zip or a zipped ARENA2 folder).</p>
+        <input type="file" id="pickzip" accept=".zip,application/zip" style="margin:8px">
+        <p id="msg" style="color:#8a8"></p>
+      </div>`;
+    document.body.appendChild(ui);
+    const msg = ui.querySelector('#msg');
+    const ingest = async (files) => {
+      // DG-LNX: guarded like the zip arm, with the folder's own hint.
+      try {
+        if (!files.length) { msg.textContent = `the browser handed over no files from that folder. ${FOLDER_PICK_HINT}`; return; }
+        msg.textContent = `reading ${files.length} files...`;
+        const entries = await readPicked(files, (done, n) => { msg.textContent = `reading ${done}/${n}...`; });
+        if (!entries.length) { msg.textContent = `no ARENA2 files in that selection (${files.length} files, none of them Daggerfall\u2019s). Pick the ARENA2 folder itself, or a .zip of it.`; return; }
+        const fail = await finishIngest(entries, msg);
+        if (fail) { msg.textContent = fail; return; }   // stay on the picker
+        ui.remove();
+        resolve();
+      } catch (err) {
+        msg.textContent = `folder failed: ${err?.message ?? err}. ${FOLDER_PICK_HINT}`;
+      }
+    };
+    ui.querySelector('#pick').addEventListener('change', (e) => ingest([...e.target.files]));
+    ui.querySelector('#pickzip').addEventListener('change', async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      msg.textContent = `unpacking ${f.name}...`;
+      try {
+        const entries = await readZip(f, (done, n) => { msg.textContent = `unpacking ${done}/${n}...`; });
+        if (!entries.length) { msg.textContent = 'no ARENA2 files in that zip'; return; }
+        const fail = await finishIngest(entries, msg);
+        if (fail) { msg.textContent = fail; return; }   // stay on the picker
+        ui.remove();
+        resolve();
+      } catch (err) {
+        msg.textContent = `zip failed: ${err.message}`;
+      }
+    });
+    ui.addEventListener('dragover', (e) => e.preventDefault());
+    ui.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const roots = droppedEntries(e.dataTransfer);   // AUDIT 68 S18-drop-items-after-await: before the first await
+      const files = [];
+      try {
+        await walkDroppedEntries(roots, (f) => { files.push(f); });
+      } catch (err) {
+        msg.textContent = `drop failed: ${err?.message ?? err}. ${FOLDER_PICK_HINT}`;
+        return;
+      }
+      ingest(files);
+    });
+  });
+}

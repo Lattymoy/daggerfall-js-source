@@ -1,0 +1,273 @@
+[
+  {
+    "name": "GATE-HEAL-credited-to-the-receiver",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  q.healed = (q.healed ?? 0) + got;",
+    "new": "  p.healed = (p.healed ?? 0) + got;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-ones-own-heal-credited",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (!p || !q || sub === by || f.fell || f.wrath || now >= f.wrathAt || !Number.isFinite(n) || !(n > 0)) return 0;",
+    "new": "  if (!p || !q || f.fell || f.wrath || now >= f.wrathAt || !Number.isFinite(n) || !(n > 0)) return 0;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-bucket-uncapped",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const got = Math.max(0, Math.min(n, p.hb));",
+    "new": "  const got = Math.max(0, n);",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-never-refilled",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  p.hb = Math.min(\n    depth,\n    (Number.isFinite(p.hb) ? p.hb : depth) +\n      (Math.max(0, now - (Number.isFinite(p.hbAt) ? p.hbAt : now)) / 1000) * (ref / HEAL_REFILL_S),\n  );",
+    "new": "  p.hb = Math.min(depth, (Number.isFinite(p.hb) ? p.hb : depth) + 0);",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-floor-unchecked",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (\n    !pose ||\n    !Number.isFinite(pose.x) ||\n    !Number.isFinite(pose.z) ||\n    !onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))\n  )\n    return 0;",
+    "new": "  if (!pose || !Number.isFinite(pose.x) || !Number.isFinite(pose.z) || !Number.isFinite(pose.z)) return 0;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-after-the-fall",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (!p || !q || sub === by || f.fell || f.wrath || now >= f.wrathAt || !Number.isFinite(n) || !(n > 0)) return 0;",
+    "new": "  if (!p || !q || sub === by || f.wrath || now >= f.wrathAt || !Number.isFinite(n) || !(n > 0)) return 0;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-a-stranger-credited",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    q = f.players[by];",
+    "new": "    q = f.players[by] ?? f.players[sub];",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-hl-on-every-row",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      ...(q.healed >= 1 ? { hl: Math.round(q.healed) } : {}),",
+    "new": "      ...{ hl: Math.round(q.healed ?? 0) },",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-a-healer-twice",
+    "file": "src/net/wire.js",
+    "old": "return h.every(Boolean) && new Set(h.map((t) => t[0])).size === h.length ? { k: 'heal', h } : null;",
+    "new": "return h.every(Boolean) ? { k: 'heal', h } : null;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-a-fraction",
+    "file": "src/net/wire.js",
+    "old": "&& intIn(t[1], 1, GATE_HEAL_WIRE_MAX) ? [t[0], t[1]] : null));",
+    "new": "&& t[1] >= 1 && t[1] <= GATE_HEAL_WIRE_MAX ? [t[0], t[1]] : null));",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-a-row-of-my-own",
+    "file": "src/net/wire.js",
+    "old": "typeof t[0] === 'string' && ID_RE.test(t[0]) && intIn(t[1], 1, GATE_HEAL_WIRE_MAX)",
+    "new": "typeof t[0] === 'string' && (t[0] === '' || ID_RE.test(t[0])) && intIn(t[1], 1, GATE_HEAL_WIRE_MAX)",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-a-chart-heal-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  && (r.hl === undefined || gateHp(r.hl))   // GATE-HEAL",
+    "new": "  && true   // GATE-HEAL",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-peer-never-read",
+    "file": "server/src/index.js",
+    "old": "this._courtIdFirst(by)?.[1]?.sub ?? null;",
+    "new": "null;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ],
+    "note": "SCALE5b (re-aimed by content): the healer by the id index. SCALE5d part two (re-aimed by content): the court's copies beside it."
+  },
+  {
+    "name": "GATE-HEAL-the-fallen-word-refused",
+    "file": "server/src/index.js",
+    "old": "      const pose = a.pose ? this._courtOf(a.pose) : null;   // the fallen too",
+    "new": "      const pose = a.pose && !a.pose.dd ? this._courtOf(a.pose) : null;   // the fallen too",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-session-door-dropped",
+    "file": "src/net/online.js",
+    "old": "    if (g.k === 'heal' && !this.gateHealOk) return false;",
+    "new": "",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-every-relay-hears-it",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.gateHealOk = relaySupportsGateHeal(relayV);",
+    "new": "if (primary) this.gateHealOk = true;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-owed-after-the-fall",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "const healLive = (s) => !!s && s.day !== null && !s.fell && s.wrath == null;",
+    "new": "const healLive = (s) => !!s && s.day !== null && s.wrath == null;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-owed-under-the-wrath",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "const healLive = (s) => !!s && s.day !== null && !s.fell && s.wrath == null;",
+    "new": "const healLive = (s) => !!s && s.day !== null && !s.fell;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-owed-outside-a-fight",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "const healLive = (s) => !!s && s.day !== null && !s.fell && s.wrath == null;",
+    "new": "const healLive = (s) => !!s && !s.fell && s.wrath == null;",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-a-word-every-frame",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (healOwed.size && t - healSentAt >= HEAL_SEND_MS) sendOwed(t);",
+    "new": "if (healOwed.size) sendOwed(t);",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-rows-uncapped",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (n >= 1 && h.length < GATE_HEAL_ROWS_MAX) h.push(",
+    "new": "if (n >= 1) h.push(",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-a-row-past-the-wires-bound",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "h.push([by, Math.min(Math.floor(n), GATE_HEAL_WIRE_MAX)]);",
+    "new": "h.push([by, Math.floor(n)]);",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-fractions-dropped",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (left > 0) healOwed.set(by, left); else healOwed.delete(by);",
+    "new": "healOwed.delete(by);",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-leave-forgetting",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      if (healOwed.size) sendOwed(now());   // GATE-HEAL",
+    "new": "      void healOwed;   // GATE-HEAL",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-word-never-sent",
+    "file": "src/scenes/world.js",
+    "old": "sendHeal: (heal) => !!online?.sendGate?.({ k: 'heal', ...heal }),",
+    "new": "sendHeal: () => false,",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-cast-door-silent",
+    "file": "src/scenes/world.js",
+    "old": "      if (healed > 0) gateCourt?.healedBy?.(id, healed);",
+    "new": "",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-column-always",
+    "file": "src/ui/gate/gateDamageChart.js",
+    "old": "  const healed = dm.some((r) => r.hl !== undefined); // GATE-HEAL: someone healed another in it",
+    "new": "  const healed = true; // GATE-HEAL: someone healed another in it",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-column-never",
+    "file": "src/ui/gate/gateDamageChart.js",
+    "old": "  const healed = dm.some((r) => r.hl !== undefined); // GATE-HEAL: someone healed another in it",
+    "new": "  const healed = false; // GATE-HEAL: someone healed another in it",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-narrow-fold",
+    "file": "src/ui/gate/gateDamageChart.js",
+    "old": "  .wb-dmg-healed .wb-dmg-row > .wb-dmg-heal { display: block; }",
+    "new": "  .wb-dmg-healed .wb-dmg-row > .wb-dmg-heal { display: none; }",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  },
+  {
+    "name": "GATE-HEAL-the-cell-unwritten",
+    "file": "src/ui/gate/gateDamageChart.js",
+    "old": "  r.cells[9].textContent = m.heal ?? ''; // GATE-HEAL",
+    "new": "  // GATE-HEAL",
+    "tests": [
+      "test/net/gate/gateheal.test.js"
+    ]
+  }
+]

@@ -1,0 +1,93 @@
+{
+  "name": "daggerfall-js-app",
+  "productName": "DFO Online",
+  "private": true,
+  "version": "0.1.0",
+  "description": "DFO Online - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
+  "author": "Lattymoy",
+  "homepage": "https://daggerfalljs.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lattymoy/daggerfall-js-source.git"
+  },
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "predist": "cd .. && npm run build && node scripts/desktopRelease.mjs stage",
+    "dist": "electron-builder",
+    "postdist": "cd .. && node scripts/desktopRelease.mjs unstage"
+  },
+  "devDependencies": {
+    "electron": "^42.4.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.daggerfalljs.app",
+    "productName": "DFO Online",
+    "icon": "../public/icons/icon-512.png",
+    "afterPack": "./afterPack.cjs",
+    "artifactName": "DFO-Online-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Lattymoy",
+        "repo": "daggerfall-js-source"
+      }
+    ],
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "launcherPreload.cjs",
+      "launcher/**",
+      "lib/**",
+      "private/**",
+      "game-seed.json",
+      "dist/**",
+      "!**/node_modules/@img/**",
+      "!**/node_modules/sharp/**"
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Game"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "artifactName": "DFO-Online-win-${arch}-setup.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    },
+    "portable": {
+      "artifactName": "DFO-Online-win-${arch}-portable.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.games",
+      "extendInfo": {
+        "NSDownloadsFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
+        "NSDesktopFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
+        "NSDocumentsFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded."
+      }
+    },
+    "asarUnpack": [
+      "**/node_modules/workerd/**",
+      "**/node_modules/@cloudflare/workerd-*/**"
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "miniflare": "4.20260730.0"
+  }
+}

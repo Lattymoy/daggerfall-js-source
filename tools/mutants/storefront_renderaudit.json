@@ -1,0 +1,337 @@
+[
+  {
+    "name": "RENDERAUDIT-the-view-unread",
+    "file": "src/scenes/portalFx.js",
+    "old": "  if (view) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-basis-off-world-X",
+    "file": "src/scenes/portalFx.js",
+    "old": "    return portalBasis(renderer?._view ?? null, eyeNow(), mid, basis);",
+    "new": "    return portalBasis(null, null, mid, basis);",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-arch-toward-the-eye",
+    "file": "src/scenes/portalFx.js",
+    "old": "  out.back[0] = -rz;\n  out.back[1] = 0;\n  out.back[2] = rx;",
+    "new": "  out.back[0] = rz;\n  out.back[1] = 0;\n  out.back[2] = -rx;",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-an-opening-with-no-facing",
+    "file": "src/scenes/portalFx.js",
+    "old": "        playerDoor()?.burst?.(look.open, [at[0], at[1] + 0.05, at[2]], {\n          h: PORTAL_SIZE.h,\n          w: PORTAL_SIZE.w,\n          dir: facing(at),\n        });",
+    "new": "        playerDoor()?.burst?.(look.open, [at[0], at[1] + 0.05, at[2]], { h: PORTAL_SIZE.h, w: PORTAL_SIZE.w });",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-breath-with-no-facing",
+    "file": "src/scenes/portalFx.js",
+    "old": "          dir: [back[0], back[2]],\n        });",
+    "new": "        });",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-no-eye-no-step-back",
+    "file": "src/scenes/portalFx.js",
+    "old": "  const eyeNow = () => eye ?? renderer?._camPos ?? null;",
+    "new": "  const eyeNow = () => eye;",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-flight-left-unturned",
+    "file": "src/render/killFx.js",
+    "old": "=> [c.dir[1] * x + c.dir[0] * z, y, c.dir[1] * z - c.dir[0] * x];",
+    "new": "=> [x, y, z];",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-rim-on-world-X",
+    "file": "src/render/killFx.js",
+    "old": "p: onAxes(c, Math.cos(a) * w * 0.5, at[1] + h * (0.5 + Math.sin(a) * 0.48), Math.sin(a) * w * 0.15)",
+    "new": "p: [at[0] + Math.cos(a) * w * 0.5, at[1] + h * (0.5 + Math.sin(a) * 0.48), at[2] + Math.sin(a) * w * 0.15]",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-foots-embers-on-world-X",
+    "file": "src/render/killFx.js",
+    "old": "p: onAxes(c, side * w * fx.r(0.55, 0.75), gy + fx.r(0, 0.4) * h, fx.r(-0.1, 0.1))",
+    "new": "p: [c.at[0] + side * w * fx.r(0.55, 0.75), gy + fx.r(0, 0.4) * h, c.at[2] + fx.r(-0.1, 0.1)]",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-fissure-wakes-on-world-X",
+    "file": "src/scenes/seasonHost.js",
+    "old": "{ h: 2, w: 6, dir: [Math.sin(F.f.yaw), Math.cos(F.f.yaw)] }",
+    "new": "{ h: 2, w: 6 }",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-world-before-the-held-flats",
+    "file": "src/scenes/world.js",
+    "old": "    renderer.drawHeld(camRight, bbUp);   // GRASS-PORTAL: the street's blended flats, over the grass behind them\n    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, once the opaque world is whole - no depth written, so the street's flats, the grass and the banners drawn after them painted over them (RAIN-OVER-GRASS's law)\n",
+    "new": "    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, once the opaque world is whole - no depth written, so the street's flats, the grass and the banners drawn after them painted over them (RAIN-OVER-GRASS's law)\n    renderer.drawHeld(camRight, bbUp);   // GRASS-PORTAL: the street's blended flats, over the grass behind them\n",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-exterior-before-the-windfall-and-haze",
+    "file": "src/scenes/exterior.js",
+    "old": "    // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)\n    if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();\n    if (ambientLife.draw(renderer, proj, view, walkMode ? player.pos : cam.pos)) renderer.markForeignPass();   // AMBIENT-LIFE: world.js's twin - its lights too, the people and the veiled bodies drawn above\n    // HAZE1: HEAT HAZE once the opaque world is whole, before what falls (world.js's twin note)\n    if (hazeGl) {\n      const hz = heatHaze.tick({ dt, time: gamePaused() ? 0 : dt * hccTimeScale(), exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,\n        grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4 (world.js's twin): the ease on the real clock, the shimmer on the game's\n      if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();\n    }\n    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the walkers, the watch, the foes and the Windfall - no depth written, so a flat drawn after them painted over them (world.js's twin note)\n",
+    "new": "    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the walkers, the watch, the foes and the Windfall - no depth written, so a flat drawn after them painted over them (world.js's twin note)\n    // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)\n    if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();\n    if (ambientLife.draw(renderer, proj, view, walkMode ? player.pos : cam.pos)) renderer.markForeignPass();   // AMBIENT-LIFE: world.js's twin - its lights too, the people and the veiled bodies drawn above\n    // HAZE1: HEAT HAZE once the opaque world is whole, before what falls (world.js's twin note)\n    if (hazeGl) {\n      const hz = heatHaze.tick({ dt, time: gamePaused() ? 0 : dt * hccTimeScale(), exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,\n        grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4 (world.js's twin): the ease on the real clock, the shimmer on the game's\n      if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();\n    }\n",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-interior-before-its-characters",
+    "file": "src/scenes/worldModes.js",
+    "old": "    for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);\n    magic?.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the room's last opaque draw (its characters) - no depth written, so a body drawn after them painted over them\n",
+    "new": "    magic?.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the room's last opaque draw (its characters) - no depth written, so a body drawn after them painted over them\n    for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);\n",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-sigils-ring-by-pow",
+    "file": "src/render/killFx.js",
+    "old": "    float ring = exp(-d1 * d1) + exp(-d2 * d2) * 0.9 + exp(-d3 * d3);",
+    "new": "    float ring = exp(-pow(d1, 2.0)) + exp(-d2 * d2) * 0.9 + exp(-d3 * d3);",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-sigils-eye-by-pow",
+    "file": "src/render/killFx.js",
+    "old": "    float eye = exp(-d4 * d4) + (1.0 - smoothstep(0.0, 0.08, r));",
+    "new": "    float eye = exp(-pow(d4, 2.0)) + (1.0 - smoothstep(0.0, 0.08, r));",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-rifts-rim-by-pow",
+    "file": "src/render/killFx.js",
+    "old": "float d = (sqrt(e) - 0.82) / 0.12; k = exp(-d * d)",
+    "new": "float d = (sqrt(e) - 0.82) / 0.12; k = exp(-pow(d, 2.0))",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-coils-ring-by-pow",
+    "file": "src/render/auraRing.js",
+    "old": "  col += ${P}_GLOW * exp(-glowAt * glowAt) * 0.45 * helixRun(0.0);",
+    "new": "  col += ${P}_GLOW * exp(-pow(glowAt, 2.0)) * 0.45 * helixRun(0.0);",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-light-record-a-frame",
+    "file": "src/render/killFx.js",
+    "old": "    const o = this._light, k = bestK;",
+    "new": "    const o = { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0], carried: true }, k = bestK;",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-size-a-piece",
+    "file": "src/scenes/portalFx.js",
+    "old": "      q.batch.size.w = q.d.size.w * pl.scale * (pl.spin < 0 ? -1 : 1);\n      q.batch.size.h = q.d.size.h * pl.scale;",
+    "new": "      q.batch.size = { w: q.d.size.w * pl.scale * (pl.spin < 0 ? -1 : 1), h: q.d.size.h * pl.scale };",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-batches-flat-mapped",
+    "file": "src/scenes/portalFx.js",
+    "old": "      let n = 0; // written by index: a length set to 0 lets the list's room go, and the pushes after it take it again",
+    "new": "      return list.flatMap((p) => [p.batch, ...(p.dress ?? []).map((q) => q.batch)]);\n      let n = 0;",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-hypot-a-frame",
+    "file": "src/scenes/portalFx.js",
+    "old": "  const L = Math.sqrt(rx * rx + rz * rz); // never Math.hypot a frame: a call it does not inline boxes its numbers",
+    "new": "  const L = Math.hypot(rx, rz); // never Math.hypot a frame: a call it does not inline boxes its numbers",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-portals-answer-anew",
+    "file": "src/scenes/portalFx.js",
+    "old": "      const { open: k, done } = portalOpenAt(age, p.when, opened);",
+    "new": "      const { open: k, done } = portalOpenAt(age, p.when);",
+    "tests": [
+      "test/render/killfx.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: V8 inlines portalOpenAt into the tick and replaces its one default record by scalars, so dropping the scratch adds nothing the measure sees. The scratch keeps the tick allocation-free where an engine does not inline it; the five return records it replaced were 72 bytes a call."
+  },
+  {
+    "name": "RENDERAUDIT-a-colour-array-a-part",
+    "file": "src/render/killFx.js",
+    "old": "B[o + 6] = lerp(c0[0], c1[0], u); B[o + 7] = lerp(c0[1], c1[1], u); B[o + 8] = lerp(c0[2], c1[2], u);",
+    "new": "B.set([lerp(c0[0], c1[0], u), lerp(c0[1], c1[1], u), lerp(c0[2], c1[2], u)], o + 6);",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-added-layer-over-the-blended",
+    "file": "src/render/killFx.js",
+    "old": "      gl.bufferSubData(gl.ARRAY_BUFFER, KFX_LAYER_BYTES, fx.add, 0, fx.nAdd * KFX_FLOATS);",
+    "new": "      gl.bufferSubData(gl.ARRAY_BUFFER, 0, fx.add, 0, fx.nAdd * KFX_FLOATS);",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-drawn-through-the-blended-VAO",
+    "file": "src/render/killFx.js",
+    "old": "      gl.bindVertexArray(this.vaos[1]);",
+    "new": "      gl.bindVertexArray(this.vaos[0]);",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-an-opening-in-the-kills-pool",
+    "file": "src/render/killFx.js",
+    "old": "'portal-brass-open': 'event'",
+    "new": "'portal-brass-open': 'kill'",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-horses-in-the-places-pool",
+    "file": "src/render/killFx.js",
+    "old": "'mount-warhorse': 'mount'",
+    "new": "'mount-warhorse': 'place'",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-oldest-spliced",
+    "file": "src/render/killFx.js",
+    "old": "if (x.pool === pool && x.fade < 0) { x.fade = 0; mine--; }",
+    "new": "if (x.pool === pool && x.fade < 0) { this.bursts.splice(k--, 1); mine--; }",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-fade-never-drawn",
+    "file": "src/render/killFx.js",
+    "old": "      const out = b.fade >= 0 ? 1 - b.fade / KFX_FADE_S : 1;",
+    "new": "      const out = 1;",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-faded-burst-kept",
+    "file": "src/render/killFx.js",
+    "old": "      if (b.fade >= 0 && (b.fade += d) >= KFX_FADE_S) { this.bursts.splice(i, 1); continue; }",
+    "new": "      if (b.fade >= 0) b.fade += d;",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-fit-twice-on-y",
+    "file": "src/render/effectStage.js",
+    "old": "mid[1] + (pl.at[1] - mid[1]) * fit,",
+    "new": "pl.at[1] * fit,",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-loop-turning-under-less-motion",
+    "file": "src/render/effectStage.js",
+    "old": "      if (calm) { const holdAt",
+    "new": "      if (false) { const holdAt",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-a-breath-under-less-motion",
+    "file": "src/render/effectStage.js",
+    "old": "      if (look?.ambient && !calm) {",
+    "new": "      if (look?.ambient) {",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-stage-reads-it-once",
+    "file": "src/render/effectStage.js",
+    "old": "  const still = typeof reduced === 'function' ? reduced : () => !!reduced;",
+    "new": "  const was = typeof reduced === 'function' ? reduced() : !!reduced, still = () => was;",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-engine-reads-it-once",
+    "file": "src/render/killFx.js",
+    "old": "    this._reduced = typeof reduced === 'function' ? reduced : () => !!reduced;",
+    "new": "    const once = typeof reduced === 'function' ? reduced() : !!reduced;\n    this._reduced = () => once;",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-world-engine-handed-a-fixed-answer",
+    "file": "src/scenes/hostMagic.js",
+    "old": "new KillFx({ reduced: () => prefersReducedMotion() })",
+    "new": "new KillFx({ reduced: prefersReducedMotion() })",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "RENDERAUDIT-the-profile-stage-handed-a-fixed-answer",
+    "file": "src/render/characterStage.js",
+    "old": "  const effects = createEffectStage(gl, { reduced: () => prefersReducedMotion(), onCue: (sl, k) => cue?.(sl, k) }); // less motion followed mid-session",
+    "new": "  const effects = createEffectStage(gl, { reduced: prefersReducedMotion(), onCue: (sl, k) => cue?.(sl, k) }); // less motion followed mid-session",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  }
+]

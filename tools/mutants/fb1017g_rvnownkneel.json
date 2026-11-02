@@ -1,0 +1,62 @@
+[
+  {
+    "name": "RVN-OWN-KNEEL-the-street-my-kill-dies",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (fates && revenantMayYield(f)) { if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }",
+    "new": "      if (fates && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantMayYield(f)) { if (revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }",
+    "tests": [
+      "test/systems/revenant/fb1017g_rvnownkneel.test.js"
+    ],
+    "why": "the report: my own Disintegrate passes the kneel again and closes my revenant, no choice offered"
+  },
+  {
+    "name": "RVN-OWN-KNEEL-the-dungeon-my-kill-dies",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (opts.fates && (!onlineRoom() || !isRoomFoe(foe)) && revenantMayYield(foe)) { if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(foe)) tearAwayDungeonFoe(foe); else yieldDungeonFoe(foe); return; }",
+    "new": "      if (opts.fates && !ownersWholeKill(_whole, { fromPlayer, peer }) && (!onlineRoom() || !isRoomFoe(foe)) && revenantMayYield(foe)) { if (revenantWillHolds(foe)) tearAwayDungeonFoe(foe); else yieldDungeonFoe(foe); return; }",
+    "tests": [
+      "test/systems/revenant/fb1017g_rvnownkneel.test.js"
+    ],
+    "why": "the report underground: my own whole blow closes it in the dungeon's door"
+  },
+  {
+    "name": "RVN-OWN-KNEEL-the-street-fates-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (fates && revenantMayYield(f)) {",
+    "new": "      if (revenantMayYield(f)) {",
+    "tests": [
+      "test/systems/revenant/fb1017g_rvnownkneel.test.js"
+    ],
+    "why": "a host with no fates (exterior.js) kneels a revenant nobody can judge, held at 1 for good"
+  },
+  {
+    "name": "RVN-OWN-KNEEL-the-dungeon-fates-unread",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (opts.fates && (!onlineRoom() || !isRoomFoe(foe)) && revenantMayYield(foe)) {",
+    "new": "      if ((!onlineRoom() || !isRoomFoe(foe)) && revenantMayYield(foe)) {",
+    "tests": [
+      "test/systems/revenant/fb1017g_rvnownkneel.test.js"
+    ],
+    "why": "a door with no fates kneels a revenant nobody can judge"
+  },
+  {
+    "name": "RVN-OWN-KNEEL-the-street-my-kill-asks-the-will",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f);",
+    "new": "{ if (revenantWillHolds(f)) tearAway(f);",
+    "tests": [
+      "test/systems/revenant/fb1017g_rvnownkneel.test.js"
+    ],
+    "why": "my Disintegrate on an unbroken rank 3 tears it away into the smoke instead of kneeling it"
+  },
+  {
+    "name": "RVN-OWN-KNEEL-the-dungeon-my-kill-asks-the-will",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(foe)) tearAwayDungeonFoe(foe);",
+    "new": "{ if (revenantWillHolds(foe)) tearAwayDungeonFoe(foe);",
+    "tests": [
+      "test/systems/revenant/fb1017g_rvnownkneel.test.js"
+    ],
+    "why": "underground, my Disintegrate on a stood rank 3 with its will unbroken tears it away"
+  }
+]

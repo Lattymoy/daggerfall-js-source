@@ -1,0 +1,93 @@
+[
+  {
+    "name": "HOTFIX1003f-MEMBER-ROSTER-NAMES-STRANGERS",
+    "file": "server/src/index.js",
+    "old": "if (unseen || !S?.members?.[others[i].sub]) others.splice(i, 1);",
+    "new": "if (unseen) others.splice(i, 1);",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-STRANGER-POSE-FANNED",
+    "file": "server/src/index.js",
+    "old": "    if (isArenaPrivateRoom(a.key) && !S?.members?.[a.sub]) return;   // HOTFIX 1003f: and its stands",
+    "new": "    if (false) return;   // HOTFIX 1003f: and its stands",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-JOINER-SHOWN-THE-SAND-ALONE",
+    "file": "server/src/index.js",
+    "old": "      if (other === ws || !b.id || !S?.members?.[b.sub]) continue;",
+    "new": "      if (other === ws || !b.id || !b.af) continue;",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-JOINER-SHOWN-TO-STRANGERS",
+    "file": "server/src/index.js",
+    "old": "      if (other === ws || !b.id || !S?.members?.[b.sub]) continue;",
+    "new": "      if (other === ws || !b.id) continue;",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-JOINER-SHOWN-TO-NOBODY",
+    "file": "server/src/index.js",
+    "old": "      this._send(other, mine);\n",
+    "new": "",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-END-SAID-TO-NOBODY",
+    "file": "server/src/index.js",
+    "old": "    this._sessionUnshow();   // HOTFIX 1003f\n",
+    "new": "",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-BOUT-CLEARED-FIGHTER-SAID-GONE",
+    "file": "server/src/index.js",
+    "old": "      if (b.af || b.asp || b.afid) this._setAttach(ws, { ...b, af: 0, afid: null, asp: 0 });",
+    "new": "      if (b.af) { const out = JSON.stringify({ t: 'leave', id: b.id }); for (const [o2, b2] of [...this._all()]) if (o2 !== ws && b2.id) this._send(o2, out); }\n      if (b.af || b.asp || b.afid) this._setAttach(ws, { ...b, af: 0, afid: null, asp: 0 });",
+    "tests": [
+      "test/systems/arena/arena6_private.test.js",
+      "test/net/arena/audit1003b_relay.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-CLIENT-PRESS-NEVER-REFUSED",
+    "file": "src/scenes/arena/arenaOnline.js",
+    "old": "      if (deps.signedIn?.() === false || deps.session?.()?.status !== 'open') return { ok: false, text: O.privSignIn };",
+    "new": "      if (false) return { ok: false, text: O.privSignIn };",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-CLIENT-SIGNED-OUT-LET-THROUGH",
+    "file": "src/scenes/arena/arenaOnline.js",
+    "old": "      if (deps.signedIn?.() === false || deps.session?.()?.status !== 'open') return { ok: false, text: O.privSignIn };",
+    "new": "      if (deps.session?.()?.status !== 'open') return { ok: false, text: O.privSignIn };",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  },
+  {
+    "name": "HOTFIX1003f-CLIENT-SOCKET-NOT-OPEN-LET-THROUGH",
+    "file": "src/scenes/arena/arenaOnline.js",
+    "old": "      if (deps.signedIn?.() === false || deps.session?.()?.status !== 'open') return { ok: false, text: O.privSignIn };",
+    "new": "      if (deps.signedIn?.() === false) return { ok: false, text: O.privSignIn };",
+    "tests": [
+      "test/net/arena/hotfix1003_stands.test.js"
+    ]
+  }
+]

@@ -1,0 +1,22 @@
+-- WB12d (2026-10-01) - THE FAITHFUL'S RITE: AN EMBER MORE.
+--
+-- (0046 on its branch: main's GUILD1d to SEAT-HALL took 0046-0065 first, and
+-- none of them touches `stones`. D1 applies by name in order.)
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). SQLite has no ADD COLUMN IF NOT EXISTS, so a
+-- second run errors harmlessly and the ledger is what stops it.
+--
+-- Mac: "faithful and a Summoner" (bible/11-Multiplayer/World-Bosses.md
+-- section 19 D). Those who break a breach's rite before it opens take one
+-- Deadlands Ember more when the breach is closed: a fighter's receipt says
+-- so (`r`), and one who broke it and took no part in the fight is minted a
+-- receipt of the rite alone (`earned` 'rite') - one ember, and not a breach
+-- closed (no Drakes strike, not counted among the gates closed).
+--
+-- `stones` is a row's embers: 1 a gate closed, 2 with the rite broken, 1
+-- for the rite alone. The purse is their sum less what insignia already
+-- cost; every row before this one paid one, as the default says.
+ALTER TABLE gate_kills ADD COLUMN stones INTEGER NOT NULL DEFAULT 1;

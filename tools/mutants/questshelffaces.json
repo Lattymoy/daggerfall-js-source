@@ -1,0 +1,21 @@
+[
+  {
+    "name": "QSF-the-face-of-a-quest-away-shown",
+    "file": "src/ui/hud/hudEscortFaces.js",
+    "old": "  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID) && !_questGone(_faces[i]?.questUID)); // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone",
+    "new": "  const panels = _panels.filter((_, i) => !_questGone(_faces[i]?.questUID)); // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone",
+    "tests": [
+      "test/systems/quest/escortfaces.test.js"
+    ],
+    "note": "PIN MOVED (RPT1026-MISC): re-aimed by content - FACE-ORPHAN added the gone quest's test beside the away one; only the away one is taken."
+  },
+  {
+    "name": "QSF-the-bridge-never-says",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "  setEscortQuestAway((uid) => isShelved(machine.getQuest(uid)));\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/escortfaces.test.js"
+    ]
+  }
+]

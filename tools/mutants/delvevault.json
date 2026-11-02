@@ -1,0 +1,110 @@
+[
+  {
+    "name": "DELVE-VAULT-no-piece",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "  return [piece, ...(Array.isArray(pile) ? pile : []), gold];",
+    "new": "  return [...(Array.isArray(pile) ? pile : []), gold];",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-piece-unknown",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "  piece.isIdentified = true;\n  return piece;",
+    "new": "  return piece;",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-piece-common",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "    applyRarity(piece, magicOrBetter(rolls, source), rolls, null, { family: source?.family ?? null });",
+    "new": "    applyRarity(piece, 'common', rolls, null, { family: source?.family ?? null });",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-no-gold",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "  return [piece, ...(Array.isArray(pile) ? pile : []), gold];",
+    "new": "  return [piece, ...(Array.isArray(pile) ? pile : [])];",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-gold-rate",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "export const DELVE_VAULT_GOLD_PER_LEVEL = 40;",
+    "new": "export const DELVE_VAULT_GOLD_PER_LEVEL = 4;",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-gold-spread",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "  const gold = goldStack(Math.round(DELVE_VAULT_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls())));",
+    "new": "  const gold = goldStack(Math.round(DELVE_VAULT_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * 0.5)));",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-elite-quality-dropped",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "    qualityMult: elite ? ELITE_LOOT_QUALITY_MULT : 1,",
+    "new": "    qualityMult: 1,",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-level-unread",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "    rollerLevel: levelOf(level),\n  };",
+    "new": "  };",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-ladder-switch-unread",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "  if (lootRarityOn()) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "DELVE-VAULT-host-plain-source",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "  const myVault = () =>\n    rollVault(rollPile, lv(), vaultSource(location?.mapTableData?.dungeonType, tier === 'elite', lv()));",
+    "new": "  const myVault = () => rollVault(rollPile, lv(), vaultSource(undefined, false, lv()));",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-VAULT-piece-never-marked",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "    piece.untaken = true;\n    stampWonWeapons([piece], 1, { rolls });",
+    "new": "    stampWonWeapons([piece], 1, { rolls });",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-VAULT-online-unstamped",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "    stampWonWeapons([piece], 1, { rolls });\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  }
+]

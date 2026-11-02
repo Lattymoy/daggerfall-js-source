@@ -1,0 +1,74 @@
+[
+  {
+    "name": "CU1-no-hand-on-the-way-down",
+    "file": "src/scenes/worldModes.js",
+    "old": "      magic?.handReadyTo?.(ctx.castEngine);   // CAST-USE (AUDIT part five CU1)",
+    "new": "      // CAST-USE (AUDIT part five CU1)",
+    "tests": [
+      "test/scenes/fb1001_castaudit.test.js"
+    ]
+  },
+  {
+    "name": "CU1-no-hand-on-the-way-out",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      magic.handReadyTo(opts.outerCastEngine?.() ?? null);   // CAST-USE (AUDIT part five CU1)",
+    "new": "      // CAST-USE (AUDIT part five CU1)",
+    "tests": [
+      "test/scenes/fb1001_castaudit.test.js"
+    ]
+  },
+  {
+    "name": "CU1-the-host-names-no-way-out",
+    "file": "src/scenes/worldModes.js",
+    "old": "          outerCastEngine: () => magic,   // CAST-USE (AUDIT part five CU1)",
+    "new": "          // CAST-USE (AUDIT part five CU1)",
+    "tests": [
+      "test/scenes/fb1001_castaudit.test.js"
+    ]
+  },
+  {
+    "name": "CU1-the-ready-copied-not-moved",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      readiedSpell = null; readiedFree = false; readiedCost = 0; pendingClickCast = false;\n      return true;",
+    "new": "      return true;",
+    "tests": [
+      "test/scenes/fb1001_castaudit.test.js"
+    ]
+  },
+  {
+    "name": "CU1-the-free-ready-made-paid",
+    "file": "src/scenes/hostMagic.js",
+    "old": "readiedFree = !!sp && !!free;",
+    "new": "readiedFree = false;",
+    "tests": [
+      "test/scenes/fb1001_castaudit.test.js"
+    ]
+  },
+  {
+    "name": "CU2-the-line-recomputes-the-price",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "`${shownSpellName(magic.readied())} (${magic.readiedCost()})`",
+    "new": "`${shownSpellName(magic.readied())} (${calculateCastCost(magic.readied(), playerEntity).sp})`",
+    "tests": [
+      "test/scenes/fb1001_castaudit.test.js"
+    ]
+  },
+  {
+    "name": "CU3-strikes-on-the-mount-time-engine",
+    "file": "src/scenes/hostEnchant.js",
+    "old": "    applySpellToFoe: (...a) => live().applySpellToFoe(...a),",
+    "new": "    applySpellToFoe: ((m) => (...a) => m.applySpellToFoe(...a))(live()),",
+    "tests": [
+      "test/scenes/fb1001_castaudit.test.js"
+    ]
+  },
+  {
+    "name": "CU3-reflection-on-the-mount-time-engine",
+    "file": "src/scenes/hostEnchant.js",
+    "old": "    applySpellToPlayer: (...a) => live().applySpellToPlayer(...a),",
+    "new": "    applySpellToPlayer: ((m) => (...a) => m.applySpellToPlayer(...a))(live()),",
+    "tests": [
+      "test/scenes/fb1001_castaudit.test.js"
+    ]
+  }
+]

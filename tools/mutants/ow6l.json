@@ -1,0 +1,301 @@
+[
+  {
+    "name": "OW6L-the-last-life-refused",
+    "file": "src/net/overworldLaw.js",
+    "old": "  return life === cur || life === cur - 1;",
+    "new": "  return life === cur;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-spent-forgotten-a-life-early",
+    "file": "src/net/overworldLaw.js",
+    "old": "  return kind ? (owIdLife(id) + 2) * owLifeMs(kind) : NaN;",
+    "new": "  return kind ? (owIdLife(id) + 1) * owLifeMs(kind) : NaN;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-a-bands-rows-unflipped",
+    "file": "src/net/overworldLaw.js",
+    "old": "    ? { x: cx * OW_BAND_CELL_PX, y: 499 - cy * OW_BAND_CELL_PX }",
+    "new": "    ? { x: cx * OW_BAND_CELL_PX, y: cy * OW_BAND_CELL_PX }",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-a-raiders-rows-flipped",
+    "file": "src/net/overworldLaw.js",
+    "old": "    : { x: cx * OW_RAIDER_CELL_PX, y: cy * OW_RAIDER_CELL_PX };",
+    "new": "    : { x: cx * OW_RAIDER_CELL_PX, y: 499 - cy * OW_RAIDER_CELL_PX };",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-the-square-unwidened-to-the-east",
+    "file": "src/net/overworldLaw.js",
+    "old": "    x1: (c[0] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX,",
+    "new": "    x1: (c[0] + 1) * WORLD_CELL,",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-the-spawn-roll-not-asked",
+    "file": "src/net/overworldLaw.js",
+    "old": "  return !!w && owSpawnsDungeon(w[0], w[1]) && (w.length < 4 || w[3] >= w[2]);",
+    "new": "  return !!w && (w.length < 4 || w[3] >= w[2]);",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-a-clear-before-its-sight-let-in",
+    "file": "src/net/overworldLaw.js",
+    "old": "  return !!w && owSpawnsDungeon(w[0], w[1]) && (w.length < 4 || w[3] >= w[2]);",
+    "new": "  return !!w && owSpawnsDungeon(w[0], w[1]);",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-the-keeps-window-open-below",
+    "file": "src/net/overworldLaw.js",
+    "old": "  if (owRowUntil(w) <= nowMin || seen > nowMin + OW_ROW_SLACK_MIN) return null;",
+    "new": "  if (seen > nowMin + OW_ROW_SLACK_MIN) return null;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-no-slack-for-a-clock-ahead",
+    "file": "src/net/overworldLaw.js",
+    "old": "  if (owRowUntil(w) <= nowMin || seen > nowMin + OW_ROW_SLACK_MIN) return null;",
+    "new": "  if (owRowUntil(w) <= nowMin || seen > nowMin) return null;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-the-merge-keeps-the-later-sight",
+    "file": "src/net/overworldLaw.js",
+    "old": "    const seen = had ? Math.min(had[2], w[2]) : w[2];",
+    "new": "    const seen = had ? Math.max(had[2], w[2]) : w[2];",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-a-clear-raised",
+    "file": "src/net/overworldLaw.js",
+    "old": "    const cleared = hc === null ? wc : wc === null ? hc : Math.min(hc, wc);",
+    "new": "    const cleared = hc === null ? wc : wc === null ? hc : Math.max(hc, wc);",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-an-unchanged-row-said-again",
+    "file": "src/net/overworldLaw.js",
+    "old": "    if (had && seen === had[2] && cleared === hc) continue; // nothing new: never raised, never re-said\n    const row = cleared === null ? [w[0], w[1], seen] : [w[0], w[1], seen, cleared];",
+    "new": "    const row = cleared === null ? [w[0], w[1], seen] : [w[0], w[1], seen, cleared];",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-the-spent-unbounded",
+    "file": "src/net/overworldLaw.js",
+    "old": "  if (led.sp.length > OW_CELL_SPENT_MAX) led.sp.splice(0, led.sp.length - OW_CELL_SPENT_MAX);\n  return added;",
+    "new": "  return added;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-the-rows-unbounded",
+    "file": "src/net/overworldLaw.js",
+    "old": "  if (keys.length <= OW_CELL_ROWS_MAX) return false;",
+    "new": "  return false;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-the-speaker-never-told-it-was-behind",
+    "file": "src/net/overworldLaw.js",
+    "old": "    if (held[2] < w[2] || (hc !== null && (wc === null || hc < wc))) out.set(k, held.slice());",
+    "new": "    if (hc !== null && (wc === null || hc < wc)) out.set(k, held.slice());",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-wire-a-word-before-its-hello",
+    "file": "src/net/wire.js",
+    "old": "    if (!hasHello) return { error: 'ow before hello' };\n",
+    "new": "",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-wire-the-ids-bound-off-by-one",
+    "file": "src/net/wire.js",
+    "old": "m.ids.length > OW_WORD_IDS_MAX || !m.ids.every(owWireId)) return null;",
+    "new": "m.ids.length > OW_WORD_IDS_MAX + 1 || !m.ids.every(owWireId)) return null;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-wire-a-bad-row-let-through-its-word",
+    "file": "src/net/wire.js",
+    "old": "  return rows.every(Boolean) ? { k: 'dg', rows } : null;",
+    "new": "  return { k: 'dg', rows: rows.filter(Boolean) };",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-wire-the-floor-reuses-a-number-a-relay-carried",
+    "file": "src/net/wire.js",
+    "old": "export const OW_RELAY_MIN = 127;",
+    "new": "export const OW_RELAY_MIN = 125;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-relay-a-word-heard-in-any-room",
+    "file": "server/src/index.js",
+    "old": "      if (!this._spend(ws, now, owGate, 'owBucket', 'owDrops', 'too many overworld frames')) return;\n      if (!isCellRoom(a.key)) { this._junk(ws); return; }\n",
+    "new": "      if (!this._spend(ws, now, owGate, 'owBucket', 'owDrops', 'too many overworld frames')) return;\n",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-relay-an-id-outside-the-margin-taken",
+    "file": "server/src/index.js",
+    "old": "    const junk = m.k === 'sp' ? !m.ids.every((id) => owIdInCell(id, coverOf(a))) :",
+    "new": "    const junk = m.k === 'sp' ? false :",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
+  },
+  {
+    "name": "OW6L-relay-a-row-outside-the-margin-taken",
+    "file": "server/src/index.js",
+    "old": "!m.rows.every((r) => owRowSane(r) && owRowInCell(r, coverOf(a)));",
+    "new": "!m.rows.every((r) => owRowSane(r));",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
+  },
+  {
+    "name": "OW6L-relay-the-speaker-left-out-of-the-fan",
+    "file": "server/src/index.js",
+    "old": "      if (room.pass) { for (const [other, b] of [...this._all()]) if (b.id) this._send(other, out); }",
+    "new": "      if (room.pass) { for (const [other, b] of [...this._all()]) if (b.id && other !== ws) this._send(other, out); }",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-relay-the-fans-budget-gone",
+    "file": "server/src/index.js",
+    "old": "      if (room.pass) { for (const [other, b] of [...this._all()]) if (b.id) this._send(other, out); }",
+    "new": "      if (room.pass || true) { for (const [other, b] of [...this._all()]) if (b.id) this._send(other, out); }",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-relay-a-change-never-written",
+    "file": "server/src/index.js",
+    "old": "      owPrune(led, now);\n      await this._owWrite(led);\n",
+    "new": "      owPrune(led, now);\n",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-relay-the-behind-answer-unsaid",
+    "file": "server/src/index.js",
+    "old": "      if (behind.length) this._send(ws, JSON.stringify({ t: 'ow', k: 'dg', rows: behind }));\n",
+    "new": "",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-relay-the-welcome-unsaid",
+    "file": "server/src/index.js",
+    "old": "      return w.sp.length || w.dg.length || w.gr?.length ? `,\"ow\":${JSON.stringify(w)}` : '';   // GRAVE-PARTY: a cell whose ledger holds graves alone says them too",
+    "new": "      return '';",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-relay-the-ledger-never-read-back",
+    "file": "server/src/index.js",
+    "old": "        const led = owLedgerOf(await this.state.storage.get(OW_LEDGER_KEY));",
+    "new": "        const led = owLedgerOf(undefined);",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-relay-no-prune-on-load",
+    "file": "server/src/index.js",
+    "old": "        if (owPrune(led, now)) await this._owWrite(led);\n",
+    "new": "",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-session-an-older-relay-sent-the-frame",
+    "file": "src/net/online.js",
+    "old": "    if (!this.owOk || !isCellRoom(this.room) || this.status !== 'open'",
+    "new": "    if (!isCellRoom(this.room) || this.status !== 'open'",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-session-the-margin-not-asked-at-home",
+    "file": "src/net/online.js",
+    "old": "validOwIn({ k, ids: payload.filter((id) => owIdInCell(id, room)).slice(0, OW_WORD_IDS_MAX) })",
+    "new": "validOwIn({ k, ids: payload.filter((id) => typeof id === 'string').slice(0, OW_WORD_IDS_MAX) })",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-session-a-halos-welcome-dropped",
+    "file": "src/net/online.js",
+    "old": "      if (!primary) for (const o of owIn) this._deliver('ow', () => this.onOverworld?.(o, room));\n",
+    "new": "",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "OW6L-spawn-ledger-merge-raises-a-sight",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "      if (seen < r.seen) { r.seen = seen; moved = true; }",
+    "new": "      if (seen !== r.seen) { r.seen = seen; moved = true; }",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  }
+]

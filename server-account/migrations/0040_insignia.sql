@@ -1,0 +1,37 @@
+-- WB9g (2026-09-30) - THE BROKER'S INSIGNIA: A TITLE AND AN AURA, BOUGHT.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). SQLite has no ADD COLUMN IF NOT EXISTS, so a
+-- second run errors harmlessly and the ledger is what stops it.
+--
+-- Mac: "Add a brand new title to the broker and a new addition (the
+-- aura), an animated burning ground aura that circles the ground where
+-- your character stands. These items should be expensive and sought
+-- after." The Sigil Broker sells them for Sigil Stones; what they are is
+-- src/net/insignia.js, both ends' one law.
+--
+-- ═══ A SALE IS A FACT, SO IT IS STORED ═════════════════════════════
+--
+-- Every grant this service knew was DERIVED (ACC3's law: a founder
+-- cutoff, a config list, an account's age), and none of them is a
+-- column. A purchase cannot be derived from anything - it happened, at a
+-- moment, for a price - so it is recorded, as a gate closed is a row
+-- (0014): `insignia`, the offers' ids bought, space-separated in the
+-- order they were bought; and `insignia_spent`, the Sigil Stones they
+-- cost in all. What the account HOLDS is still derived at every read:
+-- titles.js reads the title and the aura off `insignia`, so a title
+-- bought is a title held exactly as a founder's cutoff is.
+--
+-- THE SPEND IS ITS OWN COLUMN because the sale's one UPDATE checks it:
+-- the account's closed gates (gate_kills, one row a kill, one Sigil
+-- Stone a kill) less `insignia_spent` must cover the price, and the
+-- UPDATE that records the sale adds to the spend in the same statement -
+-- so two sales at once can never both spend the same stones.
+--
+-- `aura` is the aura WORN, as `title` (0004) is the title worn: the only
+-- thing about it that is a choice. Null is none, which every row gets.
+ALTER TABLE players ADD COLUMN insignia TEXT;
+ALTER TABLE players ADD COLUMN insignia_spent INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE players ADD COLUMN aura TEXT;

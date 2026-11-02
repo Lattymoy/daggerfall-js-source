@@ -1,0 +1,192 @@
+[
+  {
+    "name": "AUDIT-GALLEON-2-DK2-height-of-the-moment",
+    "file": "src/scenes/world.js",
+    "old": "deck.keep(local[0], local[2], was ? was[1] : local[1], piece, local);",
+    "new": "deck.keep(local[0], local[2], local[1], piece, local);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "the leash measured off the body's height of the moment again: one fallen through her deck under the Carrack's forecastle lifted onto it"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK2-own-floor-any-distance",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      if (Math.abs(own - ref) <= FLIGHT_JOIN) {",
+    "new": "      if (!Number.isNaN(own)) {",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "its piece's floor in the cell at any distance again: the Carrack's walks set 2-3 m between her main deck and her forecastle"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK2-own-any-piece",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "        own = c < 0 ? NaN : floorNear(c, p, ref);",
+    "new": "        own = c < 0 ? NaN : floorNear(c, -1, ref);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "any piece's floor in the cell within a flight's rise of the last: a body stepped up or down a ledge onto another piece's floor (AUDIT GN-D1's law, held by the piece alone once the leash keeps to FLIGHT_JOIN)"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK2-edge-at-any-level",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      const j = nearestCell(x, z, p, ref, FLIGHT_JOIN, true);",
+    "new": "      const j = -1;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "its piece's edge at any level: a body under her forecastle lifted onto it"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK2-deck-under-her-stair-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "        if (p >= 0 && more.piece[n] !== p) continue;",
+    "new": "        if (p >= 0 && (p === 0 || more.piece[n] !== p)) continue;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "her open piece's floors under its top floor unread (her deck under her forecastle): a body there slid out to her waist or lifted"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK2-ring-blind-to-more",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "    const h = ringNear ? floorNear(j, ringPiece, ringLevel) : ringPiece ? levelOf(j, ringPiece) : y[j];",
+    "new": "    const h = ringPiece > 0 ? levelOf(j, ringPiece) : y[j];",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "the leash's search at a level reads her open deck's top floor alone: a body under her forecastle slid out to her waist"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK1-covers-unread-aboard",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "          if (ajar)\n            for (let n = ajar.at[j]; n < ajar.at[j + 1]; n++) if (ajar.y[n] >= lo && ajar.y[n] <= hi) return true; // AUDIT GN2-DK1: a shut cover stood on",
+    "new": "          // AUDIT GN2-DK1: a shut cover stood on",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a shut cover no floor to standing aboard: 600 of the 1575 points on the Carrack's cargo doors ashore"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK1-covers-unread-by-leash",
+    "file": "src/scenes/world.js",
+    "old": " && !(Math.abs(local[1] - deck.ajarAt(local[0], local[2], local[1])) <= DECK_STEP)) {",
+    "new": ") {",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a body on a shut cover set off it by the leash: a boarder held 2.48 m off a player on the Carrack's cargo doors"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK1-lids-unbaked",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "          if (moves) {\n            lids[k * nx + i].push(y);\n            continue;\n          }",
+    "new": "          if (moves) continue;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a part's faces looking up never baked: her covers no floor to aboard or the leash"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK1-lid-band-a-metre",
+    "file": "src/scenes/world.js",
+    "old": "deck.ajarAt(local[0], local[2], local[1])) <= DECK_STEP)) {",
+    "new": "deck.ajarAt(local[0], local[2], local[1])) <= 1)) {",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a body a metre under a cover let be: one gone down her open hatchway held on the air"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK1-margin-unbaked",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "    for (let pass = 0; pass < inset && front.length; pass++) {",
+    "new": "    for (let pass = 0; pass < 0 && front.length; pass++) {",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "the margin her inset kept off a cover and a doorway no floor to the leash: a boarder held at the cargo hatch's edge, every door shut to him"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK3-doorways-unbaked",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      for (const h of doors[j]) if (h >= main - LEVEL_BIN && add(j, h)) front.push(j, h);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a doorway no floor to the leash: no boarder through a door of hers"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK3-leaf-unmarked",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "        wallFace(moves ? leaves : walls, ax, ay, az, bx, by, bz, cx, cy, cz);",
+    "new": "        wallFace(walls, ax, ay, az, bx, by, bz, cx, cy, cz);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a door's leaf a wall like any other: no doorway found, no boarder through a door"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK3-leaf-no-wall",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "          doors[j].push(y);\n        continue;\n      }",
+    "new": "          doors[j].push(y);\n      }",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a door's leaf no wall to her deck: her great cabin joined to her open deck through its doorway, her doorway deck"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK3-room-unread",
+    "file": "src/scenes/world.js",
+    "old": "piece = was ? deck.pieceAt(was[0], was[2], was[1], DECK_STEP) : 0;",
+    "new": "piece = was ? Math.max(0, deck.pieceAt(was[0], was[2], was[1], DECK_STEP)) : 0;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a body that stood on no floor of hers (a doorway) taken for her open deck's: one pressed into her castle's front from her cabin side put out on her main deck through the wall"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK3-band-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      return d <= band ? best : -1;",
+    "new": "      return best;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "pieceAt's band unread: a body in her doorway taken for the piece of a floor far over it (her castle's roof) - put out through the wall"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-DK4-comment",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "  // 511, the Large Galley 4013 -> 4016, the mod's galleon 690 -> 727 (AUDIT GN2-DK4: over her own extent, the pool's -",
+    "new": "  // 511, the Large Galley 4013 -> 4016, the mod's galleon 714 -> 750 (AUDIT GN2-DK4: over her own extent, the pool's -",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "the D-wall comment's count for the mod's galleon measured over the new galleon's extent again"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-TS9-diagonal-over-a-flight",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "            : false;",
+    "new": "            : true;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "a walk steps across a riser at a corner - a diagonal over a flight's rise past the motors' step (survived every suite at the second audit)"
+  },
+  {
+    "name": "AUDIT-GALLEON-2-TS9-line-ignores-flights",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      ii >= 0 && kk >= 0 && ii < nx && kk < nz && !Number.isNaN(y[kk * nx + ii]) && steps(was, kk * nx + ii);",
+    "new": "      ii >= 0 &&\n      kk >= 0 &&\n      ii < nx &&\n      kk < nz &&\n      !Number.isNaN(y[kk * nx + ii]) &&\n      Math.abs(y[kk * nx + ii] - y[was]) <= DECK_JOIN;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_deck.test.js"
+    ],
+    "why": "the corners cut blind to a flight: a straight walk up one a leg a row (survived every suite at the second audit)"
+  }
+]

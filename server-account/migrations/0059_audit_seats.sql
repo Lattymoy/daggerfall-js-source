@@ -1,0 +1,13 @@
+-- AUDIT-SEATS (2026-10-01, Mac: "We need to do a comprehensive audit on everything and finish the not done") - S9: A BARRED
+-- CHALLENGER'S INFLUENCE VOIDED, NEVER DELETED (bible/11-Multiplayer/Seats-Arc.md 6.5, 6.8: "the challenger's influence at
+-- the seat is cleared"; server-account/src/seatSiege.js applyResult).
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI).
+--
+-- FOUND: the clearing was a DELETE, and the Watch's day cap, the Orc Raids' day and week caps and the gate's week cap
+-- count the account's own rows - so a siege lost freed every one of them, and the same account earned its day's 60 again.
+-- A cleared row now stays, `voided` 1: the caps count it (they never ask), the standings do not (gatherStandings asks
+-- `voided = 0`). A plain column with a default: no row is rewritten.
+ALTER TABLE town_seat_influence ADD COLUMN voided INTEGER NOT NULL DEFAULT 0 CHECK (voided IN (0, 1));

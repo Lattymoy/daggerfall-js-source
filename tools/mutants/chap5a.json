@@ -1,0 +1,319 @@
+[
+  {
+    "name": "CHAP5A-ORDER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return [\n    ...ok.filter((s) => s.seat === 'master').slice(0, CHAPTER_SEATS.master),\n    ...ok.filter((s) => s.seat === 'officer').slice(0, CHAPTER_SEATS.officer),\n  ];",
+    "new": "  return ok.slice(0, CHAPTER_SEATS.master + CHAPTER_SEATS.officer);",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-CAP-MASTER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    ...ok.filter((s) => s.seat === 'master').slice(0, CHAPTER_SEATS.master),",
+    "new": "    ...ok.filter((s) => s.seat === 'master'),",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-CAP-OFFICER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    ...ok.filter((s) => s.seat === 'officer').slice(0, CHAPTER_SEATS.officer),",
+    "new": "    ...ok.filter((s) => s.seat === 'officer'),",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-GUARD-NAME",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    .filter((s) => typeof s?.name === 'string' && s.name.trim()) // a seat of no known kind is neither list's",
+    "new": "    .filter((s) => typeof s?.name === 'string') // a seat of no known kind is neither list's",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-NAME-CAP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    .map((s) => ({ seat: String(s.seat), name: String(s.name).trim().slice(0, CHAPTER_ROLL_NAME_MAX) }));",
+    "new": "    .map((s) => ({ seat: String(s.seat), name: String(s.name).trim() }));",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-TRIM",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    .map((s) => ({ seat: String(s.seat), name: String(s.name).trim().slice(0, CHAPTER_ROLL_NAME_MAX) }));",
+    "new": "    .map((s) => ({ seat: String(s.seat), name: String(s.name).slice(0, CHAPTER_ROLL_NAME_MAX) }));",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-TITLE-GUILD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;",
+    "new": "  if (hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
+  },
+  {
+    "name": "CHAP5A-TITLE-HIDDEN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;",
+    "new": "  if (!isRollFaction(faction) || !regionOk(region)) return null;",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
+  },
+  {
+    "name": "CHAP5A-TITLE-REGION",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;",
+    "new": "  if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction))) return null;",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
+  },
+  {
+    "name": "CHAP5A-LINE-STATE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    ...(Number.isFinite(chapter?.strength)\n      ? [`${chapterLineOf({ faction: /** @type {number} */ (faction), strength: chapter.strength })}.`]\n      : []),\n    // AUDIT GUILD3 W8: an Ascendant chapter's Master is its High Master - the roll says it as the band line does",
+    "new": "    // AUDIT GUILD3 W8: an Ascendant chapter's Master is its High Master - the roll says it as the band line does",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-LINE-STATE-GUARD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    ...(Number.isFinite(chapter?.strength)\n      ? [`${chapterLineOf({ faction: /** @type {number} */ (faction), strength: chapter.strength })}.`]\n      : []),",
+    "new": "    ...(chapter ? [`${chapterLineOf({ faction: /** @type {number} */ (faction), strength: chapter.strength })}.`] : []),",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-LINE-MASTER",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    master\n      ? `${chapterBandOf(chapter?.strength).band === 'ascendant' ? 'High Master' : 'Master'} of the chapter: ${master.name}.`\n      : \"The Master's chair stands empty.\",",
+    "new": "    \"The Master's chair stands empty.\",",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-LINE-OFFICERS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    officers.length ? `Its council: ${namesListed(officers)}.` : 'No council chair is held.', // GUILD3a: its council, never its \"officers\"",
+    "new": "    `Its council: ${namesListed(officers)}.`, // GUILD3a: its council, never its \"officers\"",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-LIST",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const namesListed = (/** @type {string[]} */ n) =>\n  n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;",
+    "new": "const namesListed = (/** @type {string[]} */ n) => n.join(', ');",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-LIST-ONE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;",
+    "new": "  n.length < 1 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-BOOK-TITLE",
+    "file": "src/ui/chapterRoll.js",
+    "old": "    text(roll.title),\n    nl(),",
+    "new": "    nl(),",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-BOOK-FONT",
+    "file": "src/ui/chapterRoll.js",
+    "old": "const TITLE_FONT = 5;",
+    "new": "const TITLE_FONT = 4;",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-BOOK-LINES",
+    "file": "src/ui/chapterRoll.js",
+    "old": "  for (const line of roll.lines) out.push(text(line), nl(), nl());\n  return out;",
+    "new": "  return out;",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-BOOK-AUTHOR",
+    "file": "src/ui/chapterRoll.js",
+    "old": "  return { title: roll.title, author: CHAPTER_ROLL_AUTHOR, pageCount: 1, getPageTokens: () => tokens };",
+    "new": "  return { title: roll.title, author: '', pageCount: 1, getPageTokens: () => tokens };",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SHEET-SEATS",
+    "file": "src/net/chapterSheet.js",
+    "old": "                  seats: chapterRollSeatsOf(c.seats),",
+    "new": "                  seats: Array.isArray(c.seats) ? c.seats : [],",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
+  },
+  {
+    "name": "CHAP5A-SHEET-COPY",
+    "file": "src/net/chapterSheet.js",
+    "old": "            seats: s.seats.map((x) => ({ ...x })),",
+    "new": "            seats: s.seats,",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
+  },
+  {
+    "name": "CHAP5A-SHEET-STRENGTH",
+    "file": "src/net/chapterSheet.js",
+    "old": "      return s === undefined ? null : s.strength;",
+    "new": "      return s === undefined ? null : s;",
+    "tests": [
+      "test/net/chap5a_roll.test.js",
+      "test/systems/guild/chap3c_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SERVICE-NAME",
+    "file": "server-account/src/npcChapters.js",
+    "old": "SELECT s.faction, s.region, s.seat, c.name FROM npc_chapter_seats s",
+    "new": "SELECT s.faction, s.region, s.seat, s.char_id AS name FROM npc_chapter_seats s",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SERVICE-MASTER-FIRST",
+    "file": "server-account/src/npcChapters.js",
+    "old": "ORDER BY s.seat = 'master' DESC, s.since, s.char_id`",
+    "new": "ORDER BY s.since, s.char_id`",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SERVICE-TENURE",
+    "file": "server-account/src/npcChapters.js",
+    "old": "ORDER BY s.seat = 'master' DESC, s.since, s.char_id`",
+    "new": "ORDER BY s.seat = 'master' DESC, s.since DESC, s.char_id`",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SERVICE-KEY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    const k = `${r.faction}|${r.region}`;\n    if (!seats.has(k))",
+    "new": "    const k = `${r.faction}|21`;\n    if (!seats.has(k))",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SERVICE-SEATS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "band: chapterBandOf(strength).band, seats: seats.get(`${c.faction}|${c.region}`) ?? [], ...events",
+    "new": "band: chapterBandOf(strength).band, seats: [], ...events",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ],
+    "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
+  },
+  {
+    "name": "CHAP5A-HOST-REGION",
+    "file": "src/scenes/world.js",
+    "old": "const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, region) ?? null : null;\n      const title",
+    "new": "const c = Number.isInteger(region) ? chapterSheet?.chapterOf(faction, 0) ?? null : null;\n      const title",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ],
+    "note": "AUDIT CHAP5: aimed at its one site - the hall's price (AUDIT CHAP5 C1) keeps the same line."
+  },
+  {
+    "name": "CHAP5A-HOST-TITLE",
+    "file": "src/scenes/world.js",
+    "old": "return title ? { title, lines: [...chapterRollLines(faction, c),",
+    "new": "return c ? { title, lines: [...chapterRollLines(faction, c),",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ],
+    "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
+  },
+  {
+    "name": "CHAP5A-SHELF-OF",
+    "file": "src/scenes/worldModes.js",
+    "old": "(guild ? host.chapterRoll?.(guild.factionId) ?? null : null);",
+    "new": "(guild ? host.chapterRoll?.(0) ?? null : null);",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SHELF-REFUSED",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorOverlay = roll ? chapterRollWindow({ ...roll, lines: [...roll.lines, access.text] }) : new ActionTextBox([access.text]);",
+    "new": "interiorOverlay = new ActionTextBox([access.text]);",
+    "tests": [
+      "test/net/chap5a_roll.test.js",
+      "test/systems/bookshelf.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SHELF-FIRST",
+    "file": "src/scenes/worldModes.js",
+    "old": "items: roll ? [roll.title, ...bookshelfTitles(shelf.books)] : bookshelfTitles(shelf.books),",
+    "new": "items: bookshelfTitles(shelf.books),",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SHELF-PICK",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (roll && i === 0) { interiorOverlay = chapterRollWindow(roll); return; }",
+    "new": "if (false) { interiorOverlay = chapterRollWindow(roll); return; }",
+    "tests": [
+      "test/net/chap5a_roll.test.js"
+    ]
+  },
+  {
+    "name": "CHAP5A-SHELF-SHIFT",
+    "file": "src/scenes/worldModes.js",
+    "old": "_openBookById({ message: shelf.books[roll ? i - 1 : i] });",
+    "new": "_openBookById({ message: shelf.books[i] });",
+    "tests": [
+      "test/net/chap5a_roll.test.js",
+      "test/systems/bookshelf.test.js"
+    ]
+  }
+]

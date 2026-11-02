@@ -1,0 +1,270 @@
+[
+  {
+    "name": "AUDWBX-R1-the-share-left-in-him",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  for (const p of Object.values(f.players))\n    if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);",
+    "new": "  void ABSENT_RETIRE_MS;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R1-the-return-healing-him",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  f.hp += p.share * frac;",
+    "new": "  f.hp += p.share;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R2-a-beat-holding-a-seat",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (present.has(sub) || hasPart(p)) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
+    "new": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
+    "tests": [
+      "test/net/gate/auditwb_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R3-the-cleave-back-at-six",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    range: 7,",
+    "new": "    range: 6,",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R4-the-walls-fight",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const fight = Math.max(1, Number.isFinite(f.liveMs) ? f.liveMs : f.fell.at - f.startedAt);",
+    "new": "  const fight = Math.max(1, f.fell.at - f.startedAt);",
+    "tests": [
+      "test/net/gate/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R5-the-wind-ups-silence",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    } else hpFrame(f, now, out); // AUDIT WBX R5: the blows landing through its wind-up are seen on the bar",
+    "new": "    } else void hpFrame; // AUDIT WBX R5: the blows landing through its wind-up are seen on the bar",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R6-a-blow-after-midnight",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (now >= f.wrathAt) return 0; // AUDIT WBX R6: midnight is the Wrath's, whether or not a beat has said so yet",
+    "new": "  if (false) return 0; // AUDIT WBX R6: midnight is the Wrath's, whether or not a beat has said so yet",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R6-a-blow-never-waking-him",
+    "file": "server/src/index.js",
+    "old": "    if (!f.fell && !f.wrath && !(this._beatArmedTo > now)) { this._beatArmedTo = now + BRAIN_TICK_MS; await this._gateArm(now); }",
+    "new": "    void this._beatArmedTo;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-R7-the-law-unasked",
+    "file": "server/src/index.js",
+    "old": "      if (!(m.bv >= GATE_BRAIN_MIN)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S1-the-hub-keeping-it",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.put(k, { d: day, spent: true, e: Math.floor(now / 1000) + RECEIPT_TTL_S });",
+    "new": "    void k;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S4-every-tab-handed-it",
+    "file": "server/src/index.js",
+    "old": "    for (const [sub, { ws }] of newest) this._send(ws, JSON.stringify({ t: 'gate', ...rc.get(sub) }));",
+    "new": "    for (const [ws, b] of [...this._all()]) if (b.id && b.sub && rc.has(b.sub) && !here.has(b.sub) && !done.has(b.sub)) this._send(ws, JSON.stringify({ t: 'gate', ...rc.get(b.sub) }));",
+    "equivalent": true,
+    "why": "ONE-SEAT (2026-09-27): an account holds the hub from ONE tab - a second tab of the same verified account is refused there, or closes the first by claiming (net/wire.js ONE-SEAT) - so every tab of the account and its newest tab are the same socket, and the two hand-outs cannot differ. The hand-out itself is pinned (S1: one tab of the account handed it, the newest). AUDIT ONESEAT T3: re-aimed - the first `new` also dropped the spent-receipt exclusion (AUDIT WBX2 M3), which is no equivalent (auditwbx2.test.js kills it); the one it changes now is every-tab-for-newest alone.",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S4-the-court-handed-it-by-the-hub",
+    "file": "server/src/index.js",
+    "old": "      if (!b.sub || !rc.has(b.sub) || here.has(b.sub) || done.has(b.sub)) continue;",
+    "new": "      if (!b.sub || !rc.has(b.sub) || done.has(b.sub)) continue;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js",
+      "test/net/gate/wb3_gate_room.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S1-said-before-it-is-safe",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    const durable = store?.persisted?.(STORE_KEY) ?? true;",
+    "new": "    const durable = true;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S3-the-clock-rule-for-this-build",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue;",
+    "new": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S3-a-save-clearing-nothing",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      const ids = new Set([...held].filter(([id, h]) => h.who === whoSaved && (!only || only.includes(id))).map(([id]) => id));",
+    "new": "      const ids = new Set();",
+    "tests": [
+      "test/net/gate/auditwbx.test.js",
+      "test/net/gate/auditwb_spoils.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-S2-the-level-unsigned",
+    "file": "src/net/gate/gateReceipt.js",
+    "old": "  ...(l !== undefined ? { l } : {}),\n  ...(r === 1 ? { r } : {}),",
+    "new": "  ...(r === 1 ? { r } : {}),",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+  },
+  {
+    "name": "AUDWBX-S2-the-players-level-whatever-the-claim",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "export const spoilsLevel = (playerLevel, claimLevel) => Math.max(1, Math.min(Math.max(1, playerLevel | 0), Number.isSafeInteger(claimLevel) && claimLevel >= 1 ? claimLevel : Infinity));",
+    "new": "export const spoilsLevel = (playerLevel, claimLevel) => Math.max(1, playerLevel | 0);",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F1-the-razor-on-the-stand-in",
+    "file": "src/systems/artifactEffects.js",
+    "old": "        if (!target || !item || target.spareGear) return null;",
+    "new": "        if (!target || !item) return null;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F3-the-fall-at-the-words-start",
+    "file": "src/net/gate/gateLink.js",
+    "old": "        return g.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: g.dm }, heardAt: now } : { ...s, heardAt: now };\n      const [x, z] = place(s, g.at);",
+    "new": "        return g.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: g.dm }, heardAt: now } : { ...s, heardAt: now };\n      const [x, z] = [s.x, s.z];",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F4-the-charge-kept-through-the-walk",
+    "file": "src/net/gate/gateLink.js",
+    "old": "        atk: null,\n        move: { x: g.x, z: g.z, tx: g.tx, tz: g.tz, v: g.v, at: g.at },",
+    "new": "        move: { x: g.x, z: g.z, tx: g.tx, tz: g.tz, v: g.v, at: g.at },",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F3-the-relay-left-behind",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    settleAt(f, now); // AUDIT WBX F3: where he fell, not where his last beat left him",
+    "new": "    void settleAt; // AUDIT WBX F3: where he fell, not where his last beat left him",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F7-the-lane-at-half-its-width",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    halfW: tether\n      ? TELEGRAPH_CHAIN_HALF_W\n      : A.shape === 'lane'\n        ? Math.max((A.width ?? 0) / 2, P.bossR)\n        : (A.width ?? 0) / 2,",
+    "new": "    halfW: tether ? TELEGRAPH_CHAIN_HALF_W : (A.width ?? 0) / 2,",
+    "tests": [
+      "test/net/gate/auditwbx.test.js",
+      "test/net/gate/wb4_gate_boss.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-F6-the-trap-forgotten-at-the-door",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (d !== null && trapMark?.day !== d) trapMark = null;",
+    "new": "    if (trapMark?.day !== d) trapMark = null;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W1-sealed-in-the-root",
+    "file": "src/scenes/gate/gatePool.js",
+    "old": "    if (f && g && inGateRoot(place, f)) landBefore(g);",
+    "new": "    void inGateRoot;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W6-the-box-every-frame",
+    "file": "src/scenes/gate/gatePool.js",
+    "old": "      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W6-the-box-left-where-it-stood",
+    "file": "src/scenes/gate/gatePool.js",
+    "old": "      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {",
+    "new": "      if (!box) {",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W2-the-archive-asked-of-a-made-song",
+    "file": "src/systems/music.js",
+    "old": "    if (!this.enabled && !made) return null;",
+    "new": "    if (!this.enabled) return null;",
+    "tests": [
+      "test/net/gate/auditwbx.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W3-the-fanfare-under-the-fade",
+    "file": "src/systems/gate/gateScore.js",
+    "old": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS; // AUDIT WBX W3: from when it sounds",
+    "new": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now; // AUDIT WBX W3: from when it sounds",
+    "tests": [
+      "test/net/gate/auditwbx.test.js",
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWBX-W4-the-session-every-frame",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "      if (!due && t - meAt < GATE_ME_POLL_MS) return false;",
+    "new": "      void meAt;",
+    "tests": [
+      "test/net/gate/auditwb_spoils.test.js"
+    ]
+  }
+]

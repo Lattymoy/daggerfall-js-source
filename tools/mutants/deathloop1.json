@@ -1,0 +1,213 @@
+[
+  {
+    "name": "revival-forgets-the-drains",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const cleared = endLethalDrains(entity),",
+    "new": "  const cleared = [],",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "poison-not-a-drain",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth']);",
+    "new": "export const LETHAL_DRAINS = Object.freeze(['continuousDamage', 'transferHealth']);",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "continuous-damage-not-a-drain",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth']);",
+    "new": "export const LETHAL_DRAINS = Object.freeze(['poison', 'transferHealth']);",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "disease-cured-by-dying",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth']);",
+    "new": "export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth', 'disease']);",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "floor-heals-the-living-too",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  if (dead || force) entity.health = respawnHealth(entity.maxHealth);",
+    "new": "  entity.health = respawnHealth(entity.maxHealth);",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "floor-leaves-the-dead-dead",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const dead = !(entity.health > 0);",
+    "new": "  const dead = false;",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "prison-release-online-refills-nothing",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "          // floor it replaced is inside the refill (a full pool is above it).\n          fillVitalSigns(playerEntity);",
+    "new": "          // floor it replaced is inside the refill (a full pool is above it).\n          if (!sharedClockOn()) fillVitalSigns(playerEntity);",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "prison-release-refills-nobody",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "          // floor it replaced is inside the refill (a full pool is above it).\n          fillVitalSigns(playerEntity);",
+    "new": "          // floor it replaced is inside the refill (a full pool is above it).",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "online-respawn-back-to-a-bare-heal",
+    "file": "src/scenes/world.js",
+    "old": "    reviveForPlay(playerEntity, { force: true });\n    surfacePlayer();",
+    "new": "    playerEntity.health = respawnHealth(playerEntity.maxHealth);\n    surfacePlayer();",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "dead-save-loads-with-its-poison",
+    "file": "src/systems/save/save.js",
+    "old": "  if (loadDeadOnline) reviveForPlay(entity);",
+    "new": "  if (loadDeadOnline) entity.health = respawnHealth(entity.maxHealth);",
+    "tests": [
+      "test/scenes/deathloop1.test.js",
+      "test/systems/disc19.test.js"
+    ]
+  },
+  {
+    "name": "clear-reports-every-kind-regardless",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const cleared = LETHAL_DRAINS.filter((k) => had.has(k));",
+    "new": "  const cleared = [...LETHAL_DRAINS];",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "fullscreen-role-back-to-bare",
+    "file": "app/main.cjs",
+    "old": "        process.platform === 'darwin'\n          ? { role: 'togglefullscreen' }\n          : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },",
+    "new": "        { role: 'togglefullscreen' },",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "fullscreen-accelerator-back-on-f11",
+    "file": "app/main.cjs",
+    "old": "          : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },",
+    "new": "          : { role: 'togglefullscreen', accelerator: 'F11' },",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "corpse-latch-never-lowers",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    if (died) {\n      if (last.died) return;\n      initialize();",
+    "new": "    if (died) {\n      return;\n      initialize();",
+    "tests": [
+      "test/scenes/deathloop1.test.js",
+      "test/player/eyeOfTheBeholder/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "corpse-latch-lowers-even-while-dead",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      if (last.died) return;\n      initialize();",
+    "new": "      initialize();",
+    "tests": [
+      "test/scenes/deathloop1.test.js",
+      "test/player/eyeOfTheBeholder/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "corpse-latch-lowered-without-reinit",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      if (last.died) return;\n      initialize();   // alive again: the clip stops, the table returns to Idle, one forced orientation",
+    "new": "      if (last.died) return;\n      died = false;",
+    "tests": [
+      "test/scenes/deathloop1.test.js",
+      "test/player/eyeOfTheBeholder/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "revival-leaves-the-exposure",
+    "file": "src/systems/deathRespawn.js",
+    "old": "    exposure = endLethalExposure(entity);",
+    "new": "    exposure = [];",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "revival-leaves-the-soaking",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0, wet: 0 });",
+    "new": "export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0 });",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "revival-wipes-the-needs-too",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0, wet: 0 });",
+    "new": "export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0, wet: 0, thirst: 0, sleepDebt: 0 });",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "exposure-reset-reports-regardless",
+    "file": "src/systems/deathRespawn.js",
+    "old": "    if ((s[k] ?? 0) !== v) {\n      s[k] = v;\n      cleared.push(k);\n    }",
+    "new": "    s[k] = v;\n    cleared.push(k);",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "death-wail-leaves-the-constructor",
+    "file": "src/systems/playerDeath.js",
+    "old": "    playSound?.(this.deathSound);",
+    "new": "    this._pending = this.deathSound;",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "a-host-stacks-death-screens",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!(interiorOverlay instanceof DeathScreen)) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "the-cold-becomes-survivable",
+    "file": "src/systems/survival/needs.js",
+    "old": "const bite = Math.max(1, Math.trunc((abs - 40) / 10));\n      if (!replay && !landing) sinks.hurt?.(bite);",
+    "new": "const bite = Math.max(1, Math.trunc((abs - 40) / 10));\n      if (!replay && !landing) hurtFloored(bite);",
+    "tests": [
+      "test/scenes/deathloop1.test.js"
+    ]
+  }
+]

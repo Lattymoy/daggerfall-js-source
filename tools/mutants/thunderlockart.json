@@ -1,0 +1,231 @@
+[
+  {
+    "name": "THUNDERLOCK-ART-the-dye-kept",
+    "file": "src/systems/textureReplacement.js",
+    "old": "      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;",
+    "new": "      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return dye;",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-every-record-undyed",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  for (const e of _vendor.values())\n    if (\n      e.archive === bare.archive &&\n      e.record === bare.record &&\n      e.frame === bare.frame &&\n      e.map === bare.map &&\n      e.dye != null &&\n      !e.studio\n    )\n      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-a-real-archive-undyed",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (!bare?.standIn) return dye;",
+    "new": "  if (!bare) return dye;",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-doll-layer-in-a-list",
+    "file": "src/systems/thunderlock.js",
+    "old": "      : ART_RECORDS.icon;",
+    "new": "      : ART_RECORDS.doll;",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-list-door-bypassed",
+    "file": "src/systems/item/itemTemplates.js",
+    "old": "    if (own)",
+    "new": "    if (own && false)",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-doll-door-bypassed",
+    "file": "src/ui/paperDoll.js",
+    "old": "    if (own) return { archive: own.archive, record: own.record, dye: MATERIAL_DYES",
+    "new": "    if (own && false) return { archive: own.archive, record: own.record, dye: MATERIAL_DYES",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-gap-left",
+    "file": "tools/gunIcons.mjs",
+    "old": "  const icon = trim(own ?? healGap(doll));",
+    "new": "  const icon = trim(own ?? doll);",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-gold-alpha",
+    "file": "tools/gunIcons.mjs",
+    "old": "    bright.push([t, i]);",
+    "new": "    out.data[o + 3] = 255;\n    bright.push([t, i]);",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-the-cap-wound-in",
+    "file": "tools/meshCap.mjs",
+    "old": "      I.push(b, a, base);",
+    "new": "      I.push(a, b, base);",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-a-loop-left-open",
+    "file": "tools/meshCap.mjs",
+    "old": "  for (const loop of loops) {",
+    "new": "  for (const loop of loops.slice(1)) {",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART-a-bar-under-the-shot",
+    "file": "src/systems/quickslots.js",
+    "old": "  !isAmmunition(item) &&\n  (kind === 'weapon' || kind === 'shield' || kind === 'light' || item.group === 'Armor' || isEnchanted(item)); // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)",
+    "new": "  !!item && (kind === 'weapon' || kind === 'shield' || kind === 'light' || item.group === 'Armor' || isEnchanted(item)); // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)",
+    "tests": [
+      "test/systems/thunderlockart.test.js"
+    ]
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-canvas-cropped",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "return { frames, anchor: canvas, union:",
+    "new": "return { frames, anchor: contentBox(cells[0]), union:",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The owner's canvas would be cropped to its content - the gun seated off where the owner placed it."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-foot-where-the-kick-shows-it",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "offset: 0.085, raise: -11, alphaCut: 128 });",
+    "new": "offset: 0.085, raise: 0, alphaCut: 128 });",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "Seated flush, the shot's kick would lift the canvas's cut foot into view."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-table-left-at-six",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "export const THUNDERLOCK_ANIMS = gunAnims(THUNDERLOCK_STRIP.frames);",
+    "new": "export const THUNDERLOCK_ANIMS = gunAnims(6);",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The owner's seventh frame would never play."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-pistolet-on-the-thunderlocks",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return PISTOLET_ANIMS; // PISTOLET: an idle and six fire frames, AlignRight, every direction alike (THUNDERLOCK-ART2: its own table now - the Thunderlock plays seven)",
+    "new": "  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return THUNDERLOCK_ANIMS; // PISTOLET: an idle and six fire frames, AlignRight, every direction alike (THUNDERLOCK-ART2: its own table now - the Thunderlock plays seven)",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The Pistolet would ask for a seventh frame its strip does not have."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-every-hot-texel-averaged",
+    "file": "src/combat/gun/gunFlash.js",
+    "old": "    if (n > size) {\n      size = n;\n      body = one;",
+    "new": "    if (n) {\n      size += n;\n      body = body ? body.map((v, k) => v | one[k]) : one;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The shot would leave from down the barrel, the bolt's sparks pulling the muzzle off the flash's ball."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-gloves-gilded",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "keep[i] = hue >= 32 && hue <= 60 && s >= 0.5 && l >= 0.32 ? 1 : 0;",
+    "new": "keep[i] = hue >= 15 && hue <= 60 && s >= 0.3 && l >= 0.2 ? 1 : 0;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "A Gilded Thunderlock would be held in gold-plated gloves."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-flash-gilded",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "if (data[o + 3] < 128 || flame[i] || luma(data, o) >= FLASH_LUMA) continue;",
+    "new": "if (data[o + 3] < 128) continue;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The muzzle flash would be laid in gold leaf - the flash and the smoke stay the flash and the smoke."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-glow-gilded",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "if (data[o + 3] < 128 || flame[i] || luma(data, o) >= FLASH_LUMA) continue;",
+    "new": "if (data[o + 3] < 128 || luma(data, o) >= FLASH_LUMA) continue;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The flash's painted orange glow, brass by hue alone, would be laid in gold leaf round a white ball (THUNDERLOCK-ART2's audit)."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-last-body",
+    "file": "src/combat/gun/gunFlash.js",
+    "old": "    if (n > size) {",
+    "new": "    if (n) {",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The muzzle would be whichever hot body the scan met last - a spark down the barrel, not the flash's ball."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-smoke-lit",
+    "file": "src/combat/gun/gunFeel.js",
+    "old": "export const THUNDERLOCK_MUZZLE_CURVE = Object.freeze([0, 1, 0.3, 0.12, 0.04, 0, 0]);",
+    "new": "export const THUNDERLOCK_MUZZLE_CURVE = Object.freeze([0, 1, 0.82, 0.12, 0.04, 0, 0]);",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The room would stay lit at the sheet's second-flash height on a frame of smoke (THUNDERLOCK-ART2's audit)."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-a-strip-cut-short",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "strip.width !== S.frames * S.cellW || strip.height !== S.cellH) return null;",
+    "new": "strip.width < S.frames * S.cellW || strip.height < S.cellH) return null;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "A strip with an eighth frame, or padded, would be read as the owner's seven (THUNDERLOCK-ART2's audit)."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-lab-a-tick-early",
+    "file": "src/combat/gun/gunMachine.js",
+    "old": "      const adv = Math.floor(m._t * m.fps + 1e-9); // THUNDERLOCK-ART2's audit: a frame's edge read on its later side - sixty 1/60s sum a hair short of 1",
+    "new": "      const adv = Math.floor(m._t * m.fps); // THUNDERLOCK-ART2's audit: a frame's edge read on its later side - sixty 1/60s sum a hair short of 1",
+    "tests": [
+      "test/systems/thunderlock.test.js"
+    ],
+    "note": "Seven frames at 14fps end on a 60Hz tick's edge; the lab's sum of sixtieths would read it a tick early and the game and the lab would part (THUNDERLOCK-ART2's audit)."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-whole-frame-shimmered",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "magic ? thunderlockShimmer(own) : own",
+    "new": "magic ? shimmer(own) : own",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "An enchanted Thunderlock's grey sleeve would turn blue."
+  }
+]

@@ -1,0 +1,210 @@
+[
+  {
+    "name": "ED-raw-bytes-inherited",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "  const raw = Object.prototype.hasOwnProperty.call(woods, '_bytes') || isValidMapPixel(mapPixelX, mapPixelY);",
+    "new": "  const raw = !!woods._bytes || isValidMapPixel(mapPixelX, mapPixelY);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-frame-x0",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    const num = f32(f32(f32((mapPixelX - this.frame.x0) * this.subX) + f32(clamp01(f32(fracX)) * this.subX)) - 0.5); // ETHER-DEEP: the frame's own cells (the Bay's: the pixel less 0)",
+    "new": "    const num = f32(f32(f32(mapPixelX * this.subX) + f32(clamp01(f32(fracX)) * this.subX)) - 0.5); // ETHER-DEEP: the frame's own cells (the Bay's: the pixel less 0)",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-carved-frame",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    const num = f32(\n      f32(f32((mapPixelX - this.frame.x0) * this.subFine) + f32(clamp01(f32(fracX)) * this.subFine)) - 0.5,\n    );",
+    "new": "    const num = f32(f32(f32(mapPixelX * this.subFine) + f32(clamp01(f32(fracX)) * this.subFine)) - 0.5);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-byte-frame",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    const px = (x >> 3) + this.frame.x0,\n      py = (y >> 3) + this.frame.y0; // ETHER-DEEP: a cell is the frame's own",
+    "new": "    const px = x >> 3,\n      py = y >> 3; // ETHER-DEEP: a cell is the frame's own",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-candidates-for-sea",
+    "file": "src/world/etherWatersBake.js",
+    "old": "      const bits = s === 1 ? ALL8 : s === 2 ? partial.get(k) : NONE8;",
+    "new": "      const qx = x0 + (k % w),\n        qy = y0 + Math.floor(k / w),\n        c = this._class(i, qx, qy);\n      const bits =\n        c === PIXEL_SEA\n          ? ALL8\n          : c === PIXEL_LAND\n            ? NONE8\n            : coarseCandidateBits(pixelWaterSampler(this.woods, qx, qy, this.locationRectAt(qx, qy)));",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-flood-wrong-cell",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX,",
+    "new": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX + 1,",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-rows-misrouted",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW && r?.f !== TAMRIEL_ROW));",
+    "new": "    this.bay.adoptPlanes(list);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-rows-no-sea",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    return { ...row, f: ETHER_ROW, sea: sea ? sea.slice() : null, cls: cls ?? null };",
+    "new": "    return { ...row, f: ETHER_ROW, sea: null, cls: cls ?? null };",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-kept-forever",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    if (this._caches().some((c) => c.size > PLANE_KEEP_MAX)) this.evictOutside(px, py, PLANE_KEEP_RADIUS);",
+    "new": "    void px;\n    void py;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-no-rect",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    if (!r) return null;",
+    "new": "    return null;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-bay-alone",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  if (!bay || (!ether && !continent)) return bay;",
+    "new": "  return bay;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-routing-bay",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    const f = waterFrameOf(px, py, !!this.ether, this.tamriel?.frame ?? null);",
+    "new": "    const f = BAY_FRAME;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-tile-bay-frame",
+    "file": "src/world/deepWater/deepWaterTileData.js",
+    "old": "    this.frame = this.bake?.frameOf?.(mapPixelX, mapPixelY) ?? BAY_FRAME; // ETHER-DEEP: the map this pixel's queries clamp to",
+    "new": "    this.frame = BAY_FRAME; // ETHER-DEEP: the map this pixel's queries clamp to",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-client-unsaid",
+    "file": "src/world/deepWater/deepWatersClient.js",
+    "old": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, ether, continent }, [bytes.buffer]);",
+    "new": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, continent }, [bytes.buffer]);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-client-no-ether",
+    "file": "src/world/deepWater/deepWatersClient.js",
+    "old": "    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), {\n      woods: ether ? etherGround(woods) : woods,\n      ether,\n      continent,\n    });",
+    "new": "    bake = new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) });",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-worker-raw",
+    "file": "src/world/deepWater/deepWatersWorker.js",
+    "old": "      woods: m.ether ? etherWoods(woods) : woods,",
+    "new": "      woods,",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-host-bay-gate",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether, continentFrame), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "new": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, null, continentFrame), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-host-any-pixel",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether, continentFrame), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "new": "    if (isDry(pixel)) return Promise.resolve(null);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-host-bay-climates",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "  const climateIn = (px, py) => { const f = waterFrameOf(px, py, ether, continentFrame);",
+    "new": "  const climateIn = (px, py) => { const f = waterFrameOf(px, py, null, continentFrame);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-host-unsaid",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "rects: deepWatersLocationRects(woods, locations, maps, blocks, meetsTown), ether, continent });",
+    "new": "rects: deepWatersLocationRects(woods, locations, maps, blocks, meetsTown), continent });",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-pits-everywhere",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) {\n      markTerrainProcessed(st, v, 'rejected:off-the-map');\n      return;\n    }",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ],
+    "note": "PITS-WORLD re-aimed by content: the hold is the world's grid (world/oceanHoles.js pitPixelOk) - gone, a pixel off the grid is cut."
+  },
+  {
+    "name": "ED-world-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "    ether: etherSea ? etherPlaceRects(_etherTemplates, locationRectReader(maps, blocks, { regionIndex: ETHER_REGION, locationIndex: -1000 })) : null,",
+    "new": "    ether: null,",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-world-near-held",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    const dwNear = deepWaters ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;",
+    "new": "    const dwNear = deepWaters && onTheBay(px, py) ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;",
+    "tests": [
+      "test/world/tamriel2.test.js"
+    ]
+  }
+]

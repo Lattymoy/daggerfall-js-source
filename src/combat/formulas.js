@@ -1,0 +1,1121 @@
+// Combat formulas (C8 E3b). Verbatim ports from DFU FormulaHelper.cs
+// / Dice100.cs / DaggerfallUnityItem.cs / DFCareer.cs (MIT,
+// Daggerfall Workshop). Every function cites its source; classic's
+// bugs are PRESERVED where DFU preserves them (dodging uses /4 and
+// is applied as a flat penalty; the enemy-type bonus that classic
+// gated behind max-enchantment weapons follows DFU's always-on port).
+// Entity shape (ours): { level, health, maxHealth, armor, skills
+// (flat, per SetEnemyCareer), stats: {strength, agility, luck},
+// attackModifierFlags (career CFG byte), isPlayer }.
+// Both interims this header used to hold open SHIPPED, in this file.
+// Proficiency (CF1): proficiencyModifiers is CalculateProficiencyModifiers
+// (FormulaHelper.cs:908-931) and calculateAttackDamage applies it in
+// the player block in DFU's own order - proficiency before racial,
+// FormulaHelper.cs:602-609. The enchantment channels (E1): the
+// to-hit chain adds enchantArmorMod on the armour term
+// (FormulaHelper.cs:1158's IncreasedArmorValueModifier /
+// DecreasedArmorValueModifier) and enchantChanceToHitMod in
+// attacker.ChanceToHitModifier's slot (:814), both imported from
+// systems/enchantments.js below. (AUDIT 23: adrenaline rush,
+// biography adjustments and per-part armor SHIPPED - the first two
+// live in this very file.)
+
+import { MELEE_DISTANCE } from '../characters/enemy/enemyMotor.js';   // single source (EnemyAttack.cs:30)
+import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
+import { rand } from '../formats/dfRandom.js';
+import { enchantChanceToHitMod, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload; AUDIT 39: ImprovesTalents' adrenaline flag lives in the fold's bag   // the monster multi-attack reflex gate (F2)
+import { entityArmorMod, entityWeightMult, weaponDamageMods, weaponBlowMods } from '../systems/entityMods.js';   // RF1: one read per channel - DFU's enchantment channel and every enhancement fold, summed there
+import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
+import { skillValue, SKILLS } from '../systems/skills.js';
+import { noteSkillChallenge } from '../systems/skillSoftcap.js';   // SOFTCAP1: the foe a blow was traded with, for the real-use law
+import { mentorArmorValue, mentorGearScale, mentorDamageTakenMult } from '../systems/mentorMode.js';   // SOFTCAP1: mentor mode's overlay   // S3: real skills (enemies stay flat, verbatim)
+import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
+import { SPECIAL_ABILITY_BITS, PROFICIENCY_BITS } from '../systems/specialAdvantages.js';   // AUDIT 21 F2: the Adrenaline Rush bit; CF1: the HandToHand expertise bit
+// NOT from rest.js, which re-exports healingRateModifier FROM here - importing
+// hasSpecialAbility back out of it makes a cycle, and the ESM binding lands in
+// the temporal dead zone: the helper reads `undefined` at call time and the
+// bonus silently never applies. specialAdvantages.js is a leaf.
+import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
+import { equipTableOf, lowerCondition, dfuBlowWear, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';   // C-slice: DamageEquipment; CF1: GetWeaponSkillUsed as a ProficiencyFlag, -1 quirk included
+import { SHIELD_PARTS } from '../systems/armorMaterials.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon (a leaf)
+import { clawMetalDamage } from './clawMetal.js';   // BAL6-GAUNTLETS: the beast's claws take its gauntlets' metal
+import { totalWeight } from '../systems/inventory.js';   // EW1: ItemCollection.GetWeight, the one home for a stack's kg
+import { liveVampirism } from '../systems/racialLive.js';   // VU1: an import-free LEAF - vampirism.js cycles back here through loot.js
+import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wave 31: BreakNormalPowerConcealmentEffects, in its own leaf so this import cannot cycle
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language (an import-free leaf)
+import { blowTaken } from '../systems/blowTaken.js';   // TELL1: what the target takes - a leaf, for the brain that registers into it imports the motor that imports this file
+import { ENEMY_GROUPS, enemyEntityGroup, _resetEnemyGroups } from './enemyGroups.js';   // AUDIT DEX C3: the group switch and its mod door, a leaf
+
+// ---- Dice100.cs verbatim ----
+export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
+
+// ── PCO1: FormulaHelper.RegisterOverride ────────────────────────────
+// DFU lets a mod replace a formula by name (FormulaHelper.cs
+// RegisterOverride / the `overrides` dictionary each member consults
+// first). Physical Combat And Armor Overhaul (combat/pcaao.js) is the
+// first mod here that does, on three members: damageModifier,
+// damageEquipment and calculateAttackDamage's core. A registered arm
+// returns `undefined` to DECLINE (its module switch is off), and the
+// stock formula stands; anything else is its answer. One registry, one
+// name per member, the mod's own install as the only writer.
+const _overrides = new Map();
+export function registerFormulaOverride(name, fn) { if (fn) _overrides.set(name, fn); else _overrides.delete(name); }
+/** The test seam: every override, group, language and skeletal word let go. */
+export function _resetFormulaDoors() { _overrides.clear(); _resetEnemyGroups(); _languages.length = 0; _skeletal.length = 0; }
+export const formulaOverride = (name) => _overrides.get(name) ?? null;
+
+// ---- FormulaHelper.AdjustWeaponHitChanceMod / AdjustWeaponAttackDamage ----
+/** AUDIT PCO1: DFU's two "mod hook" members - no-ops in FormulaHelper
+ *  itself ("Mod hook for adjusting final hit chance mod and adding new
+ *  elements to calculation"), called by the STOCK CalculateAttackDamage
+ *  after CalculateWeaponToHit and at the tail of
+ *  CalculateWeaponAttackDamage, and the two Roleplay Realism's archery
+ *  registers. Physical Combat And Armor Overhaul registers its copies
+ *  of them when its archery arm is on WHATEVER its armour module says,
+ *  so with the redone formula off DFU still bends a bow's hit and
+ *  damage by the draw here; the port's stock path consults the same
+ *  registry. Identity when nothing is registered. */
+export function adjustWeaponHitChanceMod(attacker, target, hitChanceMod, weaponAnimTime, weapon) {
+  const r = _overrides.get('adjustWeaponHitChanceMod')?.(attacker, target, hitChanceMod, weaponAnimTime, weapon);
+  return r === undefined ? hitChanceMod : r;
+}
+export function adjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon) {
+  const r = _overrides.get('adjustWeaponAttackDamage')?.(attacker, target, damage, weaponAnimTime, weapon);
+  return r === undefined ? damage : r;
+}
+
+// ---- FormulaHelper.DamageModifier ----
+export function damageModifier(strength) {
+  const r = _overrides.get('damageModifier')?.(strength);   // PCO1
+  return r === undefined ? Math.floor((strength - 50) / 5) : r;
+}
+
+// ---- U10 / ONE DFU MEMBER, ONE EXPORT: the rest of FormulaHelper's
+// DERIVED STATS (FormulaHelper.cs:66-125). The chargen bonus-stats
+// screen shows all seven in one block, and the port had them
+// scattered - MaxEncumbrance inline in charsheet.js, MagicResist
+// inline in spellcast.js, HealingRateModifier in rest.js, SpellPoints
+// in chargen.js - with ToHitModifier and HitPointsModifier missing
+// entirely. They live here, beside DamageModifier, and the old sites
+// import them.
+export const maxEncumbrance = (strength) => Math.floor(strength * 1.5);
+/** DaggerfallEntity.GetMaxEncumbrance (:501-507) and the
+ *  `MaxEncumbrance` property that is its one reader (:272). The
+ *  ENTITY's ceiling is the formula above over live strength PLUS the
+ *  IncreasedWeightAllowance multiplier the enchantment fold holds
+ *  (`amount += (int)(amount * multiplier)` - the cast truncates, and
+ *  the multiplier is only added when > 0).
+ *
+ *  Which of the two a call site wants is DFU's own split: everything
+ *  reading a LIVE entity (inventory, character sheet, the bank's gold
+ *  weight gate, the trade window's proceeds) reads this; the chargen
+ *  bonus-stats screen reads the raw formula off working stats
+ *  (CreateCharAddBonusStats.cs:157), because there is no entity yet. */
+export const entityMaxEncumbrance = (entity) => {
+  const amount = maxEncumbrance(liveStat(entity, 'strength'));
+  const mult = entityWeightMult(entity);   // IncreasedWeightAllowance's channel plus the port's (RF1)
+  return mult > 0 ? amount + Math.trunc(amount * mult) : amount;
+};
+/** L-slice (combat-16): the HUD line for a weapon whose material
+ *  cannot bite the target. The row is Internal_Strings.csv:56
+ *  (`materialIneffective`), verbatim - GetLocalizedText hands it over
+ *  with no substitution, so the words are the whole string. */
+export const MATERIAL_INEFFECTIVE_TEXT = 'The material of the weapon you are using is ineffective.';
+/** L10N3d: that line where it is said, in the player's language. */
+export const materialIneffectiveText = () => localizedText('materialIneffective', MATERIAL_INEFFECTIVE_TEXT);
+export const spellPointsFor = (intelligence, multiplier) => Math.floor(intelligence * multiplier);
+export const magicResist = (willpower) => Math.floor(willpower / 10);
+export const toHitModifier = (agility) => Math.floor(agility / 10) - 5;
+export const hitPointsModifier = (endurance) => Math.floor(endurance / 10) - 5;
+/** DFU deliberately skips classic's negative-modifier-plus-one bug;
+ *  so do we (the note rest.js carried since S20). */
+export const healingRateModifier = (endurance) => Math.floor(endurance / 10) - 5;
+
+// ---- CalculateHandToHandMin/MaxDamage (int division) ----
+export const handToHandMinDamage = (skill) => Math.floor(skill / 10) + 1;
+export const handToHandMaxDamage = (skill) => Math.floor(skill / 5) + 1;   // the character-sheet rule, not the Chronicles table
+
+// ---- CalculateWeaponMin/MaxDamage switch tables ----
+export const WEAPON_MIN_DAMAGE = Object.freeze({
+  Dagger: 1, Tanto: 1, Wakazashi: 1, Shortsword: 1, Broadsword: 1, Staff: 1, Mace: 1,
+  Longsword: 2, Claymore: 2, 'Battle Axe': 2, 'War Axe': 2, Flail: 2,
+  Saber: 3, Katana: 3, 'Dai-Katana': 3, Warhammer: 3,
+  'Short Bow': 5, 'Long Bow': 5,   // BAL-ARCHERY: +1 over FormulaHelper; the swing reads weaponMinDamage
+});
+export const WEAPON_MAX_DAMAGE = Object.freeze({
+  Dagger: 6, Tanto: 8, Shortsword: 8, Staff: 8, Wakazashi: 10,
+  Broadsword: 12, Saber: 12, 'Battle Axe': 12, Mace: 12, Flail: 14,
+  Longsword: 16, Katana: 16, 'War Axe': 16, 'Short Bow': 17,
+  Claymore: 18, Warhammer: 18, 'Long Bow': 19, 'Dai-Katana': 21,
+});
+
+/** DaggerfallUnityItem.GetBaseDamageMin/GetBaseDamageMax
+ *  (DaggerfallUnityItem.cs:969-977), verbatim: DFU NEVER stores a
+ *  weapon's damage on the item - it resolves the TEMPLATE INDEX
+ *  through CalculateWeaponMin/MaxDamage on every swing.
+ *
+ *  AUDIT 18 F1: the port read `weapon.minDamage`/`weapon.maxDamage`
+ *  instead, fields only enemyEquipment.createWeapon and the retired
+ *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
+ *  weapons from the item templates - {group, templateIndex, material,
+ *  name, value} - so the moment starting gear replaced the interim
+ *  dagger, EVERY armed player swing computed `undefined + ...` = NaN.
+ *  Deriving from the template, as DFU does, is both the fix and the
+ *  reason a baked field can never rot again. */
+export const baseDamageMin = (weapon) => weaponMinDamage(weapon?.templateIndex);
+export const baseDamageMax = (weapon) => weaponMaxDamage(weapon?.templateIndex);
+
+// ---- DaggerfallUnityItem.GetWeaponMaterialModifier (index = material 0..9) ----
+export const WEAPON_MATERIAL_MODIFIER = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);
+
+// ---- CalculateStruckBodyPart (FormulaHelper.cs:869-870; AC-COMPARE: the table exported, its one home - see struckBodyPartTable) ----
+export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6]);
+export const calculateStruckBodyPart = (roll01 = Math.random()) => STRUCK_BODY_PARTS[Math.floor(roll01 * STRUCK_BODY_PARTS.length)];
+
+// ---- DFCareer.StructureData attack-modifier bit table ----
+export { ENEMY_GROUPS, registerEnemyGroup, enemyEntityGroup } from './enemyGroups.js';   // AUDIT DEX C3: GetEnemyEntityEnemyGroup's one home
+export const GROUP_BITS = Object.freeze([[0x01, 0x10], [0x02, 0x20], [0x04, 0x40], [0x08, 0x80]]);   // [bonus, phobia] per group (DEX1: exported - a mod's career is packed into the same bits)
+/** DFCareer.GetAttackModifier (DFCareer.cs:817-848), verbatim: the two
+ *  bits are decoded EXCLUSIVELY, bonus first - `if (HasFlags(0x01))
+ *  result = Bonus; else if (HasFlags(0x10)) result = Phobia;`. The
+ *  resolved AttackModifier enum (Normal 0 / Bonus 1 / Phobia 2) is
+ *  what GetBonusOrPenaltyByEnemyType then masks, so a career carrying
+ *  BOTH bits for one group is a BONUS in DFU, never a wash.
+ *  AUDIT 18: the port summed the raw bits instead (+1 and -1 netting
+ *  0) and its comment asserted the inverse of the C#. Vanilla data
+ *  never sets both (every CLASS*.CFG and ENEMY*.CFG byte in ARENA2 is
+ *  0x00 or 0x04), but U20b's custom-class builder ORs them
+ *  independently, so "Bonus to hit: Undead" + "Phobia: Undead" = 0x11
+ *  reaches here. */
+export function careerAttackModifier(attackModifierFlags, group) {
+  const [bonus, phobia] = GROUP_BITS[group] ?? [];
+  if (bonus == null) return 0;                                     // EnemyGroups.None
+  if ((attackModifierFlags & bonus) === bonus) return 1;
+  if ((attackModifierFlags & phobia) === phobia) return -1;
+  return 0;
+}
+
+// FormulaHelper.GetEnemyEntityEnemyGroup and its mod door: combat/enemyGroups.js (AUDIT DEX C3 - one home, a leaf).
+
+// ---- GetBonusOrPenaltyByEnemyType (the DFU always-on port) ----
+/** FormulaHelper.cs:993-1057, verbatim including the ladder's ORDER.
+ *
+ *  AUDIT 17n wired the ATTACKER half (DFU reads
+ *  attacker.Career.<group>AttackModifier for every attacker; the port
+ *  had flattened the byte onto the entity and only the foe builder
+ *  ever set it). AUDIT 18 wires the TARGET half, which had two holes:
+ *
+ *  1. the port pre-resolved ONE group from the target's affinity and
+ *     handed the callee a number. DFU uses TWO discriminants - the
+ *     Humanoid arm keys on `MobileEnemy.Affinity == MobileAffinity.
+ *     Human` (so an Orc, whose group IS Humanoid but whose affinity is
+ *     Darkness, gets NOTHING - a DFU quirk, reproduced) while the
+ *     Undead/Daedra/Animals arms key on GetEnemyGroup(). The two
+ *     disagree for Slaughterfish 11, Vampire 28, Vampire Ancient 30
+ *     and both Dragonlings 34/40, which the port scored 0.
+ *  2. `target is PlayerEntity` had no port at all: every enemy->player
+ *     site passed a null group, so the "player is assumed humanoid"
+ *     arm never fired. Every 0x04 (Humanoid bonus) career in the real
+ *     MONSTER.BSA - both vampires, all four atronachs, dragonling,
+ *     dreugh, lamia - is an ATTACKER on the player, so that arm is
+ *     where the whole modifier lives.
+ *
+ *  VU1: the player arm takes the UNDEAD modifier while the player
+ *  has vampirism, as DFU's does. The flag that used to stand here said
+ *  "the vampirism effect is not ported, so only the humanoid arm
+ *  exists" - and systems/vampirism.js had shipped, `liveVampirism` and
+ *  all, some slices earlier. The blocker retired and the sentence did
+ *  not, so every vampire character in the port took the wrong
+ *  modifier. */
+export function bonusOrPenaltyByEnemyType(attacker, target) {
+  if (!attacker || !target) return 0;
+  const flags = attacker.attackModifierFlags ?? attacker.career?.attackModifierFlags ?? null;
+  if (flags == null) return 0;
+  let group = ENEMY_GROUPS.None;
+  if (target.isPlayer) {
+    // VU1 - :1042-1048's TWO arms, not one. "Vampires are undead,
+    // therefore use undead modifier" is DFU's own comment on the
+    // HasVampirism() branch; only the else is "Player is assumed
+    // humanoid". A vampire player was taking the humanoid modifier
+    // from every attacker, which is the wrong sign as often as not -
+    // a career with a humanoid BONUS was quietly helping itself
+    // against a target it should have feared, and a monster with an
+    // undead phobia lost its penalty entirely.
+    group = liveVampirism(target) ? ENEMY_GROUPS.Undead : ENEMY_GROUPS.Humanoid;
+  } else if (target.affinity === 'Human') {
+    group = ENEMY_GROUPS.Humanoid;
+  } else {
+    const g = enemyEntityGroup(target.careerIndex);
+    // the else-if ladder has no Humanoid arm: a non-Human-affinity
+    // enemy whose GROUP is Humanoid falls through to 0, verbatim
+    if (g === ENEMY_GROUPS.Undead || g === ENEMY_GROUPS.Daedra || g === ENEMY_GROUPS.Animals) group = g;
+  }
+  if (group === ENEMY_GROUPS.None) return 0;
+  return careerAttackModifier(flags, group) * attacker.level;
+}
+
+/** FormulaHelper.CalculateRacialModifiers (FormulaHelper.cs:933-962),
+ *  verbatim - INCLUDING the else-if ladder, which is load-bearing:
+ *  a Dark Elf ARCHER takes the DarkElf arm (Level/4, not Level/3), and
+ *  a Redguard ARCHER takes the archery arm, fails the WoodElf test and
+ *  gets NOTHING. Applied to the player only, and only with a weapon.
+ *  AUDIT 18: not ported at all before now - the site note claiming the
+ *  entity "has no career/race yet" went stale when chargen shipped
+ *  (chargen.applyCharacter writes the DFU-numbered raceId). */
+/** FormulaHelper.CalculateProficiencyModifiers (:908-931), verbatim -
+ *  CF1, the "Expertise In" career flag's reader (S23 shipped only the
+ *  FORBIDDEN half of the proficiency bitfield; the port packs the
+ *  EXPERT set at bits 16..21 of the same career field, the chargen
+ *  writer's own layout). An expert weapon: damage +(level/3 + 1),
+ *  to-hit +level. The weaponless arm reads the HandToHand bit - and
+ *  DFU's own comment says "Hand-to-hand proficiency is not applied in
+ *  classic" while the code applies it, a recorded DFU departure the
+ *  port follows bug-for-bug. weaponProficiencyFlag carries equip.js's
+ *  -1 quirk for an unlisted weapon template, so `expert & -1` grants
+ *  the bonus to ANY expert career swinging one - GetWeaponSkillUsed's
+ *  Skills.None = -1 masking against every bit, the same both careers'
+ *  forbidden test already rides. */
+export function proficiencyModifiers(attacker, weapon) {
+  const mods = { damageMod: 0, toHitMod: 0 };
+  const expert = ((attacker.career?.weaponArmorShieldsBitfield ?? 0) >>> 16) & 0x3f;
+  const grant = () => {
+    mods.damageMod = Math.trunc(attacker.level / 3) + 1;
+    mods.toHitMod = attacker.level;
+  };
+  if (weapon) {
+    if ((expert & weaponProficiencyFlag(weapon)) !== 0) grant();
+  } else if ((expert & PROFICIENCY_BITS.handToHand) !== 0) grant();
+  return mods;
+}
+
+export function racialModifiers(attacker, weapon) {
+  const mods = { damageMod: 0, toHitMod: 0 };
+  if (!weapon) return mods;
+  const set = (n) => { mods.damageMod = n; mods.toHitMod = n; };
+  if (attacker.raceId === RACES.DarkElf) set(Math.trunc(attacker.level / 4));
+  else if (weaponSkillUsed(weapon.templateIndex) === SKILLS.Archery) {
+    if (attacker.raceId === RACES.WoodElf) set(Math.trunc(attacker.level / 3));
+  } else if (attacker.raceId === RACES.Redguard) set(Math.trunc(attacker.level / 3));
+  return mods;
+}
+
+// ---- CalculateStatsToHit ----
+export const statsToHit = (a, t) =>
+  Math.trunc((liveStat(a, 'luck') - liveStat(t, 'luck')) / 10) + Math.trunc((liveStat(a, 'agility') - liveStat(t, 'agility')) / 10);
+
+// ---- CalculateSkillsToHit (classic's /4 dodging; crit roll adds crit/10) ----
+export function skillsToHit(a, t, roll01 = Math.random(), notes = null) {
+  let mod = -Math.floor(skillValue(t, SKILLS.Dodging) / 4);            // classic's /4 bug preserved
+  const crit = skillValue(a, SKILLS.CriticalStrike);
+  // HN1: the CRITICAL STRIKE roll is Daggerfall's own "critical hit" -
+  // it lands on the chance to hit, not the damage (classic parity) -
+  // and the enhanced HUD's numbers name it when it succeeds. The notes
+  // channel is read-only reporting: no roll and no value changes.
+  if (dice100(crit, roll01)) { mod += Math.floor(crit / 10); if (notes) notes.critical = true; }
+  return mod;
+}
+
+// ---- CalculateAdjustmentsToHit (2026-08-13 parity audit F1) ----
+// Verbatim: biography avoid-hit (pending chargen biography - 0),
+// +40 when the TARGET is an enemy MONSTER, then a flat -50 always
+// ("DF Chronicles says -60 ... it actually seems to be -50").
+export function adjustmentsToHit(target) {
+  let mod = 0;
+  // AUDIT 21 F3: THE BIOGRAPHY MODIFIER, which was minted and never read.
+  //     if (target == player) chanceToHitMod -= player.BiographyAvoidHitMod;
+  // (FormulaHelper.cs:1236-1239.) The comment that stood here said the
+  // chargen biography was "pending". It shipped in S3e/U13:
+  // applyBiographyEffects runs inside finishChargen, biography.js mints
+  // biographyAvoidHitMod from the real BIOG*.TXT, and save.js has persisted
+  // it since AUDIT 17h. Every populated BIOG*.TXT that carries the answer
+  // carries TH -5, and 14 of the 18 class biographies have one - so a
+  // character who answered "Fighting without magic" was a flat 5 points
+  // harder to hit than the one the player built, for the whole game.
+  //
+  // Note the SIGN: DFU SUBTRACTS the modifier, so a negative TH is a
+  // PENALTY to the player - the answer makes them easier to hit, not safer.
+  if (target.isPlayer) mod -= (target.biographyAvoidHitMod ?? 0);
+  if (!target.isPlayer && target.isClass === false) mod += 40;   // EntityTypes.EnemyMonster
+  mod -= 50;
+  return mod;
+}
+
+/** CalculateAdrenalineRushToHit (FormulaHelper.cs:1163-1183), called from
+ *  CalculateSuccessfulHit at :811.
+ *
+ *  AUDIT 21 F2. The Ledger listed Adrenaline Rush as INERT "because the
+ *  consuming subsystem does not exist" - but the consumer IS
+ *  CalculateSuccessfulHit, which is live, and every input was already here:
+ *  the bit decodes (specialAdvantages.js, rest.js), and health/maxHealth are
+ *  on both entity shapes. No effect, no enchantment and no window involved.
+ *
+ *  CLASS09.CFG (Acrobat) ships bitfield 0x1406 with bit 4 set, so a VANILLA
+ *  Acrobat has it; ten monster careers do too (Werewolf, Vampire Ancient, all
+ *  four atronachs, horse, dragonling, dreugh, Lamia). The enemy half only
+ *  works once the career is stored - AUDIT 21 F1.
+ *
+ *  AUDIT 39. ImprovedAdrenalineRush is NOT unported - ImprovesTalents(2)
+ *  decodes into the enchantment fold's bag (enchantments.js) - but the
+ *  ternary read a top-level `entity.improvedAdrenalineRush` that nothing
+ *  writes, so the improved modifier (8) was unreachable anyway. The read
+ *  is the fold's own accessor, which is where DFU's entity flag lives
+ *  here. */
+export const ADRENALINE_RUSH_MODIFIER = 5;
+export const IMPROVED_ADRENALINE_RUSH_MODIFIER = 8;
+/** DFCareer.HasSpecialAbility: the flag masked against the bitfield's LOW
+ *  BYTE (rest.js's hasSpecialAbility, restated here to keep this file a
+ *  leaf-ward importer - see the import note above). */
+const hasAbility = (career, flag) => ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
+const inAdrenalineRush = (e) => Boolean(e)
+  && hasAbility(e.career, SPECIAL_ABILITY_BITS.adrenalineRush)
+  && (e.health ?? 0) < Math.trunc((e.maxHealth ?? 0) / 8);   // C# integer division
+export function adrenalineRushToHit(attacker, target) {
+  let mod = 0;
+  if (inAdrenalineRush(attacker)) {
+    mod += entityImprovedAdrenalineRush(attacker) ? IMPROVED_ADRENALINE_RUSH_MODIFIER : ADRENALINE_RUSH_MODIFIER;
+  }
+  if (inAdrenalineRush(target)) {
+    mod -= entityImprovedAdrenalineRush(target) ? IMPROVED_ADRENALINE_RUSH_MODIFIER : ADRENALINE_RUSH_MODIFIER;
+  }
+  return mod;
+}
+
+// ---- CalculateSuccessfulHit (clamp 3..97) ----
+export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls = Math.random, notes = null) {
+  let chance = chanceToHitMod;
+  // CalculateArmorToHit (FormulaHelper.cs:1149-1161): the per-part
+  // table, always. Increased/DecreasedArmorValueModifier channels pend
+  // their effects (none exist yet) - 0 (audit F5).
+  //
+  // AUDIT 24 (wave 28): the old scalar-armour fallback was an
+  // INVENTION - DFU has no scalar-armour path, because every entity
+  // carries ArmorValues from creation (CharacterDocument.cs:86-88 for
+  // the player, EnemyEntity.cs:264-267/:409-413 for enemies). It read
+  // 0 for a fresh character whose chargen had nulled the array, and 0
+  // is a hundred points of chance-to-hit below DFU's unarmoured 100.
+  // E1: FormulaHelper.cs:1158 - armorValue = ArmorValues[part] +
+  // IncreasedArmorValueModifier + DecreasedArmorValueModifier. The
+  // channels are the enchantment fold's (Strengthens/WeakensArmor,
+  // BadReactionsFrom) - the audit-F5 zeros, live at last.
+  // SOFTCAP1: a mentored target's armour keeps its gear-scale share of its protection (mentorMode.js)
+  chance += mentorArmorValue(target, target.armorValues?.[struckBodyPart] ?? 0) + entityArmorMod(target, struckBodyPart);   // RF1: the enchantment channels and the port's points on the struck part, one read
+  // AUDIT 21 F2: the adrenaline rush is APPLIED now, in DFU's own slot
+  // (FormulaHelper.cs:811, between the armour term and the stats term).
+  chance += adrenalineRushToHit(attacker, target);
+  // E1: attacker.ChanceToHitModifier (FormulaHelper.cs:814) - the
+  // audit-F4 zero. BadReactionsFrom is its one core writer.
+  chance += enchantChanceToHitMod(attacker);
+  chance += statsToHit(attacker, target);
+  chance += skillsToHit(attacker, target, rolls(), notes);
+  chance += adjustmentsToHit(target);   // the +40 monster mod and flat -50 (F1)
+  chance = Math.max(3, Math.min(97, chance));
+  return dice100(chance, rolls());
+}
+
+// ---- CalculateHandToHandAttackDamage ----
+/** BAL10 (bible/05-Combat/Balance-Arc.md section 16; the owner chose "Fix fists' missing bonuses"): AND THE PORT'S BLOW
+ *  MODIFIERS, as the weapon path reads them at its tail (weaponAttackDamage, below) - a player's fists, never the beast's
+ *  claws (BAL6 balanced the curse on its own claws and their metal). `info` is the host's word, the weapon path's own. */
+export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, rolls = Math.random, info = undefined) {
+  const h2h = skillValue(attacker, SKILLS.HandToHand);
+  const min = handToHandMinDamage(h2h);
+  const max = handToHandMaxDamage(h2h);
+  let damage = min + Math.floor(rolls() * (max + 1 - min));  // Range(min, max+1)
+  if (isPlayer && info?.wraps) damage = weaponDamageMods(info.wraps, damage);   // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own
+  damage += damageMod;
+  // FormulaHelper.cs:786 reads Stats.LiveStrength here exactly as the
+  // weapon path does (:755) - AUDIT 18: this arm read the RAW stat, so
+  // a strength drain (diseases.js writes signed statMods) moved a
+  // player's weapon damage and left their fists untouched.
+  if (isPlayer) damage += damageModifier(liveStat(attacker, 'strength'));   // "not applied in classic" for AI - DFU preserves that
+  // BAL6-GAUNTLETS (combat/clawMetal.js): A DEPARTURE - the beast's claws add its gauntlets' metal where the weapon
+  // path's material modifier stands, after Strength and before the enemy-type term
+  if (isPlayer) damage += clawMetalDamage(attacker);
+  damage += bonusOrPenaltyByEnemyType(attacker, target);
+  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths
+  return damage;
+}
+
+export const SKELETAL_WARRIOR_INDEX = 15;   // MonsterCareers.SkeletalWarrior
+
+/** DEX4b: A MOD'S SKELETAL ENEMY. Daggerfall Enemy Expansion overrides CalculateWeaponAttackDamage with DFU's own body
+ *  but for one test - the Skeletal Warrior's rule (blunt halved, silver doubled) for any enemy whose row says Skeletal
+ *  (BestiaryMod.cs:1587-1630). The port takes that test as a door, so the stock formula's own terms stand under the
+ *  mod. PCAAO's core runs its own copy (combat/pcaao.js pcaaoWeaponAttackDamage) and never asks it, as DFU's PCAAO,
+ *  replacing CalculateAttackDamage whole, never calls the overridden one. `fn(target)` -> true or false, the mod's
+ *  whole test, or null to leave DFU's. AUDIT DEX C2: the mod's test REPLACES DFU's - its override asks the enemy's ID
+ *  (`MobileEnemy.ID == SkeletalWarrior`, :1594) where DFU asks its career (`CareerIndex`, FormulaHelper.cs:740), whose
+ *  class collision makes a Barbarian (143, career 15) a skeleton; under the mod it is none. */
+const _skeletal = [];
+export function registerSkeletalTarget(fn) {
+  if (typeof fn !== 'function') throw new Error('registerSkeletalTarget: a function of (target)');
+  _skeletal.push(fn);
+}
+/** Whether the Skeletal Warrior's rule bites `target`: a mod's word where one answers, else DFU's - its career. */
+export const isSkeletalTarget = (target) => {
+  for (const fn of _skeletal) { const a = fn(target); if (a != null) return a === true; }
+  return target.careerIndex === SKELETAL_WARRIOR_INDEX;
+};
+
+/** RVN2 (bible/12-Enhanced-AI/Feud-Arc.md 13.2): NAMED VETOES on silver's double against a kind it doubles against -
+ *  `fn(target) -> true` keeps silver to its plain damage on that target (a Silver-scarred revenant's: its kind's double
+ *  gone). With none registered, or none answering true, DFU's double stands - in both cores (this one's Skeletal Warrior,
+ *  PCAAO's six beside it). A veto that throws is no veto. */
+const _silverVetoes = new Map();
+export function registerSilverDoubleVeto(name, fn) { if (typeof fn === 'function') _silverVetoes.set(name, fn); else _silverVetoes.delete(name); }
+/** Does silver double against `target` (its kind aside - the cores ask only for a kind it doubles against)? */
+export function silverDoubles(target) {
+  for (const fn of _silverVetoes.values()) { try { if (fn(target) === true) return false; } catch { /* a veto that throws is none */ } }
+  return true;
+}
+
+// ---- CalculateWeaponAttackDamage ----
+/** AUDIT 18: the pre-resolved `targetGroup` parameter is GONE. DFU
+ *  passes the TARGET ENTITY to GetBonusOrPenaltyByEnemyType
+ *  (FormulaHelper.cs:763) and derives the group inside it; the port
+ *  had lifted a single group number into a parameter, which could not
+ *  express DFU's two discriminants and left `target.group` - a field
+ *  NOTHING in the codebase mints - as this arm's fallback. */
+export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, weaponAnimTime = 0, info = undefined) {
+  const wMin = baseDamageMin(weapon), wMax = baseDamageMax(weapon);
+  let damage = weaponDamageMods(weapon, wMin + Math.floor(rolls() * (wMax + 1 - wMin))) + damageMod;   // RF1: the weapon's own modifiers over ITS roll, before the swing's mods
+  if (!target.isPlayer && isSkeletalTarget(target)) {   // DEX4b: a mod's skeletal enemy too
+    if ((weapon.flags & 0x10) === 0) damage = Math.trunc(damage / 2);   // edged-weapon rule
+    if (weapon.material === 2 && silverDoubles(target)) damage *= 2;    // Silver (RVN2: unless a veto keeps it plain)
+  }
+  damage += damageModifier(liveStat(attacker, 'strength'));
+  damage += WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0;   // half of the in-game display, per the source comment
+  if (damage < 1) damage = 0;
+  damage += bonusOrPenaltyByEnemyType(attacker, target);
+  damage = weaponBlowMods(weapon, damage, attacker, target, info);   // SIGIL1: the port's own over the whole blow - the online sigil, my blow at a foe - before the hook, so a bow's draw scales it too (SET2: `info` - the host's word that the foe had not noticed me)
+  // "Mod hook for adjusting final damage. (no-op by default)" - the
+  // stock's last line (AUDIT PCO1: Roleplay Realism's archery lands here)
+  damage = adjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon);
+  return damage;
+}
+
+// ---- CalculateBackstabDamage ----
+/** C2-slice (AUDIT 23 combat-12): the Dice100 rolls ONLY behind the
+ *  level > 1 gate (the source short-circuits at :984) - the old
+ *  eager roll01 argument burned a draw on every non-backstab swing.
+ *  A landed backstab speaks: Internal_Strings.csv:57
+ *  (`successfulBackstab`), verbatim into PopupMessage (:987-988). */
+export const SUCCESSFUL_BACKSTAB_TEXT = 'Successful backstab!';
+/** L10N3d: that popup where it is said, in the player's language. */
+export const successfulBackstabText = () => localizedText('successfulBackstab', SUCCESSFUL_BACKSTAB_TEXT);
+export function backstabDamage(damage, backstabbingLevel, rolls = Math.random, say = null) {
+  if (backstabbingLevel > 1 && dice100(backstabbingLevel, rolls())) {
+    say?.(successfulBackstabText());
+    return damage * 3;
+  }
+  return damage;
+}
+
+/**
+ * The CalculateAttackDamage orchestration for our reachable branches:
+ * class-enemy hand-to-hand vs the player (equipment E4), player
+ * weapon/hand-to-hand vs foes (input wiring E3c), monster multi-attack
+ * (rigs E4). chanceToHitMod = the attacker's live weapon skill
+ * (flat skills here). Swing/proficiency/racial player mods: E3c with
+ * the in-world weapon.
+ */
+/** CalculateAttackDamage's enemy weapon-vs-weaponless choice: classic
+ *  weapon-wielders use weapon damage, but DFU lets them keep the
+ *  weaponless attack when its AVERAGE is higher (source comment: some
+ *  enemies' weapons undershoot similar-tier monsters). */
+export function chooseEnemyWeapon(weapon, basics) {
+  if (!weapon) return null;
+  const weaponAvg = Math.trunc((baseDamageMin(weapon) + baseDamageMax(weapon)) / 2);
+  const noWeaponAvg = Math.trunc(((basics?.minDamage ?? 0) + (basics?.maxDamage ?? 0)) / 2);
+  return noWeaponAvg > weaponAvg ? null : weapon;
+}
+
+/** AUDIT 58: EnemyAttack.MeleeDamage's FIRST step, which no foe-vs-foe
+ *  arm ran - "Switch to hand-to-hand if enemy is immune to weapon"
+ *  (EnemyAttack.cs:191-194):
+ *
+ *      DaggerfallUnityItem weapon = entity.ItemEquipTable.GetItem(EquipSlots.RightHand);
+ *      if (weapon != null && targetEntity != null
+ *          && targetEntity.MobileEnemy.MinMetalToHit > (WeaponMaterialTypes)weapon.NativeMaterialValue)
+ *          weapon = null;
+ *
+ *  `targetEntity` is non-null only when senses.Target is ANOTHER
+ *  ENEMY (EnemyAttack.cs:188-189), so the drop is live exactly and
+ *  only foe-vs-foe - and the player has no MinMetalToHit, which is
+ *  why the player arm never needed it. It runs BEFORE the reach fork
+ *  (:199-206) and before CalculateAttackDamage's own weapon-vs-
+ *  weaponless average swap, so the striker falls through to its
+ *  hand-to-hand attack and deals REAL damage where the port returned
+ *  report(0) forever (the material gate at :499 below, which this
+ *  makes unreachable on a foe-vs-foe swing, is silent for enemies).
+ *  The nulled weapon is also what PlayMissSound sees (:214). */
+export function dropWeaponIfTargetImmune(weapon, targetEntity) {
+  if (!weapon || !targetEntity) return weapon ?? null;
+  return (targetEntity.minMetalToHit ?? -1) > weapon.material ? null : weapon;
+}
+
+/** FormulaHelper.DamageEquipment (:1080-1118) +
+ *  ApplyConditionDamageThroughPhysicalHit (:1123-1138), verbatim
+ *  (C-slice, AUDIT 23 combat-1). Runs at CalculateAttackDamage's
+ *  tail for every attack; the body gates on a WEAPON hit that dealt
+ *  damage, so hand-to-hand and monster natural attacks degrade
+ *  nothing. The attacker's weapon always takes (10*damage+50)/100
+ *  condition (int division; a 20% floor roll turns 0 into 1, rolled
+ *  PER ITEM); the struck side routes to an equipped shield COVERING
+ *  the struck part - DFU's own improvement, its comment notes
+ *  classic never damaged shields - else to the struck part's armor
+ *  slot. Breaks speak and unequip through lowerCondition. */
+export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
+  // WBX6 (2026-09-26, Swololo on Discord: "I broke one and a half of a weapon during the fight"): A BLOW ON THE WARDEN
+  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gate/gateBoss.js bossStandIn carries
+  // `spareGear`), a fight measured in hundreds of blows, and it broke weapons it was never meant to. A departure (Ledger
+  // A, WB): every other foe wears the gear as DFU's does, and the override below is never asked for him either.
+  if (target?.spareGear) return;
+  // PCO1: the registered override first (the mod's DamageEquipment,
+  // which wears gear on a fist's blow too, so no `!weapon` gate here).
+  const o = _overrides.get('damageEquipment');
+  if (o && o(attacker, target, damage, weapon, struckBodyPart, { rolls, say }) !== undefined) return;
+  if (!weapon || damage <= 0) return;
+  const hit = (item, owner) => {
+    // RR1: ApplyConditionDamageThroughPhysicalHit's own override slot (FormulaHelper.cs:1123-1128) - "Only return if override returns true"
+    if (_overrides.get('applyConditionDamageThroughPhysicalHit')?.(item, owner, damage, { say, rolls }) === true) return;
+    let amount = Math.trunc((10 * damage + 50) / 100);
+    if (amount === 0 && dice100(20, rolls())) amount = 1;
+    lowerCondition(item, dfuBlowWear(amount, rolls), owner, say);   // BALANCE1: DFU's amount, on the port's wear scale; WEAR-TWICE: twice it, WEAR-ONE: once again
+  };
+  hit(weapon, attacker);
+  const slots = equipTableOf(target);
+  const shield = slots[EQUIP_SLOTS.LeftHand];
+  const covered = shield ? SHIELD_PARTS.get(shield.templateIndex) ?? [] : [];
+  if (covered.includes(struckBodyPart)) hit(shield, target);
+  else {
+    const slot = slotForBodyPart(struckBodyPart);
+    const armor = slot !== EQUIP_SLOTS.None ? slots[slot] : null;
+    if (armor) hit(armor, target);
+  }
+}
+
+export function calculateAttackDamage(attacker, target, { weapon = null, wraps: wrapsIn = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null, blowShare = null, blowWeight = 1 } = {}) {
+  if (!attacker || !target) return 0;
+  // HAND-WRAPS (bible/05-Combat/Hand-Wraps.md): the Hand Wraps' blow is the fists' - either core, the report and the
+  // listeners see no weapon. What the wraps carry rides beside it: their lines (`wraps`, to the blow modifiers and the
+  // strike listeners) and their Strikes payload.
+  const wraps = isHandWraps(weapon) ? weapon : isHandWraps(wrapsIn) ? wrapsIn : null;
+  if (isHandWraps(weapon)) weapon = null;
+  // SOFTCAP1: THE FOE THIS BLOW WAS TRADED WITH, remembered on the player
+  // for the tallies that follow it (hit or miss - a swing at a tough foe is
+  // real use; skillSoftcap.js overcapTallyWeight). Both directions: my
+  // weapon skills learn from whom I strike, my Dodging from who strikes me.
+  if (attacker.isPlayer && !attacker.peer) noteSkillChallenge(attacker, target);
+  if (target.isPlayer && !target.peer) noteSkillChallenge(target, attacker);
+  // HN1: THE RESOLUTION IS REPORTED, once per attack, through one seam
+  // (setPlayerAttackHook - the enhanced HUD's damage numbers). Every
+  // path out of this function tells the hook what happened: a miss, an
+  // ineffective material, a hit and its damage, whether the critical
+  // strike roll succeeded, whether it was a backstab. Nothing here
+  // changes a roll or a value; the notes object is written by the hit
+  // roll and read at the tail.
+  const notes = { critical: false, backstab: false, hit: false, ineffective: false };
+  // SW1: the struck part, at the FUNCTION's scope - the resolution hook
+  // at the tail is past the block the roll is made in.
+  let struckPart = -1;
+  const report = (damage) => {
+    // DUEL1: a blow between players is rolled with a stub of the striker's sheet (combat/duelCombat.js duelStub -
+    // `isPlayer`, and `peer`) - since INT8 on the striker's own machine, against a neutral stand-in (AUDIT C&C H5): the
+    // stub's report stays quiet, and the host says a miss and the referee's word a hit (reportPlayerAttack, below)
+    if (_playerAttackHook && attacker.isPlayer && !attacker.peer) {
+      try { _playerAttackHook({ ...notes, damage, attacker, target, weapon }); } catch { /* a HUD is not the formula's problem */ }
+    }
+    // ARENA-FIX 9/10: every resolution, whoever swung - the arena's judges count the misses and its crowd hears the
+    // critical strikes (scenes/arena/arenaBouts.js attackResolved)
+    if (_resolutionListeners.size) for (const fn of _resolutionListeners.values()) { try { fn({ ...notes, damage, attacker, target, weapon }); } catch { /* a listener is not the blow's problem */ } }
+    return damage;
+  };
+  // PCO1: THE REGISTERED CORE. FormulaHelper.CalculateAttackDamage is
+  // one of the members a mod replaces whole; the port's tail below
+  // (concealment, the Strikes payload, the struck hook, the HUD report)
+  // is DFU's CALLERS' work and runs after either core. The override gets
+  // the whole option bag plus the notes.
+  const core = _overrides.get('calculateAttackDamage');
+  // WIDGET-RECOIL (FIELD BUGS 2026-10-03, SlipperyPeasant: "I think the recoil module isnt working either"): a core
+  // that rolls its own part hands it back (`onStruck`) - PCAAO's, on by default, rolled one the tail never saw, so the
+  // struck hook said -1 on every blow and the Shield Widget's "Attack On Shield" Recoil (its default) never fired
+  const overridden = core ? core(attacker, target, { weapon, wraps, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;
+  let damage = 0;
+  // TWO-HANDS (AUDIT, bible/05-Combat/Two-Hands.md): THE BLOW'S SHARE - the off hand's (handsLaw.js offHandDamage), a
+  // function of the rolled damage - laid where the blow is rolled, before anything reads it: in the stock core ahead of
+  // the equipment's wear, after a mod's core; so the HUD, the strike listeners (a leech, an echo), the Strikes payloads
+  // and the report all see the blow that landed, never the whole roll. Null for every other blow. (AUDIT 2: a core that
+  // takes the share itself - PCAAO's, ahead of its own wear - says so, `notes.shared`, and is not shared twice.)
+  const shared = (d) => (blowShare && d > 0 ? blowShare(d) : d);
+  if (overridden !== undefined) {
+    damage = notes.shared ? overridden : shared(overridden);
+  } else {
+  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {
+    // L-slice (AUDIT 23 combat-16): FormulaHelper.cs:576-583 - a
+    // too-low weapon material returns 0, and when the attacker is
+    // the PLAYER the HUD says so (`materialIneffective`,
+    // Internal_Strings.csv:56). Enemies fail silently.
+    if (attacker.isPlayer) say?.(materialIneffectiveText());
+    notes.ineffective = true;
+    return report(0);
+  }
+  // source: chanceToHitMod = skill, then player swing/proficiency/
+  // racial toHit mods add on; damageModifiers ride INTO the damage
+  // calls (before the skeletal rules and the <1 floor)
+  // chanceToHitMod = the LIVE skill for the attack in hand (weapon's
+  // skill or HandToHand), + player mods. Enemies read the same value
+  // for every skill (flat, SetEnemyCareer verbatim).
+  const attackSkill = weapon ? (weaponSkillUsed(weapon.templateIndex) ?? SKILLS.HandToHand) : SKILLS.HandToHand;
+  let chanceToHitMod = skillValue(attacker, attackSkill) + toHitMod;
+  let damageModifiers = damageMod;
+  // FormulaHelper.cs:594-613, the `attacker == player` block, in DFU's
+  // order: swing mods (the caller's damageMod/toHitMod - they need the
+  // screen weapon's state), then proficiency, then racial, then
+  // backstab onto chanceToHitMod alone.
+  if (attacker.isPlayer) {
+    // CF1: proficiency BEFORE racial - FormulaHelper.cs:602-609's order
+    const prof = proficiencyModifiers(attacker, weapon);
+    damageModifiers += prof.damageMod;
+    chanceToHitMod += prof.toHitMod;
+    const racial = racialModifiers(attacker, weapon);
+    damageModifiers += racial.damageMod;
+    chanceToHitMod += racial.toHitMod;
+  }
+  chanceToHitMod += backstabChance;
+  // CalculateWeaponToHit: material modifier x 10 rides the WEAPON
+  // branch only, verbatim (audit F3).
+  // RR1: `if (TryGetOverride("CalculateWeaponToHit", out del)) return del(weapon);` (FormulaHelper.cs:1140-1146) - Roleplay & Realism's weaponMaterials registers x3
+  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;
+  if (weapon) chanceToHitMod = adjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon);   // AUDIT PCO1: the stock's mod hook, right after CalculateWeaponToHit
+  const struck = calculateStruckBodyPart(rolls());
+  struckPart = struck;   // SW1: carried out to the tail's hook, which sits past this block
+  if (!weapon) {
+    // Monster weaponless attacks (audit F2): DFU's multi-attack loop
+    // over MobileEnemy.MinDamage/2/3 - NOT the H2H skill formula
+    // (that branch is player + class enemies only). Per attack: the
+    // reflex gate DFRandom.rand() % 100 < 50 - 10*(reflexes-2), then
+    // the shared hit roll; damage Range(min, max+1); the enemy-type
+    // bonus lands PER HIT. onMonsterHit = the special-attack rider
+    // seam (S18 diseases.js) - fired per hit BEFORE the damage sums,
+    // exactly at FormulaHelper.cs:662.
+    if (!attacker.isPlayer && attacker.isClass === false && attacker.basics) {
+      const b = attacker.basics;
+      const spans = [
+        [b.minDamage ?? 0, b.maxDamage ?? 0],
+        [b.minDamage2 ?? 0, b.maxDamage2 ?? 0],
+        [b.minDamage3 ?? 0, b.maxDamage3 ?? 0],
+      ];
+      // AUDIT 39: the gate is the PLAYER'S Reflexes setting, whoever is
+      // being bitten. FormulaHelper.cs:551 binds `player` from the game
+      // and :654 reads `player.Reflexes` regardless of `target`, so a
+      // monster mauling another foe rolls the same band as one mauling
+      // the player. Only the player carries the field (playerEntity.js),
+      // so foe-vs-foe strikes hand it in as `playerReflexes` (the same
+      // value their EnemyAttack timer is already seeded with); a strike
+      // AT the player finds it on the target itself. 2 = Average.
+      const reflexes = playerReflexes ?? (target.isPlayer ? target.reflexes : null) ?? 2;
+      const reflexesChance = 50 - 10 * (reflexes - 2);
+      for (const [min, max] of spans) {
+        let hitDamage = 0;
+        if (dfRand() % 100 < reflexesChance && min > 0 &&
+            calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
+          notes.hit = true;
+          hitDamage = min + Math.floor(rolls() * (max + 1 - min));   // Range(min, max+1)
+          if (hitDamage > 0 && onMonsterHit) onMonsterHit(attacker, target, hitDamage);
+          damage += hitDamage;
+        }
+        if (hitDamage > 0) damage += bonusOrPenaltyByEnemyType(attacker, target);
+      }
+    } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
+      notes.hit = true;
+      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, { unaware: !!unaware, wraps });   // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines
+      // INSIDE the hit, exactly as :627 - see the note below
+      const before = damage;
+      damage = backstabDamage(damage, backstabChance, rolls, say);
+      if (before > 0 && damage === before * 3) notes.backstab = true;
+    }
+  } else {
+    if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
+      notes.hit = true;
+      damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, { unaware: !!unaware });   // SET2: the host's word the foe had not noticed me, for the blow's port modifiers
+      const before = damage;
+      damage = backstabDamage(damage, backstabChance, rolls, say);   // :688
+      if (before > 0 && damage === before * 3) notes.backstab = true;
+    }
+  }
+  // THE BACKSTAB IS INSIDE THE HIT. Both C# call sites (:627 for hand
+  // to hand, :688 for weapons) sit within their own
+  // `if (CalculateSuccessfulHit(...))` block, so a MISS never reaches
+  // the backstab at all. This used to run unconditionally after both
+  // branches, on the reading that the roll was gated by the damage -
+  // but backstabDamage's gate is `backstabbingLevel > 1`, the
+  // attacker's SKILL, not the damage. So a missing thief with any
+  // Backstabbing skill drew a roll C# never draws (desyncing every
+  // later roll in the shared stream) and, on a success, printed "You
+  // backstab your opponent!" over an attack that did nothing.
+  // Poisoned weapons (S19b): a damaging weapon hit inflicts the
+  // poison ONCE and clears it from the weapon (the source's
+  // weapon.poisonType = Poisons.None, inside the weapon branch after
+  // backstab). onInflictPoison = the scene's InflictPoison seam.
+  if (weapon && damage > 0 && (weapon.poisonType ?? -1) !== -1) {
+    if (onInflictPoison) onInflictPoison(attacker, target, weapon.poisonType);
+    weapon.poisonType = -1;
+  }
+  damage = shared(Math.max(0, damage));
+  // FormulaHelper.cs:699-701: the equipment damages at the TAIL with
+  // the clamped value, whatever the hit rolled.
+  damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
+  }   // PCO1: the stock core ends here; the tail is the callers' law
+  // ELITE DUNGEONS: an elite foe's blows land at `damageScale` times (scenes/dungeonContext.js
+  // applyEliteScaling). After either core - stock or a mod's override - so the multiplier holds
+  // whichever formula rolled the hit; the concealment break and the HUD below see the real number.
+  if (!attacker.isPlayer && damage > 0 && Number.isFinite(attacker.damageScale) && attacker.damageScale !== 1) {
+    damage = Math.max(1, Math.round(damage * attacker.damageScale));
+  }
+  // SOFTCAP1: MENTOR MODE at the same tail - a mentored player's weapon lands
+  // at its gear scale, and a mentored player takes blows as if carrying the
+  // mentored health pool (mentorMode.js: rawMax / mentoredMax). Both are 1
+  // outside mentor mode, so no other blow moves.
+  if (damage > 0 && attacker.isPlayer && !attacker.peer) {
+    const k = mentorGearScale(attacker);
+    if (k < 1) damage = Math.max(1, Math.round(damage * k));
+  }
+  if (damage > 0 && target?.isPlayer && !target.peer && !attacker.isPlayer) {
+    const m = mentorDamageTakenMult(target);
+    if (m > 1) damage = Math.max(1, Math.round(damage * m));
+  }
+  // TELL1 (bible/12-Enhanced-AI/Feud-Arc.md 3.2): what the TARGET takes - a staggered foe a quarter more - after either
+  // core and every scale of the striker's, before the reports below, so they say what landed (systems/blowTaken.js)
+  damage = blowTaken(damage, attacker, target, weapon, { kind: weapon && weaponSkillUsed(weapon.templateIndex) === SKILLS.Archery ? 'arrow' : 'melee', ...(blowInfo ?? {}) });   // TELL6d: what the blow was (an aimed shot's)
+  // AUDIT 24 (wave 31) - A LANDED HIT ENDS THE ATTACKER'S NORMAL-POWER
+  // CONCEALMENT, and it was unported at every door.
+  //
+  // DFU writes this in the CALLERS, not here:
+  //     if (playerEntity.IsMagicallyConcealedNormalPower && damage > 0)
+  //         EntityEffectManager.BreakNormalPowerConcealmentEffects(...)
+  // - WeaponManager.cs:549-552 for the player's swing AND the player's
+  // arrow (DaggerfallMissile.AssignBowDamageToTarget routes a bow hit
+  // back through WeaponDamage), EnemyAttack.cs:255-257 for a foe hitting
+  // the player and :316-318 for a foe hitting anything else. Those three
+  // are the ENTIRE caller set of CalculateAttackDamage in the DFU tree
+  // and all three carry the same two-line guard, so the law is "any
+  // attack that lands damage" - and the tail of the formula is ONE home
+  // for it instead of seven a later door can forget. Two hosts had
+  // already forgotten OnMonsterHit exactly that way; wave 30 is the
+  // receipt. audit24_wave31 pins the equivalence against the C# rather
+  // than against this comment.
+  //
+  // Without it the concealments - live since S21, and read by the S21
+  // senses gate - survived a whole fight: cast the cheap Invisibility
+  // and clear a dungeon without ever being seen, or be beaten to death
+  // by a Nightblade you can never see. The TRUE powers are untouched,
+  // which is what the normal/true split exists for.
+  if (damage > 0) breakNormalPowerConcealment(attacker);
+  // E1: the STRIKES enchantment payload, at the tail for the same
+  // one-home reason as OnMonsterHit above. DFU runs it at the callers
+  // with ASYMMETRIC gates: the player's strike runs it on any hit
+  // resolution, damage 0 included (WeaponManager.cs:618-625 - the
+  // block also owns the zero-damage swing sound), an enemy's only
+  // when damage > 0 (EnemyAttack.cs:263-269). CastWhenStrikes gates
+  // itself on sourceDamage == 0 either way; what the player gate
+  // admits at zero is HealthLeech's use-stamp. The payloads can
+  // modulate the damage (PotentVs +5, LowDamageVs -5) and the total
+  // clamps at 0 inside the dispatcher.
+  // TWO-HANDS (AUDIT 2, bible/05-Combat/Two-Hands.md): THE BLOW'S WEIGHT - an off-hand blow is DUAL.OFF_DAMAGE of a blow
+  // (handsLaw.js OFF_HAND_BLOW) for what a blow sets off at its own rate rather than its damage's: on one roll it counts
+  // whole that share of the time, and otherwise sets off neither the weapon's Strikes payloads below (Cast When Strikes'
+  // spell, Potent Vs' five) nor a power's per-blow charge (the strike listeners' `blow`). Every other blow is whole.
+  const whole = !(blowWeight < 1) || rolls() < blowWeight;
+  const charged = weapon ?? wraps;   // HAND-WRAPS: the wraps' enchantment strikes with the fist
+  if (charged && isEnchantedItem(charged) && (attacker.isPlayer || damage > 0) && whole) {
+    damage = doItemEnchantmentPayloads(PAYLOAD.Strikes, charged, {
+      entity: attacker, target, damage,
+      // AUDIT 39: null, not 0 - no caller passes an enchantCtx here, and
+      // a literal 0 stamped HealthLeech's use clock at the epoch. The
+      // dispatcher falls back to the HOST's classic minute.
+      nowMinutes: enchantCtx?.nowMinutes ?? null, ctx: enchantCtx,
+    });
+  }
+  // DISC10-D H1: RacialOverrideEffect.OnWeaponHitEntity is NOT here any
+  // more. It sat at this tail for the one-home reason the two blocks above
+  // give, and that reason does not hold for it: DFU calls it from the
+  // player's STRIKE RESOLUTION after the target's health is taken
+  // (WeaponManager.cs:627-635 - DecreaseHealth, HandleAttackFromSource,
+  // then OnWeaponHitEntity) and after a civilian's SetHealth(0) (:514-521),
+  // for every connect whatever the damage. Here it ran BEFORE any door
+  // subtracted anything, so the werewolf's KilledInnocent could never see a
+  // dead innocent, and it sat past the ineffective-material early return, so
+  // a vampire's iron blade on a ghost never fed. worldTick.js's
+  // playerWeaponHitEntity is the one dispatcher; the strike sites call it.
+  // V3: the Ring of Namira, at DFU's own dispatch site - the tail of
+  // CalculateAttackDamage when an ENEMY damages the PLAYER
+  // (FormulaHelper.cs:702-719). The same registered-hook shape as
+  // above: artifactEffects imports this file's savingThrow chain, so
+  // a direct import here would close a cycle; worldTick registers.
+  if (target?.isPlayer && !attacker.isPlayer && damage > 0) {
+    _playerStruckHook?.(attacker, target, damage);
+    // SET2: and every named struck listener (Malacath's Spite of the Spurned) - the same moment, the same three words;
+    // the Ring's one slot above stays its own
+    for (const fn of _playerStruckListeners.values()) { try { fn(attacker, target, damage); } catch { /* a set is not the blow's problem */ } }
+  }
+  // SW1: PCAAO's `onAttackDamageCalculated`, at the same tail and in the
+  // same registered-hook shape. Unlike V3's above it is NOT gated on
+  // damage: three of the Shield Widget's six Recoil conditions are MISS
+  // conditions, and a blow that rang off the shield without hurting is
+  // exactly the moment the mod wants. The struck part rides along
+  // because three of the six ask whether the shield covers it.
+  if (target?.isPlayer && !attacker.isPlayer) {
+    _attackOnPlayerHook?.(attacker, target, damage, struckPart);
+  }
+  // AUDIT SET M2: MY BLOW, LANDED - every named strike listener told the blow's FINAL damage at a foe (after either
+  // core's crits, materials and armour, which PCAAO's apply after the blow modifiers), so a power that shares the blow
+  // (Ruhn's Cleave) shares what landed, never the number before the struck foe's own armour took its part
+  if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {
+    const info = { backstab: notes.backstab, blow: whole, wraps };   // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge
+    for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon, info); } catch { /* a set is not the blow's problem */ } }
+  }
+  return report(damage);
+}
+
+let _playerAttackHook = null;
+const _resolutionListeners = new Map();
+/** ARENA-FIX 9/10: NAMED listeners told EVERY attack's resolution (any attacker, any target) - `{ critical, backstab,
+ *  hit, ineffective, damage, attacker, target, weapon }`: a miss is `damage` 0, `critical` the critical-strike roll's
+ *  success (skillsToHit). A name re-registered replaces, `null` removes. Reporting only - an answer is ignored. */
+export function registerAttackResolutionListener(name, fn) { if (typeof fn === 'function') _resolutionListeners.set(name, fn); else _resolutionListeners.delete(name); }
+/** HN1: the enhanced HUD's registration seam for the PLAYER'S attack
+ *  resolutions (miss / ineffective / hit with damage, critical strike,
+ *  backstab). Reporting only - registered by the enhanced HUD, never by
+ *  the classic skin, and no formula reads it. */
+export function setPlayerAttackHook(fn) { _playerAttackHook = fn ?? null; }
+/** DUEL1: a blow between players, reported through the same seam on the STRIKER's machine. Since INT8 the formula runs
+ *  there, on the striker's stub (`peer`, whose own report stays quiet) against a neutral stand-in (AUDIT C&C H5), and the
+ *  host shows a miss at once and a hit at the referee's word ({ hit, damage } - scenes/world.js); the dungeon's court
+ *  boss shows a spell's number through it too (HN1). [DUEL1's defender resolved every blow and sent this answer back.] */
+export function reportPlayerAttack(r) {
+  if (!_playerAttackHook || !r) return;
+  try { _playerAttackHook({ critical: false, backstab: false, ineffective: false, ...r }); } catch { /* a HUD is not the duel's problem */ }
+}
+let _playerStruckHook = null;
+/** worldTick's registration seam for the enemy-damages-player tail
+ *  (V3: the Ring of Namira's reflection). */
+export function setPlayerStruckHook(fn) { _playerStruckHook = fn ?? null; }
+const _playerStruckListeners = new Map();
+/** SET2: NAMED listeners at the same tail - `fn(attacker, target, damage)`, told when a foe's attack (a weapon's or a
+ *  monster's own) resolves with damage on the player, before any host subtracts it. A name re-registered replaces,
+ *  `null` removes; the Ring of Namira keeps its one slot above. Reporting only - an answer is ignored. */
+export function registerPlayerStruckListener(name, fn) { if (typeof fn === 'function') _playerStruckListeners.set(name, fn); else _playerStruckListeners.delete(name); }
+const _playerStrikeListeners = new Map();
+/** AUDIT SET M2: NAMED listeners at the same tail for the other direction - `fn(attacker, target, damage, weapon, info)`
+ *  (RVN1: `info.backstab` - the blow landed as a backstab), told
+ *  when MY attack (never a peer's resolved here) resolves with damage on a foe (never a player: a duel's blow is its
+ *  own), the damage final, before any host subtracts it. A name re-registered replaces, `null` removes; an answer is
+ *  ignored. */
+export function registerPlayerStrikeListener(name, fn) { if (typeof fn === 'function') _playerStrikeListeners.set(name, fn); else _playerStrikeListeners.delete(name); }
+let _attackOnPlayerHook = null;
+/** SW1: the registration seam for PCAAO's `onAttackDamageCalculated` -
+ *  EVERY resolution of an enemy's attack on the player, hit or miss,
+ *  with the struck body part. Reporting only; no formula reads it. The
+ *  weapon rig registers it for the Shield Widget's Recoil module. */
+export function setAttackOnPlayerHook(fn) { _attackOnPlayerHook = fn ?? null; }
+
+// ---- GetEnemyEntityLanguageSkill (FormulaHelper.cs:2808-2880) ----
+// Class enemies: the six stealth careers speak Streetwise, the rest
+// Etiquette (DFU's BCHG - classic used Etiquette for all; the port
+// follows its source). Monsters: the tongue table; None = -1.
+const CLASS_STREETWISE = new Set([7, 8, 9, 10, 11, 5]);   // Burglar, Rogue, Acrobat, Thief, Assassin, Nightblade
+const MONSTER_LANGUAGE = new Map([
+  [7, SKILLS.Orcish], [12, SKILLS.Orcish], [21, SKILLS.Orcish], [24, SKILLS.Orcish],
+  [13, SKILLS.Harpy],
+  [16, SKILLS.Giantish], [22, SKILLS.Giantish],
+  [34, SKILLS.Dragonish], [40, SKILLS.Dragonish],
+  [10, SKILLS.Nymph], [42, SKILLS.Nymph],
+  [25, SKILLS.Daedric], [26, SKILLS.Daedric], [27, SKILLS.Daedric], [29, SKILLS.Daedric], [31, SKILLS.Daedric],
+  [2, SKILLS.Spriggan],
+  [8, SKILLS.Centaurian],
+  [1, SKILLS.Impish], [41, SKILLS.Impish],
+  [28, SKILLS.Etiquette], [30, SKILLS.Etiquette], [32, SKILLS.Etiquette], [33, SKILLS.Etiquette],
+]);
+/** DEX4b: a mod's language (TryGetOverride("GetEnemyEntityLanguageSkill"), :2810-2812) - `fn(entity)` -> a skill, or
+ *  null for DFU's. */
+const _languages = [];
+export function registerEnemyLanguage(fn) {
+  if (typeof fn !== 'function') throw new Error('registerEnemyLanguage: a function of (entity)');
+  _languages.push(fn);
+}
+export function enemyLanguageSkill(entity) {
+  for (const fn of _languages) {
+    const s = fn(entity);
+    if (s != null) return s;
+  }
+  if (entity?.isClass) return CLASS_STREETWISE.has(entity.careerIndex) ? SKILLS.Streetwise : SKILLS.Etiquette;
+  return MONSTER_LANGUAGE.get(entity?.careerIndex) ?? -1;
+}
+
+// ---- CalculateEnemyPacification (FormulaHelper.cs:357-391) ----
+/** C-slice (AUDIT 23 characters-2). Etiquette/Streetwise read
+ *  skill/10 + personality/5 (C# INT divisions); a monster tongue
+ *  reads the FULL skill + personality/10 - fluency in Orcish counts
+ *  for far more than manners. A sheathed weapon adds 10, a drawn one
+ *  costs 25. Roll Random.Range(0, 200) < chance.
+ *
+ *  X11: the LAST term is the Comprehend Languages effect's ChanceValue
+ *  (:377-380), and this doc comment carried "rides the effect arc (no
+ *  incumbent exists yet)" until that effect went live. It arrives as
+ *  an ARGUMENT rather than a global read for the same reason
+ *  `sheathed` does - DFU reads WeaponManager.Sheathed inside the
+ *  formula and this port passes it in - and here there is a second
+ *  reason: reading it here would mean importing systems/effects.js,
+ *  and effects -> spellcast -> formulas is the cycle this file's
+ *  concealment leaf exists to avoid. scenes/hostCombat.js supplies
+ *  it, at the one seam all three enemy pools already share. */
+export function calculateEnemyPacification(player, languageSkill, sheathed, roll01 = Math.random(), comprehendBonus = 0) {
+  let chance = 0;
+  if (languageSkill === SKILLS.Etiquette || languageSkill === SKILLS.Streetwise) {
+    chance += Math.trunc(skillValue(player, languageSkill) / 10);
+    chance += Math.trunc(liveStat(player, 'personality') / 5);
+  } else {
+    chance += skillValue(player, languageSkill);
+    chance += Math.trunc(liveStat(player, 'personality') / 10);
+  }
+  chance += sheathed ? 10 : -25;
+  chance += comprehendBonus;
+  return Math.floor(roll01 * 200) < chance;
+}
+
+// ---- EnemyAttack.MeleeDamage hit gate, "matched to classic" ----
+export const MELEE_HIT_YAW_DEG = 35.156;
+export function meleeHitConnects(dist, inSight, withinHitYaw) {
+  return inSight && (dist <= 0.25 || (dist <= MELEE_DISTANCE && withinHitYaw));
+}
+
+// ---- C15: knockback (WeaponManager.WeaponDamage + FormulaHelper) ----
+// PlayerSpeedChanger.classicToUnitySpeedUnitRatio / 10 - every
+// knockback constant divides through this (single source: motor.js,
+// imported at the top).
+export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
+
+/** GetEnemyEntityWeightInClassicUnits (FormulaHelper.cs:2881-2898),
+ *  now whole:
+ *
+ *    itemWeightsClassic = (int)(e.Items.GetWeight() * 4)
+ *    baseWeight = monster ? MobileEnemy.Weight : female ? 240 : 350
+ *    return itemWeightsClassic + baseWeight
+ *
+ *  EW1: the item half was absent and the shape hid why it mattered.
+ *  DFU sums the term for MONSTERS TOO - it computes itemWeightsClassic
+ *  BEFORE the type branch and adds it to whichever base wins - where
+ *  the port opened with `if (!isClass) return mobileWeight`, an early
+ *  exit that would have skipped the term even after it was bolted onto
+ *  the class arm. So the branch is a baseWeight assignment here, as it
+ *  is in C#, rather than two returns.
+ *
+ *  Weight feeds weaponKnockbackSpeed as its DIVISOR, so a foe missing
+ *  its kit was thrown further by every blow: a plate-armoured knight
+ *  at 350 instead of ~570 takes roughly 60% more knockback speed.
+ *
+ *  `items` is the foe's own list; totalWeight IS ItemCollection
+ *  .GetWeight (inventory.js:"the SHORTEST-LIVED"), so the kg->classic multiply and the
+ *  C# (int) truncation are the only arithmetic added here. A caller
+ *  with no list passes nothing and gets the old base-only answer,
+ *  which is the honest value for a foe the port gives no inventory. */
+export function enemyWeightClassicUnits(isClass, gender, mobileWeight, items = null) {
+  const itemWeightsClassic = Math.trunc(totalWeight(items ?? []) * 4);
+  const baseWeight = !isClass ? (mobileWeight ?? 0) : (gender === 'female' ? 240 : 350);
+  return itemWeightsClassic + baseWeight;
+}
+
+/** PT1: CalculateShopliftingChance, verbatim
+ *  (FormulaHelper.cs). The chance of BEING DETECTED, so a better
+ *  thief lowers it and a fine shop with a heavy armful raises it:
+ *
+ *      chance = 100 - live Pickpocket
+ *      chance += shopQuality + weightAndNumItems
+ *      clamp 5..95
+ */
+export function calculateShopliftingChance(pickpocketSkill, shopQuality, weightAndNumItems) {
+  const chance = (100 - pickpocketSkill) + shopQuality + weightAndNumItems;
+  return Math.max(5, Math.min(95, chance));
+}
+
+// ---- T3a: CalculatePickpocketingChance, verbatim ----
+// chance = live Pickpocket skill; vs an enemy mobile add
+// 5 * (playerLevel - targetLevel); clamp 5..95. targetLevel = null
+// for a townsperson (no level modifier).
+export function calculatePickpocketingChance(pickpocketSkill, playerLevel, targetLevel = null) {
+  let chance = pickpocketSkill;
+  if (targetLevel != null) chance += 5 * (playerLevel - targetLevel);
+  return Math.max(5, Math.min(95, chance));
+}
+
+/**
+ * WeaponManager.cs:578-581's GATE, which is a precedence trap:
+ *
+ *     if (enemyMotor.KnockbackSpeed <= (5 / ratio) &&
+ *         entityBehaviour.EntityType == EntityTypes.EnemyClass ||
+ *         enemyEntity.MobileEnemy.Weight > 0)
+ *
+ * `&&` binds tighter than `||` in C#, so this reads
+ * `(speed <= 5/ratio && isClass) || Weight > 0` - a monster with ANY
+ * weight is knocked back by every hit that lands, while a class enemy
+ * (whose MobileEnemy.Weight is 0 for every row in the table) must wait
+ * for the current shove to decay under the threshold first.
+ *
+ * The `Weight > 0` arm is also what keeps the formula defined. It is
+ * undefined at zero - (10d/0) * (2d - 2d) is an Infinity times a zero
+ * - and Ghost (18) and Wraith (23) are the only two rows that carry
+ * Weight 0, which is exactly why DFU never reaches it for them.
+ *
+ * AUDIT 24 (wave 38): three pools wrote three different subsets of
+ * this. One home.
+ */
+export function weaponKnockbackApplies(knockbackSpeed, isClass, mobileWeight) {
+  return (knockbackSpeed <= 5 / KB_UNIT && !!isClass) || (mobileWeight ?? 0) > 0;
+}
+
+/**
+ * MT-ii: the SAME guard one component over, and it is NOT the same
+ * expression. EnemyAttack.ApplyDamageToNonPlayer:336-337 writes the
+ * parentheses DFU's player-side arm leaves out:
+ *
+ *   if (targetMotor && (targetMotor.KnockbackSpeed <= (5 / ratio)
+ *           && (entityBehaviour.EntityType == EntityTypes.EnemyClass
+ *               || targetEntity.MobileEnemy.Weight > 0)))
+ *
+ * Two differences from weaponKnockbackApplies above, both real:
+ *   1. THE BINDING. The player's arm is `speed <= 5 && targetIsClass
+ *      || weight > 0`, so a weighted monster is shoved by every
+ *      landed hit however hard it is already flying. The foe's arm
+ *      is `speed <= 5 && (isClass || weight > 0)`, so the decay
+ *      threshold governs EVERY foe-dealt knockback - one enemy never
+ *      chain-shoves another.
+ *   2. WHOSE class. `entityBehaviour` in WeaponManager is the enemy
+ *      being hit; in EnemyAttack it is the ATTACKER. So the class
+ *      test names the attacker here and the target there.
+ * One home each, because they are two laws that merely look alike.
+ */
+export function enemyKnockbackApplies(knockbackSpeed, attackerIsClass, targetMobileWeight) {
+  return knockbackSpeed <= 5 / KB_UNIT && (!!attackerIsClass || (targetMobileWeight ?? 0) > 0);
+}
+
+/** The WeaponManager player-hit knockback speed, verbatim:
+ *  kb = ((10d - w) * 256) / (w + 10d) * 2d;
+ *  speed = (10d / w) * (2d - kb/256), through the ratio, floored at
+ *  15 classic units. Caller owns the weight-0 gate. */
+export function weaponKnockbackSpeed(damage, weightClassic) {
+  const ten = damage * 10, two = damage * 2;
+  const kb = ((ten - weightClassic) * 256) / (weightClassic + ten) * two;
+  let ks = (ten / weightClassic) * (two - kb / 256);
+  ks /= KB_UNIT;
+  const floor = 15 / KB_UNIT;
+  return ks < floor ? floor : ks;
+}
+
+/** AC-COMPARE (FIELD BUGS 2026-09-29d): THE STRUCK-PART TABLE A BLOW IS DRAWN FROM, under the core in force. A
+ *  registered core that draws a blow's part from a table of its own registers the table beside the core, on the core's
+ *  own switch, and declines with it (the combat overhaul's twenty - combat/pcaao.js); FormulaHelper's STRUCK_BODY_PARTS
+ *  (:869 - the head 2, each arm 3, the chest 4, the hands 4, the legs 3, the feet 1) stands otherwise. The enhanced
+ *  pack's overall armour weighs the doll's seven numbers by it (ui/armourCard.js), so it follows the core a blow meets. */
+export const struckBodyPartTable = () => _overrides.get('struckBodyPartTable')?.() ?? STRUCK_BODY_PARTS;

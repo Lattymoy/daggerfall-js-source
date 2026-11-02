@@ -1,0 +1,394 @@
+[
+  {
+    "name": "CK-marks-none",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!companionBodies || !sp || free || !companionCastable(sp)) return [];\n",
+    "new": "    if (true) return [];\n",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-harm-given",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!companionBodies || !sp || free || !companionCastable(sp)) return [];\n",
+    "new": "    if (!companionBodies || !sp || free) return [];\n",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-puppet-given",
+    "file": "src/scenes/hostMagic.js",
+    "old": "if (!rec || rec.dead || rec._knockedOut || !rec.entity || rec.puppet ||",
+    "new": "if (!rec || rec.dead || rec._knockedOut || !rec.entity ||",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-gift-as-blow",
+    "file": "src/scenes/hostMagic.js",
+    "old": "{ allyCast: true }, foeSinks(rec, false));",
+    "new": "{ allyCast: true }, foeSinks(rec, true));",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-gift-untagged",
+    "file": "src/scenes/hostMagic.js",
+    "old": "{ allyCast: true }, foeSinks(rec, false));",
+    "new": "undefined, foeSinks(rec, false));",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-gift-raw",
+    "file": "src/scenes/hostMagic.js",
+    "old": "applySpellToFoe(gift, castingLevel(playerEntity), rec,",
+    "new": "applySpellToFoe(sp, castingLevel(playerEntity), rec,",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-gift-unsaid",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!quiet) sayGift(allyCastCasterLine(sp.name, mark.name));   // GIFT-QUIET\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-wall-unread",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (Number.isFinite(hit) && hit < along - 1e-3) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-crosshair-unasked",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    const mine = !readiedFree && allyReach !== null && allyCastable(sp) ? companionInReach(eye, dir, allyReach) : null;",
+    "new": "    const mine = null;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-near-unarmed",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (companionNear(lastAim?.eye ?? null, sp)) { sayArm('mine-near', prevArm, pressButtonToFireSpellText(), COMPANION_ARMED_LINE); return true; }",
+    "new": "      if (false) { sayArm('mine-near', prevArm, pressButtonToFireSpellText(), COMPANION_ARMED_LINE); return true; }",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-near-radius",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (off <= ALLY_ARM_RADIUS) return true;",
+    "new": "      if (off <= 0.5) return true;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-touch-without-her",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    marks.push(...companionMarksFor(sp));   // COMPANION-KIT: or on my companion\n",
+    "new": "",
+    "tests": [
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
+    ]
+  },
+  {
+    "name": "CK-touch-applied-as-foe",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      else if (t?.companion) giveToCompanion(t, sp);   // COMPANION-KIT: the touch met my companion\n",
+    "new": "",
+    "tests": [
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
+    ]
+  },
+  {
+    "name": "CK-blast-without-her",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      giveToCompanions(sweepFoes(eye, EXPLOSION_RADIUS, companionMarksFor(sp)), sp);   // COMPANION-KIT: and my companions\n",
+    "new": "",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-bolt-passes-her",
+    "file": "src/scenes/hostMagic.js",
+    "old": "[...allyMarksFor(m.spell, false), ...companionMarksFor(m.spell, false)]",
+    "new": "[...allyMarksFor(m.spell, false)]",
+    "tests": [
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
+    ]
+  },
+  {
+    "name": "CK-bolt-given-as-a-mates",
+    "file": "src/scenes/hostMagic.js",
+    "old": "          else if (hitMate.companion) giveToCompanion(hitMate, m.spell);   // COMPANION-KIT\n",
+    "new": "",
+    "tests": [
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
+    ]
+  },
+  {
+    "name": "CK-burst-passes-her",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (allies && caster?.entity === playerEntity) giveToCompanions(sweepFoes(pos, EXPLOSION_RADIUS, companionMarksFor(spell, false)), spell);",
+    "new": "    void giveToCompanions;",
+    "tests": [
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
+    ]
+  },
+  {
+    "name": "CK-pack-none",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "        items: [],\n      };",
+    "new": "      };",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-pack-copied",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "    packOf: (boat, name) => find(boat, name)?.items ?? null,",
+    "new": "    packOf: (boat, name) => find(boat, name)?.items?.slice() ?? null,",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-pack-not-saved",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "    snapshot: () => ({\n      party: party.map((p) => ({ ...p, items: packOut(p.items) })),\n      resting: resting.map((r) => ({ ...r })),\n    }),",
+    "new": "    snapshot: () => ({ party: party.map((p) => ({ ...p, items: [] })), resting: resting.map((r) => ({ ...r })) }),",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-codec-out-unread",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      return codec ? codec.serialize(items) : items.slice();",
+    "new": "      return items.slice();",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-codec-in-unread",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      const out = codec ? codec.deserialize(data) : data.slice();",
+    "new": "      const out = data.slice();",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-pack-kept",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      c.items.length = 0;\n      return out;",
+    "new": "      return out;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-activate-arm-dropped",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (openCompanion(foe)) return true;",
+    "new": "    void openCompanion;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-steal-opens",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (\n    mode !== 'steal' &&\n    openCompanion &&\n    foe.companion != null &&\n    foe.shipmate === true &&\n    !String(foe.companion).startsWith('peer:')\n  ) {",
+    "new": "  if (openCompanion && foe.companion != null && foe.shipmate === true && !String(foe.companion).startsWith('peer:')) {",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-peer-opened",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (\n    mode !== 'steal' &&\n    openCompanion &&\n    foe.companion != null &&\n    foe.shipmate === true &&\n    !String(foe.companion).startsWith('peer:')\n  ) {",
+    "new": "  if (mode !== 'steal' && openCompanion && foe.companion != null && foe.shipmate === true) {",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-sendback-pack-left",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      stowPack(boat.uid, pack, name);\n      return 'back';",
+    "new": "      return 'back';",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-knock-pack-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (c.items?.length) stowPack(c.boat, c.items.splice(0), c.name);   // COMPANION-KIT: and his pack with him\n",
+    "new": "",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-stow-no-hold",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const rest = boat ? deps.board?.giveItems?.(items, boat)?.left ?? [] : items;",
+    "new": "const rest = boat ? deps.board?.giveItems?.(items, null)?.left ?? [] : items;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-bar-no-name",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    set('name', mate ? p.name : '', (v) => {",
+    "new": "    set('name', '', (v) => {",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-bar-no-digits",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    set(\n      'hp',\n      mate && Number.isFinite(p.hp) && Number.isFinite(p.hpMax) && p.hpMax > 0\n        ? `${Math.max(0, Math.round(p.hp))}/${Math.round(p.hpMax)}`\n        : '',\n      (v) => {\n        slot.hp.textContent = v;\n      },\n    );",
+    "new": "    set('hp', mate && Number.isFinite(p.hp) && Number.isFinite(p.hpMax) && p.hpMax > 0 ? '' : '', (v) => {\n      slot.hp.textContent = v;\n    });",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-bar-no-fx",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const fx = mate && Array.isArray(p.fx) ? p.fx.slice(0, MATE_FX_MAX) : [];",
+    "new": "    const fx = [];",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-bar-fx-uncapped",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const fx = mate && Array.isArray(p.fx) ? p.fx.slice(0, MATE_FX_MAX) : [];",
+    "new": "    const fx = mate && Array.isArray(p.fx) ? p.fx.slice() : [];",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-bar-every-mate",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const mate = typeof p.name === 'string' && p.name.length > 0;",
+    "new": "    const mate = true;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-panel-hidden-offline",
+    "file": "src/ui/partyPanel.js",
+    "old": "      if (!social) {\n        if (ck !== compPainted) paint();\n        return;\n      }",
+    "new": "      if (!social) return;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-panel-no-role",
+    "file": "src/ui/partyPanel.js",
+    "old": "    setText(card.where, String(c.role ?? ''));",
+    "new": "    setText(card.where, '');",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-panel-never-repainted",
+    "file": "src/ui/partyPanel.js",
+    "old": "    compPainted = mates.map(companionKey).join('#');",
+    "new": "    compPainted = null;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-panel-kept",
+    "file": "src/ui/partyPanel.js",
+    "old": "    showing = rows.length > 0 || mates.length > 0;",
+    "new": "    showing = true;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-panel-no-cards",
+    "file": "src/ui/partyPanel.js",
+    "old": "    const mates = comps(); // COMPANION-KIT",
+    "new": "    const mates = [];",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-panel-seam-lost",
+    "file": "src/ui/partyPanel.js",
+    "old": "      companions = typeof fn === 'function' ? fn : null;\n      compPainted = null;",
+    "new": "      void fn;",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-panel-mark",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (card.facemark && card.facemark.textContent !== mark) card.facemark.textContent = mark;\n  };",
+    "new": "  };",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-world-lock-on",
+    "file": "src/scenes/world.js",
+    "old": "[...exteriorFoes.foes, ...cityGuards.guards].filter((f) => f.companion == null), collider, LOCK_PICK_DISTANCE)",
+    "new": "[...exteriorFoes.foes, ...cityGuards.guards], collider, LOCK_PICK_DISTANCE)",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  },
+  {
+    "name": "CK-world-panel-companions",
+    "file": "src/scenes/world.js",
+    "old": "    partyPanel.setCompanions(partyCompanions);   // COMPANION-KIT\n",
+    "new": "",
+    "tests": [
+      "test/systems/companionkit.test.js"
+    ]
+  }
+]

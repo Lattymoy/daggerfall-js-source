@@ -1,0 +1,368 @@
+[
+  {
+    "name": "AURUM-rotation-nudge-unbounded",
+    "file": "src/net/aurumLaw.js",
+    "old": "const nudge = Math.min(2.5, Math.max(0, pool.length / n - 1.5));",
+    "new": "const nudge = 6;",
+    "tests": [
+      "test/net/aurum_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-rotation-seen-never-kept",
+    "file": "src/net/aurumLaw.js",
+    "old": "run.set(id, d); seen.set(id, d); }",
+    "new": "run.set(id, d); seen.get(id); }",
+    "tests": [
+      "test/net/aurum_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-rotation-eligibility-ignored",
+    "file": "src/net/aurumLaw.js",
+    "old": "const pool = AURUM_DAILY.filter((x) => x.slot === slot && eligible(x.id, d));",
+    "new": "const pool = AURUM_DAILY.filter((x) => x.slot === slot);",
+    "tests": [
+      "test/net/aurum_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-card-wire-price-trusted",
+    "file": "src/net/aurumLaw.js",
+    "old": "wares.push({ id: d.id, aurum: d.aurum, slot: d.slot, held: r.held === true });",
+    "new": "wares.push({ id: d.id, aurum: r.aurum ?? d.aurum, slot: d.slot, held: r.held === true });",
+    "tests": [
+      "test/net/aurum_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-card-duplicate-kept",
+    "file": "src/net/aurumLaw.js",
+    "old": "if (d && !wares.some((w) => w.id === d.id))",
+    "new": "if (d)",
+    "tests": [
+      "test/net/aurum_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-bonus-wrong-base",
+    "file": "src/net/aurumLaw.js",
+    "old": "const w = shopWareById(id), base = AURUM_PACKS[0];",
+    "new": "const w = shopWareById(id), base = AURUM_PACKS[1];",
+    "tests": [
+      "test/net/aurum_law.test.js",
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-week-from-thursday",
+    "file": "src/net/aurumLaw.js",
+    "old": "Math.floor((Math.floor(nowS / 86_400) + 3) / 7)",
+    "new": "Math.floor(Math.floor(nowS / 86_400) / 7)",
+    "tests": [
+      "test/net/aurum_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-service-guest-carded",
+    "file": "server-account/src/aurum.js",
+    "old": "  if (!player?.handle) return null;",
+    "new": "  if (!player) return null;",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-service-dev-open-to-all",
+    "file": "server-account/src/aurum.js",
+    "old": "return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
+    "new": "return s !== 'off';",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-service-a-line-kind-left-out",
+    "file": "server-account/src/aurum.js",
+    "old": "export const LINES_SQL = '(SELECT COALESCE(SUM(amount), 0) FROM aurum_ledger WHERE account = ?1)';",
+    "new": "export const LINES_SQL = \"(SELECT COALESCE(SUM(amount), 0) FROM aurum_ledger WHERE account = ?1 AND kind != 'cache')\";",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-service-an-unpaid-pack-counted",
+    "file": "server-account/src/aurum.js",
+    "old": "FROM shop_orders WHERE player = ?1 AND status = 'paid')\";",
+    "new": "FROM shop_orders WHERE player = ?1)\";",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-service-off-day-sold",
+    "file": "server-account/src/aurum.js",
+    "old": "  if (!deals.includes(w.id) && !soldForAurum(env, w, nowS)) return { error: 'aurum-sale' };\n",
+    "new": "",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "AURUM-service-price-never-spent",
+    "file": "server-account/src/aurum.js",
+    "old": ".bind(player.id, w.id, -at.price, utcDay(nowS), nowS, at.price, credit.join(' '))",
+    "new": ".bind(player.id, w.id, 0, utcDay(nowS), nowS, at.price, credit.join(' '))",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "AURUM-service-ware-never-given",
+    "file": "server-account/src/aurum.js",
+    "old": "shop_held: (w.bit || toks.includes(w.id) ? toks : [...toks, w.id]).join(' ')",
+    "new": "shop_held: toks.join(' ')",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "AURUM-service-balance-guard-dropped",
+    "file": "server-account/src/aurum.js",
+    "old": "WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, w.id,",
+    "new": "WHERE ?6 > 0`).bind(player.id, w.id,",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "AURUM-service-row-guard-dropped",
+    "file": "server-account/src/aurum.js",
+    "old": "WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5')",
+    "new": "WHERE id = ?1 AND ?4 = ?4 AND ?5 = ?5')",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-deed-rite-paid",
+    "file": "server-account/migrations/0201_storefront.sql",
+    "old": "AFTER INSERT ON gate_kills WHEN NEW.earned != 'rite'",
+    "new": "AFTER INSERT ON gate_kills",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-deed-amount-drift",
+    "file": "server-account/migrations/0201_storefront.sql",
+    "old": "'deed', 'serpent:' || ((NEW.at / 86400 + 3) / 7), 25,",
+    "new": "'deed', 'serpent:' || ((NEW.at / 86400 + 3) / 7), 30,",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-deed-twice-a-week",
+    "file": "server-account/migrations/0201_storefront.sql",
+    "old": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'gate:' || ((NEW.at / 86400 + 3) / 7), 30,",
+    "new": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'gate:' || NEW.at, 30,",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-window-daily-while-closed",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');",
+    "new": "  if (flow?.aurum?.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-window-daily-first",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');",
+    "new": "  if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(0, 0, 'daily');",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-window-balance-never-drawn",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "      if (balanceN.textContent !== bt) balanceN.textContent = bt;",
+    "new": "",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-window-one-press-spends",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "          if (armed?.id !== w.id) {\n            armed = { id: w.id, at: now() };\n            draw();\n            return;\n          }",
+    "new": "",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-window-armed-for-good",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  const ARM_MS = 6000;",
+    "new": "  const ARM_MS = 6e9;",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-window-get-aurum-nowhere",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "      return button('sh-getaurum', t('shop.daily.get', 'Get Aurum'), () => pick('aurum'));",
+    "new": "      return button('sh-getaurum', t('shop.daily.get', 'Get Aurum'), () => {});",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-window-icon-worn-as-glyph",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    else if (w.kind === 'icon')\n      fl.wearIcon?.(w.key); // AURUM: in the portrait well\n    else fl.toggleGlyph?.(w.key);",
+    "new": "    else fl.toggleGlyph?.(w.key);",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-window-pack-share-unsaid",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "      if (bonus) stage.append(el('div', 'sh-bonus', t('shop.aurum.bonus', '{pct}% more Aurum', { pct: bonus })));\n    } else if (w.kind === 'mount') {",
+    "new": "    } else if (w.kind === 'mount') {",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-flow-card-never-read",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.aurum = aurumCardOf(r.data.aurum); // AURUM: the Aurum's card, or none",
+    "new": "    self.aurum = null;",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-flow-answer-card-ignored",
+    "file": "src/ui/accountFlow.js",
+    "old": "      };\n      self.aurum = aurumCardOf(r.data.aurum) ?? self.aurum;\n      self.busy = false;",
+    "new": "      };\n      self.aurum = self.aurum;\n      self.busy = false;",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-flow-pack-never-said",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (\n      self.shopWaiting &&\n      (pack\n        ? (self.aurum?.balance ?? -Infinity) > (self.shopWaitingFrom ?? Infinity)\n        : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held))\n    ) {",
+    "new": "    if (self.shopWaiting && (pack ? false : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held))) {",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-A1-refund-word-not-kept",
+    "file": "server-account/src/shop.js",
+    "old": "      await keepWord(ctx.db, o.payment_intent, 'refund', '', 1, ctx.nowS);",
+    "new": "",
+    "tests": [
+      "test/server/storefront_audit2_pay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-A1-paid-word-blind",
+    "file": "server-account/src/shop.js",
+    "old": "    if (fate.refunded || fate.disputes) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/server/storefront_audit2_pay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-A2-credit-trusted",
+    "file": "server-account/src/shop.js",
+    "old": "const creditMoved = (/** @type {any} */ row, /** @type {any} */ w, /** @type {any} */ order) =>\n  w.gives.length > 0 && shopCreditOf(row, w.id).join(' ') !== String(order.credit ?? '');",
+    "new": "const creditMoved = (/** @type {any} */ row, /** @type {any} */ w, /** @type {any} */ order) => false;",
+    "tests": [
+      "test/server/storefront_audit2_pay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-A2-restore-gives-refunded-credit",
+    "file": "server-account/src/shop.js",
+    "old": "    if (!had.includes(c) && !toks.includes(`-${c}`)) toks.push(`-${c}`);",
+    "new": "    if (false) toks.push(`-${c}`);",
+    "tests": [
+      "test/server/storefront_audit2_pay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-A3-refund-on-disputed-ignored",
+    "file": "server-account/src/shop.js",
+    "old": "    if (why !== 'refunded') return { ok: true, applied: 0 }; // a second dispute on a payment already held by one: its word is kept",
+    "new": "    return { ok: true, applied: 0 };",
+    "tests": [
+      "test/server/storefront_audit2_pay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-A3-restore-over-refund",
+    "file": "server-account/src/shop.js",
+    "old": "  if (fate.refunded) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/server/storefront_audit2_pay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-A4-stale-attempt-refunds",
+    "file": "server-account/src/shop.js",
+    "old": "      if (await moved(db, id, from)) return { ok: true, applied: 0 }; // another word on it landed first - the guard held",
+    "new": "      if (await moved(db, id, from)) return { ok: true, applied: 0, refund: 'held' }; // another word on it landed first - the guard held",
+    "tests": [
+      "test/server/storefront_audit2_pay.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-demand-buys-uncounted",
+    "file": "server-account/src/staffShop.js",
+    "old": "if (c) { c.bought += Number(b.c) || 0; c.aurum += Number(b.aurum) || 0; }",
+    "new": "if (c) { c.bought += 0; }",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-demand-day-wares-unsaid",
+    "file": "server-account/src/staffShop.js",
+    "old": "daily: d < AURUM_DAILY_FROM * DAY_S ? [] : dailyWaresAt(env, d), wares: {} });",
+    "new": "daily: [], wares: {} });",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-a-daily-ware-dearer-than-its-money",
+    "file": "src/net/aurumLaw.js",
+    "old": "export const aurumDealOf = (/** @type {number} */ price) => Math.round(price * AURUM_DEAL);",
+    "new": "export const aurumDealOf = (/** @type {number} */ price) => Math.round(price * 1.1);",
+    "tests": [
+      "test/net/aurum_law.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  }
+]

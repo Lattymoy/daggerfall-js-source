@@ -1,0 +1,157 @@
+[
+  {
+    "name": "LD-AI-held-by-day-reach",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      dist < (held ? see * DISENGAGE : see) &&",
+    "new": "      dist < (held ? sight * DISENGAGE : see) &&",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-AI-threat-flashes-unread",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      dist < nightSight(FLEE_RANGE, { night: !!world.night, lit }) &&",
+    "new": "      dist < nightSight(FLEE_RANGE, { night: !!world.night, lit: !!c.lit }) &&",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-SL-night-without-harbour",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      const night = !!ctx.night && !!hb;",
+    "new": "      const night = !!ctx.night;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-SL-lurk-sails-day-place",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      return plan(e.path[e.i], dist2(here, at) > LURK_R * 0.5 ? 1 : LURK_SAILS);",
+    "new": "      return plan(e.path[e.i], dist2(here, e.at) > LURK_R * 0.5 ? 1 : LURK_SAILS);",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-SL-ring-clear-from-day",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "          if (clear(at, q)) ring.push(q); // AUDIT SHIP-LIFE A4: as the patrol's",
+    "new": "          if (clear(e.at, q)) ring.push(q); // AUDIT SHIP-LIFE A4: as the patrol's",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-H-work-sails-whole",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(1 - damage.sailShare()) * 0.5",
+    "new": "(1 - damage.sailShare())",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-H-cry-outlives-clear",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    hailCalls.clear();   // SHIP-WATCH\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-H-stow-empty-said",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!items?.length) return;\n    const boat = (csa()?.state?.AllBoats",
+    "new": "    const boat = (csa()?.state?.AllBoats",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-H-prune-pack-lost",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      for (const c of gone) if (c.items?.length) stowPack(c.boat, c.items.splice(0), c.name);",
+    "new": "      void gone;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-W-panel-frame-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    try { companionPanelFrame(); } catch (e) { console.warn('[companions] panel', e?.message ?? e); }   // COMPANION-KIT\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-W-card-off-the-party",
+    "file": "src/scenes/world.js",
+    "old": "const e = rec && !rec.dead ? rec.entity : null;",
+    "new": "const e = null;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-W-offline-panel-orphaned",
+    "file": "src/scenes/world.js",
+    "old": "    partyPanel?.destroy?.();   // COMPANION-KIT",
+    "new": "    void 0;   // COMPANION-KIT",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-W-pack-door-unasked",
+    "file": "src/scenes/world.js",
+    "old": "if (!naval?.companionPack?.(key) || !inventoryDoorReady()) return false;",
+    "new": "if (!naval?.companionPack?.(key)) return false;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-W-pack-mount-failure-said-open",
+    "file": "src/scenes/world.js",
+    "old": "    if (!modes?.mountWindow?.(w)) { (w.dispose?.bind(w) ?? w._closeSilently?.bind(w))?.(); return false; }\n    return true;\n  };",
+    "new": "    modes?.mountWindow?.(w);\n    return true;\n  };",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-W-party-companions-arc-off",
+    "file": "src/scenes/world.js",
+    "old": "const party = navalOn() && !csaRuntime?.isSailing?.() ? naval",
+    "new": "const party = !csaRuntime?.isSailing?.() ? naval",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-W-card-dead-body",
+    "file": "src/scenes/world.js",
+    "old": "const e = rec && !rec.dead ? rec.entity : null;",
+    "new": "const e = rec ? rec.entity : null;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ]
+  },
+  {
+    "name": "LD-H-cry-any-boat",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (deck?.crewed) hailCalls.set(deck,",
+    "new": "if (deck) hailCalls.set(deck,",
+    "tests": [
+      "test/systems/naval/auditwatchkit_net.test.js"
+    ],
+    "equivalent": true,
+    "why": "an uncrewed boat has no crew stood to cry it (navalCrew counts none), so a call set for her is never heard; myCrew hands it on and nothing reads it"
+  }
+]

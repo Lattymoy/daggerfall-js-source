@@ -1,0 +1,85 @@
+[
+  {
+    "name": "OW-PAST-BAY-the-press-dropped",
+    "file": "src/ui/heldMap.js",
+    "old": "      if (pick) { this._select(pick); this._openPanel('travel'); return; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ]
+  },
+  {
+    "name": "OW-PAST-BAY-the-sea-walked",
+    "file": "src/ui/heldMap.js",
+    "old": "      : past?.on === 'land' && !inBay(px, py) && this._coordsAllowedHere()",
+    "new": "      : past && !inBay(px, py) && this._coordsAllowedHere()",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ],
+    "note": "AUDIT TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay where the world knows it, the press's pick one method"
+  },
+  {
+    "name": "OW-PAST-BAY-the-coordinates-law-skipped",
+    "file": "src/ui/heldMap.js",
+    "old": "past?.on === 'land' && !inBay(px, py) && this._coordsAllowedHere() ?",
+    "new": "past?.on === 'land' && !inBay(px, py) ?",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ]
+  },
+  {
+    "name": "OW-PAST-BAY-the-mark-unpicked",
+    "file": "src/ui/heldMap.js",
+    "old": "const end = past?.city?.pixel ? past.city : past?.on === 'mark' ? past : null;",
+    "new": "const end = past?.city?.pixel ? past.city : null;",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ]
+  },
+  {
+    "name": "OW-PAST-BAY-the-teleport-map-walked",
+    "file": "src/ui/heldMap.js",
+    "old": "_walksPastBay() { return !!this._tamriel && !this._zoneMap && !this.teleportationTravel && !this._it && !!this._to; }",
+    "new": "_walksPastBay() { return !!this._tamriel && !this._zoneMap && !this._it && !!this._to; }",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ]
+  },
+  {
+    "name": "OW-PAST-BAY-no-mod-walks",
+    "file": "src/ui/heldMap.js",
+    "old": "_walksPastBay() { return !!this._tamriel && !this._zoneMap && !this.teleportationTravel && !this._it && !!this._to; }",
+    "new": "_walksPastBay() { return !!this._tamriel && !this._zoneMap && !this.teleportationTravel && !this._it; }",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ]
+  },
+  {
+    "name": "OW-PAST-BAY-the-flat-sheet-walks",
+    "file": "src/ui/heldMap.js",
+    "old": "_walksPastBay() { return !!this._tamriel && !this._zoneMap && !this.teleportationTravel && !this._it && !!this._to; }",
+    "new": "_walksPastBay() { return !this._zoneMap && !this.teleportationTravel && !this._it && !!this._to; }",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ]
+  },
+  {
+    "name": "OW-PAST-BAY-the-pick-never-walks",
+    "file": "src/ui/heldMap.js",
+    "old": "walk: !place && this._walksPastBay(), place, door: !bare, town };",
+    "new": "walk: false, place, door: !bare, town };",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ],
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
+  },
+  {
+    "name": "OW-PAST-BAY-the-mark-has-no-pixel",
+    "file": "src/ui/tamrielInk.js",
+    "old": "name, pixel: { x: mark.place.x, y: mark.place.y } };",
+    "new": "name, pixel: { x: 0, y: 0 } };",
+    "tests": [
+      "test/ui/owpastbay_walk.test.js"
+    ]
+  }
+]

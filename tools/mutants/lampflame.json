@@ -1,0 +1,86 @@
+[
+  {
+    "name": "LAMPFLAME-table-unread",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (flame != null) return size.h * flame;\n",
+    "new": "",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "LAMPFLAME-offset-unscaled",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  return own ? own.y * k : size.h / 2;",
+    "new": "  return own ? own.y : size.h / 2;",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "LAMPFLAME-any-flat",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (piece.flat[0] !== LIGHTS_ARCHIVE) return size.h / 2;\n",
+    "new": "",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "LAMPFLAME-short-chain-at-middle",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "18: 0.64, 19: 0.69, 26: 0.23, 28: 0.87",
+    "new": "18: 0.64, 19: 0.69, 26: 0.5, 28: 0.87",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "LAMPFLAME-post-at-middle",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "28: 0.87, 29: 0.81 });",
+    "new": "28: 0.87, 29: 0.5 });",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "LAMPFLAME-unlit-twin",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "{ 7: 0.45, 10: 0.61,",
+    "new": "{ 7: 0.5, 10: 0.5,",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "LAMPFLAME-yard-at-top",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const lift = decorLightLift(piece, size);\n",
+    "new": "  const lift = size.h;\n",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "CANDLEDIM-street-colour",
+    "file": "src/scenes/homeYards.js",
+    "old": "    e.color = l.candle ? candleTone(l, on) : color;",
+    "new": "    e.color = color;",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "CANDLEDIM-lane-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "  l.tone = new Float32Array(interiorLightColor(on, l.color, l.intensity));",
+    "new": "  l.tone = new Float32Array(interiorLightColor(false, l.color, l.intensity));",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "CANDLEDIM-tone-every-frame",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if (l.tone && l.toneOn === on) return l.tone;\n",
+    "new": "",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "CANDLEDIM-candle-unmarked",
+    "file": "src/scenes/homeYards.js",
+    "old": "color: c.color, slot, candle: true }, lift };",
+    "new": "color: c.color, slot }, lift };",
+    "tests": ["test/scenes/lampflame.test.js"]
+  },
+  {
+    "name": "CANDLEDIM-host-lane",
+    "file": "src/scenes/world.js",
+    "old": "CITY_LIGHT_COLOR_F32, csaLit, lightingOn);   // CANDLE-DIM",
+    "new": "CITY_LIGHT_COLOR_F32, csaLit);   // CANDLE-DIM",
+    "tests": ["test/scenes/lampflame.test.js"]
+  }
+]

@@ -1,0 +1,497 @@
+[
+  {
+    "name": "STUCK-ARROWS-still-lost",
+    "file": "src/combat/arrowFlight.js",
+    "old": "{ this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit); m.dead = true; continue; }",
+    "new": "{ m.dead = true; continue; }",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-the-point-off-the-ray",
+    "file": "src/combat/arrowFlight.js",
+    "old": "this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit)",
+    "new": "this._stick(m, [m.pos[0], m.pos[1], m.pos[2]], unit)",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-no-lift",
+    "file": "src/combat/arrowFlight.js",
+    "old": "[at[0], at[1] - STUCK_ARROW_LIFT, at[2]]",
+    "new": "[at[0], at[1], at[2]]",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-no-label",
+    "file": "src/combat/arrowFlight.js",
+    "old": "  pile.label = STUCK_ARROW_LABEL;\n",
+    "new": "",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-no-noStore",
+    "file": "src/combat/arrowFlight.js",
+    "old": "  pile.noStore = STUCK_ARROW_NO_STORE;\n",
+    "new": "",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-saved",
+    "file": "src/combat/arrowFlight.js",
+    "old": "{ unsaved: true, drawn: false, owner: STUCK_ARROW_OWNER }",
+    "new": "{ unsaved: false, drawn: false, owner: STUCK_ARROW_OWNER }",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-the-scene-cache-keeps-it",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "&& p.owner !== 'wild' && !p.unsaved).map",
+    "new": "&& p.owner !== 'wild').map",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-no-ground-arm",
+    "file": "src/combat/arrowFlight.js",
+    "old": "{ if (from) this._stick(m, groundEntry(from, m.pos, c), m.dir); m.dead = true; }",
+    "new": "{ m.dead = true; }",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-the-steps-end",
+    "file": "src/combat/arrowFlight.js",
+    "old": "this._stick(m, groundEntry(from, m.pos, c), m.dir)",
+    "new": "this._stick(m, [m.pos[0], c.heightAt(m.pos[0], m.pos[2]), m.pos[2]], m.dir)",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-the-crossing-not-interpolated",
+    "file": "src/combat/arrowFlight.js",
+    "old": "const t = da > 0 && da - db > 0 ? Math.min(1, da / (da - db)) : 0;",
+    "new": "const t = da > 0 && da - db > 0 ? 1 : 0;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-an-enemys-shaft",
+    "file": "src/combat/arrowFlight.js",
+    "old": "return !!m?.fromPlayer && !m.visual",
+    "new": "return !!m && !m.visual",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-a-peers-echo",
+    "file": "src/combat/arrowFlight.js",
+    "old": "&& !m.visual && !m.summoned",
+    "new": "&& !m.summoned",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-a-conjured-round",
+    "file": "src/combat/arrowFlight.js",
+    "old": "&& !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen()",
+    "new": "&& !orbArchiveFor(m.weapon) && !shotTallyOpen()",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-the-guns-pellet",
+    "file": "src/combat/arrowFlight.js",
+    "old": "&& !orbArchiveFor(m.weapon) && !shotTallyOpen()",
+    "new": "&& !shotTallyOpen()",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-on-the-sand",
+    "file": "src/combat/arrowFlight.js",
+    "old": " && !shotTallyOpen();\n}",
+    "new": ";\n}",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-no-cap",
+    "file": "src/combat/arrowFlight.js",
+    "old": "  for (let i = 0; i < all.length - STUCK_ARROWS_MAX; i++) loot.removePile(all[i]);\n",
+    "new": "",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-the-newest-dropped",
+    "file": "src/combat/arrowFlight.js",
+    "old": "loot.removePile(all[i]);",
+    "new": "loot.removePile(all[all.length - 1 - i]);",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-no-prune",
+    "file": "src/combat/arrowFlight.js",
+    "old": "if (p.inactive || !p.items.length) loot.removePile(p);",
+    "new": "if (false) loot.removePile(p);",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-an-emptied-pile-kept",
+    "file": "src/combat/arrowFlight.js",
+    "old": "if (p.inactive || !p.items.length) loot.removePile(p);",
+    "new": "if (p.inactive) loot.removePile(p);",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-not-drawn",
+    "file": "src/combat/arrowFlight.js",
+    "old": "if (gpu) for (const p of stuck) renderer.drawMesh(",
+    "new": "if (gpu && false) for (const p of stuck) renderer.drawMesh(",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-the-set-back-ignored",
+    "file": "src/combat/arrowFlight.js",
+    "old": "const d = pile.stuckDir, back = stuckArrowSetBack(bounds);",
+    "new": "const d = pile.stuckDir, back = 0;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-the-tip-the-spheres-back",
+    "file": "src/combat/arrowFlight.js",
+    "old": "return bounds[2] + bounds[3] - STUCK_ARROW_EMBED",
+    "new": "return bounds[2] - bounds[3] - STUCK_ARROW_EMBED",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-dungeon-entry-never-removed",
+    "file": "src/combat/arrowFlight.js",
+    "old": "    if (i >= 0) draws.splice(i, 1);\n",
+    "new": "",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-dungeon-drawn-twice",
+    "file": "src/combat/arrowFlight.js",
+    "old": "    if (held.has(p)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-exterior-no-pool",
+    "file": "src/scenes/exterior.js",
+    "old": "effects: hitEffects, loot: droppedLoot });",
+    "new": "effects: hitEffects });",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-world-no-pixel",
+    "file": "src/scenes/world.js",
+    "old": "loot: droppedLoot, pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}` });",
+    "new": "loot: droppedLoot });",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-interiors-no-pool",
+    "file": "src/scenes/worldModes.js",
+    "old": "effects: interiorHitEffects, loot: interiorDropped });",
+    "new": "effects: interiorHitEffects });",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-dungeon-wall-lost",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (m.arrow && stickable(m)) stickArrow(droppedLoot, impact, _unit);",
+    "new": "        if (false) stickArrow(droppedLoot, impact, _unit);",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-dungeon-save-keeps-it",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "droppedLoot: droppedLoot._piles.filter((p) => !p.unsaved).map(",
+    "new": "droppedLoot: droppedLoot._piles.map(",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-exterior-loose-forgets",
+    "file": "src/scenes/exterior.js",
+    "old": "muzzle: weaponRig.thunderlockMuzzle(fieldOfView()), summoned: shot.summoned });",
+    "new": "muzzle: weaponRig.thunderlockMuzzle(fieldOfView()) });",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-world-door-forgets",
+    "file": "src/scenes/world.js",
+    "old": "...(o?.summoned ? { summoned: true } : {}) }),",
+    "new": "}),",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-dungeon-loose-forgets",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "bowShotExtra(!!orbArchiveFor(playerWeapon.weapon), shot.summoned, playerWeapon.weapon));",
+    "new": "bowShotExtra(!!orbArchiveFor(playerWeapon.weapon), false, playerWeapon.weapon));",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-never-told",
+    "file": "src/systems/inventory.js",
+    "old": "  if (shot) shot.summoned = !real;",
+    "new": "",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "STUCK-ARROWS-told-the-inverse",
+    "file": "src/systems/inventory.js",
+    "old": "if (shot) shot.summoned = !real;",
+    "new": "if (shot) shot.summoned = real;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "ARROW-LODGE-always",
+    "file": "src/combat/arrowFlight.js",
+    "old": "&& !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
+    "new": "&& !m.summoned) {",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "ARROW-LODGE-never",
+    "file": "src/combat/arrowFlight.js",
+    "old": "rolls() < ARROW_LODGE_CHANCE) {",
+    "new": "rolls() < 0) {",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "ARROW-LODGE-the-conjured-lodged",
+    "file": "src/combat/arrowFlight.js",
+    "old": "&& !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
+    "new": "&& rolls() < ARROW_LODGE_CHANCE) {",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "ARROW-LODGE-arrows-counted",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  const keep = [...(gold ? [gold] : []), ...quest];",
+    "new": "  const keep = [...(gold ? [gold] : []), ...quest, ...quiver];",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "ARROW-LODGE-arrows-dropped",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  const kept = new Set([...keep, ...quiver]);",
+    "new": "  const kept = new Set(keep);",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "ARROW-LODGE-arrows-ranked",
+    "file": "src/systems/foeLootCap.js",
+    "old": "    .filter((it) => it && it !== gold && !isGoldPieces(it) && !it.questItem && !isQuiverArrow(it))",
+    "new": "    .filter((it) => it && it !== gold && !isGoldPieces(it) && !it.questItem)",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-the-max",
+    "file": "src/systems/shopStock.js",
+    "old": "export const SHOP_ARROWS_MAX = 100;",
+    "new": "export const SHOP_ARROWS_MAX = 60;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-the-counters-max-halved",
+    "file": "src/systems/shopStock.js",
+    "old": "export const shopArrowStack = (buildingType, quality) => shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX);",
+    "new": "export const shopArrowStack = (buildingType, quality) => shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX / 2);",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-every-shelf",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (shelfIndex === 0) {",
+    "new": "  if (shelfIndex >= 0) {",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-a-roll-drawn",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
+    "new": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n + Math.floor(rolls() * 0) });",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-not-merged",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
+    "new": "    if (n > 0) items.push({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-another-mint",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
+    "new": "    if (n > 0) add({ group: 'Weapons', templateIndex: ARROW_TEMPLATE, stackCount: n });",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "FLETCH-a-count-table",
+    "file": "src/systems/fletching.js",
+    "old": "  return wood > 0 && arrow > 0 ? Math.floor(wood / arrow + 1e-9) : 0;",
+    "new": "  return wood > 0 && arrow > 0 ? 2 : 0;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "FLETCH-the-whole-stack",
+    "file": "src/systems/fletching.js",
+    "old": "  if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;",
+    "new": "  if ((item.stackCount ?? 1) > 1) item.stackCount = 1;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "FLETCH-into-the-list-it-lay-in",
+    "file": "src/systems/fletching.js",
+    "old": "  const pack = ctx?.localItems ?? list;",
+    "new": "  const pack = list;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "FLETCH-a-quest-piece",
+    "file": "src/systems/fletching.js",
+    "old": "  if (!n || item.questItem) return null;",
+    "new": "  if (!n) return null;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "FLETCH-never-registered",
+    "file": "src/systems/fletching.js",
+    "old": "for (const t of FLETCH_TEMPLATES) registerItemUseHandler(t, fletch);",
+    "new": "for (const t of []) registerItemUseHandler(t, fletch);",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "BENCH-ARROWS-the-patched-arrow",
+    "file": "src/systems/fletching.js",
+    "old": "  const arrow = ITEM_TEMPLATES[ARROW_TEMPLATE]?.baseWeight ?? 0;",
+    "new": "  const arrow = templateByIndex(ARROW_TEMPLATE)?.baseWeight ?? 0;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-the-weight-of-weapons-ignored",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.max(1, Math.round(max * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "new": "  return Math.max(1, Math.round(max * (chance > 0 ? 1 : most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-quality-ignored",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.max(1, Math.round(max * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "new": "  return Math.max(1, Math.round(max * (chance / most) * (q > 0 ? 1 : 0.5)));",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-a-shop-without-weapons",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (!(chance > 0)) return 0;",
+    "new": "  if (!(chance > 0)) chance = 10;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  }
+]

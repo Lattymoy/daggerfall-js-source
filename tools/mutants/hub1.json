@@ -1,0 +1,277 @@
+[
+  {
+    "name": "HUB1-kind-order-reversed",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "  [LOCATION_TYPES.TownCity]: 3,",
+    "new": "  [LOCATION_TYPES.TownCity]: 1,",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-name-unread",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "  return [kind, same(loc.name, regionName) ? 1 : 0, blocks, buildings, -(loc.locationIndex | 0)];",
+    "new": "  return [kind, 0, blocks, buildings, -(loc.locationIndex | 0)];",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-blocks-unread",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "  const blocks = (ext?.width | 0) * (ext?.height | 0);",
+    "new": "  const blocks = 0;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-buildings-unread",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "  const buildings = loc.exterior?.buildingCount | 0;",
+    "new": "  const buildings = 0;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-tie-reversed",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "  return [kind, same(loc.name, regionName) ? 1 : 0, blocks, buildings, -(loc.locationIndex | 0)];",
+    "new": "  return [kind, same(loc.name, regionName) ? 1 : 0, blocks, buildings, loc.locationIndex | 0];",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-mod-row-counted",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "    if (!loc || !Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || !isBase(loc)) continue;",
+    "new": "    if (!loc || !Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex)) continue;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-capital-by-name-alone",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "      capital: HUB_CAPITALS.some((c) => same(c, loc.name) && same(c, regionName)),",
+    "new": "      capital: HUB_CAPITALS.some((c) => same(c, loc.name)),",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-mapid-signed",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "      mapId: loc.mapTableData.mapId >>> 0,",
+    "new": "      mapId: loc.mapTableData.mapId,",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-lookup-signed",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "  mapId == null || !Number.isFinite(Number(mapId)) ? null : (hubs?.byMapId?.get(Number(mapId) >>> 0) ?? null);",
+    "new": "  mapId == null || !Number.isFinite(Number(mapId)) ? null : (hubs?.byMapId?.get(Number(mapId)) ?? null);",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-name-case-kept",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "const same = (a, b) =>\n  typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();",
+    "new": "const same = (a, b) => typeof a === 'string' && typeof b === 'string' && a === b;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-title-capital-on-hub",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "export const hubTitle = (hub) =>\n  hub.capital ? `Capital of the Kingdom of ${hub.regionName}` : `Hub of ${hub.regionName}`;",
+    "new": "export const hubTitle = (hub) => `Hub of ${hub.regionName}`;",
+    "tests": [
+      "test/ui/ink/hub1.test.js",
+      "test/ui/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-map-word-flat",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "export const hubMapWord = (hub) => (hub.capital ? 'Capital' : 'Hub');",
+    "new": "export const hubMapWord = (hub) => 'Hub';",
+    "tests": [
+      "test/ui/ink/hub1.test.js",
+      "test/ui/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-arrival-words-flat",
+    "file": "src/systems/region/regionHubs.js",
+    "old": "export const hubArrivalLine = (hub) =>\n  `${hub.name}, ${hub.capital ? 'capital of the Kingdom of' : 'hub of'} ${hub.regionName}.`;",
+    "new": "export const hubArrivalLine = (hub) => `${hub.name}, hub of ${hub.regionName}.`;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-base-count-unloaded",
+    "file": "src/formats/mapsFile.js",
+    "old": "    if (!this.loadRegion(region)) return 0;\n    return this._readLocationCount(region);",
+    "new": "    return this._readLocationCount(region);",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-base-count-with-mod-rows",
+    "file": "src/formats/mapsFile.js",
+    "old": "    return this._readLocationCount(region);\n  }\n\n  /** DFRegion by name",
+    "new": "    return this.getRegion(region)?.locationCount ?? 0;\n  }\n\n  /** DFRegion by name",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-marks-carry-no-hub",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "    hub: hubAt(m.summary) ?? null,",
+    "new": "    hub: null,",
+    "tests": [
+      "test/ui/ink/hub1.test.js",
+      "test/ui/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-circle-over-the-glyph",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  for (const [m, x, y] of inked)\n    if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);\n  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
+    "new": "  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked)\n    if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-colours-swapped",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  const c = capital ? HUB_CIRCLE.capital : HUB_CIRCLE.hub;",
+    "new": "  const c = capital ? HUB_CIRCLE.hub : HUB_CIRCLE.capital;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-circle-no-reach",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + (m.hub ? HUB_CIRCLE_PAD : 0) + (m.seat ? SEAT_RING_PAD : 0);",
+    "new": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + 0 + (m.seat ? SEAT_RING_PAD : 0);",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-name-across-its-circle",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "    const glyph = markReach(m) + 1; // HUB1: set clear of a hub's circle, not only its glyph",
+    "new": "    const glyph = (GLYPH_R[m.kind] ?? 4) + 1; // HUB1: set clear of a hub's circle, not only its glyph",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-neighbour-across-the-circle",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "    const r = markReach(m) + 1; // HUB1: a hub's circle is ground its glyph holds",
+    "new": "    const r = (GLYPH_R[m.kind] ?? 4) + 1; // HUB1: a hub's circle is ground its glyph holds",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-circle-unfilled",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  ctx.fillStyle = c.fill;\n  ctx.fill();\n  ctx.strokeStyle = c.rim;",
+    "new": "  ctx.strokeStyle = c.rim;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-boot-collects-mod-rows",
+    "file": "src/scenes/world.js",
+    "old": "      if (l < baseCount) { _hubRows.push(loc); _bandPlacePixels.add(`${p.x},${p.y}`); }",
+    "new": "      _hubRows.push(loc); if (l < baseCount) { _bandPlacePixels.add(`${p.x},${p.y}`); }",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-map-hubs-offline",
+    "file": "src/scenes/world.js",
+    "old": "hubAt: params.has('online') ? (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId) : null,",
+    "new": "hubAt: (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId),",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-arrival-offline",
+    "file": "src/scenes/world.js",
+    "old": "        if (onlineOn) {\n          const mapId = _musicLoc?.mapTableData?.mapId;",
+    "new": "        if (true) {\n          const mapId = _musicLoc?.mapTableData?.mapId;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-arrival-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "          else if (hub) townTalk.say(hubArrivalLine(hub), 5);",
+    "new": "          else if (hub) void hubArrivalLine;",
+    "tests": [
+      "test/ui/ink/hub1.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-label-word-dropped",
+    "file": "src/ui/heldMap.js",
+    "old": "const hub = m.hub ? ` (${hubMapWord(m.hub)})` : '';",
+    "new": "const hub = '';",
+    "tests": [
+      "test/ui/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-box-title-dropped",
+    "file": "src/ui/heldMap.js",
+    "old": "const hubRows = [...(hub ? [hubTitle(hub)] : []), ...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : []), ...(tier ? [tier] : [])];",
+    "new": "const hubRows = [...(seat ? [seatInfoLine(seat, seat.holder?.guild ?? null)] : []), ...(tier ? [tier] : [])];",
+    "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e SEAT-TIP): the seat's line names its holder; re-aimed BY CONTENT (TIER1): a dungeon's tier rides the same rows, after the seat",
+    "tests": [
+      "test/ui/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-box-title-only-when-known",
+    "file": "src/ui/heldMap.js",
+    "old": "rows: [...hubRows, toFormat(TO_TEXT.MsgNoKnowledge, title)]",
+    "new": "rows: [toFormat(TO_TEXT.MsgNoKnowledge, title)]",
+    "tests": [
+      "test/ui/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "HUB1-map-not-handed-hubs",
+    "file": "src/ui/heldMap.js",
+    "old": "        hubAt: (s) => this.deps.hubAt?.(s) ?? null,   // HUB1",
+    "new": "        // HUB1",
+    "tests": [
+      "test/ui/ink/hub1.test.js",
+      "test/ui/heldmap.test.js"
+    ]
+  }
+]

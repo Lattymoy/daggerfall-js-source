@@ -1,0 +1,431 @@
+// T4: PlayerGPS's building discovery - the state the 35% map-reveal
+// writes and the town map will read. DiscoverBuilding
+// (PlayerGPS.cs:917-975) and the DiscoveredBuilding record (:92-103),
+// with the quest name-override machinery (:947-971) LIVE since
+// AUDIT 63 F49 and customUserDisplayName live since c2/S10. R1:
+// lastLockpickAttempt is LIVE too - the exterior lockpicking
+// anti-grind law (:1099-1126).
+//
+// ONE module-level store, because there is one world - the same call
+// worldTick's clock made (AUDIT 21 F2). DFU namespaces locations by
+// MapPixelID (GetMapPixelIDFromLongitudeLatitude, :936); the talk seam
+// does not carry a map pixel yet, so the location id is the caller's
+// string (`region:location` today) - the automap arc swaps it to the
+// pixel id when there is a map to draw, and the save shape below
+// already keys by that one string.
+
+import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
+import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a town's discoveries keep the layout they were made in
+import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id is no Bay pixel's
+import { LOCATION_TYPES } from '../formats/mapsFile.js';   // OW-BEYOND-KNOWN: the kinds the Bay's rows bake found
+import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-MAPS: a province's region
+import { BAY_PIXEL_IDS, isMadePlaceId } from '../world/placeIds.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500 (BAY-LEFT-B: the leaf's, the deeds' too)
+
+/**
+ * BAY-LEFT-MAPS (2026-10-27, the owner after AUDIT LEFT IN THE BAY: "Every single thing here needs to be addressed. No
+ * exceptions."; its C7 = E2; bible/03-World/Arena-Provinces.md BAY-LEFT-MAPS C7): A TOWN'S BOOK OF DISCOVERED BUILDINGS,
+ * BY ITS OWN KEY - the one key-maker every writer and reader of the building half calls (the door, the town map, the
+ * talk's reveals, the guild halls' reveals, the lockpick's anti-grind record, the quest re-stamps, a deed's residence). A
+ * Bay place keeps the key every save holds, `<regionIndex>:<name>`, byte for byte (DFU's PlayerGPS files the record by
+ * the location; one region's names are its own). A place off the Bay's pixel ids - past the Bay, past the Veil
+ * (discoveryKeyOf's whole id, AUDIT TESA II P6) - takes its map id after it, `<regionIndex>:<name>#<mapId>`, as the
+ * automap keys a lair past the Bay (systems/automap/automap.js automapKeyOf): past the Bay a province is ONE region and
+ * its names repeat - the registry's 907 listed places stood on 296 books, the Imperial City's 625 slices on 14 - so a
+ * door's plaque and the town map named another town's buildings, the I box counted its shops, a failed lock barred the
+ * same key in every town of the name, and a quest's re-stamp landed in the wrong one.
+ * @param {number} regionIndex @param {string} name @param {number} [mapId]
+ */
+export const townBookId = (regionIndex, name, mapId = 0) => {
+  const book = `${regionIndex}:${name}`;
+  const id = Number(mapId) || 0;
+  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id >>> 0}`;
+};
+/** A location's book (townBookId over its region, name and map id) - no location `-1:`, as the hosts' reads were.
+ *  @param {any} loc */
+export const townBookOf = (loc) => townBookId(loc?.regionIndex ?? -1, loc?.name ?? '', loc?.mapTableData?.mapId ?? 0);
+/** BAY-LEFT-MAPS: a book a save from before filed a town past the Bay under - a province's region and a name, no map id -
+ *  as `{ region, name }`, or null. */
+const pastBayBookOfOld = (locId) => {
+  const m = /^(\d+):([^#]*)$/.exec(locId);
+  return m && isProvinceRegion(Number(m[1])) ? { region: Number(m[1]), name: m[2] } : null;
+};
+
+/** EMPIRE-BANK: the name a discovered building is SHOWN by, on its door and its plate - its stored one, but a BANK's is
+ *  its name now (`live`, the directory's) wherever no quest renamed it: online every bank is the Empire's
+ *  (world/buildingNames.js EMPIRE_BANK_OF), and a bank discovered before - or on the other side of the online door -
+ *  would otherwise keep the other side's name in the save for good. */
+export function shownBuildingName(rec, live = null) {
+  if (!rec) return '';
+  if (rec.buildingType === BUILDING_TYPES.Bank && !rec.isOverrideName && typeof live === 'string' && live) return live;
+  return rec.displayName ?? '';
+}
+
+let _discovered = new Map();   // locationId -> Map(buildingKey -> record)
+// WD3: the layout each town's discoveries were made in (systems/layoutPins.js), for a town a layout mod changes - a
+// building is discovered by its KEY, and a key names a building only in its town's layout. None for classic.
+let _layouts = new Map();      // locationId -> stamp
+function noteTownLayout(locationId) {
+  const stamp = layoutStampOfTown(locationId);
+  if (stamp == null) return;
+  if (stamp !== CLASSIC_LAYOUT) _layouts.set(locationId, stamp);
+  else _layouts.delete(locationId);
+}
+
+/** DiscoverBuilding (:917-975): the record lands whole.
+ *  `building` is a talk-directory entry - it carries exactly the
+ *  fields DFU's GetBaseBuildingDiscoveryData reads off its own
+ *  building directory.
+ *
+ *  AUDIT 63 F49: THE QUEST NAME-OVERRIDE ARM, which this member used
+ *  to drop entire. Three of DFU's clauses were cut and are restored
+ *  here:
+ *
+ *  1. `overrideName` (:917) is a real parameter, and it BYPASSES the
+ *     already-discovered early-out (:926-927 `if (overrideName == null
+ *     && HasDiscoveredBuilding(buildingKey)) return;`). That clause is
+ *     exactly what lets DaggerfallBankManager.cs:440 rename a house
+ *     the player has already entered.
+ *  2. With no override supplied, DFU asks
+ *     TalkManager.IsBuildingQuestResource (:946-959) and promotes the
+ *     quest Place's buildingName to the override when the PC was told
+ *     the name (`pcLearnedAboutExistence`) and that name differs from
+ *     the directory's. This module is pure, so the pair arrives
+ *     injected as `questSource` - the same
+ *     { currentMapID, isBuildingQuestResource } shape the automap's
+ *     stampResidenceQuestNames already takes. IsBuildingQuestResource
+ *     keys on CurrentMapID, NOT on this store's `region:location`
+ *     string, so the map id rides with it. A host with no topic tree
+ *     (scenes/exterior.js) passes nothing and the member behaves
+ *     exactly as it did.
+ *  3. The stamp (:961-972) - oldDisplayName on the first override,
+ *     isOverrideName raised, and the unconditional collapse when
+ *     old === display. `isOverrideName` had no writer anywhere in
+ *     src/ before this, so the automap's two reads
+ *     (ExteriorAutomap.cs:676-677) were permanently falsy and a
+ *     discovered quest residence drew NO plate at all.
+ *
+ *  The record is REBUILT on the override pass, never merged into the
+ *  stored one: GetBaseBuildingDiscoveryData (:931-933, :1285-1330)
+ *  mints a fresh DiscoveredBuilding from the directory on every call
+ *  and :973 assigns it over the slot, so a re-discovery with an
+ *  override resets lastLockpickAttempt and customUserDisplayName
+ *  along with the name. `oldDisplayName` starts null, not '', because
+ *  :971's collapse must not fire for a nameless building. */
+export function discoverBuilding(locationId, building, overrideName = null, questSource = null) {
+  if (!building || building.buildingKey == null) return false;
+  let loc = _discovered.get(locationId);
+  if (!loc) { loc = new Map(); _discovered.set(locationId, loc); }
+  // :926-927 - already discovered: nothing to do. DISC28-K (Discord: two Mages Guild "cast the Sleep spell" jobs sent to
+  // the same house showed the FIRST job's name on it): unless an active quest has since named this building otherwise.
+  // A residence Place rolls a fresh surname on every pick (Place.cs:1219-1224, :1298-1311), and the first job's name
+  // stayed on the record: its tombstone's undiscover (Quest.cs:655) and the next job's topic-add undiscover
+  // (TalkManager.cs:2958) both act at the CURRENT location and only on a stored name equal to the new one, so a job
+  // ended in another town left "The X Residence" standing, and the next one's "The Y Residence" never displaced it - the
+  // quest text said Y, the door and the map said X. DFU does the same; the port re-stamps a record whose stored name
+  // is not the one the live quest gave (Port-Ledger A) - in place (restampQuestName, AUDIT DISC28 QS-K1).
+  if (overrideName == null && loc.has(building.buildingKey)) return restampQuestName(loc.get(building.buildingKey), questSource);
+  const rec = {
+    buildingKey: building.buildingKey,
+    displayName: building.name ?? '',
+    factionId: building.factionId ?? 0,
+    quality: building.quality ?? 0,
+    buildingType: building.buildingType ?? 0,
+    lastLockpickAttempt: 0,   // R1: PlayerGPS.cs:101 - the failed-attempt skill record
+    customUserDisplayName: '',   // c2/S10: the exterior automap's rename (PlayerGPS.cs:97)
+    isOverrideName: false,   // PlayerGPS.cs:97 - the automap's plate ladder reads it
+    oldDisplayName: null,    // PlayerGPS.cs:96 - the name the override displaced
+  };
+  // :945-959 - only when no override was handed in; the caller's name
+  // has priority.
+  if (overrideName == null) {
+    const q = liveQuestName(building, questSource);
+    if (q != null && q !== rec.displayName) overrideName = q;
+  }
+  if (overrideName != null) {   // :961-967
+    if (!rec.isOverrideName) rec.oldDisplayName = rec.displayName;
+    rec.displayName = overrideName;
+    rec.isOverrideName = true;
+  }
+  if (rec.oldDisplayName === rec.displayName) rec.isOverrideName = false;   // :969-970
+  loc.set(building.buildingKey, rec);
+  noteTownLayout(locationId);   // WD3
+  return true;
+}
+
+/** :945-959's read - the name a live quest gave this building, once the player has learned of it; null for none. */
+function liveQuestName(building, questSource) {
+  if (!questSource?.isBuildingQuestResource) return null;
+  const r = questSource.isBuildingQuestResource(questSource.currentMapID?.() ?? 0, building.buildingKey);
+  return r?.isQuestResource && r.pcLearnedAboutExistence ? (r.overrideBuildingName ?? null) : null;
+}
+
+/** DISC28-K (Port-Ledger A): a DISCOVERED building whose stored name the live quest no longer gives is re-stamped with
+ *  the quest's. Answers whether the name changed.
+ *
+ *  AUDIT DISC28 QS-K1: IN PLACE, and never a house the player owns. The re-stamp first rebuilt the record the way
+ *  DFU's override pass does (a fresh DiscoveredBuilding from the directory), on a path DFU never takes for a building
+ *  already discovered - so it also wiped what the PLAYER had written on it: the town map's rename
+ *  (customUserDisplayName) and the lockpick anti-grind record (lastLockpickAttempt). Only the three name fields move
+ *  now, as DiscoverBuilding's override arm moves them (the displaced name is the building's own, the flag, the
+ *  collapse). And the stored name is not always a quest's: the player's own house carries the purchase's
+ *  "<name>'s residence" (DaggerfallBankManager.AllocateHouseToPlayer's override), and a partner's SHARED quest - its
+ *  Place picked in the partner's world, where Place's owned-house exclusion is the partner's own houses - re-stamped
+ *  it, and then that quest's tombstone undiscover (Quest.TombstoneQuest) matched the stamp and deleted the house's
+ *  record. DaggerfallBankManager.IsHouseOwned is DFU's own word for which houses those are (`ownsHouse` on the seam);
+ *  a record flag of the port's own would have left every record saved before it unread. */
+function restampQuestName(rec, questSource) {
+  // FIELD BUGS 2026-10-09b HALL-STAMP: never a hideout's plate - RevealGuildHallOnMap's name for a member is shielded
+  // here as UndiscoverBuilding shields it (:1010-1012). Every Dark Brotherhood contract's questor stands at the hall,
+  // its Place there named '' (a House2 has no name of its own - buildingNames.js), and the re-stamp wrote that '' over
+  // "The Dark Brotherhood": the member's hall lost its plate on the town map and its name at the door.
+  if (rec.factionId === THIEVES_GUILD_FACTION || rec.factionId === DARK_BROTHERHOOD_FACTION) return false;
+  const renamed = liveQuestName(rec, questSource);
+  if (!renamed || renamed === rec.displayName) return false;   // HALL-STAMP: and a nameless Place names nothing
+  if (questSource?.ownsHouse?.(rec.buildingKey)) return false;
+  rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName;   // the building's own name
+  rec.displayName = renamed;
+  rec.isOverrideName = rec.oldDisplayName !== rec.displayName;   // the flag, and the collapse when the names agree
+  return true;
+}
+
+/** AUDIT DISC28 QS-K2: every building discovered at `locationId` re-stamped by the live quests (restampQuestName) - the
+ *  town map's open, whose nameplates draw an override-named residence's stored name (ExteriorAutomap.cs's
+ *  CreateBuildingNameplates) and are built once per open: the re-stamp ran only at a door, so the map opened on
+ *  arrival still named the house for the job before. Answers how many were re-stamped. */
+export function restampQuestNames(locationId, questSource) {
+  let n = 0;
+  for (const rec of _discovered.get(locationId)?.values() ?? []) if (restampQuestName(rec, questSource)) n++;
+  return n;
+}
+
+/**
+ * SetDiscoveredBuildingCustomName (PlayerGPS.cs:1057-1075) - the town
+ * map's double-click rename. c2/S10 HALF B.
+ *
+ * DFU's own two laws, both kept: the write is a NO-OP for a building
+ * that is not actually discovered ("If building not actually
+ * discovered then nothing is changed", ExteriorAutomap.cs:914-915),
+ * and the input is TRIMMED before it lands so a player cannot store
+ * leading, trailing or whitespace-only names (:911-912). The plate
+ * DRAWS this name and its tooltip keeps the canonical displayName -
+ * that split lives in the window (:880-885), not here.
+ */
+export function setDiscoveredBuildingCustomName(locationId, buildingKey, name) {
+  const rec = _discovered.get(locationId)?.get(buildingKey);
+  if (!rec) return false;
+  rec.customUserDisplayName = String(name ?? '').trim();
+  return true;
+}
+
+/** GetLastLockpickAttempt (PlayerGPS.cs:1103-1110): the Lockpicking
+ *  skill at the last FAILED exterior attempt on this building; 0 for
+ *  a building not in the discovery store. The gate at the door is
+ *  `skill <= lastAttempt` - the live skill must RISE past the failure
+ *  before another roll is allowed; success never writes it and
+ *  nothing ever clears it, verbatim. */
+export function getLastLockpickAttempt(locationId, buildingKey) {
+  return _discovered.get(locationId)?.get(buildingKey)?.lastLockpickAttempt ?? 0;
+}
+
+/** SetLastLockpickAttempt (:1118-1126): failure records the skill;
+ *  a no-op for an undiscovered building, as DFU's lookup-guard is. */
+export function setLastLockpickAttempt(locationId, buildingKey, skillValue) {
+  const rec = _discovered.get(locationId)?.get(buildingKey);
+  if (rec) rec.lastLockpickAttempt = skillValue;
+}
+
+/** HasDiscoveredBuilding (:1038-1050). */
+export function hasDiscoveredBuilding(locationId, buildingKey) {
+  return _discovered.get(locationId)?.has(buildingKey) ?? false;
+}
+
+/** PlayerGPS.GetDiscoveredBuilding (:1064-1082): the stored record for
+ *  one building, or null when it has not been discovered. AUDIT 64 F11
+ *  gave it its first caller - ActivateBuilding reads the display name
+ *  off it (PlayerActivate.cs:468-471). */
+export function getDiscoveredBuilding(locationId, buildingKey) {
+  const rec = _discovered.get(locationId)?.get(buildingKey);
+  return rec ? { ...rec } : null;
+}
+
+/** FactionFile.FactionIDs.The_Thieves_Guild / The_Dark_Brotherhood
+ *  (FactionFile.cs:91, :135) - the two hideout factions
+ *  UndiscoverBuilding shields UNCONDITIONALLY. */
+const THIEVES_GUILD_FACTION = 42;
+const DARK_BROTHERHOOD_FACTION = 108;
+
+/** PlayerGPS.UndiscoverBuilding (:986-1019): drop one building from a
+ *  location's discovered set - AFTER the three refusals, in DFU's
+ *  order (AUDIT 26 F099; the old cut deleted unconditionally):
+ *  a non-residence when onlyIfResidence is set (:1006-1007), a
+ *  Thieves Guild or Dark Brotherhood hideout ALWAYS - even on the
+ *  bank's house-sale call, which passes neither optional (:1010-1012)
+ *  - and a name that does not match the stored displayName
+ *  (:1015-1016). TK-ii undiscovers quest RESIDENCES at topic-add so a
+ *  previously discovered house does not pre-reveal on the automap
+ *  when a quest names it; both quest callers (TalkManager.cs:2958,
+ *  Quest.cs:655) pass (key, true, siteDetails.buildingName). */
+export function undiscoverBuilding(locationId, buildingKey, onlyIfResidence = false, matchName = null) {
+  const rec = _discovered.get(locationId)?.get(buildingKey);
+  if (!rec) return;
+  if (onlyIfResidence && !isResidence(rec.buildingType)) return;
+  if (rec.factionId === THIEVES_GUILD_FACTION || rec.factionId === DARK_BROTHERHOOD_FACTION) return;
+  if (matchName != null && matchName !== rec.displayName) return;
+  _discovered.get(locationId)?.delete(buildingKey);
+}
+
+/** The location's discovered records, for the map that will draw them. */
+export function discoveredBuildings(locationId) {
+  return [..._discovered.get(locationId)?.values() ?? []].map((r) => ({ ...r }));
+}
+
+// G8-slice (guilds-8): the LOCATION half - PlayerGPS
+// discoveredLocations, keyed by MapId & 0xfffff exactly as
+// HasDiscoveredLocation masks it (:875-882). The guild map reveals
+// write it; the travel map's hidden-dungeon law will read it (its own
+// ledger row).
+// AUDIT WW F1: never a zone hall's - a hall is always known (its door in every map's ink, scenes/world.js
+// wildHallSummaries), stands a day, and its id is the halls' lane (net/wire.js isHallMapId), whose low 20 bits masked
+// would name a Bay place: so a hall is neither filed nor found here.
+// AUDIT TESA II P6: A PLACE OFF THE BAY'S PIXEL IDS BY ITS WHOLE ID. DFU's mask names a Bay place by its pixel (a MapId's
+// low 20 bits are getMapPixelID's, under 1000 x 500); a place the port made past the Bay or past the Veil carries a
+// number of its own there, 500,000 and up (world/arenaLocations.js arenaPlaceId, world/tamrielCountry.js countryPlaceId
+// and the lairs' and capitals' lanes, world/etherPlaces.js etherPlaceId), and its lane in the high bits - so the low 20
+// bits alone named a farm and every farm a multiple of 64 rows from it (the countryside's lanes are its grid's rows), a
+// lair and a farm, an isle's place and a country one: one found, the others found. Such a place keys by its whole id
+// (every one of them past 2^20, so no key of the Bay's meets it); a Bay place, a spawn on a Bay pixel, the Abyss's pits
+// keep DFU's mask. BAY-LEFT-B: the law's leaf is world/placeIds.js (isMadePlaceId), which the deeds read too.
+/** The store's key for a map id. @param {number} mapId */
+export const discoveryKeyOf = (mapId) => { const low = mapId & 0xfffff; return low < BAY_PIXEL_IDS ? low : mapId >>> 0; };   // BAY-OWN: a Bay id keeps its low 20 bits, a port id keys whole
+let _locations = new Map();   // discoveryKeyOf(mapId) -> { regionName, locationName }
+let _locationsGen = 0;   // AUDIT DEEP2 B-3: bumped whenever the set changes - a cache of what is named keys on it
+
+/** AUDIT DEEP2 B-3: the discovered-location set's generation - it moves on every discovery and every restore. */
+export const discoveryGeneration = () => _locationsGen;
+
+/** DiscoverLocation's store write (:869-890, the summary columns). */
+export function discoverLocation(mapId, info = {}) {
+  if (isHallMapId(mapId)) return false;
+  const key = discoveryKeyOf(mapId);   // AUDIT TESA II P6
+  if (_locations.has(key)) return false;
+  _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });
+  _locationsGen += 1;
+  return true;
+}
+
+/** FIND-FOUND: the places the port made (isMadePlaceId) that the player has found by name - each its whole map id, its
+ *  region and its name as the store keeps them. An Arena place keeps no name here (AUDIT-TESA A1-2) and is not listed. */
+export function foundMadePlaces() {
+  const out = [];
+  for (const [key, v] of _locations) if (isMadePlaceId(key) && v.locationName) out.push({ mapId: key, regionName: v.regionName, locationName: v.locationName });
+  return out;
+}
+
+/** HasDiscoveredLocation (:875-882). */
+export function hasDiscoveredLocationId(mapId) {
+  return !isHallMapId(mapId) && _locations.has(discoveryKeyOf(mapId));   // AUDIT TESA II P6
+}
+
+/** OW-BEYOND-KNOWN (2026-10-28, the field: "travel nodes dont exist outside the bay in overworld"): THE KINDS MAPS.BSA BAKES
+ *  DISCOVERED ON EVERY ROW (its MapTable Discovered bit; the freeware's 15,251 rows) - every city, town, village, farm,
+ *  manor, poor home, inn, temple, cult and ship. No labyrinth, ruin, keep or coven is, and 191 of 774 graveyards. A place
+ *  past the Bay is no row of it, so it is known by its kind's. */
+export const BAKED_KNOWN_TYPES = Object.freeze(new Set([
+  LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms, LOCATION_TYPES.HomeWealthy,
+  LOCATION_TYPES.HomePoor, LOCATION_TYPES.Tavern, LOCATION_TYPES.ReligionTemple, LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips,
+]));
+
+/** DiscoverRandomLocation (PlayerGPS.cs:892-910), the pure law:
+ *  candidates are the CURRENT region's rows with the BAKED MapTable
+ *  Discovered flag false AND not already in the store; none left ->
+ *  null ("there's nothing to find"); else a uniform pick
+ *  (UnityEngine.Random.Range - injectable, Ledger A) is discovered
+ *  and returned. regionLocations: [{ mapId, discovered, name,
+ *  regionName }]. */
+export function discoverRandomLocation(regionLocations, rolls = Math.random) {
+  const candidates = (regionLocations ?? []).filter(
+    (l) => !l.discovered && !hasDiscoveredLocationId(l.mapId));
+  if (!candidates.length) return null;
+  const pick = candidates[Math.floor(rolls() * candidates.length)];
+  discoverLocation(pick.mapId, { regionName: pick.regionName, locationName: pick.name });
+  return pick;
+}
+
+/** The save envelope's shape. G8: grew the `locations` half - the
+ *  envelope is `{ buildings, locations }` now; restore still accepts
+ *  the pre-G8 FLAT building map (locationIds carry a colon, so the
+ *  key `buildings` can never collide with one). */
+export function snapshotDiscovery() {
+  const buildings = {};
+  for (const [locId, b] of _discovered) {
+    buildings[locId] = Object.fromEntries([...b].map(([k, r]) => [k, { ...r }]));
+  }
+  const out = { buildings, locations: Object.fromEntries([..._locations].map(([k, r]) => [k, { ...r }])) };
+  if (_layouts.size) out.layouts = Object.fromEntries(_layouts);   // WD3: only where a layout mod changed the town
+  return out;
+}
+
+/** A load REPLACES both stores (missing on old saves = nothing found).
+ *  BAY-LEFT-MAPS (C7 = E2, townBookId): `houses` the character's deeds (systems/banking.js createHouses' slots, restored
+ *  before this) - a save from before filed a town past the Bay's buildings under `<region>:<name>` alone, one book for
+ *  every place of that name in its province, whose records cannot be told apart by town: it is let go (a building is
+ *  found again at its door, DFU's own law - as AUDIT TESA II P6 lets go the location keys that named several places),
+ *  and a deed's house in it keeps its record, moved to its own town's book (the slot names its town and its map id). */
+export function restoreDiscovery(snap, { houses = null } = {}) {
+  _discovered = new Map();
+  _locations = new Map();
+  _layouts = new Map(Object.entries(snap?.layouts ?? {}).filter(([, v]) => typeof v === 'string' && v));   // WD3: none on a save from before - classic
+  _locationsGen += 1;
+  if (!snap) return;
+  const legacy = !snap.buildings && !snap.locations;
+  const buildings = legacy ? snap : (snap.buildings ?? {});
+  const deeds = (Array.isArray(houses) ? houses : []).filter((h) => h && (h.buildingKey | 0) > 0 && discoveryKeyOf(Number(h.mapId) || 0) >= BAY_PIXEL_IDS);
+  for (const [locId, b] of Object.entries(buildings)) {
+    // c2/S10: the missing-field discipline the rest of this store
+    // already keeps - a record written before the rename shipped
+    // restores with an EMPTY custom name, never `undefined`, so the
+    // plate's `custom || name` fallback cannot read a hole.
+    const recs = new Map(
+      // AUDIT 63 F49: the override columns join the same discipline -
+      // a record written before the quest arm shipped restores with
+      // the flag down and no displaced name, never `undefined`.
+      Object.entries(b).map(([k, r]) => [Number(k), { customUserDisplayName: '', isOverrideName: false, oldDisplayName: null, ...r }]));
+    const old = pastBayBookOfOld(locId);
+    if (!old) { const had = _discovered.get(locId); if (had) for (const [k, r] of recs) had.set(k, r); else _discovered.set(locId, recs); continue; }   // a book's own records over a deed's carried one
+    _layouts.delete(locId);
+    for (const h of deeds) {
+      const rec = h.location === old.name ? recs.get(h.buildingKey | 0) : null;
+      const to = rec ? townBookId(old.region, old.name, h.mapId) : null;
+      if (!to) continue;
+      if (!_discovered.has(to)) _discovered.set(to, new Map());
+      if (!_discovered.get(to).has(rec.buildingKey)) _discovered.get(to).set(rec.buildingKey, rec);
+    }
+  }
+  for (const [k, r] of Object.entries(snap.locations ?? {})) {
+    const key = Number(k);
+    // AUDIT TESA II P6: a save from before keyed a place past the Bay by its low 20 bits - a key no id answers now (and
+    // one that named several places): let go, the place found again by entering it
+    if (key >= BAY_PIXEL_IDS && key < 0x100000) continue;
+    _locations.set(key, { ...r });
+  }
+}
+
+/**
+ * WD3: A TOWN WHOSE LAYOUT CHANGED FORGETS ITS BUILDINGS. A save's discoveries name buildings by key; loaded where the
+ * town now stands in another layout (a layout mod switched on or off since, and nothing of the save's holding the
+ * town in its old one - systems/layoutPins.js), each key names another building, and the automap would write a
+ * smith's name on a stranger's house. Those towns' discovered buildings are dropped - the town itself stays found
+ * (the location half is the map's, which no layout moves). A town the host cannot place is kept as it is. Answers
+ * how many records went.
+ */
+export function pruneDiscoveryLayouts() {
+  let n = 0;
+  for (const [locId, b] of [..._discovered]) {
+    const now = layoutStampOfTown(locId);
+    if (now == null || layoutsMatch(_layouts.get(locId), now)) continue;
+    n += b.size;
+    _discovered.delete(locId);
+    _layouts.delete(locId);
+  }
+  return n;
+}

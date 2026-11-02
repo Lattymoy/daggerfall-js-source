@@ -1,0 +1,1023 @@
+// Shared interior build for scene transitions (P3): given a host
+// scene's data caches, lay out one building interior and return
+// everything the host needs to render and walk it. The pipeline is the
+// standalone interior scene's (M4/R8/R12 semantics) expressed against
+// host deps, so the world and exterior scenes enter buildings without
+// their own copies:
+//   - layoutInterior placements + action doors, parented through an
+//     optional origin (P8: the entered building's WORLD matrix -
+//     verbatim TransitionInterior's ownerPosition + buildingMatrix -
+//     so hosts get world-frame coordinates; standalone omits it),
+//   - climate swaps per submesh with the missing-record prune,
+//   - flats batched per (archive, record), archive-210 interior point
+//     lights (verbatim DaggerfallInterior.AddLight, range 15, no
+//     flicker), verbatim interior ambient + fog handled by the host
+//     per frame,
+//   - a fresh Collider over every placement and action-door mesh,
+//   - enter markers and interior static doors for the landing math.
+
+import { IIL_FIREPLACE_MODELS } from '../systems/improvedInteriorLighting.js';   // IIL1
+import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { layoutInterior, INTERIOR_MARKER, PROP_MODEL_TYPE } from '../world/interior/interiorLayout.js';
+import { isBulletinBoard } from '../world/rmbLayout.js';   // NOTICE-PANEL: no board stands indoors either
+import { multiply, transformPoint, identity } from '../world/mat4.js';
+import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF6: the room's static models as one mesh
+import { collectInteriorLights } from '../world/interior/interiorLights.js';
+import { sealDoorsToNowhere, sealedDoorText } from '../world/interior/doorsToNowhere.js';   // FIELD BUGS 2026-10-25 DOOR-VOID
+import { setMidScreenText } from '../ui/midScreenText.js';   // DOOR-VOID: the sealed door's line, where a locked door's is said
+import { applyClimate } from '../world/climateSwaps.js';
+import { remapSubMeshes, markRemapLaw } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam; AUDIT MENU-ORDER C3: a table named by its law
+import { unityMaterialName } from '../systems/immersiveFootsteps.js';   // IF1: MaterialReader's material name, for the mod's floor walk
+import { billboardSize } from '../world/rmbFlats.js';
+import { preloadTextureRecord } from '../systems/textureReplacement.js';   // LAMP-KEEPER: a re-materialised person's art, decoded before it is drawn
+import { LAMP_ARCHIVE, LAMP_CLASSIC } from '../systems/lampKeeper.js';   // LAMP-KEEPER II: a keeper standing as the lamp, on purpose
+import { isChairModel } from '../world/chairSeat.js';   // SIT1: the seats a player sits on
+import { Collider } from '../player/collider.js';
+import { isHouseContainerModel } from '../systems/containers.js';
+import { isShopShelfModel } from '../systems/shopStock.js';   // E2
+import { isBedModel } from '../systems/roleplayRealism/rrRealism.js';   // RR1: the three bed models a click may rest on
+import { placedTableSpot, TAVERN_CARD_TABLES } from '../world/placedCardTable.js';   // TAVERN-TABLE: where a tavern's card table stands; TAVERN-TABLES: and how many
+import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD, FELT_RGB, GOLD_FELT_RECORD, GOLD_FELT_RGB } from '../world/card/cardTableProp.js';   // TAVERN-TABLE: the card table's own prop; TAVERN-TABLES: the gold table's red felt
+import { holdemGoldTable } from '../net/holdemTable.js';   // TAVERN-TABLES: which of them plays for gold - the relay's own index
+import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias is its classic model to the beds' test
+import { isRoomFurnishing } from '../systems/decor/decorMods.js';   // BUILT-IN-MODS: a town mod's furniture written as scenery
+import { LADDER_MODEL_ID, doorWorldPosition } from '../player/enterExit.js';   // TAVERN-TABLE: a static door's place, for the card table to keep clear of
+import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
+import { createBaseRoom, baseBucketOf } from './decor/decorBase.js';   // BASE-HIDE: a furnishable room's own pieces, one at a time
+import { createInteriorDoors } from '../systems/decor/decorInteriorDoors.js';   // a room door taken out, its opening left
+import { decorBaseModelKey, decorBaseFlatKey } from '../net/decorLaw.js';   // BASE-HIDE: the layout's names for them
+import { mountMachineryChild } from '../world/windmills.js';
+import { collectInteriorPeople } from '../characters/interiorPeople.js';
+import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
+import { trs } from '../world/mat4.js';
+import { buildRaceCharacter, raceOfArchive } from '../characters/raceCharacter.js';
+import { createCharacterRig, deriveClassicRamps } from '../characters/engineRig.js';
+import { IDLE, WALK, POSE_L } from '../characters/animate.js';
+import { ImgFile } from '../formats/imgFile.js';
+import { fetchBytes } from './shared.js';
+import { ActionSystem } from '../world/actionSystem.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
+import { worldAabb } from '../player/activate.js';   // ROAD-C c2/S9: the automap rows' world bounds
+import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, SCAN_INTERVAL_S, registerAutomapConsoleCommands, capsuleCentreFromEye } from '../systems/automap/automap.js';   // ROAD-C c2/S9; ROAD-E E3 the console verbs
+import { INTERIOR_ELEMENT_NAMES } from '../systems/automap/automapModel.js';   // ROAD-C c2/S9
+// AUDIT 63 F22: AddFlats' own RandomTreasure arm - the gate, the
+// picture and the table index all live with the walk that finds the
+// markers, which is the member DFU puts them in.
+import { BUILDING_TYPES } from '../world/buildingNames.js';
+import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from '../systems/crimeGuilds.js';   // FactionFile.cs:91/:135
+import { rollLootRarity, pileSource, INTERIOR_RARITY_TIER, stampWonWeapons } from '../systems/loot/lootRarity.js';   // LR1: a tavern's pile rolls at the town's tier; SIGIL1: its weapons' sigils
+import { generateItems as generateLootItems, addPileLootExtras, DUNGEON_LOOT_KEYS, DROP_ICON_ARCHIVES } from '../systems/loot/loot.js';
+import { createCoverIndex, isCoverFlat, coverProxy } from '../ai/cover.js';   // TACT1: billboards are cover
+import { flatBodies } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
+// TACT1: the Enhanced AI switch is ai/cover.js's to read (createCoverIndex's default), not this host's
+
+/** AUDIT 63 F22: DaggerfallInterior.AddFlats' treasure arm
+ *  (DaggerfallInterior.cs:872-902), the one thing that walk does
+ *  besides collecting markers and lights - and the one reader
+ *  INTERIOR_MARKER.TREASURE never had. For every editor flat of type
+ *  Treasure, in a building that is a Tavern or wears the Thieves
+ *  Guild / Dark Brotherhood faction id (:879-883), DFU stands a
+ *  RandomTreasure DaggerfallLoot at the marker with the CLOTHING
+ *  archive's record 0 as its picture (:891-897, `clothingArchive, 0`
+ *  literally - no icon roll, and not the 216 treasure archive a
+ *  player's own pile takes) and fills it with `LootTables.GenerateLoot
+ *  (loot, (int)PlayerGPS.CurrentLocationType)` (:899).
+ *
+ *  THE INDEX IS THE LOCATION'S, not the building's and not a dungeon
+ *  type: GenerateLoot (LootTables.cs:121-167) indexes its 19-entry key
+ *  array with DFRegion.LocationTypes, which is the same array the
+ *  dungeon piles index with DungeonTypes - bug-for-bug, so TownCity 0
+ *  reads 'K' and Tavern 6 reads 'M'. An index off the end (None =
+ *  0xffff, or no location at all) makes GenerateLoot return false with
+ *  the container still standing, which is what the '-' key
+ *  reproduces: the empty matrix, and addPileLootExtras' J..O window
+ *  refuses it too.
+ *
+ *  The pool is the HOST's dropped-loot pool, so the piles ride every
+ *  seam already wired to it - the activation targets, the Detect
+ *  Treasure feed, the per-frame flat tick and the scene cache - and
+ *  the identity is `treasure:<marker index>`, standing in for the
+ *  loadID DFU mints from the building key and the marker's own
+ *  coordinates (:885-889). A marker the pool has already stood a
+ *  container on is SKIPPED: the cache restore has run by then, and
+ *  DFU reaches the same place from the other side (AddFlats mints,
+ *  RestoreCachedScene overwrites by loadID and removes an emptied one,
+ *  SerializableLootContainer.cs:157-160).
+ *
+ *  interior.js needs nothing: the standalone viewer has no player
+ *  entity and no loot machinery at all.
+ *
+ *  @param markers   - ctx.treasureMarkers, parented
+ *  @param building  - the discovery record (buildingType, factionId)
+ *  @param locationType - PlayerGPS.CurrentLocationType
+ *  @param pool      - the host's createDroppedLoot pool
+ *  @param level/gender - the PLAYER's (LootTables.cs:229/:237)
+ */
+export function seedInteriorTreasure({ markers, building, locationType, pool, level, gender, luck = 50 }) {
+  if (!markers?.length || !pool) return [];
+  if (!(building?.buildingType === BUILDING_TYPES.Tavern
+    || building?.factionId === THIEVES_GUILD_FACTION_ID
+    || building?.factionId === DARK_BROTHERHOOD_FACTION_ID)) return [];
+  const lootKey = DUNGEON_LOOT_KEYS[locationType] ?? '-';
+  const minted = [];
+  markers.forEach((pos, i) => {
+    const key = `treasure:${i}`;
+    if (pool.containerSeeded(key)) return;   // the cache already holds this container
+    // LootTables.cs:146-159 - the matrix, then the J..O map/potion/
+    // recipe tail, on the PLAYER's level and gender.
+    // FORAGE3: OnLootSpawned at the LOCATION type's index, which Foraging reads as the dungeon type of that number (Q12);
+    // REALM P0.4: online, the level's gold divided back
+    const items = rollLootRarity(addPileLootExtras(generateLootItems(lootKey, { level, gender }), lootKey, Math.random, { locationIndex: locationType, luck, level }), pileSource(INTERIOR_RARITY_TIER), { luck, level });   // LR1
+    stampWonWeapons(items, 1);   // SIGIL1: a pile found online, its weapons' sigils rolled at the mint
+    minted.push(pool.seedPile(items, pos, { archive: DROP_ICON_ARCHIVES.clothing, record: 0 }, key));
+  });
+  return minted;
+}
+
+/**
+ * The A1 door-audio seams for a BUILDING interior's ActionSystem.
+ * Verbatim DaggerfallActionDoor: the class defaults (which
+ * SetInteriorDoorSounds also sets) are NormalDoorOpen / NormalDoorClose
+ * / PlayerDoorBash - NOT the DungeonDoorOpen/Close pair the RDB dungeon
+ * prefab uses. Wired here, in the context BOTH interior hosts build
+ * (worldModes' entered buildings and the standalone interior scene), so
+ * neither can be left silent.
+ * @param sfx - the audio engine (injectable for tests).
+ */
+export function attachInteriorDoorSounds(actions, sfx = audio) {
+  actions.onDoorState = (o, opening) => {
+    const m = o.matrix;
+    sfx.play3d(opening ? SOUND.NormalDoorOpen : SOUND.NormalDoorClose, [m[12], m[13], m[14]]);
+  };
+  actions.onDoorBash = (o) => {
+    const m = o.matrix;
+    sfx.play3d(SOUND.PlayerDoorBash, [m[12], m[13], m[14]]);
+  };
+}
+
+/**
+ * ROAD review-p: THE INTERIOR PERSON'S HOST, and the reason it is not a
+ * bare flag write.
+ *
+ * DFU's people are GameObjects, so `npcTransform.gameObject
+ * .SetActive(true)` (DaggerfallInterior.cs:355-357) is a LIVE act - the
+ * billboard starts drawing and its BoxCollider starts answering rays
+ * the moment it runs. Two callers reach it: the quest machine's away
+ * arm, which fires DURING AddPeople (:1224, before anything has been
+ * drawn), and UpdateNpcPresence (:344-360), which fires from
+ * DaggerfallRestWindow.OnPop (:277-280) LONG after - the shop you
+ * entered shut, opening while you slept.
+ *
+ * The build below reads `pn.active` exactly once per loop, so a flag
+ * write is the whole story for the first caller and NONE of it for the
+ * second: it would move a boolean and leave the shopkeeper with no
+ * billboard, no draw and no activation extent. So the flip is routed:
+ * before the build finishes (`built()` false) it is the flag alone,
+ * the loops downstream do the standing; afterwards the host stands or
+ * unstands the person for real, the way the quest-flat host next door
+ * does it (worldModes.js standQuestFlatIn - a batch pushed into and
+ * spliced out of the live billboardBatches array).
+ *
+ * @param pn - one collectInteriorPeople person
+ * @param hooks.built - has the interior finished building?
+ * @param hooks.stand / hooks.unstand - the late half, per person
+ */
+export function makeInteriorPersonHost(pn, hooks = {}) {
+  const live = () => hooks.built?.() === true;
+  return {
+    staticNpcFactionId: pn.factionID,   // DoClick's individual broadcast reads this
+    // AUDIT 63 F1: ActiveGameObjectDatabase's cache answers only
+    // `activeInHierarchy` objects (ActiveGameObjectDatabase.cs:32-46),
+    // so AddQuestor's relink walk must be able to skip a person the
+    // away arm's SetActive(false) took out.
+    isActive: () => pn.active !== false,
+    setActive(active) {
+      active = !!active;
+      const was = !!pn.active;
+      pn.active = active;
+      if (was === active || !live()) return;
+      if (active) hooks.stand?.(pn);
+      else hooks.unstand?.(pn);
+    },
+    destroy() {
+      const was = !!pn.active;
+      pn.active = false;
+      if (was && live()) hooks.unstand?.(pn);
+    },
+  };
+}
+
+/**
+ * @param deps {{
+ *   renderer, getGpuMesh: async (id) => gpu, cpuModels: Map,
+ *   getTexture: async (archive) => TextureFile, uploadRecord,
+ * }}
+ * @returns {{drawList, billboardBatches, lights, texRemap, markers,
+ *   enterMarkers, doors, collider, destroy()}}
+ */
+export async function buildInteriorContext(deps, dfBlock, blockIndex, recordIndex, climateBase, season, origin = null, opts = {}) {
+  const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette, getMachineryParts, placeHold = null } = deps;   // FIELD BUGS 2026-10-04d PLACE-LRU: `placeHold` - the building's hold on the shared caches (scenes/placeHolds.js), the three doors above its own; settled once built, released by destroy(). None from the standalone ?interior scene
+  // P8: verbatim PlayerEnterExit.TransitionInterior parenting - the
+  // interior sits at ownerPosition + buildingMatrix (the entered
+  // building model's WORLD matrix), so every coordinate the context
+  // returns is world-frame and the closest-marker/door landing math
+  // runs in ONE frame. Standalone callers omit origin (identity).
+  const parent = (m) => origin ? multiply(origin, m) : m;
+  const parentPt = (x, y, z) => origin ? transformPoint(origin, x, y, z) : [x, y, z];
+
+  // Layout with real texture sizes: getGpuMesh warms the caches, then
+  // the layout's getModel reads the CPU model back.
+  const pending = new Map(); // id -> cpu model, resolved before layout
+  const collect = async (id) => {
+    if (!pending.has(id)) {
+      await getGpuMesh(id);
+      const cpu = cpuModels.get(id);
+      // LOUDLY, ONCE, AT THE SEAM. A null from getGpuMesh used to
+      // become a silent `undefined` here and surface three statements
+      // later as a TypeError on someone else's line.
+      if (!cpu) console.warn(`[interior] model ${id} is not in this ARCH3D - every placement of it is skipped`);
+      pending.set(id, cpu);
+    }
+    return pending.get(id);
+  };
+  // First pass: discover every model id the record references.
+  const recordData = dfBlock.rmbBlock.subRecords[recordIndex];
+  const ids = new Set();
+  for (const obj of recordData.interior.block3dObjectRecords) ids.add(obj.modelIdNum);
+  await Promise.all([...ids].map(collect));
+
+  const interior = layoutInterior(dfBlock, blockIndex, recordIndex, (id) => pending.get(id));
+  // WAGONS2: a flat HUNG from a ceiling (the caravan's lantern - systems/caravanRoom.js caravanRoomBlock): its y is the
+  // ceiling it hangs from, and the flat (drawn about its middle) stands half its own height below it
+  for (const f of interior.flats) if (f.hang) { const t = await getTexture(f.archive); if (t && f.record < t.recordCount) f.y -= billboardSize(t, f.record).h / 2; }
+  await Promise.all(interior.actionDoors.map((d) => collect(d.modelIdNum)));
+
+  // Climate swap table over the interior's submeshes, pruned like the
+  // standalone scene when the swapped archive lacks the record.
+  const texRemap = new Map();
+  const resolveTexKey = keyResolver(texRemap);   // PERF6: drawMesh's own remap resolution (every model is remapped above, before the list is built)
+  markRemapLaw(texRemap, `climate:${climateBase}.${season}`);   // AUDIT MENU-ORDER C3: the table named by the law it is built in
+  const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
+  for (const id of pending.keys()) {
+    // The undefined submesh list is the seam's to survive, not this
+    // loop's: an id whose model is absent lands in `pending` as
+    // undefined (collect writes cpuModels.get(id) and getGpuMesh only
+    // fills cpuModels on success), so this threw before the placement
+    // guard below could ever run.
+    await remapSubMeshes(cpuModels.get(id)?.subMeshes, texRemap, climateArchive, deps);
+  }
+  // CABIN-LOOK (scenes/cabinLook.js): a room its owner restyled - each picture given its twin over the climate's, before a
+  // model is added to the room's batch (its keys resolved at the add)
+  if (typeof opts.restyle === 'function') await opts.restyle(texRemap, [...pending.keys()].map((id) => cpuModels.get(id)?.subMeshes ?? []), { renderer, getTexture, palette });
+
+  const drawList = [];
+  // PERF6: THE ROOM'S STATIC MODELS AS ONE MESH - PERF5's batch for the
+  // interior. Doors are dynamicDraws and the mill's machinery its own
+  // rotors; every other placement stands still. Built lazily on the
+  // first read, freed by destroy(); drawList stays whole for the automap.
+  let staticBatch = null, staticBuilt = false;
+  const staticBuilder = new StaticBatchBuilder({ pieces: true });   // RW1: a sphere a model per merged sub-mesh - a window measured on the screen is its own model's, not the room's (render/realWindows.js)
+  // ROAD-C c2/S9: THE INTERIOR AUTOMAP'S ROWS, minted at the ONE push
+  // site every building entry runs through.
+  //
+  // IDENTITY. DFU's interior discovery record has the same three-level
+  // shape as a dungeon's - block -> blockElement -> model - with ONE
+  // block (the interior scene) and the two elements AddModels creates,
+  // "Models" and "Doors", of which only the first is ever populated
+  // (DaggerfallInterior.cs:398-401; automapModel.js records why). The
+  // port carries that address as METADATA, exactly as the dungeon host
+  // does, and mints its own key. The key is POSITIONAL here - the
+  // placement's index - where the dungeon's is the action system's
+  // `${bi}:${blockLocalPosition}`, because an interior placement has no
+  // byte offset to be named by and, crucially, because this record is
+  // VISIT-SCOPED: it is never written to a save, so a positional key
+  // costs a map at worst and never a save. The `int:` prefix keeps it
+  // out of the dungeon's `<digits>:<digits>` space by construction.
+  //
+  // THE INDEX IS THE PLACEMENTS ARRAY'S, not a running counter, so a
+  // model this ARCH3D lacks leaves a GAP rather than renumbering every
+  // key after it - the same layout must mint the same keys on every
+  // visit or discovery lands on the wrong walls.
+  //
+  // ONE THING DFU DOES THAT THE PORT DOES NOT, stated because it is
+  // visible: Option_CombineRMB is true by default (DaggerfallUnity.cs
+  // :80), so DFU's interior automap folds every non-prop, non-ladder,
+  // non-custom-activation model into ONE "CombinedModels" mesh
+  // (:459-461, :505-517) - one MeshRenderer, so revealing any part of
+  // the shell reveals all of it at once. This port combines nowhere
+  // (world/rmbLayout.js has stood standalone models since the block
+  // layout shipped), so it reveals model by model, which is DFU's own
+  // behaviour with the option off. Finer-grained, never coarser.
+  const automapEntries = [];
+  const amapModelCount = [0, 0];
+  const amapBlockName = `${dfBlock.name ?? ''}:${recordIndex}`;
+  // WM4b: the machinery's MOVING PARTS - {gpu, child, parent, state}.
+  // The body of 41601 is an ordinary draw above; its Plank_Gear and
+  // Roller are drawn by the host each frame under mountMachineryChild
+  // with the angle advanceMachinery keeps, because a draw list holds
+  // matrices and these have none that lasts a frame. The parts are
+  // fetched ONCE per context however many 41601s the room places,
+  // through the same deps door the body came through - a host that
+  // has no getMachineryParts (none today) would draw the body still.
+  const rotors = [];
+  let machineryParts = null;
+  const ladders = []; // {cpu, matrix} - verbatim id 41409
+  // S2b: house containers - the verbatim predicate lives in
+  // systems/containers.js (pure, tested); private furniture starts
+  // EMPTY, opened through the shared pickup.
+  const containers = [];
+  // E2: shop shelves. DFU's AddFurnitureAction chain checks the
+  // SHELF set FIRST - a shelf-set model in a plain UNOWNED house is
+  // NOTHING (the else-chain never reaches the house-container check).
+  // That also fixes an S2b parity slip: 41035/41037 sit in BOTH sets
+  // and had been house containers everywhere. Shelves stock lazily
+  // (StockShopShelf on first activation) when the building IsShop;
+  // Library/Guild/Temple bookshelves route at activation (BS1), and
+  // the OWNED-house arm lands below (HC1).
+  const shelves = [];
+  const tables = [];   // CARDS2: the room's card tables (world/card/cardTables.js) - TAVERN-TABLE: the props a tavern stands (below; TAVERN-TABLES: the chips table, then the gold); the host seats them
+  const beds = [];   // RR1: models 41000-41002 (RoleplayRealism.cs:126-128), listed always, activated under bedSleeping
+  const chairs = [];   // SIT1 (world/chairSeat.js): the chairs, benches and thrones a player sits on - by model id, whatever its ObjectType
+  // IF1: the combined mesh's materials, as Immersive Footsteps reads them
+  // off `CombinedModels` (Main.cs:237-308) - one name per texture in
+  // first-appearance order over the models' submeshes, through the
+  // climate remap above (DFU names the material after the swapped
+  // archive), in MaterialReader's own format. The action doors are a
+  // separate list here as in DFU's combiner; the interactive furniture
+  // DFU keeps out of the combine (shelves, containers, ladders) is in
+  // this walk, which can only reorder a floor archive a shelf model
+  // happens to carry - the floor records themselves are the same.
+  const floorMaterials = [];
+  const seenFloorMaterials = new Set();
+  const collider = new Collider(() => -Infinity);
+  collider.cover = createCoverIndex();   // TACT1: the room's solid flats are cover, with the switch on
+  // BASE-HIDE (2026-09-26, Mac: "Remove bought houses decor"): A ROOM ITS OWNER MAY FURNISH (`opts.baseEditable` - an
+  // online home, anyone's, or the player's own house or ship) STANDS ITS OWN FURNITURE PIECE BY PIECE - each prop model
+  // its own draw (never the merge) and collider bucket, each flat its own batch and light - so a piece can be taken out
+  // and put back while the room stands (scenes/decor/decorBase.js). Every other room is built as it always was. The ladder and
+  // the mill's machinery are the building's workings, not its furniture.
+  const base = opts.baseEditable ? createBaseRoom({ drawList, batches: () => billboardBatches, lights: () => lights, collider }) : null;
+  const iilFireplaces = [];   // IIL1: the fireplace models' centres (Improved Interior Lighting)
+  for (const [pi, p] of interior.placements.entries()) {
+    // NOTICE-PANEL (AUDIT FB1029g R2, the owner: "remove the notice board prop from all cities"): the town packs' rooms
+    // place model 41739 too - a tavern's, a temple's, a gate's. None stands; its index is kept, so a room's keys hold
+    if (isBulletinBoard(p.modelIdNum)) continue;
+    const matrix = parent(p.matrix);
+    // NEVER TRAPS: getGpuMesh returns NULL for a model id this data set
+    // does not carry (dataPipeline.js:"const index = arch.getRecordIndex(modelIdNum)".."gpuMeshes.set(modelIdNum, null);", and it CACHES the null), and
+    // cpuModels is written only on its success path - so an absent
+    // model used to push a {mesh: null} draw entry AND then read
+    // `cpu.positions` off undefined one line later. Every other builder
+    // in the port skips the placement; this one did not, and it is the
+    // only interior arm, which is why a single missing model could take
+    // the whole building. Skip the placement, loudly.
+    const gpu = await getGpuMesh(p.modelIdNum);
+    const cpu = cpuModels.get(p.modelIdNum);
+    if (!gpu || !cpu) {
+      console.warn(`[interior] model ${p.modelIdNum} is not in this ARCH3D - the placement is skipped`);
+      continue;
+    }
+    // ROAD-C c2/S9: the automap row rides the draw entry, key and all,
+    // so the map filters the LIVE list and no second copy of the
+    // building exists (Automap.cs duplicates the whole interior into
+    // its own GameObject instead - CreateIndoorGeometryForAutomap
+    // :1862-1910).
+    for (const sm of cpu.subMeshes ?? []) {
+      const base = `${sm.textureArchive}_${sm.textureRecord}`;
+      const swapped = texRemap.get(base) ?? base;
+      if (seenFloorMaterials.has(swapped)) continue;
+      seenFloorMaterials.add(swapped);
+      const [a, r] = swapped.split('_');
+      floorMaterials.push(unityMaterialName(a, r));
+    }
+    const aabb = worldAabb(cpu.positions, matrix);
+    // IIL1: ImproveFireplaces.cs finds its hearths by mesh id - the port keeps where they stand
+    if (IIL_FIREPLACE_MODELS.has(p.modelIdNum)) iilFireplaces.push({ x: (aabb.min[0] + aabb.max[0]) / 2, y: (aabb.min[1] + aabb.max[1]) / 2, z: (aabb.min[2] + aabb.max[2]) / 2 });
+    const key = `int:${pi}`;
+    // BUILT-IN-MODS: a piece is a prop, or furniture a town mod wrote as scenery (ObjectType 0) - DFU's prop gate still
+    // alone decides a container, a ladder and a furniture action below
+    const baseKey = base && (p.objectType === PROP_MODEL_TYPE || (p.objectType === 0 && isRoomFurnishing(p.modelIdNum)))
+      && p.modelIdNum !== LADDER_MODEL_ID && p.modelIdNum !== MACHINERY_MODEL_ID
+      ? decorBaseModelKey(pi, p.modelIdNum) : null;   // BASE-HIDE: a piece its owner may take out
+    drawList.push({ mesh: gpu, matrix, key, aabb });
+    // PERF6: the entry stays in drawList for the automap; the main view draws the merge
+    if (!baseKey && cpu.normals && cpu.uvs) { staticBuilder.add(cpu, matrix, resolveTexKey); drawList[drawList.length - 1]._batched = true; }
+    automapEntries.push({
+      key,
+      aabb,
+      blockIndex: 0,
+      blockName: amapBlockName,
+      elementIndex: 0,
+      elementName: INTERIOR_ELEMENT_NAMES[0],
+      modelIndex: amapModelCount[0]++,
+      waterLevel: null,   // AddWater is a DUNGEON block's (Automap.cs:1982-2001); an interior has no water level
+      positions: cpu.positions,
+      indices: cpu.indices,
+      normals: cpu.normals ?? null,   // DISC22-G: the file's facing - a building's ceilings are not its storeys
+      matrix,
+    });
+    collider.addMesh(baseKey ? baseBucketOf(baseKey) : 'interior', cpu.positions, cpu.indices, matrix);
+    if (baseKey) base.addModel(baseKey, { model: p.modelIdNum, draw: drawList[drawList.length - 1], cpu, matrix, at: aabb.min.map((v, i) => (v + aabb.max[i]) / 2), aabb });
+    if (p.modelIdNum === MACHINERY_MODEL_ID && getMachineryParts) {
+      machineryParts ??= await getMachineryParts();
+      for (const part of machineryParts) {
+        // Kamer's prefab gives the Roller a MeshCollider and the
+        // Plank_Gear none. A turning collider is beyond this collider
+        // (it is built once, static), so the roller's stands at its
+        // rest pose - angle 0 - which is its whole footprint but for
+        // the turn.
+        if (part.child.collider) {
+          const rest = mountMachineryChild(matrix, part.child, 0);
+          collider.addMesh('interior', part.cpu.positions, part.cpu.indices, rest);
+        }
+        await remapSubMeshes(part.cpu.subMeshes, texRemap, climateArchive, deps);
+        rotors.push({ gpu: part.gpu, child: part.child, parent: matrix, state: { angle: 0 } });
+      }
+    }
+    // AUDIT 64 F17: DaggerfallInterior.cs:491-496 gates the ladder on
+    // BOTH the model id AND ObjectType == propModelType ("Make ladder
+    // collider convex and ladder functionality, if set up as
+    // propModelType"); :439 keeps EVERY 41409 standalone scenery, so a
+    // non-prop 41409 draws and collides but never climbs. The port had
+    // tested the id alone, making it a climb trigger that teleports to
+    // the nearest 21/22 marker where DFU leaves inert geometry.
+    if (p.modelIdNum === LADDER_MODEL_ID && p.objectType === PROP_MODEL_TYPE) {
+      ladders.push({ cpu, matrix });
+    }
+    // AUDIT 64 F17: DaggerfallInterior.cs:500 gates the whole
+    // AddFurnitureAction chain on the same clause -
+    // `if (obj.ObjectType == propModelType && buildingData.buildingType
+    // != AllValid) AddFurnitureAction(...)`. (The AllValid half is
+    // DFU's separate map-layout run, which this port has no counterpart
+    // for, so it is not ported.) A non-prop shelf/wardrobe model was a
+    // lootable container here where DFU leaves it as geometry.
+    // FIELD BUGS 2026-10-14 INN-BEDS: a bed is not furniture's action - Roleplay Realism's BedActivation is keyed on the
+    // model id alone (RoleplayRealism.cs:126-128), and DFU stands a custom-activation model on its own whatever its
+    // ObjectType (the CombineRMB note above), so a bed written as scenery (ObjectType 0 or 4: a dormitory's, a ship's
+    // bunks) rests as a prop's does. The furniture chain below stays the prop's alone.
+    // SIT1 (world/chairSeat.js; Mac: "Implement the ability to interact and sit on chairs"): a chair is the port's own
+    // activation, keyed on the model id alone as a bed is (INN-BEDS), a prop or scenery; taken out of a furnished room
+    // with its piece (BASE-HIDE - it is the piece's furniture)
+    if (isChairModel(classicModelIdOf(p.modelIdNum))) {
+      const chair = { cpu, matrix, modelId: classicModelIdOf(p.modelIdNum), aabb };   // AUDIT FIVE-ASKS C7: its world box, as the build measured it
+      chairs.push(chair);
+      if (baseKey) base.furnish(baseKey, chair);
+    }
+    if (p.objectType !== PROP_MODEL_TYPE) {
+      if (isBedModel(classicModelIdOf(p.modelIdNum))) {
+        beds.push({ cpu, matrix });
+        if (baseKey) base.furnish(baseKey, beds[beds.length - 1]);   // BUILT-IN-MODS: taken out with its rest
+      }
+      continue;
+    }
+    const had = [containers.length, shelves.length, beds.length];   // BASE-HIDE: which list this piece lands in, if any
+    if (isShopShelfModel(p.modelIdNum)) {
+      if (opts.houseOwned) {
+        // HC1 - AddFurnitureAction's OWNED arm (:816-819): in a house
+        // the player OWNS, the shelf-set model is MakeHouseContainer -
+        // your furniture is storage, not merchandise. `opts.houseOwned`
+        // is the host's already-evaluated IsHouseOwned(buildingKey)
+        // answer, the peopleVisible idiom - the bank registry lives
+        // with the host, as DFU's DaggerfallBankManager does. (An
+        // owned residence is never a shop or a Library/GuildHall/
+        // Temple, so the two arms ahead of this one in DFU's chain
+        // cannot fire on it.)
+        containers.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
+      } else {
+        shelves.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
+      }
+    } else if (isBedModel(classicModelIdOf(p.modelIdNum))) {   // WD3: a town mod's coloured bed is Daggerfall's bed under another blanket (an alias) - RR rests on it as on its own (DFU draws nothing there: the mods' prefabs point at no mesh)
+      beds.push({ cpu, matrix });
+    } else if (isHouseContainerModel(p.modelIdNum)) {
+      // F209: `items: null` IS the stock-once latch, the shelf idiom
+      // one line up - StockHouseContainer runs on first access
+      // (PlayerActivate.cs:915-918), and the scene cache preserves
+      // null so an unopened chest stays unstocked across visits. Born
+      // `[]` it read as already-stocked-empty and no one ever filled it.
+      containers.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
+    }
+    if (baseKey) base.furnish(baseKey, containers[had[0]] ?? shelves[had[1]] ?? beds[had[2]] ?? null);
+  }
+  // AUDIT FB1029e H2: a piece with no floor under it holds a floor's edge over the void (a mod's bench at a gap in its
+  // room's shell) - the room keeps it, so taking it out never opens a way into the void
+  for (const p of base?.list() ?? []) if (p.model != null && collider.raycast(p.at, [0, -1, 0], 60, { skip: [baseBucketOf(p.key)] }) === Infinity) base.keep(p.key);
+  // Interior swing doors run on the ActionSystem (P4): the verbatim
+  // -90 / 1.5 s toggle with trigger-at-open-start - inner rooms open,
+  // and they are audible (DaggerfallInterior.AddActionDoors builds them
+  // from Option_InteriorDoorPrefab, which carries the same
+  // DaggerfallActionDoor component the dungeon doors have).
+  const actions = new ActionSystem(collider);
+  attachInteriorDoorSounds(actions);
+  const dynamicDraws = [];
+  const roomDoors = createInteriorDoors({
+    draws: dynamicDraws,
+    addDoor: (cpu, matrix) => actions.addDoor(cpu, matrix),
+    removeDoor: (key) => actions.removeDoor(key),
+  });
+  const hung = [];   // DOOR-VOID: [record index, model, draw] - offered to the owner's list once the seal has run
+  for (let doorIndex = 0; doorIndex < interior.actionDoors.length; doorIndex++) {
+    const d = interior.actionDoors[doorIndex];
+    // The same seam as the placements above: addDoor reads
+    // `cpu.positions`, and the push would otherwise hand the frame
+    // loop a {gpu: null} entry. A door model this data set lacks costs
+    // the door, not the building.
+    const gpu = await getGpuMesh(d.modelIdNum);
+    const cpu = cpuModels.get(d.modelIdNum);
+    if (!gpu || !cpu) {
+      console.warn(`[interior] action-door model ${d.modelIdNum} is not in this ARCH3D - the door is skipped`);
+      continue;
+    }
+    dynamicDraws.push({ gpu, object: actions.addDoor(cpu, parent(d.matrix)) });
+    hung.push([doorIndex, cpu, dynamicDraws[dynamicDraws.length - 1]]);
+  }
+  // FIELD BUGS 2026-10-25 DOOR-VOID: a door with no floor behind it stays shut - asked of the room's whole shell and its
+  // models, every door registered (world/interior/doorsToNowhere.js). Wired here, as the door sounds are, so both
+  // interior hosts (worldModes' buildings and the standalone interior scene) say the line. A sealed door is not one an
+  // owner may take out (decorInteriorDoors.js isRemovableInteriorDoor): its opening would be the way into nothing.
+  sealDoorsToNowhere(actions);
+  actions.onSealedDoor = () => setMidScreenText(sealedDoorText());
+  for (const [doorIndex, cpu, draw] of hung) roomDoors.adopt(doorIndex, cpu, draw);
+  if (base) base.roomDoors = roomDoors;   // the owner's list; a room that is not furnished has none to take out
+
+  // TAVERN-TABLE (world/card/cardTableProp.js, world/placedCardTable.js; the owner: "Lets instead place a specific table in
+  // each inn. A new property specifficaly used for the card table"): THE TAVERN'S CARD TABLE, ITS OWN PROP, where the host
+  // asks for one (`opts.placeCardTable` - a tavern, scenes/worldModes.js). Its floor is found from the room's FIRST enter
+  // marker - the record's, not the door walked through, so every client stands it in the same place - with the room's
+  // whole collider built (its closed doors stop the walk), keeping clear of the doors, the people, the flats and the
+  // markers. Then it is one of the room's models - drawn, collided, on the automap (its key the next placement index,
+  // past the record's own) - and the room's card table, seated round the TABLE's own box (its stools apart). NOT in
+  // the merge (AUDIT TAVERN-TABLE H1): staticBatch.js reads a key's archive as a number, and the prop's string archive
+  // came out NaN - the table collided, seated and dealt, and was never drawn; its own mesh draws it, one draw. Its mesh
+  // is this context's (freed by destroy); its two painted textures the renderer's, uploaded once. A room with no enter
+  // marker or no such floor stands none - nor one whose only floor for it is in the way (WAY-ROUND: a corridor, a
+  // doorway, the mouth of an opening).
+  // TAVERN-TABLES (section 30; the owner, told one table let its first sitter shut the other kind out: "Two tables per
+  // tavern"): AND A SECOND - the GOLD table, at the index the relay holds every staked sit to (net/holdemTable.js
+  // HOLDEM_GOLD_TABLE), its felt red. Found by the same walk with the first already stood (in the collider, so the walk
+  // goes round it) and its ring kept off the first's (an avoid box, the first's ring's own); a room with floor for one
+  // stands the chips table alone, every client the same (the walk is the same walk, the first table the same table).
+  const propMeshes = [];
+  if (opts.placeCardTable) {
+    const enter = interior.markers.find((m) => m.type === INTERIOR_MARKER.ENTER) ?? interior.markers.find((m) => m.type === INTERIOR_MARKER.REST);
+    const probe = {
+      floor: (x, y, z) => { const d = collider.raycast(parentPt(x, y, z), [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },
+      open: (x, y, z, r) => !collider.sphereOverlaps(parentPt(x, y, z), r),
+    };
+    const avoid = [
+      ...interior.doors.map((d) => [...doorWorldPosition(d), 1.5]),
+      ...interior.actionDoors.map((d) => [d.matrix[12], d.matrix[13], d.matrix[14], 1.5]),   // the hinge; the swing is within
+      ...collectInteriorPeople(recordData).map((pn) => [pn.x, pn.y, pn.z, 0.6]),
+      ...interior.flats.map((f) => [f.x, f.y, f.z, 0.5]),
+      ...interior.markers.map((m) => [m.x, m.y, m.z, 0.5]),
+    ];
+    while (tables.length < TAVERN_CARD_TABLES) {
+      const gold = holdemGoldTable(tables.length), felt = gold ? GOLD_FELT_RECORD : FELT_RECORD;
+      const spot = enter ? placedTableSpot(CARD_TABLE_BOX, [enter.x, enter.y, enter.z], probe, avoid) : null;
+      if (!spot) { console.warn(`[interior] no ${gold ? 'gold ' : ''}card table stood: ` + (!enter ? 'the room has no enter marker' : `no clear floor near the entrance${gold ? ' for a second' : ''} out of the way`)); break; }
+      if (!propMeshes.length) renderer.uploadTexture(CARD_TABLE_ARCHIVE, WOOD_RECORD, paintWood(), { mips: true, opaque: true });   // a model's material: opaque, with its mip chain, as a TEXTURE archive's
+      renderer.uploadTexture(CARD_TABLE_ARCHIVE, felt, paintFelt(gold ? GOLD_FELT_RGB : FELT_RGB), { mips: true, opaque: true });
+      const cpu = cardTablePropModel({ felt });
+      const mesh = renderer.createMesh(cpu);
+      propMeshes.push(mesh);
+      const matrix = parent(trs(spot.x, spot.y, spot.z, 0, spot.yawDeg, 0));   // along x, or turned a quarter where only across does it fit
+      const aabb = worldAabb(cpu.positions, matrix);   // the whole prop's, its stools in it - the draw's and the map's
+      const key = `int:${interior.placements.length + tables.length}`;   // the next placement index, past the record's own
+      drawList.push({ mesh, matrix, key, aabb });
+      automapEntries.push({ key, aabb, blockIndex: 0, blockName: amapBlockName, elementIndex: 0, elementName: INTERIOR_ELEMENT_NAMES[0], modelIndex: amapModelCount[0]++, waterLevel: null, positions: cpu.positions, indices: cpu.indices, normals: cpu.normals, matrix });
+      collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
+      const { min, max } = CARD_TABLE_BOX;
+      const corners = [min[0], max[0]].flatMap((x) => [min[1], max[1]].flatMap((y) => [min[2], max[2]].flatMap((z) => [x, y, z])));   // all eight: a building turned turns them
+      tables.push({ aabb: worldAabb(corners, matrix), box: { min: [...min], max: [...max] }, matrix, ...(gold ? { gold: true } : {}) });   // the table's own, its stools apart: its seats, its frame, its press
+      avoid.push([spot.cx, spot.y, spot.cz, spot.hx, spot.hz]);   // the next keeps its ring off this one's
+    }
+  }
+
+  // People (C1): AddPeople's data layer - base positions batch through
+  // the same billboard path as flats; the StaticNPC inputs ride on the
+  // returned people list (parent-frame, like everything else here).
+  //
+  // P1: ...and AddPeople's VISIBILITY TAIL (:1206-1226), which C1
+  // routed because it needed banking. `opts.peopleVisible` is the
+  // host's already-evaluated answer - the host owns the clock, the
+  // guild dictionary, the deed store and the entry latch, and DFU
+  // likewise hands AddPeople a resolved `buildingData` rather than
+  // making it look anything up. A host that does not pass it (the
+  // standalone ?interior route) gets C1's behaviour: everyone stands.
+  const visible = opts.peopleVisible ?? true;
+  const people = collectInteriorPeople(recordData).map((pn) => {
+    const [x, y, z] = parentPt(pn.x, pn.y, pn.z);
+    // RR2: a mod's SetMaterial over the person's billboard (Roleplay &
+    // Realism's variant keepers and residents, RoleplayRealism.cs:775-932)
+    // - the host's decision, asked as each person is listed; the person
+    // keeps its born archive/record for StaticNPC's identity (the name
+    // seed, the FLATS.CFG face) and draws the answered one
+    const v = opts.variantPerson?.(pn) ?? null;
+    // NUDE-FLATS: and whatever the person draws as, a nude figure draws its
+    // clothed stand-in while Show Nudity is off - the temples of Kynareth's
+    // own two among them. Same door, same born identity.
+    const [da, dr] = drawnFlat(v?.textureArchive ?? pn.textureArchive, v?.textureRecord ?? pn.textureRecord);
+    const redrawn = v || da !== pn.textureArchive || dr !== pn.textureRecord;
+    return { ...pn, x, y, z, active: visible, questBehaviour: null, ...(redrawn ? { drawArchive: da, drawRecord: dr } : {}) };
+  });
+  // LAMP-KEEPER II (systems/lampKeeper.js): the host's pick - a shop's keeper standing as the lamp today keeps its born identity
+  // (its name, its shop) and stands as the lamp; no Morrowind body is read for it (MWNPC8a's look, null)
+  for (const pn of people) if (opts.lampPerson?.(pn)) Object.assign(pn, { lamp: true, _mwLook: null });
+  // AUDIT 24 (wave 20): AddPeople's LAST act on every person it stands
+  // is `QuestMachine.Instance.SetupIndividualStaticNPC(go, obj.FactionID)`
+  // (DaggerfallInterior.cs:1224) - inline, at the GameObject, BEFORE
+  // PlayerEnterExit reaches AddQuestResourceObjects (:800). The port
+  // had the machine half written and NOBODY calling it, so no building
+  // NPC ever carried a QuestResourceBehaviour: the follow-up-quest
+  // bootstrap click had nothing to click, and an individual the quest
+  // had moved somewhere else went on standing at home beside their own
+  // copy. The hook runs HERE, at DFU's own moment, so the away arm's
+  // SetActive(false) can still take the person out of the batch.
+  let peopleBuilt = false;   // ROAD review-p: see makeInteriorPersonHost
+  for (const pn of people) {
+    pn.host = makeInteriorPersonHost(pn, {
+      built: () => peopleBuilt,
+      stand: (p) => standPerson(p),
+      unstand: (p) => unstandPerson(p),
+    });
+    // P1: the quest hook is DFU's ELSE branch (:1224) - a person the
+    // visibility gate took out is NOT handed to the quest machine.
+    // Wiring a hidden individual would put a clickable quest NPC
+    // inside a shuttered shop, and would let an away-arm SetActive
+    // put back someone the building rules had removed.
+    if (!visible) continue;
+    const setup = opts.setupStaticNpc?.(pn, pn.host);
+    if (setup && setup !== true) pn.questBehaviour = setup;
+  }
+
+  // C4c (?voxelfolk): people stand as the bare Rewrite humanoid - one
+  // packed mesh, per-person matrices (uniform scale to CLASSIC_HEIGHT,
+  // feet on the billboard base). Facing is static until the animation
+  // slice. Flag off = the C1 classic billboards, untouched.
+  const charDraws = [];
+  let _raceMeshes = null;   // AUDIT 23 (hosts-16)
+  let _rigFor = null;   // ROAD review-p: the person stand needs the same rig cache
+  let animateChars = null; // set when the voxel body builds
+  const flatAnims = new FlatAnimator();   // FA1
+  const billboardBatches = [];
+  const flatGroups = new Map();
+  // ROAD review-p: THE LIVE HALF of SetActive, and (AUDIT 68
+  // S21-person-hide-noop) THE ONE STAND. Every person is stood here -
+  // the build's and the one DaggerfallInterior.UpdateNpcPresence stands
+  // later (the rest window's OnPop) - each with a draw of their own and
+  // an extent, so SetActive(false) can take any of them back out. The
+  // build used to seat people in the shared (archive, record) batches,
+  // whose centres are baked in: a quest's SetActive(false) after the
+  // build (QuestResource.Tick's hide, a destroyed Person) left the
+  // person drawn, and the SetActive(true) after it stood a second copy.
+  // DFU's SetActive takes the renderer with the collider.
+  //
+  // U23: the extent is the STATIC NPC's own billboard, which the
+  // activation ray needs. DFU gives each StaticNPC a BoxCollider sized
+  // to its billboard (DaggerfallBillboard/Billboard.cs SetMaterial ->
+  // `collider.size = new Vector3(size.x, size.y, 0.1f)`), and the
+  // billboard turns to face the player every frame, so the volume it
+  // actually occupies over a turn is the SWEPT box - square in x/z
+  // (Ledger A, and only for the ray). worldModes' picker refuses
+  // `!pn.width`; a voxelfolk body reads it off the archive too.
+  // Answers the stand's promise.
+  const standPerson = (pn) => {
+    if (pn.stood) return null;
+    pn.stood = true;
+    if (pn.lamp) return standLamp(pn);   // LAMP-KEEPER II: the lamp, whatever body the room's people wear
+    if (_rigFor) {
+      const rg = _rigFor(raceOfArchive(pn.textureArchive));
+      // AUDIT 39 (#76): the person's FLOOR position rides with the draw
+      // - the matrix is re-seated every frame, off the live foot.
+      pn.standDraw = { mesh: rg.mesh, rig: rg, at: [pn.x, pn.y, pn.z], matrix: trs(pn.x, pn.y - rg.liveFootY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) };
+      charDraws.push(pn.standDraw);
+    }
+    return (async () => {
+      const t = await getTexture(pn.drawArchive ?? pn.textureArchive);   // RR2: the re-materialised billboard, where a mod set one
+      if (!t || (pn.drawRecord ?? pn.textureRecord) >= t.recordCount) return;
+      // LAMP-KEEPER (2026-09-26, Mac: "Shop keepers are lamp posts"): the mod's picture is registered LAZY (RR2 -
+      // nothing fetched at install), and a lazy record is decoded only when something ASKS for it; getTexture's
+      // archive preload skips lazy entries by design (AUDIT-DW F1). Nothing asked, so the upload below drew the
+      // classic TEXTURE.197 record in its place - and record 6 of "Kludge Town" is a street lamp: every keeper of
+      // a quality-13-plus shop or tavern stood as a lamp post, and a click on the lamp opened the shop. Ask first.
+      if (pn.drawArchive != null) await preloadTextureRecord(pn.drawArchive, pn.drawRecord ?? pn.textureRecord).catch(() => null);
+      const size = billboardSize(t, pn.drawRecord ?? pn.textureRecord);
+      pn.width = size.w;
+      pn.height = size.h;
+      // Flipped back or torn down (AUDIT 68 S21-late-stand-after-destroy:
+      // destroy() ends `peopleBuilt`) while the archive was loading, or
+      // drawn as a voxel body already: no billboard.
+      if (!peopleBuilt || _rigFor || !pn.stood || pn.standBatch) return;
+      uploadRecord(pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord);   // RR2: the re-materialised billboard   // REVIEW 2026-09-05: a FLAT - alphaIndex 0 (DaggerfallBillboard.cs:289-293), the cutout key drawBillboards reads; PR #55 had sent it through the mesh door and the person never drew
+      pn.standBatch = renderer.createBillboardBatch(pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
+      armFlatAnim(pn.standBatch, t, pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord, flatAnims, uploadRecordFrame);
+      billboardBatches.push(pn.standBatch);
+    })().catch((e) => console.error('[interior] person stand failed:', e));
+  };
+  // LAMP-KEEPER II (systems/lampKeeper.js): THE LAMP - the classic TEXTURE.197 record 6 whatever a pack replaces it
+  // with (its own pixels, getColor32's, never the replacement's), uploaded under the port's own key so a keeper a mod
+  // draws on 197_6 is not touched, at the record's size through the one billboard-size door (with Roleplay & Realism's
+  // XML scale, the bug's own stretch). Uploaded at every stand, the same key each time: the session's own one small
+  // picture, never a place's - the place-LRU never holds nor frees it (AUDIT FIVE-ASKS D5: bounded at one, its owner the
+  // page).
+  const standLamp = (pn) => (async () => {
+    const t = await getTexture(LAMP_CLASSIC.archive);
+    if (!t || LAMP_CLASSIC.record >= t.recordCount) return;
+    const size = billboardSize(t, LAMP_CLASSIC.record);
+    pn.width = size.w;
+    pn.height = size.h;
+    if (!peopleBuilt || !pn.stood || pn.standBatch) return;
+    renderer.uploadTexture(LAMP_ARCHIVE, 0, t.getColor32(t.getDFBitmap(LAMP_CLASSIC.record, 0), 0));
+    pn.standBatch = renderer.createBillboardBatch(LAMP_ARCHIVE, 0, size, [[pn.x, pn.y, pn.z]]);
+    billboardBatches.push(pn.standBatch);
+  })().catch((e) => console.error('[interior] lamp stand failed:', e));
+  // The mirror: any stood person can be taken back out.
+  const unstandPerson = (pn) => {
+    if (!pn.stood) return;
+    pn.stood = false;
+    if (pn.standBatch) {
+      const i = billboardBatches.indexOf(pn.standBatch);
+      if (i >= 0) billboardBatches.splice(i, 1);
+      flatAnims.remove(pn.standBatch);   // AUDIT 68 review (R-scenes-unstand-flatanim-leak): its FlatAnim goes with it - armFlatAnim added one at the stand
+      renderer.destroyBatch(pn.standBatch);
+      pn.standBatch = null;
+    }
+    if (pn.standDraw) {
+      const i = charDraws.indexOf(pn.standDraw);
+      if (i >= 0) charDraws.splice(i, 1);
+      pn.standDraw = null;
+    }
+  };
+  if (opts.voxelfolk && people.length) {
+    // Neutral paperdoll (C8): a redesigned standing figure from
+    // buildNeutralBody() - NOT sprite-constrained (arms at the sides,
+    // forward legs/feet, designed anatomy). Colour is baked per face
+    // (AO + snapped-ARM_PAL-ramp shading, the blocky look), ramps
+    // taken from the loaded sprite so the palette matches. The old
+    // old sprite-trace rig + 1:1 silhouette pin are retired/removed.
+    // Pieces will re-seat on this rig later - &piece is inert here.
+    const bodyImg = new ImgFile();
+    bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
+    const bodyBmp = bodyImg.getDFBitmap();
+    // NEUTRAL paperdoll (redesign): geometry + AO + snapped-ramp
+    // palette shading, baked per face. Ramps come from the loaded
+    // ART_PAL sprite (skin from the mid torso, boot from the feet) so
+    // the palette matches the game.
+    const ramps = deriveClassicRamps(palette, bodyBmp);
+    // One rig per race, cached; people instanced onto their race's
+    // mesh. The rig IS the engine rig (createCharacterRig over the
+    // race face list) - the pre-animate.js inline loco copy this file
+    // carried is deleted; idle sway is the canonical IDLE gait.
+    const raceMeshes = new Map();
+    _raceMeshes = raceMeshes;   // AUDIT 23 (hosts-16): destroy() frees these
+    const rigFor = (race) => { let rg = raceMeshes.get(race); if (!rg) { rg = createCharacterRig(renderer, buildRaceCharacter(race, ramps)); raceMeshes.set(race, rg); } return rg; };
+    _rigFor = rigFor;   // the people stand below, through standPerson
+    animateChars = (t, mode = 'idle') => {
+      const L = mode === 'walk' ? WALK : IDLE;
+      for (const rg of raceMeshes.values()) {
+        if (mode === 'off') rg.drive(0, POSE_L, null, false);
+        else rg.drive(t * L.cadence, L, null, true);
+      }
+      // AUDIT 39 (#76): grounded on the LIVE support point, the rule
+      // every other host follows (engineRig: "the stride arc dips below
+      // rest minY"). Built once off the REST footY, the placement could
+      // not follow the stride and the feet went through the floor -
+      // and the two rigs whose rest low point is fur or scale sat
+      // above it. The rigs are shared per race, so this is one matrix
+      // per PERSON off a value computed once per race by drive().
+      for (const d of charDraws) {
+        const s = d.rig.scale;
+        d.matrix = trs(d.at[0], d.at[1] - d.rig.liveFootY * s, d.at[2], 0, 0, 0, s, s, s);
+      }
+    };
+  }
+  // BASE-HIDE: a furnishable room's flats stand one batch each (their pictures are loaded once all the same), so one can
+  // be taken out; every other room groups them by picture, as it always has
+  const baseFlats = [];
+  for (const [fi, flat] of interior.flats.entries()) {
+    if (base) {
+      const t = await getTexture(flat.archive);
+      if (!t || flat.record >= t.recordCount) continue;
+      uploadRecord(flat.archive, flat.record);
+      const at = parentPt(flat.x, flat.y, flat.z);
+      const batch = renderer.createBillboardBatch(flat.archive, flat.record, billboardSize(t, flat.record), [at]);
+      armFlatAnim(batch, t, flat.archive, flat.record, flatAnims, uploadRecordFrame);
+      billboardBatches.push(batch);
+      baseFlats.push({ fi, flat, batch, at });
+      continue;
+    }
+    const key = `${flat.archive}_${flat.record}`;
+    if (!flatGroups.has(key)) flatGroups.set(key, []);
+    flatGroups.get(key).push(parentPt(flat.x, flat.y, flat.z));
+  }
+  for (const [key, centers] of flatGroups) {
+    const [archive, record] = key.split('_').map(Number);
+    const t = await getTexture(archive);
+    if (!t || record >= t.recordCount) continue;
+    uploadRecord(archive, record);
+    const size = billboardSize(t, record);
+    const batch = renderer.createBillboardBatch(archive, record, size, centers);
+    armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
+    billboardBatches.push(batch);
+    if (isCoverFlat(archive, record, size)) collider.cover.add('tact1:flats', centers.map((c) => coverProxy(c, size)));   // TACT1 (a furnishable room's own pieces, which can be taken out, are not)
+    collider.cover.add('prop-bodies', flatBodies(t, archive, record, size, centers));   // PROP-BODIES
+  }
+
+  // The build's stand: from this line SetActive is live (makeInteriorPersonHost), so a flip that lands while these
+  // stands load routes to the pair above rather than being lost.
+  peopleBuilt = true;
+  await Promise.all(people.filter((pn) => pn.active).map(standPerson));   // SetActive(false): the away copy does not draw
+
+  const t210 = await getTexture(210);
+  const lightsOf = (flats) => (t210 ? collectInteriorLights(flats, (record) =>
+    billboardSize(t210, record)) : [])
+    .map((l) => {
+      const [x, y, z] = parentPt(l.x, l.y, l.z);
+      // FIX-D: the sprite's base goes into the parent frame with it -
+      // a building turns about its vertical, so the foot is the same
+      // column's point, not a height to carry across untransformed.
+      return { ...l, x, y, z, foot: parentPt(l.x, l.foot, l.z)[1] };
+    });
+  // BASE-HIDE: a furnishable room's lights are asked a flat at a time (collectInteriorLights reads each flat alone), so
+  // each light is its own flat's and goes out with it; the room's order is the same either way
+  const lights = base ? [] : lightsOf(interior.flats);
+  for (const bf of baseFlats) {
+    const own = lightsOf([bf.flat]);
+    lights.push(...own);
+    base.addFlat(decorBaseFlatKey(bf.fi, bf.flat.archive, bf.flat.record), { flat: [bf.flat.archive, bf.flat.record], batch: bf.batch, light: own[0] ?? null, at: bf.at });
+  }
+  if (base) for (const f of interior.flats) if (!baseFlats.some((bf) => bf.flat === f)) lights.push(...lightsOf([f]));   // a flat whose picture this data set lacks still lights the room, as the grouped build's did
+
+  // Markers (all types - ladders climb against these too) into the
+  // parent frame; enterMarkers derive from the transformed set.
+  const markers = interior.markers.map((m) => {
+    const [x, y, z] = parentPt(m.x, m.y, m.z);
+    return { ...m, x, y, z };
+  });
+  /** AUDIT 64 F15: FindClosestEnterMarker accepts Rest as well as
+   *  Enter. DaggerfallInterior.cs:242-246 - "Must be an enter marker
+   *  199.8 / Sometimes marker 199.4 is used where the 199.8 enter
+   *  marker should be / Being a little forgiving and also accepting
+   *  199.4 as enter marker" - `if (markers[i].type != Enter &&
+   *  markers[i].type != Rest) continue;`. The port had filtered ENTER
+   *  alone, so a building carrying only a 199.4 marker found no marker
+   *  at all: the check position stayed at the EXTERIOR door (picking a
+   *  different interior door than DFU) and, with no interior door, the
+   *  landing came back null and the E-press threw. The union is
+   *  enterMarkers' alone - every other marker consumer below and in
+   *  the hosts reads `markers` by exact type. */
+  const enterMarkers = markers
+    .filter((m) => m.type === INTERIOR_MARKER.ENTER || m.type === INTERIOR_MARKER.REST)
+    .map((m) => [m.x, m.y, m.z]);
+  /** AUDIT 63 F22: the TREASURE markers, in the same parent frame.
+   *  DaggerfallInterior.AddFlats (:872-902) hangs a RandomTreasure
+   *  DaggerfallLoot on every editor flat of type Treasure when the
+   *  building is a Tavern or wears the Thieves Guild / Dark
+   *  Brotherhood faction (:879-883) - the port parsed the marker type
+   *  (INTERIOR_MARKER.TREASURE = 19) and no reader in src/ ever asked
+   *  for it, so those piles did not exist. The BUILDING gate is the
+   *  host's, where the discovery record lives; this only carries the
+   *  positions, and CreateLootContainer lifts the billboard by half
+   *  its own size (GameObjectHelper.cs:685-687), i.e. the marker point
+   *  is the pile's BOTTOM - which is the port's `feet` contract. */
+  const treasureMarkers = markers
+    .filter((m) => m.type === INTERIOR_MARKER.TREASURE)
+    .map((m) => [m.x, m.y, m.z]);
+
+  // HC1 - the spawn points into the parent frame, like every other
+  // coordinate here. NO DFU CORE CALLER consumes GetRandomSpawnPoint
+  // or the SpawnPoints property (a 706-file sweep of the pinned
+  // clone) - the surface is mod-facing, ported for parity and for
+  // whatever the enemies arc grows into.
+  const spawnPoints = interior.spawnPoints.map(([x, y, z]) => parentPt(x, y, z));
+
+  // ── ROAD-C c2/S9: THE INTERIOR AUTOMAP MOUNT ───────────────────────
+  // InitWhenInInteriorOrDungeon's BUILDING arm (Automap.cs:2482-2487),
+  // in the one place both interior hosts build their room. The record
+  // is minted here and dropped in destroy(): it is a session object,
+  // never a save's - see systems/automap/automap.js's interior block for the
+  // four DFU facts it reproduces and the one arm it declines.
+  const automapModel = buildRevealIndex(automapEntries);
+  const automapRec = enterInteriorAutomap({
+    // Automap.cs:2379 - the beacon takes the DUNGEON dictionary's answer
+    // for this same location when there is one. A read, nothing more.
+    dungeonEntranceDiscovered: !!opts.dungeonEntranceDiscovered,
+  });
+  bindAutomapLayout(automapRec, automapModel);
+  // ROAD-E E3: Automap.Start's RegisterCommands (:965-975). ONE Automap
+  // component serves both arms in DFU, and map_revealall's gate is
+  // IsPlayerInside - true in a shop too - so the building's map answers
+  // the same three verbs the dungeon's does. Registration is idempotent
+  // (the database is a dictionary keyed by name), which is why both
+  // mounts may do it.
+  registerAutomapConsoleCommands();
+  // SetupBeacons' building arm parks the entrance beacon at the door the
+  // player walked through (:1450-1457); rayEntrancePosOffset is (0,0,0)
+  // (:236), so this is the door's world position exactly. The standalone
+  // ?interior route has no entered door at all - DFU's building arm is
+  // gated on `door.HasValue` (:2482) - and passes none.
+  const automapEntrance = Array.isArray(opts.entrance) ? [...opts.entrance] : null;
+  // The player marker arrow, Daggerfall mesh 99900 (Automap.cs:1355) -
+  // the dungeon host's own idiom. Absent from a stripped ARCH3D the
+  // window falls back to a red quad.
+  let automapArrow = null;
+  let automapArrowBounds = null;
+  try {
+    automapArrow = await getGpuMesh(99900);
+    if (automapArrow) {
+      await remapSubMeshes(cpuModels.get(99900)?.subMeshes, texRemap, climateArchive, deps);
+      const acpu = cpuModels.get(99900);
+      if (acpu?.positions?.length) automapArrowBounds = worldAabb(acpu.positions, identity());
+    }
+  } catch { automapArrow = null; }
+  let automapScanT = SCAN_INTERVAL_S;   // the first tick probes at once (Automap.cs:993-1002's lazy-init scan)
+  placeHold?.settle();   // FIELD BUGS 2026-10-04d PLACE-LRU: built - the keep of this building's last visit goes
+  return {
+    drawList,
+    get staticBatch() {   // PERF6: merged and uploaded once, on the first frame that asks
+      if (!staticBuilt) { staticBuilt = true; const m = staticBuilder.finish(); staticBatch = m ? renderer.createMesh(m) : null; }
+      return staticBatch;
+    },
+    actions,
+    // ROAD-C c2/S9: the window's model + the live record.
+    automapModel,
+    automapRecord: () => automapRec,
+    automapEntrance: () => automapEntrance,
+    automapArrow,
+    automapArrowBounds,
+    /** CheckForNewlyDiscoveredMeshes' BUILDING arm (:1155 - the same
+     *  body a dungeon runs, gated on IsPlayerInsideBuilding beside
+     *  IsPlayerInsideDungeon), at the 5 Hz cadence (:172). Hosts call
+     *  this every gameplay frame with the live eye + view direction. */
+    automapTick(dt, eye, fwd) {
+      automapScanT += dt;
+      if (automapScanT < SCAN_INTERVAL_S) return;
+      automapScanT = (automapScanT - SCAN_INTERVAL_S) % SCAN_INTERVAL_S;   // AUDIT-AMAP F12
+      automapRevealTick(automapRec, {
+        eye, fwd, collider, model: automapModel,
+        // The three-ray scan's door blocker: an interior swing door is
+        // its own collider bucket (actionSystem addDoor), and the
+        // automap copy has no action doors at all - DoLayoutAutomap
+        // calls AddModels alone (DaggerfallInterior.cs:170-188).
+        isDoorBucket: (k) => actions.objects.get(k)?.kind === 'door',
+      });
+      // The entrance beacon's LOS check runs OUTSIDE the geometry block
+      // (:1196-1274), so it ticks indoors too - and it is what re-lights
+      // the beacon HideAll put out when the room was built.
+      automapEntranceTick(automapRec, automapEntrance, capsuleCentreFromEye(eye), collider);   // AUDIT-AMAP F9: the capsule centre (:1216)
+      automapTrailTick(automapRec, eye);   // EM3-3D: where the player has stood, for the held map's solid sheet
+    },
+    dynamicDraws,
+    billboardBatches,
+    flatAnims,   // FA1: the host ticks the flats it draws
+    rotors,      // WM4b: the machinery's moving parts; the host turns and draws them
+    parentPt,   // Q4-v: the quest mount parents marker positions through the same transform
+    lights,
+    roomLamps: Object.freeze(lights.slice()),   // AUDIT RPT1026 J1: the lamps the room was built with - DARK-ROOM's law reads these (world/interior/interiorLights.js roomAmbient), never the live list a placed lamp joins and a lamp taken out leaves
+    iilFireplaces,   // IIL1
+    texRemap,
+    floorMaterials,   // IF1: the combined mesh's material names, for Immersive Footsteps' floor walk
+    markers,
+    people,
+    charDraws,
+    animateChars,
+    flatCount: interior.flats.length,
+    ladders,
+    containers,
+    shelves,   // E2: shop shelf models (stocked lazily by the mode host)
+    tables,    // CARDS2: the card tables
+    beds,      // RR1: the bed models
+    chairs,    // SIT1: the chairs, benches and thrones sat on (world/chairSeat.js)
+    base,      // BASE-HIDE: a furnishable room's own pieces (scenes/decor/decorBase.js), null in any other room
+    enterMarkers,
+    treasureMarkers,   // AUDIT 63 F22: AddFlats' RandomTreasure arm, gated by the host
+    spawnPoints,
+    /** GetRandomSpawnPoint (DaggerfallInterior.cs:1298-1311): null is
+     *  DFU's `return false` - the caller uses its own fallback. The
+     *  pick is Random.Range(0, count), int-exclusive. */
+    getRandomSpawnPoint: (roll = Math.random) =>
+      (spawnPoints.length === 0 ? null : spawnPoints[Math.floor(roll() * spawnPoints.length)]),
+    doors: interior.doors.map((d) => ({ ...d, matrix: parent(d.matrix) })),
+    collider,
+    destroy() {
+      peopleBuilt = false;   // AUDIT 68 S21-late-stand-after-destroy: a stand still loading publishes nothing, and SetActive is the flag alone
+      // ROAD-C c2/S9: OnTransitionToExterior's automap half
+      // (Automap.cs:2525-2528) - the beacons go and the interior state
+      // is written to a field NOTHING EVER READS
+      // (RestoreStateAutomapInterior has no caller anywhere in the
+      // reference). The port drops the record instead of writing it
+      // nowhere, which is the same behaviour with one fewer dead field:
+      // interior discovery is per-visit.
+      exitInteriorAutomap();
+      for (const r of rotors) { r.hum?.stop(); r.hum = null; }   // WM4c: the gear's hum ends with the room
+      for (const b of billboardBatches) renderer.destroyBatch(b);
+      for (const b of base?.outBatches() ?? []) renderer.destroyBatch(b);   // BASE-HIDE: the flats taken out, out of that list
+      if (staticBatch) { renderer.destroyMesh(staticBatch); staticBatch = null; }   // PERF6
+      for (const mesh of propMeshes.splice(0)) renderer.destroyMesh(mesh);   // TAVERN-TABLE: the card table's mesh is this room's (TAVERN-TABLES: each of them)
+      // AUDIT 23 (hosts-16): the ?voxelfolk per-race rigs mint real GPU
+      // meshes per context - every interior exit leaked them.
+      for (const rg of _raceMeshes?.values?.() ?? []) renderer.destroyMesh(rg.mesh);
+      _raceMeshes?.clear?.(); placeHold?.release();   // FIELD BUGS 2026-10-04d PLACE-LRU: LAST, its own GL objects gone - what it shared is kept a few buildings' worth, then freed unless another place holds it
+    },
+  };
+}

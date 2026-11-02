@@ -1,0 +1,200 @@
+[
+  {
+    "name": "MARKET-AUDIT2-reserve-credits-whole",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "    if (undo) undo();\n    else wallet.credit?.(n);",
+    "new": "    wallet.credit?.(n);",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-reserve-twice",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "    if (!paid || done) return;",
+    "new": "    if (!paid) return;",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-pay-account-unreturned",
+    "file": "src/systems/court.js",
+    "old": "    if (fromBank) account.accountGold += fromBank;\n  };",
+    "new": "  };",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-rent-credit",
+    "file": "src/systems/homeRent.js",
+    "old": "    reserve: walletReserve(wallet, cost).reserve, // MARKET-AUDIT: a refusal gives back exactly what it took",
+    "new": "    reserve: () => {\n      wallet.pay(cost);\n      return () => wallet.credit?.(cost);\n    }, // MARKET-AUDIT: a refusal gives back exactly what it took",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-claim-repeat-refund",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "          if (res?.repeat) paid.back();",
+    "new": "          if (res?.repeat) refund?.(price);",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-guild-found-credit",
+    "file": "src/net/guild/guildBook.js",
+    "old": "          reserve: walletReserve(w, GUILD_FOUND_GOLD).reserve, // MARKET-AUDIT: a refusal gives back exactly what it took",
+    "new": "          reserve: () => {\n            w.pay(GUILD_FOUND_GOLD);\n            return () => w.credit(GUILD_FOUND_GOLD);\n          }, // MARKET-AUDIT: a refusal gives back exactly what it took",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-decor-change-credit",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      reserve: pay > 0 ? walletReserve(wallet, pay).reserve : null,",
+    "new": "      reserve: pay > 0 ? () => { wallet.pay(pay); return () => wallet.credit?.(pay); } : null,",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-door-empty-success",
+    "file": "src/net/accountClient.js",
+    "old": "  if (!parsed && res.status !== 204) { forgetD1Bookmark(); return { ok: false, error: 'offline', unknown: true, status: res.status }; }   // AUDIT SCALE II A-6: `offline`, as one never made\n",
+    "new": "",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-realm-word-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "  'held': () => t('account.refusal.held', 'A trade or purchase is being settled. Try again in a moment.'),\n",
+    "new": "",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-cache-not-account",
+    "file": "src/net/marketBook.js",
+    "old": "      slot(),\n      view,",
+    "new": "      view,",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-hit-cap-unsaid",
+    "file": "src/net/marketBook.js",
+    "old": "      if (Number.isSafeInteger(hit.data?.listingsMax) && hit.data.listingsMax > 0)\n        state.listingsMax = hit.data.listingsMax;\n      return { ok: !hit.error, data: hit.data, error: hit.error, stale: hit.stale };",
+    "new": "      return { ok: !hit.error, data: hit.data, error: hit.error, stale: hit.stale };",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-collect-refusal-unsaid",
+    "file": "src/net/marketBook.js",
+    "old": "            } else if (!r.kept) refused.push(r.error);",
+    "new": "            }",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-tab-refusal-unsaid",
+    "file": "src/ui/marketTab.js",
+    "old": "      const refused = (r?.refused ?? []).find(Boolean);",
+    "new": "      const refused = null;",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-tab-kept-unsaid",
+    "file": "src/ui/marketTab.js",
+    "old": "              : m.book.pending\n                ? MARKET_KEPT_TEXT\n                : '',",
+    "new": "              : '',",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-settle-blank",
+    "file": "src/ui/marketTab.js",
+    "old": "    const settling = m.book.pending || arrived().length ? ((st.loading = true), ui.rerender(), settle()) : null;",
+    "new": "    const settling = m.book.pending || arrived().length ? settle() : null;",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-spoils-offered",
+    "file": "src/ui/marketTab.js",
+    "old": "      box.append(filtersNode(st.view === 'materials' ? LISTED_FAMILIES : CRAFTED_FAMILIES));",
+    "new": "      box.append(filtersNode(st.view === 'materials' ? MARKET_FAMILIES : CRAFTED_FAMILIES));",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-closed-as-left",
+    "file": "src/ui/marketTab.js",
+    "old": "              : l.state === 'open'\n                ? `${m.name(l.material)} - ${l.units} of ${l.listed} left`\n                : `${m.name(l.material)} x${l.listed}`,",
+    "new": "              : `${m.name(l.material)} - ${l.units} of ${l.listed} left`,",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-redraw-under-list",
+    "file": "src/ui/marketTab.js",
+    "old": "    if (\n      a?.tagName === 'SELECT' &&\n      (a.classList?.contains?.('market-select') || a.classList?.contains?.('packpick-menu')) &&\n      a.getAttribute?.('data-chosen') !== '1'\n    ) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-act-throw-greys",
+    "file": "src/ui/noticeWindow.js",
+    "old": "            r = await start();\n          } catch (e) {\n            console.warn('[board] act', e);\n            r = { ok: false, text: accountRefusalText('server') };\n          } finally {\n            marketBusy = false;",
+    "new": "            r = await start();\n          } finally {\n            marketBusy = false;",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-local-unread",
+    "file": "server-account/src/market.js",
+    "old": "    const results = [...new Map([...bay, ...home].map((l) => [l.id, l])).values()];",
+    "new": "    const results = bay;",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-stall-on-board",
+    "file": "server-account/src/market.js",
+    "old": "const openSalesSql = (now) => `((SELECT COUNT(*) FROM market_listings WHERE seller = ?1 AND state = 'open' AND vendor_id IS NULL)",
+    "new": "const openSalesSql = (now) => `((SELECT COUNT(*) FROM market_listings WHERE seller = ?1 AND state = 'open')",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT2-stall-uncapped",
+    "file": "server-account/src/market.js",
+    "old": "  if (Number(open?.n ?? 0) >= listingsMax) return { error: vend ? 'vendor-full' : 'market-listings-max' };",
+    "new": "  if (!vend && Number(open?.n ?? 0) >= listingsMax) return { error: 'market-listings-max' };",
+    "tests": [
+      "test/systems/marketaudit2.test.js"
+    ]
+  }
+]

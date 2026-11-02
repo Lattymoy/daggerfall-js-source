@@ -1,0 +1,331 @@
+// THE QUEST LISTS (Q2b-ii) - QuestListsManager.cs over the vendored
+// QuestList tables (QuestList-Classic + QuestList-DFU, the same
+// provenance-pinned pack the quest sources ship in). Each row files a
+// quest under its guild group, social group, or InitAtGameStart; the
+// pools answer the offer flow (Q4 consumes them) with the classic
+// membership/minReq/reputation gates verbatim, and GetQuest resolves
+// a quest by name for StartQuest and the offer surfaces. The
+// mod/quest-pack discovery half (StreamingAssets folders, ModManager)
+// is DFU-mod infrastructure with no port-side counterpart - the two
+// shipped lists are the whole classic surface.
+//
+// deps (all injectable):
+//   readListTable(name)        - raw text of `QuestList-<name>.txt`
+//                                (the vendored Tables through the
+//                                host's data seam; tests read fs)
+//   getQuestSourceLines(name)  - quest source by name (the machine's
+//                                own seam; GetQuest checks it FIRST,
+//                                as C# checks QuestSourceFolder)
+//   parseQuest(lines, factionId, partialParse) - parse WITHOUT
+//                                scheduling (the machine's parse
+//                                glue; the offer flow starts the
+//                                accepted quest through the machine's
+//                                startQuestImmediate; partialParse
+//                                skips QRC/QBN for the quest picker)
+//   rolls()                    - SelectQuest's pool draw
+//                                (UnityEngine.Random - THE ENGINE-PRNG
+//                                RULE, Ledger A)
+//   playerNudity               - DaggerfallUnity.Settings.PlayerNudity
+//                                (the adult-quest gate; default false)
+
+import { Table } from './table.js';
+import { intTryParse } from './parseUtils.js';
+import { GUILD_GROUPS, SOCIAL_GROUPS } from '../../formats/factionFile.js';
+import { isStartQuestName } from '../starts/starts.js'; // START1: a start's quest is the main quest's prologue
+
+/** QuestListsManager.MembershipStatus - char-backed, the table's
+ *  membership column verbatim. */
+export const MEMBERSHIP_STATUS = Object.freeze({
+  Nonmember: 'N',
+  Member: 'M',
+  Prospect: 'P',
+  Akatosh: 'T',
+  Arkay: 'A',
+  Dibella: 'D',
+  Julianos: 'J',
+  Kynareth: 'K',
+  Mara: 'R',
+  Stendarr: 'S',
+  Zenithar: 'Z',
+});
+
+/** The MAIN QUEST, by the pack's own naming - DFU ships the story as
+ *  S0000*.txt and _BRISIEN is its opener - read off the QUEST NAME,
+ *  never the display name. AUDIT 68 S31-questshare-mainquest-dup: one
+ *  home for the chronicle's rail (ui/quest/questRail.js) and the share gates
+ *  (systems/quest/questShare.js), which kept two copies "in step". START1:
+ *  and a start's quest (systems/starts/starts.js), the story's prologue -
+ *  its commission is the character's own, never a party's. */
+export const isMainQuestName = (questName) =>
+  /^S0000/.test(questName ?? '') || questName === '_BRISIEN' || isStartQuestName(questName);
+
+const INIT_AT_GAME_START = 'InitAtGameStart';
+
+/** QuestListsManager.RegisterQuestList (:138-147): a mod's list by name,
+ *  false when the name is in use; LoadQuestLists reads every registered
+ *  one after the two shipped lists (:160-161). The list file is
+ *  `QuestList-<name>.txt` through the same data seam (the pack loader
+ *  globs a vendored mod's Quests/ folder beside DFU's). */
+const _questLists = [];
+const _questListGates = new Map();
+/** `isOn` is the port's stand-in for "the mod is loaded": a list whose
+ *  gate answers false is skipped by LoadQuestLists (read when the
+ *  manager loads - the mod's Enabled takes effect when the game next
+ *  loads, as its Features row says). */
+export function registerQuestList(name, isOn = null) {
+  if (_questLists.includes(name)) return false;
+  _questLists.push(name);
+  if (typeof isOn === 'function') _questListGates.set(name, isOn);
+  return true;
+}
+export const registeredQuestLists = () => _questLists.filter((n) => _questListGates.get(n)?.() ?? true);
+export function _resetQuestLists() {
+  _questLists.length = 0;
+  _questListGates.clear();
+}
+
+export class QuestListsManager {
+  constructor(deps = {}) {
+    this.deps = deps;
+    this.guilds = new Map(); // guild group id -> QuestData[]
+    this.social = new Map(); // social group id -> QuestData[]
+    this.init = []; // InitAtGameStart rows
+    this.oneTimeQuestsAccepted = null;
+    this.loadQuestLists();
+  }
+
+  /** LoadQuestLists (:151-162): the two shipped lists, then every list
+   *  a mod registered (RR3 - the discovery half, StreamingAssets folders,
+   *  stays DFU-mod infrastructure). */
+  loadQuestLists() {
+    this.guilds.clear();
+    this.social.clear();
+    this.init.length = 0;
+    this._loadQuestList('Classic');
+    this._loadQuestList('DFU');
+    for (const questList of registeredQuestLists()) this._loadQuestList(questList); // :160-161 - the registered lists
+  }
+
+  _loadQuestList(name) {
+    const text = this.deps.readListTable?.(name);
+    if (text == null) {
+      console.warn(`[quest] Quest list ${name} not found`);
+      return;
+    }
+    // LoadQuestList (:194-202) contains failures PER LIST: a
+    // malformed table logs and the other lists survive (Q2b-ii
+    // VERIFY: a throw here used to destroy the whole manager).
+    try {
+      this._parseQuestList(new Table(text));
+    } catch (e) {
+      console.warn(`[quest] Unable to parse quest list table ${name}: ${e?.message ?? e}`);
+    }
+  }
+
+  /** ParseQuestList (:204-254): a row whose minReq fails int.TryParse
+   *  is skipped SILENTLY, verbatim. Groups resolve against the
+   *  FACTION.TXT enums by NAME - a guild group, a social group, or
+   *  the InitAtGameStart bucket; anything else is dropped (the C#
+   *  "TODO other groups"). */
+  _parseQuestList(table) {
+    for (let i = 0; i < table.rowCount; i++) {
+      const minReq = intTryParse(table.getValue('minReq', i)); // AUDIT 68 S30-tryparse-dup: int.TryParse, int32 bound and all
+      if (minReq === null) continue;
+      const flag = table.getValue('flag', i)[0];
+      const questData = {
+        name: table.getValue('name', i),
+        group: table.getValue('group', i),
+        membership: table.getValue('membership', i)[0],
+        minReq,
+        oneTime: flag === '1',
+        adult: flag === 'X',
+      };
+      if (Object.hasOwn(GUILD_GROUPS, questData.group)) {
+        const id = GUILD_GROUPS[questData.group];
+        if (!this.guilds.has(id)) this.guilds.set(id, []);
+        this.guilds.get(id).push(questData);
+      } else if (Object.hasOwn(SOCIAL_GROUPS, questData.group)) {
+        const id = SOCIAL_GROUPS[questData.group];
+        if (!this.social.has(id)) this.social.set(id, []);
+        this.social.get(id).push(questData);
+      } else if (questData.group === INIT_AT_GAME_START) {
+        this.init.push(questData);
+      }
+    }
+  }
+
+  /** OURS, not DFU's: quest-sharing's own lookup (systems/quest/questShare.js).
+   *  GetQuest resolves a quest by PARSING it; this instead answers the
+   *  catalog ROW - guild group, required membership, the rank/reputation
+   *  floor, oneTime - without parsing anything, so a received share can
+   *  be checked against the receiver's OWN guild standing before a
+   *  single resource is built. A quest with no catalog row (the source
+   *  seam, or an InitAtGameStart entry) answers null: nothing here
+   *  gates it, the same as GetQuest's own first-checked seam. */
+  findQuestMeta(questName) {
+    for (const quest of this.init) if (quest.name === questName) return { scope: 'init', quest };
+    for (const [group, pool] of this.guilds) {
+      for (const quest of pool) if (quest.name === questName) return { scope: 'guild', group, quest };
+    }
+    for (const [group, pool] of this.social) {
+      for (const quest of pool) if (quest.name === questName) return { scope: 'social', group, quest };
+    }
+    return null;
+  }
+
+  /** GetQuest (:279-321): the source seam first (C#'s
+   *  QuestSourceFolder File.Exists), then init, guild and social
+   *  lists by name. Answers null for an unknown quest. */
+  getQuest(questName, factionId = 0) {
+    if (this.deps.getQuestSourceLines?.(questName)) {
+      return this.loadQuest({ name: questName }, factionId);
+    }
+    for (const questData of this.init) {
+      if (questData.name === questName) return this.loadQuest(questData, factionId);
+    }
+    for (const pool of this.guilds.values()) {
+      for (const questData of pool) {
+        if (questData.name === questName) return this.loadQuest(questData, factionId);
+      }
+    }
+    for (const pool of this.social.values()) {
+      for (const questData of pool) {
+        if (questData.name === questName) return this.loadQuest(questData, factionId);
+      }
+    }
+    return null;
+  }
+
+  /** GetGuildQuest (:322-327). */
+  getGuildQuest(guildGroup, status, factionId, rep, rank) {
+    const pool = this.getGuildQuestPool(guildGroup, status, factionId, rep, rank);
+    return this.selectQuest(pool, factionId);
+  }
+
+  /** GetGuildQuestPool (:331-360): the eligibility law verbatim -
+   *  Temple dual membership folds any member status to Member for
+   *  HolyOrder; a non-member sees only minReq 0; minReq < 10 is a
+   *  rank gate, >= 10 a reputation gate; adult quests need the
+   *  nudity setting; an accepted one-time quest never re-offers. */
+  getGuildQuestPool(guildGroup, status, _factionId, rep, rank) {
+    if (this.oneTimeQuestsAccepted == null) this.oneTimeQuestsAccepted = [];
+    const guildQuests = this.guilds.get(guildGroup);
+    if (!guildQuests) return null;
+    const tplMemb =
+      guildGroup === GUILD_GROUPS.HolyOrder && status !== MEMBERSHIP_STATUS.Nonmember
+        ? MEMBERSHIP_STATUS.Member
+        : status;
+    const pool = [];
+    for (const quest of guildQuests) {
+      if (
+        (status === quest.membership || tplMemb === quest.membership) &&
+        ((status === MEMBERSHIP_STATUS.Nonmember && quest.minReq === 0) ||
+          (quest.minReq < 10 && quest.minReq <= rank) ||
+          (quest.minReq >= 10 && quest.minReq <= rep))
+      ) {
+        if (
+          (!quest.adult || this.deps.playerNudity) &&
+          !(quest.oneTime && this.oneTimeQuestsAccepted.includes(quest.name))
+        ) {
+          pool.push(quest);
+        }
+      }
+    }
+    return pool;
+  }
+
+  /** GetSocialQuest (:362-389): minReq < 10 gates on player LEVEL (or
+   *  reputation covers it); membership here is N=any, M=male,
+   *  F=female. */
+  getSocialQuest(socialGroup, factionId, gender, rep, level) {
+    if (this.oneTimeQuestsAccepted == null) this.oneTimeQuestsAccepted = [];
+    const socialQuests = this.social.get(socialGroup);
+    if (!socialQuests) return null;
+    const pool = [];
+    for (const quest of socialQuests) {
+      if (
+        ((quest.minReq < 10 && quest.minReq <= level) || rep >= quest.minReq) &&
+        (quest.membership === 'N' ||
+          (quest.membership === 'M' && gender === 'male') ||
+          (quest.membership === 'F' && gender === 'female'))
+      ) {
+        if (
+          (!quest.adult || this.deps.playerNudity) &&
+          !(quest.oneTime && this.oneTimeQuestsAccepted.includes(quest.name))
+        ) {
+          pool.push(quest);
+        }
+      }
+    }
+    return this.selectQuest(pool, factionId);
+  }
+
+  /** SelectQuest (:391-408): Random.Range over the pool; a compile
+   *  failure logs and answers null rather than throwing. */
+  selectQuest(pool, factionId) {
+    if (pool && pool.length > 0) {
+      const roll = this.deps.rolls ?? Math.random;
+      const questData = pool[Math.floor(roll() * pool.length)];
+      try {
+        return this.loadQuest(questData, factionId);
+      } catch (e) {
+        console.warn(`[quest] Exception for quest ${questData.name} during quest compile: ${e?.message ?? e}`);
+      }
+    }
+    return null;
+  }
+
+  /** LoadQuest (:422-455): the source seam stands in for the file
+   *  read; a missing source THROWS, as C#'s missing file does. The
+   *  loaded quest carries the row's OneTime flag. partialParse skips
+   *  the QRC/QBN halves (Parser.cs:144) - the guild quest picker
+   *  reads DisplayName from header-only parses (Q4-ii). */
+  loadQuest(questData, factionId, partialParse = false) {
+    const lines = this.deps.getQuestSourceLines?.(questData.name);
+    if (!lines) throw new Error(`Quest file ${questData.name} not found.`);
+    const quest = this.deps.parseQuest?.(lines, factionId, partialParse);
+    if (!quest) return null;
+    quest.oneTime = !!questData.oneTime;
+    return quest;
+  }
+
+  /** InitAtGameStartQuests (:263-273): parse and START every
+   *  game-start row IMMEDIATELY - C# calls QuestMachine.StartQuest,
+   *  not ScheduleQuest, so the quest is live before this returns
+   *  (Q2b-ii VERIFY: the first draft deferred them a tick). The
+   *  caller hands in the machine's startQuestImmediate. */
+  initAtGameStartQuests(startQuestImmediate) {
+    for (const questData of this.init) {
+      const quest = this.loadQuest(questData, 0);
+      if (!quest) continue;
+      startQuestImmediate(quest);
+    }
+  }
+
+  /** QuestMachine_OnQuestStarted (:88-95): a started one-time quest
+   *  never re-offers. The machine's onQuestStarted dep is the event. */
+  noteQuestStarted(quest) {
+    if (quest.oneTime && this.oneTimeQuestsAccepted != null) {
+      this.oneTimeQuestsAccepted.push(quest.questName);
+    }
+  }
+
+  /** OURS: questShare.js's own two calls, not DFU's. A shared quest is
+   *  "started" for the receiver too, so it must never re-offer either
+   *  - but noteQuestStarted only pushes when the array is already
+   *  lazily initialised (a pool built at least once this session), and
+   *  a share can land before the receiver has opened any guild
+   *  counter at all. markOneTimeAccepted inits it either way;
+   *  hasAcceptedOneTime is the matching read, for the "already
+   *  completed/tombstoned" gate - a repeatable (non-oneTime) quest
+   *  keeps no such record by design (DFU means it to be redoable), so
+   *  the gate only ever applies to a oneTime quest's catalog row. */
+  markOneTimeAccepted(questName) {
+    if (this.oneTimeQuestsAccepted == null) this.oneTimeQuestsAccepted = [];
+    if (!this.oneTimeQuestsAccepted.includes(questName)) this.oneTimeQuestsAccepted.push(questName);
+  }
+
+  hasAcceptedOneTime(questName) {
+    return !!this.oneTimeQuestsAccepted?.includes(questName);
+  }
+}

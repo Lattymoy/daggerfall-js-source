@@ -1,0 +1,83 @@
+[
+  {
+    "name": "WAIT-hover-not-taken",
+    "file": "src/ui/waitWindow.js",
+    "old": "  hover() {}\n  release() {}",
+    "new": "  release() {}",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "WAIT-release-not-taken",
+    "file": "src/ui/waitWindow.js",
+    "old": "  release() {}\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "WAIT-parchment-never-drawn",
+    "file": "src/ui/waitWindow.js",
+    "old": "    drawMessageBox(renderer, m, font, this._box);",
+    "new": "    void m;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "WAIT-ten-dots",
+    "file": "src/ui/waitWindow.js",
+    "old": "export const BUSY_DOTS = 12;",
+    "new": "export const BUSY_DOTS = 10;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "WAIT-no-floor-on-the-seconds",
+    "file": "src/ui/waitWindow.js",
+    "old": "    this.seconds = Math.max(0.01, seconds);",
+    "new": "    this.seconds = seconds;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "WAIT-a-second-floor",
+    "file": "src/ui/waitWindow.js",
+    "old": "    this.seconds = Math.max(0.01, seconds);",
+    "new": "    this.seconds = Math.max(1, seconds);",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "WAIT-dt-trusted",
+    "file": "src/ui/waitWindow.js",
+    "old": "    this._elapsed += Math.max(0, dt || 0);",
+    "new": "    this._elapsed += dt;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "WAIT-seconds-unrounded",
+    "file": "src/scenes/foragingWait.js",
+    "old": "export const waitRealSeconds = (minutes) => Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100;",
+    "new": "export const waitRealSeconds = (minutes) => (minutes / 60) * WAIT_PER_HOUR;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "WAIT-seconds-to-the-tenth",
+    "file": "src/scenes/foragingWait.js",
+    "old": "export const waitRealSeconds = (minutes) => Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100;",
+    "new": "export const waitRealSeconds = (minutes) => Math.round((minutes / 60) * WAIT_PER_HOUR * 10) / 10;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  }
+]

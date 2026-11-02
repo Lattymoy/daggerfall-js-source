@@ -1,0 +1,148 @@
+[
+  {
+    "name": "TEXTPINS-the-end-mapped-as-a-start",
+    "file": "tools/carryTextPins.mjs",
+    "old": "        if (a[k].end === o) return matched[k] >= 0 ? b[matched[k]].end : null;",
+    "new": "        if (a[k].end === o) return matched[k] >= 0 ? b[matched[k]].start : null;",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-tokens-own-offset-dropped",
+    "file": "tools/carryTextPins.mjs",
+    "old": "        return a[k].start < o ? (same(k) ? b[matched[k]].start + (o - a[k].start) : null) : b[matched[k]].start;",
+    "new": "        return b[matched[k]].start;",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-regex-unescaped",
+    "file": "tools/carryTextPins.mjs",
+    "old": "const escapeRegex = (s) => s.replace(/[\\\\^$.*+?()[\\]{}|/]/g, '\\\\$&').replace(/\\n[ \\t]*/g, '\\\\n\\\\s*');",
+    "new": "const escapeRegex = (s) => s.replace(/\\n[ \\t]*/g, '\\\\n\\\\s*');",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-quote-changed",
+    "file": "tools/carryTextPins.mjs",
+    "old": "        : quoteAs(raw[0], now);",
+    "new": "        : quoteAs('\"', now);",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-found-quote-rewritten",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    if (!before || sources.some((s) => hit(s.new))) continue;",
+    "new": "    if (!before) continue;",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-named-regex-narrowed",
+    "file": "tools/carryTextPins.mjs",
+    "old": "      ? `/${named.has(lit) ? `(?:${lit.regex.pattern}|${escapeRegex(now)})` : escapeRegex(now)}/${lit.regex.flags}`",
+    "new": "      ? `/${false ? `(?:${lit.regex.pattern}|${escapeRegex(now)})` : escapeRegex(now)}/${lit.regex.flags}`",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-capture-rule-unread",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    if (regex && hasCapture(lit.regex.pattern) && !asserted.has(lit)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-run-never-cut",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    } else if ('*+?'.includes(c)) {\n      cur = cur.slice(0, -1);\n      cut();\n    }",
+    "new": "    } else if ('*+?'.includes(c)) {\n      cur += c;\n    }",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-filter-unread",
+    "file": "tools/carryTextPins.mjs",
+    "old": "        ? frag && !s.includes(frag)",
+    "new": "        ? false",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ],
+    "equivalent": true,
+    "why": "the filter only spares the time: every match holds the run (AUDIT, 2026-10-31: none from a group, an alternation, an escape's digits or a counted repeat, none under the i flag), so a text without it cannot match, and dropping the filter changes no answer"
+  },
+  {
+    "name": "TEXTPINS-an-escape-read",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    if (c === '\\\\') {\n      i++;\n      continue;\n    }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-named-group-missed",
+    "file": "tools/carryTextPins.mjs",
+    "old": "(pattern[i + 1] !== '?' || (pattern[i + 2] === '<' && !'=!'.includes(pattern[i + 3])))",
+    "new": "pattern[i + 1] !== '?'",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-groups-run-kept",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    if (depth === 0) runs.push(cur);",
+    "new": "    runs.push(cur);",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-an-alternation-read",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    } else if (c === '|' && depth === 0) return null;\n",
+    "new": "    } else if (c === '|' && depth === 0) cut();\n",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-an-escapes-digits-kept",
+    "file": "tools/carryTextPins.mjs",
+    "old": "      if (e === 'u') i = pattern[i + 1] === '{' ? skipTo(i, '}') : i + 4;\n      else if",
+    "new": "      if",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-counted-repeats-letter-kept",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    } else if (c === '{' && /^\\{\\d+(,\\d*)?\\}/.test(pattern.slice(i))) {\n      cur = cur.slice(0, -1);\n",
+    "new": "    } else if (c === '{' && /^\\{\\d+(,\\d*)?\\}/.test(pattern.slice(i))) {\n",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-i-flag-unread",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    const frag = regex && !regex.flags.includes('i') ? literalRun(lit.regex.pattern) : null;",
+    "new": "    const frag = regex ? literalRun(lit.regex.pattern) : null;",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  }
+]

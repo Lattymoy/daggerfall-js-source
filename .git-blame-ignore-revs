@@ -1,0 +1,627 @@
+# Commits that only reformat code (LEGIBLE 3, bible/01-Overview/Readability-Arc.md).
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# LEGIBLE 3 pilot: src/poi/ formatted, its pins carried
+ce8b2f66a8efa93da7d360887996b5ebb3769a9f
+# LEGIBLE 3: tools/layered-armor/ formatted, its pins carried
+56a7e31b3056f12594718a1c5eb881387a48a74b
+# LEGIBLE 3: tools/neutral/ formatted, its pins carried
+0fb1af546f50ef80ff8db47e0f6ad5378624f2a8
+# LEGIBLE 3: tools/realGpu/ formatted, its pins carried
+c26e0f0b9251d5e4fb8765f83966be5f3be149ba
+# LEGIBLE 3: src/render/dragon/ formatted, its pins carried
+4762facbfaaa3f760b655115c2694884d19a58ba
+# LEGIBLE 3: src/ui/ketch/ formatted, its pins carried
+230f18adace4eb904b270c2bf2170138e0fd097f
+# LEGIBLE 3: src/ui/wardrobe/ formatted, its pins carried
+5e991ba5bd929894e6e8089c5ad3704591ada431
+# LEGIBLE 3: src/systems/firstVisit/ formatted, its pins carried
+c62b634cd3d6decfd351f9826a21056e2f687d38
+# LEGIBLE 3: src/systems/grammar/ formatted, its pins carried
+c45d90577c44713079307c6622ba9ad241cbfb1e
+# LEGIBLE 3: src/systems/snowfall/ formatted, its pins carried
+d6c7ec0c6fd8f437ba7cb4fe73e3eee5f9a2e526
+# LEGIBLE 3: src/ui/questlines/ formatted, its pins carried
+92c0b8497a4c531ec63b31a7bdb0841bf08994b8
+# LEGIBLE 3: src/formats/save/ formatted, its pins carried
+7f0913ee5167bc440e38fc9f57030cecbf00bb67
+# LEGIBLE 3: src/ui/starfall/ formatted, its pins carried
+9afed8a197bf192a7b7f532c65307716ddc535f3
+# LEGIBLE 3: src/render/ketch/ formatted, its pins carried
+216cc68eed605f8bad14289993fd3458c26e87e0
+# LEGIBLE 3: src/systems/hunt/ formatted, its pins carried
+fc3ff1c6abf9666c3ec264d9889e6a09022f81a8
+# LEGIBLE 3: src/systems/lockpick/ formatted, its pins carried
+8a7389b4fc95c8242ed857a54485fe6db10559ae
+# LEGIBLE 3: src/systems/studioArt/ formatted, its pins carried
+9b0d906a1eab8eceadc9e5ea5ef9fae5b0fa2770
+# LEGIBLE 3: src/world/lands/ formatted, its pins carried
+55046d92b2c0eb36dbeb2f7c383a1503c8075fbb
+# LEGIBLE 3: src/world/peaks/ formatted, its pins carried
+b0e687d65a257d5d4158d47d7c212ef5162d00eb
+# LEGIBLE 3: src/world/starfall/ formatted, its pins carried
+74e9ca6150816fea912df928ce294633bdacfc76
+# LEGIBLE 3: tools/mutation/ formatted, its pins carried
+55f8513b9f373822edf2d6fc5e1e53d2929a2bac
+# LEGIBLE 3: src/render/starfall/ formatted, its pins carried
+fbcae9a30c8e49b2c761cd3f8af75251d1404155
+# LEGIBLE 3: src/systems/soundscape/ formatted, its pins carried
+fe4459f24471e10c0e20d3da8e8b44ca12171a36
+# LEGIBLE 3: src/systems/starts/ formatted, its pins carried
+e8245ec6c72c8d236fca43e9ddaf91aaacf6e997
+# LEGIBLE 3: src/characters/bodyMotion/ formatted, its pins carried
+dfbff4cacc2cbcabc48575305ea107288730af45
+# LEGIBLE 3: src/systems/sea/ formatted, its pins carried
+54e09cf522cea8edf3e4cc162ee80e587097df05
+# LEGIBLE 3: src/net/sea/ formatted, its pins carried
+e4c184b71afec7c9faeae84241f4cb60bd638931
+# LEGIBLE 3: src/ui/collections/ formatted, its pins carried
+c99d7feb82836fbf57594856ba67c3342ce69605
+# LEGIBLE 3: src/systems/deepWater/ formatted, its pins carried
+006fa1b4f2f0dce5059edfac64c5d69b97c69d4b
+# LEGIBLE 3: src/net/staffEvent/ formatted, its pins carried
+175a020ef5e1ff7dbaa0fdc977773990a16feb32
+# LEGIBLE 3: src/ui/vendor/ formatted, its pins carried
+fd81ab3697cf930b7ca8121dfd00cc42e3e2d9ed
+# LEGIBLE 3: src/systems/ketch/ formatted, its pins carried
+82ce6061aefe2b654ae0d3f5375253de57643d13
+# LEGIBLE 3: src/ui/menu/ formatted, its pins carried
+f11bebf271db15c75b22547299f7c04bc4ad47fc
+# LEGIBLE 3: src/ui/wild/ formatted, its pins carried
+b98502ebaacfca406b18ffa62300fd3695ba1059
+# LEGIBLE 3: src/net/safety/ formatted, its pins carried
+efc12331b76f7ea80ac36071d117c5399c8a1174
+# LEGIBLE 3: src/systems/dungeon/ formatted, its pins carried
+3eefb06e7b5ec4f23e0533637d85110f7546e9e4
+# LEGIBLE 3: src/systems/festival/ formatted, its pins carried
+07feb562fd03e5c25397a1bbcf67f9f212c48a40
+# LEGIBLE 3: src/world/underwater/ formatted, its pins carried
+92edd024beceb504262090e6e95132c14a1db07b
+# LEGIBLE 3: src/net/gambit/ formatted, its pins carried
+7cbd487fddc3a5b06031065a495dd6daed1fd039
+# LEGIBLE 3: src/systems/dynamicSkies/ formatted, its pins carried
+5f8ef10669e3af776111cbbe24cb06b67f268c57
+# LEGIBLE 3: src/ui/map/ formatted, its pins carried
+14f2e08088635217bcbc5ab3f7231781216fd29e
+# LEGIBLE 3: src/world/ketch/ formatted, its pins carried
+b0f4d32e3f47ee1db10e509127d0aba289ba4e91
+# LEGIBLE 3: src/net/delve/ formatted, its pins carried
+1ea00c854b5b871a16fc0bbb8b29337da9001e60
+# LEGIBLE 3: src/systems/gambit/ formatted, its pins carried
+b713a219800cd7b0c9822f78ea948b6e3913ea57
+# LEGIBLE 3: src/player/climb/ formatted, its pins carried
+d4e34708dc98cf2818f5b582b6e0e2d0096543f3
+# LEGIBLE 3: src/net/dragon/ formatted, its pins carried
+2ff08a8c694b83dbd03014837d4693e6d4a20b7e
+# LEGIBLE 3: src/ui/superDungeon/ formatted, its pins carried
+d1749889b0ff1aa3beedd3ad1af7c2947bcf868a
+# LEGIBLE 3: src/render/eliteGates/ formatted, its pins carried
+1c4d5afbc43154fd956699ad034671a236bcbe0a
+# LEGIBLE 3: src/systems/dragon/ formatted, its pins carried
+c32c6bce0ef1132611d20e2d6c0294ac3957e18f
+# LEGIBLE 3: src/systems/starfall/ formatted, its pins carried
+1c839d95b337dbca758d0ee386f7a273e057d9d8
+# LEGIBLE 3: src/combat/gun/ formatted, its pins carried
+980a610846bb93af3dd916e66f6214ffff4af2bb
+# LEGIBLE 3: src/combat/technique/ formatted, its pins carried
+f31b9c88529ae9c6e4789554fe924d4ef8432aa4
+# LEGIBLE 3: src/systems/song/ formatted, its pins carried
+1ac70d3ba9416e45da40f56f5acd9f278927b545
+# LEGIBLE 3: src/world/merchantYards/ formatted, its pins carried
+18aec90e82dcb4ca56b1363b24faeedac93baf1c
+# LEGIBLE 3: src/net/duel/ formatted, its pins carried
+3a6258064ddc6e9c4da70086a6a1abb9cd756f25
+# LEGIBLE 3: src/net/firmament/ formatted, its pins carried
+9f8850e4481b512da9fe12908cfbf10469e5481e
+# LEGIBLE 3: src/world/urban/ formatted, its pins carried
+0fca2f71518439e8c403e7c17b907eaa57b7b951
+# LEGIBLE 3: src/world/jungle/ formatted, its pins carried
+a181e8fd06a60b1c1143c858dadd0060410ecd49
+# LEGIBLE 3: src/characters/ownModels/ formatted, its pins carried
+b804c98e28759ccc13303c4de1e7497760800b0a
+# LEGIBLE 3: scripts/ formatted, its pins carried
+cb9a3da4ab8339aba719620df3c37eee590813f5
+# LEGIBLE 3: src/ui/card/ formatted, its pins carried
+790f9a8f4a31b16ad7136c31a65424fbac1ae977
+# LEGIBLE 3: src/net/starfall/ formatted, its pins carried
+c367d26f9b07da88e20ad16d521b288c5c5472ff
+# LEGIBLE 3: src/systems/wagon/ formatted, its pins carried
+a60b08d10cdfcf882dbf7724770dff05d774bdf3
+# LEGIBLE 3: src/systems/region/ formatted, its pins carried
+83bc503921b3b870cedda761f8febd1b41703834
+# LEGIBLE 3: src/net/iliac/ formatted, its pins carried
+94e79dc7d6645ced5d72a9340acef7dd563d1374
+# LEGIBLE 3: src/net/card/ formatted, its pins carried
+a7ae6169df7ccf3dd724c858f73e3882df467382
+# LEGIBLE 3: src/world/card/ formatted, its pins carried
+ccb4a41f764455844281b0d8c0bd6ca0d344cc22
+# LEGIBLE 3: src/net/ketch/ formatted, its pins carried
+6454fc8c1906a1d7cdcdf69f10a801d93b06812a
+# LEGIBLE 3: src/world/arena/ formatted, its pins carried
+18075600dd73713700b114a659a11b30f4be2d33
+# LEGIBLE 3: src/systems/faction/ formatted, its pins carried
+4264a5b742341c7809619911eb4fb768626942ba
+# LEGIBLE 3: src/systems/party/ formatted, its pins carried
+b308606a37265281fc1792a6c1b6c35339910b02
+# LEGIBLE 3: src/ui/guild/ formatted, its pins carried
+1ce3aff31f6611bd027b7d522518dd4eb04c8f7e
+# LEGIBLE 3: src/formats/unity/ formatted, its pins carried
+4925688a5b795d25a1dc0927cb780062791db177
+# LEGIBLE 3: src/ui/poi/ formatted, its pins carried
+da86781a0670e4eef5526ebdccdc3886d8bc7c90
+# LEGIBLE 3: src/scenes/wagon/ formatted, its pins carried
+beca6e06ec347e06db484622c45a062202509da6
+# LEGIBLE 3: src/systems/vanillaEnhanced/ formatted, its pins carried
+2b4d5a3c0a7a2a7bfdf2e34442163c087050ab32
+# LEGIBLE 3: src/scenes/delve/ formatted, its pins carried
+1e3278035fcf5fb87954691f78064c43a22ff579
+# LEGIBLE 3: src/systems/upkeep/ formatted, its pins carried
+0156313c965b50f46ab6c0731c09d138b64f65da
+# LEGIBLE 3: src/ui/merchant/ formatted, its pins carried
+2600ddd014c62a4aa17441bdba4b3065a1f4b551
+# LEGIBLE 3: src/ui/arena/ formatted, its pins carried
+ba35d01413ef216eed3e9fe3a620f18998682e85
+# LEGIBLE 3: tools/lib/ formatted, its pins carried
+ec9823d7fa01ffdd3b2c53c159a772e4ebdbcfba
+# LEGIBLE 3: src/scenes/starfall/ formatted, its pins carried
+e967f4095f0d8f4e765bfb4a0b41cba16a42a60f
+# LEGIBLE 3: src/combat/blood/ formatted, its pins carried
+10e16b758ff07ae457a1dc0165f4a45b6c2ee3b2
+# LEGIBLE 3: src/world/water/ formatted, its pins carried
+9736aef35977eb75d3ce98b26fa1146219781cd1
+# LEGIBLE 3: src/ui/spell/ formatted, its pins carried
+7e96547971abe53f59827a9fd9ce790c71351dce
+# LEGIBLE 3: src/ui/levelUp/ formatted, its pins carried
+ba196b7cad2b822285d7a03302994432450ee287
+# LEGIBLE 3: src/combat/twoHands/ formatted, its pins carried
+e67e54396c6c1e6997d2c091cd69dc7101a5c460
+# LEGIBLE 3: src/render/superDungeon/ formatted, its pins carried
+21a0ad86b6435c67fdf89aef34242ce1f37b62e4
+# LEGIBLE 3: src/systems/map/ formatted, its pins carried
+4c721fdd2cab9a1f8a70fc7af50253705557734b
+# LEGIBLE 3: src/ui/revenant/ formatted, its pins carried
+0eb150116a1998aadc81aa4c54cc1ddac154ee21
+# LEGIBLE 3: src/net/raid/ formatted, its pins carried
+cc870ac44e206c0ba55b39661f4ddc8f94b33d48
+# LEGIBLE 3: src/systems/iliac/ formatted, its pins carried
+a9a8e8aa079f411d738791f73202a28d26f4703b
+# LEGIBLE 3: src/world/worldOfDaggerfall/ formatted, its pins carried
+7ae2f7a8536539954a6f68a6104f23a91bab8d24
+# LEGIBLE 3: src/world/deepWater/ formatted, its pins carried
+c2ea75713f009218bc14d53e0f7d681012cddc97
+# LEGIBLE 3: src/scenes/arena/ formatted, its pins carried
+4e417be2a0c113ac37cb2c902613b7a3f967888b
+# LEGIBLE 3: src/systems/card/ formatted, its pins carried
+3c9967f579a2bc663a2a33fb120c653672fccaef
+# LEGIBLE 3: src/ui/intro/set/ formatted, its pins carried
+6c433726fb2338ad1738fd8d0ed5af901114610a
+# LEGIBLE 3: src/ui/settings/ formatted, its pins carried
+46d1edfacb2608260f68fcde0f14ee2383a7b482
+# LEGIBLE 3: src/net/herald/ formatted, its pins carried
+e637061996e857b1929593684bffd06ef91bb4c8
+# LEGIBLE 3: src/characters/paperdoll/ formatted, its pins carried
+4ddbf2b1b383e9db7765f29487d3ce94cf083f3c
+# LEGIBLE 3: src/net/wild/ formatted, its pins carried
+4764b30c7f80b7babf835b546a61e93498b7c291
+# LEGIBLE 3: src/ui/quest/ formatted, its pins carried
+d5319eb18fa6b1b0fc2570a2181a65c56de5587a
+# LEGIBLE 3: src/systems/eliteGates/ formatted, its pins carried
+959764673519c287c30ff0aef1478920901573b7
+# LEGIBLE 3: src/ui/eliteGates/ formatted, its pins carried
+17335420b38a16fc30fc6a3e2e816538c5fb354b
+# LEGIBLE 3: src/systems/foraging/ formatted, its pins carried
+ce1d3b22a18dd8e819b4045aa78f22cbc196b8e2
+# LEGIBLE 3: src/systems/professions/ formatted, its pins carried
+07db443f3f225f895f844bea94fc5b8299644deb
+# LEGIBLE 3: src/ui/ink/ formatted, its pins carried
+33b4b02947d1d65ec5597adbe4b8bcce4f196360
+# LEGIBLE 3: src/world/interior/ formatted, its pins carried
+774bc084e3eedae97fd9572071364f7dc9185597
+# LEGIBLE 3: src/world/city/ formatted, its pins carried
+6b48ae71e572f9211aecb06eedd63493e3d4a299
+# LEGIBLE 3: src/scenes/comeSailAway/ formatted, its pins carried
+9676bf9f89cdfdaee935a0f72fb632f5aa44f700
+# LEGIBLE 3: src/systems/decor/ formatted, its pins carried
+9e83fa7fe30710e986322d49bb3bab3ef3c838db
+# LEGIBLE 3: src/systems/horse/ formatted, its pins carried
+928efc03304163dde783c6169c4a292aadf23988
+# LEGIBLE 3: src/render/gate/ formatted, its pins carried
+a8367154c955e40c87ba33c18bab2a69737c18c7
+# LEGIBLE 3: src/world/worldWide/ formatted, its pins carried
+be2957e1e62c610777c9102dc829efdeecdef7f5
+# LEGIBLE 3: src/systems/spell/ formatted, its pins carried
+6a2d09c05fa79b592766c2f52ade437c6316f152
+# LEGIBLE 3: src/formats/worldData/ formatted, its pins carried
+ce399c65d64a61a5be4fb49a4db06d01b3d88fd1
+# LEGIBLE 3: src/ai/ formatted, its pins carried
+0ca9d92d1c8f4645affc6973f80a235123fef1a1
+# LEGIBLE 3: src/world/superDungeon/ formatted, its pins carried
+b2f9d03a02a8b7f9796d057b7932052c2d661660
+# LEGIBLE 3: src/net/siege/ formatted, its pins carried
+3d70399e4dcb4ec64237bbdc2d2b993a46308509
+# LEGIBLE 3: src/systems/wind/ formatted, its pins carried
+eef6dfae22d0e3a1785582c706b8c8c8335504e5
+# LEGIBLE 3: src/characters/mobile/ formatted, its pins carried
+d4ea59be7bd6650eb8ac164822a955cd16aa426e
+# LEGIBLE 3: src/world/dungeon/ formatted, its pins carried
+0c31f8f94609739528bb8971a004c0ee583c6623
+# LEGIBLE 3: src/world/gate/ formatted, its pins carried
+e210ebb45d73aee892bef85bb5359198c88a74b3
+# LEGIBLE 3: src/systems/rest/ formatted, its pins carried
+f24c1e45928faaf31e8fffa23de94a825ba3ed5f
+# LEGIBLE 3: src/world/eliteGates/ formatted, its pins carried
+3572b170b5b099e073b121dc1923ac2b825c4441
+# LEGIBLE 3: src/net/guild/ formatted, its pins carried
+ed8f0055bc508dbf41aaf8a2948a8170ab296376
+# LEGIBLE 3: 1 file(s) of src/ formatted, their pins carried
+d7b43c025eeecfbaf0fec63c468635686dbfb2bf
+# LEGIBLE 3: 4 file(s) of src/ai/nav/ formatted, their pins carried
+e45a0c06df30df77b943312a9c60abf0fef39d8c
+# LEGIBLE 3: 30 file(s) of src/characters/ formatted, their pins carried
+c9d7770531be6a09388566cccb6484025ddc2ea7
+# LEGIBLE 3: 23 file(s) of src/characters/ formatted, their pins carried
+7e6a553aac1dd6897aac6d30c9410c600dd56bfe
+# LEGIBLE 3: 22 file(s) of src/characters/pieces/ formatted, their pins carried
+553e6df0319f490c2f94bf9e111e293eeaaf5d9c
+# LEGIBLE 3: 29 file(s) of src/combat/ formatted, their pins carried
+8f5fdf839e787c886bf4e969d967e2d2fc18ce97
+# LEGIBLE 3: 8 file(s) of src/combat/ formatted, their pins carried
+764a6dba1f11275c42f615d273ae83e3e0c0c8a8
+# LEGIBLE 3: 4 file(s) of src/combat/diverseWeapons/ formatted, their pins carried
+962cf01dd7a829fdd67be603b902dc1b1112140a
+# LEGIBLE 3: 20 file(s) of src/formats/ formatted, their pins carried
+a451f43a01e52f264e77d0c05e3ad6fa1ab4e916
+# LEGIBLE 3: 24 file(s) of src/formats/morrowind/ formatted, their pins carried
+8c31b843390ec5fffb07da36c97d933260f4180f
+# LEGIBLE 3: 29 file(s) of src/net/ formatted, their pins carried
+ecfeb01c419ed20c6bb4915c0b924b2b30ee6110
+# LEGIBLE 3: 30 file(s) of src/net/ formatted, their pins carried
+547d77b924389da9a2df888902d15ff8c0b2bb09
+# LEGIBLE 3: 27 file(s) of src/net/ formatted, their pins carried
+d463c9a9f5a2a367702cd4be5f9737e9a152f199
+# LEGIBLE 3: 29 file(s) of src/net/ formatted, their pins carried
+698f5dabd81d5133c9ed3dd151b1b12a6fd4cbc0
+# LEGIBLE 3: 21 file(s) of src/net/ formatted, their pins carried
+a121a7d420871c906bcaa2a37789fa7f44612ab5
+# LEGIBLE 3: 6 file(s) of src/net/arena/ formatted, their pins carried
+0f4d0f8d4cd50a18bd934f7073ee0d16128c5a73
+# LEGIBLE 3: 11 file(s) of src/net/gate/ formatted, their pins carried
+745b6643d9ede2130aad29ed34bb94e954d44d83
+# LEGIBLE 3: 6 file(s) of src/net/peer/ formatted, their pins carried
+5caa8cf46e9ea6abc31e3dce5d22303c6b70b64a
+# LEGIBLE 3: 3 file(s) of src/net/realm/ formatted, their pins carried
+ef64c2f560dc7843e55450ceb9e42f77c6468a07
+# LEGIBLE 3: 9 file(s) of src/net/superDungeon/ formatted, their pins carried
+14cf482f780adb683793277c7dfd1f588bc88931
+# LEGIBLE 3: 26 file(s) of src/player/ formatted, their pins carried
+2bafd6556436487571567644c5e440cf215b8ec9
+# LEGIBLE 3: 7 file(s) of src/player/ formatted, their pins carried
+a46d2bc11dd57b16f14426db43105a190ecd1095
+# LEGIBLE 3: 5 file(s) of src/player/eyeOfTheBeholder/ formatted, their pins carried
+93bdb1433f70fe6476dd245d0febd6811328e458
+# LEGIBLE 3: 18 file(s) of src/render/ formatted, their pins carried
+c1ff8f39cdc663ff45f29d363d3aea0b81dc8638
+# LEGIBLE 3: 26 file(s) of src/render/ formatted, their pins carried
+1bcaf9cdfa0734e7523548a932939eaae9de9ea4
+# LEGIBLE 3: 28 file(s) of src/render/ formatted, their pins carried
+86ef7ef1b05df8d3d4b484f5c9e33234937a02b1
+# LEGIBLE 3: 26 file(s) of src/render/ formatted, their pins carried
+3ab53b1abf06f93d7e98241b3499714e361a7450
+# LEGIBLE 3: 18 file(s) of src/scenes/ formatted, their pins carried
+80c433d1049e78511c0d92b70917fdee6651a2c0
+# LEGIBLE 3: 20 file(s) of src/scenes/ formatted, their pins carried
+4647817020a4d01a9c190fa61f4435c00dfc3882
+# LEGIBLE 3: 26 file(s) of src/scenes/ formatted, their pins carried
+d6975a0e03920d0c6f14d4d9ee200b9d1545e816
+# LEGIBLE 3: 7 file(s) of src/scenes/ formatted, their pins carried
+799ee941fa9809c0b2a4876f72424a008be208b2
+# LEGIBLE 3: 2 file(s) of src/scenes/decor/ formatted, their pins carried
+c4b44e504b5a4a6866bb40eeed95f4f43c576577
+# LEGIBLE 3: 7 file(s) of src/scenes/deepWater/ formatted, their pins carried
+7a1c0a368e366e73dc85f90307fd526449b13eb9
+# LEGIBLE 3: 8 file(s) of src/scenes/eliteGates/ formatted, their pins carried
+d1de69dbba77976bd193c406d3816c383b14b7d6
+# LEGIBLE 3: 8 file(s) of src/scenes/gate/ formatted, their pins carried
+5edc4512a7bd0c28659e30a78b0ba66354868910
+# LEGIBLE 3: 6 file(s) of src/scenes/ketch/ formatted, their pins carried
+20cb36eef8d769f18fdc465b973a496e4431e250
+# LEGIBLE 3: 3 file(s) of src/scenes/livingWorld/ formatted, their pins carried
+c9111fd39fa697cffc92df7584fd568722a4bd94
+# LEGIBLE 3: 22 file(s) of src/scenes/naval/ formatted, their pins carried
+98560f654b8afa427d9729cb2749f1cdbb114d11
+# LEGIBLE 3: 7 file(s) of src/scenes/quest/ formatted, their pins carried
+feb25e30a8b6bc92bdc9900ed18681b8bb8b52d2
+# LEGIBLE 3: 16 file(s) of src/scenes/superDungeon/ formatted, their pins carried
+86f89b1ebbf91d5698201c9eb8ecafee5ffa4e9c
+# LEGIBLE 3: 27 file(s) of src/systems/ formatted, their pins carried
+ca9264e255c9c1ff3f4ed34cd9588e0ffec0d0b6
+# LEGIBLE 3: 28 file(s) of src/systems/ formatted, their pins carried
+4fd10ad4b73ee0821694dd84d390092cb34d7f7a
+# LEGIBLE 3: 29 file(s) of src/systems/ formatted, their pins carried
+f983d949deb624ed798c8f343f25704db8d82a9f
+# LEGIBLE 3: 5 file(s) of src/combat/weapon/ formatted, their pins carried
+8f6aa797f4331e6ebb669fa4f253b5ed6cd0e39b
+# LEGIBLE 3: 22 file(s) of src/net/eliteGates/ formatted, their pins carried
+370e2dd22ee3cc3ae2719be62dcf649e493097c0
+# LEGIBLE 3: 7 file(s) of src/net/serpent/ formatted, their pins carried
+3ad8aec996e2c8e32a83fa4cfef477902be72eab
+# LEGIBLE 3: 23 file(s) of src/scenes/ formatted, their pins carried
+dc93e36dfa22d623283b367d9e16602e4e8ad848
+# LEGIBLE 3: 21 file(s) of src/scenes/ formatted, their pins carried
+b34315f6fc80e05b0cf5756fc22b00a7cbaaac3e
+# LEGIBLE 3: 28 file(s) of src/systems/ formatted, their pins carried
+41832bf2e67fbcb0112e0538e7e5c7191093c873
+# LEGIBLE 3: 30 file(s) of src/systems/ formatted, their pins carried
+74c18eef383c45622320997aa3f98ad02b172df2
+# LEGIBLE 3: 30 file(s) of src/systems/ formatted, their pins carried
+f54c47145fe8cbdbea1da1defebe7e6a37e005e2
+# LEGIBLE 3: 28 file(s) of src/systems/ formatted, their pins carried
+d02400274a37d12211fd86e3a756b4d52cbf3d67
+# LEGIBLE 3: 29 file(s) of src/systems/ formatted, their pins carried
+b56dccaee4c7a8358bc17c30277909b6f85c86f6
+# LEGIBLE 3: 29 file(s) of src/systems/ formatted, their pins carried
+8b2f70231cf943b28190d866a6c09c9b8c13ec2d
+# LEGIBLE 3: 26 file(s) of src/systems/ formatted, their pins carried
+c6df0a6fdfaa432e81c7b4d9edb0d771128b4b3b
+# LEGIBLE 3: 7 file(s) of src/systems/ formatted, their pins carried
+4e99e57a67a9203c03b3f2388a1495b126abab5a
+# LEGIBLE 3: 16 file(s) of src/systems/arena/ formatted, their pins carried
+957c51283127c637fdfe71320cd5173a2c72a251
+# LEGIBLE 3: 4 file(s) of src/systems/automap/ formatted, their pins carried
+e39ab288b5eca898b04ebc568918adbd90a48a0b
+# LEGIBLE 3: 4 file(s) of src/systems/bounty/ formatted, their pins carried
+a65ead14d1a596332e691511091d2acedebfaa91
+# LEGIBLE 3: 14 file(s) of src/systems/comeSailAway/ formatted, their pins carried
+99b4c58f643b2ec04eda3d87ab0d32326b70c683
+# LEGIBLE 3: 2 file(s) of src/systems/delve/ formatted, their pins carried
+72be53dc078d19646268b2102ed7398957fd2b15
+# LEGIBLE 3: 16 file(s) of src/systems/enemyExpansion/ formatted, their pins carried
+2bfb13c9774131119b3cbc6c0a0d947c9f0643f0
+# LEGIBLE 3: 5 file(s) of src/systems/gate/ formatted, their pins carried
+9264bee4e63f878365b32c105717c0661b4eb329
+# LEGIBLE 3: 8 file(s) of src/systems/guild/ formatted, their pins carried
+8b0aa038bf9bb50e91e195579a77e2d762339417
+# LEGIBLE 3: 16 file(s) of src/systems/item/ formatted, their pins carried
+1334c6aa6b091e556318b05c105311481b444bf2
+# LEGIBLE 3: 19 file(s) of src/systems/legacy/ formatted, their pins carried
+7a1782aa6a3302083191430b66a183001d80e880
+# LEGIBLE 3: 27 file(s) of src/systems/livingWorld/ formatted, their pins carried
+9c9a378acbad03d600f89c70c778fa1a5ed0eb08
+# LEGIBLE 3: 12 file(s) of src/systems/loot/ formatted, their pins carried
+9be687940c8e380e852c4ee06f024e3497f2673f
+# LEGIBLE 3: 29 file(s) of src/systems/naval/ formatted, their pins carried
+e945953736c781a48422f3f98dcb3a4f7079cc4c
+# LEGIBLE 3: 21 file(s) of src/systems/naval/ formatted, their pins carried
+366de45f9cb46b4d13967e158d0af0c5ebd08d5c
+# LEGIBLE 3: 8 file(s) of src/systems/online/ formatted, their pins carried
+f291ddf24f0b67a5e6e48f5eb596c0d98ccbcf59
+# LEGIBLE 3: 26 file(s) of src/systems/quest/ formatted, their pins carried
+ad5403450b3eecdc1c6de606e7eaf819c4fa0102
+# LEGIBLE 3: 9 file(s) of src/systems/quest/ formatted, their pins carried
+5564489469f659993bae3e9e54b1da9d6e84db21
+# LEGIBLE 3: 12 file(s) of src/systems/questlines/ formatted, their pins carried
+398053075deaf2fd80c1f2ea91b759f57bd9d7b1
+# LEGIBLE 3: 12 file(s) of src/systems/revenant/ formatted, their pins carried
+43752b8fdc6b39dabd005425b0e0d7c2276e71cb
+# LEGIBLE 3: 3 file(s) of src/systems/roleplayRealism/ formatted, their pins carried
+ed7cd055c68e300d72025896d66c5b7d9ea6d243
+# LEGIBLE 3: 4 file(s) of src/systems/roleplayRealismItems/ formatted, their pins carried
+bc183804fbc9f9447b5fe51f0e8d64010d3d720e
+# LEGIBLE 3: 2 file(s) of src/systems/save/ formatted, their pins carried
+037b9ad3e137b7487031d732499fab6dfbeab47a
+# LEGIBLE 3: 5 file(s) of src/systems/serpent/ formatted, their pins carried
+40c56267afba465415342b26988e291fd9dc132f
+# LEGIBLE 3: 2 file(s) of src/systems/settings/ formatted, their pins carried
+52a06d87fc2573d1fa91c142e9cb82aa6b6e7575
+# LEGIBLE 3: 4 file(s) of src/systems/sigil/ formatted, their pins carried
+002316fbf00add92ca738d2667ee5e3b694954bb
+# LEGIBLE 3: 6 file(s) of src/systems/superDungeon/ formatted, their pins carried
+fc24996a5720f9d2158d28fede82bda40ff939f4
+# LEGIBLE 3: 9 file(s) of src/systems/survival/ formatted, their pins carried
+b0f80672a673789ecbd67ebba4ea1f7628999002
+# LEGIBLE 3: 4 file(s) of src/systems/talk/ formatted, their pins carried
+89db213aa3b233876475a6017c0bb6cca7af31d4
+# LEGIBLE 3: 4 file(s) of src/systems/town/ formatted, their pins carried
+340698c6e3f01293a71e848d97cde4701c2a2493
+# LEGIBLE 3: 29 file(s) of src/systems/travel/ formatted, their pins carried
+1c6744974673e681760b43537cf7b63e1762ac0c
+# LEGIBLE 3: 5 file(s) of src/systems/weather/ formatted, their pins carried
+a4661cd4594c74bcef485cb13f22ce22eb149b4d
+# LEGIBLE 3: 22 file(s) of src/systems/wild/ formatted, their pins carried
+71fe91cdd34dd4d896a9aa7ed77fff066ad88bf0
+# LEGIBLE 3: 15 file(s) of src/tools/ formatted, their pins carried
+8110dd4a114751f6ce62fead180c5c6ffcb4c327
+# LEGIBLE 3: 4 file(s) of src/tools/enhanced/ formatted, their pins carried
+2a79b7dd9d173738348af8e08ebc8c9dedc27093
+# LEGIBLE 3: 2 file(s) of src/tools/paperdoll/ formatted, their pins carried
+8e39a79b85517a86fdb49fa802e23a01c69dd646
+# LEGIBLE 3: 24 file(s) of src/ui/ formatted, their pins carried
+eda84f10e0decb67e1547ae3a9b17e906f011fb2
+# LEGIBLE 3: 24 file(s) of src/ui/ formatted, their pins carried
+5c74a1989e92260923d7a018c4286728959af345
+# LEGIBLE 3: 26 file(s) of src/ui/ formatted, their pins carried
+7a8ee46e434faf7c0a47a0d93a5c1047e9aef108
+# LEGIBLE 3: 25 file(s) of src/ui/ formatted, their pins carried
+c6847700e34ce81223feec724eb0c0cac767e51e
+# LEGIBLE 3: 3 file(s) of src/ui/ formatted, their pins carried
+d599a9a4c037fbb8d544aa5ae0f067e5eafa1e3c
+# LEGIBLE 3: 5 file(s) of src/ui/automap/ formatted, their pins carried
+4162e65e464e5ec9ae21c36117f435b3ac9b042b
+# LEGIBLE 3: 4 file(s) of src/ui/bounty/ formatted, their pins carried
+0f5f2785a44831ee38475445e697ac2417836ed8
+# LEGIBLE 3: 13 file(s) of src/ui/enhanced/ formatted, their pins carried
+84808628aa50ebf81da673c8bb50fb4a25dc1cc6
+# LEGIBLE 3: 14 file(s) of src/ui/enhanced/ formatted, their pins carried
+e82c265bf6d0888b609289dc6f5a13c71e9da430
+# LEGIBLE 3: 7 file(s) of src/ui/gate/ formatted, their pins carried
+a6f27ba9ebac1f48f2a75d712374078c9af0793f
+# LEGIBLE 3: 1 file(s) of src/ui/growth/ formatted, their pins carried
+a54a42b6ef5d1b214173ab8dd3a84d2e58616fb6
+# LEGIBLE 3: 14 file(s) of src/ui/hud/ formatted, their pins carried
+f032c32e149e98c18315dd3d2014d090aa62356f
+# LEGIBLE 3: 8 file(s) of src/ui/intro/ formatted, their pins carried
+c355e869df84a9f3ef0875983eb71bf42fb7e091
+# LEGIBLE 3: 3 file(s) of src/ui/item/ formatted, their pins carried
+d8eaf289fe695d209cdb9dcb6072e7c248710398
+# LEGIBLE 3: 1 file(s) of src/ui/legacy/ formatted, their pins carried
+b12f9224c8572a39e047decc2f7273ce1aabc382
+# LEGIBLE 3: 3 file(s) of src/ui/naval/ formatted, their pins carried
+a9066b186a741a4961af5659e5a45650ac6b9a44
+# LEGIBLE 3: 1 file(s) of src/ui/plus/ formatted, their pins carried
+801b10b013817da75edfd422f2ccb4ff2ca722b3
+# LEGIBLE 3: 6 file(s) of src/ui/professions/ formatted, their pins carried
+50d41d4c5335660bedc20c7bbc6473b1fa02543e
+# LEGIBLE 3: 2 file(s) of src/ui/touch/ formatted, their pins carried
+7ea58681212d250030677e40a3a42838c7918dda
+# LEGIBLE 3: 4 file(s) of src/ui/town/ formatted, their pins carried
+a7b11aa099ab26843ff43927438838e5b722a4a8
+# LEGIBLE 3: 5 file(s) of src/ui/travel/ formatted, their pins carried
+4f2e19aaf499009e1e6715ee4612841904c44d49
+# LEGIBLE 3: 27 file(s) of src/world/ formatted, their pins carried
+c7cd2411dc19d55f2702bd92b18ca98f637ad868
+# LEGIBLE 3: 30 file(s) of src/world/ formatted, their pins carried
+96157ef463480d241f9c11279ae352350b42eacb
+# LEGIBLE 3: 29 file(s) of src/world/ formatted, their pins carried
+96469bb7a331b2d2eb5b36a8eab7bb6271a90940
+# LEGIBLE 3: 30 file(s) of src/world/ formatted, their pins carried
+7c6572006534107f90c5e9fed57c62eb8b8f0828
+# LEGIBLE 3: 26 file(s) of src/world/ formatted, their pins carried
+5a42a7851d953afd2095c8d1dd2ce40f79496bb9
+# LEGIBLE 3: 20 file(s) of src/world/ formatted, their pins carried
+af1d3919980c04b09a3a44b21687cf561be14750
+# LEGIBLE 3: 14 file(s) of src/world/road/ formatted, their pins carried
+8ce7ab4c4ebe1b4bdb8c712aa0f821b189b90681
+# LEGIBLE 3: 14 file(s) of src/world/ships/ formatted, their pins carried
+2def3228bd5b155c4fcd979100724f70e3d74d09
+# LEGIBLE 3: 19 file(s) of src/world/tamriel/ formatted, their pins carried
+8aeb0dc4675811bb477995930da895b92fefd617
+# LEGIBLE 3: 12 file(s) of src/world/terrain/ formatted, their pins carried
+bb3e67ad9517955c6d7725e0618ba843ef6705bb
+# LEGIBLE 3: 27 file(s) of server-account/src/ formatted, their pins carried
+a78b601d5690e1a8d7d2fdc499d41bc69973eb0e
+# LEGIBLE 3: 27 file(s) of server-account/src/ formatted, their pins carried
+046714aeb45dd0cde6af8fec7cb00115ef6cd638
+# LEGIBLE 3: 27 file(s) of server-account/src/ formatted, their pins carried
+b4c81e159ff79f5d8f3d1e8a4d55a77e94c5ac16
+# LEGIBLE 3: 24 file(s) of server-account/src/ formatted, their pins carried
+236a37c81d1e8a6cbef54e9599ed6ccf4a6ce7a9
+# LEGIBLE 3: 21 file(s) of server-account/src/ formatted, their pins carried
+ba5add104495fe6711bfb8ec630507bea0039163
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+54ee99d6041aa242658396d54403e7da218f0fca
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+6ff2e8e063be529eea363f5103e4f5034792b56d
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+a67457328812a253c32e004ca56b697a275d26d9
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+3d7e4f66f3e75cf44a1245f21686ce908c36aa0f
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+7fb6959c1b5adeeefacbef377d5c5f9f85e0f126
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+eb83ff65f32047512a35d20873409caf81ee5e6a
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+a8446cd2d68453e68ce5df3123942ba4a0a0cac2
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+5d1017c5154d301a8dd418cba9cd22e37aaeb2c2
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+00dc35f67ed73a5dce5f6a11d94a1a094c9cfd6b
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+7070916adfa4a76d44486f5eeef22b77c6df6a0e
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+33278f7f81a42924ba8a538e273a114b77d54b89
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+a589a508440a4e3521052331aed28eb6e51776b6
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+557f8cc3d419bd0f25d9ede8b83e0289091c80b1
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+f3954274fcd0fa5f7be92889e39c87fc3f5517d8
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+fc09d92c4f7d997b468d67cc763327c5b823d53b
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+3b6dd036c2e16c2e5e79ce0c80cdcc13e9e2c8f8
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+f189f2f8805e60591eaab9eb683dee495772bc44
+# LEGIBLE 3: 30 file(s) of tools/ formatted, their pins carried
+1d9ac5857fb70b791d72cd5f0d47c1c347574a71
+# LEGIBLE 3: 10 file(s) of tools/ formatted, their pins carried
+2fc9d3014ba260771e1e59384eac5551fef83e37
+# LEGIBLE 3: 6 file(s) of src/characters/enemy/ formatted, their pins carried
+d270a271738c4677d05eab119ae13731d223f989
+# LEGIBLE 3: 10 file(s) of src/formats/ formatted, their pins carried
+450542899990609388f50c1019f906959ed08c25
+# LEGIBLE 3: 9 file(s) of src/formats/ formatted, their pins carried
+b6dea911b0517633172f2f09a0c5086badba7738
+# LEGIBLE 3: 10 file(s) of src/formats/ formatted, their pins carried
+8dbd71f70f1196a64ad6ca50dc04f25c0fcc3c22
+# LEGIBLE 3: 1 file(s) of src/net/ formatted, their pins carried
+82feb68cd42e00ed0990ecbfc1e63a917f97f802
+# LEGIBLE 3: 2 file(s) of src/render/ formatted, their pins carried
+02df7bb5f8cfdf7117eb5ccff3d1059c38446650
+# LEGIBLE 3: 1 file(s) of src/scenes/ formatted, their pins carried
+39f9eb40a10c9e6ad5a9bea551a5082e99c51163
+# LEGIBLE 3: 8 file(s) of src/scenes/ formatted, their pins carried
+c3b6fba98570c2a37df3ef5236127c3feef74c4d
+# LEGIBLE 3: 3 file(s) of src/scenes/ formatted, their pins carried
+49c032ea98c73dc020e8b77b88fe79f460097a41
+# LEGIBLE 3: 7 file(s) of src/scenes/ formatted, their pins carried
+de798ddc68f59ecf9c64703daf1db0d11fc60e12
+# LEGIBLE 3: 1 file(s) of src/scenes/ formatted, their pins carried
+ee6e811fd1302c042db3fb0b415301fab461447f
+# LEGIBLE 3: 3 file(s) of src/scenes/ formatted, their pins carried
+97ac2e97eadb61263e9237c5a76031ad8d299491
+# LEGIBLE 3: 9 file(s) of src/scenes/ formatted, their pins carried
+a64395d220615cef2efbd412b786b4d8c3ba4e74
+# LEGIBLE 3: 5 file(s) of src/scenes/ formatted, their pins carried
+da8c41872ec00a4b9a7e906e2eb530d59f58dc41
+# LEGIBLE 3: 2 file(s) of src/scenes/ formatted, their pins carried
+1d26cc7631cb1e23131a251d4285eb4a67e53e83
+# LEGIBLE 3: 2 file(s) of src/systems/ formatted, their pins carried
+53c0f44b30c3bf6b0272b965dcf12771db14dc97
+# LEGIBLE 3: 9 file(s) of src/systems/ formatted, their pins carried
+3cd4998751fe4fc46db08bda0b434a62b7d4d553
+# LEGIBLE 3: 10 file(s) of src/systems/ formatted, their pins carried
+a1419f3d0562467b181375fbadf913c1823b8d03
+# LEGIBLE 3: 8 file(s) of src/systems/ formatted, their pins carried
+99c3a9400e5d166ab9573bfa9eebe9b46fd7a143
+# LEGIBLE 3: 2 file(s) of src/systems/quest/ formatted, their pins carried
+49985695826d128ffd15c368c38fc88791f96e89
+# LEGIBLE 3: 9 file(s) of src/ui/ formatted, their pins carried
+305a400755dde823c094853426333e0f91df6c21
+# LEGIBLE 3: 10 file(s) of src/ui/ formatted, their pins carried
+27d612d28e29807c6fb07c0164851a3df883b3fc
+# LEGIBLE 3: 6 file(s) of src/ui/ formatted, their pins carried
+e4730e9fed79d24a0842f7ae222e8602951b0e2c
+# LEGIBLE 3: 8 file(s) of src/ui/ formatted, their pins carried
+09c3a8db1aaefe4a17eee1e3811f9d0fc4cc6af1
+# LEGIBLE 3: 10 file(s) of src/ui/ formatted, their pins carried
+188af002b21d6ba73fc0c1b7549dc3207cc176b1
+# LEGIBLE 3: 8 file(s) of src/ui/ formatted, their pins carried
+b5afb4b447d0c131c3ed2547fc100caf0cb387b2
+# LEGIBLE 3: 10 file(s) of src/ui/ formatted, their pins carried
+81682f036e4ea1d00578b966abb2d54d31806ed5
+# LEGIBLE 3: 8 file(s) of src/ui/ formatted, their pins carried
+add841b5b59275a19ec7f60bf08fed457cc22b30
+# LEGIBLE 3: 9 file(s) of src/ui/ formatted, their pins carried
+cc3a4f27de43e42bce7d3e154de53942aab83df1
+# LEGIBLE 3: 5 file(s) of src/ui/ formatted, their pins carried
+4c7e887053e298d3a1c1d4776fa2dd012ec53964
+# LEGIBLE 3: 9 file(s) of src/ui/ formatted, their pins carried
+b2fc6dcb3de43c1c306f8f1ebea51aef74aeeb02
+# LEGIBLE 3: 7 file(s) of src/ui/ formatted, their pins carried
+76cdf4f089747cc2cfc6a9423d30881323433b50
+# LEGIBLE 3: 6 file(s) of src/ui/ formatted, their pins carried
+8b600b3584dfaaf7b8db6de765383da8d2b037f3
+# LEGIBLE 3: 5 file(s) of src/ui/enhanced/ formatted, their pins carried
+cb59c67272cf19b5b928f8a8c79276b52441b83b
+# LEGIBLE 3: 1 file(s) of src/ui/enhanced/ formatted, their pins carried
+ed97cde01d75aff436f15647059c43be0c35d7b4
+# LEGIBLE 3: 1 file(s) of src/world/ formatted, their pins carried
+767082b8dae0c4f2b04f49e53deacc79adf81422
+# LEGIBLE 3: 9 file(s) of server/src/ formatted, their pins carried
+43712fc4a8759f6345e8e0a4728fcc26978007c1
+# LEGIBLE 3: 10 file(s) of server/src/ formatted, their pins carried
+304ce885a073f21acb089a69b992c4a3b177cfd1
+# LEGIBLE 3: 1 file(s) of server/src/ formatted, their pins carried
+981496e257883165d9b28964e7d4184c32c8f57f
+# LEGIBLE 3: 3 file(s) of server-account/src/ formatted, their pins carried
+7d60422a8f40737511be77b72d6e8fa2167f1639

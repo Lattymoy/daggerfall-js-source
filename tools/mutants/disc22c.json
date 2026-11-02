@@ -1,0 +1,101 @@
+[
+  {
+    "name": "D22C-classic-never-resolves",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const classic = !dom && classicPlaqueOn();",
+    "new": "  const classic = false;",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-frame-not-left-for-hud",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    else { const lit = quickLootRow(frame), w = windowOf(frame, lit); setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1); }   // DISC22-C: drawHud draws it, this frame, its lit row with it - LOOT-SCROLL: the same window the plaque draws",
+    "new": "",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-ignores-the-switch",
+    "file": "src/ui/worldPlaque.js",
+    "old": "export const classicPlaqueOn = () => !isEnhanced() && !isTouchDevice() && quickLootOn();",
+    "new": "export const classicPlaqueOn = () => !isEnhanced() && !isTouchDevice();",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-stale-frame-drawn",
+    "file": "src/systems/classicLootFrame.js",
+    "old": "export const classicLootFrame = (mark = null) => (_frame && _mark === mark ? { frame: _frame, lit: _lit } : null);",
+    "new": "export const classicLootFrame = (mark = null) => (_frame ? { frame: _frame, lit: _lit } : null);",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-hud-draws-nothing",
+    "file": "src/ui/hud/hud.js",
+    "old": "  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit, at);",
+    "new": "",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-body-not-cut",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "    drawImgCrop(renderer, sheet, m, [0, P.cutTop, P.w, P.cutBottom - P.cutTop], [L.x, L.y + P.cutTop, P.w, L.middle]);",
+    "new": "    drawImgCrop(\n      renderer,\n      sheet,\n      m,\n      [0, P.cutTop, P.w, P.cutBottom - P.cutTop],\n      [L.x, L.y + P.cutTop, P.w, P.cutBottom - P.cutTop],\n    );",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-body-not-grown",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "    const middle = Math.max(rowH, n * rowH) + 6; // the body, cut at the rules and stretched to the rows",
+    "new": "    const middle = PARCHMENT.cutBottom - PARCHMENT.cutTop; // the body, cut at the rules and stretched to the rows",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-no-lit-band",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "      if (i === lit) drawRect(renderer, m, L.x + P.textX - 2, y - 1, P.textW + 4, L.rowH, PARCHMENT_LIT);",
+    "new": "",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-parchment-without-pack",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "  const sheet = activeUiPack()?.id === 'grimoire' ? parchmentImage(renderer) : null;",
+    "new": "  const sheet = parchmentImage(renderer);",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-names-drawn-too",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "  if (!frame || frame.kind !== 'items' || !frame.rows?.length || !font?.fnt) return false;",
+    "new": "  if (!frame || !font?.fnt) return false;",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  },
+  {
+    "name": "D22C-lit-row-not-carried",
+    "file": "src/ui/worldPlaque.js",
+    "old": "setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1);",
+    "new": "setClassicLootFrame(w.frame, frameMark());",
+    "tests": [
+      "test/systems/disc22c_classic_loot.test.js"
+    ]
+  }
+]

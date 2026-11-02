@@ -1,0 +1,131 @@
+[
+    {
+        "Title": "Position - Center",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Centered shield sprite",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Shield": {
+                "OffsetHorizontal": "0.5",
+                "OffsetVertical": "-0.25"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Position - Quarter (Default)",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Modern-style shield placement",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Shield": {
+                "OffsetHorizontal": "0",
+                "OffsetVertical": "0"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Position - Corner",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Vanilla-style shield placement",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Shield": {
+                "OffsetHorizontal": "-0.5",
+                "OffsetVertical": "0.25"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Bob - Wide",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Flat horizontal bob",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Bob": {
+                "EnableBob": "True",
+                "SizeX": "1.5",
+                "SizeY": "0.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Bob - Medium",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Default bob values",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Bob": {
+                "EnableBob": "True",
+                "SizeX": "1",
+                "SizeY": "1"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Bob - Tall",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Narrow vertical bob",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Bob": {
+                "EnableBob": "True",
+                "SizeX": "0.5",
+                "SizeY": "1.5"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Inertia - Light",
+        "Author": "RedRoryOTheGlen",
+        "Description": "You're either pretty strong or you like smaller shields",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Inertia": {
+                "EnableInertia": "True",
+                "Scale": "0.5",
+                "Speed": "2",
+                "ForwardDepth": "0.5",
+                "ForwardSpeed": "2"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Inertia - Medium",
+        "Author": "RedRoryOTheGlen",
+        "Description": "Not great, not terrible",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Inertia": {
+                "EnableInertia": "True",
+                "Scale": "1",
+                "Speed": "1",
+                "ForwardDepth": "1",
+                "ForwardSpeed": "1"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Inertia - Heavy",
+        "Author": "RedRoryOTheGlen",
+        "Description": "IT'S THE WALL",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "Inertia": {
+                "EnableInertia": "True",
+                "Scale": "2",
+                "Speed": "0.5",
+                "ForwardDepth": "2",
+                "ForwardSpeed": "0.5"
+            }
+        },
+        "$version": "v1"
+    }
+]

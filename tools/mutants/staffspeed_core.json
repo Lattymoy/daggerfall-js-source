@@ -1,0 +1,83 @@
+[
+  {
+    "name": "STAFF-SPEED-CORE-touch-own-trip",
+    "file": "server-account/src/staff.js",
+    "old": "  const [row] = await Promise.all([db.prepare(STAFF_WHO_SQL).bind(hash).first(),\n    act && db.prepare(",
+    "new": "  const row = await db.prepare(STAFF_WHO_SQL).bind(hash).first();\n  await Promise.all([row,\n    act && db.prepare(",
+    "why": "an act's touch of its session a trip after the lookup, as before the fold",
+    "tests": [
+      "test/server/staffspeed_core.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-CORE-touch-every-act",
+    "file": "server-account/src/staff.js",
+    "old": "WHERE token_hash = ?2 AND last_act <= ?3 AND last_act > ?4 AND expires_at > ?1')",
+    "new": "WHERE token_hash = ?2 AND last_act > ?4 AND expires_at > ?1')",
+    "why": "the folded touch writes on every act, not once a minute",
+    "tests": [
+      "test/server/staffspeed_core.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-CORE-touch-on-poll",
+    "file": "server-account/src/staff.js",
+    "old": "    act && db.prepare('UPDATE staff_sessions SET last_act",
+    "new": "    db.prepare('UPDATE staff_sessions SET last_act",
+    "why": "a poll's lookup touches its session too",
+    "tests": [
+      "test/server/staffspeed_core.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-CORE-touch-wakes-idle",
+    "file": "server-account/src/staff.js",
+    "old": "AND last_act > ?4 AND expires_at > ?1')",
+    "new": "AND (last_act > ?4 OR 1) AND expires_at > ?1')",
+    "why": "the folded touch, landing before the lookup, brings a session past its idle back to life",
+    "tests": [
+      "test/server/staffspeed_core.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-CORE-touch-spent-life",
+    "file": "server-account/src/staff.js",
+    "old": "AND last_act > ?4 AND expires_at > ?1')",
+    "new": "AND last_act > ?4 AND (expires_at > ?1 OR 1)')",
+    "tests": [
+      "test/server/staffspeed_core.test.js"
+    ],
+    "equivalent": true,
+    "why": "the touch never moves expires_at, so a session past its 8 hours is still refused and deleted below whichever lands first, and every reader of last_act (staffHidden.js LIVE_SQL, safety.js claims, the Team page) asks expires_at too. Kept so the touch never writes a dead row."
+  },
+  {
+    "name": "STAFF-SPEED-CORE-mods-row-after",
+    "file": "server-account/src/staff.js",
+    "old": "ORDER BY handle_lc LIMIT 500'), audit('mods-read', null, null, { onceIn: STAFF_READ_ROW_S })]);",
+    "new": "ORDER BY handle_lc LIMIT 500')]); await audit('mods-read', null, null, { onceIn: STAFF_READ_ROW_S }).run();",
+    "why": "the Moderators page's audit row a trip after its read",
+    "tests": [
+      "test/server/staffspeed_core.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-CORE-team-row-after",
+    "file": "server-account/src/staff.js",
+    "old": ".bind(nowS, nowS - STAFF_IDLE_S, ...handles), audit('team-read', null, null, { onceIn: STAFF_READ_ROW_S })]);",
+    "new": ".bind(nowS, nowS - STAFF_IDLE_S, ...handles)]); await audit('team-read', null, null, { onceIn: STAFF_READ_ROW_S }).run();",
+    "why": "the Team page's audit row a trip after its read",
+    "tests": [
+      "test/server/staffspeed_core.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-CORE-audit-row-after",
+    "file": "server-account/src/staff.js",
+    "old": ".bind(view.actor, view.target, view.act, before, limit), audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })]);",
+    "new": ".bind(view.actor, view.target, view.act, before, limit)]); await audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S }).run();",
+    "why": "the Audit log page's row a trip after its read",
+    "tests": [
+      "test/server/staffspeed_core.test.js"
+    ]
+  }
+]

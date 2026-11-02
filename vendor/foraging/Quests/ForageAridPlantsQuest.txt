@@ -1,0 +1,311 @@
+-- Edited by Harbinger451
+-- StartsBy: Script
+-- Questee: anyone with a sickle
+Quest: ForageAridPlantsQuest
+DisplayName: Forage for Plants
+-- Message panels
+QRC:
+
+Message:  1013
+<ce> You could not find any suitable Plants to forage!
+
+Message:  1014
+<ce> You successfully foraged some _plant1_!
+
+Message:  1015
+<ce> You successfully foraged some _plant1_,
+<ce> and some _plant2_!
+
+Message:  1018
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a _weapon_
+<ce> that someone must have lost or discarded.
+
+Message:  1019
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a _armor_
+<ce> that someone must have lost or discarded.
+
+Message:  1020
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a _magic_
+<ce> that someone must have lost or discarded.
+
+Message:  1021
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a _misc_
+<ce> that someone must have lost or discarded.
+
+Message:  1022
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a _flamable_
+<ce> that someone must have lost or discarded.
+
+Message:  1023
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a _trinket_
+<ce> that someone must have lost or discarded.
+
+Message:  1024
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a copy of the book
+<ce> _book_
+<ce> that someone must have lost or discarded.
+
+Message:  1025
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a _potion_
+<ce> that someone must have lost or discarded.
+
+Message:  1026
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon a _map_
+<ce> that someone must have lost or discarded.
+
+Message:  1028
+<ce> While foraging for Plant Ingredients,
+<ce> you chanced upon _coins_ coins
+<ce> that someone must have lost or discarded.
+
+Message:  1032
+<ce> While foraging of Plant Ingredients,
+<ce> you chanced upon some _organ_.
+
+Message:  1033
+<ce> While foraging of Plant Ingredients,
+<ce> you chanced upon some _skin_.
+
+Message:  1034
+<ce> While foraging of Plant Ingredients,
+<ce> you chanced upon some _mythic_.
+
+Message:  1035
+<ce> While foraging of Plant Ingredients,
+<ce> you chanced upon some _mineral_.
+
+
+QBN:
+
+Item _plant1_ small_plant
+Item _plant2_ large_plant
+Item _weapon_ weapon
+Item _armor_ armor
+Item _magic_ magic_item
+Item _misc_ misc
+Item _flamable_ flamable
+Item _trinket_ trinket
+Item _book_ book
+Item _potion_ potion
+Item _map_ random_map
+Item _coins_ gold range 1 to 8
+Item _organ_ organs
+Item _skin_ skin
+Item _mythic_ mythic
+Item _mineral_ mineral
+
+
+-- Quest start-up:
+
+_weakint_ task:
+	when attribute Intelligence is at least 0
+
+_evenint_ task:
+	when attribute Intelligence is at least 40
+
+_strongint_ task:
+	when attribute Intelligence is at least 60
+
+_verystrongint_ task:
+	when attribute Intelligence is at least 80
+
+_worstchanceint_ task:
+	when _weakint_ and not _evenint_
+
+_evenchanceint_ task:
+	when _evenint_ and not _strongint_
+
+_goodchanceint_ task:
+	when _strongint_ and not _verystrongint_
+
+_bestchanceint_ task:
+	when _verystrongint_
+
+_weakluc_ task:
+	when attribute Luck is at least 0
+
+_evenluc_ task:
+	when attribute Luck is at least 40
+
+_strongluc_ task:
+	when attribute Luck is at least 60
+
+_verystrongluc_ task:
+	when attribute Luck is at least 80
+
+_worstchanceluc_ task:
+	when _weakluc_ and not _evenluc_
+
+_evenchanceluc_ task:
+	when _evenluc_ and not _strongluc_
+
+_goodchanceluc_ task:
+	when _strongluc_ and not _verystrongluc_
+
+_bestchanceluc_ task:
+	when _verystrongluc_
+
+_intweak_ task:
+	when _worstchanceint_
+	reduce player fatigue by 15
+	raise time by 1:30
+	pick one of _0plant_ _0plant_ _0plant_ _0plant_ _0plant_ _1plant_
+
+_inteven_ task:
+	when _evenchanceint_
+	reduce player fatigue by 15
+	raise time by 1:30
+	pick one of _0plant_ _0plant_ _0plant_ _0plant_ _1plant_ _1plant_
+
+_intgood_ task:
+	when _goodchanceint_
+	reduce player fatigue by 15
+	raise time by 1:30
+	pick one of _0plant_ _0plant_ _0plant_ _1plant_ _1plant_ _2plant_
+
+_intbest_ task:
+	when _bestchanceint_
+	reduce player fatigue by 15
+	raise time by 1:30
+	pick one of _0plant_ _0plant_ _1plant_ _1plant_ _2plant_ _2plant_
+
+_0plant_ task:
+	say 1013
+
+_1plant_ task:
+	say 1014
+	get item _plant1_
+	make _plant1_ permanent
+
+_2plant_ task:
+	say 1015
+	get item _plant1_
+	make _plant1_ permanent
+	get item _plant2_
+	make _plant2_ permanent
+
+_plantchopped_ task:
+	when _0plant_ or _1plant_ or _2plant_
+
+_bonusweak_ task:
+	when _plantchopped_ and _worstchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_
+
+_bonuseven_ task:
+	when _plantchopped_ and _evenchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_
+
+_bonusgood_ task:
+	when _plantchopped_ and _goodchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_ _1bonus_
+
+_bonusbest_ task:
+	when _plantchopped_ and _bestchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_ _1bonus_ _1bonus_
+
+_0bonus_ task:
+	end quest
+
+_1bonus_ task:
+	pick one of _randomingredient_ _randomingredient_ _randomingredient_ _randomingredient_ _randomitem_
+
+_randomitem_ task:
+	pick one of _weaponitem_ _armoritem_ _magicitem_ _bookitem_ _potionitem_ _mapitem_ _miscitem_
+	
+_randomingredient_ task:
+	pick one of _coinsitem_ _flamableitem_ _flamableitem_ _organitem_ _skinitem_ _mythicitem_ _mineralitem_ _trinketitem_
+
+_weaponitem_ task:
+	update-quest-item _weapon_ Leveled
+	say 1018
+	get item _weapon_
+	make _weapon_ permanent
+	end quest
+
+_armoritem_ task:
+	update-quest-item _armor_ Leveled
+	say 1019
+	get item _armor_
+	make _armor_ permanent
+	end quest
+
+_magicitem_ task:
+	say 1020
+	get item _magic_
+	make _magic_ permanent
+	end quest
+
+_miscitem_ task:
+	say 1021
+	get item _misc_
+	make _misc_ permanent
+	end quest
+
+_flamableitem_ task:
+	say 1022
+	get item _flamable_
+	make _flamable_ permanent
+	end quest
+
+_trinketitem_ task:
+	say 1023
+	get item _trinket_
+	make _trinket_ permanent
+	end quest
+
+_bookitem_ task:
+	say 1024
+	get item _book_
+	make _book_ permanent
+	end quest
+
+_potionitem_ task:
+	say 1025
+	get item _potion_
+	make _potion_ permanent
+	end quest
+
+_mapitem_ task:
+	say 1026
+	get item _map_
+	make _map_ permanent
+	end quest
+
+_coinsitem_ task:
+	say 1028
+	get item _coins_
+	make _coins_ permanent
+	end quest
+
+_organitem_ task:
+	say 1032
+	get item _organ_
+	make _organ_ permanent
+	end quest
+
+_skinitem_ task:
+	say 1033
+	get item _skin_
+	make _skin_ permanent
+	end quest
+
+_mythicitem_ task:
+	say 1034
+	get item _mythic_
+	make _mythic_ permanent
+	end quest
+
+_mineralitem_ task:
+	say 1035
+	get item _mineral_
+	make _mineral_ permanent
+	end quest

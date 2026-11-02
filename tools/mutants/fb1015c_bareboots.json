@@ -1,0 +1,20 @@
+[
+  {
+    "name": "BARE-BOOTS-chain-alone",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "  Chain: ['chain', 'iron'],\n  Chain2: ['chain', 'iron'], // BARE-BOOTS: what imperial chain lacks, iron",
+    "new": "  Chain: ['chain'],\n  Chain2: ['chain'], // BARE-BOOTS: what imperial chain lacks, iron",
+    "tests": [
+      "test/systems/fb1015c_bareboots.test.js"
+    ]
+  },
+  {
+    "name": "BARE-BOOTS-the-walk-by-material",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "    const hit = byPiece(byToken(tok));\n    if (hit.length) {\n      token = tok;\n      pool = hit;",
+    "new": "    const all = byToken(tok);\n    if (all.length) {\n      token = tok;\n      pool = byPiece(all);",
+    "tests": [
+      "test/systems/fb1015c_bareboots.test.js"
+    ]
+  }
+]

@@ -1,0 +1,237 @@
+[
+  {
+    "name": "TRUNK-FOES-the-call-gone",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  if (n && dt > 0 && collider?.move) keepFoesOffBodies(foes, collider, skip); // TRUNK-FOES: a lone foe too\n  if (n < 2 || !(dt > 0) || !collider?.move) return 0;",
+    "new": "  if (n < 2 || !(dt > 0) || !collider?.move) return 0;",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-a-lone-foe-skipped",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  if (n && dt > 0 && collider?.move) keepFoesOffBodies(foes, collider, skip); // TRUNK-FOES: a lone foe too",
+    "new": "  if (n > 1 && dt > 0 && collider?.move) keepFoesOffBodies(foes, collider, skip); // TRUNK-FOES: a lone foe too",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-a-held-frame-pushes",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  if (n && dt > 0 && collider?.move) keepFoesOffBodies(foes, collider, skip); // TRUNK-FOES: a lone foe too",
+    "new": "  if (n && collider?.move) keepFoesOffBodies(foes, collider, skip); // TRUNK-FOES: a lone foe too",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-nature-unread",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (!it.nature || cy >= feet[1] + tall || cy + it.h <= feet[1]) return; // over its head, or under its feet",
+    "new": "      if (cy >= feet[1] + tall || cy + it.h <= feet[1]) return; // over its head, or under its feet",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-span-unread",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (!it.nature || cy >= feet[1] + tall || cy + it.h <= feet[1]) return; // over its head, or under its feet",
+    "new": "      if (!it.nature) return; // over its head, or under its feet",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-reach-without-the-foe-s-radius",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      const R = it.r + rad,",
+    "new": "      const R = it.r,",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-push-past-the-edge-rule",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (\n        nudge(ai, nx * push - nz * side, nz * push + nx * side, R, collider) ||\n        (side !== 0 && nudge(ai, nx * push, nz * push, R, collider))\n      )\n        moved++; // to its edge in one frame",
+    "new": "      if (collider.move(feet, nx * push - nz * side, 0, nz * push + nx * side, tall, true)) moved++; // to its edge in one frame",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-a-tree-flat-no-nature",
+    "file": "src/world/propBodies.js",
+    "old": "    return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM, true);",
+    "new": "    return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM, false);",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-a-still-record-no-nature",
+    "file": "src/world/propBodies.js",
+    "old": "  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, isNatureArchive(archive));",
+    "new": "  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, false);",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-a-prop-nature",
+    "file": "src/world/propBodies.js",
+    "old": "  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, isNatureArchive(archive));",
+    "new": "  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, true);",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-jungle-s-trunk-no-nature",
+    "file": "src/world/propBodies.js",
+    "old": "  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, nature: true, _mark: 0 }; // MEM-AUDIT: born with the index's mark",
+    "new": "  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, nature: false, _mark: 0 }; // MEM-AUDIT: born with the index's mark",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-graht-oak-no-nature",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "  const out = [{ c: [x, y, z], r: m.trunk * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, nature: true, _mark: 0 }];",
+    "new": "  const out = [\n    { c: [x, y, z], r: m.trunk * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, nature: false, _mark: 0 },\n  ];",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-landmark-no-nature",
+    "file": "src/world/lands/landProps.js",
+    "old": "    nature: true,",
+    "new": "    nature: false,",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-box-unfilled",
+    "file": "src/ai/cover.js",
+    "old": "    box[0] = Math.min(box[0], x - it.r);\n    box[1] = Math.min(box[1], z - it.r);\n    box[2] = Math.max(box[2], x + it.r);\n    box[3] = Math.max(box[3], z + it.r);\n    for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {",
+    "new": "    for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {",
+    "tests": [
+      "test/characters/trunkfoes.test.js",
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-box-read-the-wrong-way",
+    "file": "src/ai/cover.js",
+    "old": "      if (x + reach < box[0] || x - reach > box[2] || z + reach < box[1] || z - reach > box[3]) continue;",
+    "new": "      if (x + reach < box[0] || x - reach > box[0] || z + reach < box[1] || z - reach > box[3]) continue;",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-holds-unread",
+    "file": "src/ai/cover.js",
+    "old": "    if (hx * hx + hz * hz <= rr && hy >= cy && hy <= top) {\n      if (!(((hx - ox) * d[0] + (hz - oz) * d[2]) / a - mid > COVER_MIDDLE_GRACE)) return Infinity;\n      endIn = true;\n    }\n  }",
+    "new": "  }",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-their-frame-unread",
+    "file": "src/ai/cover.js",
+    "old": "      for (let k = 0; k < nHolds; k++) _holds[k] = holds[k] - t[k % 3];",
+    "new": "      for (let k = 0; k < nHolds; k++) _holds[k] = holds[k];",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-coverDistance-drops-them",
+    "file": "src/ai/cover.js",
+    "old": "  return cover.hit(origin, dir, maxDist, sight, holds); // AUDIT TACT B2: `sight` - a line of sight to a target at maxDist; TRUNK-FOES: `holds`",
+    "new": "  return cover.hit(origin, dir, maxDist, sight); // AUDIT TACT B2: `sight` - a line of sight to a target at maxDist; TRUNK-FOES: `holds`",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-arrow-s-holds-none",
+    "file": "src/combat/arrowFlight.js",
+    "old": "struckBy?.length ? struckPoints(m.pos, unit, struckBy, _struck) : null",
+    "new": "null",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-a-body-struck-off-the-line",
+    "file": "src/systems/spellcast.js",
+    "old": "    if (!missileHitsCapsule(_at, f, b.height, b.radius ?? BODY_CAPSULE_RADIUS)) continue;\n    out.push(f[0], Math.min(Math.max(_at[1], f[1]), f[1] + (b.height ?? CAPSULE_HEIGHT)), f[2]);",
+    "new": "    out.push(f[0], Math.min(Math.max(_at[1], f[1]), f[1] + (b.height ?? CAPSULE_HEIGHT)), f[2]);",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-body-s-middle-not-the-line-s-height",
+    "file": "src/systems/spellcast.js",
+    "old": "    out.push(f[0], Math.min(Math.max(_at[1], f[1]), f[1] + (b.height ?? CAPSULE_HEIGHT)), f[2]);",
+    "new": "    out.push(f[0], f[1] + (b.height ?? CAPSULE_HEIGHT) / 2, f[2]);",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-player-no-body",
+    "file": "src/systems/spellcast.js",
+    "old": "  if (playerFeet) out.push({ feet: playerFeet, height: playerHeight, radius: PLAYER_BODY_RADIUS });\n  return out;",
+    "new": "  return out;",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-a-corpse-a-body",
+    "file": "src/systems/spellcast.js",
+    "old": "  for (const f of foes ?? []) if (f && !f.dead && f.ai?.feet) out.push(f.ai);",
+    "new": "  for (const f of foes ?? []) if (f && f.ai?.feet) out.push(f.ai);",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-flightStop-s-holds-none",
+    "file": "src/scenes/hostMagic.js",
+    "old": "coverDistance(collider, pos, unit, reach, false, holds)",
+    "new": "coverDistance(collider, pos, unit, reach, false, null)",
+    "tests": [
+      "test/characters/trunkfoes.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-bolt-s-bodies-none",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, missileBodies(m, playerFeet, playerHeight));",
+    "new": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false);",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TRUNK-FOES-the-dungeon-s-bolt-s-bodies-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, dungeonMissileBodies(m, foes, playerFeet, playerHeight, m.fromPlayer ? [gateBossBody(), arenaRivalBody(), ...gateCrystalBodies(), ...gateHostBodies()] : null));",
+    "new": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer);",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  }
+]

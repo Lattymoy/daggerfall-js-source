@@ -1,0 +1,343 @@
+[
+  {
+    "name": "GUILD-YARD-hall-yard-refused-at-the-read",
+    "file": "server-account/src/decor.js",
+    "old": "    if (yard === true && S.seat) return { error: 'hall-yard' };\n",
+    "new": "    if (yard === true) return { error: 'hall-yard' };\n",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-hall-yard-refused-in-the-write",
+    "file": "server-account/src/decor.js",
+    "old": "const hallBars = (piece, S, out) => (piece.item || (out && S.seat) ? 1 : 0);",
+    "new": "const hallBars = (piece, S, out) => (piece.item || out ? 1 : 0);",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-look-a-characters-again",
+    "file": "server-account/src/homes.js",
+    "old": "AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character).run();",
+    "new": "AND player = ? AND char_id = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, player.id, character).run();",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-keepers-any-rank",
+    "file": "server-account/src/decor.js",
+    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS",
+    "new": "      AND g.rank >= 0\n      AND EXISTS",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-halls-look-unanswered",
+    "file": "server-account/src/homes.js",
+    "old": "          ...lookFor(h, h.kin === 1),   // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n",
+    "new": "",
+    "note": "AUDIT HOME-VOTE A3 (PIN MOVED): the hall's paint through lookFor, a shunned hall's to its guild alone",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-a-yard-pieces-half-to-the-record",
+    "file": "server-account/src/decor.js",
+    "old": "    const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
+    "new": "    const hall = delta > 0 && row.yard !== 1 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-sale-without-the-yard",
+    "file": "server-account/src/halls.js",
+    "old": "AS back FROM home_decor WHERE map_id = ? AND building_key = ?`)",
+    "new": "AS back FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = 0`)",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-a-member-keeps-the-outside",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeOutsideKept = (home) => !!home && (home.own === true || (!!home.hall && home.keeper === true));",
+    "new": "export const homeOutsideKept = (home) => !!home && (home.own === true || (!!home.hall && home.member === true));",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-a-keeper-keeps-none",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeOutsideKept = (home) => !!home && (home.own === true || (!!home.hall && home.keeper === true));",
+    "new": "export const homeOutsideKept = (home) => !!home && home.own === true;",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-yards-name",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeYardWhere = (home) => (home?.hall ? \"Your guild's yard\" : 'Your yard');",
+    "new": "export const homeYardWhere = (home) => 'Your yard';",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-stand-asks-no-keeper",
+    "file": "src/scenes/homeYards.js",
+    "old": "!pieces?.length && !homeOutsideKept(home)",
+    "new": "!pieces?.length && !home.own",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-lot-asks-no-keeper",
+    "file": "src/scenes/homeYards.js",
+    "old": "      if (!homeOutsideKept(home)) continue;",
+    "new": "      if (!home?.own) continue;",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-lot-no-halls",
+    "file": "src/scenes/homeYards.js",
+    "old": "roads: yardRoadsOf(p, y.frame.at, lot), hall: !!home.hall };",
+    "new": "roads: yardRoadsOf(p, y.frame.at, lot), hall: false };",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "GUILD-YARD-the-rooms-hall-lost",
+    "file": "src/scenes/homeYards.js",
+    "old": "yard: true, ...(cur.hall ? { hall: true } : {}), where:",
+    "new": "yard: true, where:",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-painted-word",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const whose = hall ? 'Your guild\\'s hall' : 'Your house';",
+    "new": "const whose = 'Your house';",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-build-asks-no-keeper",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "(homeLook || homeRow.mine || homeRow.keeper)) {",
+    "new": "(homeLook || homeRow.mine)) {",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-YARD-the-refresh-asks-no-keeper",
+    "file": "src/scenes/world.js",
+    "old": "((row?.look && homeDecorShownHere(row, p.homeTown)) || row?.mine || row?.keeper)) merged = true;",
+    "new": "((row?.look && homeDecorShownHere(row, p.homeTown)) || row?.mine)) merged = true;",
+    "note": "HOME-VOTE (PIN MOVED): a look counts only where it is shown - a shunned home's stays in the merge FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew.",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-C1-the-first-yard-stood",
+    "file": "src/scenes/homeYards.js",
+    "old": "      if (rank < bestRank) { best = { y, home }; bestRank = rank; }",
+    "new": "      if (!best) { best = { y, home }; bestRank = rank; }",
+    "tests": [
+      "test/net/guild_yard.test.js",
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-C1-the-lot-stood-on-unpreferred",
+    "file": "src/scenes/homeYards.js",
+    "old": "      const rank = (yardHolds(y.lot, o, feet) ? 0 : YARD_NEAR_ONLY) + away;",
+    "new": "      const rank = away;",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-C2-whose-read-after-the-write",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    deps.say?.(r?.ok ? (look ? `${whose} is painted.`",
+    "new": "    deps.say?.(r?.ok ? (look ? `${deps.room?.()?.hall ? 'Your guild\\'s hall' : 'Your house'} is painted.`",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-C2-the-houses-fallback",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "(hall ? 'The hall could not be painted.' : 'The house could not be painted.')",
+    "new": "'The house could not be painted.'",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-C3-the-town-unread",
+    "file": "src/scenes/world.js",
+    "old": "onRank: () => { onlineHomes?.bump?.(); onlineHomes?.ensure?.(_musicLoc?.mapTableData?.mapId, { force: true })?.catch?.(() => {}); },",
+    "new": "onRank: () => { onlineHomes?.bump?.(); },",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-G1-the-ranks-move-untold",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    const moved = ranked !== this._ranked;",
+    "new": "    const moved = false;",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-G1-no-guild-told-at-the-first-look",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    this._ranked = '';",
+    "new": "    this._ranked = undefined;",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-Y1-the-keeper-off-the-rank-alone",
+    "file": "server-account/src/homes.js",
+    "old": "guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true }",
+    "new": "guildMay(rank, 'decorate', powers) ? { keeper: true }",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-G2-hallEntry-asks-a-realm-character",
+    "file": "server-account/src/homes.js",
+    "old": "guildMay(rank, 'hallEntry', powers) ? { hallEntry: true }",
+    "new": "guildMay(rank, 'hallEntry', powers) && h.me_realm === 1 ? { hallEntry: true }",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-G2-the-registrys-hallEntry-the-keepers",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "              hallEntry: h.hallEntry === true, // AUDIT PROF-541 G2: may say who walks in - the rank's, no realm record asked",
+    "new": "              hallEntry: h.keeper === true, // AUDIT PROF-541 G2: may say who walks in - the rank's, no realm record asked",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-G2-the-rows-gate-the-keepers",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    ...(hallEntryTurnable(home)",
+    "new": "    ...(home.keeper",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-G2-the-press-gate-the-keepers",
+    "file": "src/scenes/worldModes.js",
+    "old": "verb === HALL_VERB.entry && hallEntryTurnable(home)) { turnHallEntry",
+    "new": "verb === HALL_VERB.entry && !!home?.hall && !!home.keeper) { turnHallEntry",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-the-lots-word-a-houses",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const hallWords = (why) => (cur?.hall && why === YARD_IN_HOUSE ? YARD_IN_HALL : why);",
+    "new": "  const hallWords = (why) => why;",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-the-bars-word-your-yard",
+    "file": "src/ui/decorPanel.js",
+    "old": "(hall ? \"The hall's yard\" : 'Your yard')",
+    "new": "'Your yard'",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-the-panels-hall-unsent",
+    "file": "src/ui/decorPanel.js",
+    "old": "yard: !!view?.yard, hall: !!view?.hall }) : null;",
+    "new": "yard: !!view?.yard }) : null;",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-the-tools-where-plain",
+    "file": "src/scenes/homeYards.js",
+    "old": "where: homeYardWhere(cur),",
+    "new": "where: 'Your yard',",
+    "tests": [
+      "test/net/guild_yard.test.js",
+      "test/scenes/homeyard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-YARD-the-hall-word-for-every-yard",
+    "file": "server-account/src/decor.js",
+    "old": "    : barred && (S.seat",
+    "new": "    : (sent.item || out) && (S.seat",
+    "tests": [
+      "test/net/guild_yard.test.js",
+      "test/net/guild1d_service.test.js",
+      "test/net/seathall_service.test.js"
+    ],
+    "note": "AUDIT PROF-541 (RE-AIMED by content): the provenance guard's word before it."
+  },
+  {
+    "name": "AUDIT-PROF-541-G3-the-commits-cap-unasked",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (decorWhyNot({ price, ready: true, gold: deps.wallet().gold + (batching ? draftGoldNow() : 0),",
+    "new": "    if (false && decorWhyNot({ price, ready: true, gold: deps.wallet().gold + (batching ? draftGoldNow() : 0),",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-G3-the-bars-hall-lost",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "yard: !!deps.room?.()?.yard, hall: !!deps.room?.()?.hall }",
+    "new": "yard: !!deps.room?.()?.yard, hall: false }",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-H1-the-gate-the-keepers",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const hallEntryTurnable = (home) => !!home?.hall && !!home.hallEntry;",
+    "new": "export const hallEntryTurnable = (home) => !!home?.hall && !!home.keeper;",
+    "tests": [
+      "test/net/guild_yard.test.js"
+    ]
+  }
+]

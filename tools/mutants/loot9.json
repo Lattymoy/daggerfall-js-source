@@ -1,0 +1,484 @@
+[
+  {
+    "name": "LOOT9-shard-unbound",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "  bound: true,\n  stackable: true,\n}]);",
+    "new": "  stackable: true,\n}]);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-shard-unstacked",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "  bound: true,\n  stackable: true,\n}]);",
+    "new": "  bound: true,\n}]);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-shard-another-index",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "export const WELKYND_SHARD_TEMPLATE = 571;",
+    "new": "export const WELKYND_SHARD_TEMPLATE = 572;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-shard-unregistered",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "registerCustomTemplates(WELKYND_SHARD_TEMPLATES);",
+    "new": "void WELKYND_SHARD_TEMPLATES;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-shards-below-one",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "{ stackCount: Math.max(1, Math.trunc(Number(n) || 1)) }",
+    "new": "{ stackCount: Math.trunc(Number(n) || 1) }",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-shard-unlisted",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ],
+    "note": "WALLET1 (PIN MOVED): re-aimed by content - the list names the Wallet's 580 too (systems/walletItem.js)."
+  },
+  {
+    "name": "LOOT9-salvage-magic-two",
+    "file": "src/systems/reforge.js",
+    "old": "magic: 1, rare: 3, legendary: 8, exalted: 15",
+    "new": "magic: 2, rare: 3, legendary: 8, exalted: 15",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-exalted-as-legendary",
+    "file": "src/systems/reforge.js",
+    "old": "return item.exalted === true ? SALVAGE_SHARDS.exalted : SALVAGE_SHARDS.legendary;",
+    "new": "return SALVAGE_SHARDS.legendary;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-dfu-magic-salvages",
+    "file": "src/systems/reforge.js",
+    "old": "  const t = item?.rarity;\n  if (t === 'legendary')",
+    "new": "  const t = item?.rarity ?? (item?.magic ? 'magic' : undefined);\n  if (t === 'legendary')",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-salvage-off",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!lootRarityOn()) return 'off';\n  if (!item) return 'not';",
+    "new": "  if (!item) return 'not';",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-aetheric-salvages",
+    "file": "src/systems/reforge.js",
+    "old": "  if (item.rarity === 'aetheric') return 'aetheric';\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-artifact-salvages",
+    "file": "src/systems/reforge.js",
+    "old": "  if (item.artifact || item.rarity === 'artifact') return 'artifact';",
+    "new": "  if (item.rarity === 'artifact') return 'artifact';",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-quest-salvages",
+    "file": "src/systems/reforge.js",
+    "old": "  if (item.questItem) return 'quest';\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-bound-salvages",
+    "file": "src/systems/reforge.js",
+    "old": "  if (isBound(item)) return 'bound';\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-worn-salvages",
+    "file": "src/systems/reforge.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (isLocked(item)) return 'locked';",
+    "new": "  if (isLocked(item)) return 'locked';",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-locked-salvages",
+    "file": "src/systems/reforge.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (isLocked(item)) return 'locked';",
+    "new": "  if (isEquipped(item)) return 'worn';",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-salvage-keeps-the-piece",
+    "file": "src/systems/reforge.js",
+    "old": "  items.splice(items.indexOf(item), 1);\n  addItem(items, welkyndShards(shards));",
+    "new": "  addItem(items, welkyndShards(shards));",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-salvage-gives-nothing",
+    "file": "src/systems/reforge.js",
+    "old": "  items.splice(items.indexOf(item), 1);\n  addItem(items, welkyndShards(shards));",
+    "new": "  items.splice(items.indexOf(item), 1);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-purse-counts-the-locked",
+    "file": "src/systems/reforge.js",
+    "old": "const spendable = (it) => isWelkyndShard(it) && !isLocked(it) && !isEquipped(it);",
+    "new": "const spendable = (it) => isWelkyndShard(it) && !isEquipped(it);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-spend-when-short",
+    "file": "src/systems/reforge.js",
+    "old": "  if (shardsHeld(items) < n) return false;\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-spend-the-locked",
+    "file": "src/systems/reforge.js",
+    "old": "    if (!spendable(it)) continue;",
+    "new": "    if (!isWelkyndShard(it)) continue;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-emptied-stack-kept",
+    "file": "src/systems/reforge.js",
+    "old": "      items.splice(i, 1);",
+    "new": "      it.stackCount = 0;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-magic-one-shard",
+    "file": "src/systems/reforge.js",
+    "old": "  magic: Object.freeze({ shards: 2, gold: 100 }),",
+    "new": "  magic: Object.freeze({ shards: 1, gold: 100 }),",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-any-legendary-priced",
+    "file": "src/systems/reforge.js",
+    "old": "      ? REFORGE_PRICE[item.rarity]\n      : item?.rarity === 'legendary' && item.exalted === true",
+    "new": "      ? REFORGE_PRICE[item.rarity]\n      : item?.rarity === 'legendary'",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - reforgePrice reads its tier's first price, then doubles it."
+  },
+  {
+    "name": "LOOT9-unknown-reforged",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-worn-reforged",
+    "file": "src/systems/reforge.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (!lines.includes(index)) return 'line';",
+    "new": "  if (!lines.includes(index)) return 'line';",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-any-line",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!lines.includes(index)) return 'line';\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-short-of-shards",
+    "file": "src/systems/reforge.js",
+    "old": "  if (shardsHeld(player?.items) < price.shards) return 'shards';\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-short-of-gold",
+    "file": "src/systems/reforge.js",
+    "old": "  if (totalGoldAmount(player) < price.gold) return 'gold';\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-no-shards-paid",
+    "file": "src/systems/reforge.js",
+    "old": "  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);",
+    "new": "  deductGold(player, price.gold);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-no-gold-paid",
+    "file": "src/systems/reforge.js",
+    "old": "  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);",
+    "new": "  spendShards(player.items, price.shards);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-reforge-off",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!lootRarityOn()) return 'off';\n  const price = reforgePrice(item);",
+    "new": "  const price = reforgePrice(item);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-exalted-every-line",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "&& item.exalted === true && list.length) lines = [list.filter((a) => a?.gem == null).length - 1];",
+    "new": "&& item.exalted === true && list.length) lines = list.map((_, i) => i);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-plain-legendary-reforged",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  else if (item?.rarity === 'legendary' && item.exalted === true && list.length)",
+    "new": "  else if (item?.rarity === 'legendary' && list.length)",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-reforged-uncounted",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const reforgeCount = (item) => (Number.isInteger(item?.reforges) && item.reforges > 0 ? item.reforges : Number.isInteger(item?.reforged) ? 1 : 0);",
+    "new": "export const reforgeCount = (item) => (Number.isInteger(item?.reforges) && item.reforges > 0 ? item.reforges : 0);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the one-line lock is gone (the owner: \"Replace, price rises\"); its mark is one reforge counted, and this mutant forgets it."
+  },
+  {
+    "name": "LOOT9-proc-to-number",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (id === old.id || !k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;",
+    "new": "    if (id === old.id || !k.groups.includes(item.group)) return false;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the pool is reforgePool's."
+  },
+  {
+    "name": "LOOT9-rare-held-to-its-slot",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (id === old.id || !k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;",
+    "new": "    if (id === old.id || !k.groups.includes(item.group) || !!k.proc !== !!was.proc || (item.rarity === 'rare' && k.slot !== was.slot)) return false;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the law inverted - a Rare's line crosses its name slots now, and this mutant holds it to its slot again."
+  },
+  {
+    "name": "LOOT9-carried-kind-again",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    return k.params ? freeParams(id).length > 0 : !others.some((a) => a?.id === id);",
+    "new": "    return k.params ? freeParams(id).length > 0 : true;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ],
+    "equivalent": true,
+    "why": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): belt-and-braces beside the draw's weights - a kind without params that another line carries weighs no line in the reforge's draw (lootRarity.js kindLines answers 0, so pickByLines never lands on it), and this guard keeps it out of the pool as well, so a line whose every alternative is carried is never offered. No piece a door mints has such a line (one line that does something at most; a number line always has a free attribute or skill), so the mutant survives every reforge pin: loot9_reforge, affixlines_reforge, craft4_temper, tech1_roster, auditloot2, loot20_sockets, fb1013e_craftprocs, judged."
+  },
+  {
+    "name": "LOOT9-exalted-line-any-value",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "rangeInt(tier === 'legendary' ? Math.ceil((lo + hi) / 2) : lo, hi, rolls)",
+    "new": "rangeInt(lo, hi, rolls)",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-name-stays",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (tier !== 'legendary') item.name = linesName(item, tier);",
+    "new": "",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content. NAME-KEPT (FIELD BUGS 2026-10-25i, AUDIT FB1025i): re-aimed again at linesName's call."
+  },
+  {
+    "name": "LOOT9-price-stays",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ],
+    "note": "LOOT14 (RE-AIMED BY CONTENT): the price line reads a garment's half (bible/06-Systems/Loot-II-Arc.md section 6) - the law it pins unmoved."
+  },
+  {
+    "name": "LOOT9-reforge-uncounted",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  item.reforges = count;\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - no line is marked now; the piece counts the reforge, and this mutant forgets to."
+  },
+  {
+    "name": "LOOT9-field-undeclared",
+    "file": "src/systems/item/itemFields.js",
+    "old": "  reforged: int({ min: 0, max: 15 }),",
+    "new": "  reforgedX: int({ min: 0, max: 15 }),",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-window-breaks-unasked",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "          if (asking !== it) {\n            asking = it;\n            say(false, BREAK_ASK(nameOf(it), n));\n            render();\n            return;\n          }",
+    "new": "",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-window-shows-the-unknown",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    if (!itemIsIdentified(it)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-popup-row-without-hook",
+    "file": "src/ui/guildServiceWindow.js",
+    "old": "    if (this.hooks.reforge && inRect(REFORGE_RECT, vx, vy)) {",
+    "new": "    if (inRect(REFORGE_RECT, vx, vy)) {",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-popup-no-key",
+    "file": "src/ui/guildServiceWindow.js",
+    "old": "    const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY;",
+    "new": "    const reforgeKey = !!this.hooks.reforge && code === 'KeyQ';",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-plus-face-no-row",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "        ...(w.hooks.reforge ? [{ label: REFORGE_ROW, act: () => w._reforge() }] : []),",
+    "new": "        ...([]),",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-any-guild-reforges",
+    "file": "src/scenes/worldModes.js",
+    "old": "reforge: route.guildGroup === GUILD_GROUPS.MagesGuild && service === 'Identify' && lootRarityOn() ?",
+    "new": "reforge: service === 'Identify' && lootRarityOn() ?",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-card-salvages-the-worn",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (side === 'local' && !line.equipped && (salvageShards(picked) > 0 ||",
+    "new": "if (side === 'local' && (salvageShards(picked) > 0 ||",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-card-breaks-unasked",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    v.onclick = () => askSalvage(picked);",
+    "new": "    v.onclick = () => { salvagePiece(picked, { items: deps.items?.() ?? [] }); refresh(); render(); };",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "LOOT9-keep-breaks-it",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  no.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };   // the piece kept",
+    "new": "  no.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); salvagePiece(item, { items: deps.items?.() ?? [] }); };",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  }
+]

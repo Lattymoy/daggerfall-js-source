@@ -1,0 +1,245 @@
+[
+  {
+    "name": "SD13-a-song-unmade",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "    gone: gone(),",
+    "new": "    gone: fell(),",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-a-voice-unset",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "    events.push({ tick: 0, type: 'programChange', channel, program: HOUR_PROGRAMS[voice] });\n    events.push({ tick: 0, type: 'controller', channel, controller: 7, value: lv });",
+    "new": "    events.push({ tick: 0, type: 'controller', channel, controller: 7, value: lv });",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-canon-past-the-end",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  const tick = (bar, beat) => Math.round((bar * 4 + beat) * SCORE_TPQ) % length;",
+    "new": "  const tick = (bar, beat) => Math.round((bar * 4 + beat) * SCORE_TPQ);",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-chime-mended-in-the-fight",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  Object.freeze(['G4', 'D5', 'Eb5', 'F#5']),",
+    "new": "  Object.freeze(['G4', 'D5', 'Eb5', 'C5']),",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-fall-in-the-minor",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "      const C = CHORDS.C;",
+    "new": "      const C = CHORDS.Cm;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-canon-on-the-beat",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "      themeBars(w, 0, THEME_R2, 'strings', 92, { octave: -1, delay: 2 });",
+    "new": "      themeBars(w, 0, THEME_R2, 'strings', 92, { octave: -1 });",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-war-levelled",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  war3: 1.62,",
+    "new": "  war3: 1.42,",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-a-ceiling-at-the-clip",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "const PRESS = Object.freeze({ threshold: -18, knee: 12, ratio: 4, attack: 0.003, release: 0.25, ceiling: -1 });",
+    "new": "const PRESS = Object.freeze({ threshold: -18, knee: 12, ratio: 4, attack: 0.003, release: 0.25, ceiling: 0 });",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-arena-by-its-rim-alone",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  if (\n    Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <=\n    SD_ARENA.r + SD_BAR_NEAR_M + (was === 'arena' ? SD_SCORE_HOLD_M : 0)\n  )",
+    "new": "  if (Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r + (was === 'arena' ? SD_SCORE_HOLD_M : 0))",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-steps-from-the-hall",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  return z >= SD_FIRST_STEP.z - SD_FIRST_STEP.r - (was === 'steps' || was === 'arena' ? SD_SCORE_HOLD_M : 0)\n    ? 'steps'\n    : 'hall';",
+    "new": "  return z >= SD_FIRST_STEP.z - (was === 'steps' || was === 'arena' ? SD_SCORE_HOLD_M : 0) ? 'steps' : 'hall';",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-no-last-minute",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  if (lastMinute) return HOUR_SONGS.last;\n  if (place === 'hall') return HOUR_SONGS.hall;",
+    "new": "  if (place === 'hall') return HOUR_SONGS.hall;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-music-over-the-end",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  if (ending) return SD_SCORE_SILENCE; // the End: nothing over it\n  if (lastMinute) return HOUR_SONGS.last;",
+    "new": "  if (lastMinute) return HOUR_SONGS.last;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-music-over-a-lost-fight",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  if (fight.lost) return SD_SCORE_SILENCE;\n  return fight.ph >= 3 ? HOUR_SONGS.war3 : fight.ph === 2 ? HOUR_SONGS.war2 : HOUR_SONGS.war1;",
+    "new": "  return fight.ph >= 3 ? HOUR_SONGS.war3 : fight.ph === 2 ? HOUR_SONGS.war2 : HOUR_SONGS.war1;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-hollows-walk-through-its-collapse",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  if (collapsing) return HOUR_SONGS.gone;\n  if (place === 'hollow') return HOUR_SONGS.hollow;",
+    "new": "  if (place === 'hollow') return HOUR_SONGS.hollow;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-fall-forever",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  if (fight?.fell) return now - fight.fell.at < SD_SCORE_STING_MS ? HOUR_SONGS.fell : HOUR_SONGS.gone;",
+    "new": "  if (fight?.fell) return HOUR_SONGS.fell;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-war-by-phase-alone",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  return fight.ph >= 3 ? HOUR_SONGS.war3 : fight.ph === 2 ? HOUR_SONGS.war2 : HOUR_SONGS.war1;",
+    "new": "  return HOUR_SONGS.war1;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-sting-from-the-kill",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "        stingAt = law === HOUR_SONGS.fell ? now + SCORE_STING_LEAD_MS : -Infinity;",
+    "new": "        stingAt = law === HOUR_SONGS.fell ? s.fell.at : -Infinity;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-late-fall-stung",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "        stingAt = law === HOUR_SONGS.fell ? now + SCORE_STING_LEAD_MS : -Infinity;",
+    "new": "        stingAt = now + SCORE_STING_LEAD_MS;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-one-sting-a-session",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "      if (fell !== fallKey) {",
+    "new": "      if (fallKey === null) {",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-score-never-let-go",
+    "file": "src/scenes/world.js",
+    "old": "      if (_hourScoreHeld) { _hourScoreHeld = false; music.fadeOut(); }   // A4: an ending, not a cut",
+    "new": "      if (false) { _hourScoreHeld = false; music.fadeOut(); }   // A4: an ending, not a cut",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-hollow-unheard",
+    "file": "src/scenes/world.js",
+    "old": "    return (_hourPlace = modes?.dungeonLocation?.superTier ? 'hollow' : null);",
+    "new": "    return (_hourPlace = null);",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-collapse-by-another-slots-record",
+    "file": "src/scenes/world.js",
+    "old": "const collapsing = rec != null && rec.s === slot && sdPhase(rec, now) === 'fell';",
+    "new": "const collapsing = rec != null && sdPhase(rec, now) === 'fell';",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-court-first",
+    "file": "src/scenes/world.js",
+    "old": "if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({",
+    "new": "if (!gateScoreFrame() && !hourScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-place-askew",
+    "file": "src/scenes/world.js",
+    "old": "return (_hourPlace = sdScorePlace(x, z, _hourPlace)); }",
+    "new": "return (_hourPlace = sdScorePlace(z, x, _hourPlace)); }",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-songs-made-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "if (!_hourScoreMade) { _hourScoreMade = true;",
+    "new": "if (true) { _hourScoreMade = true;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-end-cut",
+    "file": "src/scenes/world.js",
+    "old": "    if (want === SD_SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);\n    return true;\n  };\n  /** ARENA2",
+    "new": "    if (want === SD_SCORE_SILENCE) music.stop(); else music.playSong(want);\n    return true;\n  };\n  /** ARENA2",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  },
+  {
+    "name": "SD13-the-arena-without-a-fight",
+    "file": "src/systems/superDungeon/sdScore.js",
+    "old": "  if (place !== 'arena' || !fight) return HOUR_SONGS.steps;",
+    "new": "  if (place !== 'arena') return HOUR_SONGS.steps;",
+    "tests": [
+      "test/systems/superDungeon/sd13_score.test.js"
+    ]
+  }
+]

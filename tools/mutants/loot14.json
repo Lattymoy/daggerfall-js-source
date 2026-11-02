@@ -1,0 +1,328 @@
+[
+  {
+    "name": "LOOT14-a-garment-never-rolls",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (isGarment(item)) return lootRarityOn();",
+    "new": "  if (isGarment(item)) return false;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A9): a garment is eligible with the ladder on."
+  },
+  {
+    "name": "LOOT14-one-cut-only",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const CLOTHING_GROUPS = Object.freeze(['MensClothing', 'WomensClothing']);",
+    "new": "export const CLOTHING_GROUPS = Object.freeze(['MensClothing']);",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-feet-unread",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "SLOT_RULES[item.group]?.[item.templateIndex]?.slot === 'Feet';",
+    "new": "SLOT_RULES[item.group]?.[item.templateIndex]?.slot === 'LegsClothes';",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-a-garment-any-attribute",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return id === 'stat' && isGarment(item) ? GARMENT_STATS : k.params;",
+    "new": "  return k.params;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-a-garment-no-street",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (isGarment(item)) return { own: null, kin: garmentOnFeet(item) ? FEET_KIN : STREET_KIN };   // LOOT14",
+    "new": "  if (isGarment(item)) return { own: null, kin: STREET_KIN };   // LOOT14",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-dress-unleaned",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (lean.length && r < STANDING_OWN_SHARE) return step(lean, 0, STANDING_OWN_SHARE);",
+    "new": "  if (lean.length && r < 0) return step(lean, 0, STANDING_OWN_SHARE);",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-standing-two-rolls",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (id === 'standing') { const g = flat ? pick(free, rolls) : pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }",
+    "new": "    if (id === 'standing') { rolls(); const g = flat ? pick(free, rolls) : pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-no-own-number",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "isGarment(item) ? 'standing' : null;   // LOOT14: a garment's own number is its standing",
+    "new": "null;   // LOOT14: a garment's own number is its standing",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-a-jewels-flavour",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  MensClothing: GARMENT_FLAVOURS,\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-lines-at-full-price",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  * (isGarment(item) ? GARMENT_WORTH_SHARE : 1));",
+    "new": "  * 1);",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-flavour-at-full-price",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const rareEnchantWorth = (item) => Math.round(RARE_ENCHANT_WORTH * (isGarment(item) ? GARMENT_WORTH_SHARE : 1));",
+    "new": "export const rareEnchantWorth = () => RARE_ENCHANT_WORTH;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-exalted-at-full-price",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const exaltedWorth = (item) => Math.round(EXALTED_WORTH * (isGarment(item) ? GARMENT_WORTH_SHARE : 1));",
+    "new": "export const exaltedWorth = () => EXALTED_WORTH;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-first-pass-takes-garments",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (isGarment(it)) continue;   // LOOT14: a garment rolls in the wardrobe's pass, after every draw below\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-no-wardrobe-pass",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const dressed = wardrobePass(items, source, { rolls, luck, find });   // LOOT14: the garments, after all of it",
+    "new": "  const dressed = [];",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-pass-rolls-a-find-again",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (!isGarment(g) || g.untaken === true || !rarityEligible(g)) continue;",
+    "new": "    if (!isGarment(g) || !rarityEligible(g)) continue;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-standing-unfolded",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "        case 'standing': { const g = STANDING_GROUPS.indexOf(a.param); if (g >= 0) mods.standing[g] += v; break; }",
+    "new": "        case 'standing': break;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-warmth-unfolded",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "        case 'warmth': mods.warmth += v; break;",
+    "new": "        case 'warmth': break;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-dry-unfolded",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "        case 'dry': mods.dry += v; break;",
+    "new": "        case 'dry': break;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-card-never-says",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "out.push(affixLine(item, i) + asleepNote(a))",
+    "new": "out.push(affixLine(item, i))",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-always-asleep",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const asleepNote = (a) => (AFFIX_KINDS[a?.id]?.survival && !survivalOn() ? SURVIVAL_OFF_NOTE : '');",
+    "new": "export const asleepNote = (a) => (AFFIX_KINDS[a?.id]?.survival ? SURVIVAL_OFF_NOTE : '');",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-dress-ignores-the-gear",
+    "file": "src/systems/clothingStanding.js",
+    "old": "  return { groups: groups.map((v, g) => clamp(v) + capGear(gear?.[g])), temple: clamp(temple) };",
+    "new": "  return { groups: groups.map((v) => clamp(v)), temple: clamp(temple) };",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-gear-uncapped",
+    "file": "src/systems/clothingStanding.js",
+    "old": "export const GEAR_STANDING_CAP = 10;",
+    "new": "export const GEAR_STANDING_CAP = 20;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-gear-under-the-dress-cap",
+    "file": "src/systems/clothingStanding.js",
+    "old": "  return { groups: groups.map((v, g) => clamp(v) + capGear(gear?.[g])), temple: clamp(temple) };",
+    "new": "  return { groups: groups.map((v, g) => clamp(v + capGear(gear?.[g]))), temple: clamp(temple) };",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-lining-forgotten",
+    "file": "src/systems/survival/temperature.js",
+    "old": "    Math.max(0, Number(gear) || 0); // LOOT14: a garment's warmth lines - a lining, halved in the heat and eaten by the wet as the cloth is",
+    "new": "    0; // LOOT14: a garment's warmth lines - a lining, halved in the heat and eaten by the wet as the cloth is",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-felt-reading-ignores-the-lining",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  const clothes = clothingWarmth(worn, { wet, natural: air, inSunlight: !!env.inSunlight, gear: ctx.gearWarmth });",
+    "new": "  const clothes = clothingWarmth(worn, { wet, natural: air, inSunlight: !!env.inSunlight });",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-storm-unturned",
+    "file": "src/systems/survival/temperature.js",
+    "old": "        (1 - Math.min(GEAR_DRY_MOST, Math.max(0, Number(ctx.gearDry) || 0)) / 100) + // LOOT14: weatherproofing turns the weather's soaking aside",
+    "new": "        1 + // LOOT14: weatherproofing turns the weather's soaking aside",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-wholly-waterproof",
+    "file": "src/systems/survival/temperature.js",
+    "old": "export const GEAR_DRY_MOST = 75;",
+    "new": "export const GEAR_DRY_MOST = 100;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-context-drops-the-dry",
+    "file": "src/systems/survival/temperature.js",
+    "old": "    gearDry: Number(mods.dry) || 0,",
+    "new": "    gearDry: 0,",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-minute-never-dressed",
+    "file": "src/systems/survival/needs.js",
+    "old": ", ...wardrobeCtx(mods) };",
+    "new": " };",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT C&C, lens R decision 5): wardrobeCtx's unread host argument deleted."
+  },
+  {
+    "name": "LOOT14-the-shirt-over-the-potion",
+    "file": "src/systems/foeLootCap.js",
+    "old": "const GARMENT_UNDER_SUPPLY = 0.5;",
+    "new": "const GARMENT_UNDER_SUPPLY = 1.5;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-garment-a-gear-piece",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  if (g != null) return g;",
+    "new": "  if (g != null) void 0;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-kit-garments-never-roll",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)]; // LOOT14: the garments after every draw the kit made",
+    "new": "  const kit = [...rollKitPieces(entity, opts)]; // LOOT14: the garments after every draw the kit made",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-kit-takes-garments-first",
+    "file": "src/systems/foeLootCap.js",
+    "old": "    if (isGarment(it)) return; // LOOT14: the kit's garments roll after all of this (rollKitGarments)\n    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "new": "    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-live-garment-laddered",
+    "file": "src/systems/foeLootCap.js",
+    "old": "    const copy = { ...g, untaken: true };",
+    "new": "    const copy = g;\n    g.untaken = true;",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-kit-garment-a-bosses",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  kit.boss = false;",
+    "new": "",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "LOOT14-the-kit-garment-on-the-whole-ladder",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  kit.weights = plainFoeRarityWeights(quarters);",
+    "new": "",
+    "tests": [
+      "test/systems/loot14_wardrobe.test.js"
+    ]
+  }
+]

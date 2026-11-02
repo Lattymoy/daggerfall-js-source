@@ -1,0 +1,589 @@
+[
+  {
+    "name": "AUDITLIVED1-A-the-dungeon-rest-arm-reads-the-characters-sky",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "say: (msg) => hudText.add(msg), skyMinutes: sharedClockOn() ? Math.floor(skyMinutes()) : null });",
+    "new": "say: (msg) => hudText.add(msg) });",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-B-the-quest-disease-on-the-worlds-day",
+    "file": "src/scenes/world.js",
+    "old": "startDisease(playerEntity, diseaseType, Math.floor(ownMinutes() / 1440));",
+    "new": "startDisease(playerEntity, diseaseType, gameDaysNow());",
+    "tests": [
+      "test/systems/auditlived1.test.js",
+      "test/systems/audit63_effects.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-C-the-cure-holiday-on-the-characters-calendar",
+    "file": "src/scenes/worldModes.js",
+    "old": "rows, now: () => skyMinutes(), onClose: () => closeSelf(), godName,",
+    "new": "rows, now, onClose: () => closeSelf(), godName,",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-D-trainpc-stamps-the-worlds-minute",
+    "file": "src/systems/quest/actions.js",
+    "old": "e.timeOfLastSkillTraining = Number.isFinite(own) ? Math.floor(own) : Math.floor((hooks?.nowSeconds?.() ?? 0) / 60);",
+    "new": "e.timeOfLastSkillTraining = Math.floor((hooks?.nowSeconds?.() ?? 0) / 60);",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-D-the-machine-hands-no-character-clock",
+    "file": "src/systems/quest/machine.js",
+    "old": "      ownMinutes: () => this.deps.ownMinutes?.() ?? null,",
+    "new": "      ownMinutes: () => null,",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-D-the-host-hands-the-worlds-clock",
+    "file": "src/scenes/world.js",
+    "old": "    ownMinutes: () => ownMinutes(),   // AUDIT LIVED1 D",
+    "new": "    ownMinutes: () => worldMinutes(),   // AUDIT LIVED1 D",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-E-the-copy-keeps-the-worlds-minute",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  delete copy.worldMinutes;\n  delete copy.joinFresh;",
+    "new": "  delete copy.joinFresh;",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-E-the-quest-stamps-stay-on-the-world",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  if (copy.quest) shiftQuestStamps(copy.quest, delta * 60, { own: questOwn, world: true });",
+    "new": "",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ],
+    "note": "TIME3 (PIN MOVED): the quest stamps' walk moved to src/systems/quest/questStamps.js with the countdowns' own keys; re-aimed by content."
+  },
+  {
+    "name": "AUDITLIVED1-E-a-zero-never-becomes-a-date",
+    "file": "src/systems/quest/questStamps.js",
+    "old": "        if (ownBelow && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds;",
+    "new": "        if (ownBelow && Number.isFinite(v)) n[k] = v + deltaSeconds;",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ],
+    "note": "TIME3 (PIN MOVED): the quest stamps' walk moved to src/systems/quest/questStamps.js with the countdowns' own keys; re-aimed by content."
+  },
+  {
+    "name": "AUDITLIVED1-E-the-rumours-keep-the-worlds-limits",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  for (const r of copy.talk?.listRumorMill ?? [])\n    if (r && Number.isFinite(r.timeLimit) && r.timeLimit > 0) r.timeLimit += delta; // a quest rumour's 0 is \"no limit\"",
+    "new": "  // a quest rumour's 0 is \"no limit\"",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-E-a-spawns-first-sight-stays-on-the-world",
+    "file": "src/systems/offlineCopy.js",
+    "old": "      Array.isArray(row) ? row.map((v, i) => (i > 0 && Number.isFinite(v) ? v + delta : v)) : row,",
+    "new": "      Array.isArray(row) ? row.map((v, i) => (i > 1 && Number.isFinite(v) ? v + delta : v)) : row,",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-E-a-fire-keeps-the-worlds-hours",
+    "file": "src/systems/offlineCopy.js",
+    "old": "    if (c && Number.isFinite(c.litUntil)) c.litUntil += delta;\n    if (c && Number.isFinite(c.placedAt)) c.placedAt += delta;",
+    "new": "    if (c && Number.isFinite(c.placedAt)) c.placedAt += delta;",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-E-the-distance-the-wrong-way",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  rebaseWorldStamps(copy, Math.floor(own) - Math.floor(world), daysBetween(own, world), { questOwn: 'legacy' }); // classic minutes: the character's clock less the world's",
+    "new": "  rebaseWorldStamps(copy, Math.floor(world) - Math.floor(own), daysBetween(own, world), { questOwn: 'legacy' }); // classic minutes: the character's clock less the world's",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ],
+    "note": "TIME3 (PIN MOVED): the quest stamps' walk moved to src/systems/quest/questStamps.js with the countdowns' own keys; re-aimed by content."
+  },
+  {
+    "name": "AUDITLIVED1-E-copy-to-offline-skips-the-door",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    snap = offlineCopyOf(snap);",
+    "new": "",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-G-the-join-reads-the-offline-calendar-as-an-absence",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  copy.worldMinutes = Math.floor(worldNow);\n  // AUDIT LIVED1b P2: ...and that is the minute THIS machine's clock said at the click - the menu has no relay to",
+    "new": "  // AUDIT LIVED1b P2: ...and that is the minute THIS machine's clock said at the click - the menu has no relay to",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-G-bring-online-skips-the-door",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "const copy = onlineCopyOf(snap, sharedClassicMinutes(Date.now()));",
+    "new": "const copy = JSON.parse(JSON.stringify(snap));",
+    "tests": [
+      "test/systems/auditlived1.test.js",
+      "test/systems/realm3.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-F-a-legacy-save-keeps-its-future-day",
+    "file": "src/systems/save/save.js",
+    "old": "    if (!Number.isFinite(snap.worldMinutes)) clampMarkersAheadOf(entity, own);",
+    "new": "",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-F-the-disease-day-uncapped",
+    "file": "src/systems/save/save.js",
+    "old": "if (a.kind === 'disease') { cap(a, 'lastDay', day); cap(a, 'startingDay', day); }",
+    "new": "if (a.kind === 'disease') { cap(a, 'startingDay', day); }",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-F-the-curse-clocks-uncapped",
+    "file": "src/systems/save/save.js",
+    "old": "    for (const k of ['lastKilledInnocent', 'lastCastMorphSelf', 'lastMorphHeal', 'lastUrgeNotify', 'lastTimeFed']) cap(a, k, own);",
+    "new": "",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-H-the-mirror-leaves-the-marker-at-the-nights-start",
+    "file": "src/scenes/world.js",
+    "old": "playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, true, { spawns: false }); },",
+    "new": "playerTicker.advance(n); },",
+    "tests": [
+      "test/systems/auditlived1.test.js",
+      "test/scenes/partyrest1.test.js",
+      "test/systems/auditlived1b.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-I-the-world-arms-start-below-their-mark",
+    "file": "src/systems/worldTick.js",
+    "old": "const worldPieces = _sharedClock ? worldArmsPieces(Math.floor(worldFrom), Math.floor(worldTo)) : null;",
+    "new": "const worldPieces = _sharedClock ? (worldTo > worldFrom ? [[Math.floor(worldFrom), Math.floor(worldTo)]] : []) : null;",
+    "tests": [
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-J-a-raise-in-flight-runs-a-nested-tick",
+    "file": "src/scenes/shared.js",
+    "old": "if (tickInFlight()) { advanceOwnMinutes(minutes); _raiseWaiting = true; return null; } ",
+    "new": "",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-J-no-tick-is-ever-in-flight",
+    "file": "src/systems/worldTick.js",
+    "old": "  _tickDepth++;\n  try { return tickPlayerMinutesOnce(args); } finally { _tickDepth--; }",
+    "new": "  return tickPlayerMinutesOnce(args);",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-L-a-due-loan-says-in-0-minutes",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (left <= 0) return 'now';",
+    "new": "  if (left < 0) return 'now';",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-L-the-bank-says-nothing-is-due",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (left === 'now') return short ? 'now' : 'due now';   // AUDIT LIVED1b U3: the short form follows the classic parchment's painted \"Loan due by:\" - \"Loan due by: due now\" said it twice\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditlived1.test.js",
+      "test/systems/ol3.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-P-the-classic-parchment-gets-the-long-words",
+    "file": "src/ui/bankWindow.js",
+    "old": "      loanBy: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '', // AUDIT LIVED1 P: the parchment's room",
+    "new": "      loanBy: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '', // AUDIT LIVED1 P: the parchment's room",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-Q-the-sheet-hands-no-words",
+    "file": "src/ui/charsheet.js",
+    "old": ", dueText: loanDueShort }),",
+    "new": " }),",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-Q-the-rows-ignore-the-words",
+    "file": "src/systems/banking.js",
+    "old": "due > 0 ? (dueText?.(due) ?? dateString(dateFromClassicMinutes(due))) : '',",
+    "new": "due > 0 ? dateString(dateFromClassicMinutes(due)) : '',",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-M-the-nightfall-rides-one-row",
+    "file": "src/scenes/world.js",
+    "old": "function sayWithNightfall(text) { townTalk.say(text); const nf = worldNightfallText(); if (nf) townTalk.say(nf); }",
+    "new": "function sayWithNightfall(text) { townTalk.say(withNightfall(text)); }",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-N-the-tavern-offer-one-row",
+    "file": "src/ui/tavernWindow.js",
+    "old": "    const c = t.indexOf(' (');",
+    "new": "    const c = -1;",
+    "tests": [
+      "test/systems/auditlived1.test.js",
+      "test/systems/ol3.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-O-the-rest-card-says-no-clock",
+    "file": "src/ui/enhanced/enhancedRest.js",
+    "old": "_restingRefs.clockLine.textContent = Number.isFinite(wm) ? restClockLine(wm, { loiter: overlay.mode === 'loiter' }) : '';",
+    "new": "_restingRefs.clockLine.textContent = '';",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-S-a-loiter-rests",
+    "file": "src/ui/restWindow.js",
+    "old": "you ${loiter ? 'wait' : 'rest'} on your own clock",
+    "new": "you rest on your own clock",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T-the-cards-read-the-worlds-date",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "function saveOf(entry) {\n  const snap = entry.snap;\n  const date = Number.isFinite(snap.classicMinutes) ? dateFromClassicMinutes(snap.classicMinutes) : null;",
+    "new": "function saveOf(entry) {\n  const snap = entry.snap;\n  const date = Number.isFinite(snap.worldMinutes ?? snap.classicMinutes) ? dateFromClassicMinutes(snap.worldMinutes ?? snap.classicMinutes) : null;",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-V-a-wire-foe-keeps-another-clocks-poison-minute",
+    "file": "src/scenes/dungeonContext.js",
+    "old": ", ...(wire && Number.isFinite(a.lastMinute) ? { lastMinute: Math.floor(ownMinutes()) } : {})",
+    "new": "",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T1-the-own-day-block-walks-the-worlds-half",
+    "file": "src/systems/worldTick.js",
+    "old": "const worldHalf = arms !== DAY_ARMS.own, ownHalf = arms !== DAY_ARMS.world;",
+    "new": "const worldHalf = true, ownHalf = arms !== DAY_ARMS.world;",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T1-the-own-calendar-walks-the-worlds-arms",
+    "file": "src/systems/worldTick.js",
+    "old": "const worldArms = arms !== DAY_ARMS.own, ownArms = arms !== DAY_ARMS.world;",
+    "new": "const worldArms = true, ownArms = arms !== DAY_ARMS.world;",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T1-the-world-day-block-over-the-characters-window",
+    "file": "src/systems/worldTick.js",
+    "old": "for (const [s, e] of worldPieces) runDayChange({ entity, lastMinutes: s, nowMinutes: e, rolls, say, arms: DAY_ARMS.world });",
+    "new": "runDayChange({ entity, lastMinutes, nowMinutes, rolls, say, arms: DAY_ARMS.world });",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T2-the-rise-walks-nothing",
+    "file": "src/systems/worldTick.js",
+    "old": "const pieces = from === null ? [] : worldArmsPieces(from, now);",
+    "new": "const pieces = [];",
+    "tests": [
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T3-the-save-records-the-worlds-minute",
+    "file": "src/scenes/worldQuickSave.js",
+    "old": "classicMinutes: Math.floor(playerTicker.ownMinutes),   // LIVED1: the save's clock",
+    "new": "classicMinutes: Math.floor(playerTicker.classicMinutes),   // LIVED1: the save's clock",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T4-the-journey-guarded-offline-only",
+    "file": "src/scenes/world.js",
+    "old": "      setSyntheticTimeIncrease(true); playerTicker.advance(computed.minutes);",
+    "new": "      if (!sharedClockOn()) {\n      setSyntheticTimeIncrease(true); playerTicker.advance(computed.minutes);\n      }",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T5-the-moon-reads-the-characters-clock",
+    "file": "src/systems/worldTick.js",
+    "old": "lycanthropyMagicRound(entity, { nowMinutes: r + 1, clockMinutes, skyMinutes: sky, moonNight: Number.isFinite(skyMinutes), say });",
+    "new": "lycanthropyMagicRound(entity, { nowMinutes: r + 1, clockMinutes, moonNight: Number.isFinite(skyMinutes), say });",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T5-the-sunlight-reads-the-characters-clock",
+    "file": "src/systems/worldTick.js",
+    "old": "passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, clockMinutes: sky, sinks });",
+    "new": "passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, clockMinutes, sinks });",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-morphself-on-the-worlds-clock",
+    "file": "src/scenes/world.js",
+    "old": "now: () => playerTicker.ownMinutes,   // V2a: MorphSelf's once-a-day clock",
+    "new": "now: () => playerTicker.classicMinutes,   // V2a: MorphSelf's once-a-day clock",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-letters-on-the-worlds-clock",
+    "file": "src/scenes/world.js",
+    "old": "setCrimeGuildClock(() => Math.floor(playerTicker.ownMinutes));",
+    "new": "setCrimeGuildClock(() => Math.floor(playerTicker.classicMinutes));",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-vampire-rest-gate-on-the-worlds-clock",
+    "file": "src/scenes/world.js",
+    "old": "const rb = racialRestBlock(playerEntity, Math.floor(ownMinutes()));",
+    "new": "const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-cure-hour-on-the-worlds-clock",
+    "file": "src/scenes/world.js",
+    "old": "cureVampirism(playerEntity, { advanceMinutes: (m) => advanceOwnMinutes(m) })",
+    "new": "cureVampirism(playerEntity, { advanceMinutes: () => {} })",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-quest-join-date-on-the-worlds-clock",
+    "file": "src/scenes/world.js",
+    "old": "dateFromClassicMinutes(playerTicker.ownMinutes), _questStore()",
+    "new": "dateFromClassicMinutes(playerTicker.classicMinutes), _questStore()",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-drink-on-the-worlds-clock",
+    "file": "src/scenes/world.js",
+    "old": "drinkAtSource(playerEntity, Math.floor(ownMinutes())).text",
+    "new": "drinkAtSource(playerEntity, Math.floor(worldMinutes())).text",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-interior-vampire-rest-gate-on-the-worlds-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "const rb = racialRestBlock(playerEntity, Math.floor(interiorTicker.ownMinutes));   // V2b",
+    "new": "const rb = racialRestBlock(playerEntity, Math.floor(interiorTicker.classicMinutes));   // V2b",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-rank-wait-on-the-worlds-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "const ownDate = () => dateFromClassicMinutes(interiorTicker.ownMinutes);",
+    "new": "const ownDate = () => dateFromClassicMinutes(interiorTicker.classicMinutes);",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-loan-stamp-on-the-worlds-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "level: () => playerEntity.level ?? 1,\n      now: () => Math.floor(ownMinutes()),",
+    "new": "level: () => playerEntity.level ?? 1,\n      now: () => Math.floor(worldMinutes()),",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-conjured-item-on-the-worlds-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "nowMinutes: Math.floor(ownMinutes()),\n            rounds: rounds ?? 0,",
+    "new": "nowMinutes: Math.floor(worldMinutes()),\n            rounds: rounds ?? 0,",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-smith-booking-on-the-worlds-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "deductGold(playerEntity, price);\n      const now = Math.floor(ownMinutes());",
+    "new": "deductGold(playerEntity, price);\n      const now = Math.floor(worldMinutes());",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-rest-door-landlord-on-the-worlds-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "playerEntity.rentedRooms ?? [], Math.floor(ownMinutes()), sceneCache());",
+    "new": "playerEntity.rentedRooms ?? [], Math.floor(worldMinutes()), sceneCache());",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-rest-place-hours-on-the-worlds-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "nowMinutes: Math.floor(ownMinutes()),\n      // Interior.FindMarkers",
+    "new": "nowMinutes: Math.floor(worldMinutes()),\n      // Interior.FindMarkers",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-turn-satiation-on-the-worlds-clock",
+    "file": "src/scenes/shared.js",
+    "old": "nowMinutes: () => Math.floor(ownMinutes()),\n    playVideo(name, onClose) {",
+    "new": "nowMinutes: () => Math.floor(worldMinutes()),\n    playVideo(name, onClose) {",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-dungeon-meals-on-the-worlds-clock",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "nowMinute: () => Math.floor(ownMinutes()),   // AUDIT 21 F2",
+    "new": "nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T6-feeding-stamp-default-on-the-worlds-clock",
+    "file": "src/systems/worldTick.js",
+    "old": "export function playerWeaponHitEntity(player, target, { nowMinutes = Math.floor(ownMinutes()), isCivilian = false",
+    "new": "export function playerWeaponHitEntity(player, target, { nowMinutes = Math.floor(worldMinutes()), isCivilian = false",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T7-the-spawn-tables-hour",
+    "file": "src/scenes/world.js",
+    "old": "skyMinutes: sharedClockOn() ? Math.floor(skyMinutes()) : null",
+    "new": "skyMinutes: null",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T7-heartsday-enhanced",
+    "file": "src/ui/enhanced/enhancedTavern.js",
+    "old": "    date: { dayOfYear: dayOfYearFromMinutes(deps.worldNow?.() ?? now) }, // LIVED1: Heart's Day is the world's calendar, the room the character's own time",
+    "new": "    date: { dayOfYear: dayOfYearFromMinutes(now) }, // LIVED1: Heart's Day is the world's calendar, the room the character's own time",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T7-kitchen-hours",
+    "file": "src/ui/tavernWindow.js",
+    "old": "      hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),",
+    "new": "      hour: Math.trunc((((now % 1440) + 1440) % 1440) / 60),",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T7-meal-holiday",
+    "file": "src/ui/tavernWindow.js",
+    "old": "            const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now }); // F103: GetGoldAmount (:324); LIVED1: the meal's holiday is the world's calendar",
+    "new": "            const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: now }); // F103: GetGoldAmount (:324); LIVED1: the meal's holiday is the world's calendar",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T7-dungeon-air",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const wm = skyMinutes()",
+    "new": "const wm = ownMinutes()",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLIVED1-T7-smith-words",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  const own = ownTimeLeftText(c.doneAt);",
+    "new": "  const own = null;",
+    "tests": [
+      "test/systems/auditlived1.test.js"
+    ]
+  }
+]

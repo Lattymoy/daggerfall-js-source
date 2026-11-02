@@ -1,0 +1,212 @@
+// X11b: CREATE ITEM (Mysticism 2,255) and the CONJURED-ITEM FAMILY.
+// Verbatim from DFU (MIT, Daggerfall Workshop):
+//   Effects/Mysticism/CreateItem.cs   - the 29-row picker and the mint
+//   Items/DaggerfallUnityItem.cs:405-419 - TimeForItemToDisappear / IsSummoned
+//   Items/ItemCollection.cs:120-150   - RemoveExpiredItems
+//   Items/ItemCollection.cs:370-405   - GetItem(priorityToConjured)
+//   Items/ItemCollection.cs:700-718   - FindExistingStack's expiry clause
+//   Entities/PlayerEntity.cs:420-421  - the per-minute sweep's home
+//
+// WHAT THE EFFECT IS. Almost nothing happens in the effect class: it
+// supports DURATION alone, shows no spell icon, and its whole payload
+// is `PromptPlayer()` in Start (:96-110) - push a list picker, and when
+// the player picks, mint that item, drop it in the bag with a lifetime,
+// and End() at once. The comment on that End is the design in one line:
+// "End effect now - conjured item reports own lifetime". So there is no
+// live effect entry to tick; the ITEM is the effect.
+//
+// THE LIFETIME. `TimeForItemToDisappear = gameMinutes + RoundsRemaining`
+// (:237). A round is a classic minute, and the picker is modal so the
+// clock does not advance while it is up - but RoundsRemaining is the
+// rolled duration MINUS ONE, not the full roll.
+//
+// AUDIT 63 F17 corrected this paragraph, which claimed the full
+// duration on the ground that "the initial magic round has not run
+// yet". It has: Start runs SetDuration and then only pushes the picker
+// (CreateItem.cs:96-100 -> :113-116), and AssignBundle continues
+// synchronously to `effect.MagicRound();` (EntityEffectManager.cs:594,
+// "At this point effect is ready and gets initial magic round").
+// CreateItem overrides neither MagicRound nor RemoveRound, so
+// BaseEntityEffect's pair runs (EntityEffect.cs:572-575 -> :583-588,
+// `return --roundsRemaining`) and the picker's callback reads
+// duration-1 frames later. The port answers that value at
+// systems/effects.js's Create Item arm; every conjured item had been
+// living exactly one classic minute too long.
+//
+// THE PICKER CANNOT BE CANCELLED (`itemPicker.AllowCancel = false`,
+// :70). The magicka is already spent; DFU makes you choose. And
+// `lastSelectedIndex` is a STATIC (:35): the picker reopens on the row
+// you took last time, across casts and across characters in one run.
+//
+// FOUR CONSUMERS make the lifetime mean something, and all four are
+// laws rather than decoration:
+//   1. the per-minute sweep, which UNEQUIPS before it removes -
+//      otherwise a vanished cuirass leaves its armour value behind;
+//   2. IsStackable's summoned clause (inventory.js) - only conjured
+//      ARROWS stack, and FindExistingStack's expiry clause keeps two
+//      conjured stacks with different lifetimes apart;
+//   3. GetItem's priorityToConjured (inventory.js) - the bow spends the
+//      arrows that are about to vanish anyway, shortest life first;
+//   4. TransferItem's refusal - a summoned item cannot be dropped,
+//      sold, or put in the wagon (DaggerfallInventoryWindow.cs:1465).
+//
+// NOT PORTED, and named rather than half-built: the inventory window's
+// summonedItemBackgroundColor and the HUD's conjuredArrowsColor. Both
+// are one row of an unbuilt feature - the port's native inventory
+// window draws no item-background colours at all (quest items and the
+// light source have none either), and the HUD arrow counter is not
+// built (GUI/EnableArrowCounter is a stored setting with no consumer).
+// A lone constant with no reader is the shape this project keeps
+// catching; they land with their windows.
+
+import { addItem, isSummoned } from './inventory.js';
+import { unequipSlot, equipTableOf } from './equip.js';
+import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon, both arms
+import { randomizeArmorVariant } from './shopStock.js';       // ItemBuilder.RandomizeArmorVariant
+import { mintCondition, itemBaseValue, templateByIndex, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { DYE_COLORS } from '../characters/dyes.js';
+import { localizedText, localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+
+import { CREATE_ITEM_ROWS, MENS_PLAIN_ROBES, WOMENS_PLAIN_ROBES } from './createItemRows.js';   // INT1: the rows' leaf - the item law reads them headless
+
+export { isSummoned };
+export { CREATE_ITEM_ROWS, MENS_PLAIN_ROBES, WOMENS_PLAIN_ROBES };
+
+/** The picker's rows, in enum order. */
+/** CreateItem.lastSelectedIndex (CreateItem.cs:29, :75, :121) - ONE
+ *  static shared by every cast in a run, so the picker reopens on the
+ *  row the player took last. AUDIT 26 F079: the port kept a module
+ *  copy in EACH host, so casting in a dungeon and again outdoors
+ *  opened at the other host's remembered row. The law's own module is
+ *  the one static both hosts can share. */
+let _lastSelectedIndex = 0;
+export const lastCreateItemIndex = () => _lastSelectedIndex;
+export const setLastCreateItemIndex = (i) => { _lastSelectedIndex = i | 0; };
+
+/** L10N3d: the picker's words (CreateItem.cs:73 - GetLocalizedText(item.ToString()), the ItemTypes enum names), read
+ *  in the player's language when the picker lists them; each row's `label` stays its English name. */
+const CREATE_ITEM_TEXT = localizedStrings({
+  LeatherCuirass: 'Leather Cuirass', LeatherGauntlets: 'Leather Gauntlets', LeatherGreaves: 'Leather Greaves',
+  LeatherLeftPauldron: 'Leather Left Pauldron', LeatherRightPauldron: 'Leather Right Pauldron',
+  LeatherHelm: 'Leather Helm', LeatherBoots: 'Leather Boots', ChainCuirass: 'Chain Cuirass',
+  ChainGauntlets: 'Chain Gauntlets', ChainGreaves: 'Chain Greaves', ChainLeftPauldron: 'Chain Left Pauldron',
+  ChainRightPauldron: 'Chain Right Pauldron', ChainHelm: 'Chain Helm', ChainBoots: 'Chain Boots',
+  SteelCuirass: 'Steel Cuirass', SteelGauntlets: 'Steel Gauntlets', SteelGreaves: 'Steel Greaves',
+  SteelLeftPauldron: 'Steel Left Pauldron', SteelRightPauldron: 'Steel Right Pauldron', SteelHelm: 'Steel Helm',
+  SteelBoots: 'Steel Boots', SteelBuckler: 'Steel Buckler', SteelDagger: 'Steel Dagger',
+  SteelLongsword: 'Steel Longsword', SteelStaff: 'Steel Staff', ShortBow: 'Short Bow', Arrows: 'Arrows',
+  SteelBattleAxe: 'Steel Battle Axe', Robes: 'Robes',
+});
+export const createItemLabels = () => CREATE_ITEM_ROWS.map((r) => CREATE_ITEM_TEXT[r.label.replace(/ /g, '')] ?? r.label);
+
+/**
+ * CreateItem.CreateTempItem (:239-286) plus the lifetime stamp
+ * (:235-237). `nowMinutes` is ToClassicDaggerfallTime(), `rounds` is
+ * the effect's RoundsRemaining.
+ *
+ * The three arms mirror ItemBuilder's three constructors:
+ *  - CreateArmor(gender, race, piece, material) with its DEFAULT
+ *    variant of -1, so ApplyArmorSettings takes RandomizeArmorVariant
+ *    rather than SetVariant(0) - the same branch a shop shelf takes,
+ *    and NOT the one CreateRandomArmor (loot) takes.
+ *  - CreateWeapon(weapon, Steel), whose arrow arm ignores the material
+ *    and rolls a stack of 1..20.
+ *  - CreateMensClothing/CreateWomensClothing(Plain_robes, race) with
+ *    variant -1 (a random one of the template's two) and the ctor's
+ *    default dye, Blue.
+ *
+ * Returns null for an index outside the table - DFU's switch simply
+ * falls through and `if (item != null)` skips the AddItem (:126-128),
+ * so a bad index is silent there and silent here.
+ */
+export function createTempItem(index, { gender = 'male', nowMinutes = 0, rounds = 0, rolls = Math.random } = {}) {
+  const row = CREATE_ITEM_ROWS[index];
+  if (!row) return null;
+  let item = null;
+  if (row.kind === 'armor') {
+    // MAC-N1: SetItem's name and value through the one export - this
+    // arm wrote both by hand, a sixth copy of the law.
+    item = mintCondition(setItemFields({
+      group: 'Armor', templateIndex: row.templateIndex, material: row.material,
+      variant: randomizeArmorVariant(row.templateIndex, row.material, rolls),
+    }));
+  } else if (row.kind === 'weapon') {
+    item = createWeapon(row.templateIndex, row.material, rolls);
+    item.value = itemBaseValue(item);
+  } else {
+    // Genders.Female picks the women's template; the race decides the
+    // art row, which the port resolves at DRAW time from the wearer.
+    const templateIndex = gender === 'female' ? WOMENS_PLAIN_ROBES : MENS_PLAIN_ROBES;
+    const variants = templateByIndex(templateIndex)?.variants ?? 0;
+    item = mintCondition({
+      group: gender === 'female' ? 'WomensClothing' : 'MensClothing',
+      templateIndex,
+      variant: Math.floor(rolls() * variants),
+      dye: DYE_COLORS.Blue,
+      name: templateByIndex(templateIndex)?.name,
+    });
+    item.value = itemBaseValue(item);
+  }
+  // "Set lifetime of item based on spell duration" (:235-237). This is
+  // the ONE write that makes it conjured - IsSummoned is derived.
+  item.timeForItemToDisappear = nowMinutes + rounds;
+  return item;
+}
+
+/**
+ * The whole spell, from a picked row: mint it, bag it, and answer what
+ * was made. `AddItem` is the ordinary stacking add, which is why the
+ * expiry clause in stacksWith matters - conjured arrows join a stack
+ * only when its lifetime matches exactly.
+ */
+export function grantCreatedItem(entity, index, opts = {}) {
+  const item = createTempItem(index, opts);
+  if (!item) return null;
+  addItem(entity.items ??= [], item);
+  return item;
+}
+
+/**
+ * ItemCollection.RemoveExpiredItems (:120-150). "Removes items that
+ * have expired. Used for magically-created items. Only for the player."
+ * DFU's own note on it is worth keeping: "Reverse-engineering suggests
+ * this was intended behavior in classic, but classic does not correctly
+ * set the item flags so magically-created items never disappear." So
+ * this whole family is a DFU restoration of a classic intent, not a
+ * classic behaviour - and the port follows DFU, as the doctrine says.
+ *
+ * THE UNEQUIP IS NOT OPTIONAL. DFU walks every equip slot and unequips
+ * the item before removing it (:135-142), because the armour values are
+ * a running total: remove a worn cuirass without restoring its slot and
+ * the player keeps its protection for ever, on a piece that no longer
+ * exists.
+ *
+ * DFU calls UnequipItem AND UpdateEquippedArmorValues(item, false) as a
+ * pair, because its ItemEquipTable.UnequipItem does not touch the armour
+ * table. The port's `unequipSlot` DOES - so it is called ONCE here, and
+ * adding the second call would restore the value twice.
+ *
+ * @returns the items removed.
+ */
+export function removeExpiredItems(entity, nowMinutes) {
+  const list = entity?.items;
+  if (!Array.isArray(list) || !list.length) return [];
+  const doomed = list.filter((it) => isSummoned(it) && it.timeForItemToDisappear < nowMinutes);
+  if (!doomed.length) return [];
+  const slots = equipTableOf(entity);
+  for (const item of doomed) {
+    for (let slot = 0; slot < slots.length; slot++) {
+      if (slots[slot] === item) unequipSlot(entity, slot);
+    }
+    const i = list.indexOf(item);
+    if (i >= 0) list.splice(i, 1);
+  }
+  return doomed;
+}
+
+/** Internal_Strings "cannotRemoveItem" - the box TransferItem shows
+ *  when the player tries to move a summoned item out of the pack
+ *  (DaggerfallInventoryWindow.cs:1464-1469). */
+export const CANNOT_REMOVE_ITEM_TEXT = 'You cannot remove this item.';
+/** L10N3d: ...in the player's language, read where the box shows it. */
+export const cannotRemoveItemText = () => localizedText('cannotRemoveItem', CANNOT_REMOVE_ITEM_TEXT);

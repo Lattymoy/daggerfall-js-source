@@ -1,0 +1,111 @@
+[
+  {
+    "name": "GLOBAL-MARKET-svc-orders-regional",
+    "file": "server-account/src/market.js",
+    "old": "db.prepare(`SELECT * ${from} ORDER BY price DESC, at, id ${pageSql(page)}`).bind(nowS, familyKeys)]);",
+    "new": "db.prepare(`SELECT * ${from} AND region = ?3 ORDER BY price DESC, at, id ${pageSql(page)}`).bind(nowS, familyKeys, region)]);",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "GLOBAL-MARKET-svc-orders-no-road",
+    "file": "server-account/src/market.js",
+    "old": "orders: rows.map((o, i) => ({ ...orderView(o, me), road: quotes[i] }))",
+    "new": "orders: rows.map((o) => orderView(o, me))",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-svc-fill-courier-free",
+    "file": "server-account/src/market.js",
+    "old": "  const pay = total - tax - road.courier;",
+    "new": "  const pay = total - tax;",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-svc-fill-courier-dear-unrefused",
+    "file": "server-account/src/market.js",
+    "old": "  if (pay < 1) return { error: road.courier > 0 ? 'market-courier-dear' : 'market-taxed-out' };",
+    "new": "  if (pay < 1 && !road.courier) return { error: 'market-taxed-out' };",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-svc-fill-least-ignored",
+    "file": "server-account/src/market.js",
+    "old": "  if (Number.isSafeInteger(least) && pay < least) return { error: 'market-price-moved' };",
+    "new": "",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-svc-fill-courier-unburnt",
+    "file": "server-account/src/market.js",
+    "old": "FROM market_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3 AND ?4 > 0`).bind(me, rid, nonce, road.courier - fillTithe),",
+    "new": "FROM market_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3 AND ?4 > 0`).bind(me, rid, nonce, 0),",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-svc-fill-one-end-witnessed",
+    "file": "server-account/src/market.js",
+    "old": "    ...witnessStatements(db, player, nowS, [region, to], own, 'EXISTS (SELECT 1 FROM market_fills WHERE filler = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),",
+    "new": "    ...witnessStatements(db, player, nowS, [region], own, 'EXISTS (SELECT 1 FROM market_fills WHERE filler = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-svc-fill-answer-no-courier",
+    "file": "server-account/src/market.js",
+    "old": "      courier: Number(row.units) * Number(row.price) - Number(row.pay) - Number(row.tax) },",
+    "new": "      courier: 0 },",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-tab-fill-courier-unsaid",
+    "file": "src/ui/marketTab.js",
+    "old": "      : n * o.price - fillTaxOn((o.units - o.left) * o.price, n * o.price, c === 0 && n === o.left) - c;",
+    "new": "      : n * o.price - fillTaxOn((o.units - o.left) * o.price, n * o.price, c === 0 && n === o.left);",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-tab-fill-dear-offered",
+    "file": "src/ui/marketTab.js",
+    "old": "      b.disabled = ui.busy() || have < 1 || pay == null || pay < 1;",
+    "new": "      b.disabled = ui.busy() || have < 1;",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-tab-fill-no-least",
+    "file": "src/ui/marketTab.js",
+    "old": "            m.book.fill({ region: m.region, order: o.id, units: n, hubs: m.hubs, least: fillPay(o, n) ?? 1, ...at() }),",
+    "new": "            m.book.fill({ region: m.region, order: o.id, units: n, hubs: m.hubs, ...at() }),",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  },
+  {
+    "name": "GLOBAL-MARKET-tab-orders-regional-words",
+    "file": "src/ui/marketTab.js",
+    "old": "  noOrders: 'No buy orders right now.',",
+    "new": "  noOrders: 'No buy orders in this region.',",
+    "tests": [
+      "test/net/globalmarket.test.js"
+    ]
+  }
+]

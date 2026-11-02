@@ -1,0 +1,29 @@
+[
+  {
+    "name": "BOWVOICE-the-instant-release-twangs-again-the-defect",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "      // BOW-VOICE: the IL's PlaySwingSound here is the loose's second voice - the machine's `bowSound` is its one",
+    "new": "      playSwingSound();",
+    "tests": [
+      "test/systems/bowvoice.test.js"
+    ]
+  },
+  {
+    "name": "BOWVOICE-the-drawn-release-twangs-again",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "        updateWeapon();\n        yield tick;\n        while (machineStateIndex() === S.StrikeDown && w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) {",
+    "new": "        updateWeapon();\n        playSwingSound();\n        yield tick;\n        while (machineStateIndex() === S.StrikeDown && w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) {",
+    "tests": [
+      "test/systems/bowvoice.test.js"
+    ]
+  },
+  {
+    "name": "BOWVOICE-the-arms-twang-at-the-click",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "        if (ev === 'bowSound') { _heldSound = true; continue; }\n",
+    "new": "        if (ev === 'bowSound') { out.push(ev); continue; }\n",
+    "tests": [
+      "test/systems/bowvoice.test.js"
+    ]
+  }
+]

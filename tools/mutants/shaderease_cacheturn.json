@@ -1,0 +1,94 @@
+[
+ {
+  "name": "SEC1-same-version-clears-anyway",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "  if (from === version) return { turned: false, from, failed: [] };",
+  "new": "",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"],
+  "note": "a turn every launch would compile every program again - GPU-CACHE's bug back"
+ },
+ {
+  "name": "SEC2-the-turn-never-recorded",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "    fs.writeFileSync(path.join(userData, RECORD_NAME), JSON.stringify({ version }));",
+  "new": "    void version;",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"],
+  "note": "unrecorded, every launch clears again"
+ },
+ {
+  "name": "SEC2-GPUCache-not-named",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "  'GPUCache', 'DawnWebGPUCache', 'DawnGraphiteCache',",
+  "new": "  'DawnWebGPUCache', 'DawnGraphiteCache',",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"],
+  "note": "the WebGL program cache, the one that holds the dead binaries"
+ },
+ {
+  "name": "SEC2-reserved-caches-not-named",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "  'ShaderCache', 'GrShaderCache', 'GraphiteDawnCache', 'GPUPersistentCache',",
+  "new": "  'GraphiteDawnCache', 'GPUPersistentCache',",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"]
+ },
+ {
+  "name": "SEC4-a-new-userData-not-made",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "    fs.mkdirSync(userData, { recursive: true });",
+  "new": "",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"]
+ },
+ {
+  "name": "SEC4-a-record-not-a-string-read",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "    return typeof v === 'string' ? v : null;",
+  "new": "    return v ?? null;",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"]
+ },
+ {
+  "name": "SEC5-an-rm-throw-thrown-out",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "      failed.push(name);",
+  "new": "      throw err;",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"],
+  "note": "a held file must never stop the launch"
+ },
+ {
+  "name": "SEC5-recorded-after-a-failure",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "  if (failed.length) return { turned: false, from, failed };",
+  "new": "",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"],
+  "note": "recorded, the next launch would not try the held folder again"
+ },
+ {
+  "name": "SEC5-a-record-write-throw-thrown-out",
+  "file": "app/lib/gpuCacheTurn.cjs",
+  "old": "  } catch (err) { log('[gpu] the cache turn could not be recorded:', err?.message ?? err); }",
+  "new": "  } finally { /* nothing */ }",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"]
+ },
+ {
+  "name": "SEC6-keyed-on-the-shell-alone",
+  "file": "app/main.cjs",
+  "old": "version: `${app.getVersion()}/${gameVersion()}` }); }",
+  "new": "version: app.getVersion() }); }",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js"],
+  "note": "the channel brings new shaders with the shell's version unchanged"
+ },
+ {
+  "name": "SEC6-turned-after-ready",
+  "file": "app/main.cjs",
+  "old": "if (isSingleInstance) { openGame(); turnGpuCache({ userData: app.getPath('userData'), version: `${app.getVersion()}/${gameVersion()}` }); }",
+  "new": "app.whenReady().then(() => { if (isSingleInstance) { openGame(); turnGpuCache({ userData: app.getPath('userData'), version: `${app.getVersion()}/${gameVersion()}` }); } });",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js", "test/tooling/da13_gamechannel.test.js"],
+  "note": "after ready the GPU process has read the caches already"
+ },
+ {
+  "name": "SEC6-a-second-instance-clears",
+  "file": "app/main.cjs",
+  "old": "if (isSingleInstance) { openGame(); turnGpuCache(",
+  "new": "if (true) { openGame(); turnGpuCache(",
+  "tests": ["test/tooling/shaderease_cacheturn.test.js", "test/tooling/da13_gamechannel.test.js"],
+  "note": "a second launch would delete the caches and the game versions under the first"
+ }
+]

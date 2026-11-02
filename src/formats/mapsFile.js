@@ -1,0 +1,908 @@
+// MAPS.BSA reader: enumerates the 62 regions and extracts location layouts.
+// 1:1 translation of Daggerfall Unity's MapsFile.cs + DFRegion/DFLocation
+// structures (MIT, Daggerfall Workshop / Gavin Clayton). Quirks kept verbatim:
+//   - Region names, races, and temple faction ids are the FALL.EXE tables.
+//   - Each region is four consecutive BSA records: MAPPITEM, MAPDITEM,
+//     MAPTABLE, MAPNAMES.
+//   - Map names are 32-byte strides; two locations fill all 32 bytes with no
+//     terminator, so the terminator scan runs ON INSIDE the SAME MAPNAMES
+//     record and swallows the NEXT NAME SLOT - it never leaves the record
+//     (measured: Bhoriane slot 61 of 190 reads 1956..2009 of a 6084-byte
+//     record, Kambria slot 270 of 310 reads 8644..8701 of 9924). The 32-char
+//     truncation is still load-bearing: uncapped, those two locations get the
+//     following location's name glued on. The stride is what keeps the NEXT
+//     name correct, not the cap.
+//   - Map table longitude/latitude/type/discovered come from bitfields;
+//     LocationType uses uint wraparound ((4*bitfield) >> 27).
+//   - RMB block-name letter2 uses (byte)(2*blockCharacter) >> 6 - the 8-bit
+//     truncation is load-bearing.
+//   - Orsinium (dungeon location id 50015) has a border block moved to Z=-2,
+//     reverse engineered from classic.
+// Not ported (documented): WorldDataReplacement mod hooks (Unity
+// AssetInjection) and smaller-dungeon generation (it depends on the
+// quest/save systems - it belongs to the Systems arcs). PatchRegionIndex
+// shipped with the journal's click-through travel, which is its one
+// consumer; it is below REGION_NAMES, the table it reads.
+// ALSO not ported, and none of these was listed until the MAPS.BSA sweep
+// went looking for members rather than for values (road/maps-record):
+//   - GetMapPixelIDFromLongitudeLatitude (MapsFile.cs:386-401). Its DFU
+//     callers are all PlayerGPS discovery (PlayerGPS.cs:855, 879, 936, 993,
+//     1045, 1073, 1146, 1201). The port's PlayerGPS half does NOT recompute
+//     it and so has nothing to route through here: systems/discovery.js keys
+//     discoveredLocations by `mapId & 0xfffff`, which is DFU's own documented
+//     identity for the same number ("MapTableData.MapId & 0x000fffff =
+//     WorldPixelID", MapsFile.cs:391-393) and held for all 15,251 locations
+//     in the file. The two halves of the C# helper are both exported here -
+//     longitudeLatitudeToMapPixel and getMapPixelID - and systems/
+//     mapDirectory.js composes them for the pixel-keyed map dictionary.
+//   - WorldCoordToLongitudeLatitude (:341-347), SetClimateIndex and
+//     SetPoliticIndex (:905-946 - PAK WRITES, and this runtime reads
+//     immutable buffers), DefaultClimateSettings (:306-313 - DEFAULT_CLIMATE
+//     is exported and getWorldClimateSettings takes it), the
+//     ResolveRmbBlockName(dfLocation, x, y) overload (:1136-1147 - the port
+//     keeps getRmbBlockName plus the raw-components resolveRmbBlockName),
+//     LoadRegion(string) (:630-636 - loadRegion(getRegionIndex(name))),
+//     DiscardAllRegions, and the MinWorldCoordX/Z, MaxWorldCoordX/Z,
+//     MinWorldTileCoordX/Z and MinMapPixelX/Y constants. No port consumer
+//     reads any of them.
+//
+// Recorded DEPARTURES from the C# (each measured against the real
+// MAPS.BSA on road/maps-record):
+//   - getRegion / getRegionByName / getLocation / getLocationByName return
+//     NULL on failure where C# returns a default-constructed DFRegion or
+//     DFLocation with Loaded = false (MapsFile.cs:723-816). This is the
+//     port-wide convention and every consumer found - scenes/world.js,
+//     systems/quest/place.js, ui/travel/travelMapWindow.js, systems/map/mapDirectory.js,
+//     ui/heldMap.js, world/roadsProducer.js - already guards with
+//     `?.` / `?? null`.
+//   - loadRegion memoizes; C# re-reads the four records every call. See the
+//     comment at the cache check.
+//   - _readCStringSkip clamps its terminator scan at the record end; C#'s is
+//     unbounded and would throw. See the comment there.
+//   - readLocationIdFast drops C#'s WorldDataReplacement early return, which
+//     is unreachable here. See the comment there.
+// GetNameBankOfRegion SHIPPED with the Characters arc (C2): it lives at
+// characters/nameHelper.js getNameBankOfRegion over the REGION_RACES table
+// exported from here, and scenes/townTalk.js calls it on every directory
+// rebuild.
+
+import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
+import { worldDataDoor } from './worldData/worldDataDoor.js';   // RR3b: WorldDataReplacement's three asks (MapsFile.cs:984, :999, :1027)
+import { PakFile } from './pakFile.js';
+import { readBuildingData, BUILDING_DATA_SIZE } from './blocksFile.js';
+// PROF1: the three FALL.EXE / MapsFile tables and the map's bounds the account service reads too, in a module that reads no file (mapsTables.js) -
+// one home, re-exported here so every importer stands where it stood.
+import { REGION_NAMES, REGION_RACES, CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y, BAY_REGION_COUNT, isProvinceRegion } from './mapsTables.js';
+export { REGION_NAMES, REGION_RACES, CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y };
+
+// World metrics.
+export const WORLD_MAP_TERRAIN_DIM = 32768;
+export const WORLD_MAP_TILE_DIM = 128;
+export const WORLD_MAP_RMB_DIM = 4096;
+
+
+/**
+ * PatchRegionIndex (MapsFile.cs:550-569), verbatim - the workaround for
+ * saves written before SiteDetails carried a regionIndex.
+ *
+ * An uninitialised index reads as 0, which is Alik'r Desert, so every
+ * journal goto click from a legacy save searched Alik'r. DFU only
+ * re-scans when the index IS 0 and the stored canonical region name
+ * disagrees with REGION_NAMES[0] - a player genuinely in Alik'r has
+ * matching names and is left alone - and a name that is in no row falls
+ * back to 0 rather than to -1.
+ */
+export function patchRegionIndex(regionIndex, canonicalRegionName) {
+  if (regionIndex === 0 && canonicalRegionName !== REGION_NAMES[regionIndex]) {
+    regionIndex = REGION_NAMES.indexOf(canonicalRegionName);
+    if (regionIndex === -1) regionIndex = 0;
+  }
+  return regionIndex;
+}
+
+
+/** Region temple faction IDs from FALL.EXE. */
+export const REGION_TEMPLES = Object.freeze([
+  106, 82, 0, 0, 0, 98, 0, 0, 0, 92,
+  0, 106, 0, 0, 0, 84, 36, 36, 84, 88,
+  82, 88, 98, 92, 0, 0, 82, 0, 0, 0,
+  0, 0, 88, 94, 36, 94, 106, 84, 106, 106,
+  88, 98, 82, 98, 84, 94, 36, 88, 94, 36,
+  98, 84, 106, 88, 106, 88, 92, 84, 98, 88,
+  82, 94,
+  0, 0, 0, 0, 0, 0, 0, 0, 0,   // WW-R: the provinces past the Bay - FALL.EXE names none of their temples
+]);
+
+/** Block file prefixes indexed by blockIndex. */
+export const RMB_BLOCK_PREFIXES = Object.freeze([
+  'TVRN', 'GENR', 'RESI', 'WEAP', 'ARMR', 'ALCH', 'BANK', 'BOOK',
+  'CLOT', 'FURN', 'GEMS', 'LIBR', 'PAWN', 'TEMP', 'TEMP', 'PALA',
+  'FARM', 'DUNG', 'CAST', 'MANR', 'SHRI', 'RUIN', 'SHCK', 'GRVE',
+  'FILL', 'KRAV', 'KDRA', 'KOWL', 'KMOO', 'KCAN', 'KFLA', 'KHOR',
+  'KROS', 'KWHE', 'KSCA', 'KHAW', 'MAGE', 'THIE', 'DARK', 'FIGH',
+  'CUST', 'WALL', 'MARK', 'SHIP', 'WITC',
+]);
+
+/** Letters forming the second part of an RMB block name. */
+const LETTER2_ARRAY = ['A', 'L', 'M', 'S'];
+
+/** RDB block letters indexed by blockIndex. */
+const RDB_BLOCK_LETTERS = ['N', 'W', 'L', 'S', 'B', 'M'];
+
+export const LOCATION_TYPES = Object.freeze({
+  TownCity: 0, TownHamlet: 1, TownVillage: 2, HomeFarms: 3,
+  DungeonLabyrinth: 4, ReligionTemple: 5, Tavern: 6, DungeonKeep: 7,
+  HomeWealthy: 8, ReligionCult: 9, DungeonRuin: 10, HomePoor: 11,
+  Graveyard: 12, Coven: 13, HomeYourShips: 14, None: 0xffff,
+});
+
+/* PlayerGPS.IsPlayerInTown's seven-type set lived here briefly - two
+ * lanes ported it in the same week - and now lives in
+ * systems/nearbyObjects.js beside the port's other PlayerGPS members,
+ * as `isPlayerInTown(locationType, { mustBeInLocationRect,
+ * mustBeOutside, inLocationRect, inside })`, which models BOTH of the
+ * C#'s optional flags rather than the type list alone. That is the
+ * fuller port and the better home; this file reads MAPS.BSA. */
+
+export const DUNGEON_TYPES = Object.freeze({
+  Crypt: 0, OrcStronghold: 1, HumanStronghold: 2, Prison: 3,
+  DesecratedTemple: 4, Mine: 5, NaturalCave: 6, Coven: 7,
+  VampireHaunt: 8, Laboratory: 9, HarpyNest: 10, RuinedCastle: 11,
+  SpiderNest: 12, GiantStronghold: 13, DragonsDen: 14,
+  BarbarianStronghold: 15, VolcanicCaves: 16, ScorpionNest: 17,
+  Cemetery: 18, NoDungeon: 255,
+});
+
+
+export const CLIMATE_BASE_TYPES = Object.freeze({
+  None: -1, Desert: 0, Mountain: 100, Temperate: 300, Swamp: 400,
+});
+
+// ClimateTextureSet nature archives.
+/** The climates' nature sets - their summer archives (DECOR-OUTDOOR: a yard's trees and plants are its climate's). */
+export const CLIMATE_NATURE = Object.freeze({
+  RainForest: 500, SubTropical: 501, Swamp: 502, Desert: 503,
+  TemperateWoodland: 504, WoodlandHills: 506, HauntedWoodlands: 508,
+  Mountains: 510,
+});
+
+// FactionFile.FactionRaces values used by climate settings.
+export const FACTION_RACES = Object.freeze({
+  None: -1, Nord: 0, Khajiit: 1, Redguard: 2, Breton: 3,
+});
+
+export const DEFAULT_CLIMATE = 231;
+
+// --- Static coordinate helpers ---
+
+/** Longitude/latitude to map pixel. The world is 1000x500 map pixels. */
+export function longitudeLatitudeToMapPixel(longitude, latitude) {
+  return { x: Math.trunc(longitude / 128), y: 499 - Math.trunc(latitude / 128) };
+}
+
+/** Map pixel to longitude/latitude. */
+export function mapPixelToLongitudeLatitude(mapPixelX, mapPixelY) {
+  return { x: mapPixelX * 128, y: (499 - mapPixelY) * 128 };
+}
+
+/** ID of map pixel; maps to location and quest IDs (mapId & 0xfffff). */
+export function getMapPixelID(mapPixelX, mapPixelY) {
+  return mapPixelY * 1000 + mapPixelX;   // BAY-OWN: MapsFile's own pixel id (DFU's GetMapPixelID)
+}
+
+export function getPixelFromPixelID(pixelID) {
+  const x = pixelID % 1000;
+  return { x, y: (pixelID - x) / 1000 };
+}
+
+/** Map pixel to world coordinate in native Daggerfall units. */
+export function mapPixelToWorldCoord(mapPixelX, mapPixelY) {
+  return { x: mapPixelX * 32768, y: (499 - mapPixelY) * 32768 };
+}
+
+/** World coordinate to the map pixel it stands in. WW-C2 (bible/03-World/World-Wide.md WW-C): FLOORED - DFU's truncation to the bit on the Bay, where every coordinate is non-negative and the two agree; past its west and south edges (a negative x or z) truncation named the NEXT pixel toward the Bay, and Cyrodiil's halls stood on a pixel the player standing on them never read. */
+export function worldCoordToMapPixel(worldX, worldZ) {
+  return { x: Math.floor(worldX / 32768), y: 499 - Math.floor(worldZ / 32768) };
+}
+
+/**
+ * Settings for the specified map climate (valid CLIMATE.PAK range 223-232).
+ * Verbatim GetWorldClimateSettings.
+ */
+export function getWorldClimateSettings(worldClimate) {
+  const s = { worldClimate };
+  switch (worldClimate) {
+    case CLIMATES.Ocean:
+      s.climateType = CLIMATE_BASE_TYPES.Swamp;
+      s.groundArchive = 402;
+      s.natureArchive = CLIMATE_NATURE.TemperateWoodland;
+      s.skyBase = 24;
+      s.people = FACTION_RACES.Breton;
+      break;
+    case CLIMATES.Desert:
+    case CLIMATES.Desert2:
+      s.climateType = CLIMATE_BASE_TYPES.Desert;
+      s.groundArchive = 2;
+      s.natureArchive = CLIMATE_NATURE.Desert;
+      s.skyBase = 8;
+      s.people = FACTION_RACES.Redguard;
+      break;
+    case CLIMATES.Mountain:
+      s.climateType = CLIMATE_BASE_TYPES.Mountain;
+      s.groundArchive = 102;
+      s.natureArchive = CLIMATE_NATURE.Mountains;
+      s.skyBase = 0;
+      s.people = FACTION_RACES.Nord;
+      break;
+    case CLIMATES.Rainforest:
+      s.climateType = CLIMATE_BASE_TYPES.Swamp;
+      s.groundArchive = 402;
+      s.natureArchive = CLIMATE_NATURE.RainForest;
+      s.skyBase = 24;
+      s.people = FACTION_RACES.Redguard;
+      break;
+    case CLIMATES.Swamp:
+      s.climateType = CLIMATE_BASE_TYPES.Swamp;
+      s.groundArchive = 402;
+      s.natureArchive = CLIMATE_NATURE.Swamp;
+      s.skyBase = 24;
+      s.people = FACTION_RACES.Breton;
+      break;
+    case CLIMATES.Subtropical:
+      s.climateType = CLIMATE_BASE_TYPES.Desert;
+      s.groundArchive = 2;
+      s.natureArchive = CLIMATE_NATURE.SubTropical;
+      s.skyBase = 24;
+      s.people = FACTION_RACES.Breton;
+      break;
+    case CLIMATES.MountainWoods:
+      s.climateType = CLIMATE_BASE_TYPES.Temperate;
+      s.groundArchive = 102;
+      s.natureArchive = CLIMATE_NATURE.WoodlandHills;
+      s.skyBase = 16;
+      s.people = FACTION_RACES.Breton;
+      break;
+    case CLIMATES.Woodlands:
+      s.climateType = CLIMATE_BASE_TYPES.Temperate;
+      s.groundArchive = 302;
+      s.natureArchive = CLIMATE_NATURE.TemperateWoodland;
+      s.skyBase = 16;
+      s.people = FACTION_RACES.Breton;
+      break;
+    case CLIMATES.HauntedWoodlands:
+      s.climateType = CLIMATE_BASE_TYPES.Temperate;
+      s.groundArchive = 302;
+      s.natureArchive = CLIMATE_NATURE.HauntedWoodlands;
+      s.skyBase = 16;
+      s.people = FACTION_RACES.Breton;
+      break;
+    default:
+      s.climateType = CLIMATE_BASE_TYPES.Temperate;
+      s.groundArchive = 302;
+      s.natureArchive = CLIMATE_NATURE.TemperateWoodland;
+      s.skyBase = 16;
+      s.people = FACTION_RACES.Breton;
+      break;
+  }
+  s.natureSet = s.natureArchive;
+  return s;
+}
+
+export class MapsFile {
+  constructor() {
+    this._bsa = null;
+    this._regions = null;
+    this.autoDiscard = true;
+    this._lastRegion = -1;
+    this.climatePak = new PakFile();
+    this.politicPak = new PakFile();
+    this._isReady = false;
+  }
+
+  static get filename() {
+    return 'MAPS.BSA';
+  }
+
+  /** Number of regions (four BSA records per region). */
+  get regionCount() {
+    return this._bsa ? Math.trunc(this._bsa.count / 4) : 0;
+  }
+
+  get ready() {
+    return this._isReady;
+  }
+
+  /**
+   * Load MAPS.BSA plus CLIMATE.PAK and POLITIC.PAK contents.
+   * @param {Uint8Array} mapsBytes
+   * @param {Uint8Array} climateBytes
+   * @param {Uint8Array} politicBytes
+   * @returns {boolean} true if successful.
+   */
+  load(mapsBytes, climateBytes, politicBytes) {
+    this._isReady = false;
+    this.climatePak.load(climateBytes);
+    this.politicPak.load(politicBytes);
+
+    this._bsa = new BsaFile(mapsBytes);
+    if (this._bsa.directoryType !== DIRECTORY_TYPES.NameRecord) return false;
+    this._regions = new Array(this.regionCount).fill(null);
+    this._isReady = true;
+    return true;
+  }
+
+  /** Name of specified region ('' if out of range) - WW-R: a province's past the Bay too (formats/mapsTables.js
+   *  PROVINCE_REGION_NAMES), which holds no MAPS.BSA record. */
+  getRegionName(region) {
+    if (isProvinceRegion(region)) return REGION_NAMES[region];
+    if (region < 0 || region >= this.regionCount) return '';   // BAY-OWN: MAPS.BSA's own regions, a province's answered above
+    return REGION_NAMES[region];
+  }
+
+  /** Index of region with specified name, or -1 - WW-R: a province's too. */
+  getRegionIndex(name) {
+    for (let i = 0; i < this.regionCount; i++) {   // BAY-OWN: MAPS.BSA's own regions
+      if (REGION_NAMES[i] === name) return i;
+    }
+    for (let i = BAY_REGION_COUNT; i < REGION_NAMES.length; i++) if (REGION_NAMES[i] === name) return i;
+    return -1;
+  }
+
+  /** Load a region into memory and decompose it for use. */
+  loadRegion(region) {
+    if (region < 0 || region >= this.regionCount) return false;   // BAY-OWN: MAPS.BSA's own regions
+    // DEPARTURE (measured): C# LoadRegion has NO cache check - every call
+    // discards lastRegion and re-reads the four BSA records, rebuilding
+    // DFRegion (MapsFile.cs:653-680). Memoized here. The decoded region is
+    // identical either way, and autoDiscard's "at most one region resident"
+    // invariant survives, because the only call that skips the discard is a
+    // repeat of the region that is already the resident one.
+    if (this._regions[region] !== null) return true;
+
+    if (this.autoDiscard && this._lastRegion !== -1) this.discardRegion(this._lastRegion);
+
+    // Four consecutive records per region. REGION-VIEWS: read where MAPS.BSA holds them - the readers below only ever
+    // read them, and with one region resident (autoDiscard) every walk over the regions copied all four again - 357 KB
+    // a region on the mean, 2.3 MB the Wrothgarian Mountains' and 2.1 MB Daggerfall's: 364 regions read by a boot's 40th frame.
+    const record = region * 4;
+    const rec = {
+      name: REGION_NAMES[region],
+      mapPItem: this._bsa.getRecordView(record),
+      mapDItem: this._bsa.getRecordView(record + 1),
+      mapTable: this._bsa.getRecordView(record + 2),
+      mapNames: this._bsa.getRecordView(record + 3),
+      dfRegion: null,
+    };
+    if (
+      rec.mapNames.length === 0 || rec.mapTable.length === 0 ||
+      rec.mapPItem.length === 0 || rec.mapDItem.length === 0
+    ) {
+      return false;
+    }
+    this._regions[region] = rec;
+
+    if (!this._readRegion(region)) {
+      this.discardRegion(region);
+      return false;
+    }
+
+    // Add any additional replacement location data to the region, assigning locationIndex (MapsFile.cs:984 - RR3b: the world-data door)
+    worldDataDoor()?.getDFRegionAdditionalLocationData(region, rec.dfRegion);
+
+    this._lastRegion = region;
+    return true;
+  }
+
+  /** Discard a region from memory. */
+  discardRegion(region) {
+    if (region < 0 || region >= this.regionCount) return;   // BAY-OWN: MAPS.BSA's own regions
+    this._regions[region] = null;
+  }
+
+  /** DFRegion by index (null on failure). */
+  getRegion(region) {
+    if (!this.loadRegion(region)) return null;
+    return this._regions[region].dfRegion;
+  }
+
+  /** HUB1: how many locations the region's own MAPNAMES holds - a world-data mod's additions are appended past it
+   *  (formats/worldData/worldDataReplacement.js), so a row below this count is the game's own. 0 for an empty region. */
+  baseLocationCount(region) {
+    if (!this.loadRegion(region)) return 0;
+    return this._readLocationCount(region);
+  }
+
+  /** DFRegion by name (null on failure). */
+  getRegionByName(name) {
+    const region = this.getRegionIndex(name);
+    if (region === -1) return null;
+    return this.getRegion(region);
+  }
+
+  /** DFLocation for region/location indices (null on failure). */
+  getLocation(region, location) {
+    if (!this.loadRegion(region)) return null;
+
+    const dfLocation = this._readLocation(region, location);
+    if (!dfLocation) return null;
+
+    dfLocation.regionIndex = region;
+    dfLocation.locationIndex = location;
+    worldDataDoor()?.editLocation?.(dfLocation, this);   // ARENA1: the port's own edits (world/arena/arenaCity.js - Daggerfall's cell 4,3), on every layout's read
+    return dfLocation;
+  }
+
+  /** DFLocation by region and location names (null on failure). */
+  getLocationByName(regionName, locationName) {
+    const region = this.getRegionIndex(regionName);
+    if (!this.loadRegion(region)) return null;
+    const dfRegion = this._regions[region].dfRegion;
+    if (!dfRegion.mapNameLookup.has(locationName)) return null;
+    return this.getLocation(region, dfRegion.mapNameLookup.get(locationName));
+  }
+
+  /** Block name for exterior block at x,y. */
+  getRmbBlockName(dfLocation, x, y) {
+    // WD3: the town whose blocks are read next - a town a save keeps in another layout is read in it (systems/layoutPins.js)
+    if (Number.isInteger(dfLocation.regionIndex) && Number.isInteger(dfLocation.locationIndex)) worldDataDoor()?.noteReadingLocation?.(dfLocation.regionIndex, dfLocation.locationIndex);
+    const index = y * dfLocation.exterior.exteriorData.width + x;
+    return dfLocation.exterior.exteriorData.blockNames[index];
+  }
+
+  /**
+   * Resolve block name from raw components. The (byte)(2*blockCharacter)>>6
+   * truncation is verbatim.
+   */
+  resolveRmbBlockName(dfLocation, blockIndex, blockNumber, blockCharacter) {
+    const prefix = RMB_BLOCK_PREFIXES[blockIndex];
+
+    // Letter 1.
+    let letter1;
+    if ((blockCharacter & 0x10) !== 0) {
+      letter1 = String.fromCharCode(dfLocation.exterior.exteriorData.letter1ForRMBName);
+    } else {
+      letter1 = 'A';
+    }
+
+    // Letter 2.
+    const letter2 = LETTER2_ARRAY[((2 * blockCharacter) & 0xff) >> 6];
+
+    // Block number.
+    let numbers;
+    if (blockIndex === 13 || blockIndex === 14) {
+      // Temple numbers.
+      numbers = String.fromCharCode((blockCharacter & 0xf) + 65) + String(blockNumber);
+    } else {
+      // Numbers are uniform in non-temple blocks.
+      numbers = String(blockNumber).padStart(2, '0');
+    }
+
+    return prefix + letter1 + letter2 + numbers + '.RMB';
+  }
+
+  /** Climate index from CLIMATE.PAK (+1 X to line up with height map). */
+  getClimateIndex(mapPixelX, mapPixelY) {
+    return this.climatePak.getValue(mapPixelX + 1, mapPixelY);
+  }
+
+  /** Politic index from POLITIC.PAK (+1 X to line up with height map). */
+  getPoliticIndex(mapPixelX, mapPixelY) {
+    return this.politicPak.getValue(mapPixelX + 1, mapPixelY);
+  }
+
+  /** PlayerGPS.CurrentRegionIndex (PlayerGPS.cs:165-186) over this
+   *  pixel's politic index. AUDIT 24 (the seven-slice sweep): the
+   *  region the player is IN is a property of the POLITIC map, which
+   *  is defined on every pixel of the world - not of whether that
+   *  pixel happens to carry a location. The port had been reading
+   *  `currentLocation().regionIndex`, which is -1 across the whole
+   *  wilderness, and getNameBankOfRegion(-1) is Breton - so every
+   *  quest humanoid named outdoors came out Breton regardless of
+   *  province. Where a location DOES exist the two agree
+   *  (politic === regionIndex + 128, this file's own law).
+   *
+   *  NAMED -At, not getRegionIndex: this class already has a
+   *  getRegionIndex(NAME) (:297), and AUDIT 24 shipped this one under
+   *  that name for a day. A JS class body keeps the LAST definition,
+   *  so the by-name lookup vanished and getRegionByName /
+   *  getLocationByName started handing a region NAME in as a map pixel
+   *  x. The suite stayed green because nothing covered either - the
+   *  collision was found by the audit's own bug hunt, not by a test,
+   *  and the pin below closes that hole too. */
+  getRegionIndexAt(mapPixelX, mapPixelY) {
+    const politicIndex = this.getPoliticIndex(mapPixelX, mapPixelY);
+    // High Rock sea coast is the one politic value below the +128 band
+    let result = politicIndex === 64 ? 31 : politicIndex - 128;
+    if (result === 105) result = 16;   // known bad value -> Wrothgarian Mountains
+    if (result < 0 || result >= REGION_NAMES.length) result = 0;   // clamp out of range - WW-R: a province's region past the Bay is in range (its politic world/tamriel/tamrielGround.js groundPoliticIndex's)
+    return result;
+  }
+
+  /** LocationId with minimal overhead. Region must be loaded.
+   *
+   *  DEPARTURE (measured): C#'s FIRST statement is dropped. ReadLocationIdFast
+   *  (MapsFile.cs:1133-1137) returns
+   *  `regions[region].DFRegion.MapTable[location].LocationId` when it is
+   *  non-zero - that is how a WorldDataReplacement-ADDED location carries an
+   *  id that has no bytes in classic data. WorldDataReplacement is not ported,
+   *  so _readMapTable writes a literal `locationId: 0` into every row (:646)
+   *  and the early return is unreachable rather than missing. The byte walk
+   *  below agreed with the exterior record header's locationId for all 15,251
+   *  locations in MAPS.BSA. */
+  readLocationIdFast(region, location) {
+    const rec = this._regions[region];
+    // MapsFile.cs:1027-1028 - a location the world-data door added carries its id on the map table (RR3b), so the BSA is not peeked
+    const entry = rec.dfRegion?.mapTable?.[location];
+    if (entry?.locationId) return entry.locationId;
+    const v = new DataView(rec.mapPItem.buffer, rec.mapPItem.byteOffset, rec.mapPItem.byteLength);
+    const locationCount = this._readLocationCount(region);
+    let pos = v.getUint32(location * 4, true) + locationCount * 4;
+    const doorCount = v.getUint32(pos, true);
+    pos += 4 + doorCount * 6;
+    pos += 33; // Skip to LocationId.
+    return v.getUint16(pos, true);
+  }
+
+  // --- Readers ---
+
+  _readRegion(region) {
+    try {
+      const rec = this._regions[region];
+      rec.dfRegion = {
+        name: REGION_NAMES[region],
+        locationCount: 0,
+        mapNames: null,
+        mapTable: null,
+        mapNameLookup: new Map(),
+        mapIdLookup: new Map(),
+      };
+      this._readMapNames(region);
+      this._readMapTable(region);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
+  _readCStringSkip(bytes, r, stride) {
+    // Reads to null terminator, then advances exactly stride bytes.
+    //
+    // DEPARTURE (measured): DFU's ReadCStringSkip -> ReadCString(reader, 0)
+    // (FileProxy.cs:380-408) finds the terminator with `while
+    // (reader.ReadByte() != 0)` and NO upper bound, so a run that reaches the
+    // end of the record buffer throws EndOfStreamException; inside
+    // ReadMapNames that propagates to ReadRegion's catch and LoadRegion
+    // returns false for the WHOLE region. The `end < bytes.byteLength` clamp
+    // below returns what it read instead. Equivalent on classic MAPS.BSA: of
+    // the 15,251 name slots in the 45 populated regions exactly TWO run past
+    // their 32-byte stride, and neither reaches its record end (Bhoriane
+    // 1956..2009 of 6084, Kambria 8644..8701 of 9924), so the clamp never
+    // fires - it is a refusal to crash on data classic does not contain.
+    let end = r.pos;
+    while (end < bytes.byteLength && bytes[end] !== 0) end++;
+    let s = '';
+    for (let i = r.pos; i < end; i++) s += String.fromCharCode(bytes[i]);
+    r.pos += stride;
+    return s;
+  }
+
+  _readMapNames(region) {
+    const rec = this._regions[region];
+    const bytes = rec.mapNames;
+    const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const dfRegion = rec.dfRegion;
+
+    dfRegion.locationCount = v.getUint32(0, true);
+    dfRegion.mapNames = new Array(dfRegion.locationCount);
+
+    const r = { pos: 4 };
+    for (let i = 0; i < dfRegion.locationCount; i++) {
+      let mapName = this._readCStringSkip(bytes, r, 32);
+      // Two locations fill all 32 bytes with no terminator ("The Unfortunate
+      // Porcupine Hostel" in Bhoriane, "The Feather and Barbarian Tavern" in
+      // Kambria). The uncapped scan stays INSIDE this MAPNAMES record and
+      // swallows the NEXT NAME SLOT - "The Unfortunate Porcupine HostelThe
+      // Yeomsley Cemetery", "The Feather and Barbarian TavernGentle Martyr of
+      // Zenithar" - so the cap protects the name, not the record. The next
+      // name is read correctly either way: the reader advances by the 32-byte
+      // stride, never by what the scan consumed.
+      if (mapName.length > 32) mapName = mapName.slice(0, 32);
+      dfRegion.mapNames[i] = mapName;
+      if (!dfRegion.mapNameLookup.has(mapName)) dfRegion.mapNameLookup.set(mapName, i);
+    }
+  }
+
+  _readMapTable(region) {
+    const rec = this._regions[region];
+    const bytes = rec.mapTable;
+    const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const dfRegion = rec.dfRegion;
+
+    dfRegion.mapTable = new Array(dfRegion.locationCount);
+    let pos = 0;
+    for (let i = 0; i < dfRegion.locationCount; i++) {
+      const mapId = v.getInt32(pos, true);
+      const bitfield = v.getUint32(pos + 4, true);
+      const entry = {
+        mapId,
+        longitude: (bitfield & 0x1ffffff) >>> 8,
+        // uint wraparound: (4 * bitfield) >> 27 in C# uint arithmetic.
+        locationType: (bitfield << 2) >>> 27,
+        discovered: ((bitfield >>> 24) & 0x40) !== 0,
+        latitude: (v.getInt32(pos + 8, true) & 0xffffff) >>> 8,
+        dungeonType: bytes[pos + 12],
+        key: v.getUint32(pos + 13, true),
+        locationId: 0,
+      };
+      pos += 17;
+      dfRegion.mapTable[i] = entry;
+      if (!dfRegion.mapIdLookup.has(entry.mapId)) dfRegion.mapIdLookup.set(entry.mapId, i);
+    }
+  }
+
+  _readLocationCount(region) {
+    const bytes = this._regions[region].mapNames;
+    return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0, true);
+  }
+
+  /**
+   * WD3: the location as MAPS.BSA holds it - past the world-data door (no replacement served), with its indices set
+   * as getLocation sets them. What a mod's `location-<r>-<i>.json` edit is taken against (formats/worldData/worldDataPack.js).
+   * @returns {object|null}
+   */
+  readClassicLocation(region, location) {
+    if (!this.loadRegion(region)) return null;
+    const dfLocation = this._readClassicLocation(region, location);
+    if (!dfLocation) return null;
+    dfLocation.regionIndex = region;
+    dfLocation.locationIndex = location;
+    return dfLocation;
+  }
+
+  /**
+   * AUDIT LANDFORMS III B1: whether the world-data door serves this location in place of MAPS.BSA's own row (a town
+   * pack's) - the answer the door cached when getLocation asked, so a caller that needs every client's same row
+   * (world/landforms.js's sites) re-reads the classic one only where it differs.
+   * @returns {boolean}
+   */
+  locationReplaced(region, location) {
+    return !!worldDataDoor()?.getDFLocationReplacementData(region, location, this);
+  }
+
+  _readLocation(region, location) {
+    // Check for replacement location data and use it if found (MapsFile.cs:998-1000 - RR3b: the world-data door);
+    // WD3: the reader is handed over, so a mod's edit can be laid on this location as the BSA holds it
+    const replacement = worldDataDoor()?.getDFLocationReplacementData(region, location, this);
+    if (replacement) return replacement;
+    return this._readClassicLocation(region, location);
+  }
+
+  _readClassicLocation(region, location) {
+    try {
+      const rec = this._regions[region];
+      const dfLocation = {
+        loaded: false,
+        // Non-localized region name key, exactly as found in MAPS.BSA.
+        regionName: REGION_NAMES[region],
+        name: '',
+        regionIndex: 0,
+        locationIndex: 0,
+        hasDungeon: false,
+        politic: 0,
+        climate: null,
+        mapTableData: null,
+        exterior: {
+          recordElement: null,
+          buildingCount: 0,
+          unknown1: null,
+          buildings: null,
+          exteriorData: null,
+        },
+        dungeon: { recordElement: null, header: null, blocks: null },
+      };
+
+      this._readMapPItem(region, location, dfLocation);
+      this._readMapDItem(region, dfLocation);
+
+      dfLocation.mapTableData = rec.dfRegion.mapTable[location];
+      this._readClimatePoliticData(dfLocation);
+
+      dfLocation.loaded = true;
+      return dfLocation;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** Politic should always equal region index + 128. */
+  _readClimatePoliticData(dfLocation) {
+    const pos = longitudeLatitudeToMapPixel(
+      dfLocation.mapTableData.longitude,
+      dfLocation.mapTableData.latitude
+    );
+    dfLocation.politic = this.politicPak.getValue(pos.x, pos.y);
+    const worldClimate = this.climatePak.getValue(pos.x, pos.y);
+    dfLocation.climate = getWorldClimateSettings(worldClimate);
+  }
+
+  _readMapPItem(region, location, dfLocation) {
+    const rec = this._regions[region];
+    const bytes = rec.mapPItem;
+    const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const locationCount = this._readLocationCount(region);
+
+    // Position at location record: offset table entry + end of offset table.
+    const r = { pos: v.getUint32(location * 4, true) + locationCount * 4 };
+
+    dfLocation.name = rec.dfRegion.mapNames[location];
+
+    dfLocation.exterior.recordElement = this._readLocationRecordElement(bytes, v, r);
+
+    // BuildingListHeader.
+    dfLocation.exterior.buildingCount = v.getUint16(r.pos, true);
+    dfLocation.exterior.unknown1 = bytes.slice(r.pos + 2, r.pos + 7);
+    r.pos += 7;
+
+    // BuildingData, the same shape as the RMB FLD entries.
+    const buildings = new Array(dfLocation.exterior.buildingCount);
+    for (let b = 0; b < buildings.length; b++) {
+      buildings[b] = readBuildingData(v, r.pos);
+      r.pos += BUILDING_DATA_SIZE;
+    }
+    dfLocation.exterior.buildings = buildings;
+
+    // ExteriorData.
+    const ext = {};
+    ext.anotherName = this._readCStringSkip(bytes, r, 32);
+    ext.mapId = v.getInt32(r.pos, true);
+    ext.locationId = v.getUint32(r.pos + 4, true);
+    ext.width = bytes[r.pos + 8];
+    ext.height = bytes[r.pos + 9];
+    ext.unknown2 = bytes.slice(r.pos + 10, r.pos + 14);
+    ext.letter1ForRMBName = bytes[r.pos + 14];
+    ext.portTownAndUnknown = bytes[r.pos + 15];
+    ext.unknown3 = bytes[r.pos + 16];
+    r.pos += 17;
+    ext.blockIndex = bytes.slice(r.pos, r.pos + 64);
+    ext.blockNumber = bytes.slice(r.pos + 64, r.pos + 128);
+    ext.blockCharacter = bytes.slice(r.pos + 128, r.pos + 192);
+    r.pos += 192;
+    ext.unknown4 = bytes.slice(r.pos, r.pos + 34);
+    r.pos += 34 + 8 + 1; // unknown4 + nullValue1 (u64) + nullValue2 (byte)
+    ext.unknown5 = new Array(22);
+    for (let i = 0; i < 22; i++) {
+      ext.unknown5[i] = v.getUint32(r.pos, true);
+      r.pos += 4;
+    }
+    r.pos += 40; // nullValue3
+    ext.unknown6 = v.getUint32(r.pos, true);
+    r.pos += 4;
+    dfLocation.exterior.exteriorData = ext;
+
+    // Resolve block names.
+    const totalBlocks = ext.width * ext.height;
+    ext.blockNames = new Array(totalBlocks);
+    for (let i = 0; i < totalBlocks; i++) {
+      ext.blockNames[i] = this.resolveRmbBlockName(
+        dfLocation,
+        ext.blockIndex[i],
+        ext.blockNumber[i],
+        ext.blockCharacter[i]
+      );
+    }
+  }
+
+  /** LocationRecordElement common to MapPItem and MapDItem. */
+  _readLocationRecordElement(bytes, v, r) {
+    const doorCount = v.getUint32(r.pos, true);
+    r.pos += 4;
+    const doors = new Array(doorCount);
+    for (let door = 0; door < doorCount; door++) {
+      doors[door] = {
+        buildingDataIndex: v.getUint16(r.pos, true),
+        nullValue: bytes[r.pos + 2],
+        mask: bytes[r.pos + 3],
+        unknown1: bytes[r.pos + 4],
+        unknown2: bytes[r.pos + 5],
+      };
+      r.pos += 6;
+    }
+
+    const header = {
+      alwaysOne1: v.getUint32(r.pos, true),
+      // nullValue1 u16, nullValue2 byte
+      x: v.getInt32(r.pos + 7, true),
+      // nullValue3 u32
+      y: v.getInt32(r.pos + 15, true),
+      isExterior: v.getUint16(r.pos + 19, true),
+      // nullValue4 u16
+      unknown1: v.getUint32(r.pos + 23, true),
+      unknown2: v.getUint32(r.pos + 27, true),
+      alwaysOne2: v.getUint16(r.pos + 31, true),
+      locationId: v.getUint16(r.pos + 33, true),
+      // nullValue5 u32
+      isInterior: v.getUint16(r.pos + 39, true),
+      exteriorLocationId: v.getUint32(r.pos + 41, true),
+      // nullValue6 26 bytes
+      locationName: '',
+      // unknown3 9 bytes
+    };
+    r.pos += 45 + 26;
+    header.locationName = this._readCStringSkip(bytes, r, 32);
+    r.pos += 9;
+
+    return { doorCount, doors, header };
+  }
+
+  _readMapDItem(region, dfLocation) {
+    const rec = this._regions[region];
+    const bytes = rec.mapDItem;
+    dfLocation.hasDungeon = false;
+    if (bytes.byteLength === 0) return;
+
+    const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+
+    // Find dungeon offset matching this location id.
+    const locationId = dfLocation.exterior.recordElement.header.locationId;
+    const dungeonCount = v.getUint32(0, true);
+    let pos = 4;
+    let found = false;
+    let offset = 0;
+    for (let i = 0; i < dungeonCount; i++) {
+      offset = v.getUint32(pos, true);
+      const exteriorLocationId = v.getUint16(pos + 6, true);
+      pos += 8;
+      if (exteriorLocationId === locationId) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return;
+
+    // Position at dungeon record: end of offset table + offset.
+    const r = { pos: 4 + dungeonCount * 8 + offset };
+
+    dfLocation.dungeon.recordElement = this._readLocationRecordElement(bytes, v, r);
+
+    // DungeonHeader.
+    const header = {
+      // nullValue1 u16
+      unknown1: v.getUint32(r.pos + 2, true),
+      unknown2: v.getUint32(r.pos + 6, true),
+      blockCount: v.getUint16(r.pos + 10, true),
+      unknown3: bytes.slice(r.pos + 12, r.pos + 17),
+    };
+    r.pos += 17;
+    dfLocation.dungeon.header = header;
+
+    // DungeonBlock elements.
+    const blocks = new Array(header.blockCount);
+    for (let i = 0; i < header.blockCount; i++) {
+      const x = v.getInt8(r.pos);
+      const z = v.getInt8(r.pos + 1);
+      const bitfield = v.getUint16(r.pos + 2, true);
+      r.pos += 4;
+      const blockNumber = bitfield & 0x3ff;
+      const isStartingBlock = (bitfield & 0x400) === 0x400;
+      const blockIndex = bitfield >> 11;
+      blocks[i] = {
+        x,
+        z,
+        blockNumberStartIndexBitfield: bitfield,
+        blockNumber,
+        isStartingBlock,
+        blockIndex,
+        blockName: `${RDB_BLOCK_LETTERS[blockIndex]}${String(blockNumber).padStart(7, '0')}.RDB`,
+      };
+    }
+    dfLocation.dungeon.blocks = blocks;
+
+    // Orsinium hack: move a border block overlapping another one.
+    // Reverse engineered from classic.
+    if (dfLocation.dungeon.recordElement.header.locationId === 50015) {
+      dfLocation.dungeon.blocks[13].z = -2;
+    }
+
+    dfLocation.hasDungeon = true;
+  }
+}

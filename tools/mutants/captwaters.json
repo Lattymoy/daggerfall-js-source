@@ -1,0 +1,237 @@
+[
+  {
+    "name": "CW-deep-px",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const DEEP_PX = 12;",
+    "new": "export const DEEP_PX = 10;",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-deep-strict",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';",
+    "new": "  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx > DEEP_PX ? 'deep' : 'open';",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-coast-first",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';",
+    "new": "  false ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-unknown-deep",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';",
+    "new": "  nearPort ? 'coastal' : !(portPx < DEEP_PX) ? 'deep' : 'open';",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-pirate-k",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const DEEP_PIRATE_K = 1.8;",
+    "new": "export const DEEP_PIRATE_K = 1.5;",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-trade-k",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const DEEP_TRADE_K = 0.5;",
+    "new": "export const DEEP_TRADE_K = 0.7;",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-navy-unscaled",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "    w.navy *= DEEP_TRADE_K;\n  } // CAPT-WATERS: the deep waters",
+    "new": "  } // CAPT-WATERS: the deep waters",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-port-precedence",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "  else if (deep) {",
+    "new": "  if (deep) {",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-level",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const DEEP_LEVEL = 3;",
+    "new": "export const DEEP_LEVEL = 2;",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-level-unread",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      let cls = classFor(faction, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ether?.band?.level ?? 0), rng());",
+    "new": "      let cls = classFor(faction, (ctx.level ?? 1) + (ether?.band?.level ?? 0), rng());",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-flag-unsaid",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "        out.spawn = {\n          seed,\n          classId: cls.id,\n          variant,\n          pos,\n          yaw,\n          hunter,\n          ...(deep ? { deep: true } : {}),\n          ...(ether ? { ether: ether.band.id } : {}),\n        }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean",
+    "new": "        out.spawn = { seed, classId: cls.id, variant, pos, yaw, hunter, ...(ether ? { ether: ether.band.id } : {}) }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-bold",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const DEEP_BOLD = 0.5;",
+    "new": "export const DEEP_BOLD = 0.4;",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-tier",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const DEEP_TIER = 2;",
+    "new": "export const DEEP_TIER = 1;",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-temper-share",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < bold ? TEMPERS.bold : TEMPERS.wary;",
+    "new": "  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < BOLD_SHARE ? TEMPERS.bold : TEMPERS.wary;",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-host-temper",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (spec.deep) ship.temper = temperOf(cls, spec.seed, { bold: DEEP_BOLD });   // CAPT-WATERS: the deep waters' pirates bolder\n",
+    "new": "    if (false) ship.temper = temperOf(cls, spec.seed, { bold: DEEP_BOLD });   // CAPT-WATERS: the deep waters' pirates bolder\n",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-host-entry",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "region, area, deep: !!spec.deep, ether,",
+    "new": "region, area, deep: false, ether,",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-8): the entry keeps the area her names were drawn in."
+  },
+  {
+    "name": "CW-host-hold",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "deps.hold?.(key, tier + (entry.deep ? DEEP_TIER : 0) + etherTier(entry))",
+    "new": "deps.hold?.(key, tier + etherTier(entry))",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-host-cask",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "holdTier(classById(e.from)) + (e.deep ? DEEP_TIER : 0)",
+    "new": "holdTier(classById(e.from))",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-host-stow",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "holdTier(classById(f.from)) + (f.deep ? DEEP_TIER : 0)",
+    "new": "holdTier(classById(f.from))",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-host-casks-marked",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "lot, from: s.cls.id, deep: !!entry.deep || !!entry.ether });",
+    "new": "lot, from: s.cls.id, deep: !!entry.ether });",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-host-director",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "deep: w.waters === 'deep', notoriety:",
+    "new": "deep: false, notoriety:",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-host-hud",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      waters: w.waters ?? null,   // CAPT-WATERS: the plate says the deep waters",
+    "new": "      waters: null,   // CAPT-WATERS: the plate says the deep waters",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-plate",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "          model.ether\n            ? etherWatersWords(model.ether)\n            : `${model.notoriety.crown} waters${model.waters === 'deep' ? ', deep' : ''}`,",
+    "new": "          model.ether ? etherWatersWords(model.ether) : `${model.notoriety.crown} waters${''}`,",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-shots-drop",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      deep: !!deep,\n      pos: [...pos],",
+    "new": "      pos: [...pos],",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-world-metric",
+    "file": "src/scenes/world.js",
+    "old": "d = Math.min(d, Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)));",
+    "new": "d = Math.min(d, Math.abs(q.x - p.x) + Math.abs(q.y - p.y));",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  },
+  {
+    "name": "CW-world-waters",
+    "file": "src/scenes/world.js",
+    "old": "waters: ether ? 'ether' : watersOf({ nearPort, portPx: navalPortPx() }),",
+    "new": "waters: ether ? 'ether' : 'open',",
+    "tests": [
+      "test/systems/naval/captwaters.test.js"
+    ]
+  }
+]

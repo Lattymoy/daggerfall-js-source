@@ -1,0 +1,203 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "MaterialSwitching",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 0,
+                    "Name": "Iron",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 1,
+                    "Name": "Steel",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 2,
+                    "Name": "Silver",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 3,
+                    "Name": "Elven",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 4,
+                    "Name": "Dwarven",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 5,
+                    "Name": "Mithril",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 6,
+                    "Name": "Adamantium",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 7,
+                    "Name": "Ebony",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 8,
+                    "Name": "Orcish",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                    "Iron",
+                    "Steel",
+                    "Silver",
+                    "Elven",
+                    "Dwarven",
+                    "Mithril",
+                    "Adamantium",
+                    "Ebony",
+                    "Orcish",
+                    "Daedric"
+                    ],
+                    "Value": 9,
+                    "Name": "Daedric",
+                    "Description": "Whenever this material would drop, change it to the selected material.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+            ],
+            "$version": "v1"
+        },
+    ]
+}

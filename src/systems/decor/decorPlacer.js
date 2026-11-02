@@ -1,0 +1,351 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// DECOR1d (2026-09-25) — WHERE A NEW PIECE WILL STAND.
+//
+// Mac: placing is done from "free cam mode"; decor is "Gold per
+// placement", priced "By size". The placement tool's own state - the
+// turn, the lift, the scale, the grid - and the one piece of arithmetic
+// it exists for: a surface point the free camera's eye meets, turned
+// into the piece record the law takes (net/decorLaw.js) and the room
+// stands (scenes/decor/decorRoom.js).
+//
+// A MODEL is lifted by its own bottom: its origin is not its base (a
+// Daggerfall model's origin sits wherever its maker put it -
+// interiorLayout.js lifts the room's props the same way), so the box
+// the model is measured by, turned and scaled as it will stand, decides
+// how far above the surface its origin goes, and the RECORD says where
+// the origin is - nothing is re-derived at a restore. So a stand-in
+// rebuilt about another origin moves every piece placed by it, and its
+// saved pieces are re-seated with it (FIELD BUGS 2026-10-16b STALL-SHAPE:
+// TEMPLE-STEPS' stalls and boulders, tools/yardReseat.mjs). A FLAT stands on
+// its base, as every billboard does. The owner's own lift is added to
+// either, and the grid (a quarter metre) snaps where it stands across
+// the floor, never its height - a piece on a table stays on the table.
+//
+// The turn is a yaw in whole steps of fifteen degrees (one degree held
+// fine), wrapped to a half-circle each way as the law bounds it; the
+// scale steps by a tenth, within the law's quarter to four times; the
+// price is the law's, by the scaled size - and a piece whose size the
+// scan could not read has no price and is never placed.
+//
+// DECOR2c: A MOUNT (a weapon or a piece of armour of the owner's own) is set
+// ON the surface the eye meets, not above it: its heading and tilt are
+// the surface's (a floor's heading the eye's own, so the picture reads
+// upright from where the owner stands), the turn is its spin on the
+// surface, it hangs a hair off it, the grid snaps it across the surface
+// and the owner's lift moves it up the surface. No surface, no mount.
+//
+// WALL-CLEAR (FIELD BUGS 2026-10-12b, "a lot of stuff just clips through
+// walls, even with grid on and changing size"): A PIECE THE EYE SETS ON A
+// WALL STANDS IN FRONT OF IT. Every other piece stood its origin on the
+// point the eye met - on a wall, half a model's box and half a turning
+// flat's width inside it, the more so the bigger it was scaled. A face
+// that is neither floor nor ceiling (its normal within DECOR_HANG_NY of
+// level) is a wall: the grid snaps along the wall, never into it, and
+// the piece stands out from the face by how far it reaches into it - a
+// model by its box, turned and scaled; a flat, which turns to the eye, by
+// half its scaled width - and a hair more.
+// ═══════════════════════════════════════════════════════════════════
+
+import { trs } from '../../world/mat4.js';
+import { transformedAabb } from '../../render/frustum.js';
+import {
+  decorPieceOf,
+  decorPrice,
+  decorMountFrame,
+  decorIsFigure,
+  DECOR_SCALE_MIN,
+  DECOR_SCALE_MAX,
+  DECOR_MOUNT_LIFT,
+} from '../../net/decorLaw.js'; // DECOR-FIGURE: a person stands at its own size
+import { isNatureArchive } from '../../world/rmbFlats.js'; // YARD-WALLS: a tree or a plant never hangs
+
+export const DECOR_TURN_STEP = 15;
+export const DECOR_TURN_FINE = 1;
+export const DECOR_RAISE_STEP = 0.05;
+export const DECOR_RAISE_FINE = 0.01;
+/** The owner's own lift is bounded: a piece hangs at most this far above where it would stand, or sinks this far. */
+export const DECOR_RAISE_MAX = 3;
+export const DECOR_RAISE_MIN = -1;
+export const DECOR_SCALE_STEP = 1.1;
+export const DECOR_GRID = 0.25;
+/** DECOR-SHELL: a face whose normal (the eye's, facing it) points this far down is hung from, never stood on. */
+export const DECOR_HANG_NY = 0.5;
+/** WALL-CLEAR: how far a piece set on a wall stands clear of it, past its own reach into it (metres). */
+export const DECOR_WALL_GAP = 0.02;
+/** How far an ordinary piece may sit into a wall, metres. Never more than half its own reach. */
+export const DECOR_WALL_CLIP = 0.05;
+/** NUDGE (FIELD BUGS 2026-10-29f, the housing thread's items 12 and 14): a sideways step, a fine one, and how far the
+ *  owner may push a piece from where the eye sets it on each level axis - into a wall or another piece as they choose. */
+export const DECOR_NUDGE_STEP = 0.05;
+export const DECOR_NUDGE_FINE = 0.01;
+export const DECOR_NUDGE_MAX = 1;
+/** NUDGE: one step `dir` ('left', 'right', 'forward', 'back') as the eye at `yaw` sees it, along the level world axis
+ *  nearest that way - so a step keeps a gridded piece on the grid - as [dx, dz]. */
+export function decorNudgeStep(yaw, dir, step = DECOR_NUDGE_STEP) {
+  const y = Number.isFinite(yaw) ? yaw : 0;
+  const side = dir === 'left' || dir === 'right';
+  const sign = dir === 'left' || dir === 'back' ? -1 : 1;
+  const v = side ? [Math.cos(y), -Math.sin(y)] : [Math.sin(y), Math.cos(y)]; // the motor's right, the look's forward
+  return Math.abs(v[0]) >= Math.abs(v[1]) ? [Math.sign(v[0]) * sign * step, 0] : [0, Math.sign(v[1]) * sign * step];
+}
+/** The wall offset: a door, and a piece with no measured reach, stay clear by DECOR_WALL_GAP. Any other may clip. */
+export function decorWallOffset(reach, { door = false } = {}) {
+  if (door || !(reach > 0)) return reach + DECOR_WALL_GAP;
+  return reach - Math.min(DECOR_WALL_CLIP, reach * 0.5);
+}
+
+/** A turn wrapped into (-180, 180]. */
+export function wrapTurn(deg) {
+  const d = ((((deg + 180) % 360) + 360) % 360) - 180;
+  return d === -180 ? 180 : d;
+}
+const round = (v, places) => {
+  const k = 10 ** places;
+  return Math.round(v * k) / k;
+};
+const snapTo = (v, step) => round(Math.round(v / step) * step, 3);
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const DEG = 180 / Math.PI;
+
+/** DECOR-FIGURE: whether a catalogue entry takes a size step - never one of Daggerfall's people (net/decorLaw.js
+ *  decorIsFigure: a flat of a person's archive - the catalogue's Vendors, every one of them (BLOCKS.BSA's people records
+ *  stand in those archives alone - test/world/people.test.js), or a person's flat however it was reached). AUDIT DECOR-FIGURE
+ *  C3: by the archive alone, as the room draws one and the service writes one - the catalogue's kind, which neither of
+ *  them reads, was a second law. The placer's and the bar's buttons' (scenes/decor/decorTool.js) one question. */
+export const decorEntrySized = (entry) => !decorIsFigure(entry);
+/** YARD-WALLS: whether a catalogue entry hangs flat on a yard's wall it is set on - a picture, never one's own item, a
+ *  person (who stands) or a tree or a plant (which grow there, in the yard's season). */
+export const decorHangs = (entry) =>
+  entry?.model == null &&
+  Array.isArray(entry?.flat) &&
+  !entry.item &&
+  !entry.mount &&
+  entry.kind !== 'own' &&
+  !decorIsFigure(entry) &&
+  !isNatureArchive(entry.flat[0]);
+/** HOME-YARD: a catalogue entry as a yard places it - nothing held, no light of its own, no craft; YARD-WALLS: a picture
+ *  hung on a wall where it can be (decorHangs). */
+export const decorYardEntry = (entry) => ({
+  ...entry,
+  storage: false,
+  light: null,
+  station: null,
+  ...(decorHangs(entry) ? { hangs: true } : {}),
+});
+/** YARD-WALLS: the ground a hung picture covers, as offsets [dx, dz] from where it hangs - its quad seen from above (on a
+ *  wall, a line along it). `size` its picture's { w, h } at scale 1, else a square of the measured `radius`'s diagonal. */
+export function decorHungFoot(piece, size, radius = 0, k = 1) {
+  const { right, up } = decorMountFrame(piece.rot);
+  const hw = ((size?.w ?? (radius ?? 0) * Math.SQRT2) * k) / 2,
+    hh = ((size?.h ?? (radius ?? 0) * Math.SQRT2) * k) / 2;
+  const out = [];
+  for (const [a, b] of [
+    [-1, -1],
+    [-1, 1],
+    [1, 1],
+    [1, -1],
+  ]) {
+    const q = [right[0] * a * hw + up[0] * b * hh, right[2] * a * hw + up[2] * b * hh];
+    if (!out.some((o) => Math.hypot(o[0] - q[0], o[1] - q[1]) < 1e-3)) out.push(q);
+  }
+  return out;
+}
+
+/**
+ * THE TOOL for one catalogue `entry`. `radius` its measured radius in metres (null: unmeasured), `box` a model's local
+ * bounds [minX, minY, minZ, maxX, maxY, maxZ] (render/frustum.js localAabb), null for a flat. DECOR1e: `from` a placed
+ * piece being moved - the tool starts at its turn and its scale. DECOR2a: `free` - the player's own item, which costs
+ * nothing whatever its size, and whose piece carries its descriptor (`entry.item`). DECOR2c: an entry that is a `mount`
+ * is set on the surface, the turn its spin there. WALL-CLEAR: `flat` a flat's size { w, h } in metres at scale 1 - how far it
+ * reaches into a wall it is set on.
+ */
+export function createDecorPlacer(entry, { radius = null, box = null, from = null, free = false, flat = null } = {}) {
+  let measured = radius; // the scan's, or what a copy was priced at - filled in once the scan reaches it
+  const mount = !!entry.mount;
+  const hangs = !mount && !!entry.hangs && entry.model == null; // YARD-WALLS: a picture hung flat on a wall it is set on
+  // AUDIT FB1031 Y2: one that hangs keeps its spin on a wall (`spin`, a hung source's) apart from its heading as a
+  // billboard (`yaw`, a standing source's) - a heading of 180 taken as the spin hung it upside down. A turn turns the pose
+  // last given (`hung`).
+  const hungFrom = hangs && !!from?.hung;
+  const s = {
+    yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,
+    spin: hungFrom ? wrapTurn(from.rot?.[2] ?? 0) : 0,
+    hung: hungFrom,
+    raise: 0,
+    scale: from?.scale ?? 1,
+    snap: false,
+    nudge: [0, 0],
+  };
+  // DECOR-FIGURE: one of Daggerfall's people takes no size step - placed or moved, it stands at scale 1, one grown before
+  // brought back to its own size
+  const figure = !decorEntrySized(entry);
+  if (figure) s.scale = 1;
+
+  /** How far above a surface point the piece's origin stands, before the owner's own lift. */
+  function lift() {
+    if (entry.model == null || !box) return 0;
+    const b = transformedAabb(box, trs(0, 0, 0, 0, s.yaw, 0, s.scale, s.scale, s.scale));
+    return -b[1];
+  }
+  /** DECOR-SHELL: how far BELOW a surface point a model's origin hangs - its top at the point, turned and scaled. */
+  function drop() {
+    if (entry.model == null || !box) return 0;
+    const b = transformedAabb(box, trs(0, 0, 0, 0, s.yaw, 0, s.scale, s.scale, s.scale));
+    return -b[4];
+  }
+
+  /** WALL-CLEAR: how far the piece, turned and scaled, reaches from its origin into a wall whose level normal is `n`. */
+  function reach(n) {
+    if (entry.model == null) return flat && flat.w > 0 ? (flat.w * s.scale) / 2 : 0;
+    if (!box) return 0;
+    const b = transformedAabb(box, trs(0, 0, 0, 0, s.yaw, 0, s.scale, s.scale, s.scale));
+    return Math.max(0, Math.max(-n[0] * b[0], -n[0] * b[3]) + Math.max(-n[1] * b[2], -n[1] * b[5]));
+  }
+
+  /** DECOR2c: THE MOUNT for a surface point and its `normal` (the eye's hit's, facing the eye), or null with no surface.
+   *  YARD-WALLS: `hung` - a catalogue picture, which says so in its place (net/decorLaw.js decorIsMount). */
+  function mountAt(hit, origin, id, normal, camYaw, paid, hung = false) {
+    const len = normal ? Math.hypot(normal[0], normal[1], normal[2]) : 0;
+    if (!(len > 0)) return null;
+    const n = [normal[0] / len, normal[1] / len, normal[2] / len];
+    const level = Math.hypot(n[0], n[2]) > 1e-3;
+    const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;
+    const rot = [
+      wrapTurn(round(heading * DEG, 1)),
+      round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1),
+      hung ? s.spin : s.yaw,
+    ];
+    const { right, up } = decorMountFrame([rot[0], rot[1], 0]); // the surface's own axes, before the spin
+    let p = [hit[0] - origin[0], hit[1] - origin[1], hit[2] - origin[2]];
+    if (s.snap) {
+      // across the surface, never off it
+      const a = snapTo(dot(p, right), DECOR_GRID);
+      const b = snapTo(dot(p, up), DECOR_GRID);
+      const c = dot(p, n);
+      p = [0, 1, 2].map((i) => right[i] * a + up[i] * b + n[i] * c);
+    }
+    const push = [s.nudge[0], 0, s.nudge[1]]; // NUDGE: along the surface, never off it
+    const off = dot(push, n);
+    p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);
+    return decorPieceOf({
+      id,
+      model: null,
+      flat: [entry.flat[0], entry.flat[1]],
+      item: entry.item ?? null,
+      pos: p,
+      rot,
+      scale: s.scale,
+      light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null,
+      storage: false,
+      paid,
+      ...(hung ? { hung } : {}),
+    });
+  }
+
+  return {
+    entry,
+    state: () => ({ ...s, nudge: [...s.nudge] }),
+    /** Turn by `deg` (a step, or a fine one). */
+    turn(deg) {
+      if (s.hung) s.spin = wrapTurn(round(s.spin + deg, 1));
+      else s.yaw = wrapTurn(round(s.yaw + deg, 1));
+    },
+    /** Lift or lower by `d` metres, within the tool's own bound. */
+    raise(d) {
+      s.raise = round(Math.min(DECOR_RAISE_MAX, Math.max(DECOR_RAISE_MIN, s.raise + d)), 3);
+    },
+    /** NUDGE: push it [dx, dz] metres along the level, each axis within DECOR_NUDGE_MAX. */
+    nudge(dx, dz) {
+      const at = (v, d) =>
+        round(Math.min(DECOR_NUDGE_MAX, Math.max(-DECOR_NUDGE_MAX, v + (Number.isFinite(d) ? d : 0))), 3);
+      s.nudge = [at(s.nudge[0], dx), at(s.nudge[1], dz)];
+    },
+    /** A size step up or down, within the law's (DECOR-FIGURE: none for a figure). */
+    rescale(up) {
+      if (figure) return;
+      const next = up ? s.scale * DECOR_SCALE_STEP : s.scale / DECOR_SCALE_STEP;
+      s.scale = round(Math.min(DECOR_SCALE_MAX, Math.max(DECOR_SCALE_MIN, next)), 3);
+    },
+    /** The grid, on or off; answers which. */
+    toggleSnap() {
+      s.snap = !s.snap;
+      return s.snap;
+    },
+    /** The price at this scale (the law's), or null for a piece the scan could not measure; nothing for one's own. */
+    price() {
+      if (free) return 0;
+      return measured != null && measured > 0 ? decorPrice(measured, s.scale) : null;
+    },
+    /** The scan's measure, once a placement started before the scan had reached this piece. */
+    setRadius(r) {
+      if (r > 0) measured = r;
+    },
+    /**
+     * THE PIECE for a surface point `hit` (the free camera's eye meeting the room, this visit's frame), measured from
+     * the building's `origin` - projected by the law, or null (unpriced, or outside what a piece may be). DECOR2c: a
+     * mount takes the surface's `normal` there, and the eye's `camYaw` for a floor's heading.
+     * @param {number[]} hit
+     * @param {number[]} origin
+     * @param {string} id
+     * @param {number[]|null} [normal]
+     * @param {number} [camYaw]
+     */
+    pieceAt(hit, origin, id, normal = null, camYaw = 0) {
+      const paid = this.price();
+      if (paid == null || !hit || !origin) return null;
+      if (mount) return mountAt(hit, origin, id, normal, camYaw, paid);
+      // DECOR-SHELL (a player: "its model disappearing"): A FACE THAT LOOKS DOWN - a ceiling, a shelf's underside - is
+      // HUNG FROM, never stood on. A model stood on the ceiling the eye met from below stood above it, out of the room,
+      // where only a camera flown through the ceiling could see it; now its top touches the face, as a lamp's chain
+      // would. A flat has no top the placer knows, and does not hang: it cannot stand there.
+      const nl = normal ? Math.hypot(normal[0], normal[1], normal[2]) : 0;
+      const hang = nl > 0 && normal[1] / nl < -DECOR_HANG_NY;
+      if (hang && entry.model == null) return null;
+      // AUDIT DECOR-SHELL 4: the owner's lift is world-up and kept from surface to surface (to three metres), so a hung
+      // piece raised went into the face it hangs from, or wholly through it and out of the room: it is only lowered.
+      // AUDIT2 DECOR-SHELL 2: and the lift it carried in is let go as it hangs - kept, the first Lower presses only wore
+      // it down (twenty of them from a metre, sixty from the most) while the piece stayed at the face
+      if (hang && s.raise > 0) s.raise = 0;
+      const up = hang ? drop() + s.raise : lift() + s.raise;
+      let x = hit[0] - origin[0];
+      let z = hit[2] - origin[2];
+      // WALL-CLEAR: a face within DECOR_HANG_NY of level is a wall - the piece stands clear of it, snapped along it
+      const hl = nl > 0 ? Math.hypot(normal[0], normal[2]) : 0;
+      const wall = !hang && hl > 0 && Math.abs(normal[1] / nl) < DECOR_HANG_NY;
+      s.hung = wall && hangs;
+      if (s.hung) return mountAt(hit, origin, id, normal, camYaw, paid, true); // YARD-WALLS: flat on the wall, not stood off it
+      if (wall) {
+        const n = [normal[0] / hl, normal[2] / hl];
+        if (s.snap) {
+          // along the wall, never into it
+          const a = snapTo(x * -n[1] + z * n[0], DECOR_GRID);
+          const c = x * n[0] + z * n[1];
+          x = -n[1] * a + n[0] * c;
+          z = n[0] * a + n[1] * c;
+        }
+        const out = decorWallOffset(reach(n), { door: entry.kind === 'door' });
+        x = round(x + n[0] * out, 3);
+        z = round(z + n[1] * out, 3);
+      } else if (s.snap) {
+        x = snapTo(x, DECOR_GRID);
+        z = snapTo(z, DECOR_GRID);
+      }
+      x = round(x + s.nudge[0], 3); // NUDGE: the owner's push, after the wall's clearance - so it may clip
+      z = round(z + s.nudge[1], 3);
+      return decorPieceOf({
+        id,
+        model: entry.model ?? null,
+        flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null,
+        item: entry.item ?? null,
+        pos: [x, hit[1] - origin[1] + up, z],
+        rot: [s.yaw, 0, 0],
+        scale: s.scale,
+        light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null,
+        storage: !!entry.storage,
+        paid,
+        ...(entry.station ? { station: entry.station } : {}), // AUDIT HOME-STATIONS S1: a moved station keeps its craft
+      });
+    },
+  };
+}

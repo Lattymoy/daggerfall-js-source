@@ -1,0 +1,29 @@
+[
+  {
+    "name": "MEND-STARVE-the-self-wearing-piece-first-again",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (!best || tier < bestTier || (tier === bestTier && mendOrder(it, best) < 0)) {",
+    "new": "    if (!best || mendOrder(it, best) < 0) {",
+    "tests": [
+      "test/systems/fb1014_mendstarve.test.js"
+    ]
+  },
+  {
+    "name": "MEND-STARVE-cast-when-held-left-out",
+    "file": "src/systems/enchantments.js",
+    "old": "  it.equipSlot != null &&\n  !!itemEnchantments(it)?.some(\n    (e) => e.type === ENCHANTMENT_TYPES.CastWhenHeld || e.type === ENCHANTMENT_TYPES.ItemDeteriorates,\n  );",
+    "new": "  it.equipSlot != null && !!itemEnchantments(it)?.some((e) => e.type === ENCHANTMENT_TYPES.ItemDeteriorates);",
+    "tests": [
+      "test/systems/fb1014_mendstarve.test.js"
+    ]
+  },
+  {
+    "name": "MEND-STARVE-a-carried-piece-counted",
+    "file": "src/systems/enchantments.js",
+    "old": "  it.equipSlot != null &&",
+    "new": "  true &&",
+    "tests": [
+      "test/systems/fb1014_mendstarve.test.js"
+    ]
+  }
+]

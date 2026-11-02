@@ -1,0 +1,158 @@
+[
+  {
+    "name": "SHIP-DECK-deck-arm-dropped",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    if (floor === 'deck') {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-DECK-reread-skipped",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      lastTileMapIndex = FLOOR_LEFT;\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-DECK-every-model-a-floor",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    const floor = m.deck\n      ? 'deck'\n      : m.onStaticGeometry && ((m.tileMapIndex ?? 0) === 0 || SHALLOW_WATER_TILES.has(m.tileMapIndex))\n        ? 'floor'\n        : null;",
+    "new": "    const floor = m.deck ? 'deck' : m.onStaticGeometry ? 'floor' : null;",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-DECK-bridge-wades",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    if (floor === 'floor') {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-DECK-boots-lost",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    if (boots && mat >= ARMOR_MATERIAL.Iron) currentClimateFootsteps = cur('PlateFootsteps');",
+    "new": "    if (false) currentClimateFootsteps = cur('PlateFootsteps');",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-DECK-host-no-deck",
+    "file": "src/scenes/world.js",
+    "old": "    surf.deck = surf.staticGeometry && isDeckBucket(_down.key);",
+    "new": "    surf.deck = false;",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-DECK-helm-stride-runs",
+    "file": "src/scenes/world.js",
+    "old": "paused: _overlayHeld || _seasonHeld || _travelSoundsOff || _csaFootstepsOff, entity: playerEntity,",
+    "new": "paused: _overlayHeld || _seasonHeld || _travelSoundsOff, entity: playerEntity,",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SEA-HUNT-bounty-at-sea",
+    "file": "src/scenes/world.js",
+    "old": "&& !(walkMode && player.isPlayerSwimming) && !playerAfloat(),",
+    "new": "&& !(walkMode && player.isPlayerSwimming),",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SEA-HUNT-sea-deck-not-afloat",
+    "file": "src/scenes/world.js",
+    "old": "|| !!csaAboard.aboard?.boat || !!naval?.aboard?.() ||",
+    "new": "|| !!csaAboard.aboard?.boat ||",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "SEA-HUNT-aboard-lost",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    aboard: () => aboardShip(),",
+    "new": "    aboard: () => false,",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "GUN-HOLD-hold-ignored",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!aiming) return false;\n    cancelAim();\n    deps.say?.('Hold fire.', 1.2);",
+    "new": "    if (!aiming) return false;\n    deps.say?.('Hold fire.', 1.2);",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "GUN-HOLD-hold-always",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!aiming) return false;\n    cancelAim();",
+    "new": "    cancelAim();",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "GUN-HOLD-world-no-hold",
+    "file": "src/scenes/world.js",
+    "old": "const _holdFire = (_act.activate || _act.cast || useEdge) && !!naval?.aiming && naval.holdFire();",
+    "new": "const _holdFire = false;",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "GUN-HOLD-ladder-runs-too",
+    "file": "src/scenes/world.js",
+    "old": "&& !modes.transitioning && !_holdFire) {",
+    "new": "&& !modes.transitioning) {",
+    "tests": [
+      "test/systems/deckfield.test.js"
+    ]
+  },
+  {
+    "name": "GUN-HOLD-hint-unsaid",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "        hint:\n          model.aiming && model.armed && !ship.wrecked\n            ? `${touch ? 'Lift' : 'Let go'} to fire - ${boardKey}: hold fire`\n            : model.board\n              ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`\n              : ship.wrecked\n                ? ship.repairing\n                  ? 'Crippled, crew repairing'\n                  : ship.repairOrdered\n                    ? 'Crippled, repairs ordered'\n                    : ship.stores > 0\n                      ? 'Crippled. Order repairs, or make for port'\n                      : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n                : !model.armed\n                  ? 'No guns aboard'\n                  : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
+    "new": "        hint: false\n          ? `${touch ? 'Lift' : 'Let go'} to fire - ${boardKey}: hold fire`\n          : model.board\n            ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`\n            : ship.wrecked\n              ? ship.repairing\n                ? 'Crippled, crew repairing'\n                : ship.repairOrdered\n                  ? 'Crippled, repairs ordered'\n                  : ship.stores > 0\n                    ? 'Crippled. Order repairs, or make for port'\n                    : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n              : !model.armed\n                ? 'No guns aboard'\n                : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
+    "tests": [
+      "test/systems/deckfield.test.js",
+      "test/ui/naval/nav_f_ui.test.js"
+    ]
+  },
+  {
+    "name": "GUN-HOLD-wreck-hidden",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "          model.aiming && model.armed && !ship.wrecked",
+    "new": "          model.aiming && model.armed",
+    "tests": [
+      "test/systems/deckfield.test.js",
+      "test/ui/naval/nav_f_ui.test.js"
+    ]
+  },
+  {
+    "name": "GUN-HOLD-pad-row-lost",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  if (codes.board && model.aiming)",
+    "new": "  if (false)",
+    "tests": [
+      "test/systems/deckfield.test.js",
+      "test/systems/naval/navaudit_presentation.test.js"
+    ]
+  }
+]

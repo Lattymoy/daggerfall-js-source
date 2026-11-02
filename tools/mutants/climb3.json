@@ -1,0 +1,886 @@
+[
+  {
+    "name": "CLIMB3-up-reach-flat",
+    "file": "src/player/parkour.js",
+    "old": "  return lerp(PARKOUR_LEAP_UP_MIN, PARKOUR_LEAP_UP_MAX, clamp01(jumping / 100));",
+    "new": "  return PARKOUR_LEAP_UP_MAX;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-eject-flat",
+    "file": "src/player/parkour.js",
+    "old": "  return {\n    out: lerp(PARKOUR_EJECT_OUT_MIN, PARKOUR_EJECT_OUT_MAX, t),\n    up: lerp(PARKOUR_EJECT_UP_MIN, PARKOUR_EJECT_UP_MAX, t),\n  };",
+    "new": "  return { out: PARKOUR_EJECT_OUT_MIN, up: PARKOUR_EJECT_UP_MIN };",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-runleap-flight-time-halved",
+    "file": "src/player/parkour.js",
+    "old": "  return { along: dist / ((2 * up) / gravity), up };",
+    "new": "  return { along: dist / (up / gravity), up };",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-runleap-flat",
+    "file": "src/player/parkour.js",
+    "old": "  const apex = lerp(PARKOUR_RUNLEAP_APEX_MIN, PARKOUR_RUNLEAP_APEX_MAX, t),\n    dist = lerp(PARKOUR_RUNLEAP_DIST_MIN, PARKOUR_RUNLEAP_DIST_MAX, t);",
+    "new": "  const apex = PARKOUR_RUNLEAP_APEX_MIN,\n    dist = PARKOUR_RUNLEAP_DIST_MIN;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-runleap-apex-doubled",
+    "file": "src/player/parkour.js",
+    "old": "  const up = Math.sqrt(2 * gravity * apex);",
+    "new": "  const up = Math.sqrt(4 * gravity * apex);",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-wallrun-height-flat",
+    "file": "src/player/parkour.js",
+    "old": "  return lerp(\n    PARKOUR_WALLRUN_MIN,\n    PARKOUR_WALLRUN_MAX,\n    clamp01((clamp01(climbing / 100) + clamp01(jumping / 100)) / 2),\n  );",
+    "new": "  return PARKOUR_WALLRUN_MIN;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-side-leap-along-the-held-lip",
+    "file": "src/player/parkour.js",
+    "old": "  for (let at = { face: held.face, normal: n, lipY: held.lipY }; runs + PARKOUR_HAND_SPAN <= reach;) {",
+    "new": "  for (let at = { face: held.face, normal: n, lipY: held.lipY }; false && runs + PARKOUR_HAND_SPAN <= reach;) {",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-up-leap-past-reach",
+    "file": "src/player/parkour.js",
+    "old": "      if (g && g.lipY > held.lipY + PARKOUR_LIP_FOLLOW && g.lipY - held.lipY <= reach + 1e-9) return g;",
+    "new": "      if (g && g.lipY > held.lipY + PARKOUR_LIP_FOLLOW) return g;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-face-on-the-held-line",
+    "file": "src/player/parkour.js",
+    "old": "    return best == null ? face : [ox - n[0] * best, lipY, oz - n[2] * best];",
+    "new": "    return face;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-ends-unheld",
+    "file": "src/player/parkour.js",
+    "old": "    hang: { normal: [...g.normal], lipY: g.lipY },",
+    "new": "    hang: null,",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-wallrun-out-of-reach",
+    "file": "src/player/parkour.js",
+    "old": "  const hit = faceHit(collider, [feet[0], feet[1] + stand * 0.5, feet[2]], dir, radius + PARKOUR_WALLRUN_REACH);",
+    "new": "  const hit = faceHit(collider, [feet[0], feet[1] + stand * 0.5, feet[2]], dir, radius);",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-wallrun-hands-reach-nothing",
+    "file": "src/player/parkour.js",
+    "old": "  for (let y = feet[1] + stand * 0.5; y <= feet[1] + height + reach + 1e-9; y += PARKOUR_SCAN_STEP) {",
+    "new": "  for (let y = feet[1] + stand * 0.5; y <= feet[1] + height + 1e-9; y += PARKOUR_SCAN_STEP) {",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-wallrun-never-on-the-wall",
+    "file": "src/player/parkour.js",
+    "old": "    wall: run.grip ? null : { normal: [...run.normal] },",
+    "new": "    wall: null,",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-runleap-edge-far",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_RUNLEAP_EDGE = 1.2;",
+    "new": "export const PARKOUR_RUNLEAP_EDGE = 3.0;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-drop-sees-floor",
+    "file": "src/player/parkour.js",
+    "old": "    if (y == null) return true;",
+    "new": "    if (y != null) return true;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-late-press-forever",
+    "file": "src/player/motor.js",
+    "old": "(o.t += dt) > PARKOUR_COYOTE_S)",
+    "new": "(o.t += dt) > 1)",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-late-press-never-armed",
+    "file": "src/player/motor.js",
+    "old": "this._pkOffEdge = this.isRunning && input.forward > 0 && !this.crouching && this._pkAtPace()",
+    "new": "this._pkOffEdge = false && this.isRunning && input.forward > 0 && !this.crouching && this._pkAtPace()",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-hang-no-side-leap",
+    "file": "src/player/motor.js",
+    "old": "    if (jump && (vert < 0 || side)) {",
+    "new": "    if (jump && vert < 0) {",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-hang-back-leaps-sideways",
+    "file": "src/player/motor.js",
+    "old": "      return this._pkLeapFrom(dt, vert < 0 ? 'back' : 'side', Math.sign(side)) || this._pkLeapFrom(dt, 'back', 0) || true;",
+    "new": "      return this._pkLeapFrom(dt, 'side', Math.sign(side)) || true;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-hang-no-up-leap",
+    "file": "src/player/motor.js",
+    "old": "      if (jump && this._pkLeapFrom(dt, 'up', 0)) return true;",
+    "new": "",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-sill-never-passed",
+    "file": "src/player/motor.js",
+    "old": "    return !!wallContact(this.collider, at, [-n[0], 0, -n[2]], CAPSULE_HEIGHT, CAPSULE_RADIUS, PARKOUR_WALL_REACH);",
+    "new": "    return false;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-sill-passed-under-a-soffit",
+    "file": "src/player/motor.js",
+    "old": "    return !!wallContact(this.collider, at, [-n[0], 0, -n[2]], CAPSULE_HEIGHT, CAPSULE_RADIUS, PARKOUR_WALL_REACH);",
+    "new": "    return true;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-sill-retaken",
+    "file": "src/player/motor.js",
+    "old": "      const g = g0 && w.past != null && g0.lipY <= w.past + PARKOUR_LIP_FOLLOW ? null : g0;",
+    "new": "      const g = g0;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-sill-pressed-into",
+    "file": "src/player/motor.js",
+    "old": "hug = out == null ? (this._wall?.past != null ? 0 : -press) : out;",
+    "new": "hug = out == null ? -press : out;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-sill-pass-held-short",
+    "file": "src/player/motor.js",
+    "old": "w.seek || w.past != null || w.down ? PARKOUR_WALL_REACH : PARKOUR_CONTACT)\n      && bandsClear",
+    "new": "w.seek || w.down ? PARKOUR_WALL_REACH : PARKOUR_CONTACT)\n      && bandsClear",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-spends-no-grip",
+    "file": "src/player/motor.js",
+    "old": "    this.grip -= PARKOUR_LEAP_GRIP;\n",
+    "new": "",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-reaches-swapped",
+    "file": "src/player/motor.js",
+    "old": "way === 'up' ? leapUpReach(j) : leapSideReach(j)",
+    "new": "way === 'up' ? leapSideReach(j) : leapUpReach(j)",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-eject-into-the-wall",
+    "file": "src/player/motor.js",
+    "old": "    this._pkLaunch([n[0], 0, n[2]], out, up);",
+    "new": "    this._pkLaunch([-n[0], 0, -n[2]], out, up);",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-unbilled",
+    "file": "src/player/motor.js",
+    "old": "this.parkoured = this.parkoured ? [].concat(this.parkoured, 'leap') : 'leap';",
+    "new": "this.parkoured = this.parkoured || null;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-catch-unarmed",
+    "file": "src/player/motor.js",
+    "old": "    this._pkArm = { t: 0, air: true };\n    this._pkJumpLatch = false;\n    this._pkOffEdge = null;",
+    "new": "    this._pkArm = null;\n    this._pkJumpLatch = false;\n    this._pkOffEdge = null;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-running-leap-walking",
+    "file": "src/player/motor.js",
+    "old": "if (!move && !air && fwd && this.isRunning && !this.crouching && this._pkAtPace()) {",
+    "new": "if (!move && !air && fwd && !this.crouching && this._pkAtPace()) {",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-no-wall-run",
+    "file": "src/player/motor.js",
+    "old": "      if (run) move = planWallRun(this.pos, run);",
+    "new": "      if (run) move = null;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-no-running-leap",
+    "file": "src/player/motor.js",
+    "old": "        this._pkLaunch(look, ...this._pkRunLeapSpeeds(pk, look));\n",
+    "new": "",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-wallrun-not-asked",
+    "file": "src/player/motor.js",
+    "old": "    const refusal = move.kind === 'vault' ? null : parkourRefusal();",
+    "new": "    const refusal = move.kind === 'vault' || move.kind === 'wallrun' ? null : parkourRefusal();",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-free-climb-jump-does-nothing",
+    "file": "src/player/motor.js",
+    "old": "jumpPressed: !!input.jump && !this._pkJumpLatch }",
+    "new": "jumpPressed: false }",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-free-climb-back-leaps-up",
+    "file": "src/player/motor.js",
+    "old": "this._pkLeapFrom(dt, vert < 0 ? 'back' : side ? 'side' : 'up', Math.sign(side))",
+    "new": "this._pkLeapFrom(dt, side ? 'side' : 'up', Math.sign(side))",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-trains-climbing",
+    "file": "src/systems/worldTick.js",
+    "old": "kind === 'vault' || kind === 'leap' ? SKILLS.Jumping",
+    "new": "kind === 'vault' ? SKILLS.Jumping",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/systems/parkour.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-late-press-on-the-ground",
+    "file": "src/player/motor.js",
+    "old": "if (air && pressed && this._pkOffEdge != null && this._pkMayLeap()) {",
+    "new": "if (pressed && this._pkOffEdge != null && this._pkMayLeap()) {",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-free-climb-hold-at-the-feet",
+    "file": "src/player/motor.js",
+    "old": "    const lipY = w.mode === 'hang' && w.lipY != null ? w.lipY : this.pos[1] + PARKOUR_HANG_DROP;",
+    "new": "    const lipY = w.mode === 'hang' && w.lipY != null ? w.lipY : this.pos[1];",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-side-reach-flat",
+    "file": "src/player/parkour.js",
+    "old": "  return lerp(PARKOUR_LEAP_SIDE_MIN, PARKOUR_LEAP_SIDE_MAX, clamp01(jumping / 100));",
+    "new": "  return PARKOUR_LEAP_SIDE_MAX;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-pace-flat",
+    "file": "src/player/parkour.js",
+    "old": "  return lerp(PARKOUR_LEAP_SPEED_MIN, PARKOUR_LEAP_SPEED_MAX, clamp01(jumping / 100));",
+    "new": "  return PARKOUR_LEAP_SPEED_MIN;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-side-leap-reach-unbudgeted",
+    "file": "src/player/parkour.js",
+    "old": "      if (Math.abs(dy) > reach - s + 0.3) continue; // the reach is the leap's whole way, along and up or down",
+    "new": "      // the reach is the leap's whole way, along and up or down",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-path-unproven",
+    "file": "src/player/parkour.js",
+    "old": "    return pathClear(collider, path(feet, mid, g.feet, way === 'up' ? 0.3 : 0.5, 0), stand)\n      ? { ...g, up: mid, split: way === 'up' ? 0.3 : 0.5 }\n      : null;",
+    "new": "    return { ...g, up: mid, split: way === 'up' ? 0.3 : 0.5 };",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-not-out-from-the-wall",
+    "file": "src/player/parkour.js",
+    "old": "    mid[0] += n[0] * shift;\n    mid[2] += n[2] * shift;",
+    "new": "",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-wallrun-path-unproven",
+    "file": "src/player/parkour.js",
+    "old": "  return pathClear(collider, path(feet, up, to, 0.25, 0), stand)\n    ? { up, to, grip, normal: n, key: hit.key ?? null }\n    : null; // AUDIT CLIMB-ARC L11: the face's own key - a run with no lip rides its hull too",
+    "new": "  return { up, to, grip, normal: n, key: hit.key ?? null }; // AUDIT CLIMB-ARC L11: the face's own key - a run with no lip rides its hull too",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-wallrun-lip-without-hold-runs-on",
+    "file": "src/player/parkour.js",
+    "old": "    if (!grip) return null; // a lip with no hold under it: no run\n    top = grip.feet[1];",
+    "new": "    if (grip) top = grip.feet[1];",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-late-press-walking",
+    "file": "src/player/motor.js",
+    "old": "this._pkOffEdge = this.isRunning && input.forward > 0 && !this.crouching && this._pkAtPace()",
+    "new": "this._pkOffEdge = !this.crouching && this._pkAtPace()",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-late-press-after-a-jump",
+    "file": "src/player/motor.js",
+    "old": "      if (o.ok == null) o.ok = !this.jumping && senseDrop(this.collider, o.at, o.dir, CAPSULE_RADIUS, PARKOUR_RUNLEAP_EDGE);\n      if (!o.ok || this.jumping || (o.t += dt) > PARKOUR_COYOTE_S) this._pkOffEdge = null;",
+    "new": "      if (o.ok == null) o.ok = senseDrop(this.collider, o.at, o.dir, CAPSULE_RADIUS, PARKOUR_RUNLEAP_EDGE);\n      if (!o.ok || (o.t += dt) > PARKOUR_COYOTE_S) this._pkOffEdge = null;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT CLIMB-ARC L4/L5 made the late press the at-edge leap: it is armed only when running at pace, standing, and over a drop proven from the last floor (o.ok). A plain jump that is not itself a leap therefore never leaves an armed press to clear, and the open-ground second press that L14 pins is refused by o.ok already. The two `this.jumping` checks are kept as belts."
+  },
+  {
+    "name": "CLIMB3-running-leap-crouched",
+    "file": "src/player/motor.js",
+    "old": "if (!move && !air && fwd && this.isRunning && !this.crouching && this._pkAtPace()) {",
+    "new": "if (!move && !air && fwd && this.isRunning && this._pkAtPace()) {",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-on-a-spent-grip",
+    "file": "src/player/motor.js",
+    "old": "    if (this.grip < PARKOUR_GRIP_MIN + PARKOUR_LEAP_GRIP) return false;\n",
+    "new": "",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-eject-spends-no-grip",
+    "file": "src/player/motor.js",
+    "old": "    this.grip = Math.max(0, this.grip - PARKOUR_LEAP_GRIP);\n    this._wallEnd();",
+    "new": "    this._wallEnd();",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-no-magnetism",
+    "file": "src/player/motor.js",
+    "old": " + (leap ? PARKOUR_LEAP_REACH : 0)",
+    "new": "",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-looks-where-the-view-does",
+    "file": "src/player/motor.js",
+    "old": "    const look = leap ? [...leap.dir] : [Math.sin(yaw), 0, Math.cos(yaw)];",
+    "new": "    const look = [Math.sin(yaw), 0, Math.cos(yaw)];",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-eject-no-quiet",
+    "file": "src/player/motor.js",
+    "old": "    this._pkLaunch([n[0], 0, n[2]], out, up);\n    this._pkQuiet = PARKOUR_QUIET_STEPS;\n",
+    "new": "    this._pkLaunch([n[0], 0, n[2]], out, up);\n",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-flight-never-ends",
+    "file": "src/player/motor.js",
+    "old": "    if (this.grounded || this.swimming || this.sunk || this._wall) this._pkLeap = null;",
+    "new": "",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-free-climb-jump-held-leaps",
+    "file": "src/player/motor.js",
+    "old": "jumpPressed: !!input.jump && !this._pkJumpLatch }",
+    "new": "jumpPressed: !!input.jump }",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-refused-leap-lets-go-of-the-step",
+    "file": "src/player/motor.js",
+    "old": "      return this._pkLeapFrom(dt, vert < 0 ? 'back' : 'side', Math.sign(side)) || this._pkLeapFrom(dt, 'back', 0) || true;",
+    "new": "      return this._pkLeapFrom(dt, vert < 0 ? 'back' : 'side', Math.sign(side)) || this._pkLeapFrom(dt, 'back', 0);",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-sill-passed-for-good",
+    "file": "src/player/motor.js",
+    "old": "    if (vert < 0 || (w.past != null && this.pos[1] >= w.past + PARKOUR_UP_GAP)) w.past = null;",
+    "new": "    if (vert < 0) w.past = null;",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB3-leap-fall-from-the-take-off-unset",
+    "file": "src/player/motor.js",
+    "old": "    this.fallStart = this.pos[1];\n    this.parkoured = this.parkoured ? [].concat(this.parkoured, 'leap') : 'leap';",
+    "new": "    this.parkoured = this.parkoured ? [].concat(this.parkoured, 'leap') : 'leap';",
+    "tests": [
+      "test/player/climb3.test.js",
+      "test/player/climbdown.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ],
+    "equivalent": true,
+    "why": "the launch's fallStart write is dead: _pkLaunch sets falling false and grounded false, so the motor's airborne branch (CheckInitFall) re-anchors fallStart at the body in the launch's own step, before anything reads it - L3 pins the fall counted from the wall either way"
+  }
+]

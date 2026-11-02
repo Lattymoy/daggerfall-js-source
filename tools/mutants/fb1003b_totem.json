@@ -1,0 +1,129 @@
+[
+  {
+    "name": "TOTEMCAGE-not-unique",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "      if (found) return null;\n      found = { index, marker };",
+    "new": "      found = { index, marker };",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-any-record",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "      if (marker.record !== MARKER_TYPES.QuestSpawn && marker.record !== MARKER_TYPES.QuestItem) continue;\n      if (marker.loadID !== markerID) continue;",
+    "new": "      if (marker.loadID !== markerID) continue;",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-no-id",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "      if (marker.loadID !== markerID) continue;\n      if (found) return null;",
+    "new": "      if (found) return null;",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-any-kind",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "  return o?.kind === 'moveFlat' ? o : null;",
+    "new": "  return o;",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-objectAt-none",
+    "file": "src/world/actionSystem.js",
+    "old": "    return this._links.get(`${ns}:${positionKey}`) ?? null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-ride-no-off",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "  stand.off = offset;\n  if (stand.batch) stand.batch.origin = offset;",
+    "new": "  if (stand.batch) stand.batch.origin = offset;",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-ride-no-origin",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "  if (stand.batch) stand.batch.origin = offset;\n}",
+    "new": "}",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-ride-dead",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "  if (!stand || stand.dead || !offset) return;",
+    "new": "  if (!stand || !offset) return;",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-box-placed",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "  const o = s.off;",
+    "new": "  const o = null;",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-wm-no-follow",
+    "file": "src/scenes/worldModes.js",
+    "old": "      host?.follow(dungeonCtx?.questMarkerMover?.(marker?.markerID)?.offset);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-wm-follow-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "      follow: (offset) => rideSceneMarker(stand, offset),",
+    "new": "      follow: () => {},",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-wm-no-fill",
+    "file": "src/scenes/worldModes.js",
+    "old": "      rideSceneMarker(stand, stand.off);   // TOTEM-CAGE: a follow that came before the fill draws from the batch's first frame\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  },
+  {
+    "name": "TOTEMCAGE-wm-box-placed",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "      aabb: questStandBox(s), // TOTEM-CAGE: where the stand IS - a stand riding an acting marker is clicked where it rode to",
+    "new": "      aabb: {\n        min: [s.x - s.width / 2, s.y, s.z - s.width / 2],\n        max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2],\n      }, // TOTEM-CAGE: where the stand IS - a stand riding an acting marker is clicked where it rode to",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "TOTEMCAGE-dc-no-mover",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    questMarkerMover: (markerID) => sceneMarkerMover(dungeon.blocks, actions, markerID),",
+    "new": "    questMarkerMover: () => null,",
+    "tests": [
+      "test/systems/quest/fb1003b_totem.test.js"
+    ]
+  }
+]

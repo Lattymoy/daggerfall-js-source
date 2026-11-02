@@ -1,0 +1,56 @@
+[
+  {
+    "name": "QUEST-NAME-a-the-person-unnamed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (res?.isPerson !== true || !questBridge) return null;\n    const t = npcHoverName(",
+    "new": "    if (res?.isPerson !== true || questBridge) return null;\n    const t = npcHoverName(",
+    "tests": [
+      "test/systems/fb1011g_questname.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-b-any-stand-named-here",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (res?.isPerson !== true || !questBridge) return null;\n    const t = npcHoverName(",
+    "new": "    if (!res || !questBridge) return null;\n    const t = npcHoverName(",
+    "tests": [
+      "test/systems/fb1011g_questname.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-c-the-clicks-key-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "npcHoverName(npcDisplayName(questStandNpcData(st, res, buildingKey)),",
+    "new": "npcHoverName(npcDisplayName(questStandNpcData(st, res, 0)),",
+    "tests": [
+      "test/systems/fb1011g_questname.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-d-the-building-unnamed",
+    "file": "src/scenes/worldModes.js",
+    "old": "        const named = questStandPersonName(questFlats, key, interiorBuilding?.buildingKey ?? 0); if (named) return named;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1011g_questname.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-e-the-dungeon-unnamed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const named = questStandPersonName(dungeonQuestFlats, key, 0); if (named) return named;   // QUEST-NAME: a dungeon has no building - the click's 0\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1011g_questname.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-f-a-key-the-click-does-not-use",
+    "file": "src/scenes/worldModes.js",
+    "old": "questStandPersonName(questFlats, key, interiorBuilding?.buildingKey ?? 0)",
+    "new": "questStandPersonName(questFlats, key, 0)",
+    "tests": [
+      "test/systems/fb1011g_questname.test.js"
+    ]
+  }
+]

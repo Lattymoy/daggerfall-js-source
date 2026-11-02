@@ -1,0 +1,488 @@
+[
+  {
+    "name": "RESCUE-SAVE-a-refused-put-never-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "        markMissed();   // RESCUE-SAVE, AUDIT A6/A8: on the device now, marked - the join says so\n        keepNow();\n",
+    "new": "        markMissed();   // RESCUE-SAVE, AUDIT A6/A8: on the device now, marked - the join says so\n",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-a-hidden-page-waits-the-grace",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (hidden()) keepNow(); else if (!unkeptTimer)",
+    "new": "if (!unkeptTimer)",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-the-leave-keeps-nothing",
+    "file": "src/systems/realmSaves.js",
+    "old": "      keepNow(keepalive);   // RESCUE-SAVE: whatever never landed is on the device before the lease goes - as it stands on a page going\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-the-copy-never-played",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (kept && kept.seq === seq) {",
+    "new": "if (kept && false) {",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-played-past-the-record",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (kept && kept.seq === seq) {",
+    "new": "if (kept && kept.seq <= seq) {",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-a-stale-copy-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "  if (!kept.missed || text == null || realmHoldsIt) {\n    forgetUnsent(storage, id);\n",
+    "new": "  if (!kept.missed || text == null || realmHoldsIt) {\n",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-landed-keeps-the-copy",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (pending) rebaseCopy(); else dropCopy();",
+    "new": "if (pending) rebaseCopy();",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-never-rebased",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (pending) rebaseCopy(); else dropCopy();",
+    "new": "if (!pending) dropCopy();",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-a-refused-copy-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "            keepNow();\n          } else dropCopy();",
+    "new": "            keepNow();\n          }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-lease-drops-the-copy",
+    "file": "src/systems/realmSaves.js",
+    "old": "const UNSENT_KEPT_ON = Object.freeze(['lease', 'auth', 'signed-out']);",
+    "new": "const UNSENT_KEPT_ON = Object.freeze(['auth', 'signed-out']);",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-delete-keeps-the-copy",
+    "file": "src/systems/realmSaves.js",
+    "old": "  if (r.ok) dropUnsent(io?.storage, id);\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-a-held-save-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (holding) return Promise.resolve({ ok: false, error: 'held' });\n      // SCALE2b: A SAVE THAT SAYS NOTHING NEW IS NOT SENT.",
+    "new": "      if (holding) { unkept = text; return Promise.resolve({ ok: false, error: 'held' }); }\n      // SCALE2b: A SAVE THAT SAYS NOTHING NEW IS NOT SENT.",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-the-host-never-says",
+    "file": "src/scenes/world.js",
+    "old": "  if (realmBoot?.restored && realmBoot.missed) townTalk.say(REALM_RESTORED_TEXT);",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A1-the-save-names-none",
+    "file": "src/scenes/world.js",
+    "old": "realmSaveWithHeld(snap, holding)",
+    "new": "realmSaveWithHeld(snap, null)",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A1-the-door-hands-them-anyway",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (rec.v === SPOILS_RECORD_V && inSave?.includes(rec.id)) { left.push(rec); onHanded?.(rec); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A1-the-host-never-asks",
+    "file": "src/scenes/world.js",
+    "old": "let _spoilsInSave = realmBoot?.held ?? null;",
+    "new": "let _spoilsInSave = null;",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A1-the-boot-answers-none",
+    "file": "src/systems/realmSaves.js",
+    "old": "  const held = heldList(r.snap[REALM_HELD_FIELD]);",
+    "new": "  const held = [];",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A1-the-field-loaded-with-the-save",
+    "file": "src/systems/realmSaves.js",
+    "old": "  delete r.snap[REALM_HELD_FIELD];\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A1-held-unbounded",
+    "file": "src/systems/realmSaves.js",
+    "old": ".slice(-REALM_HELD_MAX)",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A1-an-offline-copy-carries-them",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  delete copy.realmHeld; // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none",
+    "new": "  // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A2-deleted-elsewhere-keeps-the-copy",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (joined.error === 'no-realm-character') dropUnsent(io.storage, id);",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A4-the-boot-claims-nothing",
+    "file": "src/systems/realmSaves.js",
+    "old": "  claimUnsent(io.storage, id, lease);   // AUDIT RESCUE-SAVE A4: this join is the device's last",
+    "new": "  // AUDIT RESCUE-SAVE A4: this join is the device's last",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A4-an-older-tab-writes",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (lease && owner && owner !== lease) return false;\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A4-the-rejoin-claims-nothing",
+    "file": "src/systems/realmSaves.js",
+    "old": "      claimUnsent(storage, id, lease);   // AUDIT RESCUE-SAVE A4: this tab's join is the device's last again\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A5-no-room-drops-the-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "try { if (prev != null) storage.setItem(unsentAtKey(id), prev); else forgetUnsent(storage, id); } catch { forgetUnsent(storage, id); }",
+    "new": "forgetUnsent(storage, id);",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A5-a-text-half-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "    forgetUnsent(storage, id);   // the text went in and its record would not: nothing half-kept\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A6-written-at-every-checkpoint",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (hidden()) keepNow(); else if (!unkeptTimer) unkeptTimer = later(keepNow, REALM_UNSENT_GRACE_MS);",
+    "new": "keepNow();",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A6-the-grace-writes-nothing",
+    "file": "src/systems/realmSaves.js",
+    "old": "unkeptTimer = later(keepNow, REALM_UNSENT_GRACE_MS);",
+    "new": "unkeptTimer = later(() => {}, REALM_UNSENT_GRACE_MS);",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A7-the-door-never-sweeps",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      if (r.ok) sweepUnsent(appStorage(), r.characters, storedSession(appStorage())?.id ?? null);",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A7-a-standing-copy-swept",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (kept && kept.seq !== row.seq && !kept.missed) { forgetUnsent(storage, row.id); n++; }",
+    "new": "    if (kept && !kept.missed) { forgetUnsent(storage, row.id); n++; }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A8-every-restore-said",
+    "file": "src/scenes/world.js",
+    "old": "if (realmBoot?.restored && realmBoot.missed) townTalk.say",
+    "new": "if (realmBoot?.restored) townTalk.say",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-A8-a-miss-never-read",
+    "file": "src/systems/realmSaves.js",
+    "old": "missed: at.missed === true,",
+    "new": "missed: false,",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-SAVE-x-REALM-GZIP-a-restore-rides-unpacked",
+    "file": "src/systems/realmSaves.js",
+    "old": "restored: true, missed: kept.missed, gzip: joined.data?.gzip === true };",
+    "new": "restored: true, missed: kept.missed };",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B1-a-stale-tab-drops-the-copy",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (ownsUnsent(storage, id, lease)) forgetUnsent(storage, id);   // AUDIT 2 B1",
+    "new": "forgetUnsent(storage, id);   // AUDIT 2 B1",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B1-a-stale-tab-marks-the-copy",
+    "file": "src/systems/realmSaves.js",
+    "old": "=> { if (ownsUnsent(storage, id, lease)) reviseUnsent(storage, id, patch); };",
+    "new": "=> { reviseUnsent(storage, id, patch); };",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B2-the-hide-writes-nothing",
+    "file": "src/systems/realmSaves.js",
+    "old": "  watchHidden(() => { keepNow(); });\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B3-the-landing-relabels",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (pending) rebaseCopy(); else dropCopy();",
+    "new": "if (pending) reviseUnsent(storage, id, { seq: current, missed: false }); else dropCopy();",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B3-the-older-copy-stays",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (ownsUnsent(storage, id, lease)) forgetUnsent(storage, id);\n    unkept = latest;\n",
+    "new": "    unkept = latest;\n",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B3-the-resync-relabels",
+    "file": "src/systems/realmSaves.js",
+    "old": "          rebaseCopy();\n          r = await realmPut(",
+    "new": "          reviseUnsent(storage, id, { seq: current });\n          r = await realmPut(",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B3-the-rejoin-relabels",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (moved) rebaseCopy();",
+    "new": "      if (moved) reviseUnsent(storage, id, { seq: current });",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B3-the-newest-never-known",
+    "file": "src/systems/realmSaves.js",
+    "old": "      latest = text;\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B4-the-oldest-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": ".slice(-REALM_HELD_MAX)",
+    "new": ".slice(0, REALM_HELD_MAX)",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B5-orphans-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "  for (const cid of orphans) { dropUnsent(storage, cid); n++; }\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B5-another-accounts-dropped",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (at?.player === player) orphans.push(cid);",
+    "new": "      orphans.push(cid);",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B5-the-copy-names-no-account",
+    "file": "src/systems/realmSaves.js",
+    "old": ", ...(player ? { player } : {}) }));",
+    "new": " }));",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B6-a-played-row-swept",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (row.playing) continue;",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RESCUE-SAVE-2-B7-the-older-claim-stands",
+    "file": "src/systems/realmSaves.js",
+    "old": "    try { storage?.removeItem?.(unsentOwnerKey(id)); } catch { /* storage away */ }\n  }",
+    "new": "  }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-PACK-never-packed",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (text.length <= REALM_UNSENT_PACK_OVER) { keepUnsent(",
+    "new": "if (true) { keepUnsent(",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-PACK-a-page-going-waits-for-the-packing",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if ((going || hidden()) && keepUnsent(storage, id, at, text, how)) return;\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-PACK-a-late-packing-lands",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (packed && gen === copyGen) keepUnsent(",
+    "new": "if (packed) keepUnsent(",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-PACK-a-drop-leaves-the-packing-out",
+    "file": "src/systems/realmSaves.js",
+    "old": "    copyGen++;   // RESCUE-PACK: a packing still out lands nowhere\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-PACK-the-boot-never-opens-it",
+    "file": "src/systems/realmSaves.js",
+    "old": "parseSave(kept.packed ? await unpackUnsent(kept.packed) : kept.text)",
+    "new": "parseSave(kept.text)",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "RESCUE-PACK-a-packed-copy-read-as-text",
+    "file": "src/systems/realmSaves.js",
+    "old": "    const packed = text.startsWith(REALM_UNSENT_PACKED);",
+    "new": "    const packed = false;",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "CLOSE-SAVE-a-going-page-packs-off-the-frame",
+    "file": "src/systems/realmSaves.js",
+    "old": "if ((going || hidden()) && keepUnsent(storage, id, at, text, how)) return;",
+    "new": "if (hidden() && keepUnsent(storage, id, at, text, how)) return;",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  }
+]

@@ -1,0 +1,130 @@
+[
+  {
+    "name": "SFSKIN-base-left-light",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  dark: 0.3, // the base keeps this share of its light",
+    "new": "  dark: 0.9, // the base keeps this share of its light",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-edging-dropped",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const wgt = Math.min(1, Math.max(strand, tip, fringe));",
+    "new": "    const wgt = 0;",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-strand-dropped",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const strand = smooth(k.strand[0], k.strand[1], l - mean[i]) * k.strand[2];",
+    "new": "    const strand = 0;",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-fringe-dropped",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    const fringe = near && a >= 128 && near[i] ? k.fringe : 0;",
+    "new": "    const fringe = 0;",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-eye-missed",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    if (allEye || (eye && eye[i])) {",
+    "new": "    if (allEye) {",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-eye-not-the-glyphs-red",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  eye: Object.freeze([255, 34, 46]), // #ff222e - the glyph's own eye (ui/playerBadge.js GLYPH_DETAIL)",
+    "new": "  eye: Object.freeze([255, 0, 0]), // #ff222e - the glyph's own eye (ui/playerBadge.js GLYPH_DETAIL)",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-cache-painted",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  const out = new Uint8Array(n * 4);",
+    "new": "  const out = rgba;",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-top-level-alone",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "    out.push({ ...m, rgba });",
+    "new": "    out.push(m);",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-any-glyph-a-skin",
+    "file": "src/characters/werewolfSkin.js",
+    "old": "  for (const s of WEREWOLF_SKINS) if (glyphs.includes(SKIN_GLYPH[s])) return s;",
+    "new": "  for (const s of WEREWOLF_SKINS) if (glyphs.length) return s;",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-skin-on-the-person",
+    "file": "src/combat/fpArm.js",
+    "old": "  const bodySkin = () => (built && built.werewolf && lastBuildOpts && lastBuildOpts.skin) || null;",
+    "new": "  const bodySkin = () => (lastBuildOpts && lastBuildOpts.skin) || null;",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-glyphs-not-kept",
+    "file": "src/net/accountClient.js",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, aura, icon, armory, effects, nameAsAt })",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ],
+    "note": "NAME-AS (PIN MOVED): re-aimed by content - the session keeps the choice's stamp beside them."
+  },
+  {
+    "name": "SFSKIN-list-rewritten-unchanged",
+    "file": "src/net/accountClient.js",
+    "old": "  if (next.name === was.name && next.kind === was.kind && sameGlyphs && sameAura && next.nameAsAt === was.nameAsAt) return false;",
+    "new": "  if (next.name === was.name && next.kind === was.kind && sameAura && next.nameAsAt === was.nameAsAt) return false;",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ],
+    "note": "NAME-AS (PIN MOVED): re-aimed by content - the guard reads the choice's stamp too."
+  },
+  {
+    "name": "SFSKIN-wardrobe-glyphs-not-adopted",
+    "file": "src/ui/accountFlow.js",
+    "old": "      glyphs: r.data.wardrobe?.glyphs,\n      glyphsOff: r.data.wardrobe?.glyphsOff,\n      aura: auraStated(r.data.wardrobe),",
+    "new": "      aura: auraStated(r.data.wardrobe),",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  },
+  {
+    "name": "SFSKIN-peer-skin-off-the-key",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "  return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look); // SHADOW-FANG: and the wolf's skin; MWNPC17: and an NPC's own picks (bodyLookKey) - two people in one outfit are two bodies",
+    "new": "  return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|` : bodyLookKey(look); // SHADOW-FANG: and the wolf's skin; MWNPC17: and an NPC's own picks (bodyLookKey) - two people in one outfit are two bodies",
+    "tests": [
+      "test/net/shadowfangskin.test.js"
+    ]
+  }
+]

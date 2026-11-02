@@ -1,0 +1,137 @@
+[
+  {
+    "name": "LOOT11-eight-is-twelve",
+    "file": "src/scenes/lootLines.js",
+    "old": "export const LOOT_LINES_MAX = 8;",
+    "new": "export const LOOT_LINES_MAX = 12;",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-reach-unbounded",
+    "file": "src/scenes/lootLines.js",
+    "old": "    if (!(d <= reach)) continue;",
+    "new": "",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-magic-stands",
+    "file": "src/scenes/lootLines.js",
+    "old": "    if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.rare.rank) continue;",
+    "new": "    if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.magic.rank) continue;",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-unsorted",
+    "file": "src/scenes/lootLines.js",
+    "old": "  out.sort((a, b) => a.d - b.d);",
+    "new": "",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-farthest-first",
+    "file": "src/scenes/lootLines.js",
+    "old": "  out.sort((a, b) => a.d - b.d);",
+    "new": "  out.sort((a, b) => b.d - a.d);",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-pick-off",
+    "file": "src/scenes/lootLines.js",
+    "old": "    if (!rarity) continue; // OFF IS DFU EXACTLY: with the loot-rarity row off, no find's own line\n    const tier = bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it))); // PI1: a standing item's line is its own",
+    "new": "    const tier = bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it))); // PI1: a standing item's line is its own",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-pass-off",
+    "file": "src/scenes/lootLines.js",
+    "old": "      if (!glow || (!lootRarityOn() && !_marksLive.size)) return false; // WILD1: a marked find stands its line with the rarity row off too (pickLootLines)",
+    "new": "      if (!glow) return false; // WILD1: a marked find stands its line with the rarity row off too (pickLootLines)",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-crown-at-the-feet",
+    "file": "src/scenes/lootLines.js",
+    "old": "export const lootCrown = (pos, size) =>\n  Array.isArray(pos) && pos.length >= 3\n    ? [pos[0], pos[1] + (Number.isFinite(size?.h) ? size.h : LOOT_LINE_CROWN), pos[2]]\n    : null;",
+    "new": "export const lootCrown = (pos, size) => (Array.isArray(pos) && pos.length >= 3 ? [pos[0], pos[1], pos[2]] : null);",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-crown-unsized",
+    "file": "src/scenes/lootLines.js",
+    "old": "  Array.isArray(pos) && pos.length >= 3\n    ? [pos[0], pos[1] + (Number.isFinite(size?.h) ? size.h : LOOT_LINE_CROWN), pos[2]]\n    : null;",
+    "new": "  Array.isArray(pos) && pos.length >= 3 ? [pos[0], pos[1] + (Number.isFinite(size?.h) ? size.h : 0), pos[2]] : null;",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-drop-pool-no-finds",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "  const lootFinds = () => [...piles.filter((p) => alive(p) && p.items?.length && !presented(p)).map((p) => (p.wild?.mine ? { root: lootCrown(p.pos, p.size), items: p.items, mark: WILD_MINE_MARK } : p.mark ? { root: lootCrown(p.pos, p.size), items: p.items, mark: p.mark } : { root: lootCrown(p.pos, p.size), items: p.items })), ...physical.finds()];   // PI1: and each standing item's own; WILD1: my remains, their own line; FB1013d: a pile that carries its own (the house's fallen - scenes/legacyRemainsStand.js)",
+    "new": "  const lootFinds = () => [];",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-street-shows-a-peer",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "f.dead && f.corpseMarker && !f.puppet && !f.corpseDisabled",
+    "new": "f.dead && f.corpseMarker && !f.corpseDisabled",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-dungeon-no-drops",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      ...droppedLoot.lootFinds(),   // and what was put down here\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-street-unlit",
+    "file": "src/scenes/world.js",
+    "old": "if (lootLines.draw(() => [...exteriorFoes.lootFinds(), ...droppedLoot.lootFinds()],",
+    "new": "if (lootLines.draw(() => [],",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-dungeon-unlit",
+    "file": "src/scenes/worldModes.js",
+    "old": "      host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => dungeonCtx.lootFinds?.() ?? [] });",
+    "new": "      void 0;",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  },
+  {
+    "name": "LOOT11-building-unlit",
+    "file": "src/scenes/worldModes.js",
+    "old": "    host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => [...interiorDropped.lootFinds(), ...(interiorFoes?.lootFinds?.() ?? [])] });",
+    "new": "    void 0;",
+    "tests": [
+      "test/scenes/loot11_lines.test.js"
+    ]
+  }
+]

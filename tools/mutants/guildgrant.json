@@ -1,0 +1,112 @@
+[
+  {
+    "name": "GUILDGRANT-realm-gold-left-out",
+    "file": "tools/grantGuildGold.mjs",
+    "old": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "new": "  return `UPDATE guilds SET treasury = treasury + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "The award would sit in the treasury and neither buy a hall nor come back out - the hall's buy and a realm withdrawal spend realm_gold alone (HALL-GOLD)."
+  },
+  {
+    "name": "GUILDGRANT-the-kind-unnamed",
+    "file": "tools/grantGuildGold.mjs",
+    "old": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "new": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "The ledger would say a member put 1,600,000 in - the trigger names a move with no kind a deposit."
+  },
+  {
+    "name": "GUILDGRANT-the-moment-unstamped",
+    "file": "tools/grantGuildGold.mjs",
+    "old": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "new": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "The line would carry the last deposit's moment, or none at all - guild_ledger.at is NOT NULL and the award fails."
+  },
+  {
+    "name": "GUILDGRANT-the-cap-unasked",
+    "file": "tools/grantGuildGold.mjs",
+    "old": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "new": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' RETURNING name, tag, treasury, realm_gold;`;",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "An award could take a treasury past the cap every deposit is held to."
+  },
+  {
+    "name": "GUILDGRANT-the-name-as-typed",
+    "file": "tools/grantGuildGold.mjs",
+    "old": "  return guildNameKey(n); // [a-z0-9]+ alone: nothing in it can end an SQL string",
+    "new": "  return n.replaceAll(\"'\", \"''\"); // [a-z0-9]+ alone: nothing in it can end an SQL string",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "name_key is folded; 'empire of tamriel' typed into the workflow would find no guild."
+  },
+  {
+    "name": "GUILDGRANT-the-gold-unchecked",
+    "file": "tools/grantGuildGold.mjs",
+    "old": "  const gold = /^[1-9][0-9]*$/.test(s) ? Number(s) : NaN;",
+    "new": "  const gold = Number(s);",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "'1e6' would award a million, and a hex or padded figure would award what nobody typed."
+  },
+  {
+    "name": "GUILDGRANT-zero-awarded",
+    "file": "tools/grantGuildGold.mjs",
+    "old": "  const gold = /^[1-9][0-9]*$/.test(s) ? Number(s) : NaN;",
+    "new": "  const gold = /^[0-9]+$/.test(s) ? Number(s) : NaN;",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "A run of 0 writes a ledger line of nothing."
+  },
+  {
+    "name": "GUILDGRANT-an-input-spliced-into-a-run-line",
+    "file": ".github/workflows/guild-grant.yml",
+    "old": "node tools/grantGuildGold.mjs --look \"$GUILD\"",
+    "new": "node tools/grantGuildGold.mjs --look \"${{ inputs.guild }}\"",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "An input pasted into a run: line is a shell command whoever runs the workflow can type."
+  },
+  {
+    "name": "GUILDGRANT-a-missing-guild-passes",
+    "file": ".github/workflows/guild-grant.yml",
+    "old": "          if [ \"$(echo \"$rows\" | jq -r 'length')\" != \"1\" ]; then\n            echo \"::error::no guild is named",
+    "new": "          if [ \"$(echo \"$rows\" | jq -r 'length')\" = \"-1\" ]; then\n            echo \"::error::no guild is named",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "A misspelled guild would read as a dry run with an empty summary, and a green run."
+  },
+  {
+    "name": "GUILDGRANT-an-award-that-changed-none-passes",
+    "file": ".github/workflows/guild-grant.yml",
+    "old": "          if [ \"$(echo \"$rows\" | jq -r 'length')\" != \"1\" ]; then\n            echo \"::error::the award changed no guild",
+    "new": "          if [ \"$(echo \"$rows\" | jq -r 'length')\" = \"-1\" ]; then\n            echo \"::error::the award changed no guild",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "A green run would tell the operator the gold was awarded when nothing was written."
+  },
+  {
+    "name": "GUILDGRANT-the-award-on-a-dry-run",
+    "file": ".github/workflows/guild-grant.yml",
+    "old": "      - name: Award the gold\n        if: env.APPLY == 'true'\n",
+    "new": "      - name: Award the gold\n",
+    "tests": [
+      "test/tooling/guildgrant.test.js"
+    ],
+    "note": "The dry run would write the award."
+  }
+]

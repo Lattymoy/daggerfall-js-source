@@ -1,0 +1,342 @@
+[
+  {
+    "name": "SD7B-the-top-turned-in",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "const TOP = [0, 3, 2, 1],",
+    "new": "const TOP = [0, 1, 2, 3],",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-a-side-turned-in",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "  [0, 1, 5, 4],",
+    "new": "  [0, 4, 5, 1],",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-a-riser-no-deeper-than-a-step",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "  return { w: size.w, d: size.d, h: kind === 'riser' ? SD_RISER_H + SD_STEP_THICK : SD_STEP_THICK };",
+    "new": "  return { w: size.w, d: size.d, h: SD_STEP_THICK };",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-wrong-wear",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "  crumble: Object.freeze({ atlas: SD_STEPS_RECORD.crumble[0] }),",
+    "new": "  crumble: Object.freeze({ atlas: SD_STEPS_RECORD.riser }),",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ],
+    "why": "Re-aimed by content (SD-LOOK S9)."
+  },
+  {
+    "name": "SD7B-the-collider-wound-wrong",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "  for (const [a, b, e, g] of [TOP, UNDER, ...SIDES]) indices.push(a, b, e, a, e, g);",
+    "new": "  for (const [a, b, e, g] of [TOP, UNDER, ...SIDES]) indices.push(a, e, b, a, g, e);",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-a-checkpoint-on-the-floor",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "    if (k > 0) realmIsland(f, c.x, c.z, c.r, SD_REALM_FLOOR_RECORD, { y: c.y });",
+    "new": "    if (k > 0) realmIsland(f, c.x, c.z, c.r, SD_REALM_FLOOR_RECORD, {});",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-an-island-at-the-floor",
+    "file": "src/world/superDungeon/sdRealm.js",
+    "old": "const C = (x, y, z) => realmToDungeon(cx + x, y0 + y, cz + z);",
+    "new": "const C = (x, y, z) => realmToDungeon(cx + x, y, cz + z);",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-cracks-unlit",
+    "file": "src/world/superDungeon/sdStepsArt.js",
+    "old": "    return d < S.core ? scale(col, k) : d < S.lip ? scale(col, k * 0.18) : BLACK;",
+    "new": "    return d < S.core ? BLACK : d < S.lip ? scale(col, k * 0.18) : BLACK;",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ],
+    "why": "Re-aimed by content (SD-LOOK S9)."
+  },
+  {
+    "name": "SD7B-the-hub-alight",
+    "file": "src/world/superDungeon/sdStepsArt.js",
+    "old": "    if (r < D.hub) return BLACK; // the hub's pin: brass, never a light",
+    "new": "    if (r < D.hub) return scale(col, 1); // the hub's pin: brass, never a light",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ],
+    "why": "Re-aimed by content (SD-LOOK S9)."
+  },
+  {
+    "name": "SD7B-a-bucket-that-does-not-move",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "collider?.addMesh?.(st.key, positions, indices, identity(), () => st.T);",
+    "new": "collider?.addMesh?.(st.key, positions, indices, identity());",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-a-gone-step-still-solid",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "else st.T[1] = SD_STEP_GONE_Y;",
+    "new": "else st.T[1] = y;",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-no-blink",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "const falter = beatBlinks(s, t) && Math.floor(warned * 2 * SD_BEAT_BLINK_HZ) % 2 === 1;",
+    "new": "const falter = false;",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ],
+    "why": "Re-aimed by content (SD-LOOK S9)."
+  },
+  {
+    "name": "SD7B-the-swing-not-followed",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "    stepAt(s, t, _at);",
+    "new": "    _at[0] = s.x; _at[1] = s.y; _at[2] = s.z;",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-no-carry",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (dx || dy || dz) body.carryBy?.(dx, dy, dz);",
+    "new": "if (false) body.carryBy?.(dx, dy, dz);",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-carried-by-a-vanish",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (on && on.solid && on.wasSolid) {",
+    "new": "if (on) {",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-touch-under-a-window",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (on && live && on.s.kind === 'crumble' && on.touched == null) {",
+    "new": "if (on && on.s.kind === 'crumble' && on.touched == null) {",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-no-shudder",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (c.shaking) { sx = SD_CRUMBLE_SHAKE",
+    "new": "if (false) { sx = SD_CRUMBLE_SHAKE",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-never-back",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (!(since >= 0 && since < SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK)) { st.touched = null; since = -1; }",
+    "new": "if (since < 0) { st.touched = null; since = -1; }",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-breath-over-the-Beat",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (g.push && onLine && inBreath(rz, course) && dt > 0)",
+    "new": "if (g.push && onLine && spanAt(rz, course) >= 1 && dt > 0)",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content): the breath inside its course's band (the Hour's everywhere)."
+  },
+  {
+    "name": "SD7B-the-breath-always-snapped",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "body.height, !!body.grounded && !body.jumping);",
+    "new": "body.height, true);",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-a-hitch-a-gale",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "g.push * Math.min(dt, BREATH_DT_MAX)",
+    "new": "g.push * dt",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-wind-every-frame",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (g.warn && onLine && span === 2 && lastWarned !== gust) {",
+    "new": "if (g.warn && onLine && span === 2) {",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content)."
+  },
+  {
+    "name": "SD7B-the-wind-everywhere",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (g.warn && onLine && span === 2 && lastWarned",
+    "new": "if (g.warn && onLine && span >= 0 && lastWarned",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content)."
+  },
+  {
+    "name": "SD7B-no-tick",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (lastTick != null && b !== lastTick) play(SD_STEPS_SOUNDS.tick, 0.35, 1.6);",
+    "new": "if (false) play(SD_STEPS_SOUNDS.tick, 0.35, 1.6);",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-every-fall-to-A",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "return realmToDungeon(...castBackTo(lastSpan, course));",
+    "new": "return realmToDungeon(...castBackTo(0, course));",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-void-before-the-first-step",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (inVoid(ry)) {",
+    "new": "if (inVoid(ry) && spanAt(rz) >= 0) {",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-void-under-a-window",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "if (!live || !body?.pos) return null;",
+    "new": "if (!body?.pos) return null;",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-band-narrowed",
+    "file": "src/world/superDungeon/sdSteps.js",
+    "old": "export const SD_STEPS_FREE_HALF_W = 40;",
+    "new": "export const SD_STEPS_FREE_HALF_W = 4;",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-the-arena-left-off",
+    "file": "src/world/superDungeon/sdSteps.js",
+    "old": "  Object.freeze({ kind: 'disc', ...SD_ARENA }),\n]);",
+    "new": "]);",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-world-no-steps-floors",
+    "file": "src/scenes/world.js",
+    "old": "realmArena([...SD_REALM_FLOORS, ...SD_HALL_FLOORS, ...SD_STEPS_FLOORS])",
+    "new": "realmArena([...SD_REALM_FLOORS, ...SD_HALL_FLOORS])",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-world-no-ward",
+    "file": "src/scenes/world.js",
+    "old": "registerLevitateWard(() => inSiegeRoom() || madeRuleHere('levitate') === 'banned');",
+    "new": "registerLevitateWard(() => inSiegeRoom());",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-world-the-shield-takes-it",
+    "file": "src/scenes/world.js",
+    "old": "* SD_CAST_BACK_LOSS));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });",
+    "new": "* SD_CAST_BACK_LOSS));\n      hurtPlayer(playerEntity, dmg, { spare: () => {} });",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-world-the-loss-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "* SD_CAST_BACK_LOSS));",
+    "new": "* 0));",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-modes-no-settle",
+    "file": "src/scenes/worldModes.js",
+    "old": "    player.freezeMotor = TELEPORT_FREEZE_S;\n    player.spawn(at[0], at[1], at[2]);",
+    "new": "    player.spawn(at[0], at[1], at[2]);",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-modes-always-live",
+    "file": "src/scenes/worldModes.js",
+    "old": "dungeonCtx?.sdStepsRide?.(dt, player, !overlayHeld)",
+    "new": "dungeonCtx?.sdStepsRide?.(dt, player, true)",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-modes-no-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "sdClock: () => host.deadlandsSeconds?.() ?? performance.now() / 1000,",
+    "new": "sdClock: () => performance.now() / 1000,",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  },
+  {
+    "name": "SD7B-dungeon-no-clock",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "return sdSteps.ride(opts.sdClock?.() ?? performance.now() / 1000, dt, body, live);",
+    "new": "return sdSteps.ride(performance.now() / 1000, dt, body, live);",
+    "tests": [
+      "test/world/superDungeon/sd7b_steps.test.js"
+    ]
+  }
+]

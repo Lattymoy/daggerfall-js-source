@@ -1,0 +1,137 @@
+[
+  {
+    "name": "AUDIT-QL-SCRIPTS-M1-QLCH03-keep-path-ql-paid",
+    "file": "src/systems/questlines/quests/QLCH03.txt",
+    "old": "\toutcome _keep_\n\tgive pc _gold_\n",
+    "new": "\toutcome _keep_\n\tql paid\n",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M2-QLCH03-1030-without-the-house",
+    "file": "src/systems/questlines/quests/QLCH03.txt",
+    "old": "<ce>       \"Mind - the Guild gives a Spire key to a house\n<ce>        once, %pcf. If one of your blood has taken one\n<ce>        from us before you, there is none for you now.\n<ce>        Well? Keep it, or let the Order seal it?\"",
+    "new": "<ce>          \"Well, %pcf? Keep it, or let the Order seal it?\"",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M3-QLCH03-1040-slides-the-key",
+    "file": "src/systems/questlines/quests/QLCH03.txt",
+    "old": "<ce>       The priest of the Hour says nothing at all, and\n<ce>                          leaves.\n<ce>\n<ce>       \"Kept, then,\"",
+    "new": "<ce>       Ysolde slides the key across the table to you.\n<ce>       The priest of the Hour says nothing at all, and\n<ce>                          leaves.\n<ce>\n<ce>       \"Kept, then,\"",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M4-QLIW02-purse-and-end-in-the-letter-s-tick",
+    "file": "src/systems/questlines/quests/QLIW02.txt",
+    "old": "\tgive pc _thanks_ notify 1012\n\thave _thanks_ set _paid_\n\n_paid_ task:\n",
+    "new": "\tgive pc _thanks_ notify 1012\n\n_paid_ task:\n",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M5-QLIW02-word-bound-to-heard",
+    "file": "src/systems/questlines/sheets/questlines.json",
+    "old": "{\"id\":\"word\",\"text\":\"Be in a town by day: word from the watch will find you there\",\"open\":{\"task\":\"_knelt_\"},\"done\":{\"task\":\"_paid_\"}}",
+    "new": "{\"id\":\"word\",\"text\":\"Be in a town by day: word from the watch will find you there\",\"open\":{\"task\":\"_knelt_\"},\"done\":{\"task\":\"_heard_\"}}",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M6-QLWR04-3E-406",
+    "file": "src/systems/questlines/quests/QLWR04.txt",
+    "old": "today, and not 3E 398.",
+    "new": "reads 3E 406.",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M7-QLWR02-eight-years",
+    "file": "src/systems/questlines/quests/QLWR02.txt",
+    "old": "every night since the Spire fell.",
+    "new": "every night for eight years.",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M8-QLWR01-always-here",
+    "file": "src/systems/questlines/quests/QLWR01.txt",
+    "old": "I will be here until you have.\"",
+    "new": "I will be here. I am always here.\"",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M9-QLIT01-tomorrow",
+    "file": "src/systems/questlines/quests/QLIT01.txt",
+    "old": "is another game. A friend of mine plays it. I\n<ce>        will send you to them.\"",
+    "new": "is another game. Ask me about it tomorrow.\"",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M10-QLIP02-the-court-crafter",
+    "file": "src/systems/questlines/quests/QLIP02.txt",
+    "old": "colleague to judge it - _crafter_, who keeps the",
+    "new": "colleague to judge it - _crafter_, the court crafter, who keeps the",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M11-QLBD05-keepers-of-the-Covenant",
+    "file": "src/systems/questlines/quests/QLBD05.txt",
+    "old": "To the Order of the Hour. Let",
+    "new": "To the Order of the Hour, keepers of the Covenant. Let",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M13-QLBD01-150-to-250",
+    "file": "src/systems/questlines/quests/QLBD01.txt",
+    "old": "Item _gold_ gold range 300 to 600",
+    "new": "Item _gold_ gold range 150 to 250",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M14-QLIA01-Somebody-always-bleeds-last",
+    "file": "src/systems/questlines/quests/QLIA01.txt",
+    "old": "<ce>                   Somebody always bleeds.\n<ce>\n<ce>              The Herald of the Arena of Daggerfall\n",
+    "new": "<ce>                   Somebody always bleeds.\n",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M15-QLHR01-of-the-Order-of-the-Hour-alone",
+    "file": "src/systems/questlines/quests/QLHR01.txt",
+    "old": "<ce>                  Prior Anselm Vey of the Order of the Hour\n",
+    "new": "<ce>                              Prior Anselm Vey\n<ce>                          of the Order of the Hour\n",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-SCRIPTS-M12-QLIW02-Beat-a-revenant",
+    "file": "src/systems/questlines/sheets/questlines.json",
+    "old": "{\"id\":\"kneel\",\"text\":\"See one of your revenants brought to its knees\",",
+    "new": "{\"id\":\"kneel\",\"text\":\"Beat a revenant until it kneels\",",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ]
+  }
+]

@@ -1,0 +1,406 @@
+[
+  {
+    "name": "SHOP-price-moved",
+    "file": "src/net/shopLaw.js",
+    "old": "  ware('title', 'genesis', 500, pre(1)),",
+    "new": "  ware('title', 'genesis', 400, pre(1)),",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-two-bits-shared",
+    "file": "src/net/shopLaw.js",
+    "old": "  ware('aura', 'eternal', 2000, pre(4)),",
+    "new": "  ware('aura', 'eternal', 2000, pre(2)),",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-kind-read-as-another",
+    "file": "src/net/shopLaw.js",
+    "old": "  return SHOP_WARES.filter((w) => w.kind === kind && !w.gives.length && held.includes(w.id)).map((w) => w.key);",
+    "new": "  return SHOP_WARES.filter((w) => !w.gives.length && held.includes(w.id)).map((w) => w.key);",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-client-card-buy-held",
+    "file": "src/net/shopLaw.js",
+    "old": "      buy: card.on && r.sale === true && r.held !== true ? buy : null,",
+    "new": "      buy: card.on && r.sale === true ? buy : null,",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-client-card-http-kept",
+    "file": "src/net/shopLaw.js",
+    "old": "    const buy =\n      w.cash && typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;",
+    "new": "    const buy = w.cash && typeof r.buy === 'string' && r.buy.startsWith('http') && r.buy.length <= 2048 ? r.buy : null;",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-handle-guard-dropped",
+    "file": "server-account/src/titles.js",
+    "old": "export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) =>\n  typeof player?.handle === 'string' && player.handle ? shopKeysOf(player, kind) : [];",
+    "new": "export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) => shopKeysOf(player, kind);",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-one-secret-enough",
+    "file": "server-account/src/shop.js",
+    "old": "export const shopOn = (/** @type {any} */ env) =>\n  typeof env?.STRIPE_SECRET_KEY === 'string' &&\n  !!env.STRIPE_SECRET_KEY &&\n  typeof env?.STRIPE_WEBHOOK_SECRET === 'string' &&\n  !!env.STRIPE_WEBHOOK_SECRET;",
+    "new": "export const shopOn = (/** @type {any} */ env) => typeof env?.STRIPE_SECRET_KEY === 'string' && !!env.STRIPE_SECRET_KEY;",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-time-unchecked",
+    "file": "server-account/src/shop.js",
+    "old": "  if (!sig || Math.abs(nowS - sig.t) > SHOP_HOOK_TOLERANCE_S) return false;",
+    "new": "  if (!sig) return false;",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-sale-unchecked-at-press",
+    "file": "server-account/src/shop.js",
+    "old": "  if (!shopSoldForMoney(env, ware, nowS)) return { page: 'sold' };\n  const player = await db",
+    "new": "  const player = await db",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "SHOP-held-unchecked-at-press",
+    "file": "server-account/src/shop.js",
+    "old": "  if (shopHolds(player, env, ware)) return { page: 'held' }; // ADMIN-ALL: an admin's too\n  const cents = ware.cents,",
+    "new": "  const cents = ware.cents,",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "AURUM-ONLY (2026-10-30): shopCheckout goes on only for an Aurum pack (shopRepeatable before it), and a pack is never held (shopOwns answers false for one, ADMIN-ALL holds none), so this guard cannot fire - a press for an item answers the 'aurum' page first. Kept as the money path's belt for a ware ever sold for money again."
+  },
+  {
+    "name": "SHOP-second-order",
+    "file": "server-account/src/shop.js",
+    "old": "  if (open?.stripe_url) return { url: open.stripe_url };\n  const id = mintOrderId(rand),",
+    "new": "  const id = mintOrderId(rand),",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-amount-unchecked",
+    "file": "server-account/src/shop.js",
+    "old": "  if (Number(amount) !== order.cents || String(currency).toLowerCase() !== order.currency) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-grant-guard-dropped",
+    "file": "server-account/src/shop.js",
+    "old": "        .prepare(\n          \"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')\",\n        )\n        .bind(order.id, nowS, pi),\n      mustChange(db),",
+    "new": "        .prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1\")\n        .bind(order.id, nowS, pi),",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT-STOREFRONT S7: the grant's batch is guarded on the row as read too (shop.js rowWrite), and every grant moves the row - a ware already held is refunded, never granted - so a second word on the order fails that guard and settles as moved. The order's own guard stays, belt and braces: it says the rule where the order moves."
+  },
+  {
+    "name": "SHOP-delayed-payment-granted",
+    "file": "server-account/src/shop.js",
+    "old": "      if (o.payment_status !== 'paid') return { ok: true, applied: 0 }; // a delayed method: its own event follows",
+    "new": "      if (o.payment_status === 'refused') return { ok: true, applied: 0 }; // a delayed method: its own event follows",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-part-refund-revokes",
+    "file": "server-account/src/shop.js",
+    "old": "      if (o.refunded !== true || typeof o.payment_intent !== 'string') return { ok: true, applied: 0 }; // a part refund keeps the ware",
+    "new": "      if (!(o.amount_refunded > 0) || typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-other-order-ware-taken",
+    "file": "server-account/src/shop.js",
+    "old": "  if (!others.some((o) => o.ware === w.id)) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-dispute-lost-restores",
+    "file": "server-account/src/shop.js",
+    "old": "      const ours = o.status === 'won' || o.status === 'warning_closed'; // an inquiry closed: no chargeback",
+    "new": "      const ours = !!o.status; // an inquiry closed: no chargeback",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-disclaimer-after-panels",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  body.append(head, proceeds, tabs, scroll);",
+    "new": "  body.append(head, tabs, scroll, proceeds);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-buy-to-a-guest",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null, ...base };\n  if (!flow.shop) return { state: 'closed', buy: null, ...base };",
+    "new": "  if (!flow.shop) return { state: 'closed', buy: null, ...base };",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-buy-off-sale",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (row && !row.sale) return { state: 'gone', buy: null, ...base };\n  if (aurum) {",
+    "new": "  if (aurum) {",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-landing-never-said",
+    "file": "src/ui/accountFlow.js",
+    "old": "        : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held))",
+    "new": "        : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held && w.sale === 'never'))",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-flame-gutter-filled",
+    "file": "src/ui/titleFlame.js",
+    "old": "const GUTTER = 2; // clear rows at a frame's foot, so a scaled plate never samples the next frame's picture",
+    "new": "const GUTTER = 0; // clear rows at a frame's foot, so a scaled plate never samples the next frame's picture",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-origin-edge-thick",
+    "file": "src/ui/playerBadge.js",
+    "old": "export const GLYPH_EDGE_OF = Object.freeze({ origin: 0.32 });",
+    "new": "export const GLYPH_EDGE_OF = Object.freeze({ origin: 0.6 });",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-origin-moves-for-less-motion",
+    "file": "src/ui/playerBadge.js",
+    "old": "  const motion = stillness() ? null : (GLYPH_MOTION[/** @type {keyof typeof GLYPH_MOTION} */ (g.key)] ?? null); // SHOP",
+    "new": "  const motion = GLYPH_MOTION[/** @type {keyof typeof GLYPH_MOTION} */ (g.key)] ?? null; // SHOP",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-eternal-rate-off-clock",
+    "file": "src/render/auraRing.js",
+    "old": "export const ETERNAL_HZ = Object.freeze({ wave: 1 / 2, pulse: 1 / 4, sigil: 1 / 6 });",
+    "new": "export const ETERNAL_HZ = Object.freeze({ wave: 1 / 2, pulse: 1 / 4, sigil: 1 / 7 });",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-cape-one-side",
+    "file": "src/render/auraRing.js",
+    "old": "      for (const side of [0, 1]) { gl.uniform1i(U.uSide, side);",
+    "new": "      for (const side of [1]) { gl.uniform1i(U.uSide, side);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-cape-over-own-view",
+    "file": "src/render/auraRing.js",
+    "old": "    gl.disable(offset);\n    if (!auraEyeAtHead(w, eye)) {",
+    "new": "    gl.disable(offset);\n    if (eye) {",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-rider-cape-drawn",
+    "file": "src/render/auraRing.js",
+    "old": "    if (w.mounted === true || w.cape?.sunk === true || torn >= CLOAK_RIP_S) return;\n    gl.disable(offset);",
+    "new": "    if (w.cape?.sunk === true || torn >= CLOAK_RIP_S) return;\n    gl.disable(offset);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-stroll-never-stops",
+    "file": "src/render/auraPreview.js",
+    "old": "  return { pace: s.pace * Math.max(0, walk) ** 0.6, yaw: s.turn * Math.sin((2 * Math.PI * t) / s.turnS) };",
+    "new": "  return { pace: s.pace * (0.5 + 0.5 * Math.abs(walk)), yaw: s.turn * Math.sin((2 * Math.PI * t) / s.turnS) };",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-gem-left-out-of-chain",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);",
+    "new": "  shopAnchor = anchorSeason(gem, [], home.querySelector?.('.px-profile'), home);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-failed-grant-told-done",
+    "file": "server-account/src/shop.js",
+    "old": "      if (i === 2) throw e; // never written: a 5xx, and Stripe tells it again",
+    "new": "      if (i === 2) return { ok: true, applied: 0 };",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-revoke-letter-draws-the-ware",
+    "file": "server-account/src/shop.js",
+    "old": "              null,",
+    "new": "              w.id,",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-one-letter-for-every-reason",
+    "file": "server-account/src/shop.js",
+    "old": "    batch: `${shopReceiptBatch(order.id)}-${why === 'disputed' ? 'disputed' : 'refunded'}`, // a letter a reason: a dispute, then a refund, both said",
+    "new": "    batch: `${shopReceiptBatch(order.id)}-r`, // a letter a reason: a dispute, then a refund, both said",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-restore-unsaid",
+    "file": "server-account/src/shop.js",
+    "old": "      postStatement(db, order.player, restorePost(order), w.id, nowS),\n    ]);",
+    "new": "    ]);",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-inquiry-closed-keeps-the-ware",
+    "file": "server-account/src/shop.js",
+    "old": "      const ours = o.status === 'won' || o.status === 'warning_closed'; // an inquiry closed: no chargeback",
+    "new": "      const ours = o.status === 'won'; // an inquiry closed: no chargeback",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-tax-read-as-the-price",
+    "file": "server-account/src/shop.js",
+    "old": "        ctx,\n        orderOf(),\n        { intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total, currency: o.currency },\n        { env, fetch },\n      ); // the price before any tax Stripe adds",
+    "new": "        ctx,\n        orderOf(),\n        { intent: o.payment_intent, amount: o.amount_total, currency: o.currency },\n        { env, fetch },\n      ); // the price before any tax Stripe adds",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-every-order-being-confirmed",
+    "file": "server-account/src/shop.js",
+    "old": "  if (order.status === 'open')\n    return {\n      heading: 'Thank you',\n      lines: [\n        'Your payment is being confirmed.',\n        `${wareLine(w)} arrives on your account in a minute or two, with a receipt in your mailbox.`,\n        SHOP_PROCEEDS,\n      ],\n    };",
+    "new": "  return {\n    heading: 'Thank you',\n    lines: [\n      'Your payment is being confirmed.',\n      `${wareLine(w)} arrives on your account in a minute or two, with a receipt in your mailbox.`,\n      SHOP_PROCEEDS,\n    ],\n  };",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-a-key-a-ticket",
+    "file": "server-account/src/shop.js",
+    "old": "      key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');",
+    "new": "      key = await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-tabs-without-keys",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  tabs.addEventListener?.('keydown', (/** @type {KeyboardEvent} */ e) => {",
+    "new": "  tabs.addEventListener?.('keyup-never', (/** @type {KeyboardEvent} */ e) => {",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-tabs-unwrapped",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "        ? (i + 1) % n",
+    "new": "        ? Math.min(i + 1, n - 1)",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-flame-sheet-at-once",
+    "file": "src/ui/titleFlame.js",
+    "old": "  for (let f = 0; f < spec.frames; f++) {\n    await idle();\n    flameFramePixels(spec, f, data);\n  }",
+    "new": "  await idle();\n  for (let f = 0; f < spec.frames; f++) flameFramePixels(spec, f, data);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-flame-laid-twice",
+    "file": "src/ui/titleFlame.js",
+    "old": "  if (!doc?.head || doc.getElementById?.(FLAME_STYLE_ID) || laying) return laying;",
+    "new": "  if (!doc?.head || doc.getElementById?.(FLAME_STYLE_ID)) return laying;",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-a-ware-over-the-cap",
+    "file": "src/net/shopLaw.js",
+    "old": "  ware('bundle', 'lordofoblivion', 3000, {",
+    "new": "  ware('bundle', 'lordofoblivion', 4000, {",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "AURUM-ONLY-a-pack-owned",
+    "file": "src/net/shopLaw.js",
+    "old": "  return !!w && !shopRepeatable(w) && worthLeft(w, shopHeldIds(row)) === 0;",
+    "new": "  return !!w && worthLeft(w, shopHeldIds(row)) === 0;",
+    "tests": [
+      "test/server/shop_service.test.js",
+      "test/server/admin_all_storefront.test.js"
+    ],
+    "note": "AURUM-ONLY (2026-10-30): a pack's Aurum price is none, which worthLeft read as nothing left to buy - every pack owned, its checkout refused as held."
+  }
+]

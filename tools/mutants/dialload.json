@@ -1,0 +1,93 @@
+[
+  {
+    "name": "DIAL-LOAD-no-fallback",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "\n      setPlayerPos ??= opts.placePlayer ?? null;",
+    "new": "",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  },
+  {
+    "name": "DIAL-LOAD-host-law-overrides-the-door",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "setPlayerPos ??= opts.placePlayer ?? null;",
+    "new": "setPlayerPos = opts.placePlayer ?? null;",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  },
+  {
+    "name": "DIAL-LOAD-world-context-not-handed",
+    "file": "src/scenes/worldModes.js",
+    "old": "          placePlayer: placeLoadedPlayer,",
+    "new": "",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  },
+  {
+    "name": "DIAL-LOAD-standalone-context-not-handed",
+    "file": "src/scenes/dungeon.js",
+    "old": "      placePlayer: placeLoadedPlayer,",
+    "new": "",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  },
+  {
+    "name": "DIAL-LOAD-probe-keeps-its-own-applier",
+    "file": "src/scenes/worldModes.js",
+    "old": "dungeonCtx?.quickLoad?.(placeLoadedPlayer, key)",
+    "new": "dungeonCtx?.quickLoad?.((p) => player.spawn(p[0], p[1], p[2]), key)",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  },
+  {
+    "name": "DIAL-LOAD-forwarded-save-keeps-its-own-applier",
+    "file": "src/scenes/worldModes.js",
+    "old": "return dungeonCtx.restoreSaved(extras, placeLoadedPlayer, { session: false }) ?? true;",
+    "new": "return dungeonCtx.restoreSaved(extras, (p) => { player.spawn(p[0], p[1], p[2]); }, { session: false }) ?? true;",
+    "tests": [
+      "test/scenes/dialload.test.js",
+      "test/systems/save/mac6.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-context-load-starts-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      opts.onStartLoad?.();\n",
+    "new": "",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-load-start-before-the-slot-is-read",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (opts.dungeonOnline?.()) { hudText.add('Loading is disabled during online play.'); return; }",
+    "new": "      opts.onStartLoad?.();\n      if (opts.dungeonOnline?.()) { hudText.add('Loading is disabled during online play.'); return; }",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-world-context-not-handed-the-reset",
+    "file": "src/scenes/worldModes.js",
+    "old": "          onStartLoad: () => host.cameraRecoilReset?.(),",
+    "new": "",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-world-host-resets-nothing",
+    "file": "src/scenes/world.js",
+    "old": "    cameraRecoilReset: () => cameraRecoiler.reset(),",
+    "new": "    cameraRecoilReset: () => {},",
+    "tests": [
+      "test/scenes/dialload.test.js"
+    ]
+  }
+]

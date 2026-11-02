@@ -1,0 +1,389 @@
+[
+  {
+    "name": "SEAT-HALL-tier",
+    "file": "server-account/src/decor.js",
+    "old": "WHERE h.tier = 'palace' AND EXISTS",
+    "new": "WHERE h.tier IN ('palace', 'crown') AND EXISTS",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-rank",
+    "file": "server-account/src/decor.js",
+    "old": "AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
+    "new": "AND g.rank IN (0, 1, 2, 3)\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-holder",
+    "file": "server-account/src/decor.js",
+    "old": "WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c\n    AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
+    "new": "WHERE g.player = k.p AND g.char_id = k.c\n    AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-table",
+    "file": "server-account/src/decor.js",
+    "old": "table: 'seat_hall_decor', owns: SEAT_OWNS",
+    "new": "table: 'home_decor', owns: SEAT_OWNS",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-hidden-door",
+    "file": "server-account/src/decor.js",
+    "old": "  if (seat === true) return { error: 'bad-home' };   // SEAT-HALL",
+    "new": "  // SEAT-HALL",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-store-guild",
+    "file": "server-account/src/decor.js",
+    "old": "guildOf: seatHallGuildOf,",
+    "new": "guildOf: hallGuildOf,",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-move-table",
+    "file": "server-account/src/decor.js",
+    "old": "UPDATE ${S.table} SET place = ? WHERE",
+    "new": "UPDATE home_decor SET place = ? WHERE",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-remove-guild",
+    "file": "server-account/src/decor.js",
+    "old": "const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
+    "new": "const hall = delta > 0 ? await hallGuildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-cap-used",
+    "file": "server-account/src/decor.js",
+    "old": "  const roomCap = S.seat ? S.cap : decorCapOf(",
+    "new": "  const roomCap = S.seat ? DECOR_CAP : decorCapOf(",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "SEAT-HALL-cap-scope",
+    "file": "server-account/src/decor.js",
+    "old": "['map_id = ? AND yard = ?', [mapId, out]]",
+    "new": "['map_id = ? AND building_key = ? AND yard = ?', [mapId, _buildingKey, out]]",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-trigger-when",
+    "file": "server-account/migrations/0065_seat_hall.sql",
+    "old": "  WHEN NEW.guild_id IS NOT OLD.guild_id\n",
+    "new": "",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-trigger-handed",
+    "file": "server-account/migrations/0065_seat_hall.sql",
+    "old": "DELETE FROM seat_hall_decor WHERE map_id = NEW.key;",
+    "new": "DELETE FROM seat_hall_decor WHERE 0;",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-trigger-lapsed",
+    "file": "server-account/migrations/0065_seat_hall.sql",
+    "old": "DELETE FROM seat_hall_decor WHERE map_id = OLD.key;",
+    "new": "DELETE FROM seat_hall_decor WHERE 0;",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-gate-seat",
+    "file": "server-account/src/index.js",
+    "old": "&& body?.seat === true && !seatsOpenFor(who.player, env)) return no('seats-closed'",
+    "new": "&& !seatsOpenFor(who.player, env)) return no('seats-closed'",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-gate",
+    "file": "server-account/src/index.js",
+    "old": "body?.seat === true && !seatsOpenFor(who.player, env)) return no('seats-closed'",
+    "new": "body?.seat === true && false) return no('seats-closed'",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-law-cap",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SEAT_HALL_DECOR_CAP = 100;",
+    "new": "export const SEAT_HALL_DECOR_CAP = 101;",
+    "tests": [
+      "test/net/seathall_service.test.js",
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-law-clear",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SEAT_HALL_CLEAR_M = 2;",
+    "new": "export const SEAT_HALL_CLEAR_M = 3;",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-law-holder",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const seatHallOf = (seat, guildId) => !!seat && !!guildId && seat.holder?.guild?.id === guildId;",
+    "new": "export const seatHallOf = (seat, guildId) => !!seat && !!guildId && !!seat.holder?.guild?.id;",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-largest",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "(b.cells > a.cells ? b : a)",
+    "new": "(b.cells < a.cells ? b : a)",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-court",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "return deps.charterClear?.(at) ?? null;",
+    "new": "return null;",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-commit",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (whyNotHere(p)) return false;   // HOME-YARD: off the lot; SEAT-HALL: out of the Charter Room - the bar says why\n    p.busy = true;",
+    "new": "    p.busy = true;",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-tool-cap",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": ": Number.isSafeInteger(r?.cap) ? r.cap : r?.hall ? DECOR_HALL_CAP : DECOR_CAP);",
+    "new": ": DECOR_CAP);",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-door-list",
+    "file": "src/net/accountClient.js",
+    "old": "{ mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) })\n      .then((r) =>",
+    "new": "{ mapId, buildingKey, ...(yard && !seat ? { yard: true } : {}) })\n      .then((r) =>",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-door-place",
+    "file": "src/net/accountClient.js",
+    "old": "...(yard ? { yard: true } : {}), ...(seat ? { seat: true } : {}) }),",
+    "new": "...(yard ? { yard: true } : {}) }),",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-door-move",
+    "file": "src/net/accountClient.js",
+    "old": "id, place, ...(realm ? { realm } : {}), ...(seat ? { seat: true } : {}) }),",
+    "new": "id, place, ...(realm ? { realm } : {}) }),",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-door-remove",
+    "file": "src/net/accountClient.js",
+    "old": "character, id, ...(realm ? { realm } : {}), ...(seat ? { seat: true } : {}) }),",
+    "new": "character, id, ...(realm ? { realm } : {}) }),",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-latch",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorSeatHall = building?.buildingType === BUILDING_TYPES.Palace ?",
+    "new": "interiorSeatHall = building?.buildingType === BUILDING_TYPES.Tavern ?",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-teardown",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorSeatHall = null;   // SEAT-HALL\n",
+    "new": "",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-teardown2",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorHome = null; interiorSeatHall = null; interiorOverlay = null;",
+    "new": "interiorHome = null; interiorOverlay = null;",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-room",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (interiorSeatHall?.keeper) return { kind: 'home', hall: true, seat: true",
+    "new": "if (interiorSeatHall?.member) return { kind: 'home', hall: true, seat: true",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-list-seat",
+    "file": "src/scenes/worldModes.js",
+    "old": "ask: () => primedDecorList(decorListKey(homeTownOf(b), b.buildingKey, seat)) ?? host.homeDecor.list(homeTownOf(b), b.buildingKey, seat),",
+    "new": "ask: () => primedDecorList(decorListKey(homeTownOf(b), b.buildingKey)) ?? host.homeDecor.list(homeTownOf(b), b.buildingKey),",
+    "tests": [
+      "test/net/seathall_client.test.js",
+      "test/server/decor1.test.js",
+      "test/scenes/decor/decorshell.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-writes-seat",
+    "file": "src/scenes/worldModes.js",
+    "old": "? { ...a, seat: true } : a);",
+    "new": "? a : a);",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-court-people",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (near(n.x, n.z)) return SEAT_HALL_TEXT.clear;",
+    "new": "if (near(n.x, n.y)) return SEAT_HALL_TEXT.clear;",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-court-marks",
+    "file": "src/scenes/worldModes.js",
+    "old": "if ((m.type === 11 || m.type === 18) && near(m.x, m.z))",
+    "new": "if ((m.type === 11) && near(m.x, m.z))",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-court-quests",
+    "file": "src/scenes/worldModes.js",
+    "old": "for (const q of questFlats ?? []) if (!q.dead && near(q.x, q.z))",
+    "new": "for (const q of [] ?? []) if (!q.dead && near(q.x, q.z))",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-chest",
+    "file": "src/scenes/worldModes.js",
+    "old": "if ((interiorHome?.hall && interiorHome.member) || interiorSeatHall?.member) { (interiorHome?.hall ? openSharedChest(piece.id) : openHallChest()); return; }",
+    "new": "if ((interiorHome?.hall && interiorHome.member)) { (interiorHome?.hall ? openSharedChest(piece.id) : openHallChest()); return; }",
+    "tests": [
+      "test/net/seathall_client.test.js",
+      "test/server/decor1.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-board",
+    "file": "src/scenes/worldModes.js",
+    "old": "(!!interiorHome?.hall || !!interiorSeatHall) && piece?.model",
+    "new": "(!!interiorHome?.hall) && piece?.model",
+    "tests": [
+      "test/net/seathall_client.test.js",
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-bed",
+    "file": "src/scenes/worldModes.js",
+    "old": "Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member || (!!interiorHome",
+    "new": "Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.keeper || (!!interiorHome",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "SEAT-HALL-keeper-rank",
+    "file": "src/scenes/seatHallHost.js",
+    "old": "      return {\n        key: seat.key,\n        name: g.name ?? '',\n        member,\n        keeper: member && guildMay(Number(mine?.rank), 'decorate', mine?.powers ?? null),\n      };",
+    "new": "      return { key: seat.key, name: g.name ?? '', member, keeper: member };",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the seat halls moved out of bootWorld into their own host, scenes/seatHallHost.js createSeatHallHost (HOST-SPLIT)."
+  },
+  {
+    "name": "SEAT-HALL-crown",
+    "file": "src/scenes/seatHallHost.js",
+    "old": "      const g = seat?.tier === 'palace' ? (seat.holder?.guild ?? null) : null;",
+    "new": "      const g = seat.holder?.guild ?? null;",
+    "tests": [
+      "test/net/seathall_client.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the seat halls moved out of bootWorld into their own host, scenes/seatHallHost.js createSeatHallHost (HOST-SPLIT)."
+  },
+  {
+    "name": "SEAT-HALL-realm-clause",
+    "file": "server-account/src/decor.js",
+    "old": "\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
+    "new": "))`;",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-HALL-region-unread",
+    "file": "server-account/src/decor.js",
+    "old": "const seatRegionOf = async (db, mapId) => (await db.prepare('SELECT region FROM town_seat_holds WHERE key = ?').bind(mapId).first())?.region ?? null;",
+    "new": "const seatRegionOf = async () => null;",
+    "tests": [
+      "test/net/seathall_service.test.js"
+    ]
+  }
+]

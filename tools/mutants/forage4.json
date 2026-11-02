@@ -1,0 +1,156 @@
+[
+  {
+    "name": "FORAGE4-2-escape-walks-out-of-the-wait",
+    "file": "src/ui/waitWindow.js",
+    "old": "  input() {}",
+    "new": "  input(code) {\n    if (code === 'Escape' || code === 'back') this._end(false);\n  }",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-3-a-foe-never-interrupts",
+    "file": "src/ui/waitWindow.js",
+    "old": "    if (this._interruptWhen?.()) {\n      this._end(false);\n      return;\n    } // a foe near ends it, the rest forgiven\n    this._elapsed += Math.max(0, dt || 0);",
+    "new": "    this._elapsed += Math.max(0, dt || 0);",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-4-the-wait-never-ends",
+    "file": "src/ui/waitWindow.js",
+    "old": "    if (this._elapsed >= this.seconds) this._end(true);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-5-a-second-wait-is-lost",
+    "file": "src/ui/waitWindow.js",
+    "old": "    if (!this.done && seconds > 0) this.seconds += seconds;",
+    "new": "    void seconds;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-6-an-hour-a-real-minute",
+    "file": "src/scenes/foragingWait.js",
+    "old": "    const real = waitRealSeconds(gameSeconds / 60);",
+    "new": "    const real = waitRealSeconds(gameSeconds / 3600);",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-7-the-page-over-the-pack",
+    "file": "src/scenes/foragingWait.js",
+    "old": "    if (pending()) return overlayActive() ? null : open();",
+    "new": "    if (pending()) return open();",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-8-a-save-mid-wait-owes-all",
+    "file": "src/scenes/foragingWait.js",
+    "old": "      if (!_win.done && record()) record().seconds = _win.remaining;\n      return _win;",
+    "new": "      return _win;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-9-the-held-boxes-never-shown",
+    "file": "src/scenes/foragingWait.js",
+    "old": "    release();\n    return null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-10-a-bonus-before-the-work",
+    "file": "src/scenes/foragingWait.js",
+    "old": "    holds: () => !_releasing && (pending() || !!_win || _held.length > 0),",
+    "new": "    holds: () => !_releasing && (!!_win || _held.length > 0),",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ],
+    "note": "CHOP-WAIT (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed BY CONTENT - `holds` answers false while the release is showing a box now (`!_releasing && (...)`); the pending term it drops is the same law, same killer."
+  },
+  {
+    "name": "FORAGE4-11-offline-keeps-a-wait",
+    "file": "src/scenes/foragingWait.js",
+    "old": "      if (pending()) write(0);\n      release();",
+    "new": "      release();",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-12-a-day-of-waiting-obeyed",
+    "file": "src/scenes/foragingWait.js",
+    "old": "  const seconds = Number.isFinite(r.seconds) && r.seconds > 0 ? Math.min(FORAGING_WAIT_MAX_SECONDS, r.seconds) : 0;",
+    "new": "  const seconds = Number.isFinite(r.seconds) && r.seconds > 0 ? r.seconds : 0;",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-13-online-moves-the-clock",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "      if (hooks?.sharedClock?.()) hooks?.waitOnline?.(seconds, this.parentQuest);",
+    "new": "      if (false) hooks?.waitOnline?.(seconds, this.parentQuest);",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-14-the-box-over-the-wait",
+    "file": "src/scenes/world.js",
+    "old": "    if (foragingWait.holds()) { foragingWait.hold(() => showQuestBox(box), keptBox(box)); return; }   // AUDIT 28 F6: a box of words rides the save\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-15-the-wait-not-saved",
+    "file": "src/systems/save/save.js",
+    "old": "  'foragingWait',   // FORAGE4:",
+    "new": "  'foragingWaitX',   // FORAGE4:",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-16-a-join-never-reaches-the-page",
+    "file": "src/scenes/foragingWait.js",
+    "old": "      _win?.extend(real);\n      r.seconds += real; // the sum, uncut",
+    "new": "      r.seconds += real; // the sum, uncut",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-17-a-duel-no-foe",
+    "file": "src/scenes/world.js",
+    "old": "    enemiesNear: () => duelEnemyNear() || areEnemiesNearby(exteriorFoePool(), { resting: true }),\n    online: () => sharedClockOn(),",
+    "new": "    enemiesNear: () => areEnemiesNearby(exteriorFoePool(), { resting: true }),\n    online: () => sharedClockOn(),",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE4-18-the-page-says-nothing",
+    "file": "src/scenes/foragingWait.js",
+    "old": "      own({ seconds: real, label: label ?? null, held: r?.held ?? [] });",
+    "new": "      own({ seconds: real, label: null, held: r?.held ?? [] });",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  }
+]

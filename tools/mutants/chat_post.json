@@ -1,0 +1,119 @@
+[
+  {
+    "name": "CHAT-POST-stack-count-left-off",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  return line.stack ? `${name} x${line.stack}` : name;",
+    "new": "  return name;",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-offered-offline",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (deps.canPostItem?.()) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-world-pack-mute",
+    "file": "src/scenes/world.js",
+    "old": "    linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: link into the field\n",
+    "new": "",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-building-pack-mute",
+    "file": "src/scenes/world.js",
+    "old": "    linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs link too\n",
+    "new": "",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-dungeon-pack-mute",
+    "file": "src/scenes/worldModes.js",
+    "old": "          linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack links through the outer host\n",
+    "new": "",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-item-dropped-on-parse",
+    "file": "src/net/wire.js",
+    "old": "    const linked = items ? { items, item: items[0] } : {};   // `item` kept so a one-link line still reads on an older client build\n    if (m.ch === undefined) return { t: 'chat', text, ...me, ...linked };\n    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me, ...linked } : { error: 'bad chat' };",
+    "new": "    if (m.ch === undefined) return { t: 'chat', text, ...me };\n    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-link-not-drawn",
+    "file": "src/ui/chatPanel.js",
+    "old": "    const linked = chatItemsOf(line);",
+    "new": "    const linked = [];",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-no-field-link",
+    "file": "src/ui/chatPanel.js",
+    "old": "    linkItem: (item) => {",
+    "new": "    linkItemGone: (item) => {",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-card-not-packs",
+    "file": "src/ui/chatItemLink.js",
+    "old": "  link.addEventListener('mouseenter', () => showItemHover(item, {}, link, 'shop'));",
+    "new": "  link.addEventListener('mouseenter', () => {});",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-bracket-query-mute",
+    "file": "src/ui/chatItemLink.js",
+    "old": "  const m = before.match(/\\[([^\\]\\[]*)$/);\n  return m ? { start: before.length - m[0].length, query: m[1] } : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-bag-suggest-mute",
+    "file": "src/ui/chatPanel.js",
+    "old": "  input.addEventListener('input', () => refreshSuggest());   // CHAT-POST: `[` / typed letters refresh the bag picker\n",
+    "new": "",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-pending-includes-all",
+    "file": "src/ui/chatItemLink.js",
+    "old": "    const taken = used.get(label) ?? 0;\n    if (taken >= count) continue;\n    kept.push(row);\n    used.set(label, taken + 1);",
+    "new": "    if (count < 1) continue;\n    kept.push(row);",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-tab-nests-bracket",
+    "file": "src/ui/chatPanel.js",
+    "old": "        if (openLinkQuery(v, caret)) return;\n",
+    "new": "",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  }
+]

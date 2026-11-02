@@ -1,0 +1,162 @@
+[
+  {
+    "name": "FOE-FORGE-total-off",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (heldOf(from) >= PEER_PUPPETS_TOTAL_MAX) { if (site) refused.add(site); continue; }",
+    "new": "if (false) { if (site) refused.add(site); continue; }",
+    "why": "each allowance its own again - a forged frame fills every one (eighty-nine stand)",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-total-doubled",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "export const PEER_PUPPETS_TOTAL_MAX = CELL_FRAME_RECORDS_MAX;",
+    "new": "export const PEER_PUPPETS_TOTAL_MAX = CELL_FRAME_RECORDS_MAX * 2;",
+    "why": "a total past what one frame carries holds nothing an honest owner sends",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-total-off-by-one",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (heldOf(from) >= PEER_PUPPETS_TOTAL_MAX)",
+    "new": "if (heldOf(from) > PEER_PUPPETS_TOTAL_MAX)",
+    "why": "one past the bound stands",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-taken-uncounted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const [k, f] of _adopted) if (tookLive(from, k, f)) n++;",
+    "new": "    void 0;",
+    "why": "a foe taken over leaves its owner's count - records naming the reader heir stand foes without end",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-taken-dead-counted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const tookLive = (from, k, f) => !f.dead && !f._gone && k.startsWith(from + ':');",
+    "new": "const tookLive = (from, k, f) => !f._gone && k.startsWith(from + ':');",
+    "why": "a taken foe that fell still holds its owner's room - an honest owner whose handed foes I killed is held short for the rest of the cell",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-fallen-counted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead) n++;",
+    "new": "    for (const f of _pupIndex.values()) if (f.puppet === from) n++;",
+    "why": "an owner's bodies count as its foes - a fight's corpses hold its next foes off the reader",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-total-pending-uncounted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const k of _pupPending.keys()) if (k.startsWith(from + ':')) n++;",
+    "new": "    void 0;",
+    "why": "the puppets still building are not counted - one frame of a hundred records starts a hundred builds",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-elite-off",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "markedOf(f.puppet, isElitePuppet) < PEER_ELITE_PUPPETS_MAX",
+    "new": "true",
+    "why": "every record's `z` believed - forty Elite Daedroths",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-elite-off-by-one",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "< PEER_ELITE_PUPPETS_MAX)",
+    "new": "<= PEER_ELITE_PUPPETS_MAX)",
+    "why": "nine elites",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-elite-bound",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "export const PEER_ELITE_PUPPETS_MAX = 8;",
+    "new": "export const PEER_ELITE_PUPPETS_MAX = 9;",
+    "why": "the bound moved without its record",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-taken-elite-uncounted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const [k, f] of _adopted) if (tookLive(from, k, f) && marked(f)) n++;",
+    "new": "    void 0;",
+    "why": "an elite taken over leaves its owner's eight - hand them over, send eight more",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-revenant-off",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "markedOf(f.puppet, isRevenantPuppet) < PEER_REVENANT_PUPPETS_MAX",
+    "new": "true",
+    "why": "every record's `nm` believed, and its blows at four times its kind's",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-revenant-blows-ungated",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (rev) {",
+    "new": "    if (typeof r.nm === 'string' && r.nm) {",
+    "why": "the name is refused, the blows are not",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-revenant-bound",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "export const PEER_REVENANT_PUPPETS_MAX = 9;",
+    "new": "export const PEER_REVENANT_PUPPETS_MAX = 10;",
+    "why": "the bound moved off the character's own numbers",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-giant-any-kind",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": " && f.mobileType === WILD_GIANT && !markedOf(",
+    "new": " && !markedOf(",
+    "why": "a Daedroth called a Greater Giant strikes four times as hard",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  },
+  {
+    "name": "FOE-FORGE-giant-many",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": " && !markedOf(f.puppet, (x) => x.entity?.zoneGiant === r.gg)) {",
+    "new": ") {",
+    "why": "sixty-four giants each the Greater Giant",
+    "tests": [
+      "test/scenes/foeforge.test.js"
+    ]
+  }
+]

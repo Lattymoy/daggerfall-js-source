@@ -1,0 +1,65 @@
+[
+  {
+    "name": "TP-choices-never-kept",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  byHome.set(key, choices);\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  },
+  {
+    "name": "TP-choices-kept-without-the-job",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const key = `${home.mapId}:${job}`;",
+    "new": "  const key = `${home.mapId}`;",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  },
+  {
+    "name": "TP-choices-kept-for-the-wrong-town",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const kept = byHome.get(key);\n  if (kept !== undefined) { byHome.delete(key); byHome.set(key, kept); return kept; }",
+    "new": "  const kept = byHome.values().next().value;\n  if (kept !== undefined) { byHome.delete(key); byHome.set(key, kept); return kept; }",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  },
+  {
+    "name": "TP-far-tie-by-the-higher-id",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": ".sort((a, b) => b.d - a.d || a.town.mapId - b.town.mapId);",
+    "new": ".sort((a, b) => b.d - a.d || b.town.mapId - a.town.mapId);",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  },
+  {
+    "name": "TP-equal-distance-taken-as-nearer",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "c.town !== first && c.d < d0)",
+    "new": "c.town !== first && c.d <= d0)",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  },
+  {
+    "name": "TP-draw-not-scaled-by-the-total",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  let r = rng() * total;\n  let last = null;\n  for (const p of picks) {",
+    "new": "  let r = rng();\n  let last = null;\n  for (const p of picks) {",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  },
+  {
+    "name": "TP-weight-of-the-last-town-only",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "for (const k in weights) if (weights[k] > 0) { total += weights[k];",
+    "new": "for (const k in weights) if (weights[k] > 0) { total = weights[k];",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  }
+]

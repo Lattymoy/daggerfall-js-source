@@ -1,0 +1,83 @@
+[
+  {
+    "name": "CABINHULL-room-collider",
+    "file": "src/scenes/world.js",
+    "old": "    const col = modes?.sailingCabin ? collider : csaModeCollider();",
+    "new": "    const col = csaModeCollider();",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  },
+  {
+    "name": "CABINHULL-peers-left-below",
+    "file": "src/scenes/world.js",
+    "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
+    "new": "const peers = (modes?.mode ?? 'exterior') === 'exterior' ? csa.peerBoats : [];",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  },
+  {
+    "name": "CABINHULL-pick-below",
+    "file": "src/scenes/world.js",
+    "old": "    if (!csaRuntime || modes?.sailingCabin) return null;   // CABIN-HULL",
+    "new": "    if (!csaRuntime) return null;   // CABIN-HULL",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  },
+  {
+    "name": "CABINHULL-peer-pick-below",
+    "file": "src/scenes/world.js",
+    "old": "    if (!csaOn() || modes?.sailingCabin) return null;   // CABIN-HULL: nor another's",
+    "new": "    if (!csaOn()) return null;   // CABIN-HULL: nor another's",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  },
+  {
+    "name": "CABINHULL-press-below",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sailingCabin) return;   /* CABIN-HULL",
+    "new": "    if (false) return;   /* CABIN-HULL",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  },
+  {
+    "name": "CABINHULL-hull-drawn-below",
+    "file": "src/scenes/world.js",
+    "old": "    drawModeMeshes: () => { if (csaOn() && !modes?.sailingCabin) {",
+    "new": "    drawModeMeshes: () => { if (csaOn()) {",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  },
+  {
+    "name": "CABINHULL-drops-drawn-below",
+    "file": "src/scenes/world.js",
+    "old": "    csaDrawParticlesBlended: () => { if (csaOn() && !modes?.sailingCabin) csaDrawParticlesBlended(); }",
+    "new": "    csaDrawParticlesBlended: () => { if (csaOn()) csaDrawParticlesBlended(); }",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  },
+  {
+    "name": "CABINHULL-billboards-in-cabin",
+    "file": "src/scenes/world.js",
+    "old": "...(csaOn() && !modes?.sailingCabin ? csa.batches() : [])",
+    "new": "...(csaOn() ? csa.batches() : [])",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  },
+  {
+    "name": "CABINHULL-lights-in-cabin",
+    "file": "src/scenes/world.js",
+    "old": "    modeLights: () => (csaOn() && !modes?.sailingCabin ? csa.lights(cam.pos) : []),",
+    "new": "    modeLights: () => (csaOn() ? csa.lights(cam.pos) : []),",
+    "tests": [
+      "test/systems/comeSailAway/fb1003b_cabinhull.test.js"
+    ]
+  }
+]

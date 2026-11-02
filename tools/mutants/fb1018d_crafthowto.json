@@ -1,0 +1,303 @@
+[
+  {
+    "name": "CRAFT-HOWTO-smithing-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  smithing: () => t('prof.page.how.smithing', 'Smith at a forge: Weaponsmiths, Armorers and your home have one. It smelts ore into ingots; its anvil makes weapons, armor and tools, even from raw ore. Jewelry needs a jeweler\\'s bench, in Pawn Shops, Gem Stores and your home.'),\n",
+    "new": "",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Smithing's pane says nothing again - the report's screenshot"
+  },
+  {
+    "name": "CRAFT-HOWTO-building-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  building: () => t('prof.page.how.building', 'Carpentry needs a workbench: Furniture Stores, joineries and your home have one. It saws logs into planks and makes staves, bows, arrows and furniture. A mason\\'s bench, in General Stores and your home, cuts stone and mixes Mortar.'),\n",
+    "new": "",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Building's pane says nothing"
+  },
+  {
+    "name": "CRAFT-HOWTO-outfitting-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting needs a loom: Clothing Stores and your home have one. It cures hides into leather, weaves Root Tendrils into Linen and spins furs into Wool. It makes leather armor, clothing, rugs and tapestries. Weavers sell Linen and Wool too.'),\n",
+    "new": "",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Outfitting's pane says nothing",
+    "note": "PIN MOVED (WOVEN-PAYS, FIELD BUGS 2026-10-26b): re-aimed by content - the how-to's first-time clause names cloth bought with silver. PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+  },
+  {
+    "name": "CRAFT-HOWTO-cooking-undrawn",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    pane.append(el('p', 'px-note', CRAFT_HOW.provisioning()));   // FB1018D CRAFT-HOWTO: and its cooking\n",
+    "new": "",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Provisioning says its brew and never its cooking, as before"
+  },
+  {
+    "name": "CRAFT-HOWTO-crafts-branch-inverted",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  } else if (Object.hasOwn(CRAFT_HOW, _sel)) {",
+    "new": "  } else if (!Object.hasOwn(CRAFT_HOW, _sel)) {",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "the crafts' branch answers the wrong professions (one character)"
+  },
+  {
+    "name": "CRAFT-HOWTO-brew-undrawn",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    pane.append(el('p', 'px-note', alchemyHow()));\n",
+    "new": "",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Provisioning's brew unsaid"
+  },
+  {
+    "name": "CRAFT-HOWTO-disenchant-undrawn",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    pane.append(el('p', 'px-note', ENCHANTING_HOW(enchantDiscountPct(tr.rank, tr.specs?.[50] ?? null))));",
+    "new": "    void ENCHANTING_HOW;",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Enchanting's how-to unsaid"
+  },
+  {
+    "name": "CRAFT-HOWTO-gatherers-undrawn",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (GATHER_HOW[_sel]) pane.append(el('p', 'px-note', gatherHow(_sel)));   // TOOL-SAID",
+    "new": "    if (!GATHER_HOW[_sel]) pane.append(el('p', 'px-note', gatherHow(_sel)));   // TOOL-SAID",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Mining, Logging and Herbalism lose their how-to (one character)"
+  },
+  {
+    "name": "CRAFT-HOWTO-hunting-undrawn",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    pane.append(el('p', 'px-note', t('prof.page.how.hunting', ",
+    "new": "    if (false) pane.append(el('p', 'px-note', t('prof.page.how.hunting', ",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Hunting loses its how-to"
+  },
+  {
+    "name": "CRAFT-HOWTO-fishing-undrawn",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    pane.append(el('p', 'px-note', fishingHow()));",
+    "new": "    void fishingHow;",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "Fishing loses its how-to"
+  },
+  {
+    "name": "CRAFT-HOWTO-gem-store-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "in Pawn Shops, Gem Stores and your home.'",
+    "new": "in Pawn Shops and your home.'",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "a jeweller's bench the host answers left out of Smithing's words"
+  },
+  {
+    "name": "CRAFT-HOWTO-loom-home-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "Outfitting needs a loom: Clothing Stores and your home have one.",
+    "new": "Outfitting needs a loom: Clothing Stores have one.",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "a home's loom, which the host answers, left out of Outfitting's words"
+  },
+  {
+    "name": "CRAFT-HOWTO-joinery-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "Furniture Stores, joineries and your home have one.",
+    "new": "Furniture Stores and your home have one.",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "the joinery's bench (CARP-YARD) left out of Building's words"
+  },
+  {
+    "name": "CRAFT-HOWTO-basket-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "herbs and Basket finds, and go to your pack.",
+    "new": "and herbs, and go to your pack.",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "the Basket's food, a dish's input, left out of the cooking words"
+  },
+  {
+    "name": "CRAFT-HOWTO-brew-stores-only",
+    "file": "src/ui/professions/profPages.js",
+    "old": "from what you carry or store.",
+    "new": "from what your Stores hold.",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "the brew's words say the Stores alone again (BAG-CRAFT reads the pack)"
+  },
+  {
+    "name": "CRAFT-HOWTO-saw-pays",
+    "file": "src/net/professionLaw.js",
+    "old": "      more: Object.freeze({ profession: 'logging', spec: 'timberwright', per: 3 }),\n      xp: null,",
+    "new": "      more: Object.freeze({ profession: 'logging', spec: 'timberwright', per: 3 }),\n      xp: 'carpentry',",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "a saw paying XP - the words say sawing earns none"
+  },
+  {
+    "name": "CRAFT-HOWTO-cure-pays",
+    "file": "src/net/professionLaw.js",
+    "old": "        xp: null,",
+    "new": "        xp: 'outfitting',",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "a cure paying XP - the words say curing earns none"
+  },
+  {
+    "name": "CRAFT-HOWTO-page-off-its-group",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "    id: 'crafting', group: 'livelihood',",
+    "new": "    id: 'crafting', group: 'loot',",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "the Crafting page filed away from Professions & Survival"
+  },
+  {
+    "name": "CRAFT-HOWTO-page-gem-store-unlisted",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "Jeweler\\'s bench: Pawn Shops, Gem Stores.",
+    "new": "Jeweler\\'s bench: Pawn Shops.",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "a jeweller's shop the host answers left off the page"
+  },
+  {
+    "name": "CRAFT-HOWTO-page-joinery-unlisted",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "Workbench: Furniture Stores, joineries.",
+    "new": "Workbench: Furniture Stores.",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "the joinery left off the page"
+  },
+  {
+    "name": "CRAFT-HOWTO-professions-old-words",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "{Professions} opens them, and your stored goods are under Holdings > Stores in the same window.",
+    "new": "{Professions} opens them and your Stores, where your stored goods are kept.",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "the Professions page says its key opens the Stores again"
+  },
+  {
+    "name": "CRAFT-HOWTO-seam-dropped",
+    "file": "src/scenes/gatherHost.js",
+    "old": "noteFirstUse('professions'); noteFirstUse('crafting');",
+    "new": "noteFirstUse('professions');",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "the Crafting page never pops"
+  },
+  {
+    "name": "CRAFT-HOWTO-fr-row-dropped",
+    "file": "locales/fr/Port_Strings.csv",
+    "old": "\ntutorials.crafting.more,\"",
+    "new": "\ntutorials.crafting.mor,\"",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ],
+    "why": "a whole language without the page's last point"
+  },
+  {
+    "name": "CRAFT-HOWTO-cooking-unpaid",
+    "file": "src/ui/professions/craftHall.js",
+    "old": "        t('prof.hall.src.dishXp', '{xp, number} XP, {more, number} with every pan on time', {",
+    "new": "        none(),\n        t('prof.hall.src.dishXp', '{xp, number} XP, {more, number} with every pan on time', {",
+    "why": "AUDIT FB1018D L1-5: the page tells a cook a dish pays nothing - the XP clause unread by the pin",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-HOWTO-building-unpaid",
+    "file": "src/ui/professions/craftHall.js",
+    "old": "        t('prof.hall.src.masonXp', '{xp, number} XP each, {more, number} for clean work', {",
+    "new": "        none(),\n        t('prof.hall.src.masonXp', '{xp, number} XP each, {more, number} for clean work', {",
+    "why": "AUDIT FB1018D L1-5: the workbench and the mason's bench said to pay nothing",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-HOWTO-outfitting-unpaid",
+    "file": "src/ui/professions/craftHall.js",
+    "old": "      rows.push([t('prof.hall.src.loom', 'A piece at the loom'), piece(['outfitting'])]);",
+    "new": "      rows.push([t('prof.hall.src.loom', 'A piece at the loom'), none(), piece(['outfitting'])]);",
+    "why": "AUDIT FB1018D L1-5: the loom said to pay nothing",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-HOWTO-raw-ore-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "tools, even from raw ore.",
+    "new": "tools.",
+    "why": "AUDIT FB1018D L1-5: the anvil's smelt-first chain (CRAFT1) unsaid",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-HOWTO-menu-path",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "stand at a station and press {Professions}: the Crafting page opens on it.",
+    "new": "stand at a station and open Menu > Holdings > Stores.",
+    "why": "AUDIT FB1018D L1-6: a path the Classic skin has not - its Escape is DFU's pause, no tabs",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-HOWTO-professions-menu-path",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "{Professions} opens them, and your stored goods are under Holdings > Stores in the same window.",
+    "new": "{Professions} opens them. Your stored goods are kept under Menu > Holdings > Stores.",
+    "why": "AUDIT FB1018D L1-6: the Professions page's Classic-false path",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-HOWTO-controls-row-stores",
+    "file": "src/systems/inputActions.js",
+    "old": "['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station (online)')]",
+    "new": "['Professions', t('input.action.professions', 'Open your Professions and Stores (online)')]",
+    "why": "AUDIT FB1018D L1-7: the key's Controls row keeps the claim the tutorial dropped - it lands on the Professions page",
+    "tests": [
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ]
+  }
+]

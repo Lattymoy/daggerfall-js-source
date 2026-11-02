@@ -1,0 +1,268 @@
+[
+  {
+    "name": "AUDITLOOT-F1-chain-anywhere",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (power.kind === 'chain' || power.kind === 'hammerfall' || power.kind === 'broadside') return shoots;",
+    "new": "  if (power.kind === 'chain' || power.kind === 'hammerfall' || power.kind === 'broadside') return true;",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F1-quake-anywhere",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (power.kind === 'quake') return item.group === 'Weapons' && !shoots;",
+    "new": "  if (power.kind === 'quake') return true;",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F1-every-weapon-shoots",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const shoots = item.group === 'Weapons' && weaponSkillUsed(item.templateIndex) === SKILLS.Archery;",
+    "new": "  const shoots = item.group === 'Weapons';",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F1-choices-unfitted",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries().filter((r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && !!powerOf(r.id))",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F1-wire-unfitted",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "recordFitsGroup(legendaryById(item.imprint), item) && powerFits(item, powerOf(item.imprint)));",
+    "new": "recordFitsGroup(legendaryById(item.imprint), item) && !!powerOf(item.imprint));",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ],
+    "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
+  },
+  {
+    "name": "AUDITLOOT-F2-a-made-piece-breaks",
+    "file": "src/systems/reforge.js",
+    "old": "  if (typeof item?.provenance === 'string') return 0;\n  const t = item?.rarity;",
+    "new": "  const t = item?.rarity;",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F3-reforged-as-minted",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
+    "new": "  if (item.reforges !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
+    "tests": [
+      "test/systems/auditloot.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - an old piece's one-line mark beside the count (the new law writes `reforges`; affixlines_reforge.test.js asks a piece with the old mark)."
+  },
+  {
+    "name": "AUDITLOOT-F3-imprinted-as-minted",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
+    "new": "  if (item.reforged !== undefined || item.reforges !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the line now names the count beside the old mark."
+  },
+  {
+    "name": "AUDITLOOT-F4-a-legendary-hand-alone",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  wornPowers(entity).filter(\n    (p) => !isWeapon(p.item) || p.item === weapon || (!!weapon && powerIds(weapon).includes(p.id)),\n  );",
+    "new": "  wornPowers(entity).filter((p) => !isWeapon(p.item) || p.item === weapon || (!!weapon && weapon.legendary === p.id));",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-codex-rows-in-the-picture-column",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".broker-offer.codex-row, .broker-offer.codex-set { grid-template-columns: minmax(0, 1fr); }\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-keep-in-the-picture-column",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".broker-offer > .reforge-keep { grid-column: 4; }\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-hidden-tabs-shown",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".reforge-tabs[hidden] { display: none; }\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-plus-sheet-without",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "${BROKER_CSS}\n${REFORGE_CSS}\n",
+    "new": "${BROKER_CSS}\n",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-classic-sheet-without",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  const sheets = [\n    [BROKER_SKIN_STYLE_ID, brokerSkinCss],\n    [REFORGE_SKIN_STYLE_ID, () => REFORGE_CSS],\n  ];",
+    "new": "  const sheets = [[BROKER_SKIN_STYLE_ID, brokerSkinCss]];",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-the-brokers-sheet-blocks-it",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    if (has(id)) continue;",
+    "new": "    if (has(id) || has(BROKER_SKIN_STYLE_ID)) continue;",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-tab-not-brass",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      t.classList.toggle('on', id === page);\n    } // AUDIT LOOT F6: the chosen page the kit's brass",
+    "new": "    } // AUDIT LOOT F6: the chosen page the kit's brass",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-imprint-unsaid",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      btn.setAttribute(\n        'aria-label',\n        why\n          ? `${p?.name ?? rec.name}: ${REFORGE_REFUSALS[why] ?? ''}`\n          : `Imprint ${p?.name ?? rec.name} on ${nameOf(it)} for ${reforgePriceText(IMPRINT_PRICE)}`,\n      ); // AUDIT LOOT F6: said, as the Reforge's press is",
+    "new": "      void 0; // AUDIT LOOT F6: said, as the Reforge's press is",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-the-imprint-says-reforge",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      const btn = el('button', 'act broker-buy imprint-press', reforgeLabel(why, IMPRINT_PRICE, have, 'Imprint'));",
+    "new": "      const btn = el('button', 'act broker-buy imprint-press', reforgeLabel(why, IMPRINT_PRICE, have));",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-the-imprint-card-headless",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    ul.append(el('li', null, tierLabel(it))); // AUDIT LOOT F6: the tier's line first, as the Reforge's card - the first choice wore its header's dress",
+    "new": "    void 0; // AUDIT LOOT F6: the tier's line first, as the Reforge's card - the first choice wore its header's dress",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-a-phones-keep-on-break",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "  .broker-offer > .reforge-keep { grid-column: 3; grid-row: 3; }",
+    "new": "  .broker-offer > .reforge-keep { grid-column: 3; }",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F6-a-hint-cut-short",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".broker-offer.codex-row .broker-set, .broker-offer.codex-set .broker-set { white-space: normal; }",
+    "new": ".broker-offer.codex-set .broker-set { white-space: normal; }",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F7-the-pack-closes-under-it",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (reforgeDoorOpen()) { if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); closeReforgeDoor(); } return; }\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F7-keys-reach-the-pack",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (reforgeDoorOpen()) { if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); closeReforgeDoor(); } return; }",
+    "new": "  if (reforgeDoorOpen() && overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); closeReforgeDoor(); return; }",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F8-the-last-lock-powerless",
+    "file": "src/systems/thunderlock.js",
+    "old": "  power: Object.freeze({",
+    "new": "  powerless: Object.freeze({",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F8-the-last-lock-at-anything",
+    "file": "src/systems/thunderlock.js",
+    "old": "    foes: FOE_FAMILIES.daedra,",
+    "new": "    foes: [...FOE_FAMILIES.daedra, 0],",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F8-the-codex-the-thirty",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  return allLegendaries().map((r) => {\n    const day = foundDay('legendary', r.id);\n    const p = powerOf(r.id);\n    return {\n      id: r.id,\n      kind: 'legendary',\n      name: day != null ? r.name : null,\n      group: r.group,\n      found: day != null,\n      day,\n      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',\n      power: day != null ? p : null,\n      lore: day != null ? r.lore : null,\n    };\n  });",
+    "new": "  return allLegendaries()\n    .slice(0, 30)\n    .map((r) => {\n      const day = foundDay('legendary', r.id);\n      const p = powerOf(r.id);\n      return {\n        id: r.id,\n        kind: 'legendary',\n        name: day != null ? r.name : null,\n        group: r.group,\n        found: day != null,\n        day,\n        hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',\n        power: day != null ? p : null,\n        lore: day != null ? r.lore : null,\n      };\n    });",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F8-no-hint-of-its-own",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',",
+    "new": "      hint: FAMILY_HINT[foundAmong(r.id)] ?? '',",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F8-count-of-thirty",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  legendaries: allLegendaries().length,",
+    "new": "  legendaries: 30,",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOOT-F8-imprint-of-the-thirty",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries()\n        .slice(0, 30)\n        .filter(\n          (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n        )",
+    "tests": [
+      "test/systems/auditloot.test.js"
+    ],
+    "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
+  }
+]

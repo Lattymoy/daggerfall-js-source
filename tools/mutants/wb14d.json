@@ -1,0 +1,669 @@
+[
+  {
+    "name": "WB14d-the-plain-turn-on-a-sundering-night",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "const turnOf = (f) => (f.phase === 2 && sunders(f) ? SUNDER_TURN : PHASE_TURN[f.phase]);",
+    "new": "const turnOf = (f) => PHASE_TURN[f.phase];",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-health-s-last-phase-while-sundered",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (f.max > 0 && f.phase < 3 && f.hp / f.max <= PHASE_AT[f.phase - 1] && !(f.phase === 2 && sunders(f))) {",
+    "new": "  if (f.max > 0 && f.phase < 3 && f.hp / f.max <= PHASE_AT[f.phase - 1]) {",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-split-min-off-by-one",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const two = bodies.filter((b) => !b.dead && f.players[b.sub]).length >= SUNDER_SPLIT_MIN;",
+    "new": "  const two = bodies.filter((b) => !b.dead && f.players[b.sub]).length > SUNDER_SPLIT_MIN;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-pools-his-whole-health",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const m = Math.max(0, standsAt(f) - SUNDER_LAST) / 2,",
+    "new": "  const m = standsAt(f) / 2,",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-over-walkway-1",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    two ? { a: 'cross', court: FLOOR.third, walk: WALKWAY.rift } : { a: 'cross', court: FLOOR.second, at: side(1) },",
+    "new": "    two ? { a: 'cross', court: FLOOR.third } : { a: 'cross', court: FLOOR.second, at: side(1) },",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-both-halves-on-one-spot",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    two ? { a: 'cross', court: FLOOR.third, walk: WALKWAY.rift } : { a: 'cross', court: FLOOR.second, at: side(1) },",
+    "new": "    two ? { a: 'cross', court: FLOOR.third, walk: WALKWAY.rift } : { a: 'cross', court: FLOOR.second, at: side(-1) },",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-state-a-beat-late",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  f.lastStateAt = -Infinity; // said this beat - before any word of the Flame's (its first is a beat on)\n}",
+    "new": "}",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-choosing-his-whole-arsenal",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "const kitOf = (f) => (f.sd ? SUNDER_KITS[f.half === HALF.flame ? HALF.flame : HALF.blade] : null);",
+    "new": "const kitOf = (f) =>\n  f.sd && f.half !== HALF.flame ? SUNDER_KITS[f.half === HALF.flame ? HALF.flame : HALF.blade] : null;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14d-the-flame-s-words-unnamed",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  for (let k = k0; k < out.length; k++) if (FLAME_WORDS.has(out[k].k)) out[k].b = HALF.flame;",
+    "new": "  void k0;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-one-flame-count-of-attack-numbers",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    seq: {\n      get: () => f.seq,\n      set: (v) => {\n        f.seq = v;\n      },\n    },\n    xa: {",
+    "new": "    xa: {",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-rift-way-laid-on-the-view-alone",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    xa: {\n      get: () => f.xa,\n      set: (v) => {\n        f.xa = v;\n      },\n    },\n  });",
+    "new": "  });",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-a-flame-blow-on-the-blade-s-pool",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const half = f.sd ? (o?.b === HALF.flame ? HALF.flame : HALF.blade) : null;",
+    "new": "  const half = f.sd ? HALF.blade : null;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-struck-from-any-court",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (!inCourt(pose.x, pose.z, B.court, POSE_SLACK)) return 0;",
+    "new": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK) && B === f) return 0;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-a-kneeling-half-struck",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (H?.kn) return 0;\n  // the blow rate: a token bucket, GATE_HIT_HZ_MAX a second, one second deep - spent whatever the blow turns out to be",
+    "new": "  // the blow rate: a token bucket, GATE_HIT_HZ_MAX a second, one second deep - spent whatever the blow turns out to be",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-pool-uncapped",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp, H ? H.h * f.max : Infinity)); // WB14d: never past the half's pool",
+    "new": "  const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp)); // WB14d: never past the half's pool",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-s-threat-his",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    B.threat[sub] = (B.threat[sub] ?? 0) + got;",
+    "new": "    f.threat[sub] = (B.threat[sub] ?? 0) + got;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-never-kneels",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (H.h <= 1e-9) kneel(f, half, now);\n  } // WB14d: the half's pool, and its kneel as it is spent",
+    "new": "  } // WB14d: the half's pool, and its kneel as it is spent",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-kneel-keeps-its-blow",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (B.atk?.a !== ATTACKS.wrath.id) B.atk = null; // AUDIT WB14 (LAW-4): the Wrath is the clock's - a Blade kneeling under its wind-up keeps it",
+    "new": "  // AUDIT WB14 (LAW-4): the Wrath is the clock's - a Blade kneeling under its wind-up keeps it",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14d-the-kneel-never-said",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (H.kn && !H.said) {\n      H.said = true;\n      out.push({ k: 'kn', b, at: H.kn });\n    }",
+    "new": "    if (H.kn && !H.said) H.said = true;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-pair-law-ignored",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (!S.rj && S.bl.kn && S.fl.kn) rejoin(f, now, out);",
+    "new": "  if (!S.rj && S.bl.kn && S.fl.kn && false) rejoin(f, now, out);",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-rise-at-its-whole-pool",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  H.h = Math.min(SUNDER_RISE * S.m, Math.max(O.h, SUNDER_RISE_MIN * S.m));",
+    "new": "  H.h = S.m;\n  void O;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14d-the-rise-heals-him-nothing",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  credit(f, H.h);\n  B.stunUntil = 0;",
+    "new": "  B.stunUntil = 0;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14d-never-rises",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      if ((b ? S.fl : S.bl).kn && now >= (b ? S.fl : S.bl).kn + SUNDER_PAIR_MS) rise(f, b, now, out);",
+    "new": "      if ((b ? S.fl : S.bl).kn && now >= (b ? S.fl : S.bl).kn + SUNDER_PAIR_MS * 100) rise(f, b, now, out);",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-rejoining-at-his-health",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  f.hp = f.max * SUNDER_LAST;\n  if (!(f.max > 0)) f.idle = SUNDER_LAST; // AUDIT WB14 (LAW-3)",
+    "new": "  if (!(f.max > 0)) f.idle = SUNDER_LAST; // AUDIT WB14 (LAW-3)",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14d-the-flame-lands-on-him",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  S.fl.pending = { a: 'cross', court: FLOOR.first, at: [C[0] + SUNDER_SIDE_M, C[1]] };",
+    "new": "  S.fl.pending = { a: 'cross', court: FLOOR.first };",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-last-phase-in-the-third-court",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  f.queue = PHASE_TURN[3].slice(1).map((e) => ({ ...e })); // the turn's wait and signature - he already stands in his last court",
+    "new": "  f.queue = PHASE_TURN[3].map((e) => ({ ...e })); // the turn's wait and signature - he already stands in his last court",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-never-whole",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (ATTACK_BY_ID[was.a] === ATTACKS.rejoin && f.sd) whole(f, now, out);\n    // WB8b: ECHOING - a meteor falls again, a breath after the first: on the one it fell for, where they stand now (and",
+    "new": "    // WB8b: ECHOING - a meteor falls again, a breath after the first: on the one it fell for, where they stand now (and",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-halves-choose-while-rejoining",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (now >= f.nextAt && !f.pending && !f.sd?.rj) {",
+    "new": "  if (now >= f.nextAt && !f.pending) {",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-a-mend-at-once",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      H.mend = now - H.lone >= SUNDER_LONE_MS;",
+    "new": "      H.mend = true;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14d-a-mend-past-its-pool",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    const add = Math.min(Math.max(0, S.m - H.h), (SUNDER_MEND * S.m * dt) / 1000);",
+    "new": "    const add = (SUNDER_MEND * S.m * dt) / 1000;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-a-mend-together",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (!S.two || S.rj || H.kn || (b ? hereF : here).length) {",
+    "new": "    if (S.rj || H.kn || (b ? hereF : here).length) {",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-feeding-into-his-whole",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      if (f.sd)",
+    "new": "      if (false)",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-feeding-past-the-pool",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    const add = Math.min(Math.max(0, S.m - H.h), feed / 2);",
+    "new": "    const add = feed / 2;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-through-the-wrath",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (f.sd) {\n      f.sd.fl.atk = null;\n      f.sd.fl.move = null;\n      f.sd.fl.queue = [];\n      f.sd.fl.pending = null;\n    } // WB14d: and his Flame stands as Dagon gathers (every screen drops its blow at the Wrath's word)",
+    "new": "    void 0; // WB14d: and his Flame stands as Dagon gathers (every screen drops its blow at the Wrath's word)",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-blade-at-his-whole-size",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  return f?.half === HALF.flame ? halfProfile(P, HALF.flame) : f?.sd ? halfProfile(P, HALF.blade) : P;",
+    "new": "  return f?.half === HALF.flame ? halfProfile(P, HALF.flame) : P;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-made-from-the-blade-s",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "export const flameProfileOf = (f) => halfProfile(profileOf(f?.sd ? { md: f.md } : f), HALF.flame);",
+    "new": "export const flameProfileOf = (f) => halfProfile(profileOf(f), HALF.flame);",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-s-blow-never-judged",
+    "file": "src/net/bossRef.js",
+    "old": "  if (f.sd) bodyBlow(f.sd.fl.atk, live, flameProfileOf(f), prev, now, out); // WB14d: and his Flame's, by its own body",
+    "new": "  void flameProfileOf; // WB14d: and his Flame's, by its own body",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-a-b-of-2-kept",
+    "file": "src/net/wire.js",
+    "old": "  if (m.b !== undefined && m.b !== 0 && m.b !== 1) return null;   // WB14d",
+    "new": "  if (false) return null;   // WB14d",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-a-pool-past-its-whole-kept",
+    "file": "src/net/wire.js",
+    "old": "!gateHalves(sd.h, (h) => gateHp(h) && h <= sd.m)) return null;",
+    "new": "!gateHalves(sd.h, gateHp)) return null;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-s-word-folded-as-his",
+    "file": "src/net/gate/gateLink.js",
+    "old": "  if (g.b === HALF.flame || g.k === 'sdh' || g.k === 'kn' || g.k === 'kr' || g.k === 'rj')\n    return foldSunder(s, g, now, place); // WB14d: the halves' own",
+    "new": "  if (g.k === 'sdh' || g.k === 'kn' || g.k === 'kr' || g.k === 'rj') return foldSunder(s, g, now, place); // WB14d: the halves' own",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-rift-way-not-laid-on-screen",
+    "file": "src/net/gate/gateLink.js",
+    "old": "        heardAt: now,\n        ...crossLaid(s, g),\n      };",
+    "new": "        heardAt: now,\n      };",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-wrath-leaves-the-flame",
+    "file": "src/net/gate/gateLink.js",
+    "old": "        ...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}),",
+    "new": "        ...(g.a === ATTACKS.wrath.id ? { stunUntil: 0 } : {}),",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-kneel-keeps-the-blade-s-blow",
+    "file": "src/net/gate/gateLink.js",
+    "old": "      return {\n        ...s,\n        sd: { ...S, kn, h, lo },\n        atk: null,\n        move: null,\n        x,\n        z,\n        stunUntil: g.at + SUNDER_PAIR_MS,\n        stunAt: g.at,\n        heardAt: now,\n      };",
+    "new": "      return { ...s, sd: { ...S, kn, h, lo }, stunUntil: g.at + SUNDER_PAIR_MS, stunAt: g.at, heardAt: now };",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-view-reads-his-place",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "      x: F.x,\n      z: F.z,\n      yaw: F.yaw,",
+    "new": "      yaw: F.yaw,",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-struck-from-the-blade-s-court",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "      if (inItsCourt(F, now)) {",
+    "new": "      if (mine()) {",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-its-blow-judged-twice",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "        setMark(judged, atk);\n        if (v === 'hit') land(atk, P);",
+    "new": "        if (v === 'hit') land(atk, P);",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-hit-without-its-half",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "      return !!send({ q: blowQ('f'), d: dmg, r, b: HALF.flame });",
+    "new": "      return !!send({ q: blowQ('f'), d: dmg, r });",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-struck-through-its-ward",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "      if (\n        !F ||\n        s.fell ||\n        s.wrath != null ||\n        !Object.values(HIT_KINDS).includes(r) ||\n        now < F.shieldUntil ||\n        now < F.stunUntil ||\n        !inItsCourt(F, now)\n      )\n        return false;",
+    "new": "      if (!F || s.fell || s.wrath != null || !Object.values(HIT_KINDS).includes(r) || !inItsCourt(F, now)) return false;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-kneel-unsaid",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "        if (kn > 0 && now - kn <= SUNDER_LATE_MS) say(SUNDER_TEXT.kneels(halfName(b, P, bossName(s))));",
+    "new": "        if (kn > 0 && false) say(SUNDER_TEXT.kneels(halfName(b, P, bossName(s))));",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-rejoining-unsaid",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "      if (now - S.rj <= SUNDER_LATE_MS) say(SUNDER_TEXT.rejoin());\n    }",
+    "new": "    }",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-flame-s-shapes-never-drawn",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "      if (mark) _shapes.push(mark);\n      if (shape) _shapes.push(shape);\n      return _shapes;",
+    "new": "      return _shapes;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-one-flame-for-every-aspect",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "export const flameLookOf = (aspectId) =>\n  Object.freeze({ mobile: FLAME_LOOKS[aspectId] ?? FLAME_LOOKS.burning, scale: BOSS_LOOKS.ruhn.scale });",
+    "new": "export const flameLookOf = (aspectId) => Object.freeze({ mobile: FLAME_LOOKS.burning, scale: BOSS_LOOKS.ruhn.scale });",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-one-flame-name-for-every-aspect",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  return (b === HALF.flame ? (HALF_NAMES[P?.aspect?.id] ?? HALF_NAMES.burning) : HALF_NAMES.blade)(boss);",
+    "new": "  return (b === HALF.flame ? HALF_NAMES.burning : HALF_NAMES.blade)(boss);",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-plain-card-on-a-sundering-night",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "  if (hasPortent(pt, 'sunder') && (n === 2 || n === 3)) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-last-card-twice",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (c && !(s.phase === 3 && rjCarded)) beat =",
+    "new": "if (c) beat =",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-kneeling-blade-struck",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      if (t < s.shieldUntil || (s.sd && t < s.stunUntil)) return false;   // WB14d",
+    "new": "      if (t < s.shieldUntil) return false;   // WB14d",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-one-track",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "  const halves = S\n    ? [HALF.blade, HALF.flame].map((b) => ({\n        name: halfName(b, P, boss.name),\n        frac: S.m > 0 ? Math.max(0, Math.min(1, S.h[b] / S.m)) : 0,\n        state: halfState(s, b, now),\n        kneels: (S.kn[b] | 0) > 0,\n        warded: now < (b === HALF.flame ? S.fl.sh : s.shieldUntil),\n        color: b === HALF.flame ? css(emberColor(P)) : '',\n      }))\n    : null;",
+    "new": "  const halves =\n    S && false\n      ? [HALF.blade, HALF.flame].map((b) => ({\n          name: halfName(b, P, boss.name),\n          frac: S.m > 0 ? Math.max(0, Math.min(1, S.h[b] / S.m)) : 0,\n          state: halfState(s, b, now),\n          kneels: (S.kn[b] | 0) > 0,\n          warded: now < (b === HALF.flame ? S.fl.sh : s.shieldUntil),\n          color: b === HALF.flame ? css(emberColor(P)) : '',\n        }))\n      : null;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-blade-s-blow-called-in-the-flame-s-court",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "  const C = flameMine && flame ? flame : s,\n    PC = C === s ? P : profileOf(C);",
+    "new": "  const C = s,\n    PC = P;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-last-mark-at-a-third",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "    marks: sunders(s) ? [PHASE_AT[0], SUNDER_LAST] : [...PHASE_AT],",
+    "new": "    marks: [...PHASE_AT],",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-a-kneel-said-as-his-stun",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "  } else if (!s.fell && s.wrath == null && now < (s.stunUntil ?? 0) && !s.sd)",
+    "new": "  } else if (!s.fell && s.wrath == null && now < (s.stunUntil ?? 0))",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "WB14d-the-kneel-s-seconds-wrong",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "  if (kn > 0 && now < su) return BOSS_BAR_TEXT.kneels(Math.max(0, Math.ceil((su - now) / 1000)));",
+    "new": "  if (kn > 0 && now < su) return BOSS_BAR_TEXT.kneels(Math.max(0, Math.ceil((su - now) / 2000)));",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-pair-law-window-zero",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      if ((b ? S.fl : S.bl).kn && now >= (b ? S.fl : S.bl).kn + SUNDER_PAIR_MS) rise(f, b, now, out);",
+    "new": "      if ((b ? S.fl : S.bl).kn && now >= (b ? S.fl : S.bl).kn + 1000) rise(f, b, now, out);",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-mend-ten-times",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    const add = Math.min(Math.max(0, S.m - H.h), (SUNDER_MEND * S.m * dt) / 1000);",
+    "new": "    const add = Math.min(Math.max(0, S.m - H.h), (SUNDER_MEND * S.m * dt) / 100);",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-mend-lone-half",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      H.mend = now - H.lone >= SUNDER_LONE_MS;",
+    "new": "      H.mend = now - H.lone >= SUNDER_LONE_MS / 2;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-blade-signature-nova",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    { a: 'slam' },",
+    "new": "    { a: 'nova' },",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-feeding-whole-to-each",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    const add = Math.min(Math.max(0, S.m - H.h), feed / 2);",
+    "new": "    const add = Math.min(Math.max(0, S.m - H.h), feed);",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-flame-shares-his-cooldowns",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  'used',\n  'threat',",
+    "new": "  'threat',",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it).",
+    "equivalent": true,
+    "why": "the two kits share no attack with a cooldown (the Chains the Blade's, the Brand the Flame's), so a `used` read through to his is never one the Flame stamps or reads; the key stands so a kit that ever shares one keeps its own"
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-kneel-without-stun",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  B.stunUntil = now + SUNDER_PAIR_MS;",
+    "new": "  B.stunUntil = now;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-the-flame-drawn-as-him",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  Object.freeze({ mobile: FLAME_LOOKS[aspectId] ?? FLAME_LOOKS.burning, scale: BOSS_LOOKS.ruhn.scale });",
+    "new": "  Object.freeze({ mobile: BOSS_LOOKS.ruhn.mobile, scale: BOSS_LOOKS.ruhn.scale });",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-a-view-made-every-frame",
+    "file": "src/scenes/gate/gateFlame.js",
+    "old": "  let v = _views.get(s);",
+    "new": "  let v = null;",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-the-two-discs-elemental",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    pct: 0.45,\n    base: 12,\n    el: null,\n    aim: 'self',",
+    "new": "    pct: 0.45,\n    base: 12,\n    el: 'fire',\n    aim: 'self',",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-the-rejoining-anywhere",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  f.pending = { a: 'cross', court: FLOOR.first };",
+    "new": "  f.pending = { a: 'cross', court: FLOOR.second };",
+    "tests": [
+      "test/net/gate/wb14d_sundering.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  }
+]

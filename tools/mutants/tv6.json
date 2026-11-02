@@ -1,0 +1,142 @@
+[
+  {
+    "name": "TV6-a-temple-is-a-dungeon",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  ]),",
+    "new": "    LOCATION_TYPES.ReligionTemple,\n  ]),",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A temple is marked as a dungeon."
+  },
+  {
+    "name": "TV6-no-cap",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  return [...out.filter(inGrid), ...rest.slice(0, max)].sort(nearer);",
+    "new": "  return [...out.filter(inGrid), ...rest].sort(nearer);",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "Every dungeon in 20 km is marked at once."
+  },
+  {
+    "name": "TV6-a-square",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "    if (d > range) continue;",
+    "new": "    if (Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) > range) continue;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "The range is a square: its corners 28 km off."
+  },
+  {
+    "name": "TV6-found-again",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "    if (g.found || g.spawn) continue;",
+    "new": "    if (g.spawn) continue;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A found dungeon is found again, and said again."
+  },
+  {
+    "name": "TV6-found-from-afar",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "    bestD = TV_DUNGEON_FIND_M * NATIVE_PER_M;",
+    "new": "    bestD = TV_DUNGEON_FIND_M * NATIVE_PER_M * 10;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A dungeon ten kilometres off is found."
+  },
+  {
+    "name": "TV6-the-farthest",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "    if (d <= bestD) {\n      best = g;\n      bestD = d;",
+    "new": "    if (d <= TV_DUNGEON_FIND_M * NATIVE_PER_M) {\n      best = g;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "The last of several near dungeons is found, not the nearest."
+  },
+  {
+    "name": "TV6-never-found",
+    "file": "src/scenes/world.js",
+    "old": "    if (discoverLocation(g.row.mapID, { regionName: maps.getRegionName(g.row.regionIndex), locationName: g.loc.name })) tvSay(dungeonFoundText(g.loc.name), 5);",
+    "new": "    tvSay(dungeonFoundText(g.loc.name), 5);",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A dungeon is said to be found and never is - said again four times a second."
+  },
+  {
+    "name": "TV6-classic-finds",
+    "file": "src/scenes/world.js",
+    "old": "    if (!isEnhanced() || (modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned) return;",
+    "new": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned) return;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "The classic skin finds dungeons DFU never would."
+  },
+  {
+    "name": "TV6-find-never-asked",
+    "file": "src/scenes/world.js",
+    "old": "    dungeonFindFrame(performance.now());   // TV6: an undiscovered dungeon within a kilometre is found\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "No dungeon is ever found on approach."
+  },
+  {
+    "name": "TV6-lairs-named",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "label: '?', kind: 'lair' });",
+    "new": "label: g.loc.name, kind: 'lair' });",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "An undiscovered dungeon's name is given away."
+  },
+  {
+    "name": "TV6-lairs-a-journey",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "label: '?', kind: 'lair' });",
+    "new": "label: '?', kind: 'lair', pick: true, edge: true });",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "An undiscovered dungeon is a journey, held at the edge."
+  },
+  {
+    "name": "TV6-found-no-journey",
+    "file": "src/scenes/world.js",
+    "old": "?? tvDng.list.find((p) => p.key === key && p.summary);",
+    "new": ";",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A found dungeon's plate takes no click."
+  },
+  {
+    "name": "TV6-kept-forever",
+    "file": "src/scenes/world.js",
+    "old": "    tvDng = { at: null, dg: -1, list: [] };   // TV6: nor the dungeons\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A loaded character sees the last one's dungeons."
+  },
+  {
+    "name": "TV6-lair-a-traveller",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "k === 'party' || k === 'lair' || k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';",
+    "new": "k === 'party' || k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "An undiscovered dungeon looks like another player."
+  }
+]

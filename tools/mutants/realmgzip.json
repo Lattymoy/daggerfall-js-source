@@ -1,0 +1,192 @@
+[
+  {
+    "name": "REALM-GZIP-the-tab-never-packs",
+    "file": "src/systems/realmSaves.js",
+    "old": "  if (!gzip || !canGzip()) return text;\n",
+    "new": "  return text;\n",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-session-drops-the-word",
+    "file": "src/systems/realmSaves.js",
+    "old": "        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { gzip });\n",
+    "new": "        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text);\n",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-rejoin-never-learns",
+    "file": "src/systems/realmSaves.js",
+    "old": "      gzip = j.data.gzip === true;",
+    "new": "      void 0;",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-boot-drops-the-word",
+    "file": "src/systems/realmSaves.js",
+    "old": "origin: typeof origin === 'string' ? origin : null, gzip: joined.data?.gzip === true, ...(stranded",
+    "new": "origin: typeof origin === 'string' ? origin : null, gzip: false, ...(stranded",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-read-never-asks-as-stored",
+    "file": "src/systems/realmSaves.js",
+    "old": "`${realmSavePath(id)}${canGunzip() ? '?enc=gzip' : ''}`",
+    "new": "realmSavePath(id)",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-read-never-opened",
+    "file": "src/systems/realmSaves.js",
+    "old": "  const text = await saveTextOf(r.bytes, Infinity);\n",
+    "new": "  const text = new TextDecoder().decode(r.bytes);\n",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-service-never-says",
+    "file": "server-account/src/index.js",
+    "old": "answer(r.error ? r : { ...r, gzip: true })",
+    "new": "answer(r)",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-trailer-unread",
+    "file": "server-account/src/index.js",
+    "old": "            if (isGzip(packed) && gzipSizeOf(packed) > REALM_TEXT_MAX_BYTES) return no('too-large', 413, origin);\n",
+    "new": "",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-an-older-build-handed-the-gzip",
+    "file": "server-account/src/index.js",
+    "old": "            if (url.searchParams.get('enc') !== 'gzip') {\n",
+    "new": "            if (false) {\n",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-an-older-build-handed-a-lie-unbounded",
+    "file": "server-account/src/index.js",
+    "old": "              body = isGzip(bytes) ? await gunzipText(bytes, REALM_TEXT_MAX_BYTES) : bytes;\n",
+    "new": "              body = isGzip(bytes) ? await gunzipText(bytes, Infinity) : bytes;\n",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-first-save-read-unopened",
+    "file": "server-account/src/realm.js",
+    "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);",
+    "new": "  const text = new TextDecoder().decode(body);",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-first-save-opened-unbounded",
+    "file": "server-account/src/realm.js",
+    "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);",
+    "new": "  const text = await saveTextOf(new Uint8Array(body), Infinity);",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-a-gold-act-reads-unopened",
+    "file": "server-account/src/realm.js",
+    "old": "    save = JSON.parse(await realmSaveTextOf(object));",
+    "new": "    save = JSON.parse(await object.text());",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-a-gold-act-held-to-the-request",
+    "file": "server-account/src/realm.js",
+    "old": "  if (bytes > REALM_TEXT_MAX_BYTES) return { error: 'no-data' }; // REALM-GZIP: written plain, within the text's bound",
+    "new": "  if (bytes > REALM_MAX_BYTES) return { error: 'no-data' }; // REALM-GZIP: written plain, within the text's bound",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-a-trade-reads-unopened",
+    "file": "server-account/src/realmTrade.js",
+    "old": "saveA = JSON.parse(await realmSaveTextOf(objA)); saveB = JSON.parse(await realmSaveTextOf(objB));",
+    "new": "saveA = JSON.parse(await objA.text()); saveB = JSON.parse(await objB.text());",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-a-trade-held-to-the-request",
+    "file": "server-account/src/realmTrade.js",
+    "old": "  if (bytesA > REALM_TEXT_MAX_BYTES || bytesB > REALM_TEXT_MAX_BYTES) return",
+    "new": "  if (bytesA > 4 * 1024 * 1024 || bytesB > 4 * 1024 * 1024) return",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-bound-never-kept",
+    "file": "src/net/realm/realmSaveCodec.js",
+    "old": "      if (size > max) {\n        reader.cancel().catch(() => {});\n        return null;\n      }\n      parts.push(value);",
+    "new": "      parts.push(value);",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-plain-text-past-its-bound",
+    "file": "src/net/realm/realmSaveCodec.js",
+    "old": "  return bytes.byteLength > max ? null : new TextDecoder().decode(bytes);",
+    "new": "  return new TextDecoder().decode(bytes);",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-host-session-drops-the-word",
+    "file": "src/scenes/world.js",
+    "old": "seq: realmBoot.seq, gzip: realmBoot.gzip, onLost:",
+    "new": "seq: realmBoot.seq, onLost:",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  },
+  {
+    "name": "REALM-GZIP-the-birth-drops-the-word",
+    "file": "src/scenes/world.js",
+    "old": "  return realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text, { gzip: made.data.gzip === true });",
+    "new": "  return realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text);",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the first save is realmFirstSave's (realmBirth's and an online member's birth alike)."
+  },
+  {
+    "name": "REALM-GZIP-customs-drops-the-word",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "JSON.stringify(copy), { gzip: made.data.gzip === true });",
+    "new": "JSON.stringify(copy));",
+    "tests": [
+      "test/net/realm_gzip.test.js"
+    ]
+  }
+]

@@ -1,0 +1,76 @@
+[
+  {
+    "name": "PROTECT-FIGHT-the-fight-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
+    "new": "getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection')));",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ]
+  },
+  {
+    "name": "PROTECT-FIGHT-the-protection-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
+    "new": "!!fightHere()));",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ]
+  },
+  {
+    "name": "PROTECT-FIGHT-every-blow-spared",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
+    "new": "    return !!person;",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ]
+  },
+  {
+    "name": "PROTECT-FIGHT-the-raid-alone-again",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
+    "new": "    return !!person && !!raidHere();",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ]
+  },
+  {
+    "name": "PROTECT-FIGHT-the-world-host-fight-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    fightHere: () => fightNear([...cityGuards.guards, ...exteriorFoes.foes], player.pos),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers - AUDIT FB1025i D3: a fight near me, a peer's foes too (encounters.js fightNear)\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ],
+    "note": "AUDIT FB1025i D3 (re-aimed by content): the fight is encounters.js fightNear"
+  },
+  {
+    "name": "PROTECT-FIGHT-the-city-host-fight-unwired",
+    "file": "src/scenes/exterior.js",
+    "old": "    fightHere: () => fightNear([...cityGuards.guards, ...exteriorFoes.foes], player.pos),   // PROTECT-FIGHT: world.js's twin (AUDIT FB1025i D3: encounters.js fightNear)\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ],
+    "note": "AUDIT FB1025i D3 (re-aimed by content): the fight is encounters.js fightNear"
+  },
+  {
+    "name": "PROTECT-FIGHT-the-city-host-trample-unfiltered",
+    "file": "src/scenes/exterior.js",
+    "old": "    livePersons: () => _livePersons.filter((seat) => !cityGuards.playerSparesPerson(seat.person)),\n    foes: () => exteriorFoes.foes, guards: () => cityGuards.guards.filter((g) => !cityGuards.playerSpares(g)),",
+    "new": "    livePersons: () => _livePersons,\n    foes: () => exteriorFoes.foes, guards: () => cityGuards.guards.filter((g) => !cityGuards.playerSpares(g)),",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ]
+  },
+  {
+    "name": "PROTECT-FIGHT-the-city-host-defenders-unfiltered",
+    "file": "src/scenes/exterior.js",
+    "old": "    foes: () => exteriorFoes.foes, guards: () => cityGuards.guards.filter((g) => !cityGuards.playerSpares(g)),\n    isGuardRecord",
+    "new": "    foes: () => exteriorFoes.foes, guards: () => cityGuards.guards,\n    isGuardRecord",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ]
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "WR1-the-frame-along-the-first-edge",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "        t0 = scaled(rows, 1 / len(rows)),",
+    "new": "        t0 = scaled(e1, 1 / len(e1)),",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "WR1-the-scaled-frame-along-the-first-edge",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "      const f1 = lin(rows),",
+    "new": "      const f1 = lin(e1),",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "WR2-no-pebble-list",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "export function wodRockUvs(\n  cpu,\n  matrix,\n  modelId = null,\n  minStretch = WOD_ROCK_MODELS.has(modelId) ? WOD_ROCK_PEBBLE_MIN : WOD_ROCK_STRETCH_MIN,\n) {",
+    "new": "export function wodRockUvs(cpu, matrix, modelId = null, minStretch = WOD_ROCK_STRETCH_MIN) {",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "WR2-the-host-hands-no-id",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const cpu = wodRockUvs(cpuModels.get(m.modelId), m.matrix, m.modelId);",
+    "new": "const cpu = wodRockUvs(cpuModels.get(m.modelId), m.matrix);",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "WR2-a-pebble-at-its-own-size-re-mapped",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "export const WOD_ROCK_PEBBLE_MIN = 1.05;",
+    "new": "export const WOD_ROCK_PEBBLE_MIN = 0.5;",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-CAP-no-cap",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "          if (fine > cap) {\n            const q = cap / fine;\n            ux *= q;\n            uy *= q;\n            vx *= q;\n            vy *= q;\n          }\n        }",
+    "new": "        }",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-CAP-the-cap-on-every-model",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "  const cap = WOD_ROCK_MODELS.has(modelId) ? WOD_ROCK_MAX_REPEATS_PER_M : Infinity;",
+    "new": "  const cap = WOD_ROCK_MAX_REPEATS_PER_M;",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-CAP-by-the-coarse-direction",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "          const fine = Math.sqrt((s1 + s2) / 2);",
+    "new": "          const fine = Math.sqrt(Math.max(0, (s1 - s2) / 2));",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-CAP-a-coarse-pebble-made-finer",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "          if (fine > cap) {",
+    "new": "          if (fine > 0) {",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  },
+  {
+    "name": "ROCK-CAP-a-repeat-per-two-metres",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
+    "old": "export const WOD_ROCK_MAX_REPEATS_PER_M = 1 / 8;",
+    "new": "export const WOD_ROCK_MAX_REPEATS_PER_M = 1 / 2;",
+    "tests": [
+      "test/world/worldOfDaggerfall/fb1001_wodaudit.test.js"
+    ]
+  }
+]

@@ -1,0 +1,1165 @@
+// U42: THE SPELLBOOK - DaggerfallSpellBookWindow.cs (MIT, Daggerfall
+// Workshop; original authors Lypyl and Gavin Clayton) on the real
+// SPBK00I0.IMG, with SPBK01I0.IMG behind the guilds' BUY mode. It
+// retires the U4 keyed overlay that lived in ui/inventory.js (now
+// ui/deathScreen.js, which is all that module has left), the last
+// text stand-in on the daily loop: the book opens on every cast.
+//
+// THE NATIVE-WINDOW RULE, element by element (rects :33-55):
+// - the whole window is one 259x164 panel, Center/Middle on the
+//   320x200 native panel - so it sits at (30.5, 18), the half pixel
+//   included, because that is what HorizontalAlignment.Center
+//   computes and the classic art is an odd width.
+// - the spell list is a 110x130 ListBox at (5,13) showing SIXTEEN
+//   rows (:349), with its scroll bar at (122,28,7,103) and the two
+//   arrow buttons at (121,11) and (121,132), 9x16 each.
+// - the bottom row is four 38x9 buttons at y=152 - DELETE (or BUY),
+//   UP, SORT, DOWN - and EXIT is 43x15 at (216,149).
+// - the three icon panels: the spell's own at (149.25,14,16,16), the
+//   TARGET at (182,14,25,16) - a 24-wide icon stretched one pixel -
+//   and the ELEMENT at (223,14,16,16). All three are black behind
+//   the art, so an unknown icon reads as a black square, not a hole.
+// - three effect panels at (138,40/78/116,118,28), each carrying TWO
+//   centred labels at y=5 and y=17: the effect's GROUP name and its
+//   SUBGROUP name (:486-496, :624-649).
+// - the labels: spell name at (123,2), spell points at (214,2), and
+//   in buy mode the cost at (76,154) and the player's gold at
+//   (116,154).
+//
+// THE LAWS, verbatim:
+// - a row reads "{cost} - {name}" and the cost is recomputed EVERY
+//   refresh, because it rides the caster's live skills (:256-282).
+//   A spell the player cannot currently afford is DESATURATED 75%
+//   toward grey rather than hidden.
+// - the lycanthropy tag casts free, so its row shows 0 even though
+//   classic shows a cost (:266-267).
+// - DELETE refuses the vampire and lycanthropy tags with their own
+//   messages BEFORE prompting (:821-831) - those spells have no way
+//   back until the curse is cured.
+// - the DELETE confirmation pops the BOX, not the book. This entry
+//   used to read "both confirmations CLOSE THE BOOK ... Kept", off
+//   the CloseWindow() that sits outside the Yes arm (:851). AUDIT-39r
+//   read the call through: it is the non-virtual
+//   UserInterfaceWindow.CloseWindow (:127-132) -> PopWindow ->
+//   RemoveWindow (UserInterfaceManager.cs:190-199), which pops
+//   TopWindow, and TopWindow is the YesNo box mb.Show() pushed -
+//   DaggerfallMessageBox.ActivateButton (:479-484) raises the event
+//   and never pops itself. So the box goes and the book stays, which
+//   is the only reading under which that arm's own
+//   RefreshSpellsList(true) and UpdateSelection() do any work; the
+//   same law is written out in nativeTrade's _confirm.
+//   SortSpellsConfirm (:924) is the identical construct and still
+//   closes the book here - one audit's scope, not two.
+// - SORT is alphabetical, and only if that changed nothing does it
+//   sort by point cost (:911-921).
+// - the swap buttons move the spell AND the selection, then force
+//   one more row into view when the selection lands on the visible
+//   edge (:876-897).
+// - clicking the spell NAME renames it (a non-empty answer only,
+//   :929-950); clicking the ICON opens the picker; clicking an
+//   effect panel pops that effect's spellbook description (:730-763).
+// - BUY mode offers every SPELLS.STD record whose name does NOT
+//   start with '!' - the file's internal spells - sorted by name,
+//   duplicates of what you already know included (:283-323).
+// - BUY mode: the price is the casting cost x4, halved (floor 1) on
+//   Witches Festival, then run through CalculateTradePrice against
+//   the shop's quality (:519-536, :685-688). The ladder is
+//   spellbook, then gold, then a haggle line chosen by how the
+//   asking price compares - TEXT.RSC 260/261/262 - and Yes deducts,
+//   adds the spell and closes (:975-1024). The gold read is
+//   GetGoldAmount, so a letter of credit buys a spell.
+//
+// RENAME retires a ledger row. DFU's EffectBundleSettings is a
+// STRUCT, so GetSpell hands the handler a COPY, the copy is renamed,
+// and SetSpell writes it back into the player's slot - the shared
+// SPELLS.STD record is untouched. The port's records are objects
+// shared by every caster, so confirmRename copies explicitly and
+// marks the copy `custom`, which is exactly the flag save.js:"...(entity.spells ?? [])"
+// already reads to store a whole record instead of a bare index.
+// U4's "rename needs per-entity copies + name persistence first" is
+// answered: it has both.
+//
+// THE STRINGS ARE REAL. U4 recorded that "the classic en string
+// table is not in the source snapshot", and U42 inherited that and
+// wrote its own prose for the prompts. The table IS in the snapshot -
+// StreamingAssets/Text/Master Localization CSV Files/
+// Internal_Strings.csv - and every string this window needs is in
+// it: the two curse refusals (:850-851), deleteSpell and sortSpells
+// (:956-957), enterSpellName (:954), effectNotFoundError (:958),
+// selectIcon (:950), and the ten target/element descriptions
+// (:940-949). All ten of those live in ui/spell/spellIcons.js. The port
+// has no localization LOOKUP, so these are the en values held as
+// constants rather than TextManager calls - that is the departure,
+// and it is a mechanism one, not a content one.
+//
+// RECORDED DEPARTURES:
+// - no localization LOOKUP: every string above is DFU's own en text,
+//   read out of Internal_Strings.csv and held as a constant with its
+//   TextManager key named, rather than resolved at runtime.
+// - DFU's spell VERSION gate (:746-747) has nothing to gate: the
+//   port's records carry no bundle version.
+// - DFU wires the name label's rename AND the icon panel's picker in
+//   BOTH modes (:465, :437; SetupIcons is called unconditionally at
+//   :145), and both handlers then index the PLAYER's book with the
+//   OFFER's index (:929, :962) - editing whatever spell happens to
+//   sit at that slot. The port gates BOTH to cast mode, and gates
+//   the icon panel's `selectIcon` TOOLTIP with them, since a tip
+//   naming a picker that is deliberately unreachable would be the
+//   window advertising the bug it declines to port.
+// - buy mode prices the offer with a bare CalculateTotalEffectCosts
+//   (:521) - no minimumCastingCost - where the LIST rows
+//   pass both (:262). The port has one castCost hook for both, so
+//   the offer's price rides the player's live skills either way.
+//
+// ROAD-D D10 gave the effect popup its BODY. ShowEffectPopup
+// (:651-660) puts one thing in its click-anywhere box - the effect's
+// own SpellBookDescription tokens - and the port had no per-effect
+// text id, so the box carried the group/subgroup pair instead. The
+// ids are systems/spell/spellEffects.js's SPELLBOOK_DESCRIPTION_IDS now
+// (EntityEffect.cs:78/:395, overridden by 85 effect classes and
+// computed from the variant index by the two variant families), read
+// through the TEXT.RSC seam this window already had one method down.
+// The group/subgroup line remains the FALLBACK for a host with no
+// record source and for an effect DFU gives no description - never a
+// box with nothing in it.
+//
+// STILL DEPARTED: DFU's double-click-to-buy on the list (the port's
+// list picks straight through, U24's own recorded departure).
+
+import { nativeMetrics, drawImg, drawRect, shadowText, loadImg, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // SPELLSHOP-SAID: the window's own click-anywhere box, as the enhanced panel (ENH-NOTICE2)
+import { drawText } from './text.js';
+import { bindings } from './input.js';
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM6: the rename is a pushed DaggerfallInputMessageBox
+import { codeMeans } from '../systems/inputActions.js';   // UXB1-S: its own key, shared or not
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import {
+  preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
+  TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
+} from './spell/spellIcons.js';
+import { effectByKey, spellBookDescriptionId, effectMacroSource, portEffectDescription } from '../systems/spell/spellEffects.js';
+import { expandRowValues, sourceValues } from '../systems/quest/questMacros.js';   // MACRO-5: the effect popup's source
+import { calculateTradePrice } from '../systems/shopStock.js';
+import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
+import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all - and ROAD-G G4: the LIVE component, drag included
+import { ALT_SHADOW_1, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed; OT1: the ListBox double-click window
+import { ToolTip } from './toolTip.js';   // U37's shared component - SetupIcons points three panels at it
+import { SpellIconPickerWindow } from './spell/spellIconPickerWindow.js';   // MC1: the window the icon panel's click pushes
+import {
+  expandGuildMacros, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID, cureOfferMessageOffset,
+} from '../systems/guild/guildServiceActions.js';   // DaggerfallTradeWindow's shared ids (:33-34) and the three haggle BANDS, all already homed
+import { getHolidayId, HOLIDAYS } from '../systems/holidays.js';
+import { NO_SPELLBOOK_ID, SPELLBOOK_TEMPLATE_INDEX, MAX_SPELL_NAME, purchaseSpell } from '../systems/spell/spellMaker.js';
+import { shownSpellName } from '../systems/loot/loot.js';   // L10N3e: a stock spell's name in the player's language
+import { totalGoldAmount } from '../systems/court.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
+
+/** The window's rects, verbatim (:33-55). */
+export const SPELLBOOK_RECTS = Object.freeze({
+  main: [0, 0, 259, 164],
+  list: [5, 13, 110, 130],
+  deleteOrBuy: [3, 152, 38, 9],
+  up: [48, 152, 38, 9],
+  sort: [90, 152, 38, 9],
+  down: [132, 152, 38, 9],
+  upArrow: [121, 11, 9, 16],
+  downArrow: [121, 132, 9, 16],
+  exit: [216, 149, 43, 15],
+  scrollBar: [122, 28, 7, 103],
+  spellIcon: [149.25, 14, 16, 16],
+  targetIcon: [182, 14, 25, 16],
+  elementIcon: [223, 14, 16, 16],
+  effect: [[138, 40, 118, 28], [138, 78, 118, 28], [138, 116, 118, 28]],
+});
+/** The label anchors (:33-36) and the two rows inside an effect
+ *  panel (:493-496). */
+const LABEL_POS = Object.freeze({ name: [123, 2], points: [214, 2], cost: [76, 154], gold: [116, 154] });
+const EFFECT_LABEL_ROWS = Object.freeze([5, 17]);
+const EFFECT_LABEL_MAX_CHARS = 24;   // TextLabel.MaxCharacters (:489)
+/** mainPanel is Center/Middle on the native panel (:342-343), which
+ *  on a 259-wide panel lands it on a HALF pixel. */
+const PANEL_X = (320 - SPELLBOOK_RECTS.main[2]) / 2;   // 30.5
+const PANEL_Y = (200 - SPELLBOOK_RECTS.main[3]) / 2;   // 18
+const ROWS_DISPLAYED = 16;             // spellsListBox.RowsDisplayed (:349)
+/** ONE export for the geometry the tests and the hosts read, so
+ *  PANEL_X/ROWS_DISPLAYED/LABEL_POS do not each become a second
+ *  module-level home for a name another window already owns. */
+export const SPELLBOOK_LAYOUT = Object.freeze({
+  x: PANEL_X, y: PANEL_Y, rowsDisplayed: ROWS_DISPLAYED, rowSpacing: ROW_SPACING,
+  labels: LABEL_POS, effectLabelRows: EFFECT_LABEL_ROWS, effectLabelMaxChars: EFFECT_LABEL_MAX_CHARS,
+});
+/** noSpellBook (:100) and the buy ladder's records (:977-979). */
+export const NO_SPELLBOOK_TEXT_ID = NO_SPELLBOOK_ID;
+const NOT_ENOUGH_GOLD_TEXT_ID = NOT_ENOUGH_GOLD_ID;
+/** The window's strings, VERBATIM from DFU's own en table
+ *  (StreamingAssets/Text/Master Localization CSV Files/
+ *  Internal_Strings.csv :850-851, :954, :956-958). U42 first shipped
+ *  these as the port's own prose, inheriting the U4 window's claim
+ *  that "the classic en string table is not in the source snapshot";
+ *  it is, and every one of them is in it. `enterSpellName` keeps the
+ *  trailing space the window appends to the label (:934). */
+export const CANNOT_DELETE_VAMP = 'Cannot delete special vampire spells.';     // cannotDeleteVamp
+export const CANNOT_DELETE_WERE = 'Cannot delete special lycanthropy spell.';  // cannotDeleteWere
+export const DELETE_SPELL_PROMPT = 'Do you want to delete this spell?';        // deleteSpell
+export const SORT_SPELLS_PROMPT = 'Do you want to sort spells?';               // sortSpells
+export const ENTER_SPELL_NAME = 'Enter spell name : ';                         // enterSpellName + " " (:934)
+export const EFFECT_NOT_FOUND = '<effect not found>';                          // effectNotFoundError
+export const SELECT_ICON_TIP = 'Select icon';                                  // selectIcon
+/** L10N3d: the same, in the player's language, read where each is shown
+ *  - this window, the enhanced book and the spell maker's name box. */
+export const cannotDeleteVampText = () => localizedText('cannotDeleteVamp', CANNOT_DELETE_VAMP);
+export const cannotDeleteWereText = () => localizedText('cannotDeleteWere', CANNOT_DELETE_WERE);
+export const deleteSpellPrompt = () => localizedText('deleteSpell', DELETE_SPELL_PROMPT);
+export const sortSpellsPrompt = () => localizedText('sortSpells', SORT_SPELLS_PROMPT);
+export const enterSpellNameLabel = () => `${localizedText('enterSpellName', 'Enter spell name :')} `;   // + " " (:934)
+export const effectNotFoundText = () => localizedText('effectNotFoundError', EFFECT_NOT_FOUND);
+export const selectIconTip = () => localizedText('selectIcon', SELECT_ICON_TIP);
+/** PlayerEntity.cs:41-42 - the two tags DELETE refuses. V2a moved
+ *  their HOME to systems/lycanthropy.js (the producer that grants the
+ *  tagged spells lives there now); imported and re-exported so this
+ *  window's own laws and its consumers keep one spelling. */
+import { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG } from '../systems/lycanthropy.js';
+import { chapterPriced } from '../net/npcChapterLaw.js';   // CHAP3c / AUDIT CHAP3 R12: a hall's band laid over a spell's price
+export { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG };
+/** ListItem's desaturation toward grey when the spell is unaffordable
+ *  (:276-279). */
+export const DESATURATION = 0.75;
+/** DaggerfallUI.cs:57, :63 - the HOVERED row and the hovered SELECTED
+ *  row (ListBox.cs:71, :73, applied by DecideTextColor :358-390). */
+const HIGHLIGHT_TEXT_COLOR = Object.freeze([255 / 255, 130 / 255, 40 / 255, 1]);
+const HIGHLIGHT_SELECTED_TEXT_COLOR = Object.freeze([254 / 255, 56 / 255, 18 / 255, 1]);
+
+/** SPELLSHOP-SAID: the boxes that ASK - DFU's YesNo boxes, the delete (:835), the sort (:902) and the trade
+ *  (:1001-1005) - and the boxes a click or a key puts away (ClickAnywhereToClose): the no-book and no-gold refusals
+ *  (DaggerfallUI.MessageBox, :985, :989) and the notes - the curse refusals (:823, :828) and an effect's description
+ *  (ShowEffectPopup, :656-657). The rename box (:933) and the icon picker are windows of their own. */
+const ASKS = Object.freeze(['delete', 'sort', 'trade']);
+const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note']);
+
+const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+/** A window rect hit-tested in NATIVE coords (the panel offset out). */
+const hitPanel = (rect, vx, vy) => inRect(rect, vx - PANEL_X, vy - PANEL_Y);
+const lerpGrey = (c) => c.map((v, i) => (i === 3 ? v : v + (0.5 - v) * DESATURATION));
+
+/** The effect slots a record really carries: the reader keeps three
+ *  and marks the unused ones type -1, where DFU's converted bundle
+ *  simply has fewer (:552-560 walks Effects.Length). */
+export const spellEffects = (spell) => (spell?.effects ?? []).filter((e) => e && e.type >= 0);
+
+/** PopulateSpellsList's row text (:271) and its free-cast quirk
+ *  (:266-267). L10N3e: the bundle's Name, which DFU gave a stock spell
+ *  in the player's language (EntityEffectBroker.cs:877). */
+export function spellRowText(spell, cost) { return `${cost} - ${shownSpellName(spell)}`; }
+export function spellPointCost(spell, castCost) {
+  if (spell?.tag === LYCANTHROPY_SPELL_TAG) return 0;
+  return rawSpellPointCost(spell, castCost);
+}
+/** The same CalculateTotalEffectCosts value WITHOUT the display
+ *  quirk - what SortSpellsPointCost orders by (AUDIT 26 F179). */
+export function rawSpellPointCost(spell, castCost) {
+  return castCost ? castCost(spell) : (spell?.cost ?? 0);
+}
+/** L10N3e: SortSpellsAlpha (DaggerfallEntity.cs:736) and the shop's
+ *  sort (:322) both OrderBy the bundle's Name - the name as shown. */
+const byShownName = (a, b) => {
+  const x = shownSpellName(a), y = shownSpellName(b);
+  return x < y ? -1 : x > y ? 1 : 0;
+};
+
+/** GetSpell/SetSpell (:940-951, :960-974): an edit lands on a COPY of the
+ *  book's entry, marked `custom` so the save keeps it whole - the entry
+ *  may be the shared SPELLS.STD record or a frozen RRI one.
+ *  AUDIT 68 S31-enhanced-rename-mutates-shared-spell: both skins edit here.
+ *  Answers the new entry, or null when the row is empty. */
+export function editBookSpell(list, index, fields) {
+  const spell = list?.[index];
+  if (!spell) return null;
+  return (list[index] = { ...spell, ...fields, custom: true });
+}
+
+let _art = null;
+/** SPBK00I0 (cast) and SPBK01I0 (buy), plus the icon sheets. */
+export async function preloadSpellbookArt(deps) {
+  if (_art) return _art;
+  const [base, buy] = await Promise.all([
+    loadImg(deps, 'SPBK00I0.IMG'),
+    loadImg(deps, 'SPBK01I0.IMG'),
+  ]);
+  await preloadSpellIcons(deps).catch((e) => console.warn('[spellbook] icon sheets unavailable:', e?.message ?? e));
+  _art = { base, buy };
+  return _art;
+}
+export const spellbookArtLoaded = () => !!_art;
+export function _setSpellbookArtForTests(art) { _art = art; }
+
+export class SpellbookWindow {
+  /** deps: { spells(), entity, castCost(spell), onReady(spell,
+   *  { noSpellPointCost }), onClose(), rows(id), offered(),
+   *  buildingQuality(), shopName(), skills(), classicMinutes() }.
+   *  `buyMode` swaps the art, the list and the bottom-left button,
+   *  exactly as DFU's one window does - it is one class in DFU too. */
+  constructor(deps = {}, { buyMode = false } = {}) {
+    this.deps = deps;
+    this.buyMode = !!buyMode;
+    this.done = false;
+    this.isChoiceWindow = true;
+    this.selectedIndex = -1;
+    this.scrollIndex = 0;
+    this.top = null;          // the pushed box: see _boxRows
+    this.renameBox = null;    // CM6: the pushed rename box while `top` is 'rename'
+    this.deleteSpellIndex = -1;
+    this.presentedCost = 0;
+    this._box = null;
+    this._boxMemo = null;   // BOX1
+    this._noteRows = null;
+    this._rows = [];
+    this.offeredSpells = [];
+    this.highlightedIndex = -1;
+    this._lastRowClick = null;   // OT1: the list's last row click, for the timed use gesture
+    // SetupIcons (:436, :448, :454) points all three icon panels at
+    // the shared defaultToolTip. U37 built that component; this is
+    // the second window to hold one.
+    this.tip = new ToolTip();
+    // ROAD-G G4: THE SPELLS LIST'S OWN VerticalScrollBar (:363-372),
+    // live rather than drawn. `rect` is mainPanel-local, which is the
+    // space Position/Size are set in (:366-367) and the space
+    // ScreenToLocal hands MouseClick and Update; OnScroll is
+    // SpellsListScrollBar_OnScroll (:794-797), the one line that
+    // copies the bar's index onto the list box.
+    this.scrollBar = new VerticalScrollBar({
+      rect: [...SPELLBOOK_RECTS.scrollBar],
+      displayUnits: ROWS_DISPLAYED,
+      onScroll: (i) => { this.scrollIndex = i; },
+    });
+    this.refreshSpellsList(false);
+    this.setDefaults();
+    // OnPush (:172-176): the book opens with a page turn, the shop
+    // with a button click.
+    audio.playOneShot(this.buyMode ? SOUND.ButtonClick : SOUND.OpenBook, 1);
+  }
+
+  // --- the list (:216-278) ---
+
+  /** The spells the list shows: the player's book, or the guild's
+   *  offer in buy mode (:229-240). */
+  get spells() {
+    return (this.buyMode ? this.offeredSpells : this.deps.spells?.()) ?? [];
+  }
+
+  /** LoadSpellsForSale (:284-323). Two laws live here and nowhere
+   *  else: a record whose name starts with '!' is one of the file's
+   *  INTERNAL spells and is never offered, and the offer is sorted by
+   *  NAME before it reaches the list. Classic allows buying a
+   *  duplicate of a spell you already know, and so does this - DFU's
+   *  own note says to leave it alone. */
+  loadSpellsForSale() {
+    const all = this.deps.offered?.() ?? [];
+    this.offeredSpells = all
+      .filter((sp) => sp && !String(sp.name ?? '').startsWith('!'))   // the FILE's name, before the bundle is made (:302)
+      .sort(byShownName);
+    return this.offeredSpells;
+  }
+
+  /** RefreshSpellsList (:217-254). */
+  refreshSpellsList(preservePosition = false) {
+    const oldScroll = this.scrollIndex;
+    const oldSelected = this.selectedIndex;
+    if (this.buyMode) this.loadSpellsForSale();
+    const list = this.spells;
+    const available = this.buyMode ? null : (this.deps.entity?.magicka ?? null);
+    this._rows = list.map((spell) => {
+      const cost = spellPointCost(spell, this.deps.castCost);
+      return {
+        spell, cost, text: spellRowText(spell, cost),
+        // Desaturate what the player cannot afford (:268-275)
+        dim: available != null && available < cost,
+      };
+    });
+    if (preservePosition) {
+      this.scrollIndex = oldScroll;
+      if (oldSelected >= this._rows.length) this.selectedIndex = this._rows.length ? this._rows.length - 1 : -1;
+      else this.selectedIndex = oldSelected;
+      this._clampScroll();
+    }
+  }
+
+  /** SetDefaults (:186-203): the first spell, or none. */
+  setDefaults() {
+    this.selectedIndex = this._rows.length > 0 ? 0 : -1;
+    this.scrollIndex = 0;
+  }
+
+  get selected() { return this._rows[this.selectedIndex]?.spell ?? null; }
+
+  _clampScroll() {
+    const max = Math.max(0, this._rows.length - ROWS_DISPLAYED);
+    this.scrollIndex = Math.min(Math.max(0, this.scrollIndex), max);
+  }
+
+  /** ROAD-G G4: UpdateSelection's scroller block (:507, :509-512) - Reset
+   *  (:171-176) takes RowsDisplayed, Count and the list's ScrollIndex
+   *  with no event raised, and DFU's two following assignments write
+   *  the two values Reset just wrote. The port keeps ONE index (the
+   *  window's `scrollIndex`, which the wheel, the arrows, the keyboard
+   *  and SelectPrevious/Next all move) and pours it into the component
+   *  before every read, exactly as `listPicker.js`'s syncScrollBar
+   *  does - so the drawn thumb, the paging arms and the drag can never
+   *  disagree about where the list is. */
+  _syncScrollBar() {
+    this.scrollBar.reset(ROWS_DISPLAYED, this._rows.length, this.scrollIndex);
+    return this.scrollBar;
+  }
+
+  /** SelectPrevious (ListBox.cs:709-724) and SelectNext (:726-741),
+   *  which the two arrow buttons and the keyboard share.
+   *
+   *  The scroll clause lives INSIDE the movement guard and nudges by
+   *  exactly one row - it does not snap. Both details are reachable,
+   *  because the wheel moves scrollIndex without moving the selection
+   *  (SpellsListBox_OnMouseScroll, :789-792): scroll five rows down,
+   *  press Up at the top of the book, and DFU leaves the view where
+   *  it is while a guard-outside version yanks it back to zero. */
+  selectPrevious() {
+    if (this.selectedIndex > 0) {
+      this.selectedIndex--;
+      if (this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
+    }
+  }
+
+  selectNext() {
+    if (this.selectedIndex < this._rows.length - 1) {
+      this.selectedIndex++;
+      if (this.selectedIndex > this.scrollIndex + (ROWS_DISPLAYED - 1)) this.scrollIndex++;
+    }
+  }
+
+  wheel(dir) {
+    if (this.top === 'iconPicker') { this._iconPicker?.wheel(dir); return; }   // MC1
+    if (!dir || this.top) return;
+    this.scrollIndex += Math.sign(dir);
+    this._clampScroll();
+  }
+
+  /** ListBox.MouseMove (:427-438) and MouseLeave (:459-462): the row
+   *  under the pointer is HIGHLIGHTED - a colour swap, not a bar -
+   *  and leaving the list clears it to -1. */
+  hover(vx, vy, e = null) {
+    if (this.top === 'iconPicker') { this._iconPicker?.hover(vx, vy, e); return; }   // MC1: the selection follows the pointer
+    const [lx, ly, lw, lh] = SPELLBOOK_RECTS.list;
+    const x = vx - PANEL_X, y = vy - PANEL_Y;
+    this._tipHover(x, y, vx, vy);
+    // ROAD-G G4: THE THUMB DRAG (VerticalScrollBar.Update, :101-130).
+    // `e.buttons & 1` is the port's read of GetMouseButton(0) - the
+    // same read `listPicker.js:"if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy))"` makes - and the host's mousemove
+    // is the frame. The drag continues wherever the cursor goes,
+    // including off the bar and off the panel, because DFU polls a
+    // POSITION and a held button, not a component the pointer is over.
+    // A pushed box owns the frame in DFU (UserInterfaceManager.Update
+    // ticks the TOP window only), so a window with `top` set does not
+    // poll - which is the guard the highlight arm below already keeps.
+    // The (-1,-1) SENTINEL never reaches the drag. Every host answers a
+    // pointer OFF its letterboxed panel with that pair, and it is a
+    // fabricated coordinate rather than a position - ROAD-C c2 flight 2
+    // found it teleporting the town map ~165 world units for the same
+    // reason. Straying into the black border mid-drag would otherwise
+    // fling the list to row 0. The latch itself is not left behind by
+    // the skip: `release()` is what ends it.
+    if (!this.top && vy >= 0 && this._syncScrollBar().update(!!(e?.buttons & 1), y)) {
+      this.scrollIndex = this.scrollBar.scrollIndex;
+    }
+    if (this.top || !inRect([lx, ly, lw, lh], x, y)) { this.highlightedIndex = -1; return; }
+    const row = Math.floor((y - ly) / this._rowHeight());
+    const index = this.scrollIndex + row;
+    this.highlightedIndex = (index >= 0 && index < this._rows.length) ? index : -1;
+  }
+
+  /** ROAD-G G4: THE BUTTON COMING UP - Update's `else` arm (:123-129),
+   *  delivered by the overlay mouse-UP seam wave E built rather than
+   *  waited for on the next `hover` whose buttons bit happens to be
+   *  clear. All four hosts route it: `townTalk.pointer('up')` (the
+   *  world and exterior slots), `worldModes`' interior slot,
+   *  `dungeonContext.overlayPointer`'s up arm and `interior.js`'s own
+   *  listener. While the icon picker is up it is the TOP window and
+   *  this one does not tick, so the edge goes there and nowhere else.
+   */
+  release() {
+    if (this.top === 'iconPicker') { this._iconPicker?.release?.(); return; }
+    this.scrollBar.draggingThumb = false;
+  }
+
+  /** The three icon panels' tooltips. The spell icon's is the static
+   *  `selectIcon` (:436) - it names the PICKER the click opens, not
+   *  the icon - and the other two are recomputed per selection by
+   *  UpdateSelection (:572, :574) from GetTargetTypeDescription and
+   *  GetElementDescription. A panel is only tipped when ShowIcons is
+   *  on (:565-575), i.e. when a spell is selected at all. */
+  _tipHover(x, y, vx, vy) {
+    const spell = this.selected;
+    if (this.top || !spell) { this.tip.hide(); return; }
+    if (inRect(SPELLBOOK_RECTS.spellIcon, x, y) && !this.buyMode) { this.tip.show(selectIconTip(), vx, vy); return; }
+    if (inRect(SPELLBOOK_RECTS.targetIcon, x, y)) {
+      this.tip.show(TARGET_DESCRIPTIONS[spell.rangeType] ?? null, vx, vy);
+      return;
+    }
+    if (inRect(SPELLBOOK_RECTS.elementIcon, x, y)) {
+      this.tip.show(ELEMENT_DESCRIPTIONS[spell.element] ?? null, vx, vy);
+      return;
+    }
+    this.tip.hide();
+  }
+
+  /** The tooltip's rest clock - the same `tick` name every host's
+   *  overlay seam already calls (townTalk.frame, tickOverlay). */
+  tick(dt) { this.tip.update(dt); }
+
+  // --- the selection's panels (:508-575) ---
+
+  /** UpdateSelection's buy-mode half (:520-534): the casting cost x4,
+   *  halved on Witches Festival with a floor of one. */
+  _updatePresentedCost() {
+    const spell = this.selected;
+    if (!spell) { this.presentedCost = 0; return; }
+    // DEPARTURE, recorded: UpdateSelection prices the offer with a
+    // bare CalculateTotalEffectCosts (:521) - no caster and no
+    // minimumCastingCost, and so no lycanthropy free-cast quirk. The
+    // port has one castCost hook, so the quirk is skipped HERE
+    // rather than inside it; no offered spell carries the tag.
+    let cost = (this.deps.castCost ? this.deps.castCost(spell) : (spell.cost ?? 0)) * 4;
+    const minutes = this.deps.classicMinutes?.() ?? 0;
+    if (getHolidayId(minutes, 0) === HOLIDAYS.Witches_Festival) {
+      cost >>= 1;
+      if (cost === 0) cost = 1;
+    }
+    this.presentedCost = cost;
+  }
+
+  /** GetTradePrice (:685-688) - the shop's quality prices the offer
+   *  against the player's LIVE Mercantile and Personality, which is
+   *  where FormulaHelper.CalculateTradePrice reaches for them
+   *  (:1982-1998). The port passes them in, so the host supplies the
+   *  same pair every other trade surface does. */
+  tradePrice() {
+    this._updatePresentedCost();
+    const price = calculateTradePrice(this.presentedCost, this.deps.buildingQuality?.() ?? 0,
+      this.deps.skills?.() ?? {}, false);
+    // CHAP3c (Chapters-Arc 5.2): online, the hall's chapter's band laid over DFU's price (`priceFactor`, the host's) -
+    // DFU's own where it answers 1 or nothing
+    return chapterPriced(price, this.deps.priceFactor?.() ?? 1);   // AUDIT CHAP3 R12: the law's one rounding
+  }
+
+  /** SetEffectLabels (:624-649): the group and subgroup names of the
+   *  effect in this slot, or the not-found pair, which puts the RAW
+   *  KEY on the second row.
+   *
+   *  The key is built with `& 0xff` because the port has TWO
+   *  spellings of "no subtype": a SPELLS.STD record reads it as a
+   *  SIGNED byte and stores -1, while a spell built in the maker
+   *  copies the catalog's 255. Every other consumer normalizes the
+   *  same way (systems/effects.js:"i.e. ANY of the six"'s classicSub, spellcost.js:"return EFFECT_COST_TABLE")
+   *  and the effect table is keyed on 255, so a Free Action off the
+   *  file would otherwise print "Effect not found" in the book. */
+  effectLabels(slot) {
+    const effects = spellEffects(this.selected);
+    const e = effects[slot];
+    if (!e) return ['', ''];
+    const key = `${e.type},${e.subType & 0xff}`;
+    const template = effectByKey(key);
+    if (!template) return [effectNotFoundText(), key];
+    return [template.group, template.subgroup ?? ''];
+  }
+
+  // --- the buttons (:729-1020) ---
+
+  _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
+  _edit() { audio.playOneShot(SOUND.PageTurn, 1); }
+
+  /** SpellsListBox_OnUseSelectedItem (:770-787): ready the spell and
+   *  drop back to the HUD. Lycanthropy casts free. */
+  useSelected() {
+    const spell = this.selected;
+    if (!spell) return;
+    this.deps.onReady?.(spell, { noSpellPointCost: spell.tag === LYCANTHROPY_SPELL_TAG });
+    this._close();
+  }
+
+  /** DeleteButton_OnMouseClick (:811-837). */
+  deleteButton() {
+    if (this.selectedIndex === -1) return;
+    const spell = this.selected;
+    if (spell?.tag === VAMPIRE_SPELL_TAG) { this.top = 'note'; this._noteRows = [cannotDeleteVampText()]; return; }
+    if (spell?.tag === LYCANTHROPY_SPELL_TAG) { this.top = 'note'; this._noteRows = [cannotDeleteWereText()]; return; }
+    this.deleteSpellIndex = this.selectedIndex;
+    this.top = 'delete';
+  }
+
+  /** DeleteSpellConfirm_OnButtonClick (:839-852).
+   *
+   *  AUDIT-39r: the trailing `CloseWindow()` (:851) reads as "either
+   *  answer closes the book" and is not. It is the non-virtual
+   *  UserInterfaceWindow.CloseWindow (:127-132) -> PopWindow ->
+   *  RemoveWindow (UserInterfaceManager.cs:190-199), which pops
+   *  TopWindow - and TopWindow is the YesNo box `mb.Show()` pushed,
+   *  because ActivateButton (DaggerfallMessageBox.cs:479-484) only
+   *  raises the event and never pops itself. So the box goes and the
+   *  BOOK STAYS, which is the only reading under which this arm's own
+   *  `RefreshSpellsList(true); UpdateSelection();` do any work. This
+   *  port already writes that law out in nativeTrade's _confirm; the
+   *  book had been reading it backwards since U42. */
+  confirmDelete(yes) {
+    if (yes && this.deleteSpellIndex !== -1) {
+      const list = this.deps.spells?.() ?? [];
+      list.splice(this.deleteSpellIndex, 1);
+      this.refreshSpellsList(true);   // UpdateSelection rides along: the clamp is in here
+      this._edit();
+    }
+    this.deleteSpellIndex = -1;
+    this.top = null;
+  }
+
+  /** SwapButton_OnMouseClick (:872-897), both arms including the
+   *  force-one-more-row-into-view step. */
+  swap(dir) {
+    if (this.selectedIndex === -1) return;
+    const list = this.deps.spells?.() ?? [];
+    const i = this.selectedIndex;
+    if (dir > 0 && i < list.length - 1) {
+      [list[i], list[i + 1]] = [list[i + 1], list[i]];
+      this.refreshSpellsList(true);
+      this.selectNext();
+      if (this.selectedIndex === this.scrollIndex + ROWS_DISPLAYED - 1) { this.scrollIndex++; this._clampScroll(); }
+      this._edit();
+    } else if (dir < 0 && i > 0) {
+      [list[i], list[i - 1]] = [list[i - 1], list[i]];
+      this.refreshSpellsList(true);
+      this.selectPrevious();
+      if (this.selectedIndex === this.scrollIndex) { this.scrollIndex--; this._clampScroll(); }
+      this._edit();
+    }
+  }
+
+  /** SortSpellsConfirm_OnButtonClick (:906-925): alphabetical, and
+   *  point cost only if the alphabetical pass changed nothing (:912-
+   *  918). This one closes the book on either answer too (:924). */
+  confirmSort(yes) {
+    if (yes) {
+      const list = this.deps.spells?.() ?? [];
+      const before = list.slice();
+      list.sort(byShownName);
+      if (list.every((sp, i) => sp === before[i])) {
+        // AUDIT 26 F179: the RAW cost, not the display one.
+        // SortSpellsPointCost (DaggerfallEntity.cs:741-752) calls
+        // CalculateTotalEffectCosts with no tag check at all - the
+        // zero-cost lycanthropy quirk lives only in
+        // PopulateSpellsList (:264-267), where its comment says it is
+        // "so it displays correctly in spellbook". Sorting through
+        // the display value floated that spell to the front of a
+        // lycanthrope's book instead of leaving it at its real
+        // position.
+        const cost = new Map(list.map((sp) => [sp, rawSpellPointCost(sp, this.deps.castCost)]));
+        list.sort((a, b) => cost.get(a) - cost.get(b));
+      }
+      this.refreshSpellsList(false);
+      this.setDefaults();
+      this._edit();
+    }
+    this.top = null;
+    this._close();
+  }
+
+  /** SpellNameLabel_OnMouseClick (:927-938) + RenameSpellPromptHandler
+   *  (:940-951). */
+  renameButton() {
+    if (this.selectedIndex === -1 || !this.selected || this.buyMode) return;   // the button exists in cast mode only (:465 gated, see the header)
+    // GetSpell, then `new DaggerfallInputMessageBox(uiManager, this)`
+    // seeded from bundle.Name under enterSpellName (:927-938). CM6: the
+    // box is PUSHED and owns the keyboard; `top` stays 'rename' so the
+    // list under it neither highlights nor scrolls, as under any box.
+    this.top = 'rename';
+    this.renameBox = new InputMessageBoxWindow({
+      label: enterSpellNameLabel(),
+      value: shownSpellName(this.selected) ?? '',   // L10N3e: the Name as the book shows it
+      maxCharacters: MAX_SPELL_NAME,   // TextBox.maxCharacters (TextBox.cs:26, :425), homed in spellMaker.js
+      onSubmit: (input) => this.confirmRename(input),
+      onCancel: () => { this.top = null; },
+    });
+  }
+
+  /** RenameSpellPromptHandler (:940-951). DFU's EffectBundleSettings
+   *  is a STRUCT: GetSpell hands back a COPY, the handler renames the
+   *  copy, and SetSpell writes it into the player's slot - the shared
+   *  SPELLS.STD record is never touched. The port's records are
+   *  objects shared by every caster, so the copy has to be explicit,
+   *  and it is marked `custom` so save.js:"...(entity.spells ?? [])" stores the whole record
+   *  instead of the bare index it would otherwise write (which would
+   *  reload the ORIGINAL name). That retires the U4 ledger's rename
+   *  row: renaming is real and it persists. */
+  confirmRename(input) {
+    // RAW, not trimmed: DFU's guard is string.IsNullOrEmpty (:944), so
+    // a name of three spaces is a legal rename in classic and the
+    // port keeps it legal rather than quietly being stricter.
+    this.top = null;
+    if (this.selectedIndex === -1 || !input) return;   // "Must not be blank" (:943-944)
+    // L10N3e: the box was seeded with the name as shown; handed back as
+    // it was, the spell keeps its own canonical name under it
+    const sp = this.selected;
+    const name = sp && input === shownSpellName(sp) ? sp.name : input;
+    if (!editBookSpell(this.deps.spells?.(), this.selectedIndex, { name })) return;
+    this.refreshSpellsList(true);
+    this._edit();
+  }
+
+  /** MC1: the icon picker mounts over the book (uiManager.PushWindow,
+   *  :957) and IconPicker_OnClose (:960-974) is the same struct
+   *  copy-then-SetSpell shape as the rename above: a non-null pick
+   *  writes the icon onto a COPY of the selected spell, marks it
+   *  `custom` so the save keeps it, refreshes the selection and plays
+   *  the edit sound; a cancel (null) changes nothing. */
+  _openIconPicker() {
+    this.top = 'iconPicker';
+    this._iconPicker = new SpellIconPickerWindow({
+      onClose: (icon) => {
+        this.top = null;
+        this._iconPicker = null;
+        if (!icon) return;
+        if (!editBookSpell(this.deps.spells?.(), this.selectedIndex, { icon: icon.index })) return;   // GetSpell's false arm (:963-964)
+        this._edit();   // editSpellBook (:972)
+      },
+    });
+  }
+
+  /** BuyButton_OnMouseClick (:975-1013): spellbook, gold, then the
+   *  haggle line chosen by how the price compares. */
+  buyButton() {
+    this._click();
+    const entity = this.deps.entity;
+    const price = this.tradePrice();
+    const hasBook = (entity?.items ?? []).some(
+      (it) => it.group === 'MiscItems' && it.templateIndex === SPELLBOOK_TEMPLATE_INDEX);
+    // BOX1 (2026-09-17, Mac: "When buying a spell, the dialouge ui Flickers
+    // between 2 seperate conversations"): a box's text is READ ONCE, when
+    // the box opens. The host's `rows(id)` is TextProvider's random-variant
+    // draw (townTalk.lines -> variantLinesById), and this window used to
+    // ask it again on every draw() - so a record with two variants (the
+    // trade lines are) flickered between them at frame rate. DFU's
+    // BuyButton_OnMouseClick reads the tokens once into the box
+    // (DaggerfallSpellBookWindow.cs:984-1000); so does this.
+    this._boxMemo = null;
+    if (!hasBook) { this.top = 'noSpellbook'; return; }
+    if (totalGoldAmount(entity) < price) { this.top = 'notEnoughGold'; return; }
+    // The three bands (:984-990) are cureOfferMessageOffset's - DFU
+    // wrote the same comparison in the temple, the trade window and
+    // here, and the port keeps ONE home (tradeModes.js already reuses
+    // it for the trade records).
+    // AUDIT CHAP5 D6: against the cost the hall's chapter lists (its band laid over DFU's, as the price is) - the
+    // bargaining's own line; a Thriving hall's price against DFU's list said the player had haggled it down
+    this._tradeOffset = cureOfferMessageOffset(chapterPriced(this.presentedCost, this.deps.priceFactor?.() ?? 1), price);
+    this.top = 'trade';
+  }
+
+  /** ConfirmTrade_OnButtonClick (:1011-1024) - and the close is
+   *  outside the Yes arm here as well. */
+  confirmTrade(yes) {
+    if (yes) {
+      const spell = this.selected;
+      if (spell) {
+        purchaseSpell(this.deps.entity, { ...spell }, this.tradePrice());
+        audio.playOneShot(SOUND.GoldPieces, 1);
+      }
+    }
+    this.top = null;
+    this._close();
+  }
+
+  _close() {
+    noticeRelease(this);   // SPELLSHOP-SAID: a host drops a closed window and never draws it again
+    // OnPop (:178-183): the book turns a page shut, the shop clicks.
+    audio.playOneShot(this.buyMode ? SOUND.ButtonClick : SOUND.PageTurn, 1);
+    this.done = true;
+    this.deps.onClose?.();
+  }
+
+  // --- the host seam ---
+
+  input(code, e = null) {
+    if (this.top === 'iconPicker') { this._iconPicker?.input(code); return; }   // MC1: the picker is modal
+    if (this.top === 'rename') {
+      // the pushed box owns the keyboard (:927-938); its Return runs
+      // confirmRename and its Escape clears `top`, both through the box
+      this.renameBox?.input(code, e);
+      if (this.renameBox?.done) this.renameBox = null;
+      return;
+    }
+    if (this.top === 'delete') {
+      if (code === 'KeyY') { this._click(); this.confirmDelete(true); }
+      else if (code === 'KeyN' || code === 'Escape') { this._click(); this.confirmDelete(false); }
+      return;
+    }
+    if (this.top === 'sort') {
+      if (code === 'KeyY') { this._click(); this.confirmSort(true); }
+      else if (code === 'KeyN' || code === 'Escape') { this._click(); this.confirmSort(false); }
+      return;
+    }
+    if (this.top === 'trade') {
+      if (code === 'KeyY') { this._click(); this.confirmTrade(true); }
+      else if (code === 'KeyN' || code === 'Escape') { this._click(); this.confirmTrade(false); }
+      return;
+    }
+    if (this.top) { this.top = null; return; }   // the click-anywhere boxes
+    // Update's toggle-closed binding is the CAST key (:158-161,
+    // :205-214), and the back button closes too.
+    if (code === 'Escape' || codeMeans(bindings(), code, 'CastSpell')) { this._close(); return; }
+    switch (code) {
+      case 'ArrowUp': this.selectPrevious(); return;
+      case 'ArrowDown': this.selectNext(); return;
+      case 'Enter': case 'NumpadEnter':
+        // OnUseSelectedItem - what Return raises - is subscribed ONLY
+        // outside buy mode (:357-360); the shop wires
+        // OnMouseDoubleClick instead, so Enter does nothing there and
+        // B or the BUY button is the keyboard path.
+        if (!this.buyMode) this.useSelected();
+        return;
+      case 'KeyE': this._close(); return;                                   // SpellbookExit
+      default: break;
+    }
+    if (this.buyMode) {
+      if (code === 'KeyB') this.buyButton();                                 // SpellbookBuy
+      return;
+    }
+    if (code === 'KeyL') { this.deleteButton(); }                            // SpellbookDelete
+    else if (code === 'KeyU') { this.swap(-1); }                             // SpellbookUp
+    else if (code === 'KeyD') { this.swap(1); }                              // SpellbookDown
+    else if (code === 'KeyS') { this.top = 'sort'; }                         // SpellbookSort
+  }
+
+  /** BaseScreenComponent's own clock, never a positional: the
+   *  `Time.realtimeSinceStartup` of :688, in the seam `ui/listPicker.js`
+   *  already declares, so a pin overrides the CLOCK rather than
+   *  occupying an argument slot the hosts own. */
+  _now() { return typeof performance !== 'undefined' ? performance.now() : Date.now(); }
+
+  /** AUDIT 65 UI-1: THE HOSTS OWN THE THIRD AND FOURTH SLOTS. Every
+   *  host that holds an overlay slot dispatches
+   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:"else overlay.click?.(v[0], v[1], e.button === 2, e.button === 1)"`,
+   *  `scenes/worldModes.js:"return handled;"`, `scenes/dungeonContext.js:"and the drain in"` - so
+   *  a clock threaded positionally here arrived as `e.button === 2`, a
+   *  BOOLEAN. `false ?? Date.now()` keeps the `false`, `false != null`
+   *  is true and `false - false === 0 < 300`, which made EVERY second
+   *  click in the list a double-click - any row, any distance in time -
+   *  the exact gesture OT1 was written to remove. Neither button is
+   *  read here; the clock is `_now()`. (`ui/charsheet.js`'s nested
+   *  forward passes two arguments and was never bitten, which is why
+   *  the book worked from the character sheet and nowhere else.) */
+  click(vx, vy, right = false, middle = false) {
+    if (this.top === 'iconPicker') return this._iconPicker?.click(vx, vy) ?? true;   // MC1
+    if (ASKS.includes(this.top)) {
+      const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
+      if (hit === MB_BUTTONS.Yes) this.input('KeyY');
+      else if (hit === MB_BUTTONS.No) this.input('KeyN');
+      return true;
+    }
+    if (this.top === 'rename') return true;   // a field answers keys only
+    if (this.top) { this.top = null; return true; }
+    if (hitPanel(SPELLBOOK_RECTS.exit, vx, vy)) { this._close(); return true; }
+    if (hitPanel(SPELLBOOK_RECTS.upArrow, vx, vy)) { this._edit(); this.selectPrevious(); return true; }
+    if (hitPanel(SPELLBOOK_RECTS.downArrow, vx, vy)) { this._edit(); this.selectNext(); return true; }
+    if (hitPanel(SPELLBOOK_RECTS.deleteOrBuy, vx, vy)) {
+      if (this.buyMode) this.buyButton();
+      else this.deleteButton();
+      return true;
+    }
+    if (!this.buyMode) {
+      if (hitPanel(SPELLBOOK_RECTS.up, vx, vy)) { this.swap(-1); return true; }
+      if (hitPanel(SPELLBOOK_RECTS.down, vx, vy)) { this.swap(1); return true; }
+      if (hitPanel(SPELLBOOK_RECTS.sort, vx, vy)) { this.top = 'sort'; return true; }
+      if (inRect([LABEL_POS.name[0], LABEL_POS.name[1], 110, 10], vx - PANEL_X, vy - PANEL_Y)) {
+        this.renameButton();
+        return true;
+      }
+      if (hitPanel(SPELLBOOK_RECTS.spellIcon, vx, vy)) {
+        // MC1: SpellIconPanel_OnMouseClick pushes the picker (:954-958)
+        this._click();
+        this._openIconPicker();
+        return true;
+      }
+    }
+    // the three effect panels pop their effect's description (:730-763)
+    for (let i = 0; i < 3; i++) {
+      if (!hitPanel(SPELLBOOK_RECTS.effect[i], vx, vy)) continue;
+      if (this.buyMode) this._click();
+      const [group, subgroup] = this.effectLabels(i);
+      if (!group) return true;
+      this.top = 'note';
+      // SetTextTokens(effect.SpellBookDescription) and nothing else
+      // (:658) - the group/subgroup line is the port's fallback for a
+      // record the host cannot read, not a header DFU draws.
+      this._noteRows = this._effectDescription(i) ?? [subgroup ? `${group} ${subgroup}` : group];
+      return true;
+    }
+    // F180 CLOSED (ROAD-G G4): the press on the bar, WHOLE. DFU splits
+    // it across two members of one component - MouseClick (:142-150)
+    // pages by displayUnits above or below thumbRect, and Update
+    // (:105-113) latches `draggingThumb` when the press lands ON the
+    // thumb - and `VerticalScrollBar.press` is that split, so this
+    // window states neither arm itself. The drag that the latch starts
+    // is `hover`'s per-frame poll below.
+    //
+    // NO COUNT GATE. The old arm asked `_rows.length > ROWS_DISPLAYED`
+    // first; the component does not. A bar on a list that FITS never
+    // drew a thumb (Draw returns at :135-139), so thumbRect keeps the
+    // zero rect, every press falls into MouseClick's `>` arm and
+    // SetScrollIndex clamps it back to 0 - the same answer, reached
+    // DFU's way, and the click is consumed either way because the bar
+    // is a component in the panel whether or not it painted.
+    if (this._syncScrollBar().contains(vx - PANEL_X, vy - PANEL_Y)) {
+      this.scrollBar.press(vx - PANEL_X, vy - PANEL_Y);
+      this.scrollIndex = this.scrollBar.scrollIndex;
+      return true;
+    }
+    // a click in the list selects that row; a second within the
+    // double-click window USES it.
+    //
+    // OT1: this arm used to re-click the SELECTED row - a click on
+    // the row already selected used it, however long ago it was
+    // selected - which Ledger row :505 recorded as an approximation.
+    // The spellsListBox is a ListBox: MouseClick selects
+    // (SpellsListBox_OnSelectItem) and MouseDoubleClick uses
+    // (SpellsListBox_OnUseSelectedItem - cast, or the buy in buy
+    // mode), and the double-click test is on TIME ALONE
+    // (BaseScreenComponent.cs:691), the law listPicker.js and
+    // nativeTalk.js already carry. The second click need not land on
+    // the same row: the first of the pair has already moved the
+    // selection.
+    const [lx, ly, lw, lh] = SPELLBOOK_RECTS.list;
+    if (inRect([lx, ly, lw, lh], vx - PANEL_X, vy - PANEL_Y)) {
+      const row = Math.floor((vy - PANEL_Y - ly) / this._rowHeight());
+      const index = this.scrollIndex + row;
+      if (index >= 0 && index < this._rows.length) {
+        const t = this._now();   // BaseScreenComponent.cs:688 - leftClickTime = Time.realtimeSinceStartup
+        const wasDouble = this._lastRowClick != null && (t - this._lastRowClick) < DOUBLE_CLICK_DELAY_MS;
+        this.selectedIndex = index;          // MouseClick
+        this._lastRowClick = t;
+        // AUDIT 65 UI-1: the stamp is NOT cleared on a double.
+        // BaseScreenComponent.cs:687-688 stores `lastLeftClickTime =
+        // leftClickTime` UNCONDITIONALLY, so three fast clicks in DFU
+        // are click/double/DOUBLE; clearing made the third a plain
+        // MouseClick and lost the second use.
+        if (wasDouble) {                     // MouseDoubleClick
+          if (!this.buyMode) this.useSelected(); else this.buyButton();
+        }
+      }
+      return true;
+    }
+    return true;
+  }
+
+  /** ShowEffectPopup (:651-660): the box is the effect's own
+   *  SpellBookDescription. Null when the effect declares none
+   *  (EntityEffect's default) or the host has no TEXT.RSC seam. */
+  _effectDescription(slot) {
+    const e = spellEffects(this.selected)[slot];
+    if (!e) return null;
+    const key = `${e.type},${e.subType & 0xff}`;
+    const id = spellBookDescriptionId(key);
+    if (id == null) { const own = portEffectDescription(key); return own ? [...own] : null; }   // RESURRECT1: the port's own effect's own words
+    // MACRO-5: SetTextTokens(effect.SpellBookDescription, EFFECT) - the
+    // box's source is the effect itself (EntityEffectMCP), not the
+    // book's trade source, so %bdr..%clm are its own settings.
+    const rows = expandRowValues(this.deps.rows?.(id) ?? [], sourceValues(effectMacroSource(e)));
+    return rows.length ? rows : null;
+  }
+
+  _rowHeight() { return (this._font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
+
+  /** The rows a pushed box carries. `rows(id)` is the host's
+   *  GetRandomTokens seam (variantLinesById), and every record goes
+   *  through the ONE macro table - SpellbookMacroDataSource answers
+   *  Amount (%a, the trade price), ShopName (%cpn) and GuildTitle
+   *  (%pct, which MacroHelper.GetFirstname makes the PLAYER's first
+   *  name here, not a rank; :711-722). */
+  _boxText(id, amount = null) {
+    const raw = this.deps.rows?.(id) ?? [];
+    return raw.map((r) => {
+      const text = expandGuildMacros(typeof r === 'string' ? r : r.text ?? '', {
+        amount,
+        gold: totalGoldAmount(this.deps.entity),
+        guildTitle: String(this.deps.entity?.name ?? '').split(' ')[0],
+        shopName: this.deps.shopName?.() ?? '',
+        playerName: this.deps.entity?.name ?? '',
+      });
+      return typeof r === 'string' ? text : { ...r, text };
+    });
+  }
+
+  /** BOX1: the three buy-mode boxes latch their rows on the first read
+   *  after the box opened (buyButton clears the memo); the delete and
+   *  sort prompts are constants and the rename box is live by design. */
+  _boxRows() {
+    if (this.top === 'noSpellbook' || this.top === 'notEnoughGold' || this.top === 'trade') {
+      this._boxMemo ??= this._boxRowsNow();   // buyButton is the one opener and clears it
+      return this._boxMemo;
+    }
+    return this._boxRowsNow();
+  }
+  _boxRowsNow() {
+    if (this.top === 'delete') return [deleteSpellPrompt()];
+    if (this.top === 'sort') return [sortSpellsPrompt()];
+    if (this.top === 'noSpellbook') {
+      const rows = this._boxText(NO_SPELLBOOK_TEXT_ID);
+      return rows.length ? rows : ['You have no spellbook.'];
+    }
+    if (this.top === 'notEnoughGold') {
+      const rows = this._boxText(NOT_ENOUGH_GOLD_TEXT_ID);
+      return rows.length ? rows : ['You do not have enough gold.'];
+    }
+    if (this.top === 'trade') {
+      const price = this.tradePrice();
+      const rows = this._boxText(TRADE_MESSAGE_BASE_ID + (this._tradeOffset ?? 0), price);
+      return rows.length ? rows : [`That will be ${price} gold.`];
+    }
+    return this._noteRows ?? [];
+  }
+
+  draw(renderer, canvas, font) {
+    const m = nativeMetrics(canvas);
+    this._font = font;
+    const art = _art ? (this.buyMode ? _art.buy : _art.base) : null;
+    if (art) drawImg(renderer, art, m, PANEL_X, PANEL_Y, SPELLBOOK_RECTS.main[2], SPELLBOOK_RECTS.main[3]);
+    else drawRect(renderer, m, PANEL_X, PANEL_Y, SPELLBOOK_RECTS.main[2], SPELLBOOK_RECTS.main[3], [0.05, 0.04, 0.03, 0.95]);
+    if (!font) return;
+
+    // the list
+    const [lx, ly] = SPELLBOOK_RECTS.list;
+    const rh = this._rowHeight();
+    for (let r = 0; r < ROWS_DISPLAYED; r++) {
+      const i = this.scrollIndex + r;
+      const row = this._rows[i];
+      if (!row) break;
+      // DecideTextColor's four arms (ListBox.cs:358-390). A SELECTED
+      // row draws with selectedShadowPosition = Vector2.zero, so it
+      // loses its drop shadow entirely - drawn flat, not shadowed.
+      const selected = i === this.selectedIndex, hot = i === this.highlightedIndex;
+      const base = selected
+        ? (hot ? HIGHLIGHT_SELECTED_TEXT_COLOR : SELECTED_TEXT_COLOR)
+        : (hot ? HIGHLIGHT_TEXT_COLOR : DEFAULT_TEXT_COLOR);
+      const color = row.dim ? lerpGrey(base) : base;
+      const x = PANEL_X + lx, y = PANEL_Y + ly + r * rh;
+      if (selected) drawText(renderer, font, row.text, m.ox + x * m.s, m.oy + y * m.s, m.s, color);
+      else shadowText(renderer, font, row.text, m, x, y, { color });
+    }
+
+    // VerticalScrollBar: Draw() returns early when the list fits
+    // (:135-139), so a book of sixteen spells or fewer has NO thumb -
+    // thumbSpan answers null there and drawScrollThumb paints nothing.
+    // The geometry is :204-207 verbatim, minimum height included, and
+    // ROAD-D2 gave it DFU's OWN three art slices (see below).
+    const [sbx, sby, sbw, sbh] = SPELLBOOK_RECTS.scrollBar;
+    drawScrollThumb(renderer, m, [PANEL_X + sbx, PANEL_Y + sby, sbw, sbh],
+      this._syncScrollBar().thumbSpan);   // ROAD-G G4: the LIVE component's own span, so the art and the drag read one number
+
+    const spell = this.selected;
+    // The name and the spell-point labels carry
+    // DaggerfallAlternateShadowColor1 (:465, :479); the buy-mode cost
+    // and gold labels set ShadowPosition = Vector2.zero (:472-475),
+    // so they draw FLAT - no shadow pass at all.
+    if (spell) {
+      // spellNameLabel.Text = spellSettings.Name (:549) - L10N3e, as shown
+      shadowText(renderer, font, shownSpellName(spell) ?? '', m,
+        PANEL_X + LABEL_POS.name[0], PANEL_Y + LABEL_POS.name[1], { shadow: ALT_SHADOW_1 });
+    }
+    if (!this.buyMode) {
+      const e = this.deps.entity ?? {};
+      shadowText(renderer, font, `${e.magicka ?? 0}/${e.maxMagicka ?? 0}`, m,
+        PANEL_X + LABEL_POS.points[0], PANEL_Y + LABEL_POS.points[1], { shadow: ALT_SHADOW_1 });
+    } else {
+      const flat = (text, [lx2, ly2]) => drawText(renderer, font, text,
+        m.ox + (PANEL_X + lx2) * m.s, m.oy + (PANEL_Y + ly2) * m.s, m.s, DEFAULT_TEXT_COLOR);
+      // The label is the PRESENTED cost (:534) - the casting cost x4,
+      // Witches-Festival-halved - NOT the trade price. They are
+      // deliberately different numbers: the whole 260/261/262 ladder
+      // exists to compare one against the other, so a shop asking
+      // less than the sticker gets a friendlier line. GetTradePrice
+      // (:685-688) is read only by the ladder, the %a macro and the
+      // deduction.
+      this._updatePresentedCost();
+      flat(String(this.presentedCost), LABEL_POS.cost);
+      flat(String(totalGoldAmount(this.deps.entity)), LABEL_POS.gold);
+    }
+
+    // the three icons - black panels behind whatever the sheets give
+    if (spell) {
+      for (const [rect, drawIcon, value] of [
+        [SPELLBOOK_RECTS.spellIcon, drawSpellIcon, spell.icon ?? 0],
+        [SPELLBOOK_RECTS.targetIcon, drawTargetIcon, spell.rangeType ?? 0],
+        [SPELLBOOK_RECTS.elementIcon, drawElementIcon, spell.element ?? 0],
+      ]) {
+        const dst = [PANEL_X + rect[0], PANEL_Y + rect[1], rect[2], rect[3]];
+        drawRect(renderer, m, ...dst, [0, 0, 0, 1]);
+        drawIcon(renderer, m, value, dst);
+      }
+      // the effect panels' two labels each, centred IN THE PANEL
+      // (HorizontalAlignment.Center, :490) and clipped to
+      // MaxCharacters (:489)
+      for (let i = 0; i < 3; i++) {
+        const [ex, ey, ew] = SPELLBOOK_RECTS.effect[i];
+        this.effectLabels(i).forEach((text, row) => {
+          if (!text) return;
+          shadowText(renderer, font, text.slice(0, EFFECT_LABEL_MAX_CHARS), m,
+            PANEL_X + ex, PANEL_Y + ey + EFFECT_LABEL_ROWS[row],
+            { align: 'center', w: ew, shadow: ALT_SHADOW_1 });
+        });
+      }
+    }
+
+    // SPELLSHOP-SAID (FIELD BUGS 2026-10-19f): a box that does not ask - the no-book and no-gold refusals
+    // (BuyButton_OnMouseClick's DaggerfallUI.MessageBox, ClickAnywhereToClose) and a note - is the enhanced notice
+    // panel, ENH-NOTICE2's seam. Under Enhanced Plus the spell shop is this window inside the port (SHOP-PLUS), whose
+    // quiet renderer paints no parchment: the refusal was drawn onto nothing, and Buy did nothing a player could see
+    if (noticeFrame(this, NOTES.includes(this.top) ? this._boxRows() : null)) {
+      this._box = null;
+    } else if (this.top === 'iconPicker') {
+      this._box = null;
+      this._iconPicker?.draw(renderer, canvas, font);   // MC1: the picker rides over the book
+    } else if (this.top === 'rename') {
+      this._box = null;
+      this.renameBox?.draw(renderer, canvas, font);   // CM6: the pushed box rides over the book
+    } else if (this.top) {
+      this._box = layoutMessageBox(font, this._boxRows(), ASKS.includes(this.top) ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : []);
+      this._drawBox(renderer, m, font);
+    } else this._box = null;
+
+    this.tip.draw(renderer, m, font);   // LAST - DFU's final-component order
+  }
+
+  _drawBox(renderer, m, font) {
+    // SHOP-PLUS: drawMessageBox answers false itself when the classic art is not up; asking it first lets the
+    // Enhanced Plus face (a decision drawn as the enhanced dialog) stand whether or not that art has loaded
+    if (drawMessageBox(renderer, m, font, this._box)) return;
+    (this._box.rows ?? []).forEach((r, i) => drawText(renderer, font, r.text ?? r,
+      m.ox + 20 * m.s, m.oy + (20 + i * 10) * m.s, m.s, [0.9, 0.9, 0.75, 1]));
+  }
+}
+
+/** DaggerfallUI.cs:52's default row colour is nativePanel's
+ *  DEFAULT_TEXT_COLOR and :62's dark-red selected row is the list
+ *  picker's SELECTED_TEXT_COLOR - both imported, neither rewritten. */
+/** ROAD-D2 closed this file's thumb note. The "Resources sprite the
+ *  port has no reader for" was stale: ROAD-A7 carried vScrollThumb
+ *  Top/Body/Bottom into the repo as their fifteen literal bytes
+ *  (ui/verticalScrollBar.js:"export const THUMB_TOP_ROW"), so the book's thumb is DFU's own
+ *  art - a 77 left edge, a 186 body under a 223 highlight, an all-77
+ *  foot, each strip StretchToFill across the 7-wide rail - drawn by
+ *  drawScrollThumb, and the local 10px floor and the flat brass
+ *  rectangle it used to paint are both gone. THUMB_MIN_H
+ *  (VerticalScrollBar.cs:209) and the whole of :204-221 live in that
+ *  one file; this window states no geometry of its own.
+ *  ROAD-G G4 then closed the last clause of that note. The DRAG
+ *  (Update, :101-130) is BUILT: `this.scrollBar` is a live
+ *  VerticalScrollBar, the press latches through it, `hover`'s
+ *  `e.buttons & 1` is GetMouseButton(0)'s frame and `release()` is the
+ *  else arm. The reason the note gave - "no host hands this window a
+ *  held-button frame" - was true of the port's seam and stopped being
+ *  true twice over: ROAD-A7 gave the hosts' hover the DOM event, and
+ *  wave E gave every overlay slot the button-UP edge. The Ledger's
+ *  F159/F170/F180 row records the closure. */

@@ -1,0 +1,173 @@
+[
+  {
+    "name": "EGPLUS-role-forgotten",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "    'body .eg-k-tile',\n  ], // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards",
+    "new": "  ], // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-cut-whole",
+    "file": "src/ui/eliteGates/egKit.js",
+    "old": "export const egKitCss = () => scopeRules(frameCss(), isEgKitSelector);",
+    "new": "export const egKitCss = () => frameCss();",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-ground-on-press",
+    "file": "src/ui/eliteGates/egKit.js",
+    "old": ".eg-k-btn { margin: 0; padding: 4px 12px; min-height: 30px; border-width: 2px; border-style: solid; font: inherit; font-size: 13px; color: #efe8d6; text-align: center; cursor: pointer; }",
+    "new": ".eg-k-btn { background: #333; margin: 0; padding: 4px 12px; min-height: 30px; border-width: 2px; border-style: solid; font: inherit; font-size: 13px; color: #efe8d6; text-align: center; cursor: pointer; }",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-serif-back",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  padding: 9px 12px 10px; border-width: 2px; border-style: solid; ${PIXEL_FONT_CSS} font-size: calc(14px * var(--hud-scale, 1)); line-height: 1.35;",
+    "new": "  padding: 9px 12px 10px; border-width: 2px; border-style: solid; font-family: Georgia, serif; font-size: calc(14px * var(--hud-scale, 1)); line-height: 1.35;",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-cut-never",
+    "file": "src/ui/eliteGates/egKit.js",
+    "old": "  return lay(EG_KIT_STYLE_ID, egKitCss());",
+    "new": "  return false;",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-decree-lines-dropped",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "      lines: o.map((id) => EG_DECREES[id]?.line ?? ''),",
+    "new": "      lines: o.map(() => ''),",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-vote-unmarked",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "      if (a.mine === y) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-reader-unmarked",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "    const n = el('div', `eg-k-row${r.you ? ' on' : ''}`);",
+    "new": "    const n = el('div', 'eg-k-row');",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-band-dropped",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "      sub: [`Hall ${r.h} - ${EG_BAND_NAMES[egBandOfHall(r.h)]}`, r.pr || ''].filter(Boolean).join(' - '),",
+    "new": "      sub: [`Hall ${r.h}`, r.pr || ''].filter(Boolean).join(' - '),",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-runs-oldest-first",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "      .slice()\n      .reverse();",
+    "new": "      .slice();",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-chosen-twice",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "    if (done) return;\n    done = true;",
+    "new": "    done = true;",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-slot-told-after",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "    leave();\n    fn();",
+    "new": "    fn();\n    leave();",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-ask-skipped",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "    if (!s.missing.length) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-fold-stuck",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "        folded = open;",
+    "new": "        folded = true;",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-panel-never",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "  if (o.panel) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-hall1-dropped",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "  const list = keys > 0 ? (mine.includes(0) ? mine : [...mine, 0]) : [];",
+    "new": "  const list = keys > 0 ? mine.filter((ew) => ew > 0) : [];",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-mark-misread",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "        (m) => Array.isArray(starts?.[m.sub]) && egMayStart(/** @type {number[]} */ (starts[m.sub]), ew),",
+    "new": "        (m) => Array.isArray(starts?.[m.sub]) && egMayStart(/** @type {number[]} */ (starts[me]), ew),",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-family-missing",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "export const EG_WAGER_FAMILIES = Object.freeze(Object.keys(EG_WAGER_FAMILY_WORDS));",
+    "new": "export const EG_WAGER_FAMILIES = Object.freeze(Object.keys(EG_WAGER_FAMILY_WORDS).slice(1));",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    panel: isEnhancedPlus() ? egStartPanelDoors({ slot: egWindowSlot }) : null,",
+    "new": "    panel: null,",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  }
+]

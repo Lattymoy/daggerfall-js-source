@@ -1,0 +1,360 @@
+[
+  {
+    "name": "IT1-1-homes-read-homes",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.dungeons)",
+    "new": "  if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.homes)",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The mod's own bug: the homes read Dungeons (IL_0adb), and Homes admits nothing."
+  },
+  {
+    "name": "IT1-2-31-not-skipped",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "    if (r === 31) continue;\n    if (r > 0) return r;",
+    "new": "    if (r > 0) return r;",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "BorderingRegionIndex passes 31 over."
+  },
+  {
+    "name": "IT1-3-alikr-a-region",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "    if (r > 0) return r;",
+    "new": "    if (r >= 0) return r;",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "Region 0 is never an answer (the `> 0` test)."
+  },
+  {
+    "name": "IT1-4-y-plus-one-once",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "    [x, y + 1],\n    [x + 1, y],",
+    "new": "    [x + 1, y],",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The mod asks (x, y+1) twice - carried, and the order pinned."
+  },
+  {
+    "name": "IT1-5-capital-unmasked",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "export const isCapital = (mapId) => CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK) === pixelIdOf(mapId));",
+    "new": "export const isCapital = (mapId) => CAPITAL_MAP_IDS.some((c) => c === (mapId | 0));",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "isCapital compares masked."
+  },
+  {
+    "name": "IT1-6-no-capital-to-capital",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  if (fromCapital && (dest.capital ?? isCapital(dest.mapId))) return null; // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word",
+    "new": "  if (false) return null; // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
+    ],
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
+  },
+  {
+    "name": "IT1-7-capital-words-swapped",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  return fromCapital ? 'capitalOnly' : 'regionLocked'; // IL_097e-09a3",
+    "new": "  return fromCapital ? 'regionLocked' : 'capitalOnly'; // IL_097e-09a3",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
+    ],
+    "note": "The two refusals by where the player stands."
+  },
+  {
+    "name": "IT1-8-fee-no-plus-one",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  let totalCost = piecesCost + fee * Math.trunc((hours - ocean) / 24) + fee;",
+    "new": "  let totalCost = piecesCost + fee * Math.trunc((hours - ocean) / 24);",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The fee's plus one (IL_1df4)."
+  },
+  {
+    "name": "IT1-9-own-ship-pays-rent",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "    if (!hasShip) totalCost += (settings?.dailyShipCost | 0) * seaDays;",
+    "new": "    totalCost += (settings?.dailyShipCost | 0) * seaDays;",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "An owned ship pays no rent."
+  },
+  {
+    "name": "IT1-10-dock-unmasked",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "export const hasDock = (mapId) => DOCKS.has(pixelIdOf(mapId));",
+    "new": "export const hasDock = (mapId) => DOCKS.has(mapId | 0);",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "HasDock masks the id it is asked."
+  },
+  {
+    "name": "IT1-11-no-north-neighbour",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  return hasDock(id) || hasDock(id - 1000) || hasDock(id + 1) || hasDock(id + 1000) || hasDock(id - 1);",
+    "new": "  return hasDock(id) || hasDock(id + 1) || hasDock(id + 1000) || hasDock(id - 1);",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "NearDock asks the row above."
+  },
+  {
+    "name": "IT1-12-region-30",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  return gps.regionIndex === 31;",
+    "new": "  return gps.regionIndex === 30;",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "IsPlayerInTown's region 31."
+  },
+  {
+    "name": "IT1-13-no-region-sails-nowhere",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  if (border === dest.regionIndex || border === -1) return null;",
+    "new": "  if (border === dest.regionIndex) return null;",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "No region answering sails anywhere (IL_16d0)."
+  },
+  {
+    "name": "IT1-14-fifty-minutes",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  let minutes = 51 * steps;",
+    "new": "  let minutes = 50 * steps;",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
+    ],
+    "note": "51 minutes a pixel."
+  },
+  {
+    "name": "IT1-15-reckless-not-halved",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  if (!speedCautious) minutes >>= 1;\n  return { minutes, oceanPixels: 0 };",
+    "new": "  return { minutes, oceanPixels: 0 };",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The reckless halving."
+  },
+  {
+    "name": "IT1-16-own-ship-no-captain",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  totalCost += (settings?.dailyCaptainFee | 0) * days;",
+    "new": "  if (!hasShip) totalCost += (settings?.dailyCaptainFee | 0) * days;",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The captain is paid on your own ship."
+  },
+  {
+    "name": "IT1-17-sea-inns",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  if (kind === IT_POPUP.seafarer) return { speedCautious: true, travelShip: true, sleepModeInn: false };",
+    "new": "  if (kind === IT_POPUP.seafarer) return { speedCautious: true, travelShip: true, sleepModeInn: true };",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
+    ],
+    "note": "SeafarersPopUp.OnPush camps out."
+  },
+  {
+    "name": "IT1-18-camp-out-keeps-ship",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "    st.travelShip = false; // IL_1b46-1b5d, IL_1b67-1b7e - the camp-out button alone\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The carriage's camp-out drops the ship."
+  },
+  {
+    "name": "IT1-19-captain-lets-you-walk",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "    if (transport && st.travelShip) {\n      st.travelShip = true;\n      return 'cannotDisableShip';\n    } // IL_1f33-1f41, IL_1f4c-1f5a\n    if (sleep && !st.sleepModeInn) {",
+    "new": "    if (sleep && !st.sleepModeInn) {",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
+    ],
+    "note": "The captain refuses land."
+  },
+  {
+    "name": "IT1-20-normal-travel-ignored",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "  if (!settings?.enabled || !settings.disableNormalTravel) return null;",
+    "new": "  if (!settings?.enabled) return null;",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
+    ],
+    "note": "Disable Normal Travel off leaves the map alone."
+  },
+  {
+    "name": "IT1-21-drivers-not-merchants",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "    power: 100,\n    face: -1,\n    race: -1,\n    sgroup: 1,\n    ggroup: 16,\n  }),\n  Object.freeze({",
+    "new": "    power: 100,\n    face: -1,\n    race: -1,\n    sgroup: 0,\n    ggroup: 16,\n  }),\n  Object.freeze({",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "sgroup 1 (Merchants) is what routes a driver to the merchant popup."
+  },
+  {
+    "name": "IT1-22-dock-table-drift",
+    "file": "src/systems/immersiveTravelTables.js",
+    "old": "  5222, 5224, 5229, 8219, 11215, 14210, 22763, 23240, 29347, 34162, 35152, 35449, 38152, 40361, 41483, 42127, 45124,",
+    "new": "  5223, 5224, 5229, 8219, 11215, 14210, 22763, 23240, 29347, 34162, 35152, 35449, 38152, 40361, 41483, 42127, 45124,",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The tables are the DLL's bytes."
+  },
+  {
+    "name": "IT1-23-online-mod-the-players",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "    Enabled: true,\n    'General.DisableNormalTravel': false,",
+    "new": "    'General.DisableNormalTravel': false,",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/modsonline.test.js"
+    ],
+    "note": "The carriages are the room's ground."
+  },
+  {
+    "name": "IT1-24-online-map-refuses",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "    'General.DisableNormalTravel': false,\n  }),",
+    "new": "  }),",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/modsonline.test.js"
+    ],
+    "note": "Online the map's trips stay walked."
+  },
+  {
+    "name": "IT1-25-online-fares-the-players",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "  'immersive-travel': Object.freeze([",
+    "new": "  'immersive-travel-x': Object.freeze([",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/realm0.test.js"
+    ],
+    "note": "A fee of 0 online would be a free teleport."
+  },
+  {
+    "name": "IT1-27-shipped-default-on",
+    "file": "src/systems/modSettings.js",
+    "old": "      'General.DisableNormalTravel': Object.freeze({\n        default: false,",
+    "new": "      'General.DisableNormalTravel': Object.freeze({\n        default: true,",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The port ships Disable Normal Travel off."
+  },
+  {
+    "name": "IT1-28-laid-twice",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "    if (!l.match(fileName) || !(l.isOn?.() ?? true) || l.owns?.(json)) continue;",
+    "new": "    if (!l.match(fileName) || !(l.isOn?.() ?? true)) continue;",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "The mod's own file is never laid twice."
+  },
+  {
+    "name": "IT1-29-layer-ignores-switch",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "    if (!l.match(fileName) || !(l.isOn?.() ?? true) || l.owns?.(json)) continue;",
+    "new": "    if (!l.match(fileName) || l.owns?.(json)) continue;",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "The mod off lays nothing."
+  },
+  {
+    "name": "IT1-30-no-composites",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "export const IT_GATE_FILE = /^(WALLAA(?:08|09|10|11))(?:\\.[A-Z0-9]+)?\\.RMB\\.json$/;",
+    "new": "export const IT_GATE_FILE = /^(WALLAA(?:08|09|10|11))\\.RMB\\.json$/;",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "Beautiful Cities' composites carry the carriages too."
+  },
+  {
+    "name": "IT1-31-sheet-remembers",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (o && !this._panelState.it && !this._zoneMap) setTravelMapPopUpState(o);",
+    "new": "    if (o && !this._zoneMap) setTravelMapPopUpState(o);",
+    "tests": [
+      "test/systems/travel/it1_heldmap.test.js"
+    ],
+    "note": "The mod's popups are new each time."
+  },
+  {
+    "name": "IT1-32-sheet-skips-refusal",
+    "file": "src/ui/heldMap.js",
+    "old": "      if (refusal) { this._itRefusal = IT_TEXT[refusal]; this._renderCard(); return; }",
+    "new": "",
+    "tests": [
+      "test/systems/travel/it1_heldmap.test.js"
+    ],
+    "note": "A refused place opens no panel."
+  },
+  {
+    "name": "IT1-33-classic-fare-dfus",
+    "file": "src/ui/travel/travelPopUp.js",
+    "old": "    if (this.itKind) {\n      const t = itTrip(",
+    "new": "    if (false) {\n      const t = itTrip(",
+    "tests": [
+      "test/systems/guild/it1_immersivetravel.test.js"
+    ],
+    "note": "The mod's popup bills its own calculator."
+  },
+  {
+    "name": "IT1-34-classic-carriage-map-with-to",
+    "file": "src/ui/travel/travelMapWindow.js",
+    "old": "    this._carriageMap = !!this._it || (!!this._itSettings && !this._to);",
+    "new": "    this._carriageMap = !!this._it || !!this._itSettings;",
+    "tests": [
+      "test/systems/it1_classicmap.test.js"
+    ],
+    "note": "The player's own map is a CarriageMap only with Travel Options off."
+  },
+  {
+    "name": "IT1-35-classic-escape-closes",
+    "file": "src/ui/travel/travelMapWindow.js",
+    "old": "      if (code === 'Enter' || code === 'NumpadEnter' || code === 'KeyO') { this._click(); this.top = null; this._itRefusal = null; }",
+    "new": "      this._click(); this.top = null; this._itRefusal = null;",
+    "tests": [
+      "test/systems/it1_classicmap.test.js"
+    ],
+    "note": "An OK box answers Return and O alone."
+  },
+  {
+    "name": "IT1-36-ports-filter-over-the-mods-map",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._it) return this._it.kind === IT_POPUP.seafarer ?",
+    "new": "    if (this._it && !this.portsFilter) return this._it.kind === IT_POPUP.seafarer ?",
+    "tests": [
+      "test/systems/travel/it1_heldmap.test.js"
+    ]
+  }
+]

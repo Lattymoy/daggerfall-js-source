@@ -1,0 +1,16 @@
+-- VOID (2026-10-02, Mac: "lets finish the build work") - A RESULT REMEMBERS WHAT IT MOVED, SO A MODERATOR CAN VOID IT
+-- (bible/11-Multiplayer/Seats-Arc.md 18: "Moderators (MOD1) may void a siege (`/siege void`) - a history row, the holder
+-- keeping the seat - when a fight was won by an exploit found after it"). A battle's result (server-account/src/seatSiege.js
+-- applyResult) writes over the Charter it decides: a capture puts the attacker in the old holder's row (Standing 50, its
+-- Tithe and arrears none) and clears the old holder's Legacy, and the seat's works go a tier down; a hold adds Standing.
+-- `prior` keeps, in the result's own INSERT, what stood before - JSON `{ hold, legacy, forts }`: `hold` the seat's row
+-- (`guild`, `region`, `standing`, `since`, `truce`, `tithe`, `titheWeek`, `owed`; null at an unheld seat), `legacy` every
+-- Legacy row at the seat from the battle's week on (`[week, guild, amount]`), and at a capture `forts` each work's tier
+-- the siege was fought behind (`{ work: tier }`, written after the projects due were raised and before the drop) - so
+-- `/siege void` (seatSiege.js voidSiege) gives back exactly that. A result written before this column has none, and its
+-- void falls back as the spec says (a Charter back at Standing 50).
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI).
+ALTER TABLE town_seat_results ADD COLUMN prior TEXT;

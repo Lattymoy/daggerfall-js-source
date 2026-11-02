@@ -1,0 +1,152 @@
+[
+  {
+    "name": "REL7-1-the-old-notes-kept",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  return cut < 0 ? notes : `${notes}\\n\\n${text.slice(cut)}`;",
+    "new": "  return cut < 0 ? notes : `${notes}\\n\\n${text}`;",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "The old notes would stand under the new ones, \"Fixes and improvements.\" among them."
+  },
+  {
+    "name": "REL7-2-the-list-dropped",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  return cut < 0 ? notes : `${notes}\\n\\n${text.slice(cut)}`;",
+    "new": "  return notes;",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "GitHub's list of merged changes would be lost from the release."
+  },
+  {
+    "name": "REL7-3-crlf-read-as-is",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  const text = String(current ?? '').replace(/\\r\\n/g, '\\n');",
+    "new": "  const text = String(current ?? '');",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "A body GitHub hands back with CRLF would keep its carriage returns in the list."
+  },
+  {
+    "name": "REL7-4-a-cut-of-its-own",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "export const GENERATED_LIST_RE = /^(##\\s*What['’]s Changed\\b|\\*\\*Full Changelog\\*\\*|##\\s*New Contributors\\b)/m;",
+    "new": "export const GENERATED_LIST_RE = /^(##\\s*What['’]s Changed\\b|\\*\\*Full Changelog\\*\\*)/m;",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "The release's cut and the launcher's would drift apart."
+  },
+  {
+    "name": "REL7-6-a-failed-read-writes-anyway",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "        `the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`,\n      );\n      return 1;\n    }",
+    "new": "        `the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`,\n      );\n      notes = [];\n    }",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "GitHub down: the release's notes would be written over with \"Fixes and improvements.\"."
+  },
+  {
+    "name": "REL7-9-a-schedule-of-its-own",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "on:\n  workflow_dispatch:",
+    "new": "on:\n  schedule:\n    - cron: '0 * * * *'\n  workflow_dispatch:",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "The workflow would rewrite releases on its own."
+  },
+  {
+    "name": "REL7-5-read-up-to-main",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "      notes = pullRequestNotesSince(previousReleaseTag(a, git, a), { to: a });",
+    "new": "      notes = pullRequestNotesSince(previousReleaseTag(a, git, a));",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "Run from main, a release would take the notes of every pull request merged since it."
+  },
+  {
+    "name": "REL7-7-the-tag-unchecked",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "          if ! [[ \"$TAG\" =~ ^app-v[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then",
+    "new": "          if ! [[ \"$TAG\" =~ ^app-v ]]; then",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "A tag carrying quotes or a newline would reach the API."
+  },
+  {
+    "name": "REL7-8-a-text-sort",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "--list 'app-v*' --sort=v:refname | head -n 1)",
+    "new": "--list 'app-v*' | head -n 1)",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "app-v0.1.10 sorts before app-v0.1.9 as text: an edit would rewrite a later release than the one that brought the pull request."
+  },
+  {
+    "name": "REL7-10-the-tag-is-its-own-previous",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "      notes = pullRequestNotesSince(previousReleaseTag(a, git, a), { to: a });",
+    "new": "      notes = pullRequestNotesSince(previousReleaseTag(b, git, a), { to: a });",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "The release would read the merges since itself - none - and write \"Fixes and improvements.\" over its notes."
+  },
+  {
+    "name": "REL7-11-an-open-pull-request-too",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "(github.event.pull_request.merged && github.event.changes.body && ",
+    "new": "(github.event.changes.body && ",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "Every edit to an open pull request's description would rewrite a release."
+  },
+  {
+    "name": "REL7-12-no-tag-writes-anyway",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "      try {\n        git(['rev-parse', '--verify', '--quiet', `refs/tags/${a}^{commit}`]);\n      } catch {\n        throw new Error(`no tag ${a} in this checkout`);\n      }\n      notes = pullRequestNotesSince(previousReleaseTag(a, git, a), { to: a });",
+    "new": "      notes = pullRequestNotesSince(previousReleaseTag(a, git, a), { to: a });",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "A tag the checkout lacks reads as no previous release, and \"Fixes and improvements.\" is written over the notes."
+  },
+  {
+    "name": "REL7-13-the-pull-request-s-code",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "          ref: ${{ github.event.repository.default_branch }}",
+    "new": "          ref: ${{ github.event.pull_request.head.sha }}",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "pull_request_target would run a pull request's own code under a token that writes releases."
+  },
+  {
+    "name": "REL7-14-no-release-yet-fails",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "              echo \"no release carries #$PR yet - the next one reads its description as it is\"\n              exit 0",
+    "new": "              echo \"no release carries #$PR yet - the next one reads its description as it is\"\n              exit 1",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "An edit before the release is cut would fail a run for nothing."
+  },
+  {
+    "name": "REL7-15-write-with-no-release",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "      - name: Write the notes again\n        if: steps.release.outputs.tag != ''\n",
+    "new": "      - name: Write the notes again\n",
+    "tests": [
+      "test/tooling/rel7_renotes.test.js"
+    ],
+    "note": "With no release to write, the step would ask GitHub for an empty tag and fail."
+  }
+]

@@ -1,0 +1,586 @@
+// @ts-check
+// NAME-F1 (2026-09-16, Mac: "a proper censoring system for players
+// choosing their online name. Im seeing a lot of names like 'Cum'").
+//
+// ═══ THE PROBLEM THIS IS, AND THE ONE IT IS NOT ═══════════════════
+//
+// A word list is easy. A word list that does not refuse SCUNTHORPE is
+// the whole job, and it is the reason this file is long enough to have
+// a header.
+//
+// Two failures, and they pull opposite ways:
+//   - a name that reads as a slur gets through because it was spelled
+//     `C0ck` or `f_u_c_k` or `xXcumXx`;
+//   - a real name is refused because a rude word hides inside it -
+//     Cumberland, Scunthorpe, Penistone, Lightwater, Dickens,
+//     Cockburn, Assisi, Shitterton (a real Dorset village).
+//
+// So the check runs in TWO STAGES and they are deliberately different:
+//
+//   1. NORMALISE hard. Fold case, map the leet alphabet onto letters,
+//      drop everything that is not a letter, and collapse runs of the
+//      same letter. `xX c0ck Xx` and `cccoooock` both become `xxcockxx`
+//      -> the padding is still there but the word inside it is plain.
+//      This stage is aggressive ON PURPOSE: it is not deciding
+//      anything, it is only making the next stage's job possible.
+//
+//   2. MATCH softly. A word matches when it stands as a WORD in what
+//      is left - at a boundary, or wrapped only in the padding players
+//      actually use (`x`, `_`, `-`, digits, and a leading/trailing
+//      `the`). `cumberland` does not match `cum` because `berland` is
+//      not padding; `xxcumxx` does, because `xx` is.
+//
+// THE COST, SAID PLAINLY. Stage 2 is where the judgement lives and it
+// will be wrong in both directions sometimes: a determined player will
+// find a spelling this does not hold (`kum`, `c u m b` with a letter
+// that normalises away), and one day a real name will be refused. The
+// first is a losing arms race by nature - the list is a speed bump,
+// not a wall - and the second is why the refusal says WHICH word it
+// caught, so a player with a legitimate name knows what to change and
+// can tell someone the filter is wrong.
+//
+// WHAT WAS NOT HERE, AND IS NOW. Chat lines. Mac asked for names, and a
+// name is not a chat line: it is permanent, it hangs over a player's head
+// in the world, and it is read by everyone who never chose to talk to
+// them. A line scrolls away - so NAME-F1 left `sanitizeChat` untouched.
+// TEXT-F1 (2026-10-07, Mac: "Any human input elements need filtering,
+// including notes") reads a player's WORDS too - see `maskText` at the
+// foot of this file, and why a sentence is starred where a name is
+// refused.
+//
+// Not a DFU member: Daggerfall Unity has no online names. Ledger A row
+// (ONLINE).
+
+/**
+ * THE LEET ALPHABET. Only the mappings players actually use; a wider
+ * table starts folding real letters together and manufactures false
+ * positives out of nothing.
+ */
+const LEET = new Map(
+  Object.entries({
+    0: 'o',
+    1: 'i',
+    3: 'e',
+    4: 'a',
+    5: 's',
+    6: 'g',
+    7: 't',
+    8: 'b',
+    9: 'g',
+    '@': 'a',
+    $: 's',
+    '!': 'i',
+    '|': 'i',
+    '+': 't',
+    '(': 'c',
+    '<': 'c',
+    '£': 'l',
+  }),
+);
+
+/** The letters a padded name wraps a word in. `x` is the common one
+ *  (`xXnameXx`); digits and the separators come in with it - though by
+ *  stage 2 the separators are already gone, so this is really about
+ *  `x`, and it is kept explicit because that is what it means. */
+const PAD = /^[x_\-0-9]*$/;
+
+/**
+ * ENGLISH TAILS, and the reason stage 2 is not a bare word boundary.
+ *
+ * `Wanker` and `Tits` are the word plus an ordinary suffix, and a
+ * boundary check lets both through. Allowing a SHORT, CLOSED set of
+ * tails catches them - and the set has to stay short, because every
+ * entry is a new way to refuse a real name. These are the ones that
+ * turn a noun into a plural, an agent or a verb; `us` and `an` are
+ * deliberately NOT here, which is what keeps `Titus` and `Titan`.
+ */
+const TAILS = Object.freeze(['s', 'es', 'z', 'er', 'ers', 'ed', 'ing', 'y', 'ie', 'ies']);
+
+/**
+ * Stage 1. Case folded, accents stripped, leet mapped, non-letters
+ * dropped.
+ *
+ * The accent fold is what stops `Çüm` sliding past the list, and the
+ * ENTRY pane is the only place it can matter: by the time a hello
+ * reaches the relay, `sanitizeName` has already dropped everything
+ * outside printable ASCII. AUDIT-CHATR struck a second clause from here
+ * claiming this is also why roster.js sorts accents with their base
+ * letter - roster.js never sees one, for the same reason.
+ *
+ * (The run collapse is NOT here. It is its own reading - see
+ * `collapseRuns` for the bug that taught that.)
+ */
+export function normaliseName(name) {
+  // NFKD splits `Ç` into `C` + a combining cedilla and folds the
+  // compatibility forms; the a-z filter below then drops every mark
+  // that is left. An explicit combining-mark strip stood here too and
+  // a mutant proved it INERT - the second dead line this file grew,
+  // after the `stretchable` flag. Both were written as belt-and-braces
+  // and both were braces on braces; a line that cannot change an
+  // answer is a line the next reader has to work out the purpose of.
+  const flat = String(name ?? '')
+    .normalize('NFKD')
+    .toLowerCase();
+  let out = '';
+  for (const ch of flat) {
+    const mapped = LEET.get(ch) ?? ch;
+    if (mapped >= 'a' && mapped <= 'z') out += mapped;
+  }
+  return out;
+}
+
+/**
+ * The stretched-letter form: `cccoooock` -> `cock`.
+ *
+ * THIS IS A SECOND READING, NOT PART OF THE FIRST, and the difference
+ * is a bug this file already made once. Collapsing runs inside
+ * `normaliseName` meant the LIST had to be written in collapsed
+ * spelling too - so `ass`, `jizz`, `pussy` and `coon` could never
+ * match anything, because a doubled letter cannot survive to be
+ * found. Four dead entries, in a list that looked complete.
+ *
+ * Worse, collapsing MERGES words that are not the same: `coon` and
+ * `con` both land on `con`, so a list written that way refuses anyone
+ * called Con.
+ *
+ * So the collapse is its own form and every word is checked against
+ * BOTH - the plain reading catches `ass` and `coon` as themselves, the
+ * collapsed one catches `cccoooock`, and neither has to lie about the
+ * other's spelling. The list is written the way the words are spelled.
+ */
+export const collapseRuns = (flat) => String(flat ?? '').replace(/(.)\1+/g, '$1');
+
+/**
+ * THE LIST. Kept short and kept obvious: the words that actually turn
+ * up, not a dictionary of everything anyone has ever found rude. A
+ * long list is a long list of false positives.
+ *
+ * Every entry is written as it looks AFTER normalisation - lowercase
+ * letters only, no doubled letters (the collapse in stage 1 would
+ * never produce them). `SLURS` is separated only so the reason a name
+ * was refused can be honest about which kind it was.
+ */
+export const CRUDE = Object.freeze([
+  'anus',
+  'arse',
+  'arsehole',
+  'ass',
+  'asshole',
+  'bastard',
+  'bitch',
+  'bollock',
+  'boner',
+  'boob',
+  'bullshit',
+  'clit',
+  'cock',
+  'cum',
+  'cunt',
+  'dick',
+  'dickhead',
+  'dildo',
+  'dipshit',
+  'dumbass',
+  'fuck',
+  'jizz',
+  'knob',
+  'minge',
+  'nonce',
+  'penis',
+  'piss',
+  'prick',
+  'pussy',
+  'scrotum',
+  'semen',
+  'shit',
+  'shithead',
+  'slut',
+  'smegma',
+  'spunk',
+  'testicle',
+  'tit',
+  'twat',
+  'vagina',
+  'wank',
+  'whore',
+]); // TEXT-F1: and the compounds a sentence reaches for, which no boundary finds in one word - `asshole`'s `ass` has `hole` after it
+
+/** Slurs and hate terms. Held apart from CRUDE because these are not
+ *  a matter of taste and the refusal should not pretend they are.
+ *  Written normalised, as above. */
+export const SLURS = Object.freeze([
+  'chink',
+  'coon',
+  'dyke',
+  'fag',
+  'faggot',
+  'gook',
+  'kike',
+  'nig',
+  'nigga',
+  'nigger',
+  'paki',
+  'raghead',
+  'retard',
+  'spic',
+  'tard',
+  'tranny',
+  'wetback',
+]);
+
+/** Impersonation: a player calling themselves the room's authority.
+ *  Not rude, and not allowed either - "Admin" in a chat line is a
+ *  social-engineering tool, not an insult. */
+export const IMPERSONATION = Object.freeze(['admin', 'moderator', 'mod', 'staf', 'sistem', 'ofical', 'server']);
+
+/** TEXT-F1 (2026-10-07): THE WORDS NO WORD HIDES INNOCENTLY - read ANYWHERE inside a word, where the lists above are read
+ *  standing alone (stage 2, so `cumberland` keeps its `cum`). Two English words hold one innocently (AUDIT 657 T1:
+ *  INNOCENT, below, reads them out first); for the rest a boundary was only ever the way past: `motherfucker` and
+ *  `xXfaggotlordXx` stood beside no padding and passed. Each list its kind, as LISTS reads them; written normalised. */
+export const ANYWHERE = Object.freeze([
+  Object.freeze({ kind: 'slur', words: Object.freeze(['faggot', 'nigga', 'nigger']) }),
+  // NAME-WORDS (2026-10-19, Mac: "Not sure how the filter didnt catch this", over the handle PROSTITUTE_STRANGLER):
+  // stage 1 drops the underscore, and in `prostitutestrangler` each word stands beside the other, never padding - so here,
+  // read anywhere, as `motherfucker` is
+  Object.freeze({ kind: 'crude', words: Object.freeze(['cocksuck', 'fuck', 'prostitute', 'strangler']) }),
+]);
+
+/** AUDIT 657 T1 (= D1): THE WORDS THAT HOLD A LISTED ONE INNOCENTLY. TEXT-F1 said no English word holds an ANYWHERE
+ *  word, and two do - `snigger` and `niggard`, and every word made of them (sniggering, niggardly) - so names NAME-F1
+ *  let through (Snigger, Niggardly) were refused, and "he gave a snigger" was starred. A sentence reads a listed word's
+ *  tails too (stage 2's `s`, `ed`, `y`), and the ordinary words a listed word and a tail spell were starred with them:
+ *  "spiced wine", "a booby trap", "don't get cocky", "pricked his finger", a merchant's "dicker" (the dictionary's run is
+ *  in the AUDIT 657 record). Each is read OUT before the ANYWHERE words are looked for, in a name and a sentence alike,
+ *  and a sentence's word that IS one is never read against the lists. A name's verdict on the rest is NAME-F1's,
+ *  unmoved: a name is chosen and stays, and `Cocky` was refused before. Written normalised. Never a word a list holds,
+ *  and never one whose plain reading is the insult as often as not (`chink`, `knob`, `prick` stay listed). */
+export const INNOCENT = Object.freeze([
+  'snigger',
+  'niggard',
+  'spicy',
+  'spiced',
+  'spices',
+  'titter',
+  'titters',
+  'titer',
+  'titers',
+  'booby',
+  'cocky',
+  'cocked',
+  'cocking',
+  'dicker',
+  'dickers',
+  'knobby',
+  'knobbed',
+  'pricked',
+  'pricking',
+  'spunky',
+]);
+/** The ANYWHERE word a normalised reading holds - either reading, its innocent words read out of it first (a space
+ *  where each stood, so no word is found across the gap) - as `{ kind, word }`, or null (AUDIT 657 T1). */
+function anywhereIn(flat) {
+  const holds = (plain) => {
+    const stretched = collapseRuns(plain);
+    for (const { kind, words } of ANYWHERE) {
+      const word = words.find((w) => plain.includes(w) || stretched.includes(w));
+      if (word) return { kind, word };
+    }
+    return null;
+  };
+  // the innocent words read out only where a word was found: most words hold none, and are read once
+  return holds(flat) && holds(INNOCENT.reduce((s, w) => s.split(w).join(' '), flat));
+}
+
+/** Every entry must survive normalisation unchanged - lowercase
+ *  letters only - or it is an entry that can never match. Checked in
+ *  the pins by RUNNING the normaliser over the list rather than by
+ *  reading it, so a dead entry cannot be added quietly. */
+export const listIsNormalised = (words) => words.every((w) => normaliseName(w) === w);
+
+const LISTS = Object.freeze([
+  { kind: 'slur', words: SLURS },
+  { kind: 'crude', words: CRUDE },
+  { kind: 'impersonation', words: IMPERSONATION },
+]);
+
+/**
+ * Stage 2. Does `word` stand as a WORD inside the normalised `flat`?
+ *
+ * Every occurrence is checked, and one is enough. What wraps it must
+ * be nothing at all or padding - so `xxcumxx` is caught and
+ * `cumberland` is not, and `thecum` is caught because a leading `the`
+ * is padding a player reaches for the moment the bare name is refused.
+ */
+export function standsAlone(flat, word) {
+  const strip = (s) => s.replace(/^the/, '').replace(/the$/, '');
+  const tailOk = (s) => {
+    if (PAD.test(s)) return true;
+    // one tail, then padding again: `wankerxx`, `tits`
+    for (const t of TAILS) if (s.startsWith(t) && PAD.test(s.slice(t.length))) return true;
+    return false;
+  };
+  for (let i = flat.indexOf(word); i >= 0; i = flat.indexOf(word, i + 1)) {
+    const before = strip(flat.slice(0, i));
+    const after = strip(flat.slice(i + word.length));
+    if (PAD.test(before) && tailOk(after)) return true;
+  }
+  return false;
+}
+
+/**
+ * THE VERDICT. `{ ok: true }`, or `{ ok: false, kind, word, reason }`
+ * - the word included, so the refusal can say what it caught and a
+ * player with a real name knows the filter is wrong rather than
+ * guessing at it.
+ *
+ * A name is also refused for having no letters at all: `___` and `---`
+ * come through stage 1 as nothing, and that is how a player gets past a
+ * list without getting past a reader.
+ *
+ * AUDIT-CHATR F8: this used to name `1234` beside them and it is not
+ * true - the leet map reads it as `iea`, a name-shaped thing with
+ * letters in it, so it passes. That is the right BEHAVIOUR (it is a
+ * daft name, not a rude one) and it was the wrong CLAIM, which is worse
+ * than either: the next reader would have taken it for a pin's law.
+ */
+export function checkName(name) {
+  const raw = String(name ?? '').trim();
+  const flat = normaliseName(raw);
+  if (!flat) return { ok: false, kind: 'empty', word: '', reason: 'A name needs some letters in it.' };
+  const stretched = collapseRuns(flat);
+  // TEXT-F1: a word no word hides innocently, anywhere in either reading - AUDIT 657 T1: the innocent words read out first
+  const any = anywhereIn(flat);
+  if (any)
+    return {
+      ok: false,
+      kind: any.kind,
+      word: any.word,
+      reason: `That name reads as "${any.word}". Please pick another.`,
+    };
+  for (const { kind, words } of LISTS) {
+    for (const word of words) {
+      // BOTH readings - see collapseRuns for why they are two - and
+      // note that the word passed to the stretched one is the word AS
+      // WRITTEN, never a collapsed copy of it.
+      //
+      // That is the whole guard, and it took a mutation campaign to see
+      // it. An earlier cut collapsed the WORD too, so `coon` was
+      // compared as `con` and anyone called Con was refused as a slur.
+      // The fix was read as needing a `stretchable` test beside it -
+      // and that test turned out to be inert: the stretched haystack
+      // has no doubled letters by construction, so a word that HAS one
+      // can never be found there anyway. A mutant forcing it true
+      // changed nothing, which is how a dead guard announces itself.
+      if (!standsAlone(flat, word) && !standsAlone(stretched, word)) continue;
+      return {
+        ok: false,
+        kind,
+        word,
+        reason:
+          kind === 'impersonation'
+            ? `"${word}" is reserved. Please pick another name.`
+            : `That name reads as "${word}". Please pick another.`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/** The one-word answer, for callers that only need the gate. */
+export const nameAllowed = (name) => checkName(name).ok;
+
+/**
+ * THE ENTRY PANE'S VERDICT, which is not quite `checkName`'s - and
+ * AUDIT-CHATR F2/F3 are the two bugs that came of not having it.
+ *
+ * ONE SUBJECT. The name a player will wear is the first non-empty rung
+ * of a LADDER the host walks - the field, then the chosen character's
+ * own name (scenes/world.js's onlineStart). The pane had that ladder
+ * written twice: once for the line it paints, with `saves[0]`, and once
+ * inside each save card's press, with THAT card's save. A player whose
+ * second character was called Cum saw a clean pane and then a button
+ * that did nothing at all, because the refusal repainted a verdict
+ * about the FIRST save and found it fine. One function, given the save
+ * it is about, cannot disagree with itself.
+ *
+ * EMPTY IS NOT A REFUSAL. `checkName('')` answers `empty`, which is the
+ * right answer to "is this a name?" and the wrong one here: the field
+ * is optional, the copy beside it promises "an empty name shows as
+ * Traveller", and `sanitizeName` really does hand an empty name the
+ * fallback. A pane that refused it would refuse what the relay allows -
+ * and it did, on a browser with no saves yet, painting a red "A name
+ * needs some letters in it" under a field nobody had touched.
+ *
+ * A name that is TYPED and comes to nothing (`___`, `---`) is still
+ * refused, and deliberately: the player put something there and stage 1
+ * read no letters in it, so saying so beats silently renaming them.
+ *
+ * @param {...(string|null|undefined)} candidates the ladder, in order
+ */
+export function entryVerdict(...candidates) {
+  const name = candidates.map((c) => String(c ?? '').trim()).find((c) => c) ?? '';
+  if (!name) return { ok: true, kind: 'fallback', word: '', reason: '' };
+  return checkName(name);
+}
+
+// ═══ TEXT-F1: A PLAYER'S WORDS ═════════════════════════════════════
+//
+// Mac (2026-10-07): "Any human input elements need filtering, including
+// notes." A name is one word, read whole. A SENTENCE read whole hides
+// every word in it: stage 1 drops the spaces, so `you are an ass` is
+// `youareanass` and `ass` stands alone nowhere. So a line is read WORD
+// BY WORD - each word through the same two readings and the same lists
+// a name meets - and a word caught is STARRED, letter for letter. Never
+// refused: a line is said, not chosen, and a note or a chat line that
+// will not send over one word is worse than the line with the word
+// starred out. A name is refused (it is chosen, and it stays).
+//
+// Three differences from a name's verdict, each deliberate:
+//   - the server's own words (IMPERSONATION) are not read - "ask a mod"
+//     and "the server restarts at eight" are sentences, not costumes;
+//   - a word spelled a letter at a time (`f u c k`, `f.u.c.k`) is read
+//     as the run of its letters;
+//   - a word's own sentence marks are read off it - a leet `!` inside a
+//     word is its `i` (`sh!t`), at its end it is the sentence's (`fuck!`).
+// A number is a number (`8008` is somebody's sum) and is not read.
+//
+// The mask keeps every character that is not a letter of a caught word,
+// a star for each letter, so a line's spaces and its punctuation stand
+// and it never grows: a bound measured before it holds after it (AUDIT
+// 657 D9: never LONGER, rather than the same length - a letter past the
+// Basic Plane, a mathematical bold one, is two UTF-16 units and one
+// star). It is idempotent - a starred word has no letters left to catch
+// - so a line cleaned twice (the sender's, the relay's, the reader's)
+// reads once.
+//
+// Where it runs: net/wire.js sanitizeChat (every chat line, on both ends
+// and at the relay) and wordsLine (a letter's lines, a note's, a guild
+// note's, a journal page's - net/letterLaw.js, the board and the page
+// law). The name-shaped words a player types - a rank's name, a custom
+// class, a maker's mark, an item's new name - are judged by `textCaught`
+// and refused or let go instead, as a name is.
+
+/** A character a word is spelled in: a letter, its accents, a digit or a mark of the leet alphabet. Anything else stands
+ *  between words. AUDIT 657 T2: a letter's own combining accent is the letter's - it stood between words, so a word
+ *  spelled with one (`u` and U+0301, the accent stage 1 folds away) read as two halves, and neither was the word. */
+const isWordChar = (ch) => /[\p{L}\p{M}\p{N}]/u.test(ch) || LEET.has(ch);
+/** The leet marks a sentence puts at a word's edge - an opening bracket, a closing bang, a bar or a plus; and AUDIT 657
+ *  T3, an at sign before a name (`@word` read only as `aword`, so a word said at someone passed). */
+const EDGE_HEAD = new Set(['!', '|', '(', '<', '+', '@']);
+const EDGE_TAIL = new Set(['!', '|', '+']);
+/** The lists a sentence is read against: the slurs and the crude words, never the server's words. */
+const TEXT_LISTS = Object.freeze([
+  { kind: 'slur', words: SLURS },
+  { kind: 'crude', words: CRUDE },
+]);
+/** The longest run of letters spelled one at a time that is read as a word. */
+const SPELLED_MAX = 12;
+/** Every word a sentence's lists read (AUDIT 657 T5's pre-check). */
+const SENTENCE_WORDS = Object.freeze([...ANYWHERE.flatMap((g) => g.words), ...SLURS, ...CRUDE]);
+/** AUDIT 657 T5: whether `letters` hold a word a sentence's lists read, in either reading. Every reading of a shorter
+ *  run is the start of the longer run's reading, so a run that holds none has no window that is caught. */
+const mayHold = (letters) => {
+  const flat = normaliseName(letters),
+    stretched = collapseRuns(flat);
+  return SENTENCE_WORDS.some((w) => flat.includes(w) || stretched.includes(w));
+};
+
+/** One word, as a sentence writes it: the list word it reads as, or null. */
+function wordCaught(word) {
+  if (/^\p{N}+$/u.test(word)) return null;
+  const flat = normaliseName(word);
+  if (!flat || INNOCENT.includes(flat)) return null; // AUDIT 657 T1: an ordinary word, read as itself
+  const any = anywhereIn(flat);
+  if (any) return any.word;
+  const stretched = collapseRuns(flat);
+  for (const { words } of TEXT_LISTS)
+    for (const w of words) if (standsAlone(flat, w) || standsAlone(stretched, w)) return w;
+  return null;
+}
+
+/**
+ * THE READER. Every word of `text` the lists catch, as code-point ranges into it - `[from, to)` - with the list word each
+ * reads as. Words are maximal runs of word characters; each is read as written and again without its sentence marks;
+ * then each run of one-letter words is read for a word spelled across it.
+ * @param {string} text
+ */
+function caughtWords(text) {
+  const cps = Array.from(String(text ?? ''));
+  /** @type {{from: number, to: number}[]} */
+  const words = [];
+  for (let i = 0; i < cps.length;) {
+    if (!isWordChar(cps[i])) {
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j < cps.length && isWordChar(cps[j])) j++;
+    words.push({ from: i, to: j });
+    i = j;
+  }
+  /** @type {{from: number, to: number, word: string}[]} */
+  const out = [];
+  const taken = new Set();
+  words.forEach((w, k) => {
+    // the word without its sentence marks first, so a caught word's `!` stays the sentence's; then the word as written
+    let { from, to } = w;
+    while (from < to && EDGE_HEAD.has(cps[from])) from++;
+    while (to > from && EDGE_TAIL.has(cps[to - 1])) to--;
+    let word = from < to ? wordCaught(cps.slice(from, to).join('')) : null;
+    if (!word && (from !== w.from || to !== w.to)) {
+      ({ from, to } = w);
+      word = wordCaught(cps.slice(from, to).join(''));
+    }
+    if (word) {
+      out.push({ from, to, word });
+      taken.add(k);
+    }
+  });
+  // a word spelled a letter at a time - a run of one-letter words, each a letter (with its accents, AUDIT 657 T2), none
+  // caught already
+  const letterOf = (w) => cps.slice(w.from, w.to).join('');
+  const single = (k) => k < words.length && !taken.has(k) && /^\p{L}\p{M}*$/u.test(letterOf(words[k]));
+  for (let k = 0; k < words.length;) {
+    if (!single(k)) {
+      k++;
+      continue;
+    }
+    let end = k;
+    while (single(end)) end++;
+    for (let i = k; i < end;) {
+      let hit = 0;
+      const last = Math.min(end, i + SPELLED_MAX);
+      // AUDIT 657 T5: the longest window read once first - every window a reading of its own cost a 240-letter chat line
+      // of one-letter words 7 ms at the relay; a window holds a word only where the longest one from its letter does
+      if (mayHold(words.slice(i, last).map(letterOf).join(''))) {
+        for (let j = i + 3; j <= last; j++) {
+          const word = wordCaught(words.slice(i, j).map(letterOf).join(''));
+          if (word) {
+            for (let x = i; x < j; x++) out.push({ ...words[x], word });
+            hit = j;
+            break;
+          }
+        }
+      }
+      i = hit || i + 1;
+    }
+    k = end;
+  }
+  return { cps, out };
+}
+
+/** The first word in `text` the lists catch, as the list writes it - or null for words that pass. The verdict a
+ *  name-shaped line meets (a rank's name, a custom class, a maker's mark, an item's new name): refused, naming the
+ *  word, as a name is. */
+export function textCaught(text) {
+  const { out } = caughtWords(text);
+  return out.length ? out.reduce((a, b) => (b.from < a.from ? b : a)).word : null;
+}
+
+/** `text` with every caught word starred, letter for letter; every other character as it was. Idempotent. */
+export function maskText(text) {
+  const { cps, out } = caughtWords(text);
+  if (!out.length) return String(text ?? '');
+  for (const { from, to } of out) for (let i = from; i < to; i++) if (isWordChar(cps[i])) cps[i] = '*';
+  return cps.join('');
+}

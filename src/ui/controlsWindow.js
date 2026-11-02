@@ -1,0 +1,539 @@
+// I4: THE CONTROLS WINDOW - DaggerfallControlsWindow.cs (MIT,
+// Daggerfall Workshop) on the real CNFG00I0.IMG, with CNFG00I1's
+// mouse-look-alt panel at (152,100,168,45) (:100-105). The rebinding
+// grid the I1 registry has been waiting for.
+//
+// THE NATIVE-WINDOW RULE, element by element:
+// - the panel is the full 320x200 CNFG00I0 (:96-99).
+// - NINE GROUPS of 47x7 buttons stacked at +11 (:184-201), covering
+//   Actions[2..40) - 38 of the 44: Escape and ToggleConsole are not
+//   offered, and QuickSave/QuickLoad/PrintScreen/AutoRun sit past
+//   the grid's end. DFU's own quirk, kept - and, as in DFU, those
+//   six rebind in the ADVANCED window (ui/mouseControlsWindow.js).
+// - the group anchors are the FIRST-SETUP values (:146-152). DFU's
+//   UpdateKeybindButtons re-anchors every group one pixel up-left
+//   (:243-251 - 56,12 against 57,13), so its labels shift by (1,1)
+//   after the first rebind; the port draws from ONE table and the
+//   quirk is recorded rather than reproduced (Ledger B would need a
+//   second layout table to lie identically).
+// - the tab row at y=190 (:108-131): JOYSTICK (0), ADVANCED (80 -
+//   DFU's mouse tab), DEFAULT (160), CONTINUE (240), 80x10 each.
+//   ADVANCED opens DaggerfallUnityMouseControlsWindow over this one
+//   (ROAD-G G6, ui/mouseControlsWindow.js), sharing THESE staged dicts
+//   exactly as DFU's two windows share ControlsConfigManager.Instance;
+//   JOYSTICK opens DaggerfallJoystickControlsWindow the same way (GP2,
+//   ui/joystickControlsWindow.js), on staging THIS window owns. DFU paints the ADVANCED tab with an
+//   "advanced_controls_button" texture out of its own Resources folder
+//   (:114-120); the port has no DFU asset bundle, so the tab is the
+//   bare CNFG00I0 rect - ui/travel/travelPopUp.js's shape, recorded, and not
+//   a behaviour.
+// - the PRIMARY/SECONDARY toggle at (268,0,50,8) (:135-141), showing
+//   which staged dict the grid edits; switching is refused while the
+//   shown dict carries an internal clash (:337-343).
+//
+// THE FLOW, law for law:
+// - a LEFT CLICK on a key button enters capture: the next keydown binds
+//   (WaitForKeyPress :383-427). ReservedKeys is empty in DFU
+//   (InputManager.cs:73 `new KeyCode[] { }`, exposed :174-177), so the
+//   capture gate that consults it (DaggerfallControlsWindow.cs:410) never
+//   refuses a key - Escape included. A8 retired half of the combo flag
+//   here: a captured key pressed under Ctrl/Shift/Alt now binds a COMBO,
+//   drawn through GetButtonText's combo arm ("LSHIFT + T", elongated past
+//   ten characters, the full string on the tooltip). Still not here: DFU
+//   also captures MOUSE BUTTONS, and its two-key gesture accepts ANY key
+//   as the modifier where this one reads the event's three virtual flags.
+// - a RIGHT CLICK prompts to remove the binding (:371-381,
+//   PromptRemoveKeybindMessage :290-320), Yes staging null.
+// - DUPLICATES colour the labels - red inside the shown dict, blue
+//   across the two (:243-266) - and EITHER kind blocks CONTINUE and
+//   Escape with the multipleAssignments box (:258-267, :319-333).
+// - DEFAULT confirms, then resets the LIVE registry and re-stages
+//   (:296-317).
+// - CONTINUE on a valid grid closes; the close APPLIES the staged
+//   dicts and saves (OnPop :163-171).
+import { loadImg, nativeMetrics, drawImg } from './native/nativePanel.js';
+import { drawMenuBackdrop } from './chargenArt.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { drawText, measureText } from './text.js';
+import { ACTIONS, PORT_ACTIONS, HIDDEN_ACTIONS, saveKeyBinds } from '../systems/inputActions.js';   // AUDIT SOC D3: the port's own rows YIELD here - this window's art cannot draw them
+import { bindings, mouseCode } from './input.js';   // MAC-K1: the ONE crossed-name table, so this grid does not spell it a second time
+import {
+  createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
+  applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, ELONGATED_TEXT,
+  INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, comboFromEvent, removeKeybindPromptRows,
+  bindingHolders, stageReplace,
+  canShareKey, stageShare, replacePromptRows, SHARED_KEY_COLOR,
+} from '../systems/controlsConfig.js';
+import { ToolTip } from './toolTip.js';
+import { MouseControlsWindow, promptAnswer, PROMPT_YES, PROMPT_NO } from './mouseControlsWindow.js';   // ROAD-G G6: the ADVANCED tab's destination; L10N3f: the prompts' Yes/No
+import { JoystickControlsWindow, createJoystickUnsaved, resetJoystickUnsaved, saveJoystickSettings } from './joystickControlsWindow.js';   // GP2: the JOYSTICK tab's destination
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { gameSettingsText } from '../systems/textDatabases.js';   // L10N3f: DFU's GameSettings text database, a pack's in its language
+
+/** SetupKeybindButtons' nine calls (:146-152): [startIndex, endIndex)
+ *  into the Actions enum, and the group's anchor.
+ *
+ *  SOC5 (2026-09-16, Mac: "by pressing F on their body"): THIS WINDOW CANNOT
+ *  PLACE THE PORT'S OWN ACTION, and that is a layout fact, not a decision
+ *  deferred. Every number above is a pixel on CNFG00I0.IMG - nine groups of
+ *  47x7 buttons at a +11 stride, anchored where DFU's SetupKeybindButtons puts
+ *  them - and the art has no free rect. Both lower columns already run to the
+ *  floor: the last row of the x=102 stack and of the x=270 stack both sit at
+ *  y=181, a button is 7 tall, and the tab row starts at y=190 - two pixels of
+ *  clearance, where a tenth row needs eleven. Widening a group pushes its own
+ *  last row onto the tabs; a tenth group has nowhere to stand. DFU itself leaves six
+ *  of its own forty-four off this grid for the same reason and rebinds them in
+ *  the ADVANCED popup (ui/mouseControlsWindow.js KEYBIND_ROWS) - a SECOND fixed
+ *  layout, six rows, equally full.
+ *
+ *  So 'SocialInteract' is rebound in the ENHANCED controls window alone
+ *  (ui/enhanced/enhancedControls.js, over systems/inputActions.js ACTION_GROUPS - the 'Online' group) - a DOM pane that
+ *  grows a row without moving a pixel of anyone's art. Nothing is broken by the
+ *  absence: the action ships bound to KeyF by default
+ *  (systems/inputActions.js DEFAULT_BINDINGS), and online forces the enhanced
+ *  lane whole (systems/online/onlineLane.js), so the one player who can use the action
+ *  is the one player already looking at the window that offers it.
+ *  test/ui/soc5_interact.test.js pins both halves: this table still ends at 40, and
+ *  the enhanced pane still lists the action.
+ *
+ *  AUDIT SOC D3: ...AND SO IT YIELDS HERE. Staging is ALL of ACTIONS (the dicts
+ *  are the registry's whole), so the duplicate check saw 'SocialInteract' on F
+ *  even though no button on this art does - a classic player who put a grid
+ *  action on F was shown a clash against a row that is not on the screen, could
+ *  not clear it, and could not close the window (the exit gate is
+ *  `checkDuplicates().ok`). Both classic windows now hand the check
+ *  `{ yield: PORT_ACTIONS }`: the port's row gives the key up rather than
+ *  arguing for it, and comes back rebindable in the pane that draws it. */
+export const KEY_GROUPS = Object.freeze([
+  { start: 2, end: 8, x: 57, y: 13 },     // moveKeysOne
+  { start: 8, end: 14, x: 164, y: 13 },   // moveKeysTwo
+  { start: 14, end: 20, x: 270, y: 13 },  // modeKeys
+  { start: 20, end: 24, x: 102, y: 80 },  // magicKeys
+  { start: 24, end: 27, x: 102, y: 125 }, // weaponKeys
+  { start: 27, end: 30, x: 102, y: 159 }, // statusKeys
+  { start: 30, end: 32, x: 270, y: 80 },  // activateKeys
+  { start: 32, end: 36, x: 270, y: 103 }, // lookKeys
+  { start: 36, end: 40, x: 270, y: 148 }, // uiKeys
+]);
+/** buttonGroup[j].Size (:159) and the +11 stride (:164). */
+export const KEY_BTN = Object.freeze({ w: 47, h: 7, stride: 11 });
+/** The tab row (:108-131) and the primary/secondary toggle (:135). */
+export const TAB_RECTS = Object.freeze({
+  joystick: [0, 190, 80, 10],
+  advanced: [80, 190, 80, 10],
+  defaults: [160, 190, 80, 10],
+  continue: [240, 190, 80, 10],
+  whichDict: [268, 0, 50, 8],
+});
+/** mLookAltPanel (:100-103). */
+export const MLOOK_ALT_RECT = Object.freeze([152, 100, 168, 45]);
+
+/** Every button the grid offers, derived once from the group table. */
+export function gridButtons() {
+  const out = [];
+  for (const g of KEY_GROUPS) {
+    for (let i = g.start; i < g.end; i++) {
+      out.push({ action: ACTIONS[i], x: g.x, y: g.y + (i - g.start) * KEY_BTN.stride });
+    }
+  }
+  return out;
+}
+
+let _art = null;
+export async function preloadControlsArt(deps) {
+  if (!_art) {
+    const base = await loadImg(deps, 'CNFG00I0.IMG');
+    let mlook = null;
+    try { mlook = await loadImg(deps, 'CNFG00I1.IMG'); } catch { /* the alt panel is optional art */ }
+    _art = { base, mlook };
+  }
+  return _art;
+}
+export const controlsArtLoaded = () => !!_art;
+
+const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+
+// ROAD-G G6 MOVED TWO HELPERS INTO systems/controlsConfig.js, where
+// the second one always belonged (PromptRemoveKeybindMessage is
+// ControlsConfigManager's, :290-320) and the first has to live because
+// BOTH rebinding windows capture keys and this one opens the other.
+// `comboFromEvent` keeps its name here so the sites that import it
+// from the grid still resolve.
+export { comboFromEvent };
+
+const TEXT_COLOR = [0.9, 0.9, 0.75, 1];   // DaggerfallDefaultTextColor's role here
+const DIM = [0.6, 0.58, 0.5, 1];
+
+export class ControlsWindow {
+  /** hooks: { onBack() } - the host reopens the pause window. */
+  constructor(hooks = {}) {
+    this.hooks = hooks;
+    this.done = false;
+    this.isChoiceWindow = true;
+    this.unsaved = createUnsavedKeybinds(bindings());
+    // GP2: DaggerfallJoystickControlsWindow.ResetUnsavedSettings() at
+    // Setup (DaggerfallControlsWindow.cs:142) - the joystick window's
+    // staging, owned here because THIS window's OnPop saves it
+    this.unsaved.joystick = createJoystickUnsaved(bindings());
+    // AUDIT KB1: the grid's art prints every DFU row, Slide among them; the port's HIDDEN two do nothing, so their
+    // slot is not a button - a key bound there would be a key spent twice (inputActions.js HIDDEN_ACTIONS).
+    this.buttons = gridButtons().filter((b) => !HIDDEN_ACTIONS.includes(b.action));
+    this.capture = null;        // the action awaiting a key (:52 waitingForInput)
+    this.top = null;            // 'dupes' | 'defaults' | 'remove' | 'replace' | 'note'
+    this._noteRows = null;
+    this._removeAction = null;
+    this._replace = null;       // KB1: { action, code, holders } while the replace prompt stands
+    this._box = null;
+    this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS });
+    // U37: DFU points every key button at the shared tooltip and
+    // SUPPRESSES it unless the label elongated (:214-216) - the tip
+    // exists to show the full text a '...' is standing in for.
+    this.tip = new ToolTip();
+    this._hover = [-1, -1];
+    // ROAD-G G6: the ADVANCED tab's window, held rather than shown by
+    // the host. DaggerfallUI keeps ONE dfUnityMouseControlsWindow and
+    // PushWindow lays it over this one (DaggerfallUI.cs:569-571), so
+    // it is built once, it stays alive underneath while it is open,
+    // and it edits THIS window's staged dicts.
+    this.advanced = null;
+    this.advancedOpen = false;
+    // GP2: the JOYSTICK tab's window, on the same terms (dfuiOpenJoystickControlsWindow, :279-286)
+    this.joystick = null;
+    this.joystickOpen = false;
+  }
+
+  /** GP2: whichever popup is up - DaggerfallUI draws and feeds the TOP window only. */
+  get _popup() { return this.advancedOpen ? this.advanced : this.joystickOpen ? this.joystick : null; }
+  _popupDone() { if (this.advancedOpen && this.advanced.done) this._closeAdvanced(); if (this.joystickOpen && this.joystick.done) this._closeJoystick(); }
+
+  _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
+
+  _close() {
+    // OnPop (:163-171): apply the staged dicts, save, and hand the
+    // slot back to the pause window.
+    applyUnsavedKeybinds(bindings(), this.unsaved);
+    saveKeyBinds(bindings());
+    // GP2: DaggerfallJoystickControlsWindow.SaveSettings() (:170) - the
+    // joystick staging written back, its settings saved, its rebinds
+    // applied and the keybinds saved again
+    saveJoystickSettings(bindings(), this.unsaved.joystick);
+    // ...and THAT is what writes the advanced window's ten settings:
+    // it does all of its writing in the OnSavedKeyBinds handler
+    // (DaggerfallUnityMouseControlsWindow.cs:83, :351-371), so the
+    // raise above has to happen before the subscription is released.
+    this.advanced?.dispose();
+    this.done = true;
+    this.hooks.onBack?.();
+  }
+
+  _refresh() { this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS }); }
+
+  /** KB1 (law 4): the captured code lands - or, when another action holds it in the shown dict, the window ASKS.
+   *  The staged copy used to take it, and the `yield` pass then left a port row this art cannot draw silently
+   *  unbound (the player never saw that G stopped dropping the torch). The prompt names every holder, a mod's with
+   *  its mod - AUDIT KB1 F5: under getDuplicates' own relation, so a combo's bare modifier is asked for too and
+   *  `yield` is left nothing a capture made. */
+  _bindCaptured(code) {
+    const action = this.capture;
+    this.capture = null;
+    const holders = bindingHolders(this.unsaved, action, code);
+    if (holders.length) { this.top = 'replace'; this._replace = { action, code, holders }; return; }
+    setUnsavedBinding(this.unsaved, action, code);
+    this._refresh();
+  }
+
+  input(code, e = null) {
+    if (this._popup) {
+      this._popup.input(code, e);
+      this._popupDone();
+      return;
+    }
+    if (this.capture) {
+      // WaitForKeyPress (:380-424): the next key binds - reserved keys
+      // are EMPTY in DFU, so Escape binds too rather than cancelling.
+      //
+      // A8 - THE COMBO HALF. DFU takes TWO key-downs: the first is the
+      // modifier, and a second arriving before the first comes up makes
+      // `GetComboCode(code1, code2)` (:408). The port's overlay seam
+      // delivers key-DOWNS only and no held set, so the two-key gesture
+      // is read off the event's own modifier flags instead: a captured
+      // key pressed under Ctrl, Shift or Alt binds the combo, anything
+      // else binds the single code.
+      //
+      // NARROWED, deliberately, and the narrowing is only here in the
+      // capture: DFU lets ANY key be the modifier (Z+LeftShift is legal
+      // and GetDuplicates' third phase exists for it), and it tells
+      // left from right. A browser KeyboardEvent reports three virtual
+      // flags and no side, so this door offers the LEFT side of the
+      // three - which is what every DFU default binds anyway. The
+      // storage, the duplicate law and the runtime read take any pair.
+      const combo = comboFromEvent(code, e);
+      this._bindCaptured(combo ?? code);
+      return;
+    }
+    // AUDIT KB1: a prompt is answered by a PRESS. The hosts hand repeated keydowns to the window, so a key held a beat
+    // after its capture (Escape, Y, N - all bindable) answered the prompt it had just raised.
+    if (this.top && e?.repeat) return;
+    // L10N3f: a prompt's Yes and No answer to their DialogShortcuts
+    // letters - Y and N in English (promptAnswer, mouseControlsWindow.js).
+    const answer = this.top ? promptAnswer(code, e) : null;
+    if (this.top === 'replace') {
+      const r = this._replace;
+      if (answer === 'yes') {
+        this._click();
+        stageReplace(this.unsaved, r.action, r.code, r.holders);
+        this._refresh();
+      }
+      // UXB1-S: B - "use it for both": the key lands here and stays where it is (the box says so when it may)
+      const share = !answer && code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);
+      if (share) { this._click(); stageShare(this.unsaved, r.action, r.code); this._refresh(); }
+      if (answer || code === 'Escape' || share) { this.top = null; this._replace = null; }
+      return;
+    }
+    if (this.top === 'defaults') {
+      if (answer === 'yes') {
+        this._click();
+        resetUnsavedToDefaults(bindings(), this.unsaved);
+        saveKeyBinds(bindings());   // ConfirmDefaultsBox (:309-317)
+        resetJoystickUnsaved(bindings(), this.unsaved.joystick);   // GP2: SetDefaults (:230-238) re-reads the joystick staging off the reset store
+        this._refresh();
+      }
+      if (answer || code === 'Escape') this.top = null;
+      return;
+    }
+    if (this.top === 'remove') {
+      if (answer === 'yes') {
+        this._click();
+        setUnsavedBinding(this.unsaved, this._removeAction, null);
+        this._refresh();
+      }
+      if (answer || code === 'Escape') { this.top = null; this._removeAction = null; }
+      return;
+    }
+    if (this.top) { this.top = null; return; }   // dupes/note: any key clears
+    if (code === 'Escape') {
+      // the back door obeys the same gate as CONTINUE (:71-74)
+      if (!this.dupes.ok) { this.top = 'dupes'; return; }
+      this._click();
+      this._close();
+    }
+  }
+
+  /** U37: the hover seam. A key button whose label ELONGATED offers
+   *  its full text; everything else offers nothing, exactly as
+   *  SuppressToolTip decides (:214-216). */
+  hover(vx, vy) {
+    this._hover = [vx, vy];
+    if (this._popup) { this._popup.hover(vx, vy); this._popup.drag(vx); return; }
+    if (this.capture || this.top) { this.tip.hide(); return; }
+    const dict = currentDict(this.unsaved);
+    for (const b of this.buttons) {
+      if (inRect([b.x, b.y, KEY_BTN.w, KEY_BTN.h], vx, vy)) {
+        const code = dict.get(b.action);
+        // the SUPPRESS rule: only an elongated label gets a tip
+        if (buttonText(code) !== ELONGATED_TEXT) { this.tip.hide(); return; }
+        this.tip.show(buttonText(code, true), vx, vy);
+        return;
+      }
+    }
+    this.tip.hide();
+  }
+
+  /** ROAD-E E1: the pointer-up edge, forwarded. HorizontalSlider's
+   *  drag body runs only inside `GetMouseButton(0)` and its else arm
+   *  (HorizontalSlider.cs:148-154) drops `draggingThumb` the frame the
+   *  button comes up; the port has no held-button poll, so the hosts
+   *  deliver that edge as `overlay.release?.()` and a nesting window
+   *  has to pass it on (ui/item/itemMakerWindow.js:"this.picker?.release"'s shape). The popup
+   *  latches its thumb on the press and `hover` above pumps the drag
+   *  from every move, so this is the only edge that ends it. */
+  release() { this.advanced?.release(); this.joystick?.release(); }
+
+  /** The wheel seam (U-scroll): the hosts deliver it as
+   *  `overlay.wheel?.(dir, vx, vy)` (AUDIT 65 UI-5), and while the popup is up
+   *  it is the popup's - MouseScrollUp/Down (HorizontalSlider.cs:
+   *  180-190) over the slider the pointer is on. */
+  wheel(dir) { this._popup?.wheel(dir); }
+
+  /** The tooltip's rest clock. `tick` is the name the hosts' overlay
+   *  seam already calls (townTalk.frame, dungeonContext.tickOverlay) -
+   *  ONE per-frame hook, not a second one beside it. */
+  tick(dt) {
+    if (this._popup) { this._popup.tick(dt); return; }
+    this.tip.update(dt);
+  }
+
+  /** OnReturn (DaggerfallControlsWindow.cs:173-178 / the advanced
+   *  window's own OnPush :146-149 and OnReturn :151-155): the grid
+   *  re-reads the staged dicts and re-checks duplicates when the
+   *  popped window uncovers it. */
+  _closeAdvanced() {
+    this.advancedOpen = false;
+    this.advanced.release();
+    this._refresh();
+  }
+  /** GP2: the joystick window's OnPop (:176-179) reads its controls
+   *  back into the staging; the grid's OnReturn re-checks its own. */
+  _closeJoystick() {
+    this.joystickOpen = false;
+    this.joystick.onPop();
+    this.joystick.release();
+    this._refresh();
+  }
+
+  /** vx/vy native; `right` marks the remove gesture (:371), `middle`
+   *  is the wheel press - carried because MAC-K1 made it a binding. */
+  click(vx, vy, right = false, middle = false) {
+    if (this._popup) {
+      this._popup.click(vx, vy, right);
+      this._popupDone();
+      return true;
+    }
+    if (this.capture) {
+      // MAC-K1 (Mac: "Mouse keybindings not working properly"). This
+      // line read `return true` - "every tab ignores clicks
+      // mid-capture (:283 etc.)" - which is the right law for a click
+      // that means something ELSE, and the wrong one for the capture
+      // itself. DFU's WaitForKeyPress is `Input.GetKeyDown` walked over
+      // every KeyCode, and Mouse0/1/2 ARE KeyCodes - which is how three
+      // of its own defaults come to be mouse buttons. So a press while
+      // armed is the binding, exactly as a keystroke is.
+      //
+      // NO COMBO ARM HERE, and that is a real difference from the key
+      // door: this seam is given a position and three booleans, never
+      // the event, so there are no modifier flags to read. A
+      // modifier+button combo can be made in the enhanced pane and
+      // will display, save and run correctly everywhere; it just
+      // cannot be ENTERED through the classic grid.
+      //
+      // Unity counts Mouse0/1/2 as left/RIGHT/middle where the DOM
+      // counts left/middle/right, so the two middle names cross - and
+      // this reads the one table (ui/input.js MOUSE_CODES) rather than
+      // spelling the crossing a second time.
+      const code = mouseCode(right ? 2 : (middle ? 1 : 0));
+      this._bindCaptured(code);
+      return true;
+    }
+    if (this.top) {
+      if ((this.top === 'defaults' || this.top === 'remove' || this.top === 'replace') && this._box) {
+        const hit = messageBoxHit(this._box, vx, vy);
+        if (hit === MB_BUTTONS.Yes) this.input(PROMPT_YES);
+        else if (hit === MB_BUTTONS.No) this.input(PROMPT_NO);
+        return true;
+      }
+      this.top = null;
+      return true;
+    }
+    for (const b of this.buttons) {
+      if (inRect([b.x, b.y, KEY_BTN.w, KEY_BTN.h], vx, vy)) {
+        this._click();
+        if (right) {
+          // PromptRemoveKeybindMessage refuses on an unbound slot (:292)
+          if (currentDict(this.unsaved).get(b.action) == null) return true;
+          this.top = 'remove';
+          this._removeAction = b.action;
+        } else this.capture = b.action;
+        return true;
+      }
+    }
+    if (inRect(TAB_RECTS.continue, vx, vy)) {
+      this._click();
+      if (!this.dupes.ok) this.top = 'dupes';   // ShowMultipleAssignmentsMessage
+      else this._close();
+      return true;
+    }
+    if (inRect(TAB_RECTS.defaults, vx, vy)) { this._click(); this.top = 'defaults'; return true; }
+    if (inRect(TAB_RECTS.whichDict, vx, vy)) {
+      this._click();
+      // the switch is refused while the SHOWN dict clashes internally
+      if (this.dupes.internal.size) { this.top = 'dupes'; return true; }
+      this.unsaved.usingPrimary = !this.unsaved.usingPrimary;
+      this._refresh();
+      return true;
+    }
+    if (inRect(TAB_RECTS.joystick, vx, vy)) {
+      // JoystickButton_OnMouseClick (:279-286): the click sound, then
+      // PostMessage(dfuiOpenJoystickControlsWindow) - one cached instance,
+      // pushed again (OnPush -> OnReturn re-reads the staging, :181-190)
+      this._click();
+      this.joystick ??= new JoystickControlsWindow(this.unsaved.joystick);
+      this.joystick.onPush();
+      this.joystickOpen = true;
+      this.tip.hide();
+      return true;
+    }
+    if (inRect(TAB_RECTS.advanced, vx, vy)) {
+      // MouseButton_OnMouseClick (:288-295): the click sound, then
+      // PushWindow(dfUnityMouseControlsWindow) - one cached instance.
+      this._click();
+      this.advanced ??= new MouseControlsWindow(this.unsaved);
+      // OnPush -> OnReturn (DaggerfallUnityMouseControlsWindow.cs:146-155):
+      // the pushed window re-reads the shared dicts and re-checks
+      // duplicates, so a clash the GRID made between two visits colours
+      // in the popup too. The cached instance is pushed again, not
+      // rebuilt, so `done` is cleared there rather than by a constructor.
+      this.advanced.onPush();
+      this.advancedOpen = true;
+      this.tip.hide();
+      return true;
+    }
+    return true;
+  }
+
+  /** The rows of the prompt standing over the grid (`top`). The three
+   *  prompts are Internal_Strings' own, recovered - the remove prompt
+   *  formats the camel-split action and the FULL key text exactly as
+   *  PromptRemoveKeybindMessage does (:300-302) - and each is read in the
+   *  player's language when it is drawn (L10N3d: :262, :302). */
+  promptRows() {
+    return this.top === 'dupes' ? [localizedText('multipleAssignments', 'You have multiple assignments...')]
+      : this.top === 'defaults' ? [localizedText('confirmDefaultControls', 'Are you sure you want to set default controls?')]
+        : this.top === 'remove'
+          ? removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction))
+          : this.top === 'replace' ? replacePromptRows(this.unsaved, this._replace)
+            : this._noteRows;
+  }
+
+  draw(renderer, canvas, font) {
+    if (!_art) { this.done = true; return; }
+    // DaggerfallUI draws ONLY the top window (DaggerfallUI.cs:489-492),
+    // so while the advanced popup is up the grid draws nothing at all.
+    if (this._popup) { this._popup.draw(renderer, canvas, font); return; }
+    const m = nativeMetrics(canvas);
+    drawMenuBackdrop(renderer, canvas);
+    drawImg(renderer, _art.base, m, 0, 0);
+    if (_art.mlook) drawImg(renderer, _art.mlook, m, MLOOK_ALT_RECT[0], MLOOK_ALT_RECT[1]);
+    const dict = currentDict(this.unsaved);
+    for (const b of this.buttons) {
+      const code = dict.get(b.action);
+      const label = this.capture === b.action ? '' : buttonText(code);
+      const color = this.dupes.internal.has(code) ? INTERNAL_DUPE_COLOR
+        : this.dupes.cross.has(code) ? CROSS_DUPE_COLOR : this.dupes.shared?.has(code) ? SHARED_KEY_COLOR : TEXT_COLOR;   // UXB1-S: a share, in its own colour
+      const lw = measureText(font.fnt, label);
+      drawText(renderer, font, label,
+        m.ox + (b.x + Math.round((KEY_BTN.w - lw) / 2)) * m.s,
+        m.oy + b.y * m.s, m.s, color);
+    }
+    // the primary/secondary face (:141) - L10N3f: GameSettings' primary/secondary
+    // (:139, :252), a pack's in its language; the port's English stays upper-case
+    // where DFU's rows read "Primary"/"Secondary" (GameSettings.txt:207-208)
+    const which = this.unsaved.usingPrimary ? gameSettingsText('primary', 'PRIMARY') : gameSettingsText('secondary', 'SECONDARY');
+    drawText(renderer, font, which,
+      m.ox + (TAB_RECTS.whichDict[0] + 2) * m.s, m.oy + (TAB_RECTS.whichDict[1] + 1) * m.s,
+      m.s, DIM);
+    if (this.capture) {
+      drawText(renderer, font, 'Press a key...', m.ox + 4 * m.s, m.oy + 180 * m.s, m.s, TEXT_COLOR);
+    }
+    if (this.top) {
+      const rows = this.promptRows();
+      const buttons = (this.top === 'defaults' || this.top === 'remove' || this.top === 'replace') ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
+      this._box = layoutMessageBox(font, rows, buttons);
+      if (!drawMessageBox(renderer, m, font, this._box)) {
+        (this._box.rows ?? []).forEach((r, i) => drawText(renderer, font, r.text, m.ox + 20 * m.s, m.oy + (20 + i * 10) * m.s, m.s, TEXT_COLOR));
+      }
+    } else this._box = null;
+    this.tip.draw(renderer, m, font);   // LAST - DFU's final-component order
+  }
+}

@@ -1,0 +1,128 @@
+[
+  {
+    "name": "TV-a-landing-repaints-the-counter",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "    : linePicture(line, { box: SLOT_BOX.row, onReady: landed });",
+    "new": "    : linePicture(line, { box: SLOT_BOX.row, onReady: render });",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-counters-tiles-unasked",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  return tiles.tile({ line, grid: tradeView === 'grid' });",
+    "new": "  return drawTile(line, tradeView === 'grid', render);",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-counters-pack-drawn-whole",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  else keepList(virtualRows(list, items, (it) => itemRow(it, 'local'), { onAim: rowsMoved, sizes: sizesOf(`local:${tradeView}`) }));",
+    "new": "  else for (const it of items) list.append(itemRow(it, 'local'));",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-counter-aimed-before-the-scroll-is-given-back",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  syncLists({ draw: false });   // TRADE-VIRT: the long lists measured",
+    "new": "  syncLists();   // TRADE-VIRT: the long lists measured",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-counters-card-left-beside-nothing",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "const rowsMoved = () => { if (hoverRow && hoverRow.isConnected === false) { hoverRow = null; hideItemHover(); } };",
+    "new": "const rowsMoved = () => {};",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-counters-old-lists-kept",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  dropLists();   // TRADE-VIRT: the old DOM's windows and waiting tiles go with it\n  tiles.clear();\n  host.innerHTML = '';",
+    "new": "  tiles.clear();\n  host.innerHTML = '';",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-counters-lists-kept-past-the-unmount",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "      dropLists();   // TRADE-VIRT: the windows' scroll listeners, and the tiles that will never be drawn into\n      tiles.clear();\n      hoverRow = null;",
+    "new": "      tiles.clear();\n      hoverRow = null;",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-staged-left-in-the-pack",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  const held = new Set(remoteItems());",
+    "new": "  const held = new Set();",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-a-landing-repaints-the-trade",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "    const pic = linePicture(line, { box: SLOT_BOX.row, onReady: landed });",
+    "new": "    const pic = linePicture(line, { box: SLOT_BOX.row, onReady: () => alive && render() });",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-trades-pack-drawn-whole",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "    else fill(list, items, (it) => row(it, 'pack'), 'pack');   // TRADE-VIRT",
+    "new": "    else for (const it of items) list.append(row(it, 'pack'));",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-trades-old-lists-kept",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "    dropLists();   // TRADE-VIRT: the old DOM's windows and waiting tiles go with it\n    tiles.clear();\n    hostEl.innerHTML = '';",
+    "new": "    tiles.clear();\n    hostEl.innerHTML = '';",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-trades-lists-kept-past-the-unmount",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "      dropLists(); tiles.clear();   // TRADE-VIRT: the windows' scroll listeners",
+    "new": "      tiles.clear();   // TRADE-VIRT: the windows' scroll listeners",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-sessions-call-painting-inside-the-verb",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "    if (!alive || quiet) return;   // TRADE-VIRT: a verb of mine under way paints once, after it",
+    "new": "    if (!alive) return;",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "TV-the-trade-aimed-before-the-scroll-is-given-back",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "    syncLists({ draw: false });   // TRADE-VIRT: measured and spaced first, so the scroll given back is the whole list's",
+    "new": "    syncLists();   // TRADE-VIRT: measured and spaced first, so the scroll given back is the whole list's",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  }
+]

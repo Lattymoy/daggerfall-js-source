@@ -1,0 +1,78 @@
+[
+  {
+    "name": "INFECTION-KEPT-the-temple-ends-every-disease",
+    "file": "src/systems/guild/guildServiceActions.js",
+    "old": "import { cureDiseasesInfectionsLast } from '../effects.js';",
+    "new": "import { cureAllDiseases as cureDiseasesInfectionsLast } from '../effects.js';",
+    "tests": [
+      "test/systems/fb0929h_infectionkept.test.js"
+    ]
+  },
+  {
+    "name": "INFECTION-KEPT-every-cure-ends-every-disease",
+    "file": "src/systems/effects.js",
+    "old": "export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease', plainDiseaseLive(t));",
+    "new": "export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease');",
+    "tests": [
+      "test/systems/fb0929h_infectionkept.test.js"
+    ]
+  },
+  {
+    "name": "INFECTION-KEPT-the-infection-never-cured",
+    "file": "src/systems/effects.js",
+    "old": "export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease', plainDiseaseLive(t));",
+    "new": "export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease', true);",
+    "tests": [
+      "test/systems/fb0929h_infectionkept.test.js"
+    ]
+  },
+  {
+    "name": "INFECTION-KEPT-a-cast-ends-the-infection-with-the-plague",
+    "file": "src/systems/effects.js",
+    "old": "      cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true || plainDiseaseLive(target));",
+    "new": "      cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true);",
+    "tests": [
+      "test/systems/fb0929h_infectionkept.test.js",
+      "test/systems/spellgift.test.js"
+    ]
+  },
+  {
+    "name": "INFECTION-KEPT-a-cast-never-ends-it",
+    "file": "src/systems/effects.js",
+    "old": "      cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true || plainDiseaseLive(target));",
+    "new": "      cureAllOfKind(target, CURE_KINDS[e.subType], true);",
+    "tests": [
+      "test/systems/fb0929h_infectionkept.test.js",
+      "test/systems/spellgift.test.js"
+    ]
+  },
+  {
+    "name": "INFECTION-KEPT-the-temple-prices-the-infection-with-the-plague",
+    "file": "src/systems/diseases.js",
+    "old": "  return live.filter((a) => !a.infection).length || live.length;",
+    "new": "  return live.length;",
+    "tests": [
+      "test/systems/fb0929h_infectionkept.test.js",
+      "test/systems/infection.test.js"
+    ]
+  },
+  {
+    "name": "INFECTION-KEPT-the-infection-alone-never-priced",
+    "file": "src/systems/diseases.js",
+    "old": "  return live.filter((a) => !a.infection).length || live.length;",
+    "new": "  return live.filter((a) => !a.infection).length;",
+    "tests": [
+      "test/systems/fb0929h_infectionkept.test.js",
+      "test/systems/infection.test.js"
+    ]
+  },
+  {
+    "name": "INFECTION-KEPT-the-turn-keeps-the-old-infection",
+    "file": "src/systems/lycanthropy.js",
+    "old": "import { cureAllDiseases, cureAllPoisons } from './effects.js';",
+    "new": "import { cureDiseasesInfectionsLast as cureAllDiseases, cureAllPoisons } from './effects.js';",
+    "tests": [
+      "test/systems/fb0929h_infectionkept.test.js"
+    ]
+  }
+]

@@ -1,0 +1,201 @@
+[
+  {
+    "name": "QUESTOR-MOVED-questor-never-asked",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (!resource.isPerson || !resource.reseatMovedQuestor?.(world)) continue;",
+    "new": "      if (!resource.isPerson || true) continue;",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-mapID-to-recordStands",
+    "file": "src/systems/quest/person.js",
+    "old": "    if (\n      !this.isQuestor ||\n      !(q?.buildingKey > 0) ||\n      recordStands({ mapId: q.mapID, buildingKey: q.buildingKey, layout: q.layout })\n    )\n      return false; // the struct spells it mapID; recordStands reads mapId",
+    "new": "    if (!this.isQuestor || !(q?.buildingKey > 0) || recordStands(q)) return false; // the struct spells it mapID; recordStands reads mapId",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-name-rung-dropped",
+    "file": "src/systems/quest/person.js",
+    "old": "      buildings.find((b) => b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName && b.npcs.length) ??",
+    "new": "      buildings.find(\n        (b) => false && b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName && b.npcs.length,\n      ) ??",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-empty-hall-taken",
+    "file": "src/systems/quest/person.js",
+    "old": "      buildings.find((b) => b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName && b.npcs.length) ??",
+    "new": "      buildings.find((b) => b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName) ??",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-hall-look-rung-dropped",
+    "file": "src/systems/quest/person.js",
+    "old": "      halls.find((b) => b.isNamedBuilding && b.npcs.some(sameLook)) ??\n      (guild",
+    "new": "      (guild",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-unnamed-building-taken",
+    "file": "src/systems/quest/person.js",
+    "old": "      halls.find((b) => b.isNamedBuilding && b.npcs.some(sameLook)) ??",
+    "new": "      halls.find((b) => b.npcs.some(sameLook)) ??",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-hall-look-rung-any-people",
+    "file": "src/systems/quest/person.js",
+    "old": "      halls.find((b) => b.isNamedBuilding && b.npcs.some(sameLook)) ??",
+    "new": "      halls.find((b) => b.isNamedBuilding && b.npcs.length > 0) ??",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-person-look-rung-dropped",
+    "file": "src/systems/quest/person.js",
+    "old": "    const npc = {\n      ...(to.npcs.find(ownself) ??\n        to.npcs.find(sameLook) ??\n        to.npcs.find((n) => n.factionID === q.factionID) ??\n        to.npcs[0]),\n    };",
+    "new": "    const npc = { ...(to.npcs.find(ownself) ?? to.npcs.find((n) => n.factionID === q.factionID) ?? to.npcs[0]) };",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-person-faction-rung-dropped",
+    "file": "src/systems/quest/person.js",
+    "old": "    const npc = {\n      ...(to.npcs.find(ownself) ??\n        to.npcs.find(sameLook) ??\n        to.npcs.find((n) => n.factionID === q.factionID) ??\n        to.npcs[0]),\n    };",
+    "new": "    const npc = { ...(to.npcs.find(ownself) ?? to.npcs.find(sameLook) ?? to.npcs[0]) };",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-first-person-rung-dropped",
+    "file": "src/systems/quest/person.js",
+    "old": "      ...(to.npcs.find(ownself) ??\n        to.npcs.find(sameLook) ??\n        to.npcs.find((n) => n.factionID === q.factionID) ??\n        to.npcs[0]),",
+    "new": "      ...(to.npcs.find(ownself) ?? to.npcs.find(sameLook) ?? to.npcs.find((n) => n.factionID === q.factionID)),",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-questor-unstamped",
+    "file": "src/systems/quest/person.js",
+    "old": "    this.questorData = stampLayout(npc, layoutStampOfMapId(q.mapID));",
+    "new": "    this.questorData = npc;",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-hall-left-behind",
+    "file": "src/systems/quest/person.js",
+    "old": "      hall.siteDetails = stampLayout(\n        { ...site, buildingKey: to.buildingKey, buildingName: to.buildingName },\n        layoutStampOfMapId(site.mapId),\n      );\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-hall-unstamped",
+    "file": "src/systems/quest/person.js",
+    "old": "      hall.siteDetails = stampLayout(\n        { ...site, buildingKey: to.buildingKey, buildingName: to.buildingName },\n        layoutStampOfMapId(site.mapId),\n      );",
+    "new": "      hall.siteDetails = stampLayout({ ...site, buildingKey: to.buildingKey, buildingName: to.buildingName }, '');",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-scopes-none-guard-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (this.scope === Scopes.None) return this._unseat(held);",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-receive-unmended",
+    "file": "src/systems/quest/machine.js",
+    "old": "    this.quests.set(quest.uid, quest);\n    this._reseatArrived(quest); // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)",
+    "new": "    this.quests.set(quest.uid, quest); // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-resync-unmended",
+    "file": "src/systems/quest/machine.js",
+    "old": "    this._reseatArrived(quest); // QUESTOR-MOVED: a partner's copy from before the town mods, mended as it lands\n    // QUEST-AUDIT II SITE-LINKS: each Place's link made AGAIN, never once more - the copy's own link from its accept (or",
+    "new": "    // QUEST-AUDIT II SITE-LINKS: each Place's link made AGAIN, never once more - the copy's own link from its accept (or",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-layouts-gate-ignored",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (!world || world.townLayoutsKnown?.() === false) return 0;",
+    "new": "    if (!world) return 0;",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-hall-link-left",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (hall?.siteDetails) follow(hall);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-name-always-answered",
+    "file": "src/systems/quest/machine.js",
+    "old": "    return person && person.nameSeed !== npcData?.nameSeed ? person.displayName : null;",
+    "new": "    return person ? person.displayName : null;",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-name-never-answered",
+    "file": "src/systems/quest/machine.js",
+    "old": "    return person && person.nameSeed !== npcData?.nameSeed ? person.displayName : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-seam-always-known",
+    "file": "src/scenes/questWorld.js",
+    "old": "townLayoutsKnown: () => !homeLayoutsOnline || host._homeLayoutsApplied,",
+    "new": "townLayoutsKnown: () => true,",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-MOVED-name-preference-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "    return questBridge?.machine?.movedQuestorName?.(npcData) ?? staticNpcName(npcData,",
+    "new": "    return staticNpcName(npcData,",
+    "tests": [
+      "test/systems/quest/fb1003b_questor.test.js",
+      "test/systems/talk/audit24_onehome.test.js"
+    ]
+  }
+]

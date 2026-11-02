@@ -1,0 +1,11 @@
+-- LAMP-KEEPER II (2026-10-14, Mac: "A chance of finding a vendor NPC as a lamp model. Anybody that interacts with the
+-- lamp model should earn the 'I Love Lamp' title").
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI).
+--
+-- THE LAMP'S TITLE ON THE ROW - I Love Lamp, laid by the account's first word with a lamp keeper
+-- (server-account/src/lamp.js claimLamp) and held for good, read off the row as Hourbreaker is off `sd_honours`
+-- (titles.js titlesHeld). 0 for every row before this.
+ALTER TABLE players ADD COLUMN lamp_title INTEGER NOT NULL DEFAULT 0;

@@ -1,0 +1,393 @@
+[
+  {
+    "name": "AUDITCLIMB1-F1-crouch-armed-not-flipped",
+    "file": "src/player/motor.js",
+    "old": "      this.standingHeightAdjustment = 0;\n      this.crouching = true;\n      this.heightAction = 'crouch';",
+    "new": "      this.standingHeightAdjustment = 0;\n      this.heightAction = 'crouch';",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F1-crouch-key-mid-move",
+    "file": "src/player/motor.js",
+    "old": "    } else if (this._pkMove) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F1-eye-over-the-whole-move",
+    "file": "src/player/motor.js",
+    "old": "      this.heightTimerMax = move.dur * move.split;",
+    "new": "      this.heightTimerMax = move.dur;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F2-path-unproven",
+    "file": "src/player/parkour.js",
+    "old": "  for (let i = 1; i <= n; i++) {\n    if (!capsuleFits(collider, movePoint(m, i / n), body)) return false;\n  }",
+    "new": "  for (let i = 1; i <= n; i++) {}",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F2-path-one-sample",
+    "file": "src/player/parkour.js",
+    "old": "  const n = Math.max(6, Math.ceil(len / PARKOUR_PATH_STEP));",
+    "new": "  const n = 1;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F4-pin-keeps-move",
+    "file": "src/player/motor.js",
+    "old": "    this._pkMove = null;   // AUDIT CLIMB1 F4: a pin is a placement - the move it interrupts is over, never resumed\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F4-freeze-keeps-move",
+    "file": "src/player/motor.js",
+    "old": "      this._pkMove = null;   // AUDIT CLIMB1 F4: a freeze follows a placement (the helm's, a teleport's) - the move is over\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F5-carry-leaves-move",
+    "file": "src/player/motor.js",
+    "old": "    if (this._pkMove) offsetMove(this._pkMove, [dx, dy, dz]);   // AUDIT CLIMB1 F5: a move on the deck is carried with it\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F5-mover-not-ridden",
+    "file": "src/player/motor.js",
+    "old": "      if (now) { carryMove(m, m.carrier, now); m.carrier = now; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F6-every-catch-holds",
+    "file": "src/player/motor.js",
+    "old": "    if (air && ((this.falling && this.fallStart - this.pos[1] > parkourCatchHold(skill)) || this.grip < PARKOUR_GRIP_MIN)) return false;\n",
+    "new": "    if (air && this.grip < PARKOUR_GRIP_MIN) return false;\n",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F6b-never-rests",
+    "file": "src/player/motor.js",
+    "old": "    if (air && this._pkQuiet > 0) { this._pkQuiet--; return false; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F7-jump-not-spent",
+    "file": "src/player/motor.js",
+    "old": "    this._pkJumpLatch = true;\n    this.moveForward = 0;\n",
+    "new": "    this.moveForward = 0;\n",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F7-classic-jump-ungated",
+    "file": "src/player/motor.js",
+    "old": "        && !this._pkJumpLatch   // AUDIT CLIMB1 F7: not the Jump a move spent\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F8-edge-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    _activity.parkoured = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F8-jump-edge-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    _activity.jumped = false;\n    _activity.parkoured = null;",
+    "new": "    _activity.parkoured = null;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F9-walk-input-kept",
+    "file": "src/player/motor.js",
+    "old": "    this._pkJumpLatch = true;\n    this.moveForward = 0;\n    this.moveStrafe = 0;\n    this.moveSpeed = 0;\n",
+    "new": "    this._pkJumpLatch = true;\n",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F9-bag-says-nothing",
+    "file": "src/player/motor.js",
+    "old": "    climbing: !!(player.climb?.isClimbing || player.mantling || player.onWall),\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F10-gate-ignored",
+    "file": "src/player/motor.js",
+    "old": "    const refusal = move.kind === 'vault' ? null : parkourRefusal();",
+    "new": "    const refusal = null;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F10-rr-allows",
+    "file": "src/systems/roleplayRealism/rrRealism.js",
+    "old": "  return weaponDrawn && !weaponMelee ? NO_CLIMB_HOLDING_WEAPON : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-F11-shelf-not-lane",
+    "file": "src/scenes/shared.js",
+    "old": "  const row = onlineForcedPref('enhancedClimbing', search) ?? getPref('enhancedClimbing');",
+    "new": "  const row = getPref('enhancedClimbing');",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G1-deep-edge-probe",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_EDGE_INSET = 0.03;",
+    "new": "export const PARKOUR_EDGE_INSET = 0.2;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G1-foot-in-the-slope",
+    "file": "src/player/parkour.js",
+    "old": "      let top = y + radius / ny - radius;",
+    "new": "      let top = y;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G1-slope-reads-as-face",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_FACE_LEAN = 0.08;",
+    "new": "export const PARKOUR_FACE_LEAN = 0.2;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G2-no-slide",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_NUDGE = Object.freeze([0, 0.15, -0.15, 0.3, -0.3]);",
+    "new": "export const PARKOUR_NUDGE = Object.freeze([0]);",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G3-no-middle-landing",
+    "file": "src/player/parkour.js",
+    "old": "  else if (depth >= PARKOUR_MIN_STAND_DEPTH) s = depth / 2;\n  else {",
+    "new": "  else {",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G3-no-clamber",
+    "file": "src/player/motor.js",
+    "old": "    const over = senseOver(this.collider, this.pos, ledge, geo, PARKOUR_OVER_DROP)\n",
+    "new": "    const over = null\n",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G3-deep-drop-is-top",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_TOP_DROP = 0.1;",
+    "new": "export const PARKOUR_TOP_DROP = 0.35;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G3-narrow-tops-refused",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_MIN_STAND_DEPTH = 0.28;",
+    "new": "export const PARKOUR_MIN_STAND_DEPTH = 0.5;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G4-no-slab",
+    "file": "src/player/parkour.js",
+    "old": "  const wall =\n    scanFace(collider, feet, dir, low, high, reach) ?? scanSlab(collider, feet, dir, low, high, reach, radius);",
+    "new": "  const wall = scanFace(collider, feet, dir, low, high, reach);",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G4-deep-under",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_UNDER = 0.02;",
+    "new": "export const PARKOUR_UNDER = 0.08;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G5-no-footing",
+    "file": "src/player/parkour.js",
+    "old": "    if (Number.isFinite(f.dist) && lipY - PARKOUR_UNDER - f.dist - feet[1] > PARKOUR_FOOTING)\n      return { ok: false, why: 'riser' };\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-G6-no-floor-asked",
+    "file": "src/player/parkour.js",
+    "old": "    if (!Number.isFinite(below.dist)) continue;\n    if (!capsuleFits(collider, up, height) || !capsuleFits(collider, over, height)) continue;",
+    "new": "    if (!capsuleFits(collider, up, height) || !capsuleFits(collider, over, height)) continue;",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-R7-vault-reads-climbing",
+    "file": "src/player/motor.js",
+    "old": "      if (vault) move = planVault(this.pos, ledge, vault, jumpingSkill(inputs), this.speed);",
+    "new": "      if (vault) move = planVault(this.pos, ledge, vault, skill, this.speed);",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-lid-read-as-top",
+    "file": "src/player/parkour.js",
+    "old": "  for (let tries = 0; tries < 2; tries++) {",
+    "new": "  for (let tries = 0; tries < 1; tries++) {",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCLIMB1-depth-unbisected",
+    "file": "src/player/parkour.js",
+    "old": "    for (let k = 0; k < 4; k++) {\n      const mid = (a + b) / 2;\n      if (onTop(mid)) a = mid;\n      else b = mid;\n    }\n    return { depth: (a + b) / 2 };",
+    "new": "    return { depth: (a + b) / 2 };",
+    "tests": [
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
+    ]
+  }
+]

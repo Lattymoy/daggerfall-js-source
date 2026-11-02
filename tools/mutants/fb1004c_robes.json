@@ -1,0 +1,196 @@
+[
+  {
+    "name": "ROBES-helper-sends-nothing",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  questItem.setPlayerClicked();\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-quickloot-no-click",
+    "file": "src/systems/quickLoot.js",
+    "old": "  sendQuestItemClick(item, getQuest);\n  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });",
+    "new": "  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-menu-no-click",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);\n  const acts",
+    "new": "  const acts",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-quickact-no-click",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "{ sendQuestItemClick(item, deps.getQuest ?? null); take(item); return true; }",
+    "new": "{ take(item); return true; }",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-row-no-click",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);\n    // IG7",
+    "new": "    // IG7",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-row-clicks-local-too",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);\n    // IG7",
+    "new": "    sendQuestItemClick(item, deps.getQuest ?? null);\n    // IG7",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-native-no-click",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "    sendQuestItemClick(it, this.hooks.getQuest ?? null);   // WHERE-ROBES",
+    "new": "    //",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js",
+      "test/ui/native/audit26_uicore.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-name-old-field",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export const questStandItem = (resource) => resource?.daggerfallUnityItem ?? null;",
+    "new": "export const questStandItem = (resource) => resource?.daggerfallItem ?? resource?.item ?? null;",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-name-building-namer-reverted",
+    "file": "src/scenes/worldModes.js",
+    "old": "        const st = questFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(questStandItem(res),",
+    "new": "        const st = questFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(res.daggerfallItem ?? res.item ?? null,",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-name-dungeon-namer-reverted",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const st = dungeonQuestFlats[Number(key.split(':')[1])];\n    const res = st?.behaviour?.targetResource ?? null;\n    if (!res || res.isPerson === true || res.isFoe === true) return null;\n    const t = questResourceName(questStandItem(res),",
+    "new": "    const st = dungeonQuestFlats[Number(key.split(':')[1])];\n    const res = st?.behaviour?.targetResource ?? null;\n    if (!res || res.isPerson === true || res.isFoe === true) return null;\n    const t = questResourceName(res.daggerfallItem ?? res.item ?? null,",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-shelf-ungated",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (shelvesAct(interiorBuilding)) interiorCtx.shelves.forEach(",
+    "new": "interiorCtx.shelves.forEach(",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-shelf-predicate-loses-an-arm",
+    "file": "src/scenes/worldModes.js",
+    "old": "(hallOfRecordsHere(b) || isShop(b.buildingType) || isBookshelfBuilding(b.buildingType))",
+    "new": "(isShop(b.buildingType) || isBookshelfBuilding(b.buildingType))",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-surface-law-dropped",
+    "file": "src/player/activate.js",
+    "old": "    } else if (target.surface === true && collider.raycastHit && d <= bestDist) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-surface-containment-dropped",
+    "file": "src/player/activate.js",
+    "old": "      if (\n        !boxContains(\n          target.aabb,\n          [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist],\n          PICK_PARDON_M,\n        )\n      )\n        continue;\n      d = Math.max(d, firstHit.dist);",
+    "new": "      d = Math.max(d, firstHit.dist);",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-surface-struck-at-entry",
+    "file": "src/player/activate.js",
+    "old": "      d = Math.max(d, firstHit.dist);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-bed-box-raced",
+    "file": "src/scenes/worldModes.js",
+    "old": "reach: DEFAULT_ACTIVATION_DISTANCE, surface: true });   // WHERE-ROBES: the mattress",
+    "new": "reach: DEFAULT_ACTIVATION_DISTANCE });   // WHERE-ROBES: the mattress",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-container-box-raced",
+    "file": "src/scenes/worldModes.js",
+    "old": "reach: TREASURE_ACTIVATION_DISTANCE, surface: true });",
+    "new": "reach: TREASURE_ACTIVATION_DISTANCE });",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-shelf-box-raced",
+    "file": "src/scenes/worldModes.js",
+    "old": "reach: DEFAULT_ACTIVATION_DISTANCE, surface: true });   // WHERE-ROBES: its boards",
+    "new": "reach: DEFAULT_ACTIVATION_DISTANCE });   // WHERE-ROBES: its boards",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-share-click-lost",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (was?.clicked && !r.hasPlayerClicked) r.setPlayerClicked();\n      if (was?.hidden && r.isItem) r.isHidden = true;",
+    "new": "      if (was?.hidden && r.isItem) r.isHidden = true;",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-share-pickup-lost",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (was?.hidden && r.isItem) r.isHidden = true;\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ]
+  },
+  {
+    "name": "ROBES-dungeon-search-box-raced",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "lastPlayerFeet[1] + lastPlayerHeight : NaN), surface: true }); });",
+    "new": "lastPlayerFeet[1] + lastPlayerHeight : NaN) }); });",
+    "tests": [
+      "test/systems/fb1004c_robes.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the reach is the body's now (searchReachFor) - re-aimed by content at the same `surface: true`."
+  }
+]

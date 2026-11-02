@@ -1,0 +1,65 @@
+[
+  {
+    "name": "GOLD-DROP-the-button-gone",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    gold.append(give);\n",
+    "new": "",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-field-never-shown",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (giving && goldEntry != null) bar.append(goldField());\n",
+    "new": "",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-bars-button-back",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  head.append(acts);\n  col.append(head);\n",
+    "new": "  if (!deps.loot) { const g = el('button', 'act', 'Gold'); g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; render(); }; acts.append(g); }\n  head.append(acts);\n  col.append(head);\n",
+    "tests": [
+      "test/ui/enhanced/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-verb-lost",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const verb = `${GOLD_VERB[remote?.kind] ?? 'Drop'} gold`;",
+    "new": "const verb = 'Drop gold';",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-fields-verb-lost",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const verb = GOLD_VERB[remote?.kind] ?? 'Drop';",
+    "new": "  const verb = 'Drop';",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-the-toggle-stuck",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "give.onclick = () => { goldEntry = goldEntry == null ? '0' : null;",
+    "new": "give.onclick = () => { goldEntry = '0';",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-DROP-storage-gated-with-the-loot",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  packOpen = !d.loot || d.loot.storage === true;",
+    "new": "  packOpen = !d.loot;",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  }
+]

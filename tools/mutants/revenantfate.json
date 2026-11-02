@@ -1,0 +1,336 @@
+[
+  {
+    "name": "REVENANT-FATE-dies-as-before",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (fates && revenantMayYield(f)) { if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-16b RVN-OWNERS-CHOICE (PIN MOVED): re-aimed by content - a whole blow passes the gate only as the owner's own (ownersWholeKill). FIELD BUGS 2026-10-17g RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone."
+  },
+  {
+    "name": "REVENANT-FATE-a-blow-kills-it-kneeling",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f.yielded || f.executing || f.sparing || f.leaving || f.roaring) return;   // REVENANT-FATE: a beaten revenant takes no blow",
+    "new": "    if (f.leaving || f.roaring) return;   // REVENANT-FATE: a beaten revenant takes no blow",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-a-foe-still-hunts-it",
+    "file": "src/characters/enemy/enemyTargets.js",
+    "old": "    if (!isPlayer && (c.yielded || c.executing || c.sparing || c.leaving)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-kneeling-in-the-save",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "!f.transient && !f.entity?.revenant).map(",
+    "new": "!f.transient).map(",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-no-pile",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (typeof dropLoot === 'function' && items.length) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-the-trophy-left-out",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  const items = [...(Array.isArray(f.entity?.items) ? f.entity.items : []), ...(f.trophy ? [f.trophy] : [])];",
+    "new": "  const items = [...(Array.isArray(f.entity?.items) ? f.entity.items : [])];",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-the-record-open",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  revenantExecuted(player, f.entity);\n  swornWitness(f.mobileType ?? f.entity?.mobileType); // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15",
+    "new": "  swornWitness(f.mobileType ?? f.entity?.mobileType); // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-the-sworn-left-hunting",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  r.sworn = true; r.fate = 'sworn';",
+    "new": "  r.fate = 'sworn';",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-spare-past-the-retinue",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  if (!retinueHasRoom()) return null;\n  setRetinuePlayer(player);",
+    "new": "  setRetinuePlayer(player);",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-the-wait-on-the-wall-clock",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  f.yielded.held = (f.yielded.held ?? 0) + Math.max(0, Number(dtMs) || 0);",
+    "new": "  f.yielded.held = Date.now() - f.yielded.at;",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-no-slip",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (yieldStep(f, playerFeet, dt * 1000) === 'slip') { escapeFoe(f, { slip: true }); return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-a-bad-flag-let-through",
+    "file": "src/net/wire.js",
+    "old": "  if (r.yd !== undefined) { if (r.yd !== 1) return null; out.yd = 1; }",
+    "new": "  if (r.yd !== undefined) { out.yd = r.yd; }",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-one-click-decides",
+    "file": "src/ui/revenant/revenantFateView.js",
+    "old": "      if (picked === o.id) onChoose(o.id);\n      else onPick(o.id);",
+    "new": "      onChoose(o.id);",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-back-closes-over-a-pick",
+    "file": "src/ui/revenant/revenantFateView.js",
+    "old": "  if (k === 'escape' && picked) {\n    onPick(null);\n    return true;\n  }\n  return false;",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-TROPHY-the-carried-blade-ignored",
+    "file": "src/systems/revenant/revenantTrophy.js",
+    "old": "  if (carried != null) return carried;\n  const pool = TROPHY_KIND_WEAPONS[r?.mobileType] ?? [W.Longsword];",
+    "new": "  const pool = TROPHY_KIND_WEAPONS[r?.mobileType] ?? [W.Longsword];",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-TROPHY-a-common-trophy",
+    "file": "src/systems/revenant/revenantTrophy.js",
+    "old": "  return x < leg ? 'legendary' : x < leg + rare ? 'rare' : 'magic';",
+    "new": "  return x < leg ? 'legendary' : x < leg + rare ? 'rare' : 'common';",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-TROPHY-the-name-without-its-owner",
+    "file": "src/systems/revenant/revenantTrophy.js",
+    "old": "  return `${possessive(given)} ${noun}`;",
+    "new": "  return noun;",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-TROPHY-the-rank-unread",
+    "file": "src/systems/revenant/revenantTrophy.js",
+    "old": "  const k = Math.max(0, Math.min(4, (rank | 0) - 1));",
+    "new": "  const k = 0;",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-SLOTS-the-crew-blind-to-the-sworn",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      if (!find(boat, hand.name) && companionsWithYou() >= COMPANION_SLOTS) return COMPANION_WHY.slots;\n      return null;",
+    "new": "      return null;",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-SLOTS-the-bound-four",
+    "file": "src/systems/companionSlots.js",
+    "old": "export const COMPANION_SLOTS = 3;",
+    "new": "export const COMPANION_SLOTS = 4;",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-COMPANION-a-call-past-the-slots",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;\n  return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-COMPANION-the-wake-never-comes",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "        if (stateOf(r) === 'resting' && now >= restUntil(r, now)) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-COMPANION-health-boosted-at-every-door",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  if (fresh) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-PORTAL-the-arrival-unasked",
+    "file": "src/scenes/crewAshore.js",
+    "old": "          try {\n            place.fx?.arrive?.(rec);\n          } catch {\n            /* COMPANION-PORTAL: no portal, the stand all the same */\n          }\n          deps.onStood?.(c, rec);",
+    "new": "          deps.onStood?.(c, rec);",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-PORTAL-the-body-out-at-once",
+    "file": "src/scenes/crewAshore.js",
+    "old": "    if (typeof s.fx?.leave !== 'function') {",
+    "new": "    {",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-PORTAL-the-jump-without-its-pair",
+    "file": "src/scenes/crewAshore.js",
+    "old": "          try {\n            s.fx?.jump?.(rec, from);\n          } catch {\n            /* COMPANION-PORTAL: no portal, the step all the same */\n          }\n          // AUDIT CC-A3: stood afresh - the motor resumes as a puppet handed back does (enemyMotor.js resumeLive: its",
+    "new": "          // AUDIT CC-A3: stood afresh - the motor resumes as a puppet handed back does (enemyMotor.js resumeLive: its",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-PORTAL-never-freed",
+    "file": "src/scenes/portalFx.js",
+    "old": "      if (done) {\n        dropDress(p);\n        try {\n          renderer.destroyBillboardBatch(p.batch);\n        } catch {\n          /* gone */\n        }\n        list.splice(i, 1);",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-PORTAL-art-outside-the-oval",
+    "file": "src/scenes/portalFx.js",
+    "old": "      if (r > 1) continue; // outside: clear",
+    "new": "      if (r > 1.5) continue; // outside: clear",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-PORTAL-standing-in-front",
+    "file": "src/scenes/portalFx.js",
+    "old": "        p.origin[0] = p.feet[0] + (dx / L) * PORTAL_BACK;\n        p.origin[2] = p.feet[2] + (dz / L) * PORTAL_BACK;",
+    "new": "        p.origin[0] = p.feet[0] - (dx / L) * PORTAL_BACK;\n        p.origin[2] = p.feet[2] - (dz / L) * PORTAL_BACK;",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "DISSOLVE-the-lane-without-it",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (dissolveGone(uv)) discard;   // DISSOLVE: burnt away, or not yet through its portal\n  vec3 emission = elDecode(emissionTexel);   // SPRITE-GRAD: sampled above the cut",
+    "new": "  vec3 emission = elDecode(emissionTexel);   // SPRITE-GRAD: sampled above the cut",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "DISSOLVE-arriving-backwards",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "    if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, 1 - Math.max(0, t)), ...tint];",
+    "new": "    if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, Math.max(0, t)), ...tint];",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-the-state-left-changed",
+    "file": "src/characters/mobile/mobileUnit.js",
+    "old": "      this.state = was;",
+    "new": "      /* kept */",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-ROSTER-release-at-one-press",
+    "file": "src/ui/companionRoster.js",
+    "old": "      _confirm = r.id;\n      _notice = null;",
+    "new": "      releaseRevenant(r.id);",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-ROSTER-the-refusal-unsaid",
+    "file": "src/ui/companionRoster.js",
+    "old": "        const no = callRevenant(r.id, now);\n        _notice = no ? { id: r.id, text: no } : null;",
+    "new": "        callRevenant(r.id, now);",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "COMPANION-ROSTER-the-strip-blind-to-the-crew",
+    "file": "src/ui/companionRoster.js",
+    "old": "  const filled = [...withYou.map((r) => ({ r })), ...crew.map((c) => ({ c }))];",
+    "new": "  const filled = [...withYou.map((r) => ({ r }))];",
+    "tests": [
+      "test/systems/revenant/revenant_companions.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-a-held-foe-animates-its-own-underground",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (!_fateHeld) {   // REVENANT-FATE: a held foe's pose is its own (dungeonFateFrame) - it is still drawn below\n",
+    "new": "        {\n",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  },
+  {
+    "name": "REVENANT-FATE-a-held-foe-undrawn-underground",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f.mobile) {\n        // C11: the sprite mobile.",
+    "new": "      if (f.mobile && !_fateHeld) {\n        // C11: the sprite mobile.",
+    "tests": [
+      "test/systems/revenant/revenant_fate.test.js"
+    ]
+  }
+]

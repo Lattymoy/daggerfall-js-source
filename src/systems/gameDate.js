@@ -1,0 +1,366 @@
+// S28: THE CALENDAR. 1:1 from Daggerfall Unity's
+// Utility/DaggerfallDateTime.cs (MIT, Daggerfall Workshop / Gavin
+// Clayton). Daggerfall's calendar is fixed 30-day months, twelve of
+// them, so every date is exact integer arithmetic with no leap rules.
+//
+// WHY IT LANDED HERE. The port has had a clock since the beginning -
+// worldTick's classicMinutes - but no DATE, and a surprising number of
+// laws are written in days rather than minutes: the guild rank gate is
+// 28 DAYS between changes (Guild.cs UpdateRank), shop opening hours
+// are a clock hour, the magic-item stock rotates on a day seed, quest
+// timers are due-dates. U23 wired the guild service popup and its
+// OnPush calls UpdateRank, which needs { year, dayOfYear }; inventing
+// one would have made the 28-day gate fiction, so the calendar is
+// ported instead.
+//
+// THE EPOCH IS NOT ZERO. classicEpochInSeconds (:28) converts between
+// DFU's own year-zero seconds and the minute counter classic saves
+// keep, and classicGameStartTime (:29) is the start of a new game -
+// 13:30 on the 4th of Morning Star, 3E405 (:489). The port's
+// classicMinutes counts from that start, so a live date is
+// dateFromClassicMinutes(classicGameStartTime + elapsed).
+//
+// THE MOONS LANDED AT V2a (the lunar block below): lycanthropy's
+// full-moon forced change is what finally read one, and DFU's own
+// comment - the logic mirrors Enhanced Sky rather than classic - is
+// carried on the block. RaiseTime's carry chain is not ported:
+// this module is pure functions over an absolute minute count, so
+// there is no mutable clock object to carry.
+
+import { localizedText, localizedTextList, formatText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+
+export const SECONDS_PER_MINUTE = 60;
+export const MINUTES_PER_HOUR = 60;
+export const MINUTES_PER_DAY = 1440;
+export const HOURS_PER_DAY = 24;
+export const DAYS_PER_WEEK = 7;
+export const DAYS_PER_MONTH = 30;
+export const MONTHS_PER_YEAR = 12;
+export const DAYS_PER_YEAR = DAYS_PER_MONTH * MONTHS_PER_YEAR; // 360
+/** :48-49. The two DaggerfallDateTime members the rest of the port
+ *  reached for by re-declaring them: the seconds in a week (quest
+ *  tombstones expire on it, and V1's vampire turn raises the clock by
+ *  two of them) and DUSK, which is both the light rig's cutover and
+ *  the hour a new vampire always wakes at. ONE DFU MEMBER, ONE
+ *  EXPORT - world/worldClock.js and systems/quest/machine.js now read
+ *  them from here, the way both already read MINUTES_PER_DAY. */
+export const SECONDS_PER_WEEK = 7 * 86400;
+export const DAWN_HOUR = 6;
+export const DUSK_HOUR = 18;
+
+/** :28-29. The epoch conversion and the new-game start, verbatim. */
+export const CLASSIC_EPOCH_IN_SECONDS = 12566016000;
+export const CLASSIC_GAME_START_TIME = 523530;
+
+/** The class's own field defaults (:57-62) - what a DaggerfallDateTime
+ *  holds before anything sets it. Kept because SetClassicGameStartTime
+ *  is what a new game actually calls, and the two disagree. */
+export const DEFAULT_DATE = Object.freeze({ year: 405, month: 5, day: 0, hour: 12, minute: 0 });
+
+/** The four enums (:223-279), in DFU's declaration order - the value
+ *  IS the index, which is what DayValue/MonthValue/BirthSignValue
+ *  cast to. Names come from DFU's Internal_Strings lists
+ *  ("dayNames", "monthNames", "birthSignNames", "seasonNames"), read
+ *  where GetDayName/GetMonthName/GetBirthSignName/GetSeasonName read
+ *  them (:550-615). SEASON_NAMES stays the English list as well: the
+ *  quest Season trigger compares a season's word against it. */
+export const dayNames = () =>
+  localizedTextList('dayNames', ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);
+export const monthNames = () =>
+  localizedTextList('monthNames', [
+    'Morning Star',
+    "Sun's Dawn",
+    'First Seed',
+    "Rain's Hand",
+    'Second Seed',
+    'Midyear',
+    "Sun's Height",
+    'Last Seed',
+    'Hearthfire',
+    'Frostfall',
+    "Sun's Dusk",
+    'Evening Star',
+  ]);
+export const birthSignNames = () =>
+  localizedTextList('birthSignNames', [
+    'The Ritual',
+    'The Lover',
+    'The Lord',
+    'The Mage',
+    'The Shadow',
+    'The Steed',
+    'The Apprentice',
+    'The Warrior',
+    'The Lady',
+    'The Tower',
+    'The Atronach',
+    'The Thief',
+  ]);
+export const SEASON_NAMES = Object.freeze(['Fall', 'Spring', 'Summer', 'Winter']);
+const seasonNames = () => localizedTextList('seasonNames', ['Fall', 'Spring', 'Summer', 'Winter']);
+export const SEASONS = Object.freeze({ Fall: 0, Spring: 1, Summer: 2, Winter: 3 });
+
+/** ToSeconds (:430-441). Year/month/day are counted from ZERO, and
+ *  the month term is SecondsPerMonth * Month - i.e. months are the
+ *  same fixed 30 days as everywhere else. */
+export function dateToSeconds({ year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0 }) {
+  return (
+    year * (DAYS_PER_YEAR * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE) +
+    month * (DAYS_PER_MONTH * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE) +
+    day * (HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE) +
+    hour * (MINUTES_PER_HOUR * SECONDS_PER_MINUTE) +
+    minute * SECONDS_PER_MINUTE +
+    Math.trunc(second)
+  );
+}
+
+/** FromSeconds (:446-470). DFU walks the years and months off with two
+ *  while loops; the division is the same answer and does not spin on a
+ *  large epoch. Day is the day OF THE MONTH counted from 0. */
+export function dateFromSeconds(time) {
+  const secondsPerDay = HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE;
+  const dayclock = time % secondsPerDay;
+  let dayno = Math.floor(time / secondsPerDay);
+  const second = dayclock % SECONDS_PER_MINUTE;
+  const minute = Math.floor((dayclock % (MINUTES_PER_HOUR * SECONDS_PER_MINUTE)) / SECONDS_PER_MINUTE);
+  const hour = Math.floor(dayclock / (MINUTES_PER_HOUR * SECONDS_PER_MINUTE));
+  const year = Math.floor(dayno / DAYS_PER_YEAR);
+  dayno -= year * DAYS_PER_YEAR;
+  const month = Math.floor(dayno / DAYS_PER_MONTH);
+  const day = dayno - month * DAYS_PER_MONTH;
+  return { year, month, day, hour, minute, second };
+}
+
+/** ToClassicDaggerfallTime (:475-478) / FromClassicDaggerfallTime
+ *  (:483-486) - the minute counter classic saves keep. */
+export const dateToClassicMinutes = (date) =>
+  Math.floor((dateToSeconds(date) - CLASSIC_EPOCH_IN_SECONDS) / SECONDS_PER_MINUTE);
+export const dateFromClassicMinutes = (minutes) =>
+  dateFromSeconds(CLASSIC_EPOCH_IN_SECONDS + minutes * SECONDS_PER_MINUTE);
+
+/** SetClassicGameStartTime (:491-494): 13:30 4th Morning Star 3E405. */
+export const classicGameStartDate = () => dateFromClassicMinutes(CLASSIC_GAME_START_TIME);
+
+// RETIRED AT THE AUDIT 22 MERGE. S28 shipped
+// classicMinutesFromElapsed/dateFromElapsedMinutes because the port's
+// hosts each counted ELAPSED minutes from zero, so the epoch had to be
+// added back on every read. AUDIT 21 F2 (main) made the world clock a
+// single absolute counter that STARTS at CLASSIC_GAME_START_TIME -
+// worldTick.worldMinutes() is already a classic minute count - so
+// adding the epoch again would land the calendar 363 days out. The
+// bridge is gone rather than deprecated: a helper that double-counts
+// is worse than no helper. Read a date with
+// dateFromClassicMinutes(worldMinutes()).
+
+/** GetDayOfYear (:629-633): `(Month * DaysPerMonth) + (Day + 1)`, so it
+ *  is 1-based and the first day of the year is 1. Guild.cs's
+ *  CalculateDaySinceZero reads exactly this. */
+export const dayOfYear = (date) => date.month * DAYS_PER_MONTH + (date.day + 1);
+/** The SAME day of year, read off a raw CLASSIC-MINUTES counter
+ *  instead of a date record - the arithmetic GetHolidayId does inline
+ *  (`(gameMinutes % minutesPerYear) / 1440 + 1`). It lives here rather
+ *  than in each caller because two modules deriving a day of year two
+ *  ways is how a room's Heart's Day and a meal's holiday end up
+ *  disagreeing about what day it is. */
+export const dayOfYearFromMinutes = (gameMinutes) =>
+  Math.floor((gameMinutes % (DAYS_PER_YEAR * MINUTES_PER_DAY)) / MINUTES_PER_DAY) + 1;
+/** GetMonthOfYear (:635-639) and GetDayOfMonth (:623-627): both 1-based. */
+export const monthOfYear = (date) => date.month + 1;
+export const dayOfMonth = (date) => date.day + 1;
+
+// ── THE MOONS (V2) ───────────────────────────────────────────────
+// DaggerfallUnityEnums.LunarPhases (:644-655) and
+// DaggerfallDateTime.GetLunarPhase (:655-687), verbatim: one 32-day
+// cycle over (DayOfYear + Year * 360 + offset), Massar offset 3 /
+// Secunda offset -1 - DFU's own note says the offsets align the full
+// moon with vanilla DF and Enhanced Sky, "so lycanthropes will see
+// full moon on days they are forced to change". The ratio bands are
+// the source's exact ladder in the source's exact ORDER: the two ==
+// tests run before the bands, so ratio 16 reads New where the <=22
+// band below would have called it OneWax.
+export const LUNAR_PHASES = Object.freeze({
+  None: -1,
+  New: 0,
+  OneWax: 1,
+  HalfWax: 2,
+  ThreeWax: 3,
+  Full: 4,
+  ThreeWane: 5,
+  HalfWane: 6,
+  OneWane: 7,
+});
+export function lunarPhase(date, { masser = true } = {}) {
+  if (date.year < 0) return LUNAR_PHASES.None; // "Year < 0 not supported"
+  const offset = masser ? 3 : -1;
+  const moonRatio = (dayOfYear(date) + date.year * MONTHS_PER_YEAR * DAYS_PER_MONTH + offset) % 32;
+  if (moonRatio === 0) return LUNAR_PHASES.Full;
+  if (moonRatio === 16) return LUNAR_PHASES.New;
+  if (moonRatio <= 5) return LUNAR_PHASES.ThreeWane;
+  if (moonRatio <= 10) return LUNAR_PHASES.HalfWane;
+  if (moonRatio <= 15) return LUNAR_PHASES.OneWane;
+  if (moonRatio <= 22) return LUNAR_PHASES.OneWax;
+  if (moonRatio <= 28) return LUNAR_PHASES.HalfWax;
+  return LUNAR_PHASES.ThreeWax; // 29..31
+}
+/** Both moons off one classic-minutes clock - the shape every system
+ *  caller has (worldTick's round, the enchantment ctx). */
+export const lunarPhasesFromMinutes = (gameMinutes) => {
+  const date = dateFromClassicMinutes(gameMinutes);
+  return {
+    masser: lunarPhase(date, { masser: true }),
+    secunda: lunarPhase(date, { masser: false }),
+  };
+};
+
+/** CLK3 (2026-09-08): THE PHASE AS A NUMBER ON THE CLOCK. DFU's phase is
+ *  a day-granularity STEP of the ladder above - the rule, kept for every
+ *  system that reads it (the lycanthrope's full moon, the enchantment
+ *  ctx). The enhanced dome draws a moon at a place behind the sun set by
+ *  its phase, and lights the world by it, and a step there is a moon
+ *  that JUMPS 45 degrees at midnight. This is the same 32-day ratio with
+ *  the minute of the day added, mapped onto the dome's 0..8 ring (New 0,
+ *  Full 4 - `moonSkyDirection`'s own scale): Full at ratio 0, the wanes
+ *  through the day's ratio 16 New, the waxes back to Full at 32. At
+ *  midnight it never disagrees with the ladder by more than one ring
+ *  step, and within the day by at most 1.25 - the fraction walks a
+ *  quarter step across a day while the ladder stands still (DFU's bands
+ *  are uneven: 32 days over eight steps, and ratio 28 ends the widest).
+ *  None (year < 0) is 0. */
+export function lunarPhaseFraction(date, minuteOfDay, { masser = true } = {}) {
+  if (date.year < 0) return 0;
+  const offset = masser ? 3 : -1;
+  const ratio =
+    ((dayOfYear(date) + date.year * MONTHS_PER_YEAR * DAYS_PER_MONTH + offset) % 32) +
+    (((minuteOfDay % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY) / MINUTES_PER_DAY;
+  return (4 + ratio / 4) % 8;
+}
+export const lunarPhaseFractionsFromMinutes = (gameMinutes) => {
+  const date = dateFromClassicMinutes(gameMinutes);
+  const minuteOfDay = ((gameMinutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return {
+    masser: lunarPhaseFraction(date, minuteOfDay, { masser: true }),
+    secunda: lunarPhaseFraction(date, minuteOfDay, { masser: false }),
+  };
+};
+
+/** IsDay (DaggerfallDateTime's own property): hour in [DawnHour,
+ *  DuskHour) - 6:00 to 17:59. The V2b fast-travel gate and V2c's
+ *  sunlight law both read it off the classic-minutes clock. */
+export const isDayFromMinutes = (gameMinutes) => {
+  const hour = dateFromClassicMinutes(gameMinutes).hour;
+  return hour >= DAWN_HOUR && hour < DUSK_HOUR;
+};
+/** LycanthropyEffect.MagicRound's own full-moon test (:151-152):
+ *  EITHER moon full forces the change. */
+export const isFullMoonFromMinutes = (gameMinutes) => {
+  const { masser, secunda } = lunarPhasesFromMinutes(gameMinutes);
+  return masser === LUNAR_PHASES.Full || secunda === LUNAR_PHASES.Full;
+};
+/** TIME2 (bible/06-Systems/Online-Time-Arc.md 6.1): the NIGHT a minute stands in, named by the date of its dusk - from
+ *  18:00 of a date to 06:00 of the next (isDayFromMinutes' complement) - as that date's first minute; null by day. */
+export const nightDateMinutes = (gameMinutes) => {
+  const day = Math.floor(gameMinutes / MINUTES_PER_DAY),
+    into = gameMinutes - day * MINUTES_PER_DAY;
+  if (into >= DUSK_HOUR * 60) return day * MINUTES_PER_DAY;
+  if (into < DAWN_HOUR * 60) return (day - 1) * MINUTES_PER_DAY;
+  return null;
+};
+/** TIME2: a full moon UP - the night begun at the dusk of a full-moon date (either moon, as DFU's test; a phase is the
+ *  date's, so the date's first minute reads it). Online the forced change holds for that night alone; offline DFU's
+ *  whole calendar day stands (isFullMoonFromMinutes). */
+export const isFullMoonNightFromMinutes = (gameMinutes) => {
+  const night = nightDateMinutes(gameMinutes);
+  return night !== null && isFullMoonFromMinutes(night);
+};
+/** GetMinuteOfDay (:618-622). */
+export const minuteOfDay = (date) => date.hour * MINUTES_PER_HOUR + date.minute;
+
+/** GetDayName (:550-559). The week is the day's position WITHIN its
+ *  week, and since 30 divides evenly by neither 7 nor anything useful,
+ *  DFU simply takes day mod 7 - written there as day - week*7. */
+export const dayName = (date) => dayNames()[date.day - Math.floor(date.day / DAYS_PER_WEEK) * DAYS_PER_WEEK];
+export const monthName = (date) => monthNames()[date.month];
+export const birthSignName = (date) => birthSignNames()[date.month];
+
+/** GetSeasonValue (:577-607). DFU's own comment admits the boundary is
+ *  approximate: "Daggerfall seems to roll over seasons part way
+ *  through final month. Using clean month boundaries here for
+ *  simplicity." Kept verbatim, quirk included - the port must not be
+ *  more accurate than the thing it is a port of. */
+export function seasonValue(date) {
+  const m = date.month;
+  if (m === 11 || m === 0 || m === 1) return SEASONS.Winter;
+  if (m === 2 || m === 3 || m === 4) return SEASONS.Spring;
+  if (m === 5 || m === 6 || m === 7) return SEASONS.Summer;
+  if (m === 8 || m === 9 || m === 10) return SEASONS.Fall;
+  return SEASONS.Summer; // DFU's `default:`
+}
+export const seasonName = (date) => seasonNames()[seasonValue(date)];
+
+/** DateString (DaggerfallDateTime.cs:417-422) over the en table's
+ *  dateFormatString '{0} the {1}{2} of {3:00}' - DayName, the day, its
+ *  ordinal suffix, MonthName. The {3:00} spec lands on the STRING
+ *  MonthName and string.Format drops it, exactly as it does in
+ *  DateTimeString below. There is NO year in this one.
+ *  AUDIT 24 systems: the port had invented "Loredas, 4 Morning Star,
+ *  3E 405" where DFU renders "Loredas the 4th of Morning Star" - and
+ *  every %dat, %qdt and %qdat macro reads this. */
+export const dateString = (date) =>
+  formatText(
+    localizedText('dateFormatString', '{0} the {1}{2} of {3:00}'),
+    dayName(date),
+    dayOfMonth(date),
+    daySuffix(dayOfMonth(date)),
+    monthName(date),
+  );
+
+/** GetSuffix (:641-652): st on 1/21, nd on 2/22, rd on 3/23, else th
+ *  (a 30-day month never reaches 31, so DFU never wrote that arm). */
+export function daySuffix(dayOfMonth1) {
+  if (dayOfMonth1 === 1 || dayOfMonth1 === 21) return 'st';
+  if (dayOfMonth1 === 2 || dayOfMonth1 === 22) return 'nd';
+  if (dayOfMonth1 === 3 || dayOfMonth1 === 23) return 'rd';
+  return 'th';
+}
+// AUDIT 24 (wave 22): the `{0:00}` in every one of these format
+// strings. .NET's custom numeric format ROUNDS (away from zero) - it
+// does not truncate - and DaggerfallDateTime.Second is a `float`
+// (:63), not an int. So at 59.5 seconds DFU really does print
+// `13:29:60`, and the port's Math.floor quietly corrected it to
+// `:59`. Hour, Minute and the day are ints on both sides, where
+// rounding and flooring are the same thing. L10N3d: the patterns are
+// read through the text core now, and formatText's `{n:00}` is that
+// Math.round and pad - half-UP where .NET's is half-AWAY-FROM-ZERO; a
+// clock component is never negative, so the two agree everywhere this
+// is reachable.
+/** DateTimeString (:409-414) over the en table's dateTimeFormatString
+ *  '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'. QUIRK KEPT: the
+ *  {5:00} spec lands on the STRING MonthName - System.String is not
+ *  IFormattable, string.Format drops the spec and the name prints
+ *  plainly - and the day ({3}) is UNPADDED here. The notebook's D:
+ *  note headers read this shape (Q4-v). */
+export const dateTimeString = (d) =>
+  formatText(
+    localizedText('dateTimeFormatString', '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'),
+    d.hour,
+    d.minute,
+    d.second,
+    d.day + 1,
+    daySuffix(d.day + 1),
+    monthName(d),
+    d.year,
+  );
+/** MidDateTimeString (:390-394) over midDateTimeFormatString
+ *  '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}' - HERE the day IS padded
+ *  ({3:00} lands on the int) and the month-name spec drops again. The
+ *  notebook's finished-quest headers read this shape (Q4-v). */
+export const midDateTimeString = (d) =>
+  formatText(
+    localizedText('midDateTimeFormatString', '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}'),
+    d.hour,
+    d.minute,
+    d.second,
+    d.day + 1,
+    monthName(d),
+    d.year,
+  );

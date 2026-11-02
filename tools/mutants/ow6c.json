@@ -1,0 +1,192 @@
+[
+  {
+    "name": "OW6-C-codes-swapped",
+    "file": "src/world/campShared.js",
+    "old": "  return k >= 0 ? k + 1 : 2;",
+    "new": "  return k >= 0 ? 3 - k : 2;",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp said as a band."
+  },
+  {
+    "name": "OW6-C-dead-tagged",
+    "file": "src/world/campShared.js",
+    "old": "    if (!f || r.d === 1 || !campNumber(f.campId)) continue;",
+    "new": "    if (!f || !campNumber(f.campId)) continue;",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A dead member still tagged a camp's."
+  },
+  {
+    "name": "OW6-C-junk-kept",
+    "file": "src/world/campShared.js",
+    "old": "    if (recordNumber(i) && campNumber(id) && kind && !out.has(i)) out.set(i, { id, kind });",
+    "new": "    if (kind && !out.has(i)) out.set(i, { id, kind });",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "Any number a peer says is a camp here."
+  },
+  {
+    "name": "OW6-C-tags-unbounded",
+    "file": "src/world/campShared.js",
+    "old": "    if (out.size >= CAMP_TAGS_MAX) break;",
+    "new": "    if (out.size >= Infinity) break;",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A frame's tags without a bound."
+  },
+  {
+    "name": "OW6-C-camps-merged",
+    "file": "src/world/campShared.js",
+    "old": "    let g = by.get(m.camp);",
+    "new": "    let g = by.get(m.camp.split(':')[1]);",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "Two players' camps of one number merged into one."
+  },
+  {
+    "name": "OW6-C-middle-wrong",
+    "file": "src/world/campShared.js",
+    "old": "    at: [g.x / g.n, g.y / g.n, g.z / g.n],",
+    "new": "    at: [g.x, g.y, g.z],",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "The mark far from where the camp stands."
+  },
+  {
+    "name": "OW6-C-tags-unsent",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const cz = campTagsOf(out, (r) => src.get(r));",
+    "new": "    const cz = [];",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp rides untagged: its readers stand loose foes and mark nothing."
+  },
+  {
+    "name": "OW6-C-tag-not-kept",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        else { if (campTags.has(r.i)) f._pupCamp = campTags.get(r.i); applyPuppetRecord(f, r);",
+    "new": "        else { applyPuppetRecord(f, r);",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A standing puppet never learns its camp."
+  },
+  {
+    "name": "OW6-C-built-untagged",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          nf._pupCamp = rec._camp ?? campTags.get(r.i) ?? null;   // OW6: and its camp",
+    "new": "          nf._pupCamp = null;",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A puppet built from a tagged record forgets its camp."
+  },
+  {
+    "name": "OW6-C-adopt-drops-camp",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f._pupCamp) {\n      const t = f._pupCamp, ck = `${from}:${t.id}`;",
+    "new": "    if (false) {\n      const t = f._pupCamp, ck = `${from}:${t.id}`;",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp taken over becomes loose wanderers at infighting."
+  },
+  {
+    "name": "OW6-C-adopt-number-each",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (id == null) { id = newCampId(); _adoptedCamps.set(ck, id); }",
+    "new": "      id = newCampId();",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp taken over splits into one camp a member."
+  },
+  {
+    "name": "OW6-C-adopt-sight-lost",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.ai) f.ai.sightRadius = CAMP_SIGHT_RADIUS;\n      if (f.entity) f.entity.campId = id;",
+    "new": "      if (f.entity) f.entity.campId = id;",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp taken over sees a hundred metres, not its sixty."
+  },
+  {
+    "name": "OW6-C-host-own-counter",
+    "file": "src/scenes/world.js",
+    "old": "    const campId = exteriorFoes.newCampId();   // OW6: the pool's one counter",
+    "new": "    const campId = 1;   // OW6: the pool's one counter",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "Every camp one number: an adopted camp and mine share it."
+  },
+  {
+    "name": "OW6-C-kind-unset",
+    "file": "src/scenes/world.js",
+    "old": "          f.campKind = hit.kind ?? 'pack';",
+    "new": "          f.campKind = 'pack';",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp marked as a pack."
+  },
+  {
+    "name": "OW6-C-marks-undrawn",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "    for (const c of travelViewCamps()) marks.push(",
+    "new": "    for (const c of []) marks.push(",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "No camp on the Overworld."
+  },
+  {
+    "name": "OW6-C-hud-camp-a-traveller",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "|| k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';",
+    "new": "|| k === 'band' || k === 'raider' ? k : 'traveller';",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp drawn as a traveller."
+  },
+  {
+    "name": "OW6-C-walkaway-uncalled",
+    "file": "src/scenes/world.js",
+    "old": "    handOverWalkedAway(performance.now());   // OW6: a foe I walk away from goes to the player beside it, never culled from under them\n",
+    "new": "",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp walked away from is culled from under the friend fighting it."
+  },
+  {
+    "name": "OW6-C-walkaway-any-distance",
+    "file": "src/scenes/world.js",
+    "old": "      if (mine < foeWalkAwayM(f)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp handed to whoever stands nearer, however near it is to me."
+  },
+  {
+    "name": "OW6-C-walkaway-farther-player",
+    "file": "src/scenes/world.js",
+    "old": "      let id = null, best = mine;",
+    "new": "      let id = null, best = Infinity;",
+    "tests": [
+      "test/scenes/ow6_camps.test.js"
+    ],
+    "note": "A camp handed to a player farther from it than I am."
+  }
+]

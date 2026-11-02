@@ -1,0 +1,65 @@
+[
+  {
+    "name": "SCW-native-offer-back",
+    "file": "src/ui/native/nativeTrade.js",
+    "old": "this.box = { rows: d.textIds.flatMap((id) => this._rows(id, price)), buttons: null };",
+    "new": "this.box = this.hooks.credit?.([...this.stagedForCost], price)?.kind === 'credit' ? { rows: [], buttons: 'YesNo', price, cost, onYes: () => this._confirm(price) } : { rows: d.textIds.flatMap((id) => this._rows(id, price)), buttons: null };",
+    "tests": [
+      "test/systems/shipcredit.test.js"
+    ]
+  },
+  {
+    "name": "SCW-native-credit-as-proceeds",
+    "file": "src/ui/native/nativeTrade.js",
+    "old": "? sellProceeds(price, this.hooks.weight?.() ?? {})\n      : null;",
+    "new": "? sellProceeds(price, this.hooks.weight?.() ?? {})\n      : this.hooks.credit?.([...this.stagedForCost], price) ?? null;",
+    "tests": [
+      "test/systems/shipcredit.test.js"
+    ]
+  },
+  {
+    "name": "SCW-enhanced-offer-back",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "box = { rows: d.textIds.flatMap((id) => rowsFor(id, price)), buttons: null };",
+    "new": "box = deps.credit ? { rows: [], buttons: 'YesNo', onYes: () => confirmTrade(price) } : { rows: d.textIds.flatMap((id) => rowsFor(id, price)), buttons: null };",
+    "tests": [
+      "test/systems/shipcredit.test.js"
+    ]
+  },
+  {
+    "name": "SCW-enhanced-credit-as-proceeds",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : null;",
+    "new": "const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : deps.credit?.([...stagedForCost()], price) ?? null;",
+    "tests": [
+      "test/systems/shipcredit.test.js"
+    ]
+  },
+  {
+    "name": "SCW-host-hook-back",
+    "file": "src/scenes/worldModes.js",
+    "old": "      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell, { holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0), guildFactionId }),   // AUDIT TOWN-ECON 2 PRICE-1: the purchase's own asks\n",
+    "new": "      credit: (staged, price) => null,\n      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell, { holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0), guildFactionId }),   // AUDIT TOWN-ECON 2 PRICE-1: the purchase's own asks\n",
+    "tests": [
+      "test/systems/shipcredit.test.js"
+    ]
+  },
+  {
+    "name": "SCW-the-purse-pays-a-share",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mode === 'Buy') {\n      deductGold(playerEntity, price);\n",
+    "new": "    if (mode === 'Buy') {\n      deductGold(playerEntity, proceeds?.pay ?? price);\n",
+    "tests": [
+      "test/systems/shipcredit.test.js"
+    ]
+  },
+  {
+    "name": "SCW-a-claim-stamped-at-the-counter",
+    "file": "src/systems/fleet.js",
+    "old": "  if (port) r.port = port;\n  return r;",
+    "new": "  if (port) r.port = port;\n  if (arguments[1]?.credit) r.credit = { ...arguments[1].credit };\n  return r;",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  }
+]

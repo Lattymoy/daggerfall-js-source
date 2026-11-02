@@ -1,0 +1,67 @@
+[
+  {
+    "name": "SLIM-FRAME-scale5b-verbatim",
+    "file": "src/net/wire.js",
+    "old": "    const r = native && (k === 'x' || k === 'z') ? Math.round(v) : k === 'x' || k === 'y' || k === 'z' ? Math.round(v * SLIM_SCENE_STEPS) / SLIM_SCENE_STEPS : ",
+    "new": "    const r = k === 'x' || k === 'y' || k === 'z' ? Math.round(v) : ",
+    "tests": [
+      "test/net/slimframe.test.js",
+      "test/net/scale5b.test.js"
+    ],
+    "note": "SCALE5b's rounding back: every peer on the second wire stands on a whole metre of height, and off the overworld walks a one-metre grid"
+  },
+  {
+    "name": "SLIM-FRAME-height-whole",
+    "file": "src/net/wire.js",
+    "old": "    const r = native && (k === 'x' || k === 'z') ? Math.round(v) : ",
+    "new": "    const r = native && (k === 'x' || k === 'y' || k === 'z') ? Math.round(v) : ",
+    "tests": [
+      "test/net/slimframe.test.js",
+      "test/net/scale5b.test.js"
+    ],
+    "note": "the height read as a world unit in a cell - a player up to half a metre in the air or sunk, the report"
+  },
+  {
+    "name": "SLIM-FRAME-scene-place-whole",
+    "file": "src/net/wire.js",
+    "old": "    const r = native && (k === 'x' || k === 'z') ? Math.round(v) : ",
+    "new": "    const r = (k === 'x' || k === 'z') ? Math.round(v) : ",
+    "tests": [
+      "test/net/slimframe.test.js"
+    ],
+    "note": "a dungeon's, a town's and a building's x and z whole metres - a peer walks a one-metre grid"
+  },
+  {
+    "name": "SLIM-FRAME-room-unread",
+    "file": "src/net/wire.js",
+    "old": "  const native = nativePoseRoom(key);",
+    "new": "  const native = false;",
+    "tests": [
+      "test/net/slimframe.test.js",
+      "test/net/scale5b.test.js"
+    ],
+    "note": "every room rounded as the scene's - a cell's x and z carry hundredths of a world unit nobody can see"
+  },
+  {
+    "name": "SLIM-FRAME-relay-unkeyed",
+    "file": "server/src/index.js",
+    "old": "entry ??= JSON.stringify([a.id, slimPose(m.p, a.key)])",
+    "new": "entry ??= JSON.stringify([a.id, slimPose(m.p)])",
+    "tests": [
+      "test/net/slimframe.test.js",
+      "test/net/scale5b.test.js"
+    ],
+    "note": "the relay's fan never says the room - a cell's place rounded as a dungeon's"
+  },
+  {
+    "name": "SLIM-FRAME-steps-coarse",
+    "file": "src/net/wire.js",
+    "old": "export const SLIM_SCENE_STEPS = 100;",
+    "new": "export const SLIM_SCENE_STEPS = 10;",
+    "tests": [
+      "test/net/slimframe.test.js",
+      "test/net/scale5b.test.js"
+    ],
+    "note": "the scene's meters to the decimetre - a peer up to five centimetres off the ground"
+  }
+]

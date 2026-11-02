@@ -1,0 +1,314 @@
+import { defineConfig } from 'vite';
+import { createReadStream, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
+import { studioArtIndex } from './scripts/studioArtIndex.mjs';   // STUDIO1: the studio's listing, served and built from the folder
+import { firstVisitPinsPlugin } from './scripts/firstVisitPins.mjs';   // FIRST-VISIT: the kept answers' pins, computed by the build and the dev server
+import { noImportedTopLevelAwait } from './scripts/noTopLevelAwait.mjs';   // WEBKIT-TLA (AUDIT FB1029g TLA-1): no imported chunk awaits at its top level
+import { limitOpenFiles } from './scripts/openFileLimit.mjs';   // FOUNDATION F5: the assets' reads held under Windows' open-file limit (EMFILE)
+
+limitOpenFiles();
+
+/** Soft URL `/2d-playground` → folder index (Pages + Vite; artists' sprite preview). */
+function floraPlaygroundAlias() {
+  return {
+    name: 'flora-playground-alias',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (!req.url) return next();
+        const q = req.url.indexOf('?'), path = q < 0 ? req.url : req.url.slice(0, q), qs = q < 0 ? '' : req.url.slice(q);
+        if (path === '/2d-playground') req.url = `/2d-playground/${qs}`;
+        next();
+      });
+    },
+  };
+}
+
+// Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
+// never committed or bundled (Port-Doctrine); builds contain no game files.
+function arena2DevServer() {
+  const root = process.env.ARENA2_PATH || '/home/claude/dfdata/arena2';
+  // ARENA2 FOLDERS IN THE WILD ARE MIXED CASE. The retail data was
+  // written on a filesystem that did not care, and real installs prove
+  // it: the DaggerfallSetup build carries INVE00I0.img beside
+  // INVE04I0.IMG and ANIM0001.vid beside ANIM0002.VID - 76 of its
+  // 1,598 files are lowercase. The port's own data path already knows
+  // this (dataSource.normalizeName uppercases on both ingest and
+  // lookup, so the browser is fine), and THIS server did not: on Linux
+  // a request for INVE00I0.IMG 404'd against a file that was sitting
+  // right there. Production worked and dev did not, which is the worst
+  // way round.
+  //
+  // One directory read, cached, mapping the canonical uppercase name
+  // to whatever the disk actually calls it.
+  let byUpper = null;
+  const onDisk = (name) => {
+    if (!byUpper) {
+      byUpper = new Map();
+      try {
+        for (const f of readdirSync(root)) byUpper.set(f.toUpperCase(), f);
+      } catch { /* no folder yet - the fallbacks below still answer */ }
+    }
+    return byUpper.get(name.toUpperCase()) ?? name;
+  };
+  // AUDIT 68 X2: a FILE, not merely a path that exists - the name rule
+  // admits `BOOKS`, `.` and `..`, and a directory's EISDIR killed the server.
+  const isFile = (p) => statSync(p, { throwIfNoEntry: false })?.isFile() === true;
+  // MOUNTED thrice (U60 + SKYRIM-FLORA). dataSource fetches `./arena2/*` RELATIVE to its
+  // document, so with the game at /play/ the browser asks for
+  // /play/arena2/*; the flora lab at /2d-playground/ asks /2d-playground/arena2/*;
+  // the probes' direct imports still fetch /arena2/*.
+  // Same handler, every door - a dev server that answered one and not
+  // the other is the mixed-case bug above in a new coat.
+  return {
+    name: 'arena2-dev-server',
+    configureServer(server) {
+      for (const mount of ['/arena2', '/play/arena2', '/2d-playground/arena2']) server.middlewares.use(mount, (req, res, next) => {
+        const name = decodeURIComponent(req.url.slice(1).split('?')[0]);
+        // Flat directory only - no separators, no traversal.
+        if (!/^[A-Za-z0-9._-]+$/.test(name)) return next();
+        let path = join(root, onDisk(name));
+        // B1: books live in ARENA2/BOOKS/ - a flat BOK*.TXT name falls
+        // back to the subfolder (still no separators in the URL name),
+        // the folder and the file found whatever the disk calls them, as
+        // app/main.cjs finds them: DFU's own folder is "books"
+        // (BookFile.cs:27), and a literal 'BOOKS' 404'd every book on Linux.
+        if (!isFile(path) && /^BOK\d+\.TXT$/i.test(name)) {
+          const books = join(root, onDisk('BOOKS'));
+          let file = name;
+          try { file = readdirSync(books).find((f) => f.toUpperCase() === name.toUpperCase()) ?? name; } catch { /* no books folder */ }
+          path = join(books, file);
+        }
+        if (!isFile(path)) {
+          res.statusCode = 404;
+          return res.end('not found');
+        }
+        // configureServer middlewares run BEFORE vite's cors layer, so
+        // headless probe pages (null origin via setContent) need the
+        // header here or their fetch() dies while ESM imports work.
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'application/octet-stream');
+        // AUDIT 68 X2: a read failure ends THIS response, not the server;
+        // a client gone mid-file closes the descriptor.
+        const file = createReadStream(path);
+        file.on('error', () => {
+          if (!res.headersSent) res.statusCode = 500;
+          res.end();
+        });
+        res.on('close', () => file.destroy());
+        file.pipe(res);
+      });
+    },
+  };
+}
+
+// THE DEPLOY'S OWN NAME, stamped where a verifier can read it without
+// parsing minified JavaScript. `scripts/buildTag.mjs` already writes
+// HEAD's sha into src/buildTag.js at prebuild; that constant reaches
+// the browser inside a bundled chunk whose variable name is minified
+// away, so the only thing tools/verify-deploy.mjs could compare was
+// the ENTRY CHUNK'S HASH - an exact-match test that fails the moment
+// another session pushes past your build tag, even though the deploy
+// that landed CONTAINS your commit. It cost four cycles before it was
+// worth fixing. A meta tag makes the deployed head self-describing:
+// the verifier reads one attribute out of the live index and can then
+// ask git whether the commit it is looking for is an ANCESTOR of it.
+// Build-only - the dev server's src/buildTag.js is whatever the last
+// build left behind, and nothing verifies dev.
+function buildTagMeta() {
+  return {
+    name: 'build-tag-meta',
+    apply: 'build',
+    transformIndexHtml() {
+      const sha = readBuildSha();   // '' before prebuild - the tag is simply absent, not wrong
+      if (!sha) return [];
+      return [{
+        tag: 'meta',
+        attrs: { name: 'build-tag', content: sha },
+        injectTo: 'head',
+      }];
+    },
+  };
+}
+
+// base is './' - RELATIVE, so the same build serves from a project path
+// (lattymoy.github.io/daggerfall-js-source/) and from the apex of the
+// custom domain (daggerfalljs.dev, U64) without a rebuild.
+export default defineConfig({
+  base: './',
+  build: {
+    target: 'es2022',
+    // AUDIT DEPS1 (the review): Vite 8 minifies CSS with Lightning CSS -
+    // every page's inline <style> too - for `cssTarget`, which defaults to
+    // `target`, and es2022 reads as Safari 16.4. At 16.4 Lightning CSS drops
+    // a prefix that browser no longer needs (`-webkit-appearance` beside
+    // `appearance`), and the game runs below it: WebGL2 is Safari 15's, and
+    // SAFARI1 (test/systems/nolookbehind.test.js) keeps the modules parsing before
+    // 16.4. The floor is named here so a prefix a Safari 15 needs is kept
+    // (test/tree/csstarget.test.js builds a page through it).
+    cssTarget: ['es2022', 'safari15', 'ios15'],
+    // EOTB5: EYE OF THE BEHOLDER'S SPRITES ARE FILES, NOT JAVASCRIPT.
+    //
+    // Vite inlines any asset under `assetsInlineLimit` (4 KB by
+    // default) as a base64 data URI. The mod ships 3035 sprites
+    // averaging 2.8 KB, so every one of them qualified - and the build
+    // quietly produced a TWELVE MEGABYTE JavaScript chunk, exited 0 and
+    // said nothing. A player would have parsed 12 MB of base64 before
+    // the game started, to get art most of them never look at.
+    //
+    // So this mod's art was excluded from inlining BY PATH, and the rule
+    // was narrow on purpose: "every other vendored texture keeps the
+    // default, because inlining a handful of small files is a win and
+    // the problem here is only ever the COUNT." AUDIT-IF F1 then added
+    // Immersive Footsteps (123 clips under 4 KB, 250 KB of base64).
+    //
+    // INLINE1 (2026-09-20): THAT PREMISE WAS WRONG, AND THE RULE WAS AN
+    // ENUMERATION. A vendored mod is never "a handful of small files" -
+    // it ships in the hundreds - and an allow-list of three folders is a
+    // rule enforced by memory: twenty vendor folders landed after it and
+    // not one joined the list. Shield Widget's 275 under-4 KB sprites
+    // (plus Handheld Torches' 31 and Climates & Calories' 18) went into
+    // the weaponRig chunk as 1.34 MB of base64 - which is why that chunk
+    // gzips to 1.0 MB against main's 0.5 MB, base64 being nearly
+    // incompressible - and main imports it STATICALLY, so every player
+    // pulled a megabyte of shield art before first paint. The build
+    // exited 0 and said nothing, exactly as EOTB5 records it did the
+    // first time.
+    //
+    // So the rule is the CLASS, not a list: nothing under vendor/ is ever
+    // inlined. A mod's art and audio are files, fetched when the mod
+    // wants them (test/ui/vendorinline.test.js walks every vendor folder and
+    // holds it). Everything outside vendor/ keeps Vite's default -
+    // returning `undefined` falls back to the 4 KB limit, and a callback
+    // that returned `true` would force-inline REGARDLESS of size, the
+    // opposite mistake and just as quiet.
+    assetsInlineLimit: (filePath) => (/[\\/]vendor[\\/]/.test(filePath) ? false : undefined),
+    // BUILD-LEFTOVERS (2026-10-15): THE CHUNK-SIZE WARNING IS A LINE AGAIN.
+    // At Vite's 500 kB it fired on every build - the world chunk, world.js
+    // and all it imports statically, is 2,662 kB - so it said nothing. Set
+    // just over today's largest chunk, it speaks when a chunk grows past the
+    // world. (AUDIT BUILD-LEFTOVERS, the second read: 2,500 sat over the
+    // world's 2,446 when written, and main's POI editor took it to 2,662 by
+    // the merge. And HOST-SPLIT does not shrink it: a module the host imports
+    // statically joins the host's chunk - pixelBuild.js is in it. Only a
+    // dynamic import takes code out; lower this when one does.)
+    chunkSizeWarningLimit: 2_750,
+    // EVERY ROOT PAGE: the game, the voxel editor (viewer.html), the labs
+    // and the prototypes. None carries game data - a page that draws the
+    // game's art asks for the user's own ARENA2. AUDIT 68: a root page
+    // missing here works under `npm run dev` and silently never ships;
+    // test/tooling/audit68_repo.test.js holds every tracked root *.html to a key.
+    rollupOptions: {
+      // BUILD-LEFTOVERS: one warning is the design, not a fault. hudLayout.js
+      // loads revenantCard.js dynamically (the HUD preview's ghost) because
+      // revenantCard.js imports hudLayout.js statically - the dynamic edge
+      // keeps the two out of a cycle, it was never meant to split a chunk
+      // (hud.js imports revenantCard.js anyway). Only that pair is quiet;
+      // any other ineffective dynamic import still warns. The module is the
+      // log's `id` (its absolute path); the importer is read off the message,
+      // whose paths are the working directory's and come after a colour code
+      // (AUDIT BUILD-LEFTOVERS: a filter anchored to the message's start never
+      // matched a real build). Either separator, for a Windows build.
+      // AUDIT BUILD-LEFTOVERS, the second read: THIS tree's revenantCard.js
+      // (the build runs from the repository), hudLayout.js its only dynamic
+      // importer - and never a static one too, the mistake mwFirstPerson's was
+      // (the filter read any prefix and any static list, and quieted both)
+      onLog(level, log, handler) {
+        if (log.code === 'INEFFECTIVE_DYNAMIC_IMPORT' && (log.id ?? '').replace(/\\/g, '/') === `${process.cwd().replace(/\\/g, '/')}/src/ui/revenant/revenantCard.js`
+          && /\bdynamically imported by (?:\.[\\/])?src[\\/]ui[\\/]hud[\\/]hudLayout\.js but\b/.test(log.message)
+          && !/statically imported by [^\n]*\bsrc[\\/]ui[\\/]hud[\\/]hudLayout\.js/.test(log.message)) return;
+        handler(level, log);
+      },
+      input: {
+        // THE SITE, THEN THE GAME (U60). The root document is the landing
+        // page - what this is, how to play, credits, Play - and the game
+        // is one directory down at /play/. The `main` key stays on the
+        // game so its entry chunk keeps its name (staleChunk.js and
+        // verify-deploy read `main-*.js`).
+        landing: 'index.html',
+        main: 'play/index.html',
+        // TERMS1: the Terms of Service and the Privacy Policy - documents,
+        // as the landing page is one, and the pages the Create account form
+        // links to (src/net/legalLaw.js TERMS_URL and PRIVACY_URL).
+        terms: 'terms/index.html',
+        privacy: 'privacy/index.html',
+        viewer: 'viewer.html',
+        sky: 'sky.html',   // ES1: the enhanced sky lab
+        water: 'water.html', // WATER1: the enhanced water lab (src/tools/waterLab.js)
+        ketch: 'ketch.html', // KETCH: the sky-ketch Mzunthar, made in code, drawn by the game's renderer (src/tools/ketchLab.js)
+        abyss: 'abyss.html', // SD-LAB: the Shattered Hour and the Rift, made in code, drawn by the game's renderer (src/tools/abyssLab.js)
+        spire: 'spire.html', // EG-G2: an Elite Breach's circle in its band's dress, made in code (src/tools/spireLab.js) - tools/spireLabProbe.mjs
+        cards: 'cards.html', // CARDS3: the card table lab (src/tools/cardsLab.js) - tools/cardsProbe.mjs
+        delve: 'delve.html', // DLV5: the curated blocks' lab - its front page (src/tools/delveLabPage.js), the bench's `?dungeon=lab` its floor (src/tools/delveLab.js)
+        // MW-D: the Morrowind data inspector. Reads a player's own
+        // archives and reports what is IN them; it draws nothing, stores
+        // nothing and is wired to nothing the game runs. It exists
+        // because the reverted first-person arc asked for a skeleton
+        // file that is not in Morrowind.bsa and never said so.
+        mwInspect: 'mw-inspect.html',
+        // MW-IMPORT SLICE 2: the Morrowind mesh viewer - user-supplied
+        // Morrowind.bsa / loose NIFs through a picker, nothing baked in.
+        // Doubles as the record-coverage scout for the strict NIF reader,
+        // and as the visual proving ground the first-person rig has to
+        // pass before it goes anywhere near the game.
+        mwViewer: 'mw-viewer.html',
+        // A PROTOTYPE, and deployed on purpose: a design that claims to
+        // adapt to a phone has to be opened on one.
+        enhanced: 'enhanced.html',
+        // The same, for the FRONT DOOR - the four boot screens
+        // (title, launcher, splash, PICK03I0) as one menu.
+        menu: 'menu.html',
+        // And for the wizard behind it, one stage at a time.
+        chargen: 'chargen.html',
+        // THE MODERN DIRECTION (Mac, 2026-08-27): the Skyrim-esque
+        // main-menu redesign, self-contained, deployed for phone eyes.
+        menuRedesign: 'menu-redesign.html',
+        // The same direction cut in Daggerfall's own pixel idiom.
+        menuPixel: 'menu-pixel.html',
+        // THE GROUND PROTOTYPE (Mac, 2026-08-31: prototype the new
+        // ground textures and the 3D grass before any code change).
+        // Deployed on purpose - a look has to be judged on a real
+        // screen, and this one runs on the phone too. It touches
+        // nothing the game runs: its own page, its own shaders, and
+        // the tileset tools/groundProto.mjs writes into
+        // public/prototype/ground/.
+        grassProto: 'grass-proto.html',
+        // THE GUN LAB (Mac, 2026-09-19): a NEW WEAPON TYPE prototyped
+        // before a line of the game changes. Its own page over our own
+        // art (public/art/gun-*), the classic 320x200 placement law and
+        // nothing else borrowed; combat/fpsWeapon.js is untouched and
+        // nothing the game runs imports src/tools/gunLab.js.
+        gunProto: 'gun-proto.html',
+        // THE PISTOL LAB (2026-10-21): the second new weapon type through
+        // the gun lab's door - a dwarven flintlock pistol, one in either
+        // hand. Our own art (public/art/pistol-frames.png); nothing the
+        // game runs imports src/tools/pistolLab.js.
+        pistolProto: 'pistol-proto.html',
+        // LV1: THE ASCENSION LAB - the enhanced level-up window over a
+        // made-up character, so the screen a player sees once a level
+        // can be opened on demand, at any size, with no ARENA2 on disk.
+        // tools/levelUpProbe.mjs drives this page.
+        levelUp: 'levelup.html',
+        // FIRM1: THE FIRMAMENT LAB - the passive tree's window over made-up purses, no service and no ARENA2, in either
+        // dress (`?dress=grimoire`), so the sky can be judged and driven by hand
+        firmament: 'firmament.html',
+        // GROWTH: THE GROWTH TAB'S LAB - the pause window on its Growth tab over a made-up character, Firmament book and
+        // captain, no ARENA2 and no service, so the guide and the skies drawn in the pane can be driven by hand;
+        // tools/growthProbe.mjs drives this page.
+        growth: 'growth.html',
+        // The texture-archive contact sheet: every record of one
+        // TEXTURE.nnn laid out and numbered, to read off which record
+        // an item template points at. The player's own ARENA2 through
+        // a picker, like mw-inspect - nothing baked in.
+        archiveSheet: 'archive-sheet.html',
+        // STUDIO1: THE STUDIO - every picture the port paints itself, as worn, each with its template to download, and the
+        // artists' own pictures beside them (src/tools/studioLab.js; public/art/studio/README.md). No game data.
+        studio: 'studio.html',
+        // SKYRIM-FLORA: artist preview — biome ground + one sprite (catalog or uploaded PNG) as crossed cards / hang.
+        // Folder entry so Pages serves `/2d-playground/` (floraPlaygroundAlias softens the bare path in dev).
+        floraPlayground: '2d-playground/index.html',
+      },
+    },
+  },
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait()],
+});

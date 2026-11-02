@@ -1,0 +1,195 @@
+[
+  {
+    "name": "REALM1-checkpoint-any-lease",
+    "file": "server-account/src/realm.js",
+    "old": "  if (row.lease !== lease) return { error: 'lease' };\n  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq }; // the service's own: a client whose last answer was lost resyncs",
+    "new": "  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq }; // the service's own: a client whose last answer was lost resyncs",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-checkpoint-any-seq",
+    "file": "server-account/src/realm.js",
+    "old": "  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq }; // the service's own: a client whose last answer was lost resyncs",
+    "new": "  void 0; // the service's own: a client whose last answer was lost resyncs",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-join-keeps-others",
+    "file": "server-account/src/realm.js",
+    "old": "  await freeOthers({ db }, playerId, id);\n  const row = await db",
+    "new": "  const row = await db",
+    "tests": [
+      "test/server/realm1.test.js"
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the refusal above it names a tombstone now."
+  },
+  {
+    "name": "REALM1-create-keeps-others",
+    "file": "server-account/src/realm.js",
+    "old": "  await freeOthers({ db }, playerId, id);\n  return { id, lease, seq: 0 };",
+    "new": "  return { id, lease, seq: 0 };",
+    "tests": [
+      "test/server/realm1.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1029e)."
+  },
+  {
+    "name": "REALM1-no-bound",
+    "file": "server-account/src/realm.js",
+    "old": "          ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?' +",
+    "new": "          ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ? + 100' +",
+    "tests": [
+      "test/server/realm1.test.js"
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living, and a birth names its line and person. Re-aimed by content (AUDIT FB1029e)."
+  },
+  {
+    "name": "REALM1-customs-no-track",
+    "file": "server-account/src/realm.js",
+    "old": "            ' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)' +",
+    "new": "            ' AND (1 OR EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)' +",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-customs-twice",
+    "file": "server-account/src/realm.js",
+    "old": "            ' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)' +",
+    "new": "            ' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ?)' +",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-customs-realm-origin",
+    "file": "server-account/src/realm.js",
+    "old": "  if (typeof origin !== 'string' || !ORIGIN_ID_RE.test(origin) || REALM_ID_RE.test(origin)) return { error: 'body' };",
+    "new": "  if (typeof origin !== 'string' || !ORIGIN_ID_RE.test(origin)) return { error: 'body' };",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-one-object",
+    "file": "server-account/src/realm.js",
+    "old": ") => `${realmPrefix(playerId)}${id}/${seq}-${tag}`;",
+    "new": ") => `${realmPrefix(playerId)}${id}/0`;",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-read-the-other",
+    "file": "server-account/src/realm.js",
+    "old": "  if (!row.seq || !row.bytes || !row.obj) return { error: 'no-data' };\n  const object = await bucket.get(row.obj);",
+    "new": "  if (!row.seq || !row.bytes || !row.obj) return { error: 'no-data' };\n  const object = await bucket.get(row.prev);",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-lease-listed",
+    "file": "server-account/src/realm.js",
+    "old": "    playing: !!r.lease && nowS - r.lease_at < REALM_PLAYING_S,",
+    "new": "    lease: r.lease,\n    playing: !!r.lease && nowS - r.lease_at < REALM_PLAYING_S,",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-leave-any-lease",
+    "file": "server-account/src/realm.js",
+    "old": "    .prepare('UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND lease = ?')",
+    "new": "    .prepare('UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND ? IS NOT NULL')",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-delete-keeps-objects",
+    "file": "server-account/src/realm.js",
+    "old": "  if (!bucket) return;",
+    "new": "  if (bucket) return;",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-summary-unprojected",
+    "file": "server-account/src/realm.js",
+    "old": "  const json = JSON.stringify(s);",
+    "new": "  const json = JSON.stringify(v);",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-lease-status",
+    "file": "server-account/src/index.js",
+    "old": "'no-realm-character': 404, 'no-data': 404, lease: 409, seq: 409,",
+    "new": "'no-realm-character': 404, 'no-data': 404, lease: 400, seq: 409,",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-cors-shut",
+    "file": "server-account/src/index.js",
+    "old": "'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass, x-staff-session'",
+    "new": "'content-type, authorization'",
+    "tests": [
+      "test/server/realm1.test.js"
+    ],
+    "note": "SCALE4g (2026-10-10) re-aimed it by content."
+  },
+  {
+    "name": "REALM1-seq-hidden",
+    "file": "server-account/src/index.js",
+    "old": "                'access-control-expose-headers': 'x-realm-seq',\n",
+    "new": "",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-any-id-path",
+    "file": "server-account/src/service.js",
+    "old": "  const m = typeof path === 'string' ? /^\\/v1\\/realm\\/(r[0-9a-f]{20})\\/data$/.exec(path) : null;",
+    "new": "  const m = typeof path === 'string' ? /^\\/v1\\/realm\\/([A-Za-z0-9_-]{4,64})\\/data$/.exec(path) : null;",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-customs-leaves-life",
+    "file": "server-account/src/realm.js",
+    "old": "      ...customsCarry(db, playerId, origin, id),\n    ]);",
+    "new": "    ]);",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-customs-leaves-the-guild",
+    "file": "server-account/src/realm.js",
+    "old": "export const CHARACTER_TABLES = Object.freeze(['renown_tracks', 'homes', 'guild_members']);",
+    "new": "export const CHARACTER_TABLES = Object.freeze(['renown_tracks']);",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "REALM1-delete-walk-skipped",
+    "file": "server-account/src/realm.js",
+    "old": "  if (typeof bucket.list !== 'function') return;",
+    "new": "  if (typeof bucket.list === 'function') return;",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  }
+]

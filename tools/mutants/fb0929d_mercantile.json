@@ -1,0 +1,97 @@
+[
+  {
+    "name": "MERC-RISE-the-half-is-of-the-seller's-own-ask",
+    "file": "src/systems/shopStock.js",
+    "old": "    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE); // REALM P0.4; MERC-RISE: half the least it asks",
+    "new": "    const half = Math.floor(\n      calculateTradePrice(cost, shopQuality, { mercantile, personality }, false) * ONLINE_SALE_SHARE,\n    ); // REALM P0.4; MERC-RISE: half the least it asks",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-RISE-the-best-haggler-is-average",
+    "file": "src/systems/shopStock.js",
+    "old": "    const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX }; // MERC-RISE: the best haggler this counter can meet",
+    "new": "    const best = { mercantile: 50, personality: 50 }; // MERC-RISE: the best haggler this counter can meet",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-RISE-the-reference-ignores-personality",
+    "file": "src/systems/shopStock.js",
+    "old": "    const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX }; // MERC-RISE: the best haggler this counter can meet",
+    "new": "    const best = { mercantile: ONLINE_HAGGLE_MAX, personality }; // MERC-RISE: the best haggler this counter can meet",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-RISE-the-online-sale-is-uncapped",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (!online) return sale;",
+    "new": "    return sale;",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-SLOPE-the-flat-half-back",
+    "file": "src/systems/shopStock.js",
+    "old": "    return Math.max(slope, Math.min(sale, half, 1));",
+    "new": "    return Math.min(sale, half);",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-SLOPE-the-whole-slope",
+    "file": "src/systems/shopStock.js",
+    "old": "export const ONLINE_SALE_SKILL_WEIGHT = 0.5;",
+    "new": "export const ONLINE_SALE_SKILL_WEIGHT = 1;",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-SLOPE-over-the-half",
+    "file": "src/systems/shopStock.js",
+    "old": "      half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top),",
+    "new": "      half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * sale) / Math.min(sale, top)),",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-SLOPE-the-wrong-top",
+    "file": "src/systems/shopStock.js",
+    "old": "    const top = calculateTradePrice(cost, shopQuality, best, true, { online: false });",
+    "new": "    const top = calculateTradePrice(cost, shopQuality, best, false, { online: false });",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "MERC-SLOPE-a-cheap-lot-for-nothing",
+    "file": "src/systems/shopStock.js",
+    "old": "    return Math.max(slope, Math.min(sale, half, 1));",
+    "new": "    return slope;",
+    "tests": [
+      "test/systems/fb0929d_mercantile.test.js",
+      "test/systems/fb0929f_mercantile.test.js",
+      "test/systems/realm0.test.js"
+    ]
+  }
+]

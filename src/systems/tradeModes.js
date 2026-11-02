@@ -1,0 +1,676 @@
+// U40 - THE TRADE WINDOW'S MODE FLOW, law half.
+// DaggerfallTradeWindow.cs (MIT, Daggerfall Workshop / Hazelnut).
+//
+// U8c shipped the shop screen in BUY mode only, and said so: "FLAGGED
+// loud: the basket + mode-action flow (DFU accumulates then Buy)".
+// That one gap is the named blocker at four separate sites - the
+// repair popup's SELL button, the plain-merchant sell arm in
+// worldModes, the shelf flow's mode split, and nativeTrade's own
+// INVE10 art - so this is one law with four consumers waiting.
+//
+// THE SHAPE, because it is not the shape the port has been using.
+// DFU does NOT transact at the click. A click STAGES an item: in Buy
+// mode into the BASKET, in every other mode into the REMOTE list. The
+// cost strip re-totals the whole staged collection on every change,
+// and the mode-action button (Buy / Sell / Repair / Identify) commits
+// the lot behind one Yes/No popup. That is why there is a Clear
+// button at all, and why the cost label can show a number for goods
+// the player does not own yet.
+//
+// THE FIVE MODES and their action-panel art (:78-83, :751-771). Sell
+// and SellMagic share INVE10; DFU also loads INVE11 (the same panel in
+// GOLD) purely to cut the SELECTED state of the select button out of
+// it, which is why that one is loaded unconditionally regardless of
+// mode.
+//
+// THREE THINGS THAT DO NOT READ THE WAY THEY LOOK, each pinned:
+//
+// 1. SELL MODE LOOKS LIKE IT PRICES BY CONDITION AND DOES NOT.
+//    :462 calls `CalculateCost(item.value, quality, item.ConditionPercentage)`
+//    and CalculateCost's third parameter (:1884) is
+//    `conditionPercentage = -1`, which its BODY NEVER READS - the
+//    parameter exists only so a mod override can see it. So a
+//    battered sword and a pristine one fetch the same price in DFU,
+//    and the call site says otherwise. The port's calculateCost took
+//    the third slot for ApplyRegionalPriceAdjustment (which DFU
+//    reaches for as a global), so this file must NOT pass condition
+//    into it - and the reason is written down here rather than
+//    rediscovered.
+//
+// 2. THE BUY-MODE HOLIDAY DISCOUNTS ARE THREE DIFFERENT PREDICATES
+//    (:444-449), not one. Merchants Festival halves everything but
+//    only OUTSIDE a guild; Tales and Tallow halves only INSIDE the
+//    Mages Guild; Warriors Festival halves only WEAPONS and only
+//    outside a guild. And unlike the tavern's meal - which passes
+//    region 0 as a literal - this one reads the player's REAL region,
+//    so a regional holiday actually lands here.
+//
+// 3. THE HAGGLE MESSAGE IS THE TEMPLE'S. ShowTradePopup's three bands
+//    (:1104-1110) are `cost >> 1 <= price` and `cost - (cost >> 2) <=
+//    price` - character for character the bands
+//    DaggerfallGuildServiceCureDisease uses, which the port already
+//    ported as cureOfferMessageOffset. DFU wrote it twice; there is
+//    one home here. The only difference is the +3 that moves the SELL
+//    modes onto their own three records.
+
+import { calculateCost, calculateTradePrice, essentialPrice } from './shopStock.js'; // ESSENTIALS-HALF: online, a potion costs half
+import { GOLD_PIECE_WEIGHT_KG, isEnchanted } from './inventory.js';
+import { calculateItemRepairCost, repairRefusal } from './repairService.js';
+import { itemValueOf, conditionPercentage, isAmmunition } from './item/itemTemplates.js';
+import { plateMetal } from './armorMaterials.js'; // DAEDRIC-SALE: a plate piece's metal, one decode
+import { WEAPON_MATERIALS } from '../characters/weapons.js'; // DAEDRIC-SALE: the Daedric metal's index
+import { craftedRarityWorth, socketsOf, gemWorthOf } from './loot/lootRarity.js'; // CRAFT-WORTH: a crafted piece's rolled worth, never a counter's
+import { isOnlinePage } from './online/onlineLane.js'; // SELL-AS-FOUND and MEND-THIRD: online, a sale reads a found piece through its mark
+import { foundSalePercentage, isFoundMarked } from './item/foundMark.js'; // SELL-AS-FOUND and MEND-THIRD: the mark's one home
+import { isCampfireKit } from './survival/items.js'; // AUDIT REST: the Campfire an essential online
+import { isFirewood } from './rest/restItems.js';
+import { isPotion } from './useItem.js'; // ESSENTIALS-HALF: the potion, by DFU's own IsPotion   // JAN1: the one value read; RRI2: ConditionPercentage, the Sell arm's third argument
+import { HOLIDAYS } from './holidays.js';
+import { GUILDS } from './guild/guilds.js';
+import { isBagItem } from '../net/bagLaw.js'; // BAG1: a loaded Materials Bag is never sold (the cart's rule)
+import { activeWagonItem } from './wagon/wagonKinds.js'; // WAGONS2 (FINAL AUDIT): the wagon driven, read once for every counter (sellGuardOf)
+import { wagonSoldWhole } from './wagon/wagonUpkeep.js'; // WAGON-TIERS: a wagon's wear prices its sale only on Hard
+import { wagonUpkeepRules } from './upkeep/upkeepSwitch.js'; // WAGON-TIERS: the tier, through wagon upkeep's one accessor
+import { PATRON_COUNTER_MARK, COUNTER_PAID_MARK, COUNTER_VALUE_MARK } from '../net/patronLaw.js'; // AUDIT LW-II-2 S1: online, a counter's piece is no patron's; LAW-3: nor sold on for more than it cost
+import { clearStolen } from './stolenGoods.js'; // STOLEN-GOODS AUDIT S3: a piece bought at a counter is the buyer's, honestly
+import { cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID } from './guild/guildServiceActions.js';
+import { localizedText, formatText } from './textManager.js'; // L10N3d: the window's own lines
+
+/** The shared TEXT.RSC ids. DaggerfallTradeWindow declares both
+ *  (:33-34) and so do the guild services; ONE DFU MEMBER, ONE EXPORT,
+ *  so this re-exports the existing home rather than writing 260 and
+ *  454 down a third time. */
+export { TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID };
+/** The weight law's own - re-exported so a caller of sellProceeds
+ *  can read the number it was weighed against. */
+export { GOLD_PIECE_WEIGHT_KG };
+
+/** WindowModes (:133-141). Inventory is DFU's own "should never get
+ *  used, treat as 'none'" - kept because the numbering depends on it. */
+export const WINDOW_MODES = Object.freeze({
+  Inventory: 0,
+  Sell: 1,
+  Buy: 2,
+  Repair: 3,
+  Identify: 4,
+  SellMagic: 5,
+});
+
+/** LoadTextures' mode switch (:755-764). Sell and SellMagic share the
+ *  same panel; Inventory mode has NO overlay at all, which is what
+ *  DFU's `if (actionButtonsTexture != null)` at :213 is guarding. */
+export const MODE_ACTION_ART = Object.freeze({
+  Buy: 'INVE08I0.IMG',
+  Sell: 'INVE10I0.IMG',
+  SellMagic: 'INVE10I0.IMG',
+  Repair: 'INVE12I0.IMG',
+  Identify: 'INVE14I0.IMG',
+});
+/** sellButtonsGoldTextureName (:80), loaded in EVERY mode (:765) - not
+ *  as a panel, but as the source of the select button's SELECTED
+ *  state, cut out of it at selectButtonRect (:767-768). */
+export const SELL_GOLD_ART = 'INVE11I0.IMG';
+
+export const modeActionArt = (mode) => MODE_ACTION_ART[mode] ?? null;
+
+/** The two refusal ids the Repair arm speaks (:87-88). DFU declares
+ *  them a second time here; the port's repair law already owns them,
+ *  so these are its bindings and not a fresh 24 and 33. The NAMES
+ *  differ between the two DFU sites, which is exactly how a duplicate
+ *  slips past a guard that matches on identifiers. */
+export { DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID } from './repairService.js';
+
+/** CalculateItemIdentifyCost's numerator (:1950) - `(25 * value) >> 8`. */
+export const IDENTIFY_COST_MULTIPLIER = 25;
+
+/** DaggerfallUnityItem.GetIsIdentified (:1821-1827), which is a
+ *  DERIVATION and not a field:
+ *
+ *      if (!IsEnchanted) return true;
+ *      return (flags & identifiedMask) > 0;
+ *
+ *  An UNENCHANTED item is ALWAYS identified - the flag only means
+ *  anything for something with magic in it, which is why DFU's own
+ *  comment on the member says "only relevant if item has some
+ *  enchantments".
+ *
+ *  X7 FIX. Every reader below took `item.isIdentified` raw. The port's
+ *  items are plain records that carry the field only once something
+ *  has written it, so an ordinary iron dagger read `undefined` -
+ *  FALSY - and therefore UNIDENTIFIED. The Identify mode would have
+ *  accepted a rusty dagger and charged (25 * value) >> 8 to identify
+ *  it, and the mode-action button would have lit up over a pack with
+ *  no magic in it at all. It was never seen because the Identify
+ *  destination was a null and the mode could not be opened; X7 opened
+ *  it, so the derivation had to be right first. Both paths run at
+ *  worldModes.js:"function commitTrade" now (commitTrade) - the paid service and the spell. */
+export const itemIsIdentified = (item) => !isEnchanted(item) || item?.isIdentified === true;
+
+/** FormulaHelper.CalculateItemIdentifyCost (:1935-1955). FREE on the
+ *  Witches Festival, and the guild discount applies after the shift.
+ *  The holiday arm is gated on HasCurrentLocation, so identifying in
+ *  the wilderness never gets the festival - the caller passes the
+ *  holiday it resolved (or None off-location). */
+export function calculateItemIdentifyCost(
+  baseItemValue,
+  { holidayId = HOLIDAYS.None, reducedIdentifyCost = null } = {},
+) {
+  if (holidayId === HOLIDAYS.Witches_Festival) return 0;
+  const cost = (IDENTIFY_COST_MULTIPLIER * baseItemValue) >> 8;
+  return reducedIdentifyCost ? reducedIdentifyCost(cost) : cost;
+}
+
+/** DaggerfallTradeWindow's Identify-spell pass (:966-991).
+ *
+ *  The SERVICE identifies everything staged for gold; the SPELL rolls
+ *  PER ITEM against the spell's own chance and charges magicka once.
+ *  Three details that are easy to lose:
+ *
+ *   - an ALREADY-IDENTIFIED item counts as a SUCCESS rather than being
+ *     skipped (:970-975), so the tally the player is shown is
+ *     "how many of these do you now know", not "how many did the spell
+ *     work on". In spell mode identified items can be staged at all
+ *     (:823's `|| UsingIdentifySpell`), which is what makes that
+ *     reachable - DFU's comment says it matches classic;
+ *   - the magicka is spent ONCE for the whole list and only when the
+ *     list is non-empty (:985-987) - not per item, and not per success;
+ *   - a FAILED roll leaves the item unidentified and simply does not
+ *     count. There is no retry cost and nothing is consumed.
+ *
+ *  Returns the tally DFU shows and the items it identified. */
+export function identifySpellPass(items, chance, rolls = Math.random) {
+  const list = items ?? [];
+  const identified = [];
+  let successCount = 0;
+  for (const item of list) {
+    if (itemIsIdentified(item)) {
+      successCount++;
+      continue;
+    } // already known counts as a success
+    if (Math.floor(rolls() * 100) < chance) {
+      // Dice100.SuccessRoll
+      identified.push(item);
+      successCount++;
+    }
+  }
+  return { successCount, total: list.length, identified, spendMagicka: list.length > 0 };
+}
+
+/** AUDIT 26 F067 - DoModeAction's magicka refusal
+ *  (DaggerfallTradeWindow.cs:960-963). The string table the old flag
+ *  waited on IS in the reference tree, and it settles the wording:
+ *  `Assets/StreamingAssets/Text/Master Localization CSV Files/
+ *  Internal_Strings.csv:1052` reads
+ *  `notEnoughSpellpointsLeft,You do not have enough spell points left.`
+ *  - so the literal below is now the table's row verbatim, not the key
+ *  rendered into English. The REFUSAL itself is the parity law and is
+ *  exact: the whole pass returns, nothing is identified, no magicka is
+ *  spent and Mercantile is not tallied.
+ *  (GodMode's `&& !GodMode` arm has no port counterpart, as
+ *  motor.js:"this.transportMode = mode" already records for the levitation term.) */
+export const NOT_ENOUGH_SPELL_POINTS_TEXT = 'You do not have enough spell points left.';
+/** L10N3d: ...as the refusal shows it (:962), in the player's language. */
+export const notEnoughSpellPointsText = () => localizedText('notEnoughSpellpointsLeft', NOT_ENOUGH_SPELL_POINTS_TEXT);
+
+/** The tally (:990): string.Format over GetLocalizedText("totalIdentified"),
+ *  Internal_Strings.csv:1053 - `totalIdentified,{0} out of {1} identified.` */
+export const identifiedTallyText = (successCount, total) =>
+  formatText(localizedText('totalIdentified', '{0} out of {1} identified.'), successCount, total);
+
+/** The three Buy-mode holiday halvings (:444-449), as ONE predicate
+ *  per arm so each can be pinned alone. `guildFactionId` is null
+ *  outside a guild - DFU's `Guild == null`. */
+export function buyHolidayHalvesPrice(item, { holidayId = HOLIDAYS.None, guildFactionId = null } = {}) {
+  const inGuild = guildFactionId != null;
+  if (holidayId === HOLIDAYS.Merchants_Festival && !inGuild) return true;
+  if (holidayId === HOLIDAYS.Tales_and_Tallow && inGuild && guildFactionId === GUILDS.MagesGuild.factionId) return true;
+  return holidayId === HOLIDAYS.Warriors_Festival && !inGuild && item.group === 'Weapons';
+}
+
+/** One basket item's Buy price (:443-450). The halving is C# integer
+ *  division on an int, so it TRUNCATES, and it lands AFTER the stack
+ *  multiply rather than per unit. */
+export function buyItemPrice(
+  item,
+  { quality = 0, priceAdjustment = 1000, holidayId = HOLIDAYS.None, guildFactionId = null, online = undefined } = {},
+) {
+  const price = calculateCost(itemValueOf(item), quality, priceAdjustment) * (item.stackCount ?? 1); // JAN1: the one value read
+  const holiday = buyHolidayHalvesPrice(item, { holidayId, guildFactionId });
+  const held = holiday ? Math.trunc(price / 2) : price;
+  // ESSENTIALS-HALF (2026-09-30, Discord: "cut the cost of most essential items by half"): online a POTION costs half
+  // (shopStock.js essentialPrice, rounded up - its law against buying to sell back), at every counter's Buy. AUDIT
+  // ESSENTIALS F1: never on top of a holiday's own half - the sale cap reads the full price, so a quarter bought on
+  // Merchants Festival sold back for half; the two halves do not stack
+  return (isPotion(item) || isCampfireKit(item) || isFirewood(item)) && !holiday
+    ? essentialPrice(held, { online })
+    : held; // AUDIT REST: REST2's Campfire and Firewood arm
+}
+
+/** SELL-AS-FOUND (AUDIT ECON O1, 2026-10-01) AND MEND-THIRD (2026-10-19): ONLINE A COUNTER PAYS FOR A FOUND PIECE AT
+ *  THE CONDITION THE WORLD HANDED IT OVER AT, AND A THIRD OF WHAT ITS OWNER'S OWN MENDS PUT PAST IT.
+ *  Roleplay & Realism: Items' condition prices are the room's (onlineLane.js), and its rolls hand pieces over worn - a
+ *  pile's and a body's at 20-75%, a poorer shelf's at 25-100% (rriRealism.js) - so a sale climbs with a repair. At
+ *  REPAIR-RATE's third (repairService.js) the repair cost less than the sale it added: mending worn loot to sell it paid
+ *  every player online - +102 gold on a value-1000 piece found at 20% (Mercantile 30, Personality 40, a quality-10
+ *  counter), +2,592 on a Daedric longsword. So online the Sell arm reads a found piece through the mark it was handed
+ *  over with (item/foundMark.js foundSalePercentage): a smith's paid repair adds nothing to the sale, at any counter,
+ *  in any region, at any guild's discount (AUDIT MEND-THIRD L1-1, L1-2 - a third of it, credited, paid at a cheap smith
+ *  sold at a dear counter, and at the Fighters Guild's rank discount), and a Repair Kit's, Repairs Objects' or the Varla
+ *  Stone's mend past the mark sells for a third of what the condition is worth (MEND-THIRD - the Discord's
+ *  #feature-feedback "Bring back loot price based on the condition!": "actively discourage players to repair an item in
+ *  order to maximalize the sell price - like with repair kits at early levels, and enchants at higher"); wear after the
+ *  find still lowers the sale. A piece with no mark - handed over whole (a craft, a reward, a new shelf's), or found
+ *  before this - sells at its own condition, repaired or not. Offline, the mod's prices stand. Bible:
+ *  06-Systems/Economy-Arc.md, MEND-THIRD. */
+export function saleConditionPercentage(item, { online = isOnlinePage() } = {}) {
+  // WAGON-TIERS (2026-10-15, Mac: "Yes, same tiers"): a wagon's condition is its wear, and its wear prices it only where
+  // the seller's wagon upkeep tier says so (Hard). On Boons - and Off - a counter buys it as DFU's plain wagon, which
+  // never wore: whole (bible/06-Systems/Wagon-Upkeep.md, The tiers)
+  if (wagonSoldWhole(item, wagonUpkeepRules())) return 100;
+  if (!online) return conditionPercentage(item);
+  return foundSalePercentage(item);
+}
+
+/** AUDIT LW-II-2 S1: THE COUNTER'S MARK (net/patronLaw.js PATRON_COUNTER_MARK) - ONLINE, EVERY PIECE AN NPC COUNTER SELLS
+ *  IS MARKED, and no town's patron takes it (patronLaw.js patronTakes): a patron paid more than an online counter asks
+ *  (a book three times its file price, a quality-1 smith's weapon a fifth over its ask), so a player bought at the
+ *  counter, stocked a hired trader and printed the difference. The counter's Buy hands every piece through here
+ *  (worldModes.js commitTrade's Buy arm and the keyed list's doBuy - every shop's shelf, a guild's, a caravan's on the
+ *  road); the mark rides the save, the item law and the market's listing, and a stack keeps it through a merge (either
+ *  part's) and a split (inventory.js addItem, splitStack). Offline nothing is written. Answers how many it marked.
+ *  STOLEN-GOODS AUDIT (2026-10-16, S3): and on either lane A PIECE BOUGHT AT A COUNTER IS THE BUYER'S, HONESTLY - its theft
+ *  mark (systems/stolenGoods.js) cleared before a stack's merge takes it. No shelf piece is stolen by construction (a sold
+ *  one never reaches a shelf - landSold), yet a peer's word for a shelf could carry one (an older build's sale, a hostile
+ *  client - world/interior/interiorShared.js applyInteriorLoot strips it too), and a piece stolen elsewhere and left on a shut
+ *  shelf stays marked there: paid for, it is the buyer's.
+ *  LAW-3 (Town-Economy-Arc 7.4, the carry between regions): with the lot's `price`, each piece is marked with what the
+ *  counter was paid for it (COUNTER_PAID_MARK) - the price shared by each piece's own ask at one counter (buyItemPrice
+ *  at the middle quality and index: the essentials' half among the shares), floored a piece, so no piece is held to
+ *  more than it cost. AUDIT TOWN-ECON 2 PRICE-1: the asks the purchase's own (its `holidayId` and `guildFactionId`) -
+ *  a Warriors Festival's halved weapon shared by its full ask held a piece bought beside it to less than it cost, and
+ *  itself to more; PRICE-5: a lot that paid a gold a piece or more gives every piece one, and the rest by the asks (a
+ *  cheap stack bought beside a dear piece floored to 0, and sold for 0 ever after); PRICE-6: and the value each piece
+ *  was bought at (COUNTER_VALUE_MARK). */
+export function markCounterBought(
+  items,
+  { online = isOnlinePage(), price = null, holidayId = HOLIDAYS.None, guildFactionId = null } = {},
+) {
+  for (const it of items ?? []) clearStolen(it);
+  if (!online) return 0;
+  const lot = (items ?? []).filter((it) => it && typeof it === 'object');
+  const stackOf = (it) => (Number.isInteger(it.stackCount) && it.stackCount > 1 ? it.stackCount : 1);
+  const asks = lot.map((it) =>
+    Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)),
+  ); // a gold a piece at least, as a purchase asks
+  const total = asks.reduce((a, b) => a + b, 0);
+  const paid = typeof price === 'number' && Number.isFinite(price) && price >= 0 && total > 0;
+  const pieces = lot.reduce((n, it) => n + stackOf(it), 0);
+  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0; // PRICE-5: a gold a piece first, where the lot paid it
+  const rest = paid ? /** @type {number} */ (price) - base * pieces : 0;
+  lot.forEach((it, i) => {
+    it[PATRON_COUNTER_MARK] = true;
+    if (paid) it[COUNTER_PAID_MARK] = base + Math.floor((rest * asks[i]) / total / stackOf(it));
+    const v = counterValueOf(it);
+    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v); // PRICE-6
+  });
+  return lot.length;
+}
+
+/** CRAFT-WORTH (2026-10-11): THE VALUE A COUNTER PAYS A PIECE ON - its own (itemValueOf), less what a crafted piece's
+ *  quality rolled onto it (lootRarity.js craftedRarityWorth): a counter pays for a crafted piece what it pays for the
+ *  plain piece its recipe makes, never for its Magic or Rare lines. Every selling arm reads it - the trade windows'
+ *  Sell and SellMagic, and the keyed shelf's (scenes/worldModes.js sellPrice). AUDIT CRAFT-WORTH: the roll comes off a
+ *  piece's OWN value alone - a piece with none is priced at its template's base (itemValueOf), which never held the roll. */
+export function counterValueOf(item) {
+  const v = itemValueOf(item);
+  if (!Number.isFinite(item?.value)) return daedricSaleValue(item, v); // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off
+  const rolled = craftedRarityWorth(item);
+  return daedricSaleValue(item, rolled > 0 ? Math.max(1, v - rolled) : v);
+}
+
+/** DAEDRIC-SALE (2026-10-26, a player: "tune down daedric selling price by 50%"): A COUNTER PAYS HALF FOR DAEDRIC GEAR.
+ *  Daedric's value ladder is 512x a weapon's or plate piece's base (characters/weapons.js valueMultipliersByMaterial),
+ *  twice Orcish, so one Daedric cuirass sold for more than a run's gold. Halved HERE, at the one value every selling arm
+ *  reads (Sell, SellMagic, the keyed shelf; LAW-3's marks), so a sale cannot be priced around it - and only the SELLING
+ *  side: what a shop ASKS for a Daedric piece (buyItemPrice) stands. A gem set in the piece is the player's own and sells
+ *  at its whole worth - it rides `value` (lootRarity.js socketGem) only where the piece carries a value of its own. */
+export const DAEDRIC_SALE_SHARE = 0.5;
+/** DAEDRIC-SALE: a Daedric weapon (ammunition prices off its template, never the metal) or a Daedric plate piece -
+ *  a shield too. */
+export function isDaedricGear(item) {
+  if (item?.group === 'Weapons') return !isAmmunition(item) && item.material === WEAPON_MATERIALS.Daedric;
+  if (item?.group === 'Armor') return plateMetal(item.material) === WEAPON_MATERIALS.Daedric;
+  return false;
+}
+function daedricSaleValue(item, v) {
+  if (!isDaedricGear(item) || !Number.isFinite(v)) return v;
+  const gems = Number.isFinite(item?.value) ? socketsOf(item).reduce((n, g) => n + (g ? gemWorthOf(g) || 0 : 0), 0) : 0;
+  const own = Math.max(0, v - gems);
+  return Math.max(1, Math.round(own * DAEDRIC_SALE_SHARE) + Math.min(gems, v));
+}
+
+/**
+ * UpdateCostAndGold (:425-489). Answers the cost strip's number and
+ * whether the mode-action button is ENABLED - which is the same walk,
+ * because DFU sets `modeActionEnabled = true` from inside each arm
+ * and an arm that skips every item leaves the button dead.
+ *
+ * `staged` is the basket in Buy mode and the remote list in every
+ * other. Repair skips an item already being repaired and Identify
+ * skips one already identified, so a list of nothing BUT those totals
+ * zero AND cannot be committed - the two are one fact.
+ *
+ * FB0929: the same walk counts the PIECES a purchase pays for - the
+ * basket's, and the live repair jobs', a stack piece by piece - which
+ * is what getTradePrice's floor below asks a gold for. The sale and
+ * identify arms count none.
+ */
+export function tradeCost(
+  mode,
+  staged = [],
+  {
+    quality = 0,
+    priceAdjustment = 1000,
+    holidayId = HOLIDAYS.None,
+    guildFactionId = null,
+    reducedRepairCost = null,
+    reducedIdentifyCost = null,
+    usingIdentifySpell = false,
+    isBeingRepaired = () => false,
+    online = undefined,
+  } = {},
+) {
+  let cost = 0;
+  let modeActionEnabled = false;
+  let pieces = 0;
+  /** LAW-3: the lot's pieces a counter sold online - their cost, and what the counter was paid for them */
+  let resale = null;
+  const live = online ?? isOnlinePage();
+  const sold = (item, c, stack) => {
+    if (!live) return;
+    const now = counterValueOf(item);
+    // AUDIT TOWN-ECON 2 PRICE-2: a gem a counter sold, set in the piece - its share of the sale held to what it cost
+    for (const [i, paid] of Array.isArray(item.socketBought) ? item.socketBought : []) {
+      const w = gemWorthOf(socketsOf(item)[i]);
+      if (paid == null || !(w > 0) || !(now > 0)) continue;
+      resale ??= { cost: 0, paid: 0 };
+      resale.cost += Math.round((c * Math.min(w, now)) / now);
+      resale.paid += paid;
+    }
+    if (item[PATRON_COUNTER_MARK] !== true || !Number.isInteger(item[COUNTER_PAID_MARK])) return;
+    resale ??= { cost: 0, paid: 0 };
+    // AUDIT TOWN-ECON 2 PRICE-6: a piece worth more than it was bought at (a gem set, a hone, a reforge) - the cost of the
+    // part the counter sold alone is capped, the rest is the player's own work, haggled on its own
+    const was = item[COUNTER_VALUE_MARK];
+    resale.cost += Number.isInteger(was) && was < now && now > 0 ? Math.round((c * was) / now) : c;
+    resale.paid += item[COUNTER_PAID_MARK] * stack;
+  };
+  for (const item of staged) {
+    const stack = item.stackCount ?? 1;
+    switch (mode) {
+      case 'Buy':
+        modeActionEnabled = true;
+        cost += buyItemPrice(item, { quality, priceAdjustment, holidayId, guildFactionId });
+        pieces += stack;
+        break;
+      case 'Sell': {
+        modeActionEnabled = true;
+        // DFU passes ConditionPercentage (:462) into a slot its own
+        // CalculateCost never reads - see the header; RRI2: Roleplay &
+        // Realism: Items' override reads it, so the slot is passed.
+        // SELL-AS-FOUND and MEND-THIRD: online, a found piece at its mark and a third of its owner's own mends past it
+        const c =
+          calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) *
+          stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth
+        cost += c;
+        sold(item, c, stack); // LAW-3
+        break;
+      }
+      case 'SellMagic': {
+        // DFU's own TODO sits on this line: "Fencing base price higher
+        // and guild rep affects it". Until it does, SellMagic is Sell
+        // WITHOUT the stack multiply - a stack of five soul gems fences
+        // for the price of one. Verbatim, and deliberately not "fixed".
+        modeActionEnabled = true;
+        // AUDIT MEND-THIRD L3-1: ONLINE A FOUND PIECE FENCES AS IT SELLS - through its mark. DFU's CalculateCost here takes
+        // no condition (the mod's override reads it whole), and the item maker enchants a found piece for one side effect
+        // at no gold: a Daedric cuirass found at 47% sold for 22,350 and fenced, unmended, for 47,553. An unmarked piece -
+        // a magic item's condition is its uses - and every piece offline fence as DFU's do.
+        const fenced = live && isFoundMarked(item) ? saleConditionPercentage(item, { online: true }) : -1;
+        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, fenced); // CRAFT-WORTH: a fenced crafted piece at its plain worth
+        cost += c;
+        sold(item, c, stack); // LAW-3: the stack it hands over cost what it cost
+        break;
+      }
+      case 'Repair':
+        if (isBeingRepaired(item)) break;
+        modeActionEnabled = true;
+        cost +=
+          calculateItemRepairCost(itemValueOf(item), quality, item.currentCondition ?? 0, item.maxCondition ?? 0, {
+            reducedRepairCost,
+            priceAdjustment,
+          }) * stack;
+        pieces += stack;
+        break;
+      case 'Identify':
+        if (itemIsIdentified(item)) break;
+        modeActionEnabled = true;
+        // "Identify spell remains free" (:479-481) - the button still
+        // enables, so the spell can be cast on a list that costs nothing.
+        if (!usingIdentifySpell) {
+          cost += calculateItemIdentifyCost(item.value, { holidayId, reducedIdentifyCost });
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return resale ? { cost, modeActionEnabled, pieces, resale } : { cost, modeActionEnabled, pieces }; // LAW-3: the tally only where a counter's piece is sold
+}
+
+/** FB0929: the least a purchase asks for each piece it buys or mends -
+ *  see getTradePrice. */
+export const MIN_PRICE_PER_PIECE = 1;
+
+/** GetTradePrice (:492-509). Buy and Repair haggle as a PURCHASE,
+ *  Sell and SellMagic as a SALE, and Identify does not haggle at all -
+ *  its cost is the price. DFU THROWS on any other mode rather than
+ *  returning the cost, so Inventory mode reaching here is a bug and
+ *  says so.
+ *
+ *  FB0929 - A PURCHASE IS NEVER FREE (Port-Ledger A; lumin on Discord,
+ *  relayed by Mac: "There should be a hard minimum of 1 gold for
+ *  anything"). CalculateTradePrice's buying `amount` (FormulaHelper.cs
+ *  :2000) is the cost times 66/256 to 256/256, truncated, and
+ *  CalculateCost floors a piece at 2 (1 after a holiday's halving) - so
+ *  a piece at that floor (a candle, the General Store's parchment worth
+ *  0, a bandage in a cheap province, a cheap blade's repair) came to 0
+ *  gold wherever the haggle fell under 128/256, and a stack to less than
+ *  a gold a piece. Both PURCHASE modes ask at least MIN_PRICE_PER_PIECE
+ *  for each piece tradeCost priced (`pieces`; a caller with no walk
+ *  still never asks nothing), and Daggerfall's number wherever it is
+ *  more. The lot is still haggled once, as DFU does, so a candle bought
+ *  beside a horse rounds into the horse's price like any piece of a lot;
+ *  no price a counter quotes is under a gold a piece.
+ *
+ *  THE SALE IS NOT FLOORED. Online REALM P0.4 pays at most half the
+ *  asking price (shopStock.js ONLINE_SALE_SHARE), and half a one-gold
+ *  ask is nothing; offline that candle rode the horse for no gold, so a
+ *  gold for selling it alone would be minted. The floor only raises an
+ *  asking price, so no buy-and-sell-back gains by it. Identify keeps its
+ *  cost - the Witches Festival's free one is DFU's design.
+ *
+ *  LAW-3 (Town-Economy-Arc 7.4, the carry between regions) - ONLINE A COUNTER
+ *  NEVER PAYS MORE FOR A PIECE A COUNTER SOLD THAN WAS PAID FOR IT. `resale`
+ *  is tradeCost's (the lot's pieces marked with COUNTER_PAID_MARK, their cost
+ *  and what was paid for them). Where the sale of those pieces would pass what
+ *  was paid, they fetch what was paid and the rest of the lot is haggled on
+ *  its own; the whole lot's price is never passed. A town's discount (TOWN-
+ *  ECON) and the regions' walk made a piece bought cheap and carried dear pay
+ *  on 1,752 of 4,000 world days, and an essential at half price on most. */
+export function getTradePrice(mode, cost, quality, skills, pieces = cost > 0 ? 1 : 0, resale = null) {
+  switch (mode) {
+    case 'Buy':
+    case 'Repair':
+      return Math.max(pieces * MIN_PRICE_PER_PIECE, calculateTradePrice(cost, quality, skills, false));
+    case 'Sell':
+    case 'SellMagic': {
+      const whole = calculateTradePrice(cost, quality, skills, true);
+      if (!(resale?.cost > 0) || calculateTradePrice(resale.cost, quality, skills, true) <= resale.paid) return whole;
+      return Math.min(whole, calculateTradePrice(Math.max(0, cost - resale.cost), quality, skills, true) + resale.paid);
+    }
+    case 'Identify':
+      return cost;
+    default:
+      throw new Error(`Unexpected windowMode: ${mode}`);
+  }
+}
+
+/** ShowTradePopup's record offset (:1102-1113). The three haggle bands
+ *  are cureOfferMessageOffset's - DFU wrote the same comparison twice
+ *  and the port keeps one home - and the SELL modes then step three
+ *  records further on to their own set. */
+export function tradeMessageOffset(mode, cost, tradePrice) {
+  const band = cureOfferMessageOffset(cost, tradePrice);
+  return mode === 'Sell' || mode === 'SellMagic' ? band + 3 : band;
+}
+
+/** ShowTradePopup as a decision (:1100-1134). A BUYING mode with too
+ *  little gold gets the two records CONCATENATED into one
+ *  click-anywhere box and no Yes/No at all - the deal is refused
+ *  before it is offered, which is the opposite of the tavern's order
+ *  and of the temple's. A SELLING mode never checks gold, because the
+ *  gold is coming the other way. */
+export function tradeDecision(mode, { cost, tradePrice, gold = 0 }) {
+  const textId = TRADE_MESSAGE_BASE_ID + tradeMessageOffset(mode, cost, tradePrice);
+  const selling = mode === 'Sell' || mode === 'SellMagic';
+  if (!selling && gold < tradePrice) {
+    return { kind: 'notEnoughGold', textIds: [textId, NOT_ENOUGH_GOLD_ID], price: tradePrice };
+  }
+  return { kind: 'offer', textId, price: tradePrice };
+}
+
+/** ConfirmTrade_OnButtonClick's TAIL (:1092-1093), Internal_Strings
+ *  `letterOfCredit` verbatim. DFU announces the parchment: the gold
+ *  did not move and the player is owed an explanation, or a sale of a
+ *  valuable item while overloaded reads as a sale that simply failed.
+ *  The sound alone (ParchmentScratching, already ported at :1084) is
+ *  not that explanation - it plays where GoldPieces would have. */
+export const LETTER_OF_CREDIT_TEXT = 'You are paid with a letter of credit.';
+/** L10N3d: ...as the box shows it (:1093), in the player's language - both skins read it. */
+export const letterOfCreditText = () => localizedText('letterOfCredit', LETTER_OF_CREDIT_TEXT);
+
+/** ConfirmTrade's SELL arm (:1035-1050): the proceeds are weighed
+ *  BEFORE they are paid, and a purse that would push the player past
+ *  MaxEncumbrance becomes a LETTER OF CREDIT for the full amount
+ *  instead - added to the FRONT of the pack, and announced with
+ *  parchment rather than coins. The weight test uses the same
+ *  0.0025 kg/piece the character sheet's encumbrance line does. */
+export function sellProceeds(tradePrice, { carriedWeightKg = 0, maxEncumbranceKg = Infinity } = {}) {
+  const goldWeight = tradePrice * GOLD_PIECE_WEIGHT_KG;
+  return carriedWeightKg + goldWeight <= maxEncumbranceKg
+    ? { kind: 'gold', amount: tradePrice }
+    : { kind: 'letterOfCredit', amount: tradePrice };
+}
+
+/** FilterLocalItems' mode gate (:672-703). The player's own pack is
+ *  shown WHOLE in most modes, but the two selling modes narrow it:
+ *  Sell to the groups this shop actually buys (storeBuysItemType, the
+ *  port's shopBuysItem), SellMagic to ENCHANTED items only. An
+ *  equipped item never appears in any mode, which is the port's
+ *  existing AUDIT 17e F4 rule reaching the same conclusion DFU does.
+ *  Note SellMagic does NOT also apply the shop's accepted groups - a
+ *  fence takes an enchanted item the shop would refuse plain. */
+export function localListAccepts(mode, item, { accepts = () => true, enchanted = () => false } = {}) {
+  if (mode === 'Sell') return accepts(item);
+  if (mode === 'SellMagic') return enchanted(item);
+  return true;
+}
+
+/** LocalItemListScroller_OnItemClick as a decision (:788-826). A click
+ *  on the player's own item either STAGES it or is REFUSED with a
+ *  box, and which of the two is entirely mode-dependent:
+ *    Sell/SellMagic - the LOADED CART is refused, silently; anything
+ *                     else stages (the list is already filtered)
+ *    Repair         - the three refusals, in DFU's own click order
+ *    Identify       - refused when the item is already identified,
+ *                     UNLESS the spell is in use ("matches classic")
+ *    Buy            - a BASKET item clicks back out to the shelf;
+ *                     anything else is the equip path, not a trade
+ *  Answers { kind: 'stage' } | { kind: 'unstage' } | { kind: 'refuse',
+ *  textId | text } | { kind: 'ignore' }. Every 'stage' is a
+ *  TransferItem call in DFU (:795, :817, :823, :826), so the window
+ *  owes it TransferItem's own guards on top of this. */
+/** WAGONS2 (FINAL AUDIT): WHAT A COUNTER'S CLICK READS OFF THE ENTITY - PlayerEntity.WagonItems and .Items.GetItem
+ *  (:789-793; WAGONS1: the wagon DRIVEN, the best owned - a cart left over from an upgrade is an empty cart to sell) and
+ *  BAG1's bag - one home for the six places the two trade windows asked it, each its own copy (the copies were pinned
+ *  nowhere: any one turned back to the first wagon in the pack sold a loaded caravan while a spare cart was held). */
+export const sellGuardOf = (entity) => ({
+  wagonLoaded: (entity?.wagonItems ?? []).length > 0,
+  bagLoaded: (entity?.bagItems ?? []).length > 0, // BAG1: the Materials Bag holding anything
+  usedWagon: activeWagonItem(entity?.items ?? []),
+});
+export function localClickDecision(
+  mode,
+  item,
+  {
+    inBasket = () => false,
+    allowMagicRepairs = false,
+    usingIdentifySpell = false,
+    wagonLoaded = false,
+    usedWagon = null,
+    bagLoaded = false,
+  } = {},
+) {
+  switch (mode) {
+    case 'Sell':
+    case 'SellMagic':
+      // BAG1: the Materials Bag is the cart's own case, said - a bag sold with materials in it would strand them in a list
+      // nobody owns (systems/materialsBag.js bagMayLeave)
+      if (isBagItem(item) && bagLoaded) return { kind: 'refuse', refusal: 'bagLoaded' };
+      // "Are we trying to sell the non empty wagon?" (:789-794).
+      // PlayerEntity.Items.GetItem(Transportation, Small_cart) is the
+      // cart the player actually owns, and the click is dropped
+      // SILENTLY while WagonItems.Count > 0 - selling the cart out
+      // from under a loaded wagon would strand everything in it. A
+      // HORSE is Transportation too and is not that record, so it
+      // still sells, loaded cart or not.
+      if (item.group === 'Transportation' && wagonLoaded && usedWagon === item) return { kind: 'ignore' };
+      return { kind: 'stage' };
+    case 'Repair': {
+      const refusal = repairRefusal(item, { allowMagicRepairs });
+      if (!refusal) return { kind: 'stage' };
+      return { kind: 'refuse', refusal };
+    }
+    case 'Identify':
+      return !itemIsIdentified(item) || usingIdentifySpell
+        ? { kind: 'stage' }
+        : { kind: 'refuse', refusal: 'identified' };
+    case 'Buy':
+      return inBasket(item) ? { kind: 'unstage' } : { kind: 'ignore' };
+    default:
+      return { kind: 'ignore' };
+  }
+}
+
+/** DaggerfallTradeWindow.cs:826's `doesntNeedIdentify`, quoted from
+ *  Internal_Strings.csv:821 - `doesntNeedIdentify,This does not need to
+ *  be identified.` (the row has no "item"). */
+export const DOESNT_NEED_IDENTIFY = 'This does not need to be identified.';
+/** L10N3d: ...as the refusal shows it, in the player's language - both skins read it. */
+export const doesntNeedIdentifyText = () => localizedText('doesntNeedIdentify', DOESNT_NEED_IDENTIFY);
+
+// The three clauses that stood here are all closed:
+//  - the IDENTIFY SPELL arm (:956-996) is live. identifySpellPass
+//    (:161) feeds worldModes.js:"the player walked in,", which spends the magicka
+//    ONCE for the whole list whatever the outcome and tells the player
+//    "N of M identified"; the window opens from openIdentifyWindow
+//    (worldModes.js:"const f = floorLanding"), the entry point the magic arc owed.
+//  - the LETTER OF CREDIT is tender and bankable: minted at systems/
+//    inventory.js:"DaggerfallInventoryWindow.AddLocalItem", summed by creditAmount at systems/court.js:"if (people)",
+//    spent letters-before-coins by deductGold at court.js:"training, the tavern's", and
+//    moved at systems/banking.js:"export function depositAllLetters" depositAllLetters / systems/banking.js:"export function withdrawLetter"
+//    withdrawLetter.
+//  - SellMagic's "fencing base price" TODO is DFU's own
+//    (DaggerfallTradeWindow.cs:464 carries it verbatim), so it is
+//    parity by construction, never a port gap.

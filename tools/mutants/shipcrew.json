@@ -1,0 +1,370 @@
+[
+  {
+    "name": "SC-role-mate",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  i === 0\n    ? FIRST_MATE\n    : mobile === MOBILE.Bard\n      ? 'Bard'\n      : ROLES.reduce((best, r) => ((held.get(r) ?? 0) < (held.get(best) ?? 0) ? r : best), ROLES[0]);",
+    "new": "  mobile === MOBILE.Bard\n    ? 'Bard'\n    : ROLES.reduce((best, r) => ((held.get(r) ?? 0) < (held.get(best) ?? 0) ? r : best), ROLES[0]);",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-fallen-first-joined",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "      while (hands.length > roster.length) fell.push(hands.pop());",
+    "new": "      while (hands.length > roster.length) fell.push(hands.shift());",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-hire-name-reused",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "          name: handName(seed, hires++, gender, regionIndex, bank),",
+    "new": "          name: handName(seed, i, gender, regionIndex, bank),",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
+  },
+  {
+    "name": "SC-loss-uncapped",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "        const d = Math.max(LOSSES_CAP - losses, MORALE_EVENT.handLost * Math.max(0, n));",
+    "new": "        const d = MORALE_EVENT.handLost * Math.max(0, n);",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-fight-never-over",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    fightOver() {\n      losses = 0;\n    },",
+    "new": "    fightOver() {},",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-win-uncounted",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "      if (kind === 'win') for (const h of hands) h.fights++;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-port-uncapped",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "        if (morale < PORT_CAP) {\n          portT += dt;\n          const k = Math.floor(portT / PORT_RISE_S);\n          if (k > 0) {\n            portT -= k * PORT_RISE_S;\n            morale = Math.min(PORT_CAP, morale + k);\n          }\n        } else portT = 0;",
+    "new": "        {\n          portT += dt;\n          const k = Math.floor(portT / PORT_RISE_S);\n          if (k > 0) {\n            portT -= k * PORT_RISE_S;\n            morale = Math.min(MORALE_MAX, morale + k);\n          }\n        }",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ],
+    "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
+  },
+  {
+    "name": "SC-sea-clock-unkept",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "          seaT -= k * SEA_DECAY_S;",
+    "new": "          seaT = 0;",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ],
+    "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
+  },
+  {
+    "name": "SC-reload-unscaled",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "export const reloadScaleOf = (m, order = null) =>\n  (1 - MORALE_RELOAD * moraleFactor(m)) * (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
+    "new": "export const reloadScaleOf = (m, order = null) => (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-guns-order-unread",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "export const reloadScaleOf = (m, order = null) =>\n  (1 - MORALE_RELOAD * moraleFactor(m)) * (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
+    "new": "export const reloadScaleOf = (m, order = null) => (1 - MORALE_RELOAD * moraleFactor(m)) * 1;",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-mend-unscaled",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "export const mendScaleOf = (m) => 1 + MORALE_MEND * moraleFactor(m);",
+    "new": "export const mendScaleOf = (m) => 1;",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-rail-no-hand",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "export const handsBonusOf = (m, order = null) =>\n  (m >= HIGH_SPIRITS ? 1 : 0) - (m <= LOW_SPIRITS ? 1 : 0) + (order === CREW_ORDERS.rail ? 1 : 0);",
+    "new": "export const handsBonusOf = (m, order = null) => (m >= HIGH_SPIRITS ? 1 : 0) - (m <= LOW_SPIRITS ? 1 : 0);",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-sings-always",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    sings: () => morale >= SING_MIN,",
+    "new": "    sings: () => true,",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-save-hands-dropped",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    if (Array.isArray(record.hands)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SC-orders-crewless-guns",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  const ids = crewed\n    ? [CREW_ORDERS.guns, CREW_ORDERS.rail, CREW_ORDERS.repair, CREW_ORDERS.stand]\n    : [CREW_ORDERS.repair, CREW_ORDERS.stand];",
+    "new": "  const ids = [CREW_ORDERS.guns, CREW_ORDERS.rail, CREW_ORDERS.repair, CREW_ORDERS.stand];",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SR-canvas-first",
+    "file": "src/systems/naval/navalYard.js",
+    "old": "  const h = Math.min(hullGap, left);",
+    "new": "  const h = Math.min(hullGap, left * 0);",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SR-budget-unread",
+    "file": "src/systems/naval/navalYard.js",
+    "old": "  if (out.work > cap) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ],
+    "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
+  },
+  {
+    "name": "SR-alone-full",
+    "file": "src/systems/naval/navalYard.js",
+    "old": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE; // AUDIT CC-D2",
+    "new": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : 1; // AUDIT CC-D2",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ],
+    "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
+  },
+  {
+    "name": "SR-grog-crewless",
+    "file": "src/systems/naval/navalYard.js",
+    "old": "  if (crewed && morale != null) {",
+    "new": "  if (morale != null || !crewed) {",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SR-stack-spent-whole",
+    "file": "src/systems/naval/navalStores.js",
+    "old": "  if ((it.stackCount | 0) > 1) it.stackCount--;\n  else items.splice(i, 1);",
+    "new": "  items.splice(i, 1);",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SR-reload-scale-unread",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "      const s = reloadSeconds(b.gun, crewShare(), crewed, loadAt(side)) * (b.gun === 'barrel' ? 1 : scaleNow());",
+    "new": "      const s = reloadSeconds(b.gun, crewShare(), crewed, loadAt(side));",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-fallen-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        for (const h of fell) deps.say?.(`${h.name}, ${h.role}, has fallen.`, 4);",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-loss-unfelt",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (lost > 1e-9 && b.crewed) c.event('handLost', lost / CREW_PER_HAND);",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-win-unfelt",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (by === myId()) struckToMe();   // SHIP-CREW: she struck to us",
+    "new": "if (by === myId()) noteAct('ship-struck');   // SHIP-CREW: she struck to us",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-grog-unfelt",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (id === 'grog') { st.crew.event('grog'); st.crew.drankGrog(where().day ?? null); }",
+    "new": "      if (id === 'grog') { st.crew.drankGrog(where().day ?? null); }",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ],
+    "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
+  },
+  {
+    "name": "SCH-stores-unspent",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      while (s.credit < -1e-9 && deps.stores?.spend?.(b)) s.credit += STORE_POINTS;",
+    "new": "      while (s.credit < -1e-9) s.credit += STORE_POINTS;",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ],
+    "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
+  },
+  {
+    "name": "SCH-the-pace-under-fire-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(underFire ? SEA_REPAIR_UNDER_FIRE : 1)",
+    "new": "1",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-refusal-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      else if (st.credit <= 1e-9 && (deps.stores?.count?.(boat) ?? 0) <= 0) said = `${who}We've no carpenter's stores aboard, Captain.`;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-done-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!wantsRepair(s.damage)) { s.crew.give(CREW_ORDERS.stand); deps.say?.(`${mate ? `${mate}: ` : ''}Repairs done, Captain.`, 4); }",
+    "new": "    if (!wantsRepair(s.damage)) { s.crew.give(CREW_ORDERS.stand); }",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-spent-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "else if (spent) { s.crew.give(CREW_ORDERS.stand); deps.say?.(`${mate ? `${mate}: ` : ''}The carpenter's stores are spent, Captain.`, 4); }",
+    "new": "else if (spent) { s.crew.give(CREW_ORDERS.stand); }",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-save-mates-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  return { barrels: st.guns.barrels, mates: st.crew.snapshot(), ...(Object",
+    "new": "  return { barrels: st.guns.barrels, ...(Object",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCH-mend-unscaled",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "scale: b.crewed ? mendScaleOf(s.crew.morale) * (s.worth?.mend ?? 1) : 1 });",
+    "new": "scale: b.crewed ? 1 * (s.worth?.mend ?? 1) : 1 });",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "SCL-rail-unmustered",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "ctx.muster : ctx.order === 'rail' ? 1 : 0;",
+    "new": "ctx.muster : 0;",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCL-guns-no-fight",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    const battle = !!ctx.battle || !!muster || ctx.order === 'guns';",
+    "new": "    const battle = !!ctx.battle || !!muster;",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCL-song-in-low-spirits",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "        if (crew.length >= 2 && ctx.sings !== false) {",
+    "new": "        if (crew.length >= 2) {",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCL-line-unread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "          const theirs = !struck && !ctx.battle && !ctx.muster ? ctx.line?.() ?? null : null;",
+    "new": "          const theirs = null;",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCW-stores-not-the-hold",
+    "file": "src/scenes/world.js",
+    "old": "      count: (boat) => storesIn(boat?.Cargo?.Items),",
+    "new": "      count: (boat) => 0,",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCW-orders-hook-cut",
+    "file": "src/scenes/world.js",
+    "old": "    orders: () => { const b = csaRuntime?.state?.CurrentBoat; if (b) navalOrders(b); },",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCW-panel-orders-off",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  if (h.orders) out.push({ act: 'orders', label: 'Orders', kind: 'hook' }); // SHIP-CREW: her captain's orders (the naval arc on)",
+    "new": "  // SHIP-CREW: her captain's orders (the naval arc on)",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  },
+  {
+    "name": "SCW-menu-orders-cut",
+    "file": "src/systems/comeSailAway/csaBoatMenu.js",
+    "old": "    rows.push({ id: BOAT_VERB.orders, label: BOAT_MENU_TEXT.orders });",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipcrew.test.js"
+    ]
+  }
+]

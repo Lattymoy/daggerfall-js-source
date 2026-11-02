@@ -1,0 +1,281 @@
+[
+  {
+    "name": "AUDIT1003-W1-GROUND-UNPLACED",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "  modelReferenceList.push({ modelId: String(ARENA_GROUND_MODEL), modelIdNum: ARENA_GROUND_MODEL, description: 'ARN' });",
+    "new": "  modelReferenceList.push({ modelId: '0', modelIdNum: 0, description: 'ARN' });",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/world/arena/arena2_floor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-GROUND-UNREGISTERED",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  registerCustomModel(ARENA_GROUND_MODEL, () => arenaGroundModel(arenaGroundTiles())); // AUDIT PRE-MERGE 1003 W1: the cell's paving, under the floor's instance",
+    "new": "  // AUDIT PRE-MERGE 1003 W1: the cell's paving, under the floor's instance",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-GROUND-AT-THE-BLOCK-ZERO",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "    yPos: -GROUND_Y,",
+    "new": "    yPos: 0,",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-MOUTH-OPEN",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "  wall([c[0] + GATE_MOUTH.x0 - 3, c[2] + GATE_MOUTH.z], [c[0] + GATE_MOUTH.x1 + 3, c[2] + GATE_MOUTH.z], 12); // the mouth, into the walls either side",
+    "new": "  // the mouth, into the walls either side",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-EDGE-OPEN",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "  wall([0, 0], [S, 0], 40);\n  wall([S, 0], [S, S], 40);\n  wall([S, S], [0, S], 40);\n  wall([0, S], [0, 0], 40); // the cell's edge, over its highest roof",
+    "new": "  // the cell's edge, over its highest roof",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-NO-WAY-OUT-AT-THE-MOUTH",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "  Object.freeze({\n    at: Object.freeze([(GATE_MOUTH.x0 + GATE_MOUTH.x1) / 2, GATE_MOUTH.z - 0.5, CITY_GROUND_UP]),\n    normal: Object.freeze([0, 0, -1]),\n  }),\n]);",
+    "new": "]);",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-WAY-OUT-OFF-THE-GROUND",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "export const CITY_GROUND_UP = GROUND_Y * GLOBAL_SCALE - floorCentre()[1];",
+    "new": "export const CITY_GROUND_UP = 0;",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-PAVING-ARCHIVE",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "export const ARENA_GROUND_ARCHIVE = 302;",
+    "new": "export const ARENA_GROUND_ARCHIVE = 2;",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-LAYS-UNTURNED",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "      const lay = (tile.IsRotated ? 1 : 0) + (tile.IsFlipped ? 2 : 0);",
+    "new": "      const lay = 0;",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W1-PAVING-FACING-DOWN",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "      byRecord.get(tile.TextureRecord)?.push(base, base + 2, base + 1, base, base + 3, base + 2); // wound so cross(b - a, c - a) points up (the port's front face)",
+    "new": "      byRecord.get(tile.TextureRecord)?.push(base, base + 1, base + 2, base, base + 2, base + 3); // wound so cross(b - a, c - a) points up (the port's front face)",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W2-RELAY-EX",
+    "file": "src/scenes/arena/arenaBouts.js",
+    "old": "    if (p.relayEx) return { west: 'red', east: 'blue' };",
+    "new": "",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/systems/arena/arena5_banners.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W4-REMAPPED",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  if (isClimateFreeModel(id)) return NO_CLIMATE_REMAP;",
+    "new": "",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W4-ARM-UNREAD",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const climateFree = (await ensureRemap(p.modelIdNum)) === NO_CLIMATE_REMAP;",
+    "new": "const climateFree = false; await ensureRemap(p.modelIdNum);",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W4-MERGE-REMAPPED",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "staticBuilder.add(cpu, matrix, climateFree ? ownTexKey : resolveTexKey);",
+    "new": "staticBuilder.add(cpu, matrix, resolveTexKey);",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/scenes/perf5.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W4-ENTRY-UNMARKED",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "aabb, ...(climateFree ? { texRemap: NO_CLIMATE_REMAP } : {}) });",
+    "new": "aabb });",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/scenes/perf5.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W4-WORLD-HOST-DRAWS-BY-THE-LEVEL",
+    "file": "src/scenes/worldModes.js",
+    "old": "renderer.drawMesh(d.mesh, d.matrix, d.texRemap ?? dungeonCtx.texRemap);",
+    "new": "renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/scenes/perf5.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W4-DUNGEON-HOST-DRAWS-BY-THE-LEVEL",
+    "file": "src/scenes/dungeon.js",
+    "old": "renderer.drawMesh(d.mesh, d.matrix, d.texRemap ?? ctx.texRemap);",
+    "new": "renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/scenes/perf5.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W5-NO-FOOTING",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "      if (!seatFooting(heightAt, x, z, a, /** @type {number} */ (h))) continue; // AUDIT PRE-MERGE 1003 W5",
+    "new": "",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W5-LEVEL-LOOSE",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "export const SEAT_LEVEL_M = 0.15;",
+    "new": "export const SEAT_LEVEL_M = 0.5;",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W5-FOOT-SHORT",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "export const SEAT_FOOT_M = 0.35;",
+    "new": "export const SEAT_FOOT_M = 0.1;",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W5-ALONG-ONLY",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "    [-s, c],\n    [s, -c],\n  ]) {",
+    "new": "  ]) {",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W5-ACROSS-ONLY",
+    "file": "src/world/arena/arenaFloor.js",
+    "old": "    [c, s],\n    [-c, -s],\n    [-s, c],",
+    "new": "    [-s, c],",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W6-NO-BREATH",
+    "file": "src/world/arena/arenaModel.js",
+    "old": "    await breathe();\n  }",
+    "new": "  }",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W6-DOOR-NEVER-SLICED",
+    "file": "src/world/customModels.js",
+    "old": "  if (m.cached || !breathe || !m.buildSliced) return customModelFor(id, ctx);",
+    "new": "  return customModelFor(id, ctx);",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W6-ARENA-UNSLICED",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "        {\n          climateFree: true,\n          needs: [...new Set(ARENA_MODEL_INDEX.pieces.map((p) => p.model))],\n          buildSliced: (ctx, breathe) =>\n            arenaDrawnModelSliced(\n              buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null),\n              breathe,\n            ),\n        },",
+    "new": "        { climateFree: true, needs: [...new Set(ARENA_MODEL_INDEX.pieces.map((p) => p.model))], buildSliced: null },",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W6-PIPELINE-UNHANDED",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "const custom = await customModelBuilt(modelIdNum, { classicModel: classicModelOf }, breathe);",
+    "new": "const custom = await customModelBuilt(modelIdNum, { classicModel: classicModelOf }, null);",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/world/arena/arena1_model.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W6-PIXEL-UNHANDED",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const gpu = await getGpuMesh(placed.modelIdNum, () => breather.breathe());",
+    "new": "const gpu = await getGpuMesh(placed.modelIdNum);",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W7-ARENA-TAKEN",
+    "file": "src/systems/siegeField.js",
+    "old": "    if (d?.arena) continue; // AUDIT PRE-MERGE 1003 W7\n    if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6)",
+    "new": "    if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6)",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/scenes/castle_gate.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W7-UNMARKED",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });",
+    "new": "normal: doorNormalOf(d, local) });",
+    "tests": [
+      "test/world/audit1003_world.test.js",
+      "test/scenes/castle_gate.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT1003-W8-DOC",
+    "file": "src/scenes/world.js",
+    "old": "(one start an hour - AUDIT PRE-MERGE 1003 W8: a walk back, or a door taken and left, does not start it again)",
+    "new": "(one start an hour, a walk back restarts it)",
+    "tests": [
+      "test/world/audit1003_world.test.js"
+    ]
+  }
+]

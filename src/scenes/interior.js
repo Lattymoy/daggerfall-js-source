@@ -1,0 +1,418 @@
+// Milestone 4: ?interior=<BLOCKNAME>:<record> renders one building interior
+// standalone (e.g. ?interior=MAGEAA00.RMB:0), camera spawned at the Enter
+// marker when present.
+// P7c: the scene folds onto buildInteriorContext - the exact build the
+// world/exterior hosts use for transitions (M4/R8/R12/P4 semantics live
+// there); this file is data loading, the fly camera, and the frame loop.
+
+import { iilActive, iilInteriorLights, iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL1
+import { Arch3dFile } from '../formats/arch3dFile.js';
+import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
+import { INTERIOR_CLEAR } from '../render/renderer.js';
+import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
+import { requestLook, makeLookGate } from '../player/pointerLock.js';   // AUDIT-AMAP H8: the lock gate the other hosts run
+import { attachTouch } from '../ui/touch/touch.js';
+import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
+import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT FONT F5: the touch layer's face gate (the skin cannot change without a reload, so the boot-time read is exact)
+import { BlocksFile } from '../formats/blocksFile.js';
+import { bindWorldDataBlocks } from '../formats/worldData/worldDataReplacement.js';   // RR3b
+import { loadModWorldData } from './modWorldData.js';   // RR3b
+import { DFPalette } from '../formats/dfPalette.js';
+import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR, roomAmbient } from '../world/interior/interiorLights.js';   // RPT1026-WORLD DARK-ROOM: roomAmbient
+import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
+import { skyMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12); TIME1: the sky's night
+import { nearestLights } from '../world/city/cityLights.js';
+import { syncLightingLane, interiorLightColor, interiorGrade } from '../render/enhancedLighting.js';   // EL1; INTERIOR-DIM: a room's lamps and its grade
+import { INTERIOR_MARKER } from '../world/interior/interiorLayout.js';
+import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { fetchBytes, seasonOverride, ensureAudio } from './shared.js';
+import { INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: DaggerfallInterior.cs:51 - an interior is summer-skinned, always
+import { createDataPipeline } from './dataPipeline.js';
+import { audio } from '../systems/audio.js';   // WM4c
+import { buildInteriorContext } from './interiorContext.js';
+import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
+import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // AUDIT: the FOURTH host the SETT slice missed; AUDIT 65 MC-4: and the FOURTH LookFilter owner FIX-F missed
+import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
+import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
+import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
+import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automap/automapDoor.js';   // ROAD-C c2/S9 + EM3: the second interior host's M window, behind the skin fork
+import { nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';   // ROAD-C c2/S9
+import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
+import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
+import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
+import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { swallowBrowserKey, actionsOf, keyboardLook, letGoOnBlur } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
+import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // AUDIT RETRO1 A8/C4: the lens and the world rect the other hosts take - the docked bar's, and retro mode's texture aspect and pillarbox
+import { hudShortcutKey } from '../ui/hud/hudShortcuts.js';   // AUDIT RETRO1 C4: DaggerfallHUD's shortcuts, Shift-F11 among them, as in the other hosts
+import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate, the fourth host's
+import { deliverOwedShots } from '../ui/screenshot.js';   // SHOT1: every drawn foot pays the shots owed (this host routes no PrintScreen of its own)
+
+// Milestone 4 scene: one building interior, standalone at block-local origin.
+export async function bootInterior(canvas, renderer, params, status) {
+  const [blockName, recordStr] = params.get('interior').split(':');
+  const recordIndex = Number(recordStr || 0);
+  syncLightingLane(renderer);   // EL1: the lane, installed at mount (the interior's lights carry their own colours)
+  // DFU interiors climate-swap their models (SetClimate with
+  // WindowStyle.Disabled - emission stays dark here by default). A
+  // standalone block has no location, so ClimateBases.Temperate is the
+  // verbatim field default; ?climate= overrides.
+  // A1: the season is NOT the calendar's here - DaggerfallInterior.cs
+  // :51 declares `climateSeason = ClimateSeason.Summer` and never
+  // assigns it, so every interior in the reference is summer-skinned
+  // whatever the date outside. ?season= is the probe's override.
+  const CLIMATE_PARAM = { desert: 0, mountain: 100, temperate: 300, swamp: 400 };
+  const climateBase = CLIMATE_PARAM[(params.get('climate') || 'temperate').toLowerCase()] ?? 300;
+  const season = seasonOverride(params) ?? INTERIOR_SEASON;
+
+  status('loading data');
+  const [palBytes, blocksBytes, archBytes] = await Promise.all([
+    fetchBytes('ART_PAL.COL'),
+    fetchBytes('BLOCKS.BSA'),
+    fetchBytes('ARCH3D.BSA'),
+  ]);
+  const palette = new DFPalette();
+  palette.load(palBytes, 'ART_PAL.COL');
+  const blocks = new BlocksFile();
+  blocks.load(blocksBytes);
+  bindWorldDataBlocks(blocks);   // RR3b: WorldDataReplacement's ContentReader.BlockFileReader - the new block indices start past this BSA's count
+  await loadModWorldData();   // RR3b: ModManager's world-data assets on the door before the first region or block loads
+  const arch = new Arch3dFile();
+  arch.load(archBytes);
+
+  const blockIndex = blocks.getBlockIndex(blockName);
+  if (blockIndex === -1) throw new Error(`block not found: ${blockName}`);
+  const dfBlock = blocks.getBlock(blockIndex);
+
+  status(`laying out ${blockName}:${recordIndex}`);
+  const pipeline = createDataPipeline({ renderer, arch, palette });
+  renderer.setClearColor(INTERIOR_CLEAR);   // INCIDENT 2026-09-04: inside clears to BLACK (CameraClearManager.cs:24-25)
+  // AUDIT 18 HOST GAP: the audio engine's bootstrap lived only in
+  // buildDungeonContext, so every sound in this host was a silent
+  // no-op until a dungeon was entered (DFU's sound reader is global
+  // and the exterior prefab is audible from frame one).
+  ensureAudio(fetchBytes);
+
+  const ctx = await buildInteriorContext(
+    { ...pipeline, renderer }, dfBlock, blockIndex, recordIndex, climateBase, season);
+
+  // R8: verbatim interior ambient; verbatim InteriorFogSettings
+  // (exponential 0.001, fog color black).
+  renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, ctx.roomLamps)), 0);   // AUDIT 23 (C12): PlayerAmbientLight.cs:75-80; RPT1026-WORLD DARK-ROOM: a room with no lamp of its own (AUDIT RPT1026 J1: the lamps it was built with)
+  renderer.setWindowEmission(windowEmissionRGB('disabled'));   // F002: the dev route draws the same Disabled interiors (DaggerfallInterior.cs:473/:517/:1270)
+  renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
+
+  // Camera at the Enter marker when present, else the first placement,
+  // facing the interior's bounding center (the marker sits at the entry
+  // door, so yaw 0 would stare into it).
+  const bb = { minX: Infinity, minZ: Infinity, maxX: -Infinity, maxZ: -Infinity };
+  for (const p of ctx.drawList) {
+    bb.minX = Math.min(bb.minX, p.matrix[12]); bb.maxX = Math.max(bb.maxX, p.matrix[12]);
+    bb.minZ = Math.min(bb.minZ, p.matrix[14]); bb.maxZ = Math.max(bb.maxZ, p.matrix[14]);
+  }
+  const centerX = (bb.minX + bb.maxX) / 2;
+  const centerZ = (bb.minZ + bb.maxZ) / 2;
+  const enter = ctx.markers.find((m) => m.type === INTERIOR_MARKER.ENTER);
+  const spawn = enter
+    ? [enter.x, enter.y + 1, enter.z]
+    : [ctx.drawList[0].matrix[12], 1.5, ctx.drawList[0].matrix[14]];
+  const cam = {
+    pos: spawn,
+    yaw: Math.atan2(centerX - spawn[0], centerZ - spawn[2]),
+    pitch: 0,
+  };
+  const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
+
+  // ── ROAD-C c2/S9: THE SECOND INTERIOR HOST'S MAP ────────────────────
+  // The FOUR HOSTS rule, applied to the arm this stage builds: the map
+  // belongs to the interior CONTEXT, and both hosts that mount one owe
+  // it a tick and a door. This scene is the dev route - a fly camera
+  // over one building record, no player, no HUD - so its window has no
+  // entrance beacon (DFU's building arm is gated on `door.HasValue`,
+  // Automap.cs:2482, and there is no entered door here either) and its
+  // "player" is the camera. Everything else is the same window.
+  let overlay = null;
+  /** ROAD-tail: ...and the stack under it, so THIS host's pause is the
+   *  same primitive the other three ask. UserInterfaceManager.AddWindow
+   *  (:179-186) calls `GameManager.PauseGame(true)` for a
+   *  PauseWhileOpen window and RemoveWindow (:190-216) calls
+   *  `PauseGame(false)` only when the stack drains; PauseGame
+   *  (GameManager.cs:600-635) is the `Time.timeScale = 0` this frame's
+   *  gates read. This scene is the dev route - one window, no depth
+   *  today - and it is exactly the host the standing watch names: it
+   *  took the gate by hand (`if (!overlay)`, and a look gate that was
+   *  written `if (!(false))` and so never closed at all), and now it
+   *  does not. */
+  const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
+  const gamePaused = () => windows.paused() || pauseWhileOpen(overlay);
+  const lookGate = makeLookGate(canvas);   // AUDIT-AMAP H8: a window up frees the cursor, or the map cannot be dragged
+  let mapFont = null;
+  makeFontFor().catch((e) => console.warn('[automap] FONT0003 unavailable:', e?.message ?? e));
+  async function makeFontFor() {
+    mapFont = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003');
+  }
+  preloadAutomapArt({ renderer, fetchBytes, palette })
+    .catch((e) => console.warn('[automap] native map art unavailable; keyed fallback:', e?.message ?? e));
+  const toggleAutomap = () => {
+    if (overlay) return;
+    // PushWindow (UserInterfaceManager.cs:79-91) - `onTop` writes the
+    // slot every reader below already uses, and the latch rises with it.
+    // EM3: the skin fork's gate stands BEFORE the push, exactly as it
+    // does in the other two automap hosts - `automapDoorReady()` is
+    // true only where the door can build something, so the push site
+    // stays a direct expression and CRASH2's closed-population pin can
+    // still read what can arrive here.
+    if (!automapDoorReady()) return;
+    windows.pushWindow(createAutomapWindow({
+      record: () => ctx.automapRecord(),
+      drawList: ctx.drawList, dynamicDraws: ctx.dynamicDraws, texRemap: ctx.texRemap,
+      player: () => ({ feet: cam.pos, eye: cam.pos, yaw: cam.yaw }),
+      startMarker: null,
+      blocks: null,
+      arrowMesh: ctx.automapArrow,
+      arrowBounds: ctx.automapArrowBounds,
+      dungeonName: blockName,
+      indexSize: ctx.automapModel.length,
+      model: ctx.automapModel,
+      insideBuilding: true,
+      where: () => ({ insideBuilding: true }),   // EM3
+      title: blockName,
+    }));
+  };
+  const nativeAt = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return pointToNative(nativeMetrics(canvas),
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height));
+  };
+  // ROAD-tail: the slot is nulled by hand here as in every host, and
+  // `reconcile` is what turns that into PopWindow - which is what
+  // lowers the pause latch (RemoveWindow :201-215).
+  const drainOverlay = () => { if (overlay?.done) { overlay.dispose?.(); overlay = null; windows.reconcile(overlay); } };
+
+  const keys = new Set();
+  addEventListener('keydown', (e) => {
+    // U47: FIRST, before any early return - one list, in ui/input.js.
+    // AUDIT 58 (f2/hosts): this host was the FIFTH keydown and the U47
+    // rollout enumerated four, so F5 in the ?interior route reloaded
+    // the page and destroyed the session - the exact failure AUDIT 17e
+    // F41 recorded for the others - and F11 went fullscreen. The law
+    // (ui/input.js:"One list, because") is "every host that registers a keydown
+    // calls this FIRST", and it is NOT conditional on the host having
+    // a destination for the key. First, because every arm below
+    // returns before its own preventDefault - worldModes.js:"draws a dead arm." sits
+    // ahead of its arms for the same reason.
+    swallowBrowserKey(e);
+    // The open map owns the keyboard, exactly as it does in the three
+    // hosts that already carry it - including the toggle key, which the
+    // window itself defers to its own close.
+    if (overlay) {
+      overlay.input(e.code, e);
+      drainOverlay();
+      // MENU-RELOCK: the close key is the browser gesture pointer-lock
+      // needs. Do not wait for the next animation frame to reclaim look.
+      if (!overlay && !gamePaused()) requestLook(canvas);
+      e.preventDefault();
+      return;
+    }
+    // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER, the law all four
+    // hosts now carry. InputManager.PollInput (:1795-1809) adds every
+    // held key before GameManager.Update reads an Action, and this add
+    // sat BELOW the KeyM arm - so the one key this host dispatches was
+    // the one key that never entered the Set. Harmless while nothing
+    // read the ring; not now, because the Set IS the ring
+    // ModifierOnlyHeld scans (:1632-1639, ui/input.js). It stays below the
+    // overlay gate, where DFU's Update returns before PollInput
+    // (:487-503).
+    keys.add(e.code);
+    if (hudShortcutKey(e, keys)) { e.preventDefault(); return; }   // AUDIT RETRO1 C4: below the window gate, as DaggerfallHUD.Update is
+    if (actionsOf(e, keys).includes('AutoMap')) { toggleAutomap(); e.preventDefault(); return; }   // UXB1-S: its key, shared or not   // FIX-F: the registry's key, not a raw M - the one host that read the literal
+    // DFU parity: any keypress re-engages a dropped lock (no click-to-look mode).
+    if (document.pointerLockElement !== canvas) requestLook(canvas);
+  });
+  // ROAD-E E1: THE KEY-UP ROUTE, the shape the other four hosts carry.
+  // An open window owns the keyboard on the way DOWN (the keydown arm
+  // above) and had never been told about the way up, so the automap
+  // this host mounts could neither close on DFU's key UP nor hold a
+  // key down for more than the browser's repeat.
+  letGoOnBlur(keys, null);   // KEYS-BLUR: a key held as the page lost focus is let go
+  addEventListener('keyup', (e) => {
+    keys.delete(e.code);
+    if (!overlay) return;
+    overlay.keyup?.(e.code, e);
+    drainOverlay();
+    if (!overlay && !gamePaused()) requestLook(canvas);
+  });
+  canvas.addEventListener('pointerdown', (e) => {
+    // An open window withholds the pointer lock (the dungeon.js law) -
+    // the drag has to work with the lock released.
+    if (overlay) {
+      const v = nativeAt(e);
+      if (v) overlay.pointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
+      drainOverlay();
+      return;
+    }
+    requestLook(canvas);
+  });
+  addEventListener('pointermove', (e) => {
+    if (!overlay) return;
+    const v = nativeAt(e);
+    // ROAD-G G4: THE EVENT RIDES THE HOVER, in this host too. Every
+    // other host has handed its overlay slot the DOM mousemove since
+    // ROAD-A7 (`e.buttons & 1` is the port's read of
+    // InputManager.GetMouseButton(0), which VerticalScrollBar.Update
+    // polls every frame, :105); this one dropped it, so a window
+    // mounted HERE could latch a thumb drag on the press and never
+    // move it. The four-hosts rule again: a seam three hosts carry and
+    // the fourth does not is a latch nothing errors on.
+    if (v) overlay.pointer?.('move', v[0], v[1], 0);
+    // AUDIT 64 F48 (the four-hosts rule again, one seam over): the
+    // MISS is an event too. townTalk.js, worldModes.js and dungeon.js
+    // all hand `hover` the (-1,-1) pointer-leave sentinel; this host
+    // dropped it, so a window whose hover CLEARS on a miss - the
+    // shared ToolTip, DaggerfallInventoryWindow.cs:981/:2200 - would
+    // keep its last text standing here alone.
+    overlay.hover?.(v ? v[0] : -1, v ? v[1] : -1, e);
+  });
+  addEventListener('pointerup', (e) => {
+    if (!overlay) return;
+    const v = nativeAt(e);
+    overlay.pointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
+    overlay.release?.();   // ROAD-E E1: the latch-dropping edge, for a window with no pointer seam (the list picker's thumb)
+    drainOverlay();
+  });
+  // AUDIT 65 UI-5: the point rides the notch here too (the four-hosts
+  // rule, one seam over from F48's miss above) - BaseScreenComponent
+  // .cs:725-736's scroll block is guarded by `mouseOverComponent`, which
+  // :577-594 recomputes each Update, so no window routes by a remembered
+  // hover; `nativeAt` is the hover arm's own arithmetic.
+  addEventListener('wheel', (e) => {
+    if (!overlay) return;
+    const v = nativeAt(e);
+    overlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
+  });
+  addEventListener('mousemove', (e) => {
+    if (document.pointerLockElement !== canvas) return;
+    // AUDIT 28 W7: the delta goes to the look filter's target, not the
+    // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
+    // at MouseLookSmoothingFactor. HANDEDNESS (mat4's law): mouse-right
+    // turns toward +x = screen-right; the pitch clamp is the filter's.
+    lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
+  });
+  const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
+    look: (dx, dy) => {
+      lookFilter.add(dx * lookScale(), -dy * lookScale() * lookInvert());   // AUDIT 28 W7: through the look filter (HANDEDNESS, mat4's law)
+    },
+    enhanced: isEnhanced(),   // AUDIT FONT F5: the layer's text in the pixel face under the enhanced skin - FONT1 wired this in scenes/world.js alone, so every OTHER host's touch buttons stayed system-ui
+  };
+  const touch = attachTouch(canvas, inputHooks);
+  const gamepad = attachGamepad(canvas, inputHooks);   // GP1: null without the Gamepad API
+
+  const shotMode = params.has('shot');
+  // DS1: the probe surface the exterior host carries - place the fly camera by script (tools/screenshot.mjs SHOT_EVAL)
+  if (shotMode) window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
+  // E3: the console's door. This host mounts no window that registers a
+  // command, but the database is one static class in DFU - every
+  // command registered anywhere is reachable from any scene - and the
+  // building's own automap registers the three map verbs from
+  // interiorContext, so the door is not empty here.
+  installConsoleProbe();
+  status(`${blockName}:${recordIndex} - ${ctx.drawList.length} draws`);
+  console.log(
+    `interior: ${ctx.drawList.length} models, ${ctx.dynamicDraws.length} action doors, ` +
+    `${ctx.flatCount} flats, ${ctx.markers.length} markers, ${ctx.doors.length} static doors, ` +
+    `climate ${climateBase}, season ${season}, ${ctx.texRemap.size} swaps, ${ctx.lights.length} lights, ${ctx.people.length} people`
+  );
+
+  let frames = 0;
+  let last = performance.now();
+  function frame(now) {
+    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - `last` kept, so the next drawn frame's dt covers it
+    const dt = Math.min(0.1, (now - last) / 1000);
+    // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
+    // three answers - paused (:241-244) returns before ApplyLook and the
+    // owed look WAITS; a held swing (:248-253, WeaponSwingMode 0, not a
+    // bow) is SetFacing(lookCurrent) - the owed look is DROPPED; else
+    // ApplySmoothing pays it out at the setting's fraction. Before the
+    // camera is read.
+    gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
+    if (!gamePaused()) {
+      if (false) lookFilter.settle();   // MAC-O2: the fourth LookFilter owner mounts NO weapon rig, so nothing here can hold SwingWeapon and swingSuppressesLook (lookFilter.js) has nothing to ask
+      else lookFilter.tick(dt, cam);
+      // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
+      // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
+      // here per second at the live sensitivity (ui/lookSettings.js),
+      // into the same filter the mouse feeds, owed to the NEXT tick as
+      // a mouse delta is. Additive with the mouse rather than DFU's
+      // override-for-the-frame (:1510-1511): a held turn key beside a
+      // moving mouse is not a case a player reaches on purpose.
+      const kb = keyboardLook(keys);
+      if (kb.x || kb.y) lookFilter.add(kb.x * keyboardLookRate() * dt, kb.y * keyboardLookRate() * dt * lookInvert());
+    }
+    last = now;
+    const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
+    const speed = (keys.has('ShiftLeft') ? 12 : 3) * dt;
+    if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
+    if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
+    if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
+    if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+
+    const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
+    const proj = mirrorProjectionX(perspective(fieldOfView(), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), 0.05, 500));   // HANDEDNESS (mat4's law); AUDIT RETRO1 A8: the hosts' one denominator
+    renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // AUDIT RETRO1 A8/C4: ViewportChanger.Update, as the other hosts - the retro pillarbox too
+    const view = lookAt(cam.pos, target, [0, 1, 0]);
+
+    // LT1: per-light range AND colour x intensity - AddLight's whole
+    // second switch reaches the GPU (interiorLightProperties).
+    iilSyncLane(renderer, true);   // IIL2
+    const _iil = iilActive(renderer.lightingLane) ? iilInteriorLights(ctx.lights, ctx.iilFireplaces ?? []) : null;   // IIL1 (worldModes.js's interior arm)
+    const lit = _iil
+      ? nearestLights(_iil.lights, cam.pos, renderer.maxPointLights, _iil.ranges, _iil.colorOf)
+      : nearestLights(ctx.lights, cam.pos, renderer.maxPointLights, ctx.lights.map((l) => l.range),   // EL1: the installed set's cap
+        (l) => interiorLightColor(!!renderer.lightingLane, l.color, l.intensity));   // INTERIOR-DIM (worldModes.js's interior arm)
+    renderer.setPointLights(lit.data, null, lit.colors);
+    renderer.everyLightCasts();   // DISC15: the dev route draws the building whole too
+    renderer.setSceneGrade?.(interiorGrade(!!renderer.lightingLane));   // INTERIOR-DIM: the room's grade (worldModes.js's interior arm)
+    renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
+    for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
+    // WM4b: the mill's machinery turns at Kamer's rate, in here too.
+    for (const r of ctx.rotors) {
+      advanceMachinery(r.state, dt, r.child);
+      renderer.drawMesh(r.gpu, mountMachineryChild(r.parent, r.child, r.state.angle), ctx.texRemap);
+      // WM4c: the part that carries Spin_Up hums (the gear; the roller's
+      // script adds no source). Retried until the context is up.
+      if (r.child.loopsSound && !r.hum) r.hum = audio.loop3d(MILL_SOUND.clip, machineryChildPos(r.parent, r.child), MILL_SOUND.volume, MILL_SOUND);
+    }
+    // Swing doors (P4) draw at rest through their ActionSystem matrices;
+    // the standalone scene has no activation path, so they stay closed.
+    for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
+    const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
+    ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
+    renderer.drawBillboards(ctx.billboardBatches, camRight, UP_Y);
+
+    // ROAD-C c2/S9: the 5 Hz reveal probes and the map over them. The
+    // probe PAUSES while the window is up: its driver is not Update but
+    // CoroutineCheckForNewlyDiscoveredMeshes (Automap.cs:1280-1291),
+    // whose body is `if (!isOpenAutomap) { CheckForNewlyDiscoveredMeshes(); }`
+    // - the coroutine keeps its 1/scanRate cadence and simply skips the
+    // scan, for the reason DFU states on the gate (SetActive(false) on
+    // the geometry would mess with the open map's rendering). Update's
+    // own call at :1001 is the one-shot lazy init, not a per-frame
+    // driver. dungeon.js:"if (!overlayHeld) ctx.automapTick?.(dt, cam.pos, fwd)" and worldModes.js:"if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd)"/worldModes.js:"if (!overlayHeld) interiorCtx.automapTick?.(dt, cam.pos, fwd)" gate the same
+    // way; this is that gate for this host.
+    lookGate(!!overlay);   // AUDIT-AMAP H8
+    if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
+    if (overlay) {
+      overlay.tick(dt);
+      drainOverlay();
+      if (overlay) overlay.draw(renderer, canvas, mapFont, 1);
+    }
+    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
+    deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
+
+    frames++;
+    if (shotMode && frames === 5) window.__shotReady = true;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}

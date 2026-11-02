@@ -1,0 +1,173 @@
+[
+  {
+    "name": "AUDITREP-F1-the-court's-charge-dropped",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (crimeId() !== 0) chargeOnce();\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-the-machine-clock-trusted",
+    "file": "src/systems/worldTick.js",
+    "old": "(_sharedClock && !_sharedClockHeard ? NaN : worldMinutes())",
+    "new": "worldMinutes()",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-an-untrusted-read-stamps",
+    "file": "src/systems/standing.js",
+    "old": "  if (!Number.isFinite(worldNow)) return true;\n  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
+    "new": "  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-the-court-stamps-NaN",
+    "file": "src/systems/standing.js",
+    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null; // BANISH-SKY: the calendar's thirty days",
+    "new": "  r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-the-street-on-the-machine-clock",
+    "file": "src/scenes/world.js",
+    "old": "worldNow: () => trustedWorldMinutes(),   // AUDIT REP F2: a banishment",
+    "new": "worldNow: () => worldMinutes(),   // AUDIT REP F2: a banishment",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-the-court-on-the-machine-clock",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "banish(playerEntity, region(), trustedWorldMinutes());",
+    "new": "banish(playerEntity, region(), Date.now());",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-the-temple-on-the-machine-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "worldNow: () => trustedWorldMinutes(),   // AUDIT REP F2: the pardon's term",
+    "new": "worldNow: () => worldMinutes(),   // AUDIT REP F2: the pardon's term",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-the-page-on-the-machine-clock",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "{ worldNow = trustedWorldMinutes() } = {}) {   // AUDIT REP F2",
+    "new": "{ worldNow = worldMinutes() } = {}) {   // AUDIT REP F2",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-the-page-drops-an-unknown-term",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (rep === 0 && left === 0) continue;",
+    "new": "if (rep === 0 && !Math.ceil(left / 1440)) continue;",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F2-the-priest-guesses-the-days",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "line(Number.isFinite(left) ? `You are banished",
+    "new": "line(true ? `You are banished",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F7-the-stop-through-Invisibility",
+    "file": "src/scenes/standingHost.js",
+    "old": "    if (isInvisible(playerEntity)) return false;\n    const region = regionIndex();",
+    "new": "    const region = regionIndex();",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F3-a-fight-no-block-(world)",
+    "file": "src/scenes/world.js",
+    "old": "\n      || duelEnemyNear() || areEnemiesNearby(exteriorFoes.foes)\n      // AUDIT NAV2 F10",
+    "new": "\n      // AUDIT NAV2 F10",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F3-a-fight-no-block-(exterior)",
+    "file": "src/scenes/exterior.js",
+    "old": " || areEnemiesNearby(exteriorFoes.foes),   // AUDIT REP F3",
+    "new": ",   // AUDIT REP F3",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F4-the-paid-offer-queued-before-the-field",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "        return [{ rows: o.grant() }];",
+    "new": "        return [{ rows: o.grant() }, ...ask(i + 1, tail)];",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F4-the-short-purse-sent-to-the-field",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "...ask(i + 1, [])];",
+    "new": "...ask(i + 1, tail)];",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F5-the-raid-written-past-the-door",
+    "file": "src/systems/raidingParties.js",
+    "old": "  changeLegalRep(player, region, Math.min(LEGAL_REP_MAX, Math.max(LEGAL_REP_MIN, rep + RAID_LEGAL_REP)) - rep, {\n    kind: 'raid',\n  });",
+    "new": "  player.legalRep[region] = Math.min(LEGAL_REP_MAX, Math.max(LEGAL_REP_MIN, rep + RAID_LEGAL_REP));",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-F5-the-raid's-words-lost",
+    "file": "src/scenes/standingHost.js",
+    "old": "    case 'raid':\n      return `${name} thanks you for its defense (${by}). You are ${word}.`; // AUDIT REP F5\n    default:",
+    "new": "    default:",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-MAC-the-crime-kept-through-the-death",
+    "file": "src/scenes/world.js",
+    "old": "    setCrimeCommitted(playerEntity, CRIMES.None);\n    arrestFlow.abandon();   // the surrender question withdrawn",
+    "new": "    arrestFlow.abandon();   // the surrender question withdrawn",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREP-MAC-the-chase-kept-through-the-death",
+    "file": "src/scenes/world.js",
+    "old": "    arrestFlow.abandon();   // the surrender question withdrawn, the chase's charge and slain watchman forgotten\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrep.test.js"
+    ]
+  }
+]

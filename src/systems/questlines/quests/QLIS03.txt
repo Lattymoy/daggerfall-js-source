@@ -1,0 +1,112 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE HARBOURMASTER'S WORD, step 3 of 3 - the
+-- line's last. Begun with a harbourmaster's word by a note, the harbourmaster waiting where the player stood when it
+-- came (`local tavern` - a port, most likely, a cargo just delivered). The act: a ship made to strike her colours
+-- (`ql act ship-struck 1` - systems/questlines/qlActs.js, the naval host's, by the player's own guns); then back to
+-- the harbourmaster for the purse. The giver is unnamed, as the registry's (qlLines.js "a harbourmaster").
+-- AUDIT QUESTLINES LINES-10: a Person is made fresh in each step's quest (a new name, in whatever town the player
+-- stands in), so this step's giver is introduced as NEW - sent on by the last step's - never spoken of as the same one.
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName).
+Quest: QLIS03
+DisplayName: Strike Your Colors
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          The harbormaster has hired a navy captain instead.
+
+QuestComplete:  [1004]
+<ce>         "You'll do, captain. You'll more than do." The
+<ce>       harbormaster counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A note came from _master_, harbormaster at
+ _tavern_ here in __tavern_ and a friend of the
+ one who sent me to sea. Pirates are taking ships
+ off this coast. I am to meet one at sea and make
+ her strike her colors, then come to _tavern_.
+
+Message:  1011
+Captain,
+
+     The harbormaster who sent you to sea says you
+ can sail and you can carry. Now the hard part.
+ There are ships off this coast that take other
+ ships, and the navy is never where they are.
+
+     Find one. Fight her. Make her strike her
+ colors - a ship that has struck is beaten, and her
+ crew know it. Then come and find me at _tavern_,
+ and drink on the harbor's purse.
+
+<ce>                             _master_, harbormaster
+
+Message:  1012
+<ce>           A runner from the docks hands you a note sealed
+<ce>              with tar. "From the harbormaster," the
+<ce>              runner says, and then, quietly, "Good luck."
+
+Message:  1013
+%qdt:
+ I have made a ship strike her colors. _master_
+ waits at _tavern_ in __tavern_ to hear of it.
+
+Message:  1014
+<ce>         "Not yet? Then they are still out there taking
+<ce>          ships. Go and make one of them strike, captain,
+<ce>          and then we drink."
+
+Message:  1015
+<ce>         "Struck her colors to you! The whole harbor is
+<ce>          talking of it." The harbormaster stands and
+<ce>          raises a cup. "To the captain. This coast has
+<ce>          one more than it had, and the pirates one fewer."
+
+Message:  1016
+The harbormaster at _tavern_ wants someone to fight the pirates the navy won't.
+<--->
+_master_? Runs the harbor. Lost three ships to pirates this season.
+<--->
+There's talk at _tavern_ of a new captain, sent up the coast by another harbormaster.
+
+QBN:
+Item _note_ letter used 1011
+Item _gold_ gold range 200 to 400
+
+Person _master_ group Resident1 anyInfo 1016
+Place _tavern_ local tavern
+
+Clock _word_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _master_ at _tavern_
+	start timer _word_
+
+_word_ task:
+	give pc _note_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_struck_ task:
+	ql act ship-struck 1
+	log 1013 step 1
+
+_qgclicked_ task:
+	clicked npc _master_
+
+_clearclick_ task:
+	when _qgclicked_ and not _struck_
+	say 1014
+	clear _qgclicked_ _clearclick_
+
+_paid_ task:
+	when _struck_ and _qgclicked_
+	say 1015
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

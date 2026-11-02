@@ -1,0 +1,158 @@
+[
+  {
+    "name": "AUDITGATHER-F1-seat-unread",
+    "file": "src/net/profBook.js",
+    "old": "const seatHeld = h.carry === true && SEAT_REFUSALS.includes(r?.error) && (h.tries | 0) > 0;",
+    "new": "const seatHeld = false;",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F1-carry-unasked",
+    "file": "src/net/profBook.js",
+    "old": "const seatHeld = h.carry === true && SEAT_REFUSALS.includes(r?.error) &&",
+    "new": "const seatHeld = SEAT_REFUSALS.includes(r?.error) &&",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F2-door-clock-unread",
+    "file": "server-account/src/motherlodes.js",
+    "old": "  if (!motherlodeOpen(lode, at) || nowS < lode.opensAt) return { error: 'motherlode-closed' };",
+    "new": "  if (!motherlodeOpen(lode, at)) return { error: 'motherlode-closed' };",
+    "tests": [
+      "test/net/auditgather_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F2-insert-clock-unread",
+    "file": "server-account/src/motherlodes.js",
+    "old": "      WHERE l.day = ?5 AND l.k = ?6 AND ?12 >= l.opens_at AND ?15 >= l.opens_at AND ?12 < l.closes_at",
+    "new": "      WHERE l.day = ?5 AND l.k = ?6 AND ?12 >= l.opens_at AND ?15 >= 0 AND ?12 < l.closes_at",
+    "tests": [
+      "test/net/auditgather_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "belt-and-braces, as the insert's own ?12 beside motherlodeOpen(lode, at): the door's nowS < lode.opensAt reads the same clock and the same row first, so the strike's insert never sees an early one - kept so the one statement that takes a slot holds the rule whole"
+  },
+  {
+    "name": "AUDITGATHER-F3-bound-unread",
+    "file": "server-account/src/professions.js",
+    "old": "const school = net.school && Number((await schoolsStatement(db, player.id, day).first())?.n ?? 0) < SCHOOL_HAULS_DAY;",
+    "new": "const school = net.school;",
+    "tests": [
+      "test/net/auditgather_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F3-one-over",
+    "file": "server-account/src/professions.js",
+    "old": "?.n ?? 0) < SCHOOL_HAULS_DAY;",
+    "new": "?.n ?? 0) <= SCHOOL_HAULS_DAY;",
+    "tests": [
+      "test/net/auditgather_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F4-picker-by-name",
+    "file": "src/scenes/world.js",
+    "old": "if (!listPickerArtLoaded() || (_profPicker && gamePaused())) return false;",
+    "new": "if (!listPickerArtLoaded() || _profPicker) return false;",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F5-turn-ends-nothing",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (was && was.kind !== 'haul' && was.kind !== 'body' && was.day !== d) goneAct();",
+    "new": "if (was && was.kind !== 'haul' && was.kind !== 'body' && was.day === d) goneAct();",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F5-veins-spared",
+    "file": "src/scenes/gatherHost.js",
+    "old": "was.kind !== 'haul' && was.kind !== 'body' && was.day",
+    "new": "was.kind !== 'vein' && was.kind !== 'haul' && was.kind !== 'body' && was.day",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F6-band-unread",
+    "file": "src/systems/fishAct.js",
+    "old": "    tugS: tugWindow(angler) * firmActMult('fishing') * band,",
+    "new": "    tugS: tugWindow(angler) * firmActMult('fishing'),",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F7-wet-unread",
+    "file": "src/systems/herbAct.js",
+    "old": "  const window = HERB_ACT.steadyDeg * band * (botanist ? HERB_ACT.botanist : 1) * sky * (wet ? HERB_ACT.wet : 1);",
+    "new": "  const window = HERB_ACT.steadyDeg * band * (botanist ? HERB_ACT.botanist : 1) * sky;",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F7-wet-law",
+    "file": "src/net/professionLaw.js",
+    "old": "export const HERB_ACT = Object.freeze({\n  commonS: 0.8,\n  steadyS: 2.5,\n  steadyDeg: 3,\n  moveM: 0.25,\n  botanist: 1.5,\n  wet: 0.8,\n}); // AUDIT GATHER F7: `wet` - rain wets the herbs, the steady window -20% (5.3)",
+    "new": "export const HERB_ACT = Object.freeze({ commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5, wet: 1 }); // AUDIT GATHER F7: `wet` - rain wets the herbs, the steady window -20% (5.3)",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F7-thunder-dry",
+    "file": "src/scenes/herbHost.js",
+    "old": "export const herbsWet = (weather = fallingWeather().word) => weather === 'rain' || weather === 'thunder';",
+    "new": "export const herbsWet = (weather = fallingWeather().word) => weather === 'rain';",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F7-host-dry",
+    "file": "src/scenes/herbHost.js",
+    "old": "          wet: herbsWet(),\n        }),",
+    "new": "        }),",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F7-sim-word",
+    "file": "src/scenes/herbHost.js",
+    "old": "export const herbsWet = (weather = fallingWeather().word) => weather === 'rain' || weather === 'thunder';",
+    "new": "export const herbsWet = (weather = 'rain') => weather === 'rain' || weather === 'thunder';",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F8-floor-a-pose",
+    "file": "src/net/peer/peerGather.js",
+    "old": "export const PEER_GATHER_CUE_MS = 75;",
+    "new": "export const PEER_GATHER_CUE_MS = 100;",
+    "tests": [
+      "test/systems/auditgather.test.js",
+      "test/systems/audit_gatherfeel.test.js"
+    ]
+  },
+  {
+    "name": "AUDITGATHER-F10-pow-again",
+    "file": "src/render/nodeGlow.js",
+    "old": "  float band = exp(-bq * bq) * across * up * (1.0 - uStill);",
+    "new": "  float band = exp(-pow(bq, 2.0)) * across * up * (1.0 - uStill);",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  }
+]

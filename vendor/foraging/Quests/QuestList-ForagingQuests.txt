@@ -1,0 +1,33 @@
+-- Foraging Quests quest pack list
+
+-- name:        filename of QRC txt file
+-- group:       guild group from FactionFile.GuildGroups enum
+-- membership:  N=non-member, M=member
+-- minRep:      minimum reputation required to be offered the quest (units can use X wildcard)
+-- notes:
+
+schema: *name, group, membership, minReq, flag, notes
+
+ChopWoodQuest, None, N, 0, 0, decide bonus after chopping and gathering wood with wood axe
+FishingQuest, None, N, 0, 0, decide bonus after foraging for fish with fishing net
+ForageFoodQuest, None, N, 0, 0, decide bonus after foraging for food with basket
+ForageAridPlantsQuest, None, N, 0, 0, forage for plant ingredients with sickle in the arid deserts
+ForageSummerPlantsQuest, None, N, 0, 0, forage for plant ingredients with sickle in the rainforest swamp or summer woodlands
+ForageWinterPlantsQuest, None, N, 0, 0, forage for plant ingredients with sickle in the mountains subtropical or winter woodlands
+GraveRobbingQuest, None, N, 0, 0, dig up a grave in a cemetery to rob its contents while not using chebs necromancy mod
+GraveRobbingQuestWeak, None, N, 0, 0, dig up a grave in a cemetery to rob its contents while not using chebs necromancy mod
+GraveRobbingQuestWeaker, None, N, 0, 0, dig up a grave in a cemetery to rob its contents while not using chebs necromancy mod
+GraveRobbingQuestWeakest, None, N, 0, 0, dig up a grave in a cemetery to rob its contents while not using chebs necromancy mod
+GraveRobbingCNQuest, None, N, 0, 0, dig up a grave in a cemetery to rob its contents while using chebs necromancy mod
+GraveRobbingCNQuestWeak, None, N, 0, 0, dig up a grave in a cemetery to rob its contents while using chebs necromancy mod
+GraveRobbingCNQuestWeaker, None, N, 0, 0, dig up a grave in a cemetery to rob its contents while using chebs necromancy mod
+GraveRobbingCNQuestWeakest, None, N, 0, 0, dig up a grave in a cemetery to rob its contents while using chebs necromancy mod
+MiningQuest, None, N, 0, 0, mine for gem or metal ingredients with pick axe
+MiningQuestWeak, None, N, 0, 0, mine for gem or metal ingredients with pick axe
+MiningQuestWeaker, None, N, 0, 0, mine for gem or metal ingredients with pick axe
+MiningQuestWeakest, None, N, 0, 0, mine for gem or metal ingredients with pick axe
+FetchWood01, Commoner, N, 0, 0, collect two wood bundles for a commoner who needs some firewood
+FetchWood02, Commoner, N, 10, 0, collect four wood bundles for a commoner who needs to stock up on firewood
+FetchWood03, Noble, N, 0, 0, collect six wood bundles for a noble who needs some wood for a witch burning
+FetchWood04, Noble, N, 10, 0, collect eight wood bundles for a noble who needs to build a scaffold for an execution or two
+

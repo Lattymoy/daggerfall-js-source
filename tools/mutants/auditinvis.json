@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AINV-A-sheet-opens-the-street-pack",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const interiorSheetDoors = () => ({ inventory: () => interiorInventory(), pause: () => interiorPauseHooks() });",
+    "new": "  const interiorSheetDoors = () => ({ pause: () => interiorPauseHooks() });",
+    "tests": [
+      "test/net/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-A-world-ignores-the-door",
+    "file": "src/scenes/world.js",
+    "old": "    inventory: inventory ?? (() => (inventoryDoorReady() ? makeInventoryWindow() : null)),",
+    "new": "    inventory: (() => (inventoryDoorReady() ? makeInventoryWindow() : null)),",
+    "tests": [
+      "test/net/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-B-hidden-owner-wagon-drawn",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) || p.offGround) return null;",
+    "new": "    if (!p?.wagon || !p.shownWagon || p.offGround) return null;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "AINV-B-parked-wagon-hidden-too",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) || p.offGround) return null;",
+    "new": "    if (!p?.wagon || !p.shownWagon || (p.hidden) || p.offGround) return null;",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "AINV-B-horse-plain",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (owner) b.conceal = conceal; }",
+    "new": "}",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "AINV-B-host-hands-no-look",
+    "file": "src/scenes/world.js",
+    "old": "  hcc.setPeerLook((id) => (_hiddenPeers.has(id) || !gateCrowd.shows(id) ? 'hidden' : (_veils.get(id) ?? null)));",
+    "new": "  hcc.setPeerLook(() => null);",
+    "tests": [
+      "test/systems/disc20.test.js"
+    ]
+  },
+  {
+    "name": "AINV-C-refused-drop-every-frame",
+    "file": "src/systems/handheldTorches.js",
+    "old": "      if (w.s.onStow > ON_STOW.Unequip && !(dropRefusal?.() ?? null)) dropLightSource(l);",
+    "new": "      if (w.s.onStow > ON_STOW.Unequip) dropLightSource(l);",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "AINV-D-windup-douses-a-refused-throw",
+    "file": "src/systems/handheldTorches.js",
+    "old": "        else if (!(dropRefusal?.() ?? null)) {",
+    "new": "        else {",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "AINV-E-maps-mark-the-hidden",
+    "file": "src/scenes/world.js",
+    "old": "  const partyOnMaps = () => partyNear().filter((m) => !_hiddenPeers.has(m.id));",
+    "new": "  const partyOnMaps = () => partyNear();",
+    "tests": [
+      "test/net/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-F-nearby-names-the-concealed",
+    "file": "src/scenes/world.js",
+    "old": "localRosterSource(s, openPeers(peersNear(), isPartyMate), player.feetAt())",
+    "new": "localRosterSource(s, (peersNear() ?? []), player.feetAt())",
+    "tests": [
+      "test/net/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-F-page-to-the-concealed",
+    "file": "src/scenes/world.js",
+    "old": "    return openPeers(near, isPartyMate).filter(crowdDrawnHere).map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
+    "new": "    return near.filter(crowdDrawnHere).map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
+    "tests": [
+      "test/net/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-G-hidden-drawn",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (hid) { if (hid === 'bar') this._shown.push({ peer, height: bodyHeight(peer.id) || PEER_HEIGHT, hid: true }); continue; }\n",
+    "new": "\n",
+    "tests": [
+      "test/net/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-G-hidden-silent",
+    "file": "src/scenes/world.js",
+    "old": "remotePlayers.sync(visiblePeers, onlineToScene,",
+    "new": "remotePlayers.sync(seen, onlineToScene,",
+    "tests": [
+      "test/net/invisnet.test.js"
+    ]
+  },
+  {
+    "name": "AINV-hidden-set-never-filled",
+    "file": "src/scenes/world.js",
+    "old": "      if (look.kind === 'hidden') { _hiddenPeers.add(d.id); continue; }",
+    "new": "      if (look.kind === 'hidden') { continue; }",
+    "tests": [
+      "test/net/invisnet.test.js"
+    ]
+  }
+]

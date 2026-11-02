@@ -1,0 +1,267 @@
+[
+  {
+    "name": "OW4-J1-no-start-range",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const mine = openBlocked && peakAt && peakAt(from.x, from.y) ? new Uint8Array(cells) : null;",
+    "new": "  const mine = null;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The start's own peaks are never filled: a traveller standing among them can never leave (every step out of a peak refused)."
+  },
+  {
+    "name": "OW4-J1-flood-not-filled",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "        if (!mine[n] && peakAt(nx, ny)) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "Only the start pixel itself is left freely - the first step is exempt, the next peak's is refused: a traveller deep in the peaks is stranded again."
+  },
+  {
+    "name": "OW4-J1-leaving-from-anywhere",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    const leaving = mine !== null && mine[cell] === 1;",
+    "new": "    const leaving = mine !== null;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A start among the peaks frees every step of the route: a road out of the traveller's range into another one is followed by a walk across that one too."
+  },
+  {
+    "name": "MOUNTAINS-WALKABLE-ground-names-peaks",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const peak = (_x, _y) => false; // MOUNTAINS WALKABLE: no pixel is a peak, so \"the mountains cannot be crossed\" never fires",
+    "new": "  const peak = (x, y) => climate[y * width + x] === TV_MOUNTAIN_CLIMATE;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js",
+      "test/systems/travel/tv6_dungeons.test.js",
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
+    "note": "MOUNTAINS WALKABLE undone in the host's ground: a Mountain pixel is a peak again - a spot there refused (\"The mountains cannot be crossed on foot.\"). Re-aimed from OW4-J1-ground-no-peaks, which the merge made equivalent (no pixel is a peak)."
+  },
+  {
+    "name": "MOUNTAINS-WALKABLE-ground-refuses",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by); // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not",
+    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) =>\n    ghostfenceShuts(bx, by) || (!leaving && climateOf(bx, by) === TV_MOUNTAIN_CLIMATE); // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js",
+      "test/systems/travel/tv6_dungeons.test.js",
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
+    "note": "MOUNTAINS WALKABLE undone in the host's ground: an open step into the Mountain climate is refused again - the route goes round the range, a spot in it has no way."
+  },
+  {
+    "name": "OW4-J2-route-not-held",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    const route = st.route;   // AUDIT OW4 J2",
+    "new": "    const route = null;   // AUDIT OW4 J2",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The route is read after the panel's Camp ended a spot's journey: the avoid roll's followPath makes it 'Following a road' or 'no path'."
+  },
+  {
+    "name": "OW4-J2-not-resumed",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      if (route) { st.route = route; resumeRoute(); }",
+    "new": "      if (false) { st.route = route; resumeRoute(); }",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A won avoid roll on a spot's journey falls to the mod's followPath - the spot journey (and a TV8 walk) lost."
+  },
+  {
+    "name": "OW4-J3-no-whole-map-rung",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "export const ROUTE_MARGINS = Object.freeze([6, 20, 60, MAP_W]);",
+    "new": "export const ROUTE_MARGINS = Object.freeze([6, 20, 60]);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A range wider than the 60-pixel box answers 'no way by land' again."
+  },
+  {
+    "name": "OW4-J3-rung-repeated",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (key === box) continue;\n    // AUDIT OW4 J3: a pick the first box could not route asks the land's pieces (routeGround `apart`) before any wider",
+    "new": "    // AUDIT OW4 J3: a pick the first box could not route asks the land's pieces (routeGround `apart`) before any wider",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A rung the map's edges clamp to the last one's box searches the same box again (a far pick's whole-map search made twice)."
+  },
+  {
+    "name": "OW4-J3-pieces-never-asked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (box && !best && !asked && apart && !sea) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A pick with no way by land searches every box to the whole map before it says so (~70-380 ms a click)."
+  },
+  {
+    "name": "OW4-J3-pieces-folded-for-every-click",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (box && !best && !asked && apart && !sea) {",
+    "new": "    if (!best && !asked && apart && !sea) {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The pieces are asked before the first box: a click the first box routes pays the whole-map fold (~0.15 s) all the same."
+  },
+  {
+    "name": "OW4-J3-unentered-pixels-join",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "          if (!((entered[a] && out[a] & bit) || (entered[b] && out[b] & BACK_BIT[bit]))) continue;",
+    "new": "          if (!(out[a] & bit || out[b] & BACK_BIT[bit])) continue;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A pixel no step enters (a one-pixel ridge) joins the pieces either side of it, so a pick across it is searched to the whole map."
+  },
+  {
+    "name": "OW4-J3-start-neighbours-dropped",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      const mine = about(from);",
+    "new": "      const mine = new Set([root[from.y * width + from.x]]);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A start no step enters (the shore's sea pixel) is a piece of its own: a false 'no way by land'."
+  },
+  {
+    "name": "OW4-J3-edge-back-empty",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "for (const [bit, back] of Object.entries(OPPOSITE_BIT)) BACK_BIT[Number(bit)] = back;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The edge back's table is empty: no step is ever a road's - every route crosses country."
+  },
+  {
+    "name": "OW4-J3-ground-read-every-click",
+    "file": "src/scenes/world.js",
+    "old": "    (_tvRouteGround ??= routeGround(",
+    "new": "    (_tvRouteGround = routeGround(",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The two map tables are copied and the pieces folded again at every click."
+  },
+  {
+    "name": "OW4-J4-mod-resume",
+    "file": "src/scenes/world.js",
+    "old": "      onResumeTravel: () => { travelViewResume(); },",
+    "new": "      onResumeTravel: () => { travelOptions?.resumeTravel(); },",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The map's Resume walks straight from wherever the traveller is to the next leg - over the peaks after a walk by hand, a fight or a respawn."
+  },
+  {
+    "name": "OW4-J4-place-not-replanned",
+    "file": "src/scenes/world.js",
+    "old": "    if (r.summary) travelViewRouteTo(r.summary, { roads });",
+    "new": "    if (r.summary) travelOptions.resumeTravel();",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A place's Resume on the enhanced interface is the mod's straight walk again."
+  },
+  {
+    "name": "OW4-J5-ground-drive-at-rate",
+    "file": "src/scenes/world.js",
+    "old": "    if (journey && !travelView?.active && tvOwnsJourneys()) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "An Overworld journey with its view down (an avoided band still near) drives on the ground at the spinner's rate, ungoverned - Mac's lag."
+  },
+  {
+    "name": "OW4-J6-quad-upright",
+    "file": "src/combat/fpArm.js",
+    "old": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx, glowLook: padLooks }, proj, view, eye);",
+    "new": "{ center, halfW, halfH, anchor, hitFlash, conceal, fx, glowLook: padLooks }, proj, view, eye);",
+    "tests": [
+      "test/render/prbow1_bow.test.js"
+    ],
+    "note": "drawThird drops the view's up: the picture taken down the pitched ray is pasted upright and foreshortened twice."
+  },
+  {
+    "name": "OW4-J6-mwview-no-up",
+    "file": "src/player/mwView.js",
+    "old": "  return fpArm.drawThird(canvas, {\n    proj,\n    view,\n    eye,\n    feet,\n    yaw,\n    grow: face?.grow > 1 ? face.grow : 1,\n    up: face?.up ?? null,\n    horse,\n  });",
+    "new": "  return fpArm.drawThird(canvas, { proj, view, eye, feet, yaw, grow: face?.grow > 1 ? face.grow : 1, horse });",
+    "tests": [
+      "test/render/prbow1_bow.test.js",
+      "test/formats/morrowind/prbow1b_followups.test.js"
+    ],
+    "note": "The local body's draw never hands the travel view's up to drawThird."
+  },
+  {
+    "name": "OW4-J6-renderer-upright",
+    "file": "src/render/renderer.js",
+    "old": "    const ux = up ? up[0] * halfH : 0, uy = up ? up[1] * halfH : halfH, uz = up ? up[2] * halfH : 0;",
+    "new": "    const ux = 0, uy = halfH, uz = 0;",
+    "tests": [
+      "test/render/prbow1_bow.test.js"
+    ],
+    "note": "The renderer builds every body quad upright whatever it is told."
+  },
+  {
+    "name": "OW4-J6-anchor-landed-upright",
+    "file": "src/render/characterSprite.js",
+    "old": "landAnchor(center, anchor, camDir, right, qUp);",
+    "new": "landAnchor(center, anchor, camDir, right);",
+    "tests": [
+      "test/render/prbow1_bow.test.js"
+    ],
+    "note": "The leaned quad stands where an upright one would: the body's axis point no longer draws on itself."
+  },
+  {
+    "name": "OW4-J6-landAnchor-world-up",
+    "file": "src/render/characterSprite.js",
+    "old": "  return [anchor[0] - right[0] * px - quadUp[0] * py, anchor[1] - right[1] * px - quadUp[1] * py, anchor[2] - right[2] * px - quadUp[2] * py];",
+    "new": "  return [anchor[0] - right[0] * px, anchor[1] - py, anchor[2] - right[2] * px];",
+    "tests": [
+      "test/render/prbow1_bow.test.js"
+    ],
+    "note": "landAnchor ignores the lean and moves the quad down world up."
+  },
+  {
+    "name": "OW4-J6-resolution-upright",
+    "file": "src/render/characterSprite.js",
+    "old": "  const screenPxH = Math.abs(prjY(at[0] + qUp[0] * halfH, at[1] + qUp[1] * halfH, at[2] + qUp[2] * halfH) - prjY(at[0] - qUp[0] * halfH, at[1] - qUp[1] * halfH, at[2] - qUp[2] * halfH))",
+    "new": "  const screenPxH = Math.abs(prjY(at[0], at[1] + halfH, at[2]) - prjY(at[0], at[1] - halfH, at[2]))",
+    "tests": [
+      "test/render/prbow1_bow.test.js"
+    ],
+    "note": "The leaned quad's resolution is read upright: its texels grow past MW_ARM_PIXEL."
+  },
+  {
+    "name": "OW4-J7-bare-interrupt",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "        if (dc > st.diseaseCount) { if (ui?.isShowing) ui.closeWindow(); if (st.autopilot) interruptTravel(); deps.showHealthStatus?.(); }",
+    "new": "        if (dc > st.diseaseCount) { interruptTravel(); deps.showHealthStatus?.(); }",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ],
+    "note": "A new disease interrupts past the panel: it stays up over no autopilot - no Resume offered, the Overworld never rises."
+  },
+  {
+    "name": "OW4-J7-no-guard",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "if (ui?.isShowing) ui.closeWindow(); if (st.autopilot) interruptTravel(); deps.showHealthStatus?.();",
+    "new": "if (ui?.isShowing) ui.closeWindow(); deps.showHealthStatus?.();",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ],
+    "note": "A host whose panel does not interrupt keeps driving through the disease stop (ROAD-CRASH's guard gone)."
+  }
+]

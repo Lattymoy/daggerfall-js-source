@@ -1,0 +1,308 @@
+[
+  {
+    "name": "WAYOUT1-the-cell-off-its-middle",
+    "file": "src/systems/wayOut.js",
+    "old": "    cells.pts.push([(x + 0.5) * TRAIL_CELL, y, (z + 0.5) * TRAIL_CELL]);",
+    "new": "    cells.pts.push([x * TRAIL_CELL, y, z * TRAIL_CELL]);",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-snap-unbounded",
+    "file": "src/systems/wayOut.js",
+    "old": "    bestD = snap;",
+    "new": "    bestD = Infinity;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-a-cliff-is-a-step",
+    "file": "src/systems/wayOut.js",
+    "old": "          if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;",
+    "new": "          if (seen[j]) continue;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-a-teleporter-both-ways",
+    "file": "src/systems/wayOut.js",
+    "old": "      const l = back.get(b);\n      if (l) l.push(a);\n      else back.set(b, [a]);",
+    "new": "      for (const [x, y] of [\n        [a, b],\n        [b, a],\n      ]) {\n        const l = back.get(y);\n        if (l) l.push(x);\n        else back.set(y, [x]);\n      }",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-jump-unmarked",
+    "file": "src/systems/wayOut.js",
+    "old": "      jump[j] = 1;\n      queue[tail++] = j;",
+    "new": "      queue[tail++] = j;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-past-the-jump",
+    "file": "src/systems/wayOut.js",
+    "old": "    if (field.jump[i] === 1) {\n      first ??= cells.pts[i];\n      break;\n    } // the teleporter's own cell: the mark stands on it\n    const j = field.next[i];",
+    "new": "    const j = field.next[i];",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-nearest-seen",
+    "file": "src/systems/wayOut.js",
+    "old": "    if (sees(p)) best = p;",
+    "new": "    if (sees(p)) best ??= p;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-look-unbounded",
+    "file": "src/systems/wayOut.js",
+    "old": "  for (let s = 0; s < look; s++) {",
+    "new": "  for (let s = 0; s < look * 3; s++) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-unseen-is-the-way-in",
+    "file": "src/systems/wayOut.js",
+    "old": "  return best ?? first ?? cells.pts[from];",
+    "new": "  return best ?? cells.pts[from];",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-at-the-door-still-marked",
+    "file": "src/systems/wayOut.js",
+    "old": "      if (\n        Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M &&\n        Math.abs(exitAt[1] - feet[1]) <= WAY_STEP_DY * 2\n      )\n        return null;\n      const n = trail?.size ?? 0;",
+    "new": "      const n = trail?.size ?? 0;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-no-walked-way-no-mark",
+    "file": "src/systems/wayOut.js",
+    "old": "      return p ? [p[0], p[2]] : [exitAt[0], exitAt[2]]; // no walked way: the way in, as the crow flies",
+    "new": "      return p ? [p[0], p[2]] : null; // no walked way: the way in, as the crow flies",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-rebuilt-every-frame",
+    "file": "src/systems/wayOut.js",
+    "old": "      if (\n        (walled && nowS - builtAt >= fieldEvery) ||\n        (grown && nowS - builtAt >= refieldEvery) ||\n        (!onField(from) && nowS - builtAt >= offWait)\n      ) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-another-run-waits",
+    "file": "src/systems/wayOut.js",
+    "old": "      if (!cells || n < size || ek !== exitKey) {",
+    "new": "      if (!cells || ek !== exitKey) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-before-the-way-in-is-found",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " || !sm || !automapRec?.entranceDiscovered) { _wayAt = null; return null; }",
+    "new": " || !sm) { _wayAt = null; return null; }",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "WAYOUT1-the-compass-left-blank",
+    "file": "src/ui/hud/hud.js",
+    "old": "      wayOut: wayOut ?? null,",
+    "new": "      wayOut: null,",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B1-the-step-unfilled",
+    "file": "src/systems/automap/automap.js",
+    "old": "  if (d > TRAIL_CELL && d <= reach) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B1-a-teleport-filled",
+    "file": "src/systems/automap/automap.js",
+    "old": "  if (d > TRAIL_CELL && d <= reach) {",
+    "new": "  if (d > TRAIL_CELL && d <= reach * 10) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B1-the-fill-too-coarse",
+    "file": "src/systems/automap/automap.js",
+    "old": "Math.ceil(d / (TRAIL_CELL / 2))",
+    "new": "Math.ceil(d / (TRAIL_CELL * 2))",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C4-no-diagonal",
+    "file": "src/systems/wayOut.js",
+    "old": "        for (const j of cells.col.get(cellColumn(cx + dx, cz + dz)) ?? []) {",
+    "new": "        if (dx && dz) continue;\n        for (const j of cells.col.get(cellColumn(cx + dx, cz + dz)) ?? []) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C4-no-same-column",
+    "file": "src/systems/wayOut.js",
+    "old": "        for (const j of cells.col.get(cellColumn(cx + dx, cz + dz)) ?? []) {",
+    "new": "        if (!dx && !dz) continue;\n        for (const j of cells.col.get(cellColumn(cx + dx, cz + dz)) ?? []) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C4-a-step-and-a-half",
+    "file": "src/systems/wayOut.js",
+    "old": "          if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;",
+    "new": "          if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY * 1.5) continue;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C4-the-snap-flat",
+    "file": "src/systems/wayOut.js",
+    "old": "        const d = Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]);",
+    "new": "        const d = Math.hypot(q[0] - p[0], q[2] - p[2]);",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C4-there-a-storey-up",
+    "file": "src/systems/wayOut.js",
+    "old": "      if (\n        Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M &&\n        Math.abs(exitAt[1] - feet[1]) <= WAY_STEP_DY * 2\n      )\n        return null;",
+    "new": "      if (Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M) return null;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C4-the-moved-exit-kept",
+    "file": "src/systems/wayOut.js",
+    "old": "      if (!cells || n < size || ek !== exitKey) {",
+    "new": "      if (!cells || n < size) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C4-reset-forgets-nothing",
+    "file": "src/systems/wayOut.js",
+    "old": "  const reset = () => {\n    size = -1;\n    builtAt = -Infinity;\n    exitKey = '';\n    portalCount = -1;\n    covered = 0;\n    offWait = fieldEvery;\n    walled = false;\n    cells = null;\n    field = null;\n    asked = new Map();\n    pending = [];\n    pendingAt = 0;\n  };",
+    "new": "  const reset = () => {};",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B3-a-walked-teleporter-waits",
+    "file": "src/systems/wayOut.js",
+    "old": "      if (!field || tps.length !== portalCount) build();",
+    "new": "      if (!field) build();",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C9-never-asked",
+    "file": "src/systems/wayOut.js",
+    "old": "          if (asked.has(k)) continue;\n          const ok = stepClear(c.pts[i], c.pts[j]) !== false;",
+    "new": "          if (asked.has(k)) continue;\n          const ok = true;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C9-asked-every-build",
+    "file": "src/systems/wayOut.js",
+    "old": "            if (known !== undefined) return known;\n            if (!spend()) {",
+    "new": "            if (!spend()) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C9-no-budget",
+    "file": "src/systems/wayOut.js",
+    "old": "            if (!spend()) {\n              pending.push(i, j);\n              return true;\n            } // asked in the aims that follow; clear until then\n            const ok = stepClear(c.pts[i], c.pts[j]) !== false;",
+    "new": "            const ok = stepClear(c.pts[i], c.pts[j]) !== false;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C9-the-rest-never-asked",
+    "file": "src/systems/wayOut.js",
+    "old": "        while (pendingAt < pending.length && spend()) {",
+    "new": "        while (false) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B2-built-whenever-it-grows",
+    "file": "src/systems/wayOut.js",
+    "old": "      if (\n        (walled && nowS - builtAt >= fieldEvery) ||\n        (grown && nowS - builtAt >= refieldEvery) ||\n        (!onField(from) && nowS - builtAt >= offWait)\n      ) {",
+    "new": "      if ((walled && nowS - builtAt >= fieldEvery) || grown || (!onField(from) && nowS - builtAt >= offWait)) {",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B2-read-whole-every-time",
+    "file": "src/systems/wayOut.js",
+    "old": "    if (k++ < cells.read) continue;",
+    "new": "    k++;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C9-the-cell-s-own-wall-cuts",
+    "file": "src/systems/wayOut.js",
+    "old": "export const stepHitCuts = (hit, len, end = WAY_STEP_END_M) => Number.isFinite(hit) && hit > end && hit < len - end;",
+    "new": "export const stepHitCuts = (hit, len, end = WAY_STEP_END_M) => Number.isFinite(hit) && hit < len;",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C9-the-host-cuts-at-the-ends",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "return !stepHitCuts(collider.raycast(a, [dx / len, dy / len, dz / len], len, PROF_VEIN_ONLY), len);",
+    "new": "return !(collider.raycast(a, [dx / len, dy / len, dz / len], len, PROF_VEIN_ONLY) < len);",
+    "tests": [
+      "test/systems/wayout1_wayout.test.js"
+    ]
+  }
+]

@@ -1,0 +1,1675 @@
+// T3b: the town interaction seam (DFU PlayerActivate + TalkManager,
+// MIT Daggerfall Workshop), shared by BOTH exterior motor hosts (the
+// standing host rule). One module owns: the interaction modes
+// (Steal/Grab/Info/Talk through the registry's StealMode/GrabMode/
+// InfoMode/TalkMode actions - the classic F1-F4 are their DEFAULTS -
+// with "Interaction is now in %s mode."), the activation ray against live townsfolk
+// (mobile NPC distance 256 units = 6.4; pickpocket 128 = 3.2 with
+// the localized 'youAreTooFarAway' beyond it), the reaction roll through the
+// region's People faction, the mobile talk session (greeting window
+// or the 7205 refusal box as a HUD line), and pickpocketing.
+//
+// The hosts supply live persons (world-space feet + billboard size)
+// and call keydown/tryActivate/frame; the seam lazily loads
+// FACTION.TXT + TEXT.RSC + FONT0003 through the host's fetchBytes.
+// Overlay active = the motor holds (the U3 seam shape).
+//
+// ROAD-D D10 closed the last of this header's open clauses, and each
+// deserves its record:
+//   - Info mode opening the same talk window was never a gap:
+//     PlayerActivate.cs:775-783 falls Info, Grab and Talk on a mobile
+//     through to the same TalkToMobileNPC call.
+//   - THE TFAC PORTRAIT SHIPPED. SetNPCPortrait
+//     (DaggerfallTalkWindow.cs:360-385) is called from SetTargetNPC,
+//     before the push, so it rides openTalkWindow's `portrait` option
+//     below - CommonFaces (TFAC00I0.RCI) at SetPerson's minted record
+//     for a mobile (TalkManager.cs:817, systems/town/townPopulation.js's
+//     _setFaceRecord), and GetPortraitIndexFromStaticNPCBillboard's
+//     archive/record pair for a static NPC (:849, the law in
+//     systems/npcSession.js, wired at scenes/worldModes.js).
+//   - THE PICKPOCKET BOX SWAPPED. Pickpocket (PlayerActivate.cs:
+//     1611-1660) raises a real MessageBox for both success arms and
+//     leaves only the failure on the HUD, which systems/talk/talk.js now
+//     reports as `modal` and the steal arm below routes on.
+
+import { FactionFile } from '../formats/factionFile.js';
+import { addCustomFactions } from '../systems/faction/factionRep.js';   // RR3: a mod's registered factions, on this reader too
+import { racialSuppressTalk } from '../systems/lycanthropy.js';   // V4: the transformed talk refusal
+import { TextRsc } from '../formats/textRsc.js';
+import { FntFile } from '../formats/fntFile.js';
+import { makeFont } from '../ui/text.js';
+import { HudText } from '../ui/hud/hudText.js';
+import { TalkWindow } from '../ui/talkWindow.js';
+import { hudScale } from '../ui/hud/hud.js';
+import { hudRenderEnabled } from '../ui/hud/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
+import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: the HUD's OTHER text surface, and its notebook tail
+import { overlayAction, actionsOf, isTextEntryTarget, isDomControlTarget, isDomFocusWalk } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
+import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
+import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
+import {
+  getPeopleOfCurrentRegion, getReactionToPlayer, pickpocket, findFactions,
+  MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
+} from '../systems/talk/talk.js';
+// AUDIT 58 (talk lane): the reach refusal is ONE localized key -
+// TextManager 'youAreTooFarAway' (Internal_Strings.csv:22), spoken by
+// ActivateMobileNPC at PlayerActivate.cs:780 and :790 - so it is one
+// constant, in PlayerActivate's own module. These three sites spelled
+// it with a full stop while systems/bulletinBoard.js spelled the same
+// key with the table's ellipsis, so one session showed the player two
+// sentences for one string.
+import { tooFarAwayText } from '../player/activate.js';
+import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talk/talkSession.js';
+import { REGION_RACES } from '../formats/mapsFile.js';
+import { REGION_PEOPLE } from '../formats/mapsTables.js';   // WW-R: each region's people, a province's its own
+import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js'; import { shownFactionNames, generateBuildingName } from '../world/buildingNames.js';   // L10N3e: the place names shown, and the faction names a guild hall and a temple show; IC-PROPS: a building of another town named by its own
+import { ChoiceWindow } from '../ui/talkWindow.js';
+import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint, toneTaste } from '../systems/talk/talkTopics.js';
+import { yardDirectoryRows } from '../systems/merchantYards.js';   // YARDS-FOUND: the town's yards in its directory
+import { portDirectoryRows, FOUND_KIND_ORDER, FOUND_TALK_GROUPS, lettersOnMap } from '../systems/portPlaces.js';   // SHIPYARDS-FOUND: and a port town's shipyard, crew hall, lighthouse and docks - the found places' one order
+import { OPENED_SHOP_TYPES, OPENED_SHOP_GROUPS } from '../world/buildingNames.js';   // PROF-FOUND: the shops the port opened, asked after
+import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
+import { discoverBuilding, townBookId, townBookOf } from '../systems/discovery.js';   // T4: %loc's mark side effect; BAY-LEFT-MAPS (C7 = E2): its town's own book; IC-PROPS: a door's town's
+import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
+import { personName } from '../characters/personNames.js';   // REGION-NAMES
+import { talkMacroSource } from '../systems/talk/talkMacros.js';
+import { bumpSeed } from '../formats/dfRandom.js';
+import { FACTION_TYPES } from '../formats/factionFile.js';
+import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
+import { liveStat } from '../systems/statMods.js';   // AUDIT 63 F4: TalkManager.cs:665 reads Stats.LivePersonality (DaggerfallStats.cs:55), not the base
+import { ActionTextBox } from '../ui/actionText.js';   // ROAD-D D10: DaggerfallUI.MessageBox, the port's parchment
+import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this slot and this PopupText, offered to the one door every message goes through - and the door itself, for this host's own box seam
+import { preloadTalkArt, setNpcPortrait, clearNpcPortrait } from '../ui/native/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
+import { npcHeadImage } from '../characters/headPortraits.js';   // PORTRAIT3D: the face as the head the body wears
+import { createTalkWindow, talkDoorReady } from '../ui/talkDoor.js';   // ET1: the ONE door - the classic window or the enhanced panel over it
+import { requestLook } from '../player/pointerLock.js';   // ET1: the panel's Goodbye relocks inside its own gesture (MAC1)
+import { nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';   // U8b: pointer routing
+import { preloadExteriorAutomapArt } from '../ui/exteriorAutomapWindow.js';   // ROAD-C c2/S10: the town map's native art
+
+export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> index (DFU TalkToneToIndex)
+
+// R1: the mode itself moved to player/interactionMode.js (DFU's
+// currentMode is GLOBAL - the dungeon door ladder reads it too);
+// townTalk keeps the keydown, the HUD line and these re-exports.
+export { MODES, nextInteractionMode } from '../player/interactionMode.js';
+import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode, interactionModeText, askInteractionMode } from '../player/interactionMode.js';
+import { modeWheel, MODE_WHEEL_ACTION } from '../ui/modeWheel.js';   // MODE-WHEEL: the held key's wheel
+import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
+import { friendLine } from '../systems/livingWorld/friendWord.js';   // FIELD BUGS 2026-10-21d REGARD-OWN: a friend made, said
+// AUDIT 58 (talk lane): the four modes ride the keybinding registry
+// now - MODE_ACTIONS lives beside the mode it sets
+// (player/interactionMode.js), because PlayerActivate.cs:221-228 reads
+// InputManager ACTIONS and F1-F4 are only their defaults.
+export const PERSON_HIT_RADIUS = 0.45;   // MobilePersonNPC controller radius
+export const PERSON_HIT_HEIGHT = 1.8;
+
+/** Ray vs a vertical cylinder at feet (the person's controller):
+ *  returns the along-ray distance or Infinity. */
+/**
+ * THE NEAREST TOWNSPERSON UNDER THE RAY - the press's own scan, lifted.
+ *
+ * AUDIT-WH H2. `tryActivate` below walked the street pool inline, and
+ * the world hover needed the same answer to race a townsperson against
+ * a shopfront (the mod's .cs:299-302 band). A second walk written at
+ * the plaque is the HARD2 failure in miniature: only a readout would
+ * read it, so nobody would notice it drifting from the one the button
+ * takes. One scan, two readers.
+ *
+ * The INDEX comes back with the entry because the plaque keys its
+ * frame by it - `mobileNpc:<i>` into the host's own live pool, the
+ * same shape worldModes' static `person:<i>` already uses.
+ *
+ * @returns {{entry: object, index: number, distance: number}|null}
+ */
+export function nearestPerson(camPos, fwd, persons) {
+  let best = null, bestI = -1, bestDist = Infinity;
+  let i = -1;
+  for (const p of persons ?? []) {
+    i += 1;
+    const d = rayPersonDistance(camPos, fwd, p.pos);
+    if (d < bestDist) { best = p; bestI = i; bestDist = d; }
+  }
+  return best ? { entry: best, index: bestI, distance: bestDist } : null;
+}
+
+export function rayPersonDistance(camPos, fwd, feet) {
+  const cx = feet[0] - camPos[0], cz = feet[2] - camPos[2];
+  // closest approach in XZ
+  const fl = Math.hypot(fwd[0], fwd[2]) || 1e-6;
+  const dx = fwd[0] / fl, dz = fwd[2] / fl;
+  const t = cx * dx + cz * dz;
+  if (t <= 0) return Infinity;
+  const px = cx - dx * t, pz = cz - dz * t;
+  if (Math.hypot(px, pz) > PERSON_HIT_RADIUS) return Infinity;
+  // height gate at the hit point
+  const y = camPos[1] + fwd[1] * (t / fl);
+  if (y < feet[1] - 0.1 || y > feet[1] + PERSON_HIT_HEIGHT + 0.1) return Infinity;
+  return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
+}
+
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, nameBank = null, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, keysLive = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, taste)` a question's tone, as they took it (TONE-TASTE)   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+  // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
+  //
+  // This took a plain number, and the world host had no choice but to
+  // hand it `startLoc.regionIndex` - so every region-keyed answer in
+  // this module stayed the BOOT region's for the whole session, however
+  // far the player streamed. Three things went stale together: the
+  // wandering NPC race (computed once, right below), the People faction
+  // the reaction law reads (resolved once inside ensureLoaded), and -
+  // worst - the map-discovery KEY, which files a building under
+  // `${region}:${city}`. A building discovered in Daggerfall after
+  // walking out of Betony was filed under Betony.
+  //
+  // `regionIndex` now takes a NUMBER or a GETTER. The dev hosts, which
+  // each build exactly one location and cannot stream out of it, keep
+  // passing their number; the world host passes its live
+  // PlayerGPS.CurrentRegionIndex read.
+  const regionNow = typeof regionIndex === 'function' ? regionIndex : () => regionIndex;
+  /** TESA3: the people's name bank where the player stands, when the host answers one (the world host past the Bay: the
+   *  province's - world/tamrielPeople.js), else null and the region's (GetNameBankOfRegion) as ever. */
+  const provinceBank = () => (typeof nameBank === 'function' ? nameBank() : null) ?? null;
+  /** TK-v: the talk engine, or null before it is built / with no
+   *  game data. A getter, because world.js wires the four modules to
+   *  each other and can only hand them over once all four exist. */
+  const engine = () => (typeof talkEngine === 'function' ? talkEngine() : talkEngine);
+  const hud = new HudText('town');   // AUDIT FONT F1: this host's own PopupText model, and its own DOM column under the enhanced skin - scenes/dungeonContext.js has a second one and the two used to share one element
+  let _notebookSink = null;   // AUDIT 63 F5: the host's PlayerNotebook.AddNote(tokens)
+  let font = null, factions = null, textRsc = null, people = null;
+  // RP1: which region `people` was resolved for. FACTION.TXT is parsed
+  // once and kept; only the per-region LOOKUP re-runs, and only when
+  // the region actually changes - a border crossing, not every frame.
+  let _peopleRegion = null;
+  const peopleNow = () => {
+    if (!factions) return people;
+    const r = regionNow();
+    if (r !== _peopleRegion) { _peopleRegion = r; people = getPeopleOfCurrentRegion(factions.factionDict, r); }
+    return people;
+  };
+  let overlay = null;
+  /** AUDIT ENH-NOTICE3 C2 - WHEN THE TOASTS GO, AND WHEN THEY STAY.
+   *  DFU paints PopupText as part of the HUD window, which is the
+   *  BOTTOM of the stack (DaggerfallUI.cs:407-408), and a popup's Draw
+   *  paints its previousWindow first, dimmed (DaggerfallPopupWindow.cs
+   *  :77-85); every DaggerfallUI.MessageBox passes the then-top as
+   *  previousWindow (:1328-1362). So under a pushed BOX the rows stay;
+   *  under a window that cuts the chain (the inventory, the rest, the
+   *  sheet) they go. AUDIT FONT F4 asked "is the slot occupied", which
+   *  hid the toasts under the very box the notice stack was built to
+   *  stand beside; the question is the chain's - `hudCovered`, AUDIT 64
+   *  F35's port of it, on this slot and on the mode host's (the outer
+   *  hosts hand `modes.hudCovered` in) - and the held map's outright
+   *  HUD hide (MAP-FIELD2's `hidesHud`) beside it. */
+  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();
+  /** ROAD-B B1: the DEPTH under this host's one slot. `overlay` is the
+   *  live top - every draw, key, click and drain in this file already
+   *  reads it - and the stack (UserInterfaceManager.cs, ported in
+   *  ui/windowStack.js) carries what is suspended beneath.
+   *
+   *  showOverlay stays a REPLACEMENT, deliberately: this host's windows
+   *  dispatch to one another (a talk window hands over to a choice
+   *  window, the arrest flow walks a chain of boxes) and DFU's own
+   *  dispatch is `CloseWindow(); PushWindow(next);` - a pop and a push
+   *  that net to a replacement, not to depth. pushOverlay is the other
+   *  door: a genuine PushWindow, for a box that lands OVER whatever is
+   *  open and must hand the screen back when it closes. That is the
+   *  quest popup's case, and the reason a rest taken in the street can
+   *  now be paused and resumed like DFU's. */
+  const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
+  /** THE PAUSE - ONE ANSWER, ASKED OF THE STACK (worldModes'
+   *  `interiorPaused` carries the full note). AddWindow
+   *  (UserInterfaceManager.cs:179-186) raises
+   *  `GameManager.PauseGame(true)`, RemoveWindow (:190-216) lowers it
+   *  only on the drain, and PauseGame (GameManager.cs:600-635) is the
+   *  `Time.timeScale = 0` the two outdoor hosts freeze on. Both doors
+   *  into this slot reconcile, so the latch is the whole answer here
+   *  and `pauseWhileOpen(overlay)` (UserInterfaceWindow.cs:141) only
+   *  keeps the term shape identical to the other hosts' - and would
+   *  catch a future third door that writes the slot without one. */
+  const talkPaused = () => windows.paused() || pauseWhileOpen(overlay);
+  /** The close callbacks of the windows currently SUSPENDED, deepest
+   *  first - `_onOverlayClosed` belongs to the top window alone, and a
+   *  push must not clobber the covered window's. */
+  const _suspendedCallbacks = [];
+  let loaded = false, loading = null;
+  let directory = [];   // T3c: the location's named buildings
+  // T3f: the talk tone (persists across sessions, as DFU's window
+  // selection does). Everything else that used to live here is the
+  // ENGINE's: TK-iv's session owns toneReactionForTalkSession and
+  // TK-iii's pipeline owns lastToneIndex and numQuestionsAsked, both
+  // because C# keeps them on TalkManager and resets them from inside
+  // its own methods. A host copy of any of them is a law left with
+  // the host - this arc's first standing law, learned by breaking it
+  // three times. The locals below are the pre-engine fallbacks, used
+  // only when no talkEngine is mounted (no game data, no window).
+  //
+  // AUDIT-TALK (2026-09-15) named the one host that actually runs on
+  // them, because the arc never had: `scenes/exterior.js` mounts
+  // createTownTalk with FIVE seams and no `talkEngine` at all, so in
+  // that host there is no npcSession, no answerPipeline, no topic tree
+  // and no rumour mill - the whole TK series is absent and these locals
+  // ARE the conversation. That is a SCOPE decision and not a gap:
+  // `main.js` routes every real start through bootWorld and says so in
+  // as many words ("Dev scenes stay one param away (?exterior/?world)"),
+  // so ?exterior is a dev host. It is written here because a law with
+  // two homes and no record of which host uses which is the shape this
+  // codebase keeps being bitten by.
+  let tone = 1;                      // 0 Polite / 1 Normal / 2 Blunt
+  let toneSession = [0, 0, 0];
+  let lastToneIndex = -1;
+  let currentTier = 1;
+  let _questionsAsked = 0;           // TalkManager.numQuestionsAsked
+
+  /** RP1: was a `const` computed at construction. The race of the
+   *  people you meet is the CURRENT region's, and it is what picks the
+   *  oath pool (%oth) below. */
+  const npcRaceNow = () => REGION_PEOPLE[regionNow()] ?? 'Breton';   // WW-R: a province's people (formats/mapsTables.js REGION_PEOPLE) - the Bay's Breton or Redguard as FALL.EXE's table says
+
+  async function ensureLoaded() {
+    if (loaded || loading) return loading;
+    loading = (async () => {
+      try { font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003'); }
+      catch { console.warn('[town] FONT0003.FNT unavailable; talk UI text disabled'); }
+      if (palette) preloadTalkArt({ renderer, fetchBytes, palette });   // U8b: TALK01I0 (art-less keeps the text chain)
+      // ROAD-C c2/S10: the town map's native art (AMAP00I0 + TOWN00I0).
+      // ONE preload for BOTH exterior hosts, because this is the one
+      // seam both of them already share - and it is fire-and-forget for
+      // the same reason the talk art is: an art-less boot keeps the
+      // window's keyed fallback.
+      if (palette) {
+        preloadExteriorAutomapArt({ renderer, fetchBytes, palette })
+          .catch(() => console.warn('[town] AMAP00I0/TOWN00I0 unavailable; the town map keeps its keyed shell'));
+      }
+      try {
+        factions = new FactionFile();
+        factions.load(await fetchBytes('FACTION.TXT'));
+        addCustomFactions(factions.factionDict, factions.factionNameToId);   // RR3: DFU's TalkManager reads PlayerEntity.FactionData, which AddCustomFactions has filled - this reader stands in for it
+        _peopleRegion = regionNow();
+        people = getPeopleOfCurrentRegion(factions.factionDict, _peopleRegion);
+      } catch (e) { console.warn('[town] FACTION.TXT unavailable:', e.message); }
+      try { textRsc = new TextRsc().load(await fetchBytes('TEXT.RSC')); }
+      catch { console.warn('[town] TEXT.RSC unavailable; classic strings fall back'); }
+      // T3c: the named-building directory (the pool merge + the
+      // classic seed names; guild/temple names resolve through the
+      // faction tree, palaces through TEXT.RSC 475/476/477).
+      rebuildDirectory();
+      loaded = true;
+    })();
+    return loading;
+  }
+
+  // T3d: the directory follows the CURRENT topics - static in the
+  // fixed exterior host, swapped per location pixel in the streaming
+  // host (DFU's TalkManager rebuilds for PlayerGPS.CurrentLocation).
+  // Names ride the topics' OWN region (bank names, the name bank, the
+  // province ruler); the People faction/greetings stay on the boot
+  // region until travel lands (the recorded cross-region flag).
+  // IH1: the ONE name bag, extracted so the quest world's
+  // buildingNameOpts hook and the directory build cannot drift - a
+  // second copy of "which bank, whose regent, what the palace is
+  // called" is how %cbd and the talk directory come to disagree about
+  // the same building. Null until FACTION.TXT is read (the quest
+  // hook answers {} through it and generateBuildingName falls to its
+  // own defaults).
+  // FB1020h SITE-NAMED (FIELD BUGS 2026-10-20h): A TEMPLE'S AND A GUILD
+  // HALL'S NAME NEED NO TOWN. The bag answered null wherever no town's
+  // topics stood - on the road, at sea - and a quest that drew a remote
+  // temple or guild hall there named it '' for good: the Order of the
+  // Hour's letters read "at  in Wildertown". DFU names them from
+  // PlayerEntity.FactionData wherever the player stands
+  // (FormulaHelper.cs:3139-3162), and a shop's %ef bank and %rt regent
+  // by the player's region (FormulaHelper.cs:3225,
+  // MacroHelper.cs:644-650); only the town pair is the town's.
+  function nameOpts() {
+    if (!factions) return null;
+    const region = topics?.regionIndex ?? regionNow();
+    const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
+    return {
+      locationName: topics?.locationName, regionName: topics?.regionName,   // the canonical pair: the key a palace is chosen by (none off a town)
+      // L10N3e: ...and the pair AS SHOWN, for a shop's %cn and the bank's region (TalkManager.cs:2788-2789, :2857-2858)
+      shownLocationName: shownLocationName(), shownRegionName: shownRegionName(),
+      nameBank: provinceBank() ?? getNameBankOfRegion(region),   // TESA3: the province's people past the Bay
+      regentRuler: province?.ruler ?? 0,
+      factionName: (id) => factions.getFaction(id)?.name ?? '',
+      templeName: (id) => { const f = factions.getFaction(id); return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? ''; },
+      // L10N3e: ...and the pair AS SHOWN - GetFactionData's name in the player's language (FormulaHelper.cs:3020-3036,
+      // PersistentFactionData.cs:176): a hall by its own faction, a temple by its first child
+      ...shownFactionNames((id) => factions.getFaction(id)),
+      palaceName: (locName) => {
+        const id = { Daggerfall: 475, Wayrest: 476, Sentinel: 477 }[locName];
+        const v = id ? textRsc?.plainText(id) : null;
+        return v?.[0] ? v[0].replace(/\.$/, '') : null;   // L10N3d: generateBuildingName's own localized "palace" (FormulaHelper.cs:3069)
+      },
+    };
+  }
+  /** IC-PROPS (bible/03-World/Arena-Provinces.md IC-PROPS): A BUILDING'S NAME IN THE TOWN IT STANDS IN - the directory's row
+   *  where that town is the talk's own (its topics', the player's pixel's), else BuildingNames' law over that town's own
+   *  names (`place` a DFLocation: a neighbouring slice of the Imperial City, a town across a pixel's edge) - so a door's
+   *  plaque and its shop name the door's own building, never the player's town's building under the same key. `data` the
+   *  door's merged record (systems/talk/talkTopics.js buildingDataForDoor). */
+  function buildingNameIn(place, data) {
+    if (!data) return '';
+    const mapId = (place?.mapTableData?.mapId ?? 0) >>> 0;
+    if (!place || !topics || mapId === ((topics.mapId ?? 0) >>> 0)) return directory.find((e) => e.buildingKey === data.buildingKey)?.name ?? '';
+    const opts = nameOpts();
+    if (!opts) return '';
+    const regionName = place.regionName ?? '', shownRegion = Number.isInteger(place.regionIndex) ? getLocalizedRegionName(place.regionIndex, () => regionName) : regionName;
+    return generateBuildingName(data.nameSeed, data.buildingType, { ...opts, locationName: place.name, regionName, shownLocationName: getLocalizedLocationName(mapId, place.name), shownRegionName: shownRegion, factionId: data.factionId });
+  }
+  /** IC-PROPS: A DOOR'S OWN TOWN for its record (scenes/world.js buildingDataForDoor) - its building's name there
+   *  (buildingNameIn), the town's book of buildings its plaque and its press discover into (systems/discovery.js townBookOf),
+   *  and the town's name a nameless building's plaque says. `place` the DFLocation the door stands in. */
+  const doorTownOf = (place, data) => ({ name: buildingNameIn(place, data), townBook: townBookOf(place), townName: place?.name ?? '' });
+
+  function rebuildDirectory() {
+    directory = [];
+    if (!topics || !factions) return;
+    try {
+      const opts = nameOpts();
+      if (!opts) return;
+      directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, opts);
+      // YARDS-FOUND (from play: "Ensure these locations appear when talking to NPCs"): the town's Stable and Wagon Yard
+      // (the host's `yards`, the location's frame) as rows beside its buildings - the Where-is page, the compass, the
+      // knowledge roll and the map's mark all read a place from this one list (systems/merchantYards.js yardDirectoryRows)
+      directory.push(...yardDirectoryRows(topics.yards));
+      // SHIPYARDS-FOUND (Mac: "Everything should show on the map/overworld and be able to be asked by NPCs"): a port town's
+      // shipyard, its crew hall, its lighthouse and its docks (the host's `ports`, the location's frame), rows as the
+      // yards' are (systems/portPlaces.js portDirectoryRows)
+      directory.push(...portDirectoryRows(topics.ports));
+      // QP1: GetBuildingList's questor half rides the SAME rebuild -
+      // C# populates npcsWithWork inside the one building walk
+      // (TalkManager.cs:2807-2874). The candidates go out through the
+      // host's door because the pool (npcSession) is the host's to
+      // hold; the pool's own locationIndex guard makes re-entry a
+      // no-op, so calling on every rebuild is C#'s own shape.
+      onBuildingList?.(questorCandidateBuildings(topics.exteriorBuildings, topics.blocks, {
+        locationIndex: topics.locationIndex ?? 0,
+        mapId: topics.mapId ?? 0,
+        nameOpts: opts,
+        getFaction: (id) => factions?.factionDict?.get(id) ?? null,
+        // PlayerGPS.GetRaceOfCurrentRegion's numeric read, the same
+        // REGION_RACES+1 the quest world's currentRegionRace makes
+        raceOfCurrentRegion: () => (REGION_RACES[topics.regionIndex ?? regionNow()] ?? 0) + 1,
+      }));
+    } catch (e) { console.warn('[town] building directory failed:', e.message); }
+  }
+
+  function setTopics(t) {
+    topics = t;
+    if (loaded) rebuildDirectory();   // pre-load swaps build at load's tail
+  }
+  /** SHIPYARDS-FOUND: a port town's places handed again (scenes/world.js portPlacesOf - its docks once the harbour is
+   *  sounded off its shore), the directory rebuilt over them; nothing while no town's topics stand. */
+  function setPorts(rows) {
+    if (!topics) return;
+    topics = { ...topics, ports: rows };
+    if (loaded) rebuildDirectory();
+  }
+
+  const textVariants = (id) => textRsc?.plainText(id) ?? [''];
+  /** The current location, falling back to the region when the player is
+   *  off-location: cityName the CANONICAL pair (the discovery key), and
+   *  L10N3e shownCityName what MacroHelper.CityName (%cn) SHOWS -
+   *  CurrentLocalizedLocationName by the map id, else
+   *  CurrentLocalizedRegionName (MacroHelper.cs:571, :573). */
+  const cityName = () => topics?.locationName ?? topics?.regionName ?? '';
+  const shownCityName = () => shownLocationName() ?? shownRegionName() ?? '';
+  function shownLocationName() { return topics?.locationName == null ? topics?.locationName : getLocalizedLocationName(topics.mapId, topics.locationName); }
+  function shownRegionName() {
+    const i = topics?.regionIndex ?? regionNow();
+    return topics?.regionName == null || !Number.isInteger(i) ? topics?.regionName : getLocalizedRegionName(i, () => topics.regionName);
+  }
+  /** One record through the greeting/question macro set: the oath is
+   *  drawn ONLY when the record carries %oth (DFU expands lazily). */
+  const expandRecord = (raw) => expandMacros(raw, {
+    playerName: playerEntity.name ?? '',
+    oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRaceNow()), '') : '',   // F047: GetRandomText(201 + oathId)
+    cityName: shownCityName(),
+  });
+  const randomVariant = (id, fallback) => {
+    const v = textRsc?.plainText(id);
+    return v?.length ? v[Math.floor(rolls() * v.length)] : fallback;
+  };
+  /** AUDIT 26 F046/F047: TextProvider.GetRandomText (:250-269) pools
+   *  every Text TOKEN of a record and picks among them, where
+   *  randomVariant above picks a whole SUBRECORD variant. The two
+   *  diverge exactly where a record holds several one-line entries -
+   *  which is the shape of the oath records (textRsc.js:"o += 6;") and
+   *  of 8999 - so a multi-line variant printed all its lines fused. */
+  const randomPooledText = (id, fallback) => {
+    const t = textRsc?.randomTextById(id, rolls);
+    return t?.length ? t : fallback;
+  };
+
+  function setMode(m, ask = true) {
+    if (ask) askInteractionMode(m);   // SENSE1: asked, changed or not (the dungeon's look round reads the count); AUDIT DELVE B6: a held key's repeats are no asks
+    if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode
+    setInteractionMode(m);
+    // AUDIT 64 F34: PlayerActivate.cs:1424 ends ChangeInteractionMode
+    // with `DaggerfallUI.SetMidScreenText(interactionIsNowInMode)` - the
+    // centred label, not the popup queue.
+    setMidScreenText(interactionModeText(m));
+  }
+
+  function keydown(e, keys = null) {   // KB1: the host's held Set, so a combo'd mode key resolves (the dungeon host's arm already reads it)
+    // STATUS-LIVE: THE GATE IS THE PAUSE, NOT THE SLOT. This rung
+    // consumes every key under an occupant, which is right for a
+    // window the game is stopped for and wrong for one it is not: the
+    // status readout (ui/statusBox.js) declares `pauseWhileOpen:
+    // false` and stands in this slot while the player walks, so a W
+    // eaten here would be a step not taken. `talkPaused` is the same
+    // latch `overlayActive` already publishes - the STACK's, so a
+    // non-pausing box laid over a pausing window still consumes - and
+    // the readout's own two keys reach it through routeAction's yield
+    // and its own toggle, not through here.
+    if (overlay && talkPaused()) {
+      // CG2 (Mac: "unable to type in your name"): a key typed into a DOM
+      // text field - the enhanced wizard's name boxes stand over the
+      // canvas as real <input>s - is the FIELD's. This rung used to
+      // preventDefault every key under an overlay, so the browser never
+      // inserted the character and the name stayed empty (the wizard's
+      // own capture listener steps aside for a field and lets the key
+      // bubble here). Consumed for the host's ladder (typing must not
+      // walk the player), untouched for the field.
+      if (isTextEntryTarget(e.target)) return true;
+      // AUDIT 28 H11: Enter or Space on a DOM window's own button is the browser's press of it - the payday notice's
+      // "Take the reward", the boards' every act - never prevented under the window that drew it
+      if ((e.key === 'Enter' || e.key === ' ') && isDomControlTarget(e.target)) return true;
+      if (isDomFocusWalk(e)) return true;   // AUDIT LEGACY II U3: Tab walks a DOM window that owns the focus
+      e.preventDefault();
+      // E says goodbye too - the touch layer's E button opens AND
+      // closes talk (desktop-consistent; Esc/Enter unchanged). Choice
+      // windows (G2) receive the raw code for their keyed options.
+      // U20a: the EVENT rides along with the code. Without it the
+      // chargen window fell back to codeToKey, which lowercases every
+      // letter ('KeyS' -> 's'), so a typed character NAME - and now a
+      // typed CLASS name - could never carry a capital in this host.
+      // The dungeon host never had the bug: routeKey passes the real
+      // event to overlayAction. The live probe caught it typing
+      // "Scout" and reading back "scout".
+      //
+      // AUDIT 21 (hosts lane, F3): the FULL action map for anything that is
+      // not a ChoiceWindow. This used to understand Escape and Enter/E and
+      // nothing else, which is fine for a talk window and useless for a
+      // LevelUpScreen - it needs up/down to move the cursor and plus/minus to
+      // spend the pool. That is why levelling outside a dungeon could not
+      // open a screen here, and silently auto-spent into your LOWEST stats
+      // instead. overlayAction is the same map routeKey feeds the dungeon
+      // host's overlays, so both hosts drive an overlay identically now.
+      if (overlay.isChoiceWindow) overlay.input(e.code, e);
+      else {
+        const a = overlayAction(e);
+        if (a) overlay.input(a, e);
+        else if (e.code === 'KeyE') overlay.input('confirm');   // this host's own alias
+      }
+      // S40: OPTIONAL. A window may clear this slot from inside its
+      // own input - RestWindow calls closeOverlay() so the slot is
+      // free before RaiseSkills can want it for a level-up screen -
+      // and the unguarded re-read threw on the key that closes it.
+      if (overlay?.done) dropOverlay();
+      // MENU-RELOCK: if that key dismissed the last window, reclaim
+      // mouselook while the closing key is still a browser user gesture.
+      // A frame-late makeLookGate request can be refused by pointer-lock.
+      // ESC-LOCK: Escape is no gesture - that close is refused after the
+      // player ended a lock, and the desktop shell re-runs it as one
+      // (player/pointerLock.js shellRelock).
+      if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
+      return true;
+    }
+    // AUDIT 58 (talk lane) - THE MODE KEYS SIT UNDER THE WINDOW GATE.
+    // DFU switches the interaction mode in PlayerActivate.Update
+    // (PlayerActivate.cs:221-228), and a pausing window shuts that read
+    // down entirely: UserInterfaceManager.AddWindow -> PauseGame(true)
+    // (UserInterfaceManager.cs:183-184) sets InputManager.IsPaused
+    // (GameManager.cs:608), and InputManager.Update returns before
+    // `currentActions` is populated (InputManager.cs:487-503) - so
+    // ActionStarted is false, NO mode change happens, and the key
+    // reaches the top window's Button hotkeys instead. This branch used
+    // to be the FIRST statement of this function, above the `overlay`
+    // block: F1-F4 flipped the mode and printed the HUD line under any
+    // open window, and in this host's own slot the press was consumed
+    // as well - so the inventory's four tab hotkeys
+    // (DaggerfallInventoryWindow.cs:474-491, systems/dialogShortcuts.js
+    // InventoryWeapons/Magic/Clothing/Ingredients) and the exterior
+    // automap's three view modes could never fire.
+    //   The gate is the HOST's "any window is up", not this file's own
+    // slot: worldModes keeps a second slot (its interior/dungeon
+    // overlay) that `overlay` above cannot see, and a key eaten here
+    // never reaches it either. The hosts pass their `modes.overlayHeld`
+    // in; a host that mounts no mode machine passes nothing and the
+    // predicate is false.
+    if (otherOverlayActive?.()) return false;
+    // ...and the code -> mode read is the REGISTRY's (actionOf), so a
+    // player who moves StealMode off F1 moves the key, and an F1 they
+    // have re-pointed at Inventory falls through this ladder to the
+    // host's own `actionOf` and opens the pack.
+    // MODE-WHEEL: the held key opens the wheel and its release picks through pickMode - the same two gates as the
+    // four mode keys below, asked again AT THE RELEASE (AUDIT: a window raised while the key was held must not see the
+    // mode flip under it), and not before the host's world keys are live (KEY-BOOT: no wheel over the loading screen).
+    // NOT consumed: the key still joins the host's held ring below this rung (G3), so a key the player shares with
+    // another action still does that one too (KB1 law 3) (ui/modeWheel.js)
+    if (keysLive?.() !== false && actionsOf(e, keys).includes(MODE_WHEEL_ACTION)) { e.preventDefault(); modeWheel.press(e, pickMode); }
+    const m = actionsOf(e, keys).map((a) => MODE_ACTIONS[a]).find(Boolean);   // UXB1-S: the mode a shared key carries, whichever of its actions it is
+    if (m) {
+      e.preventDefault();
+      setMode(m, !e.repeat);   // AUDIT DELVE B6: DFU's ActionStarted is the press, not the key's repeat
+      return true;
+    }
+    return false;
+  }
+
+  /** D4 - THE OVERLAY'S KEY-UP EDGE. Every host binds `keyup` on the
+   *  window already (it is how the movement key Set is drained) and
+   *  none of them forwarded it here, so an overlay could only ever see
+   *  a press. DFU's UI sees both: a Button with an OnKeyboardEvent
+   *  handler is raised on KeyDown AND KeyUp (Button.cs:79-92), and the
+   *  travel popup's EXIT is the deferral that needs the release
+   *  (DaggerfallTravelPopUp.cs:482-495). OPTIONAL by design - a window
+   *  that does not define `keyup` is a window whose buttons subscribe
+   *  no keyboard handler, which is nearly all of them. Answers whether
+   *  the overlay consumed it, the way `keydown` does; a host that
+   *  drains its own key Set on the same event does that first. */
+  function keyup(e) {
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - the release half of the keydown rung above
+    if (typeof overlay.keyup !== 'function') return true;
+    overlay.keyup(e.code, e);
+    if (overlay?.done) dropOverlay();
+    // Automap and other two-phase windows can close on key-up rather
+    // than key-down. ESC-LOCK: a key-up is never a user activation, so
+    // this request rides whatever activation the press left (a key other
+    // than Escape still holds it) - a refusal is the shell's to re-run.
+    if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
+    return true;
+  }
+
+  // G2: the arrest/court flows push their own windows through the
+  // same overlay slot (one motor-holding seam).
+  let _onOverlayClosed = null;
+
+  /** THE SLOT IS EMPTIED BEFORE THE WINDOW IS TOLD (crash report,
+   *  2026-08-29: "InternalError: too much recursion", fifty frames of
+   *  closeOverlay -> onClose -> _close -> dispose -> closeOverlay).
+   *
+   *  Every drain here used to dispose the occupant and clear the slot
+   *  AFTER, which reads fine until you notice that `dispose()` can run
+   *  arbitrary host code. S40 made that reachable on purpose: a window
+   *  may vacate this slot from inside its own close, because DFU's
+   *  PopToHUD runs before RaiseSkills and the level-up screen needs the
+   *  slot free. RestWindow takes that door - its `onClose` is the two
+   *  exterior hosts' `if (townTalk.overlay?.isRestWindow)
+   *  townTalk.closeOverlay()`. So closing a rest window re-entered
+   *  closeOverlay while `overlay` STILL POINTED AT THE WINDOW BEING
+   *  DISPOSED, the guard read a live slot, and it disposed it again,
+   *  for ever. Every close path did it: the ended page on a key or a
+   *  click, the refusal page, backing out of the selection page, and a
+   *  host closing the slot itself.
+   *
+   *  The law is one line and it is the ORDER: null the slot, THEN tell
+   *  the window. A re-entrant close then finds an empty slot and
+   *  returns false, which is the truth - the slot really is free by
+   *  the time the window hears about it, which is the whole point of
+   *  the door S40 opened.
+   *
+   *  Why the other two hosts never crashed: worldModes (:4640) and
+   *  dungeonContext (:1223) answer the same onClose by nulling their
+   *  slot and never disposing, so there was nothing to re-enter. Only
+   *  the two hosts that come through here dispose.
+   *
+   *  @param fireCallback - false for the font-less bail below, which
+   *  drops the window to keep the motor running and was never a close. */
+  function dropOverlay(fireCallback = true) {
+    const win = overlay;
+    if (!win) return false;
+    // AUDIT 2026-08-17c: clear the close-callback BEFORE firing - a
+    // stale G2 callback (e.g. the court verdict) must never re-fire
+    // when a LATER unrelated window closes.
+    const cb = _onOverlayClosed;
+    overlay = null;
+    _onOverlayClosed = null;
+    win.dispose?.();   // A2: a window holding GL resources frees them (idempotent)
+    if (fireCallback) cb?.();
+    // ROAD-B B1: this is PopWindow (UserInterfaceManager.cs:99-104),
+    // and it happens LAST, after the window has been told - the whole
+    // point of the ordering above is that the slot is empty while the
+    // outgoing window runs, so a re-entrant close finds nothing to
+    // dispose twice. Only then does the window it was laid over come
+    // back, with its own close callback.
+    //
+    // If the dispose or the callback opened a SUCCESSOR instead, the
+    // slot is not empty and reconcile reads that as a one-level
+    // replacement - the successor sits over the same suspended window,
+    // which is what a dispatch mid-chain means.
+    //
+    // ROAD-B B5 FIXED THE RESTORE'S GUARD. It read `if (overlay)
+    // _onOverlayClosed = _suspendedCallbacks.pop() ?? null;` and could
+    // not tell the two cases apart, because BOTH leave the slot full:
+    // a real pop (the uncovered window, whose callback must come back)
+    // and a SUCCESSOR the callback just opened (whose callback was
+    // written two lines ago and must NOT be thrown away). It threw it
+    // away - `pop()` on an empty list is undefined, `?? null` makes
+    // that a null, and the successor's own close callback was gone.
+    //
+    // That is arrestFlow's live shape, not a hypothetical: the guilty
+    // verdict shows its box with `() => finish(...)` as the close
+    // callback, and `finish` opens the prison screen with `() =>
+    // release()` as ITS close callback. The release is ReleaseFromPrison
+    // (DaggerfallCourtWindow.cs:482-491) - the crime clearing, the four
+    // hours, the reposition and ClearEnemies - so a player who was
+    // found guilty and served their days walked out of the courthouse
+    // still arrested, still wanted, still standing where they were,
+    // with the court music playing. A pre-B1 dropOverlay had no restore
+    // at all and did not have this.
+    //
+    // The successor is "the slot is already full BEFORE the pop" - it
+    // was nulled at the top of this function, so only the dispose or
+    // the callback can have filled it. Either door may have: a
+    // showOverlay replaces at this level and owes no entry, and a
+    // pushOverlay reached from here pops this window first and so owes
+    // none either (see pushOverlay - it is the one that decides).
+    const successor = overlay;
+    windows.reconcile(overlay);
+    if (successor) return true;
+    if (overlay) _onOverlayClosed = _suspendedCallbacks.pop() ?? null;
+    else _suspendedCallbacks.length = 0;
+    return true;
+  }
+  /** PushWindow (UserInterfaceManager.cs:79-91) - the OTHER door.
+   *  showOverlay replaces because this host's windows dispatch; a box
+   *  that is genuinely laid OVER an open window (the quest popup) comes
+   *  through here, and the window beneath is suspended with its
+   *  callback rather than disposed. Returns true when it went up. */
+  function pushOverlay(win, onClosed = null) {
+    if (!win) return false;
+    if (hudFade.fadeInProgress) hudFade.clearFade();   // D4: UserInterfaceManager.PushWindow (:88-89), gate and all
+    // ROAD review-p: WHAT THIS PUSH COVERS, read before reconcile can
+    // move the stack. A full slot is a live window, and its callback
+    // rides down with it. An EMPTY slot is one of two things - nothing
+    // is open, or dropOverlay is running and the window that was here
+    // is about to be popped by the reconcile below - and neither owes
+    // a suspended entry. Pushing one unconditionally (which is what
+    // this did) left the list one deeper than the stack whenever a
+    // close callback pushed rather than replaced, so the NEXT close
+    // popped a stray null and threw the uncovered window's real
+    // callback away: the very loss B5's successor guard closed, moved
+    // one window along.
+    const covered = overlay;
+    windows.reconcile(overlay);
+    if (windows.containsWindow(win)) return true;
+    windows.pushWindow(win);                      // `onTop` puts it in the slot
+    // RISE-STUCK: ...unless the slot holds a window that keeps the top
+    // (the death screen - ui/windowStack.js holdsTop): the push waits
+    // BENEATH it, so its callback is the topmost suspended one and the
+    // slot's stays the death screen's.
+    if (overlay !== win) { _suspendedCallbacks.push(onClosed); return true; }
+    if (covered) _suspendedCallbacks.push(_onOverlayClosed);   // the covered window's callback rides down with it
+    _onOverlayClosed = onClosed;
+    return true;
+  }
+  // A2 (the A1 death-presenter lesson, applied to THIS slot): every
+  // point that drops the occupant must free its GL resources - the
+  // automap windows own uploaded textures and billboard batches, and
+  // uploadTexture memoizes forever, so a silent replace both leaks
+  // and leaves a live cache key behind.
+  function showOverlay(win, onClosed = null) {
+    // D4 - "Clear fade in progress when any UI window is pushed"
+    // (UserInterfaceManager.cs:86-89). Both doors into this slot are
+    // PushWindow, so both clear it: a half-finished fade under a window
+    // the player just opened would go on lerping the HUD's parent panel
+    // for the rest of its duration. THE GATE IS THE CALLER'S AND IT
+    // MATTERS: ClearFade itself sets the panel to clear
+    // unconditionally, so a push made while the screen is SMASHED to
+    // black - which raises no fadeInProgress - must not reach it, or
+    // the level-up box the fast-travel arrival raises would tear the
+    // black off a frame before performFastTravel fades it.
+    if (hudFade.fadeInProgress) hudFade.clearFade();
+    // Same order as dropOverlay, for the same reason: the slot holds
+    // the SUCCESSOR before the outgoing window is disposed, so an
+    // outgoing window that closes this slot from inside its dispose
+    // finds the new occupant and its identity guard leaves it alone.
+    const outgoing = (overlay && overlay !== win) ? overlay : null;
+    overlay = win;
+    _onOverlayClosed = onClosed;
+    // ROAD-B B1: ...and the stack follows the slot. With nothing
+    // suspended this is just "the stack now holds this one window";
+    // with a window suspended under the outgoing one it is a ONE-LEVEL
+    // replacement (DFU's CloseWindow-then-Push), so the depth beneath
+    // survives the dispatch and still returns when the chain ends.
+    windows.reconcile(overlay);
+    outgoing?.dispose?.();
+  }
+
+  /** NextInteractionMode (the touch cycle button); returns the new mode. */
+  function nextMode() {
+    // AUDIT 62 F9: the touch mode button is the one control on that
+    // layer that calls a hook DIRECTLY instead of synthesizing a key,
+    // so it walked past both gates the F1-F4 ladder carries - this
+    // host's own `overlay` slot (:320) and the host's other slot
+    // (:376's otherOverlayActive). On a phone the mode flipped and the
+    // HUD line printed under an open inventory or pause window. DFU
+    // reads the four modes through ActionStarted (PlayerActivate.cs
+    // :220-228) and a paused InputManager never populates
+    // currentActions (InputManager.cs:487-505; the window pauses at
+    // UserInterfaceManager.cs:180-185), so no mode change happens under
+    // a pausing window. Returning the CURRENT mode keeps the button's
+    // label truthful.
+    // AUDIT 68 S21-readout-eats-activate: the PAUSE, not the slot - the
+    // F1-F4 rung's own question (keydown); the non-pausing Status
+    // readout refused the touch cycle while the keys changed the mode.
+    if ((overlay && talkPaused()) || otherOverlayActive?.()) return getInteractionMode();
+    setMode(nextInteractionMode(getInteractionMode()));
+    return getInteractionMode();
+  }
+
+  /** MODE-WHEEL: one mode, chosen - the wheel's release, and the pad's NextMode and its mode choices once the four
+   *  mode actions ship unbound (the hosts' padAction door). Under nextMode's two gates, and the host's KEY-BOOT
+   *  `keysLive` where it hands one; answers whether it was heard. */
+  function pickMode(m) {
+    if ((overlay && talkPaused()) || otherOverlayActive?.() || keysLive?.() === false) return false;
+    setMode(m);
+    return true;
+  }
+
+  /** The activation ray (the host's E/use edge). persons = [{ person, pos }] world feet of LIVE townsfolk. Returns true
+   *  if a person consumed the activation. AUDIT 65 MC-2: `nearerThan` is the REST of the ladder's winning distance and
+   *  this arm consumes strictly below it alone - :412 is reached for the ONE ray's own hit (activate.js has the law). */
+  function tryActivate(camPos, fwd, persons, nearerThan = Infinity) {
+    // AUDIT 68 S21-readout-eats-activate: the pause, not the slot (STATUS-LIVE's law for every other door here). The
+    // non-pausing readout answered "consumed" with nobody under the ray, so no door, pile or townsperson opened
+    // while it stood; a person's window now takes its slot, and the rest of the ladder runs as it does without one.
+    if (overlay && talkPaused()) return true;
+    const near = nearestPerson(camPos, fwd, persons);
+    const best = near?.entry ?? null, bestDist = near?.distance ?? Infinity;
+    // AUDIT 23 (ui-native-3) - PlayerActivate.cs:76/:771-798: the ray
+    // itself reaches RayDistance (76.8); each MODE's distance gates
+    // inside with the 'youAreTooFarAway' line (Info/Grab/Talk 6.4, Steal
+    // 3.2 alone). The old 6.4 pre-gate answered a person down a long
+    // street with SILENCE and let E fall through to a door behind them.
+    if (!best || bestDist > RAY_DISTANCE || !(bestDist < nearerThan)) return false;   // MC-2: :412 is reached for the ray's OWN hit
+    // AUDIT 64 F34: PlayerActivate.cs:780 - SetMidScreenText, not the popup queue.
+    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(tooFarAwayText()); return true; }
+    // AUDIT 26 F048: ActivateMobileNPC NESTS the steal distance test
+    // inside `if (!mobileNpc.PickpocketByPlayerAttempted)`
+    // (PlayerActivate.cs:785-795), so an already-attempted townsperson
+    // produces NO output at any range - the port gated distance first
+    // and printed a line DFU never shows.
+    if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted
+        && bestDist > PICKPOCKET_DISTANCE) { setMidScreenText(tooFarAwayText()); return true; }   // AUDIT 64 F34: :790, the same surface
+    ensureLoaded().then(() => activate(best, bestDist));
+    return true;
+  }
+
+  function activate(target, dist) {
+    if (getInteractionMode() === 'steal') {
+      // PlayerActivate: pickpocket once per person, 3.2 max - and
+      // F048's nesting, so the already-attempted arm is SILENT here
+      // too, whatever the range.
+      if (target.person.pickpocketAttempted) return;
+      if (dist > PICKPOCKET_DISTANCE) { setMidScreenText(tooFarAwayText()); return; }   // AUDIT 64 F34: :790, the same surface
+      target.person.pickpocketAttempted = true;
+      const crimeWas = playerEntity.crimeCommitted;   // AUDIT LW-II-2 C15: the flag standing before the hand went in
+      const r = pickpocket(playerEntity, {
+        rolls,
+        nothingText: () => randomPooledText(FOUND_NOTHING_VALUABLE_TEXT_ID, 'You found nothing valuable.'),   // F046: GetRandomText(8999)
+      });
+      // ROAD-D D10: the box swap the header pended. Pickpocket
+      // (PlayerActivate.cs:1611-1660) raises a MESSAGE BOX for both
+      // success arms - the pinched purse (:1630) and the 8999
+      // nothing-valuable record (:1645) - and leaves only the failure
+      // on the HUD (`PopupMessage`, :1650), which is right: the
+      // failure is the arm that spawns the watch behind it.
+      if (r.modal) showOverlay(new ActionTextBox(String(r.message).split('\n')));
+      else hud.add(r.message);
+      // G1: the caught pickpocket IS the crime - SpawnCityGuards(true). LW3: a resident of the living world remembers the
+      // hand in their purse (their regard of the player); on the road - no town, no watch - that is all that comes of it:
+      // AUDIT LW-II-2 C15, the flag the pickpocket set (talk.js: no target, a crime) put back as it stood - the road's door
+      // cleared it, and a crime standing before it with it
+      if (!r.success) { livingTalk?.caught?.(target.person); if (!target.person?.living?.town?.roadside) onCrime?.(); else playerEntity.crimeCommitted = crimeWas; }
+      return;
+    }
+    // Info / Grab / Talk all talk to a mobile NPC (DFU verbatim)
+    // AUDIT 26 (talk): PlayerActivate.cs:783 hands the click to
+    // TalkManager.TalkToMobileNPC (:726-744), and that arm is not just
+    // a greeting - it rebuilds npcData as a COMMONER of the region's
+    // People faction (SetTargetNPC's mobile overload, :805-831, which
+    // also clears alreadyRejectedOnce), zeroes
+    // numAnswersGivenTellMeAboutOrRumors "so even if NPC is the same
+    // as previous talk session PC will give one correct answer"
+    // (:742), and reaches TalkToNpc's ResetNPCKnowledge (:2652-2654)
+    // for a new target. This host ran the LOCAL greeting ladder only,
+    // so the engine's npcData still carried whatever static NPC last
+    // set it: every walker answered with that NPC's social group and
+    // isSpyMaster, over an answer counter that was already spent.
+    // AUDIT 63 F47: TalkManager.cs:2618-2628's racial-override door,
+    // for the ENGINELESS host too. The engine now carries it as its
+    // `suppressTalk` dep, but the pre-engine fallback below returns at
+    // the directory-less arm before openTalkWindow's gate is reached,
+    // so a transformed player in a host with no talk engine mounted
+    // still got a window. One check, ahead of both branches.
+    // AUDIT 63 F3: a MessageBox, not AddHUDText - TalkManager.cs:2626
+    // is `DaggerfallUI.MessageBox(suppressTalkMessage)`.
+    const sup0 = racialSuppressTalk(playerEntity);
+    if (sup0) { showOverlay(new ActionTextBox([sup0.text])); return; }
+    // LW2: a resident of the living world who counts the player an enemy has no words for them - said on the HUD's
+    // middle line, as the activation's other refusals are; DFU's walkers have no memory to refuse from
+    const refusal = livingTalk?.refuses?.(target.person) ?? null;
+    // AUDIT PLAIN-UI U11: the refusal says where the resident stands - an enemy's badge was the one no panel ever opened on
+    if (refusal) { const b = livingTalk?.regard?.(target.person) ?? null; setMidScreenText(b ? `${refusal} (${b.label}, ${b.value})` : refusal); return; }
+    // LW6c: a household's moment before the words - the keepsake of one of theirs the deep kept, carried home (the
+    // body's town's: livingTown.js moment, the room's door): their words on the parchment, the conversation another time
+    const moment = target.person?.living?.town?.moment?.(target.person) ?? null;
+    if (moment) { showOverlay(new ActionTextBox(moment)); return; }
+    // LEGACY-HOME: one of the player's own line (Project Legacy's family in the world, systems/legacy/household.js) is
+    // met before the words - Play as them, the town's own conversation (`talk`, below), or goodbye: the host's window
+    if (livingTalk?.kin?.(target.person, () => converse(target))) return;
+    // LW11: one of the road's people who keeps a counter or offers the road (a caravan's merchant, a pedlar, a carter) asks
+    // what the player wants before the words - Trade, Hire on, Talk, Goodbye: the host's window
+    if (livingTalk?.offers?.(target.person, () => converse(target))) return;
+    converse(target);
+  }
+
+  /** LEGACY-HOME: a mobile's portrait - a resident's own (one of the line: the chargen head they were made with), else
+   *  TalkManager.cs:817's: a mobile ALWAYS portraits from TFAC00I0.RCI, at the record SetPerson minted for it. */
+  // PORTRAIT3D: and the look the walker's body is built from (folkBodies.js folkLook, rosterBodies.js residentLook, a
+  // kin's own) - its face as that body's head where the people stand in Morrowind bodies
+  const portraitOf = (person) => ({ ...(person?.living?.res?.portrait ?? { archive: 'CommonFaces', record: person?.personFaceRecordId ?? 0 }), head: person?._mwRes?.look ?? person?._mwFolk?.look ?? person?.living?.res?.look ?? null });
+
+  /** The conversation itself, once nothing stands before it (the activation's gates above). */
+  function converse(target) {
+    const eng0 = engine();
+    if (eng0?.session) {
+      // T3c: the NPC keeps a stable per-person seed for the
+      // reaction-tier roll (DFU seeds by the NPC object hash -
+      // engine-dependent, so a lazily-assigned uniform seed stands in,
+      // Ledger A).
+      target.person._talkSeed ??= Math.floor(rolls() * 0x7fffffff);
+      const talk = eng0.session.talkToMobileNPC(target.person);
+      // the three doors that close before a conversation (a racial
+      // override, a reaction below -20, a standing rejection) - each
+      // has already said its piece through the session's messageBox
+      if (talk?.kind !== 'talk') return;
+      _talkNpc = target.person;
+      livingTalk?.talked?.(target.person);   // LW2: a word exchanged - their regard of the player
+      _toneNext = target.person.living ? target.person : null;   // LW7: a resident's - each question's tone noted
+      // the local mirrors of the tone half TalkToNpc just reset
+      toneSession = [0, 0, 0];
+      lastToneIndex = -1;
+      // StartNewConversation (:867-878) is the WINDOW's reset, which
+      // DaggerfallTalkWindow.OnPush runs through SetStartConversation
+      // (:654) on every push - the question counter, the deferred
+      // topic-list rebuild and the mill setup.
+      eng0.session.startNewConversation();
+      _questionsAsked = 0;
+      openTalkWindow(talk.greeting, {
+        npcSeed: target.person._talkSeed, npcName: target.person.nameNPC ?? '',
+        // TalkManager.cs:817 - a mobile ALWAYS portraits from
+        // TFAC00I0.RCI, at the record SetPerson minted for it.
+        portrait: portraitOf(target.person),
+      });
+      return;
+    }
+    // The pre-engine fallback (a host with no talk engine mounted -
+    // exterior.js): the reaction-threshold greeting ladder alone.
+    const reaction = peopleNow() ? getReactionToPlayer(peopleNow(), playerEntity) : 0;
+    const t = startMobileTalk({
+      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace: npcRaceNow(), rolls, cityName: shownCityName(),
+    });
+    if (t.refused) { hud.add(t.text || 'You get no response.'); return; }
+    // AUDIT 39 (#46): through the slot's own door, like every other
+    // mount here - a raw assignment leaks the outgoing window's GL
+    // resources and leaves a previous mount's close-callback armed.
+    if (!directory.length) { showOverlay(new TalkWindow(t)); return; }
+    // T3c: the greeting carries the Where-is entry; the NPC keeps a
+    // stable per-person seed for the reaction-tier roll (DFU seeds by
+    // the NPC object hash - engine-dependent, so a lazily-assigned
+    // uniform seed stands in, Ledger A).
+    target.person._talkSeed ??= Math.floor(rolls() * 0x7fffffff);
+    _talkNpc = target.person;
+    _toneNext = target.person.living ? target.person : null;   // LW7
+    // TK-v: TalkToNpc's session reset is the ENGINE's - both halves of
+    // it - so a host cannot clear one and forget the other. With no
+    // engine mounted these local mirrors are the whole of it.
+    toneSession = [0, 0, 0];   // T3f: per talk session (DFU TalkToNpc)
+    lastToneIndex = -1;
+    // AUDIT 18 F4 - StartNewConversation (TalkManager.cs:867-871),
+    // which DaggerfallTalkWindow.OnPush runs through
+    // SetStartConversation (:654) on EVERY window push. Without the
+    // reset the counter only ever climbed, so 7215+tone (the greeting
+    // opening) was reachable at most ONCE per play session and every
+    // later conversation opened on the follow-up (7218+tone).
+    _questionsAsked = 0;
+    // U8b: the native TALK01I0 window when the art is up (clicks/taps
+    // through the verbatim hit rects; the keyed chain is the fallback)
+    openTalkWindow(t.text, {
+      npcSeed: _talkNpc?._talkSeed ?? 0, npcName: _talkNpc?.nameNPC ?? '',
+      portrait: portraitOf(_talkNpc),
+    });
+  }
+
+  /** B7: THE ONE WINDOW-OPENER. The mobile path above and
+   *  TalkToStaticNPC's fall-through (the worldModes static-NPC click,
+   *  the guild popup's TALK button) both land here - DFU has one
+   *  DaggerfallTalkWindow and every conversation pushes it
+   *  (TalkManager.cs:2616-2663 ends in pushTalkWindow). The session
+   *  resets are NOT here: the mobile path runs its own above, and
+   *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
+   *  building-less sessions keep the keyed greeting chain. */
+  function openTalkWindow(greeting, { npcSeed = 0, npcName = '', portrait = null, push = false, onClosed = null } = {}) {
+    _toneTarget = _toneNext;   // LW7: the resident this conversation is with, if the mobile door named one - else nobody
+    _toneNext = null;
+    // AUDIT 63 F44: TalkToStaticNPC is a PushWindow (TalkManager.cs:
+    // :757, :767), and for ONE caller that distinction is visible -
+    // DaggerfallGuildServicePopupWindow's TALK button is the only
+    // sibling that does not CloseWindow first (:291-295), so its popup
+    // is suspended under the conversation and returned to when
+    // DaggerfallTalkWindow closes itself. `push` routes that caller
+    // through pushOverlay, the genuine stack door; every other caller
+    // keeps CloseWindow-then-Push, which showOverlay is.
+    const mount = push ? pushOverlay : showOverlay;
+    // ROAD-D D10: SetNPCPortrait (DaggerfallTalkWindow.cs:360-385).
+    // DFU sets it from SetTargetNPC, BEFORE the push (TalkManager.cs
+    // :817 for a mobile, :849 for a static NPC), so it lands here -
+    // the port's one window door. A caller with no portrait clears
+    // the last one rather than inheriting a stranger's face.
+    if (portrait) setNpcPortrait(portrait.archive, portrait.record, { picture: portrait.head ? (renderer) => npcHeadImage(portrait.head, { renderer }) : null });   // PORTRAIT3D
+    else clearNpcPortrait();
+    _talkSeed = npcSeed;   // F043: whoever we are talking to now
+    // V4: GetSuppressTalk (LycanthropyEffect.cs:423-437) - every
+    // conversation door lands here (B7's one-opener law), so the
+    // transformed refusal gates them all at once.
+    const sup = racialSuppressTalk(playerEntity);
+    // AUDIT 63 F3: DaggerfallTalkWindow's own second door is a box too
+    // (DaggerfallTalkWindow.cs:327-333 - CloseWindow() then
+    // DaggerfallUI.MessageBox(suppressTalkMessage)), as is
+    // TalkToNpc's first (TalkManager.cs:2626). The message is a plain
+    // literal with no macro in it, so the box's ExpandMacros pass is a
+    // no-op here and the row is the string.
+    if (sup) { showOverlay(new ActionTextBox([sup.text])); return; }
+    const eng = engine();
+    // ET1: the door's readiness is the skin's - the panel needs no art.
+    if (talkDoorReady() && directory.length) {
+      mount(createTalkWindow(greeting, {
+        categories: () => treeCategories() ?? localCategories(),
+        // B5-6: the OTHER pages, off the engine's own lists - the
+        // whole reason they were blockers is that the tree computed
+        // all of this and the window threw it away. Null when no
+        // engine is mounted: the window keeps the consumed no-op.
+        // LEGACY5: Project Legacy's own rows first - a resident courted, a proposal, the wedding, the family - the port's,
+        // answered by the host and never through the engine's pipeline (`legacy`)
+        tellMeAboutTopics: () => {
+          const own = _toneTarget ? (legacyTopics?.(_toneTarget) ?? []) : [];
+          const tree = treeFlatTopics(engine()?.tree?.listTopicTellMeAbout);
+          return own.length ? [...own, ...(tree ?? [])] : tree;
+        },
+        peopleTopics: () => treeFlatTopics(engine()?.tree?.listTopicPerson),
+        thingsTopics: () => treeFlatTopics(engine()?.tree?.listTopicThing),
+        workQuestion: () => (eng?.pipeline ? eng.pipeline.getQuestionText(workListItem(), tone) : null),
+        askWork: () => {
+          _toneHeard();
+          return eng.pipeline.getAnswerText(workListItem(), {
+            npcSeed,
+            // TalkManager.WorkAvailable - the town's npcsWithWork pool
+            // (TK-iv owns it); no work in town = record 8078 verbatim
+            workAvailable: eng.session?.workAvailable ?? false,
+          });
+        },
+        answer: (row) => {
+          // COURT-DEEDS (AUDIT FB1026d B3): a row that hears the tone itself is handed it, to read the regard either side
+          if (row.legacy?.hearsTone) return row.legacy.answer(tone, _toneTaste(), _toneHeard);
+          _toneHeard();   // LW7: the question's tone, in a resident's regard
+          if (row.legacy) return row.legacy.answer(tone, _toneTaste());   // LEGACY5: the host's answer - TONE-TASTE: and how the tone was taken
+          if (row.listItem) return eng.pipeline.getAnswerText(row.listItem, { npcSeed });
+          const a = answerText(row); _questionsAsked++; return a;   // AUDIT 17e F13, moved to DFU's own site
+        },
+        // ROAD-D D10: the counter climbs in the ANSWER, not here.
+        // UpdateQuestion now runs on every SELECTION (the window's
+        // shipped selection model), and DFU's GetQuestionText has
+        // never touched numQuestionsAsked - GetAnswerText does, which
+        // is where the engine path already had it.
+        question: (row) => (row.legacy ? row.legacy.question(tone) : row.listItem
+          ? eng.pipeline.getQuestionText(row.listItem, tone)
+          : questionText(row)),
+        tone: () => tone,
+        setTone: (t2) => { tone = t2; },
+        npcName,   // AUDIT 18 F5: the NPC's OWN name, not the People faction
+        // PLAIN-UI (bible/10-UI/Plain-Words.md): a living resident's regard of the player, for the enhanced panel's badge -
+        // null for anyone else (the classic face draws DFU's TALK01I0 and nothing it has no rect for)
+        regard: () => (_toneTarget ? livingTalk?.regard?.(_toneTarget) ?? null : null),
+        // AUDIT 63 F5: OnPop's `PlayerEntity.Notebook.AddNote(
+        // copiedEntries)` (DaggerfallTalkWindow.cs:319). townTalk holds
+        // no notebook, so the sink is the host's - set beside
+        // hudMessageSink once the quest bridge exists. A host that
+        // mounts no bridge leaves it undefined and the copy is a silent
+        // no-op, which is this port's established shape for a
+        // hook-less host.
+        copyToNotebook: (tokens) => _notebookSink?.(tokens),
+        // ET1: the enhanced panel's Goodbye is a DOM click, not a press
+        // on the canvas, so the host's pointerdown never relocks after
+        // it; the panel asks here, inside its gesture (MAC1), and only
+        // when nothing is left standing under the conversation - the
+        // popup's TALK (push) returns to a popup that wants the cursor.
+        relock: () => { let under = 0; windows.eachCoveredWindow(() => { under++; }); if (!under) requestLook(canvas); },
+      }), onClosed);   // AUDIT 63 F44: the popup's TALK leaves its window standing under the conversation
+      return;
+    }
+    showGreeting(greeting, mount, onClosed);
+  }
+
+  /** TK-vi: THE WINDOW ON THE TREE. DaggerfallTalkWindow's Where-is
+   *  page IS TalkManager.listTopicLocation - the list
+   *  AssembleTopicListLocation (:3200-3353) built - and its rows are
+   *  ListItems the question and the answer both take. That grouping is
+   *  DFU's own and the T3c category list never was it: the building
+   *  types walk in ENUM order behind CheckBuildingTypeInSkipList, the
+   *  quest-residence General section and the palace arm ride a shared
+   *  group variable, and a Regional group is appended ALWAYS, whether
+   *  or not the town has one of anything. Each group opens with a
+   *  NavigationBack row, which is the window's own back button here
+   *  rather than a topic, so it is dropped.
+   *
+   *  Null when no engine is mounted (no game data): the T3c directory
+   *  below is the fallback, and it answers through the host ladder as
+   *  it always did. */
+  function treeCategories() {
+    const tree = engine()?.tree;
+    if (!tree || !engine()?.pipeline) return null;
+    return (tree.listTopicLocation ?? [])
+      .map((group) => ({
+        label: group.caption,
+        buildings: (group.listChildItems ?? [])
+          .filter((child) => child.type !== LIST_ITEM_TYPE.NavigationBack)
+          .map((child) => ({ label: child.caption, listItem: child })),
+      }))
+      .filter((group) => group.buildings.length);
+  }
+
+  /** B5-6: a FLAT tree list (Tell me about, People, Things) as window
+   *  rows. Null when no engine stands (the window keeps its no-op);
+   *  NavigationBack rows drop exactly as the location groups drop
+   *  theirs. An EMPTY list opens an empty listbox - DFU's own Things
+   *  page, verbatim (classic never implemented it). */
+  function treeFlatTopics(list) {
+    if (!engine()?.pipeline || !list) return null;
+    return list
+      .filter((child) => child.type !== LIST_ITEM_TYPE.NavigationBack)
+      .map((child) => ({ label: child.caption, listItem: child }));
+  }
+
+  /** SetTalkCategoryWork's fake list item (DaggerfallTalkWindow.cs:
+   *  1097-1099): "create fake list item so that we can call function
+   *  and set its questionType to QuestionType.Work". */
+  const workListItem = () => ({ type: LIST_ITEM_TYPE.Item, questionType: QUESTION_TYPE.Work, caption: '' });
+
+  /** AUDIT 68 S21-talk-category-dup: the location's buildings grouped by TOPIC_CATEGORIES, empty groups dropped -
+   *  one pipeline for the native window's rows and the keyed Where-is chain. */
+  const directoryByCategory = () => [
+    ...TOPIC_CATEGORIES.map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) })),
+    ...OPENED_SHOP_TYPES.map((t) => ({ label: OPENED_SHOP_GROUPS[t], buildings: directory.filter((b) => b.buildingType === t) })),   // PROF-FOUND: the Furniture Store after DFU's shops, as the tree lays it
+    ...FOUND_KIND_ORDER.map((k) => ({ label: FOUND_TALK_GROUPS[k], buildings: directory.filter((b) => b.yard === k) })),   // YARDS-FOUND: the tree's own groups, after the shops - SHIPYARDS-FOUND: the port's four after the yards' two
+  ].filter((c) => c.buildings.length);
+  /** The pre-engine fallback: T3c's flat category directory. */
+  function localCategories() {
+    return directoryByCategory()
+      .map((c) => ({ label: c.label, buildings: c.buildings.map((b) => ({ label: b.name, ...b })) }));
+  }
+
+  let _talkNpc = null;
+  /** LW7: the resident this conversation is with (the mobile door names them in `_toneNext`; openTalkWindow takes it -
+   *  every other door leaves nobody), whose regard hears each question's tone - a courteous one or a blunt one
+   *  (relations.js: once a day each). */
+  let _toneTarget = null, _toneNext = null;
+  /** TONE-TASTE: how the one spoken to takes the question's tone (talkTopics.js toneTaste) - their group's, as the
+   *  reaction reads it (a mobile's is a Commoner's, npcSession.js setTargetMobileNPC; with no engine, the same). */
+  const _toneTaste = () => toneTaste(tone, engine()?.session?.npcData?.socialGroup ?? 0);
+  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, _toneTaste()); };
+  /** REGARD-OWN (FIELD BUGS 2026-10-21d): A FRIEND MADE IS SAID - a word, its tone or a deed that carries a resident's
+   *  regard into friendship (the relations' own count, regardClock.js friendsMade), with where their Courtship is when
+   *  the house can court them. AUDIT FB1021d RO-1: said once nothing covers the HUD. The talk window covers the toasts and
+   *  the classic column, and the HUD's lines run out on real seconds (`hud.tick` takes the frame's dt, a window open or
+   *  not), so a line said at the word was gone before the window closed; it waits for the window instead, and a friend
+   *  lost again inside it (a blunt question after the word) is not said at all. */
+  const sayFriends = () => {
+    if (overlay || toastsCovered()) return;
+    for (const f of livingTalk?.friendsMade?.() ?? []) hud.add(friendLine(f));
+  };
+  // AUDIT 26 F043: the CURRENT partner's reaction seed. DFU seeds the
+  // roll from whichever NPC is being spoken to - `DFRandom.Seed =
+  // lastTargetMobileNPC.GetHashCode()` or `lastTargetStaticNPC`'s
+  // (TalkManager.cs:669-673) - so it is stable per person. The port
+  // read it off `_talkNpc`, which ONLY the mobile activate path
+  // assigns, so every guild, temple and questor conversation ran on
+  // seed 0 on a fresh boot and then inherited whichever townsperson
+  // was spoken to last. openTalkWindow is the one door both paths
+  // come through, and both already hand it the seed.
+  let _talkSeed = 0;
+
+  /** GetReactionToPlayer_0_1_2 (:632-690) for the CURRENT tone and
+   *  question. TK-iii's pipeline owns the gate that decides WHEN this
+   *  runs (`lastToneIndex`) and TK-iv's session owns the per-session
+   *  cache it fills - so this is the tier computation alone, handed
+   *  to the pipeline as its `reactionTier` seam. */
+  function computeTier(questionType, socialGroup) {
+    return reactionTier012({
+      // AUDIT 63 F4: TalkManager.cs:665 is
+      // `player.Stats.LivePersonality / 5`, i.e.
+      // DaggerfallStats.cs:55 -> GetLiveStatValue - base PLUS every
+      // standing fortify/drain/transfer and the disease PER column.
+      // The sibling skill term two lines down is already live
+      // (TalkManager.cs:647,655 GetLiveSkillValue); this one was the
+      // last raw base read in the call.
+      personality: playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50,
+      npcSeed: _talkSeed,   // F043: the door's seed - the static path has one too
+      socialGroup: socialGroup ?? 0,
+      // AUDIT 26 F042/F096: the reaction adds
+      // `questionTypeReactionMods[GetClassicQuestionIndex(qt)]`
+      // (TalkManager.cs:663-667) - +5 for LocalBuilding/Regional and
+      // QuestLocation/OrganizationInfo, 0 for the rest. This seam took
+      // the type and VOIDED it, hardcoding index 0, so every question
+      // took the +5 and a Work question banded to 8076/8077 where DFU
+      // refuses with 8075 - and the inflated value was then CACHED in
+      // the session's tone. The mapper and the table both already
+      // existed; only this call dropped them on the floor.
+      questionIndex: getClassicQuestionIndex(questionType), toneIndex: tone,
+      skillValue: tone === 0 ? skillValue(playerEntity, SKILLS.Etiquette)
+        : tone === 2 ? skillValue(playerEntity, SKILLS.Streetwise) : 0,
+      session: engine()?.session?.toneReactionForTalkSession ?? toneSession,
+      rolls,
+      onTally: (sk) => tallySkill(playerEntity, SKILLS[sk], 1),
+    });
+  }
+
+  // The pre-engine fallback: the same gate, kept locally, for a host
+  // with no engine mounted.
+  function tierNow() {
+    const e = engine();
+    if (e?.pipeline) return e.pipeline.reactionToPlayer012;
+    if (lastToneIndex !== tone) {
+      currentTier = computeTier(null, 0);
+      lastToneIndex = tone;
+    }
+    return currentTier;
+  }
+
+  // The T button cycles Polite > Normal > Blunt and re-shows the
+  // current window with the live label (our keyed-window idiom for
+  // DFU's three tone buttons).
+  const toneOption = (reshow) => ({
+    code: 'KeyT', label: `T - tone: ${TONE_NAMES[tone]}`,
+    action: () => { tone = (tone + 1) % 3; reshow(); },
+  });
+
+  /** AUDIT 63 F44 (review): THE CLOSE CALLBACK RIDES THE WHOLE
+   *  CONVERSATION, not only its first window. This art-less chain
+   *  re-mounts itself on every T and every W, and each re-mount is a
+   *  showOverlay - which overwrites _onOverlayClosed (:532-558). So
+   *  the guild popup's interior restore, handed in here by
+   *  openTalkWindow, was thrown away by the player's first tone press
+   *  and the popup DFU keeps waiting underneath
+   *  (DaggerfallGuildServicePopupWindow.cs:291-295, TalkManager.cs:757)
+   *  never came back. The exterior route does not need this - its
+   *  window is genuinely PUSHED and showOverlay is a one-level
+   *  replacement over the suspended stack - but the interior slot has
+   *  no stack, so the callback is the only thing holding the popup and
+   *  every mount in the chain must carry it. */
+  function showGreeting(text, mount = showOverlay, onClosed = null) {
+    mount(new ChoiceWindow({
+      lines: [text],
+      options: [
+        { code: 'KeyW', label: 'W - where is...', action: () => openCategories(onClosed) },
+        toneOption(() => showGreeting(text, showOverlay, onClosed)),
+        { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
+        { code: 'KeyE', label: '', action: () => {} },
+        { code: 'Enter', label: '', action: () => {} },
+      ],
+    }), onClosed);
+  }
+
+  function pagedList(lines, items, onPick, page = 0, onClosed = null) {
+    const per = 8;
+    const slice = items.slice(page * per, (page + 1) * per);
+    const options = slice.map((it, i) => ({ code: `Digit${i + 1}`, label: `${i + 1} - ${it.label}`, action: () => onPick(it) }));
+    if ((page + 1) * per < items.length) options.push({ code: 'KeyN', label: 'N - more', action: () => pagedList(lines, items, onPick, page + 1, onClosed) });
+    options.push({ code: 'Escape', label: 'Esc - goodbye', action: () => {} });
+    showOverlay(new ChoiceWindow({ lines, options }), onClosed);
+  }
+
+  function openCategories(onClosed = null) {
+    pagedList(['Where is...'], directoryByCategory(), (cat) => {
+      pagedList([cat.label], cat.buildings.map((b) => ({ label: b.name, building: b })), (it) => answerWhereIs(it.building, onClosed), 0, onClosed);
+    }, 0, onClosed);
+  }
+
+  function answerWhereIs(building, onClosed = null) {
+    // GetAnswerWhereIs (the seed-stable knowledge roll picks the
+    // knows/doesn't-know table half) + the %hnt hint chain: the T4
+    // fork - a 7333 direction variant (the %di compass in DFU's
+    // Internal_RSC phrase, MAC-U: the answer frame names the building,
+    // the hint must not) or the 7332 map reveal that discovers the
+    // building.
+    showAnswer(answerText(building), onClosed);
+  }
+
+  // AUDIT 17e F13 - the PLAYER'S QUESTION, verbatim
+  // (TalkManager.cs:1324 question = ExpandRandomTextRecord(7225 +
+  // toneIndex), with %1com -> GetPCGreetingOrFollowUpText
+  // (:1149-1156): the FIRST question opens with a greeting
+  // (7215 + tone), later ones with a follow-up (7218 + tone); %n /
+  // greetingNameNPC is "friend"/"stranger" (7221 + tone) when the
+  // reaction is <= 0, else the NPC's name (:1133-1142)).
+  // U8b shipped a hardcoded English literal ("Where is X?") that no
+  // tone or record could reach - the three tone records carry real
+  // classic flavour ("Where the hell is %key?" at Blunt).
+  function questionText(building) {
+    const asked = engine()?.pipeline?.numQuestionsAsked ?? _questionsAsked;
+    const opening = randomVariant((asked === 0 ? 7215 : 7218) + tone, 'Hail to thee');
+    const rp = peopleNow() ? getReactionToPlayer(peopleNow(), playerEntity) : 0;
+    const npcName = (rp <= 0 ? randomVariant(7221 + tone, 'stranger') : (_talkNpc?.nameNPC || 'stranger'));
+    const q = randomVariant(7225 + tone, '%1com. Where can I find %key?');
+    return expandRecord(q)
+      .replaceAll('%1com', expandRecord(opening).replaceAll('%n', npcName))
+      .replaceAll('%key', building.name ?? building.label ?? '');
+  }
+
+  // U8b: the answer STRING, shared by the native talk window and the
+  // fallback chain (the T3c-T3f pipeline unchanged).
+  function answerText(building) {
+    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:"const tier = opts.tier" never consumes it
+    const raw = randomVariant(a.textId, '%hnt');
+    // T4: %hnt is WHERE DFU rolls the reveal (GetKeySubjectBuildingHint
+    // rides MacroHelper's %hnt), so the fork runs only when the record
+    // carries the macro - lazily, like %oth below: a rude refusal
+    // never rolls and never marks the map. The mobile-talk hosts are
+    // the two exteriors, so isInside is false; %loc's mark side effect
+    // (MacroHelper.cs:1085-1090) is the discoverBuilding call, keyed
+    // region:location until the automap arc brings the map pixel id.
+    //
+    // MACRO-6: the roll rides EACH OCCURRENCE - %hnt and %hnt2 each call
+    // GetKeySubjectBuildingHint in C# (DialogHint/DialogHint2's
+    // LocalBuilding arm, TalkManagerMCP.cs:82-122), so the hint is a
+    // function the walk calls per macro, and a record with neither
+    // never rolls.
+    const hint = () => {
+      const h = buildingHint(rolls, !lettersOnMap(building.buildingKey));   // AUDIT SHIPYARDS L7-5: a found place no map letters takes the way there
+      const text = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%di of here')   // MAC-U: the no-data fallback is the table's phrase too
+        .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
+      // RP1: the discovery key is the CURRENT region's. This read the
+      // boot region, so a building revealed after streaming across a
+      // border was filed under the region the session started in and
+      // the map never showed it where the player actually was.
+      if (h.reveal) discoverBuilding(townBookId(regionNow(), cityName(), topics?.mapId), building, null, questBuildingSource);   // AUDIT 63 F49: TalkManager.cs:1290's DiscoverBuilding takes the quest name-override arm too (PlayerGPS.cs:945-959)
+      return text;
+    };
+    // MACRO-6: FemaleName/MaleName off TalkManagerMCP's own source (the
+    // region's name bank, and MaleName's DFRandom seed nudge), the ones
+    // the engine path answers through - 7269 and 7275-7294 carry them.
+    const names = talkMacroSource({
+      fullName: (gender) => personName(provinceBank() ?? getNameBankOfRegion(regionNow()), gender === 'female' ? GENDERS.Female : GENDERS.Male),   // TESA3; REGION-NAMES
+      bumpSeed,
+    });
+    // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)
+    // runs the FULL MacroHelper over the answer record - %oth and %cn
+    // resolve here exactly as they do in the greeting.
+    return expandAnswerRecord(raw, {
+      playerName: playerEntity.name ?? '',
+      oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRaceNow()), '') : '',   // F047: GetRandomText(201 + oathId)
+      cityName: shownCityName(),
+      hint, key: building.name,
+      honorific: honorificOf(playerEntity.gender),   // T4: the real %hnr/%ra
+      race: raceDisplayName(playerEntity.race),
+      femaleName: () => names.femaleName(), maleName: () => names.maleName(),
+    });
+  }
+
+  function showAnswer(text, onClosed = null) {
+    showOverlay(new ChoiceWindow({
+      lines: [text],
+      options: [
+        { code: 'KeyW', label: 'W - ask another', action: () => openCategories(onClosed) },
+        toneOption(() => showAnswer(text, onClosed)),
+        { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
+        { code: 'KeyE', label: '', action: () => {} },
+      ],
+    }), onClosed);
+  }
+
+  function frame(dt) {
+    hud.tick(dt);
+    sayFriends();   // REGARD-OWN: a friend made, once the HUD is clear
+    overlay?.tick?.(dt);   // D1: the death sequence's clock (any overlay may want one)
+    // U41: a window may FINISH inside its own tick - the travel
+    // popup's day countdown departs on a clock, not on a key - and
+    // this seam had no done check, so such a window stayed painted
+    // over the world until the next keypress. The dungeon host's
+    // tickOverlay (dungeonContext:2692-2696) has always had one.
+    if (overlay?.done) dropOverlay();
+    const s = hudScale(canvas.width, canvas.height);
+    // AUDIT 64 F37: popupText is a NativePanel component of the HUD
+    // window (DaggerfallHUD.cs:172-173), so the Draw override
+    // (:347-351) hides the popup column with everything else. Only
+    // the DRAW half is gated - PopupText.Update retires rows from
+    // DaggerfallHUD.Update, which renderHUD does not touch.
+    // FONT1: ...and the ELSE says so out loud. The enhanced skin draws
+    // these rows in the DOM (toasts in the notice stack since
+    // ENH-NOTICE3, ui/enhanced/enhancedNotice.js), and a DOM face stays painted
+    // unless it is told to hide - AUDIT 64 F37's own law - so a frame
+    // the gate refuses must reach `hide()` rather than simply skip the
+    // paint. On the classic skin `hide()` does nothing, which is what
+    // skipping the call always did.
+    // AUDIT FONT F4: ...and the host REPORTS its window slot first. The classic column is drawn HERE and the overlay
+    // stack just below it, so on that skin a window covers it; the enhanced face is DOM over the canvas and covers the
+    // window instead, so it is told to go for as long as one stands.
+    hud.observe(toastsCovered());   // AUDIT ENH-NOTICE3 F3/C2: the HUD's cover, read the way DFU paints it - see toastsCovered
+    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();
+    // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
+    // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
+    // before its own, and every box DaggerfallUI.MessageBox opens
+    // carries the then-top as its previousWindow (DaggerfallUI.cs:1330)
+    // - so a pushed box is drawn OVER a live window, not instead of
+    // it. This slot painted the top alone, which is why the courtroom
+    // CORT01I0 stood under every plea box of a trial and was never
+    // once rendered. Deepest first, then the slot's own occupant.
+    if (overlay && font) {
+      windows.eachPaintedBeneath((w) => w.draw(renderer, canvas, font, s));   // AUDIT RISE-REST F3: nothing beneath the death screen
+      overlay.draw(renderer, canvas, font, s);
+    } else if (overlay && !font) dropOverlay(false);   // font-less: never trap the motor
+  }
+
+  // U8b: pointer routing for native windows (phone taps + mouse) -
+  // the hosts call this BEFORE requestLook; a consumed click never
+  // grabs pointer lock. Canvas CSS size maps to backing pixels first.
+  function pointerdown(e) {
+    // U47 (AUDIT 18, routed 62): THE GUARD IS ON THE WINDOW, not on
+    // its click method. This tested `overlay?.click` and so let a
+    // click FALL THROUGH whenever the open window had no click
+    // handler - straight to the host's requestLook, which grabs
+    // pointer lock out from under the menu the player is reading. DFU
+    // has no such hole: its top window consumes the click whatever it
+    // does with it. worldModes.js carries the corrected shape with
+    // this reasoning spelled out beside it; this host was the copy
+    // that never got it.
+    // STATUS-LIVE: ...and the same gate on the POINTER. A click under a
+    // non-pausing readout is the WORLD's - a swing, an activation -
+    // which is why the box itself declines `click()` (ui/statusBox.js).
+    // Consuming it here would swallow the press before the box could
+    // decline anything.
+    if (!overlay || !talkPaused()) return false;
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const m = nativeMetrics(canvas);
+    const v = pointToNative(m, px, py);
+    // BOTH lanes optional-chained this line for different reasons and
+    // both stand: a window may have no `click` at all (V5/U48's rest
+    // window has none), and a window that HAS one may clear this slot
+    // from inside it (S40's does, through the PopToHUD door), so the
+    // `.done` read below is optional too.
+    // ROAD-C c2/S10: a window with the THREE-PHASE seam takes the press
+    // through it and never through `click` as well - two 'down's would
+    // arm the automap chrome's press-hold machine twice.
+    if (v) {
+      if (overlay.pointer) overlay.pointer('down', v[0], v[1], e.button ?? 0);
+      else overlay.click?.(v[0], v[1], e.button === 2, e.button === 1);   // I4: the remove gesture rides the button; G5: the middle one cycles the drop archive
+    }
+    if (overlay?.done) dropOverlay();
+    return true;   // an open native window owns the pointer either way
+  }
+
+  /**
+   * ROAD-C c2/S10: THE OTHER TWO POINTER PHASES, on this slot.
+   * dungeonContext has carried `overlayPointer` since c2/S4 because the
+   * automap's chrome is press-HOLD and drag driven; the town map is the
+   * same machine (ui/automap/automapChrome.js, EXTERIOR_ACTIONS) in the
+   * exterior hosts' slot, and a host that delivers `down` alone latches
+   * a drag that spins the map forever - with nothing to error on.
+   *
+   * A window that has no `pointer` is untouched: every window on this
+   * slot before S10 keeps the click-only seam above.
+   *
+   * The RELEASE is delivered WHEREVER it lands, including outside the
+   * canvas (the listener is on the window, not the canvas) - the
+   * chrome's own header records why that is deliberate.
+   */
+  function pointer(phase, e) {
+    // ROAD-E E1: THE RELEASE REACHES A WINDOW THAT HAS NO POINTER SEAM.
+    // This gate read `!overlay?.pointer`, so the up route existed only
+    // for the two automap windows and every other occupant of this slot
+    // was told about presses and moves and never about the button
+    // coming up. A held button is a STATE in DFU (InputManager's
+    // dictionary, polled by VerticalScrollBar.Update :101-130), so a
+    // window that latches on the press - the list picker's thumb drag -
+    // needs the edge that ends it. `release()` is that edge.
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - see pointerdown
+    if (!overlay.pointer && !(phase === 'up' && overlay.release)) return false;
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    overlay.pointer?.(phase, v ? v[0] : -1, v ? v[1] : -1, e.button ?? 0);
+    if (phase === 'up') overlay.release?.();
+    if (overlay?.done) dropOverlay();
+    return true;
+  }
+
+  /** U37: THE HOVER SEAM - native coords to whatever window is up.
+   *  Hovering never closes a window, so no done check. */
+  function hover(e) {
+    if (!overlay?.hover) return false;
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    // U41: the EVENT rides along, the way U20a's keydown seam does -
+    // the travel map's zoomed pan is a SHIFT-move, and modifier state
+    // reaches a window no other way.
+    overlay.hover(v ? v[0] : -1, v ? v[1] : -1, e);
+    return true;
+  }
+
+  /** The wheel seam (U-scroll): an open window owns the wheel; the
+   *  ones with overflow implement wheel(dir).
+   *
+   *  AUDIT 65 UI-5: THE POINT RIDES THE NOTCH, exactly as it rides the
+   *  hover above. BaseScreenComponent.Update's scroll block (:725-736)
+   *  is guarded by `mouseOverComponent`, which :577-594 recomputes from
+   *  the live mouse each frame, so a window may not route the wheel by
+   *  the last point hover() happened to hand it - a pack opened with
+   *  the Inventory key has had no mousemove at all. */
+  function wheel(e) {
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - a notch under a readout scrolls whatever the world puts under it
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    overlay.wheel?.(Math.sign(e.deltaY), v ? v[0] : -1, v ? v[1] : -1);
+    return true;
+  }
+
+  // ENH-NOTICE3: THIS HOST'S SLOT AND THIS HOST'S PopupText, OFFERED
+  // ONCE. systems/notify.js is the door every DaggerfallUI.MessageBox
+  // and AddHUDText goes through, and a box it is handed reaches a
+  // host's slot only through a presenter. This one is the OUTDOOR
+  // slot, at priority 0: the modal mode hosts (worldModes' interior
+  // arm, the dungeon context) stand in front of it, which is the
+  // order world.js's showQuestBox ladder always asked them in. A push
+  // is pushOverlay (the box lands over what is open, B5's law); a
+  // replace is showOverlay (the dispatching door); no close callback
+  // rides the door (AUDIT ENH-NOTICE3 F6). No unregister: this
+  // host lives as long as the page (every scene change in this port
+  // ends in location.replace - ui/enhanced/enhancedHudText.js, AUDIT FONT F12).
+  registerPresenter({
+    mount: (win, { push }) => { if (push) return pushOverlay(win); showOverlay(win); return true; },
+    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },
+    priority: 0,
+  });
+  registerPresenter({ holds: (win) => windows.containsWindow(win) });   // TUT1 audit: whether this host's stack still holds a window (systems/notify.js windowHeld) - a registration of its own, no `mount`, so the presenter above keeps its shape
+  return {
+    keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, pickMode, showOverlay, pushOverlay, setTopics, setPorts, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
+    openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
+    /** TK-v: the two halves of the tone the ENGINE asks the host for -
+     *  which tone button is selected, and the tier computation for a
+     *  given question. The GATE that decides when to recompute is the
+     *  pipeline's, exactly as C# keeps it inside GetAnswerText. */
+    toneIndex: () => tone,
+    computeTier,
+    texts: (id) => textVariants(id),
+    // U23: the interior host's static-NPC seam needs both of these -
+    // FACTION.TXT to route a click (PlayerActivate.StaticNPCClick reads
+    // the NPC's and the building's faction records) and TEXT.RSC rows
+    // for the parchment boxes the guild popup stacks. Both are already
+    // loaded here, once, so worldModes borrows them rather than opening
+    // a second copy of each file.
+    get factionDict() { return factions?.factionDict ?? null; },
+    // IH1: the quest world's two reads - the ONE name bag, and the
+    // named-building directory the %nt tavern pick draws from
+    nameOpts,
+    get buildingDirectory() { return directory; },
+    // AUDIT 22 F2: a RANDOM variant, because DFU shows nearly every
+    // one of these with GetRandomTokens - the rank refusal alone has
+    // eight, and the port drew the same one forever.
+    // ROAD-A7: the reader takes a PICK. GetRandomTokens has two draws
+    // (TextProvider.cs:228) and the painting macros are the dfRand one;
+    // an omitted pick keeps this host's own `rolls`.
+    lines: (id, pick = rolls) => textRsc?.variantLinesById(id, pick) ?? [],
+    /** U40: MacroHelper.CityName (%cn). The reader has existed since
+     *  T3 and only expandRecord could see it; the trade window's
+     *  records quote it too ("the lowest prices in %cn"), so the
+     *  accessor is exposed rather than a second locationName lookup
+     *  being written in the host. */
+    cityName: () => shownCityName(),
+    /** TK-i: GetRandomTokens for the rumor mill (a random variant as
+     *  TOKENS - AddNonQuestRumor freezes one per add). */
+    variantTokens: (id) => textRsc?.variantTokensById(id, rolls) ?? [],
+    /** AUDIT 63 F3: TextProvider.GetRSCTokens(int id)
+     *  (TextProvider.cs:167-188) - the WHOLE record, no variant draw.
+     *  DaggerfallMessageBox.SetTextTokens(int) reads this; the
+     *  `variantTokens` sibling above is GetRandomTokens and is a
+     *  different member with a different draw. */
+    recordTokens: (id) => textRsc?.tokensById(id) ?? [],
+    /** AUDIT 63 F3: DaggerfallUI.MessageBox's parchment, the port's
+     *  ActionTextBox - the three TalkToNpc refusals
+     *  (TalkManager.cs:2626/:2632/:2645) are modal boxes in DFU,
+     *  never AddHUDText.
+     *
+     *  ENH-NOTICE3: through the ONE DOOR, and the two changes are
+     *  deliberate. (1) It no longer builds the window: this host's
+     *  presenter (registered above) is what the seam finds while the
+     *  player is in the street, and a caller standing in a building
+     *  or a dungeon now reaches THAT host's slot instead of painting
+     *  into an outdoor one nobody is looking at. (2) It PUSHES where
+     *  it used to REPLACE. `showOverlay` disposed whatever held the
+     *  slot; DFU's own door does not - `DaggerfallUI.MessageBox` is
+     *  `new DaggerfallMessageBox(uiManager, uiManager.TopWindow);
+     *  ...; messageBox.Show()` (DaggerfallUI.cs:1346-1353) and Show
+     *  is PushWindow (UserInterfaceManager.cs:79-91). Both remaining
+     *  kinds that come through here are that: the talk refusals
+     *  above, and Travel Options' H help, which the mod raises with
+     *  `DaggerfallUI.MessageBox(HelpText)` while its own control UI
+     *  is the top window (TravelOptionsMod.cs:1335-1338 ->
+     *  DisplayHelpInfo :1246-1256) - a box OVER the panel it explains,
+     *  never one that closes it. */
+    showBox: (rows) => messageBox(rows.length ? rows : ['']),
+    /** AUDIT 24: TextProvider.GetRandomText - a flat pool of every Text
+     *  token in the record, NOT a variant pick. %oth's seam. */
+    randomText: (id) => textRsc?.randomTextById(id, rolls) ?? '',
+    ensureFactions: () => ensureLoaded(),
+    say: (line, delayInSeconds = undefined) => hud.add(line, delayInSeconds),   // AUDIT 28 W6: AddHUDText's delay arg rides through (ShopQualityHUDDelay)
+    /** AUDIT 24 (wave 22): PopupText.AddText files every line it queues
+     *  in the notebook's message ring (:123). The notebook is built by
+     *  the quest bridge, which is built after this host, so the host
+     *  hands the sink back down once it exists. */
+    set hudMessageSink(fn) { hud.onMessage = fn; midScreenText.onMessage = fn; },   // AUDIT 64 F34: SetMidScreenText carries the SAME Notebook.AddMessage tail (DaggerfallHUD.cs:371)
+    get hudMessageSink() { return hud.onMessage; },
+    /** AUDIT 63 F5: PlayerEntity.Notebook.AddNote(List<Token>) for the
+     *  talk window's Copy-to-logbook button (DaggerfallTalkWindow.cs
+     *  :319). Same shape and same reason as hudMessageSink above - the
+     *  notebook belongs to the quest bridge, which is built after this
+     *  host. */
+    set notebookSink(fn) { _notebookSink = fn; },
+    get notebookSink() { return _notebookSink; },
+    /** MERGE AUDIT: the HUD TEXT LAYER on its own, for a host whose
+     *  frame is not this one. worldModes' interior arm consumes the
+     *  frame and returns, so a line said inside a building was queued
+     *  into a HudText nothing ticked or drew - invisible where it was
+     *  said, and then popping in the street on the first non-modal
+     *  frame after the player walked out. It drives this directly. */
+    hudFrame: (dt, font_ = font) => {
+      hud.tick(dt);
+      sayFriends();   // REGARD-OWN: a friend made indoors, said where it was made
+      hud.observe(toastsCovered());   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2: the same report as the frame above, the interior slot this arm is drawn under included
+      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();   // AUDIT 64 F37: the same Draw gate as the frame above, with FONT1's hide door on its else (the enhanced column is DOM and persists)
+    },
+    get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
+    /** EB4: ...and whether the occupant has already said it is DONE -
+     *  closed by its own hand, waiting on the frame that drops it. A
+     *  hand-off that lands in that gap (the pack's book arm: hand
+     *  over, THEN close, and the file lands a microtask later) must
+     *  not be refused as if a live window stood there. */
+    get overlayDone() { return !!overlay?.done; },
+    /** AUDIT 64 F35 (review round): ...and the OTHER question the same
+     *  stack answers - does what is open blank the HUD? A window is up
+     *  (the latch) AND something on this stack cut the previousWindow
+     *  chain (`hudCovered`, DaggerfallPopupWindow.cs:76-84). The slot
+     *  goes with it because a window filled by hand has not been
+     *  reconciled onto the stack yet. */
+    get hudCovered() { return talkPaused() && windows.hudCovered(overlay); },
+    /** MAP-FIELD2: ...and the overlay that HIDES it outright, which is a
+     *  different question and takes no pause gate - the held map does not
+     *  stop the world, and the vitals go anyway. */
+    get hudHidden() { return hidesHud(overlay); },
+    /** U38: the loaded HUD font, for the components drawHud draws
+     *  (the crosshair's mode label). This module already owns the ONE
+     *  FONT0003 both exterior hosts use; handing it out beats a second
+     *  load per host. */
+    get font() { return font; },
+    /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
+     *  refuse to stack a second death screen on the first. */
+    get overlay() { return overlay; },
+    /** AUDIT OW4 P3: ContainsWindow (UserInterfaceManager.cs:114-117) -
+     *  whether the STACK still holds `win`: the slot's, or suspended under
+     *  a window pushed over it (pushOverlay). The slot alone answers "gone"
+     *  for a box a trade window, a quest popup or the exhaustion box was
+     *  laid over, and world.js's party walk lost its question that way. */
+    containsOverlay(win) { return windows.containsWindow(win); },
+    /** S40: PopToHUD. A window that must VACATE the slot before it
+     *  hands control on - the rest window does, because DFU pops to
+     *  the HUD before RaiseSkills and the level-up screen it can raise
+     *  needs this slot free - has had no door to do it through. The
+     *  identity guard is the caller's: pass the window that is
+     *  closing, and a slot already holding something else is left
+     *  alone. Runs the same drain `frame` does, callback included. */
+    /** DUPE-LOAD (AUDIT): A LOAD'S DRAIN BENEATH `keep` (the death screen the load lands under) - every other window in
+     *  the stack disposed and gone, and NONE of their close callbacks run (the suspended ones are theirs): the game they
+     *  would answer is the one the load replaces. `keep` and its own callback stand, for closeDeathScreen. */
+    discardBeneath(keep) {
+      windows.keepOnly(keep, (w) => w.dispose?.());
+      _suspendedCallbacks.length = 0;
+    },
+    closeOverlay(win = null) {
+      // The IDENTITY guard is this door's; the EMPTY-SLOT guard is
+      // dropOverlay's, and asking twice would leave that one
+      // unreachable - a guard no mutation can kill is a guard no
+      // reader can trust (A PIN MUST FAIL, applied to the code).
+      if (win && overlay !== win) return false;
+      return dropOverlay();
+    },
+    get mode() { return getInteractionMode(); },
+    get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
+    buildingNameIn,   // IC-PROPS: a door's building named in its own town
+    doorTownOf,   // IC-PROPS: and the door's record's own town
+    get locationName() { return shownCityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
+    _debug: () => ({
+      mode: getInteractionMode(), overlay: !!overlay, people: peopleNow()?.name ?? null,
+      buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],
+      native: !!overlay?.conversation, topicMode: overlay?.topicMode ?? null,
+      topicCount: overlay?.topics?.length ?? null,
+      overlayText: overlay?.conversation?.at(-1) ?? overlay?.lines?.[0] ?? overlay?.text ?? null,
+      overlayOptions: overlay?.options?.filter((o) => o.label).map((o) => o.label) ?? null,
+      overlayFlow: overlay?.flow ?? null,   // U10: the chargen probe reads the live flow
+      npcName: overlay?.hooks?.npcName ?? null,   // U8b: the native window's name plate
+      hooks: overlay?.hooks ?? null,              // the live session seam (question/answer)
+      // U25: the inventory's box queue replaced the interim popup, so
+      // the probe surface follows it - the equip refusal that S23
+      // watched here is now a real TEXT.RSC box in this queue.
+      overlayBox: (overlay?.boxes?.[0]?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
+      overlayRest: !!overlay?.isRestWindow,   // U48: the rest probe, in BOTH hosts that draw here
+      hud: hud.lines.map((l) => l.text),   // CASTLE1 probe surface
+    }),
+  };
+}

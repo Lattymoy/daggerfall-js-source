@@ -1,0 +1,1637 @@
+[
+  {
+    "name": "PROF10-silver-tier-two",
+    "file": "src/net/recipeLaw.js",
+    "old": "  Object.freeze({ id: 'silver', key: 'metal:silver', word: 'Silver', tier: 1, points: 0 }),",
+    "new": "  Object.freeze({ id: 'silver', key: 'metal:silver', word: 'Silver', tier: 2, points: 0 }),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-gold-tier-four",
+    "file": "src/net/recipeLaw.js",
+    "old": "  Object.freeze({ id: 'gold', key: 'metal:gold', word: 'Gold', tier: 3, points: 10 }),",
+    "new": "  Object.freeze({ id: 'gold', key: 'metal:gold', word: 'Gold', tier: 4, points: 10 }),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-platinum-tier-four",
+    "file": "src/net/recipeLaw.js",
+    "old": "  Object.freeze({ id: 'platinum', key: 'metal:platinum', word: 'Platinum', tier: 5, points: 20 }),",
+    "new": "  Object.freeze({ id: 'platinum', key: 'metal:platinum', word: 'Platinum', tier: 4, points: 20 }),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-silver-points-ten",
+    "file": "src/net/recipeLaw.js",
+    "old": "  Object.freeze({ id: 'silver', key: 'metal:silver', word: 'Silver', tier: 1, points: 0 }),",
+    "new": "  Object.freeze({ id: 'silver', key: 'metal:silver', word: 'Silver', tier: 1, points: 10 }),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-gold-points-twenty",
+    "file": "src/net/recipeLaw.js",
+    "old": "  Object.freeze({ id: 'gold', key: 'metal:gold', word: 'Gold', tier: 3, points: 10 }),",
+    "new": "  Object.freeze({ id: 'gold', key: 'metal:gold', word: 'Gold', tier: 3, points: 20 }),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-platinum-points-thirty",
+    "file": "src/net/recipeLaw.js",
+    "old": "  Object.freeze({ id: 'platinum', key: 'metal:platinum', word: 'Platinum', tier: 5, points: 20 }),",
+    "new": "  Object.freeze({ id: 'platinum', key: 'metal:platinum', word: 'Platinum', tier: 5, points: 30 }),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-linen-tier-two",
+    "file": "src/net/recipeLaw.js",
+    "old": "const JEWEL_CLOTH = Object.freeze({ id: 'linen', key: LINEN.key, word: '', tier: LINEN.tier, points: 0 });",
+    "new": "const JEWEL_CLOTH = Object.freeze({ id: 'linen', key: LINEN.key, word: '', tier: 2, points: 0 });",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-wood-tier-five",
+    "file": "src/net/recipeLaw.js",
+    "old": "    Object.freeze({ id: w, key: `plank:${w}`, word: woodName(w), tier: woodTier(w), points: 0 }),",
+    "new": "    Object.freeze({ id: w, key: `plank:${w}`, word: woodName(w), tier: 5, points: 0 }),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-one-wood",
+    "file": "src/net/recipeLaw.js",
+    "old": "  ['ironwood', 'ghostwood'].map((w) =>\n    Object.freeze({ id: w, key: `plank:${w}`, word: woodName(w), tier: woodTier(w), points: 0 }),\n  ),",
+    "new": "  ['ironwood'].map((w) => Object.freeze({ id: w, key: `plank:${w}`, word: woodName(w), tier: woodTier(w), points: 0 })),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-no-pearl",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const JEWEL_GEMS = Object.freeze([...GEMS.map((g) => g.key), PEARL.key, ...GRADED_GEMS.map((g) => g.key)]);",
+    "new": "export const JEWEL_GEMS = Object.freeze([...GEMS.map((g) => g.key), ...GRADED_GEMS.map((g) => g.key)]);",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - every grade of gem at the jeweller's bench (recipeLaw JEWEL_GEMS, gemPointsPct, takesCracked a plain gem's; the bench's grade row) and the craft's kin one JSON bind."
+  },
+  {
+    "name": "PROF10-gem-word-lower",
+    "file": "src/net/recipeLaw.js",
+    "old": "    ? (GRADED_GEMS.find((g) => g.key === key)?.name ?? key[4].toUpperCase() + key.slice(5))",
+    "new": "    ? (GRADED_GEMS.find((g) => g.key === key)?.name ?? key.slice(4))",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-ring-a-bracelet",
+    "file": "src/net/recipeLaw.js",
+    "old": "  jewelPiece('ring', 'Ring', 2, 1, 'may'),",
+    "new": "  jewelPiece('ring', 'Ring', 3, 1, 'may'),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-mark-may-go-bare",
+    "file": "src/net/recipeLaw.js",
+    "old": "  jewelPiece('mark', 'Mark', 4, 1, 'yes'),",
+    "new": "  jewelPiece('mark', 'Mark', 4, 1, 'may'),",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-bracelet-one-metal",
+    "file": "src/net/recipeLaw.js",
+    "old": "  jewelPiece('bracelet', 'Bracelet', 3, 2),",
+    "new": "  jewelPiece('bracelet', 'Bracelet', 3, 1),",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-bracer-no-leather",
+    "file": "src/net/recipeLaw.js",
+    "old": "  jewelPiece('bracer', 'Bracer', 1, 2, null, [[CURED_LEATHER.key, 1]]),",
+    "new": "  jewelPiece('bracer', 'Bracer', 1, 2, null, []),",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-amulet-one-metal",
+    "file": "src/net/recipeLaw.js",
+    "old": "  jewelPiece('amulet', 'Amulet', 0, 2, 'yes'),",
+    "new": "  jewelPiece('amulet', 'Amulet', 0, 1, 'yes'),",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-torc-two-metal",
+    "file": "src/net/recipeLaw.js",
+    "old": "  jewelPiece('torc', 'Torc', 5, 3),",
+    "new": "  jewelPiece('torc', 'Torc', 5, 2),",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-cloth-amulet-no-gem",
+    "file": "src/net/recipeLaw.js",
+    "old": "  jewelPiece('clothamulet', 'Cloth Amulet', 6, 1, 'yes'),",
+    "new": "  jewelPiece('clothamulet', 'Cloth Amulet', 6, 1, null),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-wand-three-planks",
+    "file": "src/net/recipeLaw.js",
+    "old": "  jewelPiece('wand', 'Wand', 7, 2, 'yes'),",
+    "new": "  jewelPiece('wand', 'Wand', 7, 3, 'yes'),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-cloth-amulet-in-metal",
+    "file": "src/net/recipeLaw.js",
+    "old": "  pieceId === 'clothamulet' ? [JEWEL_CLOTH] : pieceId === 'wand' ? [...JEWEL_WOODS] : [...JEWEL_METALS];",
+    "new": "  pieceId === 'never' ? [JEWEL_CLOTH] : pieceId === 'wand' ? [...JEWEL_WOODS] : [...JEWEL_METALS];",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-name-gem-first",
+    "file": "src/net/recipeLaw.js",
+    "old": "    name: [base.word, gemWord(gem), p.word].filter(Boolean).join(' '),",
+    "new": "    name: [gemWord(gem), base.word, p.word].filter(Boolean).join(' '),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-family-elsewhere",
+    "file": "src/net/recipeLaw.js",
+    "old": "    family: 'jewellery',",
+    "new": "    family: 'jewels',",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-a-smiths-piece",
+    "file": "src/net/recipeLaw.js",
+    "old": "    profession: 'jewelcrafting',",
+    "new": "    profession: 'smithing',",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-rank-a-tier-up",
+    "file": "src/net/recipeLaw.js",
+    "old": "    rank: TIER_RANKS[base.tier - 1],",
+    "new": "    rank: TIER_RANKS[base.tier],",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-two-gems",
+    "file": "src/net/recipeLaw.js",
+    "old": "      [[base.key, p.n], ...p.also, ...(gem ? [[gem, 1]] : [])].map(([key, n]) =>",
+    "new": "      [[base.key, p.n], ...p.also, ...(gem ? [[gem, 2]] : [])].map(([key, n]) =>",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-no-plain-ring",
+    "file": "src/net/recipeLaw.js",
+    "old": "      ...(p.gem === 'yes' ? [] : [jewelRecipe(p, base, null)]),",
+    "new": "      ...(p.gem ? [] : [jewelRecipe(p, base, null)]),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-gem-points-five",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const GEM_POINTS = 10;",
+    "new": "export const GEM_POINTS = 5;",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-gemcutter-adds-none",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const GEMCUTTER_POINTS = 10;",
+    "new": "export const GEMCUTTER_POINTS = 0;",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-goldsmith-any-metal",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (spec50 === GOLDSMITH && r.metal === JEWEL_METALS[0].key) return JEWEL_HAND_GOLDSMITH;",
+    "new": "  if (spec50 === GOLDSMITH) return JEWEL_HAND_GOLDSMITH;",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-gemcutter-any-piece",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (spec50 === GEMCUTTER && r.gem) return JEWEL_HAND_GEMCUTTER;",
+    "new": "  if (spec50 === GEMCUTTER) return JEWEL_HAND_GEMCUTTER;",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-hand-ok-goldsmith-anywhere",
+    "file": "src/net/recipeLaw.js",
+    "old": "  r?.kind === 'jewel' &&\n  ((f === JEWEL_HAND_GOLDSMITH && r.metal === JEWEL_METALS[0].key) || (f === JEWEL_HAND_GEMCUTTER && !!r.gem));",
+    "new": "  r?.kind === 'jewel' && (f === JEWEL_HAND_GOLDSMITH || (f === JEWEL_HAND_GEMCUTTER && !!r.gem));",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-hand-ok-gemcutter-anywhere",
+    "file": "src/net/recipeLaw.js",
+    "old": "  ((f === JEWEL_HAND_GOLDSMITH && r.metal === JEWEL_METALS[0].key) || (f === JEWEL_HAND_GEMCUTTER && !!r.gem));",
+    "new": "  ((f === JEWEL_HAND_GOLDSMITH && r.metal === JEWEL_METALS[0].key) || f === JEWEL_HAND_GEMCUTTER);",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-goldsmith-silver-stays-silver",
+    "file": "src/net/recipeLaw.js",
+    "old": "      ? JEWEL_METALS[1].points",
+    "new": "      ? JEWEL_METALS[0].points",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-gemcutter-hand-unread",
+    "file": "src/net/recipeLaw.js",
+    "old": "  return metal + (r.gem ? gemPointsPct(r.gem) + (hand === JEWEL_HAND_GEMCUTTER ? GEMCUTTER_POINTS : 0) : 0); // CLOTH-GEMS: the gem's grade's share",
+    "new": "  return metal + (r.gem ? gemPointsPct(r.gem) : 0); // CLOTH-GEMS: the gem's grade's share",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - every grade of gem at the jeweller's bench (recipeLaw JEWEL_GEMS, gemPointsPct, takesCracked a plain gem's; the bench's grade row) and the craft's kin one JSON bind."
+  },
+  {
+    "name": "PROF10-points-rounded",
+    "file": "src/net/recipeLaw.js",
+    "old": "  Math.floor((Math.max(0, Number(templatePoints) || 0) * (100 + jewelPointsPct(r, hand))) / 100);",
+    "new": "  Math.round((Math.max(0, Number(templatePoints) || 0) * (100 + jewelPointsPct(r, hand))) / 100);",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-points-negative",
+    "file": "src/net/recipeLaw.js",
+    "old": "  Math.floor((Math.max(0, Number(templatePoints) || 0) * (100 + jewelPointsPct(r, hand))) / 100);",
+    "new": "  Math.floor(((Number(templatePoints) || 0) * (100 + jewelPointsPct(r, hand))) / 100);",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-cracked-anywhere",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const takesCracked = (r) => !!r && r.kind === 'jewel' && !!r.gem && gemGradeOfKey(r.gem) === 'plain';",
+    "new": "export const takesCracked = (r) => !!r && r.kind === 'jewel';",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - every grade of gem at the jeweller's bench (recipeLaw JEWEL_GEMS, gemPointsPct, takesCracked a plain gem's; the bench's grade row) and the craft's kin one JSON bind."
+  },
+  {
+    "name": "PROF10-no-master-jeweller",
+    "file": "src/net/recipeLaw.js",
+    "old": "  r?.profession === 'jewelcrafting' ? spec100 === MASTER_JEWELLER : spec100 === 'masterwright';",
+    "new": "  r?.profession === 'jewelcrafting' ? false : spec100 === 'masterwright';",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ],
+    "note": "CRAFT3: re-aimed by content."
+  },
+  {
+    "name": "PROF10-cracked-never-spent",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (cracked && takesCracked(r)) inputs = inputs.map((i) => (i.key === r.gem ? { key: SIEGE_GEM.key, n: i.n } : i));",
+    "new": "  if (false && takesCracked(r)) inputs = inputs.map((i) => (i.key === r.gem ? { key: SIEGE_GEM.key, n: i.n } : i));",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-cracked-for-the-metal",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (cracked && takesCracked(r)) inputs = inputs.map((i) => (i.key === r.gem ? { key: SIEGE_GEM.key, n: i.n } : i));",
+    "new": "  if (cracked && takesCracked(r)) inputs = inputs.map((i) => (i.key !== r.gem ? { key: SIEGE_GEM.key, n: i.n } : i));",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-facets-four",
+    "file": "src/net/recipeLaw.js",
+    "old": "  facets: 3,",
+    "new": "  facets: 4,",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-gem-facets-three",
+    "file": "src/net/recipeLaw.js",
+    "old": "  gemFacets: 5,",
+    "new": "  gemFacets: 3,",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-turn-quick",
+    "file": "src/net/recipeLaw.js",
+    "old": "  degPerS: 60,",
+    "new": "  degPerS: 90,",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-window-twenty",
+    "file": "src/net/recipeLaw.js",
+    "old": "  windowDeg: 10,",
+    "new": "  windowDeg: 20,",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-master-widens-double",
+    "file": "src/net/recipeLaw.js",
+    "old": "  windowDeg: 10,\n  masterWiden: 0.5,",
+    "new": "  windowDeg: 10,\n  masterWiden: 1,",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-one-turn",
+    "file": "src/net/recipeLaw.js",
+    "old": "  turns: 2,",
+    "new": "  turns: 1,",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-light-from-zero",
+    "file": "src/net/recipeLaw.js",
+    "old": "  lightLo: 60,",
+    "new": "  lightLo: 0,",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-no-gap",
+    "file": "src/net/recipeLaw.js",
+    "old": "  lightHi: 300,\n  gapS: 0.3,",
+    "new": "  lightHi: 300,\n  gapS: 0,",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-band-no-luck",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const facetBand = ({ willpower, luck }) => actBand(Math.trunc((willpower + luck) / 2));",
+    "new": "export const facetBand = ({ willpower, luck }) => actBand(Math.trunc((willpower + willpower) / 2));",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-facets-by-metal",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const facetCount = (r) => (r?.gem ? FACET_ACT.gemFacets : FACET_ACT.facets);",
+    "new": "export const facetCount = (r) => (r?.metal ? FACET_ACT.gemFacets : FACET_ACT.facets);",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-window-unclamped",
+    "file": "src/net/recipeLaw.js",
+    "old": "  FACET_ACT.windowDeg *\n  band *\n  (1 + (FACET_ACT.masterWiden * Math.max(0, Math.min(PROF_RANK_MAX, rank))) / PROF_RANK_MAX);",
+    "new": "  FACET_ACT.windowDeg * band * (1 + (FACET_ACT.masterWiden * rank) / PROF_RANK_MAX);",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-bearing-one-way",
+    "file": "src/net/recipeLaw.js",
+    "old": "  return Math.min(d, 360 - d);",
+    "new": "  return d;",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-recipes-no-jewels",
+    "file": "src/net/recipeLaw.js",
+    "old": "  ...JEWELCRAFTING_RECIPES,\n]);",
+    "new": "]);",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-card-no-points",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (recipeById(item.recipe)?.kind === 'jewel' && Number.isSafeInteger(pts))\n    out.push(`${pts.toLocaleString('en-US')} enchantment points`);",
+    "new": "  if (recipeById(item.recipe)?.kind === 'jewel' && Number.isSafeInteger(pts)) out.push('');",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-card-points-on-a-sword",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (recipeById(item.recipe)?.kind === 'jewel' && Number.isSafeInteger(pts))\n    out.push(`${pts.toLocaleString('en-US')} enchantment points`);",
+    "new": "  if (Number.isSafeInteger(pts)) out.push(`${pts.toLocaleString('en-US')} enchantment points`);",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-fee-twenty-five",
+    "file": "src/net/professionLaw.js",
+    "old": "export const JEWEL_FEE = 50;",
+    "new": "export const JEWEL_FEE = 25;",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-no-jeweller-station",
+    "file": "src/net/decorLaw.js",
+    "old": "  'jeweller',\n  'vendor',",
+    "new": "  'vendor',",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-jeweller-licence-cheap",
+    "file": "src/net/decorLaw.js",
+    "old": "  jeweller: 50_000,",
+    "new": "  jeweller: 5_000,",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-jeweller-station-unnamed",
+    "file": "src/net/decorLaw.js",
+    "old": "  jeweller: \"Jeweller's bench\",",
+    "new": "  jeweller: 'Bench',",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-jewellery-unlisted",
+    "file": "src/net/marketLaw.js",
+    "old": "  Object.freeze(['jewellery', 'Jewellery']),\n",
+    "new": "",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-record-no-jewel-hand",
+    "file": "src/net/productRecord.js",
+    "old": "  if (r.kind === 'jewel') return jewelHandOk(r, f);\n",
+    "new": "",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-light-fixed",
+    "file": "src/systems/facetAct.js",
+    "old": "  const light = () =>\n    FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * Math.max(0, Math.min(1, Number(rng()) || 0));",
+    "new": "  const light = () => FACET_ACT.lightLo;",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-light-unclamped",
+    "file": "src/systems/facetAct.js",
+    "old": "* Math.max(0, Math.min(1, Number(rng()) || 0));",
+    "new": "* (Number(rng()) || 0);",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-window-whole-each-side",
+    "file": "src/systems/facetAct.js",
+    "old": "half: Math.max(0, Number(windowDeg) || 0) / 2,",
+    "new": "half: Math.max(0, Number(windowDeg) || 0),",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-gentle-catches",
+    "file": "src/systems/facetAct.js",
+    "old": "const inWindow = (turned) => !gentle && bearingGap(",
+    "new": "const inWindow = (turned) => bearingGap(",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-never-lost-round",
+    "file": "src/systems/facetAct.js",
+    "old": "      if (st.turned >= 360 * FACET_ACT.turns) {",
+    "new": "      if (st.turned >= 360 * (FACET_ACT.turns + 1)) {",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-passed-uncounted",
+    "file": "src/systems/facetAct.js",
+    "old": "        st.passed++;\n        end(false, st.t);",
+    "new": "        end(false, st.t);",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-next-facet-carries-the-turn",
+    "file": "src/systems/facetAct.js",
+    "old": "    st.turned = 0;\n    st.light = light();\n",
+    "new": "    st.light = light();\n",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-one-light-a-piece",
+    "file": "src/systems/facetAct.js",
+    "old": "    st.turned = 0;\n    st.light = light();\n",
+    "new": "    st.turned = 0;\n",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-stop-no-gap",
+    "file": "src/systems/facetAct.js",
+    "old": "if (st.done || at - st.lastAt < FACET_ACT.gapS) return null;",
+    "new": "if (st.done) return null;",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-stop-at-the-frame",
+    "file": "src/systems/facetAct.js",
+    "old": "const ok = inWindow(st.turned + FACET_ACT.degPerS * l);",
+    "new": "const ok = inWindow(st.turned);",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-lead-unbounded",
+    "file": "src/systems/facetAct.js",
+    "old": "const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "const l = Math.max(0, Number(lead) || 0);",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-clean-short",
+    "file": "src/systems/facetAct.js",
+    "old": "clean: st.cuts.length >= st.need && hits === st.cuts.length",
+    "new": "clean: hits === st.cuts.length",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-cancel-goes-on",
+    "file": "src/systems/facetAct.js",
+    "old": "    cancel() {\n      st.done = true;\n    },",
+    "new": "    cancel() {},",
+    "tests": [
+      "test/net/prof10_law.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-ticks-when-done",
+    "file": "src/systems/facetAct.js",
+    "old": "if (st.done || !Number.isFinite(dt) || dt <= 0) return;",
+    "new": "if (!Number.isFinite(dt) || dt <= 0) return;",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-no-facets",
+    "file": "src/systems/facetAct.js",
+    "old": "need: Math.max(1, facets | 0),",
+    "new": "need: facets | 0,",
+    "tests": [
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-jewel-a-useless-item",
+    "file": "src/systems/smithItems.js",
+    "old": "      group: 'Jewellery',",
+    "new": "      group: 'UselessItems2',",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-jewel-minted-as-armour",
+    "file": "src/systems/smithItems.js",
+    "old": "          : r.kind === 'jewel'",
+    "new": "          : r.kind === 'never'",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-jewel-unset",
+    "file": "src/systems/smithItems.js",
+    "old": "    if (r.kind === 'jewel') setJewel(item, r, hand); // PROF10: its metal's and its gem's name, points and worth\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-name-the-templates",
+    "file": "src/systems/smithItems.js",
+    "old": "item.name.includes(word) ? item.name.replace(word, r.name) : r.name;",
+    "new": "item.name.includes(word) ? item.name : r.name;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-points-no-hand",
+    "file": "src/systems/smithItems.js",
+    "old": "item.enchantmentPoints = jewelPoints(r, base?.enchantmentPoints ?? 0, hand);",
+    "new": "item.enchantmentPoints = jewelPoints(r, base?.enchantmentPoints ?? 0, null);",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-worth-no-gem",
+    "file": "src/systems/smithItems.js",
+    "old": "    ) + gem,",
+    "new": "    ),",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-worth-no-share",
+    "file": "src/systems/smithItems.js",
+    "old": "      (Number.isFinite(item.value) ? item.value : (base?.basePrice ?? 0)) +\n        ((base?.basePrice ?? 0) * jewelPointsPct(r, hand)) / 100,",
+    "new": "      (Number.isFinite(item.value) ? item.value : (base?.basePrice ?? 0)) + ((base?.basePrice ?? 0) * 0) / 100,",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-kept-word-elsewhere",
+    "file": "src/systems/smithItems.js",
+    "old": "'The last facet caught the light, but the realm has not answered yet. Your piece is kept and will be made when it does.'",
+    "new": "'The last pan came off the fire, but the realm has not answered yet. Your dish is kept and will be made when it does.'",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-maker-reads-the-template",
+    "file": "src/systems/enchanting.js",
+    "old": "  const basePower = craftedJewelPoints(item) ?? lookup(item.templateIndex)?.enchantmentPoints ?? 0;",
+    "new": "  const basePower = lookup(item.templateIndex)?.enchantmentPoints ?? 0;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-maker-any-group",
+    "file": "src/systems/enchanting.js",
+    "old": "  if (item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string')\n    return null;",
+    "new": "  if (!/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string') return null;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-maker-any-provenance",
+    "file": "src/systems/enchanting.js",
+    "old": "  if (item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string')\n    return null;",
+    "new": "  if (item?.group !== 'Jewellery' || typeof item.recipe !== 'string') return null;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-maker-negative-points",
+    "file": "src/systems/enchanting.js",
+    "old": "  if (!r || !Number.isSafeInteger(item.enchantmentPoints) || item.enchantmentPoints < 0) return null;",
+    "new": "  if (!r || !Number.isSafeInteger(item.enchantmentPoints)) return null;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-cracked-for-anyone",
+    "file": "server-account/src/professions.js",
+    "old": "if (crack && !(takesCracked(r) && specs[100] === LAPIDARY)) return { error: 'prof-lapidary' };",
+    "new": "if (crack && !takesCracked(r)) return { error: 'prof-lapidary' };",
+    "tests": [
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-cracked-in-any-piece",
+    "file": "server-account/src/professions.js",
+    "old": "if (crack && !(takesCracked(r) && specs[100] === LAPIDARY)) return { error: 'prof-lapidary' };",
+    "new": "if (crack && !(specs[100] === LAPIDARY)) return { error: 'prof-lapidary' };",
+    "tests": [
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-cracked-a-choice-at-50",
+    "file": "server-account/src/professions.js",
+    "old": "if (crack && !(takesCracked(r) && specs[100] === LAPIDARY))",
+    "new": "if (crack && !(takesCracked(r) && specs[50] === LAPIDARY))",
+    "tests": [
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-cracked-unspent",
+    "file": "server-account/src/professions.js",
+    "old": "joiner: specs[50] === 'joiner', cracked: crack });",
+    "new": "joiner: specs[50] === 'joiner', cracked: false });",
+    "tests": [
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-cracked-truthy",
+    "file": "server-account/src/professions.js",
+    "old": "  const crack = cracked === true;",
+    "new": "  const crack = !!cracked;",
+    "tests": [
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-no-master-jeweller",
+    "file": "server-account/src/professions.js",
+    "old": "qualityOdds(rank - r.rank, { masterwright: masterworkSpec(specs[100], r) })",
+    "new": "qualityOdds(rank - r.rank, { masterwright: specs[100] === 'masterwright' })",
+    "tests": [
+      "test/net/prof10_service.test.js"
+    ],
+    "note": "CRAFT3: re-aimed by content."
+  },
+  {
+    "name": "PROF10-svc-hand-at-100",
+    "file": "server-account/src/professions.js",
+    "old": "?? jewelHand(r, specs[50]);",
+    "new": "?? jewelHand(r, specs[100]);",
+    "tests": [
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-hand-unanswered",
+    "file": "server-account/src/professions.js",
+    "old": "...(r?.kind === 'dish' || r?.kind === 'jewel' ? { hand:",
+    "new": "...(r?.kind === 'dish' ? { hand:",
+    "tests": [
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-cracked-store-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "...(takesCracked(r) ? [SIEGE_GEM.key] : [])",
+    "new": "...([])",
+    "tests": [
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-svc-lapidary-a-bad-request",
+    "file": "server-account/src/index.js",
+    "old": "  'prof-lapidary': 403,",
+    "new": "  'prof-lapidary': 400,",
+    "tests": [
+      "test/net/prof10_service.test.js",
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-door-cracked-unposted",
+    "file": "src/net/accountClient.js",
+    "old": ", ...(cracked === true ? { cracked: true } : {}), mint: MINT_VERSION }),",
+    "new": ", mint: MINT_VERSION }),",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-refusal-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "  'prof-lapidary': () => t('account.refusal.profLapidary', 'Only a Lapidary can set a Siege-cracked Gem in a piece. Choose it at Jewelcrafting 100, under Smithing.'),   // PROF10; CRAFT3\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ],
+    "note": "CRAFT3: re-aimed by content."
+  },
+  {
+    "name": "PROF10-book-cracked-unkept",
+    "file": "src/net/profBook.js",
+    "old": "          ...(cracked === true ? { cracked: true } : {}) };",
+    "new": "          };",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-book-cracked-unasked",
+    "file": "src/net/profBook.js",
+    "old": "Number.isSafeInteger(w.seat) ? w.seat : null, w.cracked === true)), key);",
+    "new": "Number.isSafeInteger(w.seat) ? w.seat : null, false)), key);",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-no-jeweller-station",
+    "file": "src/ui/professions/profPages.js",
+    "old": "export const PROF_STATIONS = Object.freeze(['forge', 'workbench', 'loom', 'mason', 'jeweller']);",
+    "new": "export const PROF_STATIONS = Object.freeze(['forge', 'workbench', 'loom', 'mason']);",
+    "tests": [
+      "test/systems/prof10_client.test.js",
+      "test/systems/prof11_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-jeweller-cold-as-a-forge",
+    "file": "src/ui/professions/profPages.js",
+    "old": ": station === 'jeweller' ? t('prof.page.cold.jeweller', JEWEL_COLD_LINE) : forgeColdLine());",
+    "new": ": forgeColdLine());",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-hands-not-at-the-bench",
+    "file": "src/ui/professions/profPages.js",
+    "old": ": me !== _jewel && (_jewel.act || _jewel.crafting) ? 'jeweller' : null);",
+    "new": ": null);",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-escape-keeps-the-stone",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (_jewel.act) { _jewel.act.cancel(); endFacet(); _jewel.word = facetDownLine(); return true; }   // PROF10\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-facet-no-act",
+    "file": "src/ui/professions/profPages.js",
+    "old": "_cook.act || _jewel.act);",
+    "new": "_cook.act);",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-visit-keeps-the-piece",
+    "file": "src/ui/professions/profPages.js",
+    "old": "_jewel.piece = 'ring'; _jewel.base = 'silver'; _jewel.grade = 'plain'; _jewel.picked = null;",
+    "new": "_jewel.picked = null;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - every grade of gem at the jeweller's bench (recipeLaw JEWEL_GEMS, gemPointsPct, takesCracked a plain gem's; the bench's grade row) and the craft's kin one JSON bind."
+  },
+  {
+    "name": "PROF10-pages-gold-at-40",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  jewelcrafting: () => [[t('prof.page.unlocks.jewelcrafting1', 'Silver pieces; the Cloth Amulet'), 1], [t('prof.page.unlocks.jewelcrafting3', 'Gold pieces'), 3],",
+    "new": "  jewelcrafting: () => [[t('prof.page.unlocks.jewelcrafting1', 'Silver pieces; the Cloth Amulet'), 1], [t('prof.page.unlocks.jewelcrafting3', 'Gold pieces'), 4],",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-jewelcrafting-unpractised",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  jewelcrafting: () => [[t('prof.page.unlocks.jewelcrafting1', 'Silver pieces; the Cloth Amulet'), 1],",
+    "new": "  jewels: () => [[t('prof.page.unlocks.jewelcrafting1', 'Silver pieces; the Cloth Amulet'), 1],",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ],
+    "note": "PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
+  },
+  {
+    "name": "PROF10-pages-no-bench",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    ['jeweller', (d) => drawJewellerBench(d, rerender, kit)],   // PROF10\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-bench-no-fee-said",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const short = purseShort(bench, 'jeweller');",
+    "new": "const short = null;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-linen-a-row",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (bases.length > 1) {\n    const row = el('div', 'prof-families prof-metals');\n    for (const base of bases) {",
+    "new": "  if (bases.length > 0) {\n    const row = el('div', 'prof-families prof-metals');\n    for (const base of bases) {",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-base-never-reset",
+    "file": "src/ui/professions/profPages.js",
+    "old": "if (!bases.some((b) => b.id === _jewel.base)) _jewel.base = bases[0].id;",
+    "new": "if (false) _jewel.base = bases[0].id;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-cracked-unoffered-in-the-list",
+    "file": "src/ui/professions/profPages.js",
+    "old": " || (lapidary && takesCracked(r) && craftable(r, held, spendsFor(r, false, true)))",
+    "new": "",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-cracked-for-anyone",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (lapidary && takesCracked(r) && crackedHeld > 0) {\n      // A LAPIDARY'S",
+    "new": "    if (takesCracked(r) && crackedHeld > 0) {\n      // A LAPIDARY'S",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-cracked-unspent",
+    "file": "src/ui/professions/profPages.js",
+    "old": "cracked: cracked && lapidary && takesCracked(r) });",
+    "new": "cracked: false });",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-points-no-hand",
+    "file": "src/ui/professions/profPages.js",
+    "old": "{ points: jewelPointsLine(r, hand),",
+    "new": "{ points: jewelPointsLine(r, null),",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-hand-at-100",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const hand = jewelHand(r, specs[50]);",
+    "new": "const hand = jewelHand(r, specs[100]);",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-odds-no-master-jeweller",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const odds = qualityOdds(rank - r.rank, { masterwright: masterworkSpec(specs[100], r) });   // CRAFT3",
+    "new": "const odds = qualityOdds(rank - r.rank, { masterwright: false });   // CRAFT3",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ],
+    "note": "CRAFT3: re-aimed by content."
+  },
+  {
+    "name": "PROF10-pages-no-heartwood",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    heartwoodToggle(box, el, r, book, _jewel, rerender, cutting);   // a Wand's plank",
+    "new": "    void heartwoodToggle;   // a Wand's plank",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-facets-three",
+    "file": "src/ui/professions/profPages.js",
+    "old": "createFacetAct({ facets: facetCount(r), windowDeg:",
+    "new": "createFacetAct({ facets: 3, windowDeg:",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-window-a-novices",
+    "file": "src/ui/professions/profPages.js",
+    "old": "windowDeg: facetWindow(rank, p.facetBand?.() ?? 1) });",
+    "new": "windowDeg: facetWindow(0, p.facetBand?.() ?? 1) });",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-act-forgets-its-gem",
+    "file": "src/ui/professions/profPages.js",
+    "old": "_jewel.actWood = wood; _jewel.actCracked = crack;",
+    "new": "_jewel.actWood = wood; _jewel.actCracked = false;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-craft-forgets-its-gem",
+    "file": "src/ui/professions/profPages.js",
+    "old": "heartwood: wood, cracked });",
+    "new": "heartwood: wood });",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-gentle-cuts",
+    "file": "src/ui/professions/profPages.js",
+    "old": "if (gentle) { void finishFor(r.id, wood, crack)(false); return; }   // Gentle acts: a plain piece, no facet",
+    "new": "// Gentle acts: a plain piece, no facet",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-round-never-ends",
+    "file": "src/ui/professions/profPages.js",
+    "old": "if (_jewel.act.state.done) { ended(); return; }   // the last facet let go round",
+    "new": "// the last facet let go round",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-shut-page-cuts-on",
+    "file": "src/ui/professions/profPages.js",
+    "old": "if (!els?.bar || els.bar.isConnected === false) { _jewel.act.cancel(); endFacet(); return; }",
+    "new": "if (!els?.bar) { _jewel.act.cancel(); endFacet(); return; }",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-facet-deaf",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const key = (e) => actKey(e, _jewel.els?.hit, stop);",
+    "new": "const key = () => {};",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-one-act-a-page-unkept",
+    "file": "src/ui/professions/profPages.js",
+    "old": "(craftable(r, held, spends) || chain?.ok === true) && !_jewel.crafting && !_jewel.act && !elsewhere && !short;",
+    "new": "(craftable(r, held, spends) || chain?.ok === true) && !_jewel.crafting && !_jewel.act && !short;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-pages-no-jewel-cold-line",
+    "file": "src/ui/professions/profPages.js",
+    "old": "Jewelcrafting is done online, from your Crafting page.';   // PROF10",
+    "new": "Smelting is done online, from your Crafting page.';   // PROF10",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-modes-no-pawn-shop",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (t === BUILDING_TYPES.PawnShop || t === BUILDING_TYPES.GemStore) return",
+    "new": "if (t === BUILDING_TYPES.GemStore) return",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-modes-mason-station-a-jewellers",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'jeweller')) return",
+    "new": "if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'mason')) return",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-world-jewel-at-the-anvil",
+    "file": "src/scenes/world.js",
+    "old": "          : profession === 'jewelcrafting'   // PROF10",
+    "new": "          : profession === 'never'   // PROF10",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-world-band-no-luck",
+    "file": "src/scenes/professionsHost.js",
+    "old": "luck: liveStat(playerEntity, 'luck') }),",
+    "new": "luck: liveStat(playerEntity, 'willpower') }),",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF10-world-cracked-dropped",
+    "file": "src/scenes/professionsHost.js",
+    "old": "{ clean, heartwood, dye, cracked, fee:",
+    "new": "{ clean, heartwood, dye, fee:",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J1-any-recipe-kind",
+    "file": "src/systems/enchanting.js",
+    "old": "  return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
+    "new": "  return r ? r : null;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J1-any-template",
+    "file": "src/systems/enchanting.js",
+    "old": "  return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
+    "new": "  return r?.kind === 'jewel' ? r : null;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J1-no-cap",
+    "file": "src/systems/enchanting.js",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return item.enchantmentPoints;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J1-cap-max",
+    "file": "src/systems/enchanting.js",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.max(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J6-hand-ignored",
+    "file": "src/systems/enchanting.js",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, null));",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J6-goldsmith-assumed",
+    "file": "src/systems/enchanting.js",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? 1));",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-filter-refuses-crafted",
+    "file": "src/ui/item/itemMakerWindow.js",
+    "old": "  if (!keptEnchantments(item) || item.group === 'UselessItems2') return false;",
+    "new": "  if (item.enchantments?.length || item.group === 'UselessItems2') return false;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-kept-any-enchanted",
+    "file": "src/systems/enchanting.js",
+    "old": "  if (!jewel && !rareKeeps(item) && !gildedKeeps(item)) return null;\n  const out = [];",
+    "new": "  const out = [];",
+    "note": "Re-aimed by content (GILDED-MAKER): the guard names the Gilded door too; the mutant still takes any enchanted item.",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-kept-skips-uncostable",
+    "file": "src/systems/enchanting.js",
+    "old": "    if (!row) return null;",
+    "new": "    if (!row) continue;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-kept-never-forced",
+    "file": "src/systems/enchanting.js",
+    "old": "    const parent = typeof e?.parentEnchantment === 'string' ? e.parentEnchantment : 0;",
+    "new": "    const parent = 0;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-decision-kept-free",
+    "file": "src/systems/enchanting.js",
+    "old": "  const cost = totalEnchantmentCost(powers, sideEffects) + enchantmentListCost(keptEnchantments(item) ?? []);",
+    "new": "  const cost = totalEnchantmentCost(powers, sideEffects);",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-label-kept-free",
+    "file": "src/ui/item/itemMakerWindow.js",
+    "old": "        totalEnchantmentCost(this.powers, this.sideEffects) +\n          enchantmentListCost(keptEnchantments(this.selected) ?? []),",
+    "new": "        totalEnchantmentCost(this.powers, this.sideEffects),",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-apply-overwrites",
+    "file": "src/systems/enchanting.js",
+    "old": "  item.enchantments = [...kept, ...applied.map((e) => ({ ...e, type: classicEnchantmentType(e.type) }))];",
+    "new": "  item.enchantments = [...applied.map((e) => ({ ...e, type: classicEnchantmentType(e.type) }))];",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-kept-row-removable",
+    "file": "src/ui/item/itemMakerWindow.js",
+    "old": "      if (hit && !hit.entry.kept && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
+    "new": "      if (hit && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-guard-own-rows",
+    "file": "src/ui/item/itemMakerWindow.js",
+    "old": "      item: this.selected,\n      powers: all.powers,\n      sideEffects: all.sideEffects,\n    });",
+    "new": "      item: this.selected,\n      powers: this.powers,\n      sideEffects: this.sideEffects,\n    });",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-lists-no-kept",
+    "file": "src/ui/item/itemMakerWindow.js",
+    "old": "    return { powers: [...k.powers, ...this.powers], sideEffects: [...k.sideEffects, ...this.sideEffects] };",
+    "new": "    return { powers: this.powers, sideEffects: this.sideEffects };",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF10-J2-bench-words",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    box.append(el('p', 'px-note', t('prof.page.jewel.pointsNote', '{points}{hand, select, goldsmith { - a Goldsmith\\'s Silver, counted as Gold} gemcutter { - a Gemcutter\\'s gem} other {}}. The item maker spends them{wand, select, yes {} other {, beside a Masterwork\\'s own enchantment}}.',",
+    "new": "    box.append(el('p', 'px-note', t('prof.page.jewel.pointsNote', '{points}{hand, select, goldsmith { - a Goldsmith\\'s Silver, counted as Gold} gemcutter { - a Gemcutter\\'s gem} other {}}. The item maker spends them{wand, select, yes {} other {}}.',",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J3-port-own-rows-only",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "items: enchantRows(w, shown.powers) }",
+    "new": "items: enchantRows(w, w.powers) }",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J3-kept-row-removable",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "act: forced || kept ? null",
+    "new": "act: forced ? null",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J3-kept-row-loud",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "muted: forced || kept,",
+    "new": "muted: forced,",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J3-probe-own-rows",
+    "file": "src/scenes/worldModes.js",
+    "old": "itemMakerRowLayout(w._lists()[which === 'powers' ? 'powers' : 'sideEffects'])",
+    "new": "itemMakerRowLayout(which === 'powers' ? w.powers : w.sideEffects)",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J4-no-fit",
+    "file": "src/systems/smithItems.js",
+    "old": "        fits,\n        byLines: at(MINT_V_LINES),",
+    "new": "        byLines: at(MINT_V_LINES),",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the roll's options carry its mint version's law beside the fit."
+  },
+  {
+    "name": "AUDIT-PROF-541-J4-first-draw-stands",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (typeof fits !== 'function' || fits(first)) return first;",
+    "new": "  return first;",
+    "tests": [
+      "test/systems/prof10_client.test.js",
+      "test/systems/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J4-redraw-from-all",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "return ok.length ? pick(ok, rolls) : first;",
+    "new": "return ok.length ? pick(all, rolls) : first;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J5-wand-promised",
+    "file": "src/ui/professions/profPages.js",
+    "old": "wand: r.product === 'wand' ? 'yes' : 'no'",
+    "new": "wand: r.product === 'wands' ? 'yes' : 'no'",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J6-hand-unkept",
+    "file": "src/systems/smithItems.js",
+    "old": "if (jewelHandOk(r, hand)) item.hand = hand;",
+    "new": "if (false) item.hand = hand;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J6-any-hand-kept",
+    "file": "src/systems/smithItems.js",
+    "old": "if (jewelHandOk(r, hand)) item.hand = hand;",
+    "new": "if (hand) item.hand = hand;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-J6-field-unbounded",
+    "file": "src/systems/item/itemFields.js",
+    "old": "  hand: int({ min: 1, max: 2 }),",
+    "new": "  hand: int(),",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF541-J7-every-gem-its-first",
+    "file": "server-account/src/professions.js",
+    "old": "  const kin = firstCraftKin(r);",
+    "new": "  const kin = [r.id];",
+    "tests": [
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF541-J7-key-the-gem",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const firstCraftKey = (r) => (!r ? null : `${r.product}@${r.tier}`);",
+    "new": "export const firstCraftKey = (r) => (!r ? null : r.kind === 'jewel' ? r.id : `${r.product}@${r.tier}`);",
+    "tests": [
+      "test/net/prof10_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF-541-R2-C4-tooltip-raw",
+    "file": "src/ui/item/itemScroller.js",
+    "old": "pieceLines(item, craftedJewelPoints(item))",
+    "new": "pieceLines(item)",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF-541-R2-C4-card-raw",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "pieceLines(item, craftedJewelPoints(item))",
+    "new": "pieceLines(item)",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF-541-R2-C4-law-ignores",
+    "file": "src/net/recipeLaw.js",
+    "old": "  const pts = Number.isSafeInteger(points) ? points : item.enchantmentPoints;",
+    "new": "  const pts = item.enchantmentPoints;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF-541-R2-C5-uncapped",
+    "file": "src/systems/enchanting.js",
+    "old": "  applied.length = Math.min(applied.length, Math.max(0, MAX_ENCHANTMENTS + 1 - kept.length));\n  doEnchantedPayloads(item, applied, { entity: owner, ctx, nowMinutes });",
+    "new": "  doEnchantedPayloads(item, applied, { entity: owner, ctx, nowMinutes });",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF-541-R2-C6-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "one quality.{steps, plural, =0 {} one { The town\\'s Apothecary raises it one more.} other { The town\\'s Apothecary raises it # more.}}',",
+    "new": "one quality.',",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF-541-R2-C6-unclamped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const steps = Math.max(0, Math.trunc(Number(p.jewelSteps?.()) || 0));",
+    "new": "const steps = p.jewelSteps?.() ?? 0;",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF-541-R2-C6-world-station",
+    "file": "src/scenes/professionsHost.js",
+    "old": "jewelSteps: () => myHall('jewelcrafting').steps,",
+    "new": "jewelSteps: () => myHall('alchemy').steps,",
+    "tests": [
+      "test/systems/prof10_client.test.js"
+    ]
+  }
+]

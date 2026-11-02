@@ -1,0 +1,66 @@
+[
+  {
+    "name": "UO-held-by-the-feet-unasked",
+    "file": "src/player/enterExit.js",
+    "old": "  return (\n    collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) ||\n    collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]])\n  );",
+    "new": "  return false || collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]]);",
+    "tests": [
+      "test/player/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-held-by-the-head-unasked",
+    "file": "src/player/enterExit.js",
+    "old": "  return (\n    collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) ||\n    collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]])\n  );",
+    "new": "  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || false;",
+    "tests": [
+      "test/player/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-ring-search-asks-no-solid",
+    "file": "src/player/enterExit.js",
+    "old": "      if (heldInSolid(collider, [px, h, pz])) continue;\n      if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;",
+    "new": "      if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;",
+    "tests": [
+      "test/player/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-torso-unasked",
+    "file": "src/player/enterExit.js",
+    "old": "      if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;\n      return [px, h, pz];",
+    "new": "      return [px, h, pz];",
+    "tests": [
+      "test/player/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-floor-ignored",
+    "file": "src/player/enterExit.js",
+    "old": "      return [px, h, pz];",
+    "new": "      return [px, 0, pz];",
+    "tests": [
+      "test/player/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-sea-floor-stood-on",
+    "file": "src/player/enterExit.js",
+    "old": "      if (!Number.isFinite(h) || (dry && !dry(h))) continue;",
+    "new": "      if (!Number.isFinite(h)) continue;",
+    "tests": [
+      "test/player/unstuckout.test.js"
+    ]
+  },
+  {
+    "name": "UO-the-landing-unchecked",
+    "file": "src/scenes/world.js",
+    "old": "    if (walkMode && (!local || ground) && (heldInSolid(collider, pos) || ",
+    "new": "    if (false && (heldInSolid(collider, pos) || ",
+    "tests": [
+      "test/player/unstuckout.test.js"
+    ],
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - the landing's question is held-in-a-rock OR (a teleport's bare landing) unsafe ground"
+  }
+]

@@ -1,0 +1,289 @@
+// THE HOST ENCHANT CONTEXT - one body, mounted by every host that can
+// hold an enchanted item.
+//
+// systems/enchantments.js keeps ONE ctx per session
+// (setDefaultEnchantCtx, the port-singleton idiom - DFU's arms read
+// GameManager singletons the same way) and every payload folds it under
+// any per-call ctx. FS1 recorded for several waves that the standalone
+// ?dungeon host mounted NOTHING: setDefaultEnchantCtx had exactly one
+// caller in the tree, scenes/world.js, so in that host CastWhenUsed's
+// assign and its click-to-cast ready, the vampiric-drain and affinity
+// scans and SoulBound's break release all optional-chained into
+// silence - the AUDIT 24 seam shape exactly, a ported law that
+// evaporates with a green suite.
+//
+// The flag also said the mount was "~90 lines of live plumbing and none
+// of it is host-portable by copy". The first half was true and the
+// second was not: what is host-specific is the POOLS and the WINDOWS,
+// which are already parameters everywhere else in this tree. So the ctx
+// body lives here and each host hands in its own doors - which is also
+// the only way the two mounts can be held to the same law, since a
+// copied mount diverges the first time an arm grows.
+//
+// What is deliberately NOT a parameter: the seams that are already
+// singletons in the port (playerInSunlight/playerInHolyPlace, which
+// route by LIVE mode; worldMinutes; the settings store). A host that
+// passed those in would be re-answering a question the port answers
+// once.
+import { playerInSunlight, playerInDarkness, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the E1 conditional flags (FB1024: + the dark)
+import { skyMinutes } from '../systems/worldTick.js';   // TIME1: a season's or a moon's enchantment reads the sky
+import { getBool } from '../systems/settings/settings.js';
+import { seasonValue, SEASONS, dateFromClassicMinutes, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
+import { raidSpotOpen } from '../player/enterExit.js';   // PACK-OPEN: a raid's monster stands in the open
+import { placeFoeEnv, entityOccupancy, heldSpots, holdSpotWhile } from './quest/questFoeHost.js';   // QUEST-WAVE: the held spots' one home
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT NAV2 F55: who the drain passes by
+import { summonedBody } from '../systems/foeLootCap.js';   // RPT1026-PROGRESS: an artifact's summon carries no loot
+
+/** The law REFUSES a spot DFU would have rejected - no floor under it,
+ *  something already there, too close to the wall the ray found - and
+ *  DFU's spawner simply tries again next frame. This retries the same
+ *  way. The budget is the port's own call: DFU leaves a MonoBehaviour
+ *  running for free, and a spawn that cannot find a spot in a sealed
+ *  corridor must not spin here. */
+export const LOOSE_FOE_PLACE_ATTEMPTS = 12;
+
+/* AUDIT 68 S21-loose-foe-stacking: the spots handed to a pool whose spawn has not landed yet, per scene (keyed by
+ * its collider). PlaceFoeFreely's OverlapSphere meets every placed foe's collider; here a spawn is async (the
+ * career fetch, the texture warm) and the record joins its pool only afterwards, so a squad stood in one loop
+ * (RR's expulsion wave) saw none of its own and stood foes inside each other. A spot is taken the moment it is
+ * chosen and released when the spawn settles. QUEST-WAVE moved the set to questFoeHost.js (heldSpots), where the
+ * quest arms hold theirs too - one set a scene. */
+
+/** SD1: stand a loose foe - SoulBound's break release, the Sanguine
+ *  Rose's Daedroth - through DFU's OWN placement law.
+ *
+ *  Both arms used to drop the foe at the player's feet plus a fixed
+ *  (+2, +1, 0): inside the player in a corridor, inside the wall
+ *  against one. placeFoeFreely is the same law the quest foe arm
+ *  stands its foes through - one home.
+ *
+ *  minDistance 4, not placeFoeFreely's own 5: CreateFoeSpawner's
+ *  defaults (GameObjectHelper.cs:1314) are the spawner FIELDS both
+ *  enchantment callers get, and PlaceFoeFreely is handed those rather
+ *  than its own signature defaults.
+ *
+ *  `spawn(mobileType, pos, { yawRad, allied })` is the host's own pool
+ *  door - the placement is shared, the pool never is. */
+export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn },
+  mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS, open = false, reach = null } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
+  if (!feet || !collider || !spawn) return null;
+  const pending = heldSpots(collider);
+  const env = placeFoeEnv({
+    collider,
+    // origin at the controller centre, as tryPlaceFoe has it - DFU
+    // casts from PlayerObject.transform.position, not the feet
+    playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+    playerYawRad: yawRad,
+    fovDegrees,
+    isOccupied: entityOccupancy((f) => f.ai?.feet, () => [...foes, ...pending], feet),
+  });
+  let spot = null;
+  for (let i = 0; i < attempts && !spot; i++) {
+    spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
+    if (spot && open && !raidSpotOpen(collider, spot)) spot = null;   // PACK-OPEN: a spot in a building is another attempt
+    if (spot && reach && !reach([spot.x, spot.y, spot.z])) spot = null;   // RAID-REACH: a spot with no street to its player (in a wall, a closed yard) is another attempt
+  }
+  if (!spot) return null;
+  // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from
+  // the test point; walkers land through the pool's own chain.
+  const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
+  const pos = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
+  const yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
+  return holdSpotWhile(collider, spot, () => spawn(mobileType, pos, { yawRad: yaw, allied })).catch(() => null);   // a capsule centred on the point the law tested
+}
+
+/**
+ * The ctx object setDefaultEnchantCtx takes. Every door a host must
+ * answer is a parameter; everything a host cannot answer differently
+ * (the calendar, the lunar phases, the settings flag, the sunlight and
+ * holy-place seams) is resolved here.
+ *
+ * @param playerEntity      the one player
+ * @param spellsByIndex     () => Map(record index -> SPELLS.STD record)
+ * @param now               () => classic minutes (the payload clocks)
+ * @param sinks             { hurt, heal } - the payload's own two doors
+ * @param playerSpellSinks  the FULL player bundle, for a REFLECTED cast
+ * @param say               (line) => the host's text channel
+ * @param magic             the host's player-magic engine (M3), or a GETTER of
+ *                          the live one (CAST-USE: shared.js liveCastEngine)
+ * @param foes              () => the live foe pool
+ * @param foeSinks          (foe) => that foe's sinks
+ * @param feet              () => the player's feet
+ * @param standLooseFoe     (mobileType, { allied, lineOfSightCheck })
+ * @param messageBox        (textId) => a TEXT.RSC popup
+ * @param openCharacterSheet () => push the sheet
+ * @param replaceFoe        (targetEntity, mobileType) => the Wabbajack
+ * @param isResting         () => bool (CastWhenHeld's degrade rate)
+ * @param travelUIShowing   () => bool (AUDIT-TO1 F2: CastWhenHeldTO - no
+ *                          wear at all while an accelerated journey's
+ *                          control panel is up)
+ * @param spellToOwner      (foe, record, level) => bool - STRIKE-SHARED: a
+ *                          strike spell of the player's on a foe another
+ *                          player runs goes to that player whole; true
+ *                          when it went (nothing lands here)
+ */
+export function createEnchantCtx({
+  playerEntity,
+  spellsByIndex,
+  now,
+  sinks,
+  playerSpellSinks = null,
+  say = null,
+  magic: engine,
+  foes = () => [],
+  foeSinks = () => ({}),
+  feet = () => [0, 0, 0],
+  standLooseFoe: standFoe = null,
+  messageBox = null,
+  openCharacterSheet = null,
+  replaceFoe = null,
+  isResting = () => !!playerEntity?.isResting,
+  travelUIShowing = () => false,
+  bossSpell = null,
+  spellToOwner = null,
+} = {}) {
+  // CAST-USE: an item's spell goes through the engine whose click FIRES it. A host whose modes run different
+  // engines (world.js / exterior.js: their own above ground and indoors, dungeonContext's underground) hands a GETTER;
+  // a fixed engine still works as before.
+  const live = typeof engine === 'function' ? engine : () => engine;
+  const magic = {
+    castByItemSelf: (...a) => live().castByItemSelf(...a),
+    barCast: () => live().barCast?.(),
+    readySpell: (...a) => live().readySpell(...a),
+    applySpellToPlayer: (...a) => live().applySpellToPlayer(...a),
+    applySpellToFoe: (...a) => live().applySpellToFoe(...a),
+  };
+  return {
+    spellsByIndex,
+    now,
+    sinks,
+    // AUDIT 39: HealthLeech.cs:86-89 bills the WEARER on every strike
+    // (8) and every use (16) of a WheneverUsed leech, not only on the
+    // magic round - and worldTick's per-round ctx was the only mount
+    // in the tree that carried hurtSelf, so the -4000-point drawback
+    // cost the player nothing at the two doors that spend it.
+    hurtSelf: (n) => { if (n > 0) sinks?.hurt?.(n); },
+    say,
+    // S40: CastWhenHeld.cs:135 - a held enchantment degrades at 60 per
+    // round while the player is resting and 4 otherwise. The rest
+    // window raises the flag on OPEN, so it is live the moment the
+    // rest page is up.
+    isResting,
+    // AUDIT-TO1 F2: CastWhenHeldTO.cs:26-35. Travel Options replaces
+    // DFU's CastWhenHeld outright (RegisterEffectTemplate, :338 -
+    // UNCONDITIONALLY, not behind a setting) for one reason: its own
+    // guard reads `!SyntheticTimeIncrease && !GetTravelControlUI().isShowing`.
+    // DFU's fast travel raises the synthetic flag and costs a held
+    // enchantment nothing; an accelerated journey is REAL time, raises
+    // no flag, and would bill every one of its game minutes. Only the
+    // world host runs a journey, so every other host leaves this false.
+    travelUIShowing,
+    // V2c: the E1 conditional arms' two flags (RepairsObjects' sun
+    // gate, the affinity/curse place gates). Both read seams the mode
+    // machine registers, so they route by LIVE mode in every host.
+    inSunlight: () => playerInSunlight(),
+    // FB1024 (2026-10-24, #bug-reports): RegensHealth's InDarkness arm asks
+    // inDarkness, and no ctx answered it - Regens Health: In Darkness healed
+    // nothing, anywhere, ever (bible/01-Overview/bugs/Field-Bugs-2026-10-24.md).
+    inDarkness: () => playerInDarkness(),
+    inHolyPlace: () => playerInHolyPlace(),
+    applySpellToSelf: (record, _entity, item) => magic.castByItemSelf(record, item),   // D9: bundle.CastByItem (CastWhenUsed.cs:136)
+    // RPT1026-FIGHTS (TRAP-TO-OWNER): the door STRIKE-SHARED's strike takes, offered to the cast engine too (systems/
+    // enchantments.js spellToFoeOwner) - a cast's Soul Trap on a foe another player runs goes to that player
+    spellToOwner: (f, record, level) => !!spellToOwner?.(f, record, level),
+    castBarred: () => magic.barCast?.() === true,   // HOME-MAGIC: a place that bars casting bars an item's, and it spends nothing
+    setReadySpell: (record) => magic.readySpell(record, { free: true }),
+    applySpellToTarget: (record, attacker, target) => {
+      // X11: the caster travels WITH ITS SINKS. Spell Reflection sends
+      // the bundle back at whoever cast it, and a caster with no sinks
+      // would have the reflected damage land nowhere - silently, which
+      // is the worst way for it to be wrong.
+      const af = attacker && attacker !== playerEntity
+        ? foes().find((x) => x.entity === attacker) : null;
+      const casterOf = () => {
+        if (!attacker) return null;
+        if (attacker === playerEntity) return { entity: playerEntity, sinks: playerSpellSinks ?? sinks };
+        return af ? { entity: attacker, sinks: foeSinks(af) } : { entity: attacker };
+      };
+      if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
+      // AUDIT WBX F2: a Cast When Strikes spell on the Oblivion Gate's boss goes by the court's own spell door (the host's
+      // `bossSpell` - scenes/gate/standInSpell.js spellOnStandIn): his stand-in is no foe of the list, and the spell went nowhere.
+      // AUDIT WB11 W1: the stand-in it met goes with it - one of his host's or a crystal's names its body, and the court's
+      // door lands the spell on THAT body (every `spareGear` stand-in went to him: a blade that cut an Imp cast on him)
+      if (target?.spareGear) { bossSpell?.(record, target); return; }
+      const f = foes().find((x) => !x.dead && x.entity === target);
+      if (!f) return;
+      // STRIKE-SHARED (2026-09-29, Mac: "Do #1"): the player's strike on a foe ANOTHER player runs goes to that player,
+      // whole - landed on this machine's copy it was overwritten by the runner's next frame, and every effect but the
+      // damage (which crossed as a blow) did nothing. A spell the wire cannot carry lands here as before.
+      if (attacker === playerEntity && spellToOwner?.(f, record, playerEntity.level ?? 1)) return;
+      // AUDIT 68 S21-strike-landing-dup: the cast paths' ONE foe landing (the Soul Trap line, the Calm/Charm flag,
+      // the reflection's re-target), handed this door's membership-routed sinks. A copy here kept the reflection
+      // alone, so a Cast When Strikes Soul Trap never said "Trap active." and a struck Charm never pacified.
+      magic.applySpellToFoe(record, attacker?.level ?? 1, f, casterOf(), undefined, foeSinks(f));
+    },
+    nearbyFoes: (range) => {
+      const pf = feet();
+      return foes().filter((f) => !f.dead && f.ai
+        && Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]) <= range)
+        // V3: distance rides along - the Skull of Corruption clones
+        // the NEAREST enemy; the field is additive, no reader broke
+        .map((f) => ({
+          mobileType: f.mobileType ?? f.entity?.mobileType ?? 128,
+          distance: Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]),
+          // MT-ii: the LIVE team - both summons filter their scan on
+          // `Team != MobileTeams.PlayerAlly` before counting company
+          // (SanguineRoseEffect.cs:47-48, SkullOfCorruptionEffect
+          // .cs:47-48), so your own standing summons never count.
+          team: f.entity?.team ?? 'PlayerEnemy',
+          // AUDIT NAV2 F55: whether the player's own harm passes this
+          // body by (combat/friendlyFire.js - a town's defender, a
+          // shipmate): the vampiric drain skips it, the scans count it
+          // as ever. And the drain's word rides to the host's sink - it
+          // is no attack of the player's.
+          spared: sparedByPlayer(f),
+          hurt: (n, o) => foeSinks(f).hurt?.(n, o),
+        }));
+    },
+    // SD1: the two SPAWN arms - SoulBound's break release and the
+    // Sanguine Rose's Daedroth. They differ exactly as DFU has them
+    // differ: SoulBound passes lineOfSightCheck FALSE (SoulBound.cs:100
+    // - a released soul may appear in front of you), the Sanguine Rose
+    // takes the default TRUE and allied TRUE (SanguineRoseEffect.cs:56).
+    spawnFoe: (mobileType) => { standFoe?.(mobileType, { lineOfSightCheck: false }); },
+    // RPT1026-PROGRESS: and the allied summon's body carries nothing (foeLootCap.js summonedBody) - every host's stand
+    // answers the foe it stood (the street's and a building's pool, the dungeon's loose stand), or null
+    spawnAlliedFoe: (mobileType) => { Promise.resolve(standFoe?.(mobileType, { allied: true })).then(summonedBody, () => null); },
+    // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup,
+    // openCharacterSheet the Oghma's sheet push, replaceFoe the
+    // Wabbajack's transform over the host's own pool.
+    messageBox,
+    openCharacterSheet,
+    replaceFoe,
+    // R1: the AllowMagicRepairs seam - RepairsObjects' enchanted-item
+    // skip and the break-consumption arm both read it.
+    get allowMagicRepairs() { return getBool('Controls', 'AllowMagicRepairs'); },
+    // W1: the season seam - ExtraSpellPts' seasonal conditions compare
+    // against its OWN param order (DuringWinter=0..DuringFall=3,
+    // ExtraSpellPts.cs:184-189), not the calendar enum (Fall=0..
+    // Winter=3) - the map is the two ends swapped.
+    season: () => {
+      const s = seasonValue(dateFromClassicMinutes(skyMinutes()));
+      return s === SEASONS.Winter ? 0 : s === SEASONS.Fall ? 3 : s;
+    },
+    // V2c: the moon arms, off V2a's lunar law. ExtraSpellPts'
+    // IsFullMoon/IsHalfMoon/IsNewMoon (:133-154) each answer true when
+    // EITHER moon shows the phase; half counts both the waxing and
+    // waning half. Params 4/5/6 = Full/Half/New (:190-192).
+    moonPhase: (param) => {
+      const { masser, secunda } = lunarPhasesFromMinutes(skyMinutes());
+      const either = (...phases) => phases.includes(masser) || phases.includes(secunda);
+      if (param === 4) return either(LUNAR_PHASES.Full);
+      if (param === 5) return either(LUNAR_PHASES.HalfWax, LUNAR_PHASES.HalfWane);
+      if (param === 6) return either(LUNAR_PHASES.New);
+      return false;
+    },
+  };
+}

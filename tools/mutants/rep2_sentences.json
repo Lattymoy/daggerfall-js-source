@@ -1,0 +1,128 @@
+[
+  {
+    "name": "REP2-DFU's-half-less-one",
+    "file": "src/systems/court.js",
+    "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal, people };",
+    "new": "  if (acquitted || !MARKED_CRIMES.has(crime))\n    return { legal: Math.trunc(loss / 2) - 1, people: Math.trunc((Math.trunc(loss / 2) - 1) / 2) };",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-mark-on-every-crime",
+    "file": "src/systems/court.js",
+    "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal, people };",
+    "new": "  if (acquitted) return { legal, people };",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-acquittal-marked",
+    "file": "src/systems/court.js",
+    "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal, people };",
+    "new": "  if (!MARKED_CRIMES.has(crime)) return { legal, people };",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-sentence-credits-nothing",
+    "file": "src/systems/court.js",
+    "old": "  changeLegalRep(player, court.regionIndex, refund.legal, {\n    kind: acquitted ? 'acquittal' : 'sentence',\n    crime: court.crime,\n  });",
+    "new": "  changeLegalRep(player, court.regionIndex, 0, { kind: acquitted ? 'acquittal' : 'sentence', crime: court.crime });",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-DFU's-minus-20-line",
+    "file": "src/systems/court.js",
+    "old": "  if (!voluntary && player.watchSlain) return false;",
+    "new": "  if (!voluntary && (player.watchSlain || legalRepOf(player, regionIndex) < -20)) return false;",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-watchman-ignored",
+    "file": "src/systems/court.js",
+    "old": "  if (!voluntary && player.watchSlain) return false;\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-every-wave-charged",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (playerEntity.chargedCrime === crimeId()) return;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-worse-crime-free",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (playerEntity.chargedCrime === crimeId()) return;",
+    "new": "    if (playerEntity.chargedCrime) return;",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-no-charge-coming-quietly",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    playerEntity.haveShownSurrenderDialogue = true;\n    chargeOnce();\n    if (!surrenderToCityGuards",
+    "new": "    playerEntity.haveShownSurrenderDialogue = true;\n    if (!surrenderToCityGuards",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-acquittal-credited-as-a-sentence",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "raiseRepForSentence(playerEntity, court, { acquitted: true });",
+    "new": "raiseRepForSentence(playerEntity, court);",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-DFU's-good-side-term",
+    "file": "src/systems/court.js",
+    "old": "      ? BASE_PENALTY[crimeType]",
+    "new": "      ? PENALTY_PER_LEGAL_REP_POINT[crimeType] * legalRep + BASE_PENALTY[crimeType]",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-chase-never-ends",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (!playerEntity.crimeCommitted) { playerEntity.chargedCrime = 0; playerEntity.watchSlain = false; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-kill-never-marks",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        playerEntity.watchSlain = true;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  },
+  {
+    "name": "REP2-the-charge-carried-across-a-load",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    // REP2: and the chase it was part of - the loaded save's own crime is a chase of its own, charged at its first box\n    playerEntity.chargedCrime = 0;\n",
+    "new": "    // REP2: and the chase it was part of - the loaded save's own crime is a chase of its own, charged at its first box\n",
+    "tests": [
+      "test/scenes/rep2_sentences.test.js"
+    ]
+  }
+]

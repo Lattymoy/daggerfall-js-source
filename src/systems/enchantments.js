@@ -1,0 +1,1357 @@
+// E1: THE ENCHANTMENT SYSTEM - the largest never-started system in
+// AUDIT 25's accounting, at 0% until this slice. Verbatim from DFU's
+// Enchanting effect classes + EntityEffectManager.DoItemEnchantmentPayloads
+// (MIT, Daggerfall Workshop). The port's magic items have carried their
+// MAGIC.DEF enchantment pairs since S1 (loot.js mints
+// item.enchantments = [{type, param}]) and NOTHING ever read them -
+// every magic item was a label.
+//
+// SHAPE. DFU runs enchantments through two mechanisms:
+//   1. HELD bundles whose ConstantEffect() re-applies cleared entity
+//      modifier channels every frame (DoConstantEffects,
+//      EntityEffectManager.cs:1678-1702), and
+//   2. payload CALLBACKS dispatched per context flag
+//      (DoItemEnchantmentPayloads, :962-1035).
+// The port folds (1) into a per-magic-round recompute of
+// `entity._enchantMods` (computeEnchantmentMods) - the S22 read-time
+// idiom at the broker's own cadence; conditions (season, sunlight,
+// nearby creatures) change on the minute scale, so the round is the
+// honest resolution - and keeps (2) as the dispatcher, law for law,
+// including the quirks called out below.
+//
+// ROUND COUNTER. DFU cadences (`% 4`, `% 60`) run on
+// MagicRoundsSinceStartup, a counter that starts at 0 each SESSION -
+// its phase is arbitrary. The port passes the absolute classic minute:
+// identical cadence, phase pinned to the world clock instead of the
+// boot moment (recorded; the same substitution class as Ledger A's
+// AmbientEffectsPlayer row).
+//
+// CTX SEAMS (all optional - an absent seam idles its arm, the headless
+// charter). E2: a host mounts them ONCE with setDefaultEnchantCtx and
+// every dispatch folds that under any per-call ctx. The seams:
+// spellsByIndex(), applySpellToTarget/applySpellToSelf/setReadySpell
+// (the cast arms - hostMagic supplies them; assignHeldSpell defaults
+// to this module's own over the effects doors), now() (the classic
+// minute clock for equip stamps), sinks + rolls (the wearer's effect
+// doors for held applies), castingSkillOf(skillId) (the equip
+// durability bill's skill read - defaults to the wearer's),
+// inSunlight()/inDarkness()/inHolyPlace() (PlayerEnterExit flags -
+// V2c: answered off the passiveSpecials host seam at world.js's
+// mount, so RegensHealth/ItemDeteriorates/UserTakesDamage's
+// conditional arms are live), season(), moonPhase(param) (V2c:
+// ExtraSpellPts' IsFull/IsHalf/IsNewMoon over gameDate's lunar law),
+// nearbyFoes(range) -> [{ mobileType, spared, hurt(n, o) }] (PlayerGPS.
+// GetNearbyObjects - the affinity classifier lives HERE off
+// ENEMY_BASICS), spawnFoe(mobileType) (SoulBound's break, B1's
+// spawner), isResting(), allowMagicRepairs (a DFU setting, default
+// false), say(msg).
+
+import { ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';
+import { equipTableOf, lowerCondition, setEnchantmentHooks } from './equip.js';
+import { MINUTES_PER_DAY } from './gameDate.js'; // the canonical home - worldTick re-exports it and imports the pump below, so this leaf must not close the cycle
+import { syntheticTimeIncrease } from './effectBroker.js'; // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease - a LEAF, for the same reason
+import { classicCastingCost } from './spellcost.js'; // E2: CastWhenHeld's equip durability hit IS the spell's classic casting cost
+import { skillValue } from './skills.js';
+import { unitWeightInKg } from './inventory.js'; // AUDIT-RR2 G1: ExtraWeight's base
+import { enchantmentCost, defaultParam } from './enchantmentCatalogue.js'; // G4: the legacy value sum reads M4's costs
+import { artifactHook } from './artifactEffects.js'; // V3: the nine artifact classes' sub-registry
+import { applyDressStanding } from './clothingStanding.js'; // DRESS1 (2026-09-30, Discord): the clothing reaction, a leaf
+
+// EnchantmentTypes moved HOME to formats/magicDef.js (V3) - it is
+// FallExe's enum and the artifact registry reads it below this module
+// in the graph; re-exported for this module's many consumers.
+import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
+import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js'; // AUDIT 63 F6: PlayerEntity.cs:128-129 sizes reactionMods at socialGroupCount = 11
+import { regenShare } from './courtRules.js'; // WBX6 / EVENT-RULES: a made level holds regeneration
+import {
+  ITEM_TEMPLATES,
+  templateByIndex,
+  mendOrder,
+  mintCondition,
+  TRANSPORT_HORSE,
+  TRANSPORT_SMALL_CART,
+} from './item/itemTemplates.js'; // MEND-WORN: the mend order's one home, and the smith's refusal
+import { WEAPONS } from '../characters/weapons.js'; // MEND-WORN / MEND-ARMOUR: a tick is the classic Dagger's share
+import { repoolWeapon } from './conditionRepair.js'; // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
+import { creditOwnMend } from './item/foundMark.js'; // MEND-THIRD: the ring's mend credited past a found piece's mark
+import { NORMAL_POWER_CONCEALMENTS } from './concealment.js'; // WORN-CONCEAL: the kinds a blow ends, a leaf
+import { stampedTier } from './rarityTier.js'; // RPT1026-ITEMS RARE-KEPT: a laddered piece breaks and stays (RARE-BREAK1's law), a leaf
+export { ENCHANTMENT_TYPES };
+
+/** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
+ *  A settings row names its effect by KEY - DFU's EffectKey is the
+ *  enum member's NAME, which is exactly what
+ *  enchantmentCatalogue.js keys its cost tables by - and what
+ *  SetEnchantments stores on the item is the classic TYPE, the
+ *  number. A legacy row minted from MAGIC.DEF already carries the
+ *  number and passes straight through. */
+export const classicEnchantmentType = (type) =>
+  typeof type === 'string' ? (ENCHANTMENT_TYPES[type] ?? ENCHANTMENT_TYPES.None) : type;
+
+/** EnchantmentPayloadFlags (MagicAndEffectsEnums.cs:158-177), verbatim. */
+export const PAYLOAD = Object.freeze({
+  None: 0,
+  Enchanted: 1,
+  Used: 2,
+  Equipped: 4,
+  Unequipped: 8,
+  Held: 16,
+  Strikes: 32,
+  Breaks: 64,
+  MagicRound: 128,
+  RerollEffect: 256,
+});
+
+// The classic constants, each from its effect class (file:line cited
+// at the arm that spends it).
+export const REGEN_PER_ROUNDS = 4; // RegensHealth.cs:25 (VampiricEffect.cs:27 shares the value)
+export const CONDITION_PER_ROUNDS = 4; // RepairsObjects.cs:25 / ItemDeteriorates.cs:29
+export const CONDITION_AMOUNT = 1; // RepairsObjects.cs:26 (MEND-ARMOUR: the floor - a tick mends repairsObjectsMend)
+export const DAMAGE_PER_ROUNDS = 4; // UserTakesDamage.cs:27
+export const TIME_LEECH_PER_ROUNDS = 4; // HealthLeech.cs:27
+export const LEECH_CAST_AMOUNT = 16; // HealthLeech.cs:29
+export const LEECH_WEAPON_AMOUNT = 8; // HealthLeech.cs:30
+export const DURABILITY_LOSS_ON_USE = 10; // CastWhenUsed.cs:30
+export const DURABILITY_LOSS_ON_STRIKE = 10; // CastWhenStrikes.cs:30
+// HELD-WEAR (2026-10-28, Dudey: "Item durability drain is too fast from cast while held enchant"; a DEPARTURE, Port-Ledger A):
+// DFU wears a held piece 1 condition every 4 rounds (CastWhenHeld.cs:27). Online a round is 5 real seconds, so that was
+// 3 points a real minute. Now 1 every 36 rounds: 1 every 3 real minutes. Resting is unchanged.
+export const HELD_DEGRADE_RATE = 36; // CastWhenHeld.cs:27 has 4
+export const HELD_DEGRADE_RATE_RESTING = 60; // CastWhenHeld.cs:28
+export const EXTRA_SPELL_PTS_MAX_INCREASE = 75; // ExtraSpellPts.cs:84
+export const ENHANCE_SKILL_MOD = 15; // EnhancesSkill.cs:28
+export const REP_ADJUSTMENT = 10; // GoodRepWith.cs:26 (+) / BadRepWith.cs:30 (-)
+export const POTENT_VS_DAMAGE = 5; // PotentVs.cs:27
+export const LOW_DAMAGE_VS = -5; // LowDamageVs.cs:27
+export const STRENGTHENS_ARMOR_VALUE = -5; // StrengthensArmor.cs:25 ("lower armor value equals a stronger rating")
+export const WEAKENS_ARMOR_VALUE = 5; // WeakensArmor.cs:25
+
+/** AUDIT 26 F122/F123. DaggerfallEntity keeps TWO armour channels and
+ *  neither one accumulates: both setters are MIN-SETS, assigning only
+ *  when the incoming value is lower than the standing one
+ *  (DaggerfallEntity.cs:400-416), and both are zeroed on every
+ *  constant-effects pass (:841-842). The port folded all three
+ *  payloads into one `+=` channel, which diverged three ways:
+ *
+ *  - Two StrengthensArmor items gave -10 where DFU floors at -5, so
+ *    the player was measurably harder to hit than DFU allows. Same
+ *    for two BadReactionsFrom sources.
+ *  - WeakensArmor calls SetDecreasedArmorValueModifier(+5), and
+ *    `5 < 0` is never true from a zeroed channel, so the enchantment
+ *    is INERT in DFU. The port added +5 into the shared channel each
+ *    round, so the drawback the player took for -700 enchantment
+ *    budget cost defence only here. Bug-for-bug: the setter is
+ *    written as DFU writes it and WeakensArmor stays inert.
+ *  - The two channels are SEPARATE, so a Strengthens item and a
+ *    BadReactionsFrom source still reach -10 between them - it is
+ *    only repeats WITHIN a channel that stop stacking.
+ *
+ *  BadReactionsFrom's ChanceToHit term is genuinely additive
+ *  (ChangeChanceToHitModifier, :418-421) and keeps its `+=`. */
+const setIncreasedArmorValueModifier = (mods, amount) => {
+  if (amount < mods.increasedArmorMod) mods.increasedArmorMod = amount;
+};
+const setDecreasedArmorValueModifier = (mods, amount) => {
+  if (amount < mods.decreasedArmorMod) mods.decreasedArmorMod = amount;
+};
+export const BAD_REACTIONS_RANGE = 8; // BadReactionsFrom.cs:25
+export const BAD_REACTIONS_ARMOR = -5; // BadReactionsFrom.cs:26
+export const BAD_REACTIONS_HIT = -5; // BadReactionsFrom.cs:27
+export const EXTRA_SPELL_PTS_NEARBY_RADIUS = 18; // ExtraSpellPts.cs:26
+export const VAMPIRIC_DRAIN_RANGE = 2.25; // VampiricEffect.cs:26
+
+/** GetCombinedEnchantmentSettings' legacy walk
+ *  (DaggerfallUnityItem.cs:1402-1436): skip None slots; a
+ *  SpecialArtifactEffect keys by its artifact subtype (the artifact
+ *  effect classes pend their own slice - the registry answers no
+ *  handler and the dispatcher's unknown-key quirk below applies,
+ *  which is ALSO what stock DFU does for a artifact key when the
+ *  Special effect class is missing). */
+export function itemEnchantments(item) {
+  const list = item?.enchantments;
+  // AUDIT WORLD4 B1: an ARRAY, or nothing. `!list || !list.length` passes a string, and the filter below then throws
+  // out of whatever called it - which for the enchantment magic round is the frame body itself.
+  if (!Array.isArray(list) || !list.length) return null;
+  const out = list.filter((e) => e && e.type !== ENCHANTMENT_TYPES.None);
+  return out.length ? out : null;
+}
+
+export const isEnchantedItem = (item) => !!itemEnchantments(item);
+
+// ---- G4: what a LEGACY magic item is WORTH --------------------------
+// ItemBuilder.CreateRegularMagicItem's closing sum (:599-635). This
+// had been an open flag at its own site since S4c - "a magic item
+// still sells at its mundane base until the enchantment cost sum is
+// ported" - and M4's catalogue is that sum's missing half, so it
+// closed here and stays closed: legacyEnchantmentValue (:222-238) is
+// the sum, over VALUE_COUNTS_BELOW (:179), spellEnchantPtCost (:214)
+// and the SoulBound/CastWhen arms, and systems/loot/loot.js:"value: legacyEnchantmentValue" prices
+// every minted legacy item through it.
+//
+// THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only
+// `type < ItemDeteriorates` counts, and ItemDeteriorates is 16. Types
+// 16-25 are exactly the drawbacks, so a legacy item's value counts
+// its POWERS and nothing else - the same shape M3's GetTotalGoldCost
+// takes for a hand-made one. `None` (-1) is skipped by the same test
+// only because it also fails `!= None`, which DFU writes out.
+//
+// AND THE ONE THAT DOES NOT FIT: SoulBound is 15, UNDER the bound, so
+// it counts - but it is scored `+ SoulPts` off the enemy table, a
+// POSITIVE, where the item maker charges the catalogue's NEGATIVE for
+// the same enchantment. DFU's own comment beside it reads "Not sure
+// about this. Should be negative? Needs to be tested." So a bound
+// soul makes a SHOP item dearer and a HAND-MADE item cheaper, and
+// both are verbatim.
+//
+// THE THREE CastWhen* ARE PRICED TWICE OVER, differently: here it is
+// `10 * CalculateCastingCost` of the SPELLS.STD record
+// (FormulaHelper.GetSpellEnchantPtCost :2387-2402), where the item
+// maker charges the flat classicSpellCosts table M4 gathered. The
+// same enchantment is worth one thing bought and another made.
+export const VALUE_COUNTS_BELOW = ENCHANTMENT_TYPES.ItemDeteriorates; // 16
+
+/** The five ItemBuilder routes into enchantmentPointCostsForNonParamTypes
+ *  (:615-621), which is indexed by TYPE and ignores the stored param
+ *  entirely. Four of them mint at ClassicParam -1, so ignoring the
+ *  param and reading the single cost are the same thing. THE FIFTH IS
+ *  NOT: EnhancesSkill mints one flat cost across all thirty-five
+ *  skills, and its stored param is a real skill id - so reading it at
+ *  -1 answers null and the item prices at ZERO. (%it of Venom
+ *  Spitting is exactly that item: one EnhancesSkill slot at param 7,
+ *  and it was the one record in MAGIC.DEF this scored free.) Reading
+ *  each at the FIRST param it mints is the one lookup that is right
+ *  for all five, because a flat cost is flat.
+ *
+ *  DFU's array also holds live-looking values in slots 1-4 that this
+ *  arm can never reach - the switch routes those types elsewhere - so
+ *  a wholesale transcription of it would be five sixths dead weight
+ *  and one sixth a trap. */
+const NO_PARAM_VALUE_TYPES = new Set([
+  ENCHANTMENT_TYPES.RepairsObjects,
+  ENCHANTMENT_TYPES.AbsorbsSpells,
+  ENCHANTMENT_TYPES.EnhancesSkill,
+  ENCHANTMENT_TYPES.FeatherWeight,
+  ENCHANTMENT_TYPES.StrengthensArmor,
+]);
+const CAST_WHEN_TYPES = new Set([
+  ENCHANTMENT_TYPES.CastWhenUsed,
+  ENCHANTMENT_TYPES.CastWhenHeld,
+  ENCHANTMENT_TYPES.CastWhenStrikes,
+]);
+const TYPE_NAME = Object.freeze(
+  Object.entries(ENCHANTMENT_TYPES).reduce((a, [k, v]) => {
+    a[v] = k;
+    return a;
+  }, {}),
+);
+
+/** GetSpellEnchantPtCost (:2387-2402): ten times the classic casting
+ *  cost of the SPELLS.STD record with that index, at the enchanting
+ *  skill of 50. A spell the reader cannot find scores ZERO there -
+ *  the loop simply never matches - so an absent SPELLS.STD makes the
+ *  cast-when arms free rather than throwing. */
+export const spellEnchantPtCost = (spell) => (spell ? 10 * classicCastingCost(spell) : 0);
+
+/**
+ * The value ItemBuilder writes onto a freshly minted legacy magic
+ * item. Hooks, because the two lookups it needs are host data:
+ *   spellOfIndex(index) -> a SPELLS.STD record, or null
+ *   soulPointsOf(mobileType) -> SoulPts (defaults to the enemy table)
+ */
+export function legacyEnchantmentValue(enchantments, { spellOfIndex = null, soulPointsOf = null } = {}) {
+  let value = 0;
+  for (const e of enchantments ?? []) {
+    if (!e || e.type === ENCHANTMENT_TYPES.None) continue;
+    if (!(e.type < VALUE_COUNTS_BELOW)) continue;
+    if (CAST_WHEN_TYPES.has(e.type)) {
+      value += spellEnchantPtCost(spellOfIndex ? spellOfIndex(e.param) : null);
+    } else if (e.type === ENCHANTMENT_TYPES.SoulBound) {
+      value += soulPointsOf ? (soulPointsOf(e.param) ?? 0) : (ENEMY_BASICS[e.param]?.soulPts ?? 0);
+    } else {
+      const name = TYPE_NAME[e.type];
+      const param = NO_PARAM_VALUE_TYPES.has(e.type) ? defaultParam(name) : e.param;
+      value += enchantmentCost(name, param) ?? 0;
+    }
+  }
+  return value;
+}
+
+// ---- E2: the HOST ctx and the effects doors -------------------------
+// A host mounts ONE enchantCtx for its session (setDefaultEnchantCtx -
+// the port-singleton idiom; DFU's arms read GameManager singletons the
+// same way) and every dispatch below folds it UNDER any per-call ctx.
+// The cast doors (applySpell, the pin sweep) are REGISTERED by
+// effects.js at its module tail - effects.js imports this leaf for the
+// absorption fold, so the coupling must run upward as a registration,
+// the setEnchantmentHooks shape exactly. A consumer that never imports
+// effects.js gets idle cast arms, the headless charter.
+let _defaultCtx = null;
+export function setDefaultEnchantCtx(ctx) {
+  _defaultCtx = ctx;
+}
+/** RPT1026-FIGHTS (TRAP-TO-OWNER): THE SESSION'S DOOR TO A FOE ANOTHER PLAYER RUNS - the mounted ctx's `spellToOwner`
+ *  (STRIKE-SHARED's, routed by the pool the foe is in: scenes/world.js enchantSpellToOwner, or the standalone dungeon's
+ *  own), the one door a spell takes to that player whole. True when it went; false for a foe I run, a spell the wire
+ *  cannot carry, or no ctx mounted. The cast engine sends a cast's Soul Trap through it (scenes/hostMagic.js). */
+export const spellToFoeOwner = (foe, record, level) => {
+  try {
+    return !!_defaultCtx?.spellToOwner?.(foe, record, level);
+  } catch {
+    return false;
+  }
+};
+const mergeCtx = (ctx) => (ctx && _defaultCtx ? { ..._defaultCtx, ...ctx } : (ctx ?? _defaultCtx));
+// AUDIT 63 F14: removeFilledTrap rides the same bag, registered by
+// mysticism.js (the soul-trap law's home, beside fillEmptyTrap) - this
+// leaf sits UNDER effects.js, which mysticism.js imports, so the
+// coupling can only run upward as a registration.
+const _fx = { applySpell: null, removeItemPinnedEffects: null, removeFilledTrap: null };
+export function setEnchantmentEffectDoors(doors) {
+  Object.assign(_fx, doors);
+}
+
+/** rerollMinimumHours (EntityEffectManager.cs:42): a held bundle's
+ *  effects re-roll once the item has been worn this many classic
+ *  hours since the last roll. */
+export const REROLL_MINIMUM_HOURS = 6;
+/** WORN-CONCEAL (FIELD BUGS 2026-10-30g; a DEPARTURE, Port-Ledger A): magic rounds after the last blow that ended a worn
+ *  piece's Chameleon, Invisibility or Shadow before it stands again. DFU waits for the 6-hour reroll. */
+export const WORN_CONCEAL_BACK_ROUNDS = 2;
+const MINUTES_PER_HOUR = 60;
+
+/** InstantiateSpellBundle (CastWhenHeld.cs:~145-186): the classic
+ *  record lands on the WEARER as a HeldMagicItem bundle - pinned to
+ *  the item, BypassSavingThrows, caster the wearer itself. On a first
+ *  equip (not a recast/reroll) the item pays the spell's CLASSIC
+ *  casting cost in condition - at the PLAYER's live skills in DFU
+ *  (CalculateCastingCost(spell, false) reads PlayerEntity; the port
+ *  reads the WEARER, identical for the only entity that equips).
+ *  Either way the equip stamps timeEffectsLastRerolled. */
+export function assignHeldSpell(record, entity, item, { ctx = null, nowMinutes = 0, recast = false } = {}) {
+  ctx = mergeCtx(ctx);
+  // ENCHANT-LOAD: no strip here - AssignBundle strips nothing (EntityEffectManager.cs:443), so an item's second
+  // Cast-When-Held power stands BESIDE its first. The remove-first half is RerollItemEffects' own, ONCE per item
+  // (:2012-2021 - enchantmentMagicRound below); stripped per ROW, each power took the one before it off.
+  _fx.applySpell?.(
+    record,
+    entity.level ?? 1,
+    entity,
+    ctx?.sinks ?? {},
+    ctx?.rolls ?? Math.random,
+    { entity },
+    { bypassSavingThrows: true, heldItem: item },
+  );
+  if (!recast && !ctx?.heldEquipFree) {
+    const skillOf = ctx?.castingSkillOf ?? ((sk) => skillValue(entity, sk));
+    const bill = heldEquipBill(item, classicCastingCost(record, skillOf));
+    if (bill > 0) enchantLowerCondition(item, bill, entity, ctx);
+  }
+  item.timeEffectsLastRerolled = nowMinutes;
+}
+
+/** HELD-REWEAR (FIELD BUGS 2026-10-09f, BigOOF: "My 'Cast on held' gear is breaking sometimes IMMEDIATELY when
+ *  re-equipping ... I swapped something out with an amulet and it auto-broke the other one"; a DEPARTURE, Port-Ledger A).
+ *  DFU bills a Cast-When-Held spell's whole casting cost in condition at EVERY equip (CastWhenHeld.cs
+ *  InstantiateSpellBundle) - a hundred-odd points on an 800-point amulet - so a piece swapped on and off (the hotbar's
+ *  wear slots, a ring traded for an amulet and back) was spent by the swapping, and one whose bill passed what it had
+ *  left broke the moment it went on, repaired or not. Two laws now: */
+/** (1) A piece re-worn within REROLL_MINIMUM_HOURS of its spell's last casting (`timeEffectsLastRerolled`, the stamp
+ *  every equip and reroll writes) pays nothing: its spell is still fresh, the clock DFU itself recasts it by. */
+export function heldEquipIsFree(item, nowMinutes) {
+  const at = item?.timeEffectsLastRerolled;
+  if (!Number.isFinite(at) || !Number.isFinite(nowMinutes)) return false;
+  const since = nowMinutes - at;
+  return since >= 0 && since < REROLL_MINIMUM_HOURS * MINUTES_PER_HOUR;
+}
+/** (2) The equip bill never breaks the piece: it stops at 1 condition. What wears a held piece out is its wear while
+ *  worn (the MagicRound arm, 1 every HELD_DEGRADE_RATE rounds), as DFU's own comment says it should "die of use".
+ *  (3) LEGEND-HELD (FIELD BUGS 2026-10-11b, Boar: "Equipping legendary shield Aegis of Dawn damage it by 1/3 of its
+ *  durability"; Mac: "I dont care about DFU parity"; a DEPARTURE, Port-Ledger A): a Legendary's equip bills nothing -
+ *  its held spell is its record's (the Loot arc's), and the Aegis's Spell Resistance cost a leather buckler a third of
+ *  its life the first time it went on. Its wear while worn is (2)'s, unmoved. */
+export function heldEquipBill(item, cost) {
+  // the condition lowerCondition will lower: minted, and a weapon on its row's pool moved to the one pool first
+  if (item && Object.isExtensible(item)) {
+    mintCondition(item);
+    repoolWeapon(item);
+  }
+  if (item?.rarity === 'legendary') return 0; // LEGEND-HELD
+  const left = Number.isFinite(item?.currentCondition) ? item.currentCondition : Infinity;
+  return Math.max(0, Math.min(cost, left - 1));
+}
+
+function instantiateHeldSpell({ param, entity, item, ctx, nowMinutes }, recast) {
+  const record = ctx?.spellsByIndex?.()?.get?.(param);
+  if (!record) return;
+  (ctx?.assignHeldSpell ?? assignHeldSpell)(record, entity, item, { ctx, nowMinutes, recast });
+}
+
+/** Every DFU enchantment-payload durability site bills through
+ *  LowerCondition(amount, entity, entity.Items) - and LowerCondition's
+ *  collection arm REMOVES a broken item from that collection unless
+ *  the AllowMagicRepairs setting holds (DaggerfallUnityItem.cs:
+ *  LowerCondition). Combat wear passes no collection and keeps the
+ *  husk; enchantment wear consumes it.
+ *  RPT1026-ITEMS RARE-KEPT (a private report, 2026-10-26: a two-handed Wyrmbane worn to nothing in a hard dungeon, and
+ *  gone from the pack after): BUT NEVER A LADDERED PIECE - RARE-BREAK1's law (the owner, 2026-09-25:
+ *  "Rarity loot breaks, not destroyed"; combat/pcaao.js pcaaoFades) held for the overhaul's fading alone, and a
+ *  Legendary's own enchantment is DFU's (Wyrmbane's Cast When Strikes bills ten a blow), so where Allow Magic Repairs
+ *  is off its own blows destroyed it. It breaks, says so, and stays, repairable. A departure from LowerCondition's
+ *  collection arm (Port-Ledger A, RARE-KEPT). */
+function enchantLowerCondition(item, amount, entity, ctx, collection = null) {
+  const broke = lowerCondition(item, amount, entity, ctx?.say);
+  if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {
+    const col = collection ?? entity?.items;
+    const i = col ? col.indexOf(item) : -1;
+    if (i >= 0) col.splice(i, 1);
+  }
+  return broke;
+}
+
+// ---- the affinity classifier (PotentVs/LowDamageVs/the nearby arms) --
+// MobileEnemy.Affinity off the generated basics table; class enemies
+// (128+) are Human in DFU's table.
+const AFFINITY_PARAM = Object.freeze({ Undead: 0, Daedra: 1, Humanoid: 2, Animals: 3 });
+export function mobileAffinityMatches(mobileType, paramType) {
+  const affinity = isClassEnemyId(mobileType) ? 'Human' : (ENEMY_BASICS[mobileType]?.affinity ?? 'None');
+  return (
+    (paramType === AFFINITY_PARAM.Undead && affinity === 'Undead') ||
+    (paramType === AFFINITY_PARAM.Daedra && affinity === 'Daedra') ||
+    (paramType === AFFINITY_PARAM.Humanoid && affinity === 'Human') ||
+    (paramType === AFFINITY_PARAM.Animals && affinity === 'Animal')
+  );
+}
+
+// ---- MEND-WORN: what a Repairs Objects tick mends -------------------
+// MEND-WORN (2026-10-07, Mac: "Now we just gotta fix the 'repairs objects' not working"). DFU mends the FIRST damaged
+// piece in the whole pack, in the pack's order, by a point (RepairsObjects.cs:86-101 - 6846029b4, 2022: "RepairsObjects
+// should repair all items in inventory"; its loop before walked the equip table, which the class's own comment records
+// as classic's: "Only equipped items will receive repairs"). The port's default pack is Roleplay & Realism's - its kit
+// worn to 30-75%, loot and shelves at 20-75% with the books among them - beside the port's own pieces that keep their
+// uses in their condition (a tent's nights, a campfire's fuel). So every tick went to the oldest worn thing carried and
+// nothing the player wore was seen to mend; and WEAPON-POOL's pools (1,600 to 12,800) left a weapon a point a tick, a
+// 32nd of what a dagger had. The departures (Port-Ledger A, MEND-WORN): the mend order below, nothing a smith will not
+// repair, and a pool weapon's tick - since MEND-ARMOUR (FIELD BUGS 2026-10-16b) every piece's, a fiftieth of its own.
+
+/** MEND-ARMOUR (FIELD BUGS 2026-10-16b; the Discord: "my weapon WILL repair but no other worn items are repairing with
+ *  repair objects"): WHAT ONE TICK MENDS - a fiftieth of the piece's own condition, the share a classic Dagger's point
+ *  was of its row (Daggerfall's Dagger, 50: MEND-WORN's yardstick, Mac's "Weapons as a classic dagger"), and never less
+ *  than DFU's point (CONDITION_AMOUNT - Armbands' 15). ONE LAW for every piece the tick reaches - a weapon, armour,
+ *  clothing, a magic item's or an artifact's uses - so every worn piece's share climbs 2% a tick, whatever its kind,
+ *  its material or its size. MEND-WORN gave the share to a weapon on WEAPON-POOL's pool alone, and on the pool (32 a
+ *  tick: iron 2%, Daedric 0.25%), and left every other piece DFU's point (RepairsObjects.cs:26): an iron cuirass
+ *  (4,096) 1% every 41 ticks, a steel one (6,144) every 61, a Daedric one (32,768) every 328 - beside a blade that
+ *  climbed, the armour's % never moved. An iron weapon's tick is MEND-WORN's 32 still. */
+export const MEND_SHARE_OF = ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints;
+/** AUDIT (FIELD BUGS 2026-10-16b MEND-ARMOUR): USES KEEP THE POINT. A MAGIC.DEF item's or an artifact's condition is its
+ *  USES (loot.js), and this round runs through every rest, fast travel and prison stay as well as play (worldTick.js's
+ *  catch-up, MAX_CATCHUP_ROUNDS): at a fiftieth a tick, one 8-hour rest gave a spent Cast When Used piece back 100 casts,
+ *  where the point gave it 12. A charge is not wear - it is mended at DFU's point, as it was before MEND-ARMOUR. */
+export const repairsObjectsMend = (it) =>
+  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));
+
+/** MEND-WORN: THE PIECE A REPAIRS OBJECTS TICK MENDS in `items` (the pack), or null. Among the pieces below their
+ *  condition that a repair may touch, the first of MEND-TIERS' three tiers (mendTier: what is worn, then a worn piece
+ *  that wears itself, then the pack), and within a tier the mend order's first (itemTemplates.js mendOrder, the repair
+ *  kit's: the lowest share left first, ties in the pack's order). Never what a smith refuses as not
+ *  repairable (repairService.js repairRefusal) - DFU's own flag on the quiver it mints at 0 and on the lights, whose
+ *  condition is their fuel (Arrow, Torch, Lantern, Candle, Holy Candle), and the port's on the Dwemer Pellet, a
+ *  campfire's nights and the rest items' doses (AUDIT REST II H7). RepairsObjects.cs reads no such flag, so a lit
+ *  torch first in the pack was refuelled as it burned. An enchanted piece only under AllowMagicRepairs
+ *  (RepairsObjects.cs:93). */
+export function repairsObjectsTarget(items, { allowMagicRepairs = false } = {}) {
+  let best = null,
+    bestTier = 0;
+  for (const it of Array.isArray(items) ? items : []) {
+    if (
+      !it ||
+      !Number.isFinite(it.currentCondition) ||
+      !Number.isFinite(it.maxCondition) ||
+      !(it.currentCondition < it.maxCondition)
+    )
+      continue;
+    if (templateByIndex(it.templateIndex)?.isNotRepairable) continue;
+    if (isEnchantedItem(it) && !allowMagicRepairs) continue;
+    if (it.templateIndex === TRANSPORT_SMALL_CART || it.templateIndex === TRANSPORT_HORSE) continue; // AUDIT WAGONS4: a wagon's condition is its upkeep - a Wagon Yard's or a kit's, never a held enchantment's (DFU's wagon never wore)
+    // FIELD BUGS 2026-10-15d MEND-TIERS (Unconquerable: "worn items should always repair before backpack items"; Mac's
+    // call): a worn piece that wears itself on the round the tick mends (Cast When Held's degrade, Item Deteriorates) is
+    // mended after the rest of what is worn - first, it took every tick, +1 and -1 on the same round, and no other worn
+    // piece was mended (MEND-STARVE, 2026-10-14) - and ahead of the pack, where MEND-STARVE had put it behind the loot
+    const tier = mendTier(it);
+    if (!best || tier < bestTier || (tier === bestTier && mendOrder(it, best) < 0)) {
+      best = it;
+      bestTier = tier;
+    }
+  }
+  return best;
+}
+/** MEND-TIERS: a piece's tier for the tick - 0 worn, 1 worn and wearing itself (wearsItself), 2 carried. While a worn
+ *  piece that wears itself is below its condition the pack waits, Mac's accepted trade-off: Cast When Held wears a point
+ *  on a tick's round out of rest (HELD_DEGRADE_RATE is a multiple of CONDITION_PER_ROUNDS) and an all-the-time Item Deteriorates
+ *  on every one, so while such a piece is worn the tick holds it and the pack is not mended. */
+const mendTier = (it) => (wearsItself(it) ? 1 : it.equipSlot != null ? 0 : 2);
+/** MEND-STARVE: a WORN piece whose own held enchantment wears it a point on the rounds Repairs Objects mends - Cast When
+ *  Held (CastWhenHeld.cs:27, HELD_DEGRADE_RATE) and Item Deteriorates (ItemDeteriorates.cs:29). */
+const wearsItself = (it) =>
+  it.equipSlot != null &&
+  !!itemEnchantments(it)?.some(
+    (e) => e.type === ENCHANTMENT_TYPES.CastWhenHeld || e.type === ENCHANTMENT_TYPES.ItemDeteriorates,
+  );
+
+// ---- the payload registry -------------------------------------------
+// One row per classic type: the payload flags VERBATIM from each
+// class's SetProperties, and the arms. An arm returns
+// PayloadCallbackResults ({ strikesModulateDamage, durabilityLoss }) or
+// nothing, exactly the C# contract.
+
+const T = ENCHANTMENT_TYPES;
+
+const REGISTRY = new Map([
+  /** CastWhenUsed.cs - Used: a broken item answers durability loss
+   *  alone (:its condition gate); else the classic spell fires -
+   *  CasterOnly assigns to the USER bypassing saves and chance, every
+   *  other target type becomes the READIED spell cast for free. E2
+   *  wires the cast seams. */
+  [
+    T.CastWhenUsed,
+    {
+      flags: PAYLOAD.Used,
+      used({ param, entity, item, ctx }) {
+        if (item && (item.currentCondition ?? 1) <= 0) return { durabilityLoss: DURABILITY_LOSS_ON_USE };
+        // HOME-MAGIC (not DFU's: a departure, Port-Ledger A): where the host bars casting (a visitor in another's online
+        // home), the item's spell does not go - the host says why - and the item spends no durability on it
+        if (ctx?.castBarred?.()) return null;
+        const record = ctx?.spellsByIndex?.()?.get?.(param);
+        if (record) {
+          if (record.rangeType === 0) ctx?.applySpellToSelf?.(record, entity, item);
+          else ctx?.setReadySpell?.(record, item);
+        }
+        return { durabilityLoss: DURABILITY_LOSS_ON_USE };
+      },
+    },
+  ],
+  /** CastWhenHeld.cs - Equipped assigns the held bundle (E2:
+   *  instantiateHeldSpell - the spell rides target.activeEffects
+   *  pinned to the item; the dispatcher's Unequipped arm strips it);
+   *  RerollEffect recasts it fresh with no durability hit; MagicRound
+   *  degrades 1 per HELD_DEGRADE_RATE rounds (60 while resting; HELD-WEAR) - the magic-item wear
+   *  law that makes a Cast-When-Held ring die of use. */
+  [
+    T.CastWhenHeld,
+    {
+      flags: PAYLOAD.Equipped | PAYLOAD.MagicRound | PAYLOAD.RerollEffect,
+      equipped(env) {
+        instantiateHeldSpell(env, false);
+      },
+      reroll(env) {
+        instantiateHeldSpell(env, true);
+      },
+      magicRound({ round, entity, item, ctx }) {
+        // AUDIT 26 F126: the MagicRound item payload is dispatched only
+        // for items in activeMagicItemsInRound, and that map is filled
+        // solely under `if (IsPlayerEntity)`
+        // (EntityEffectManager.cs:1744-1755) - so an ENEMY's
+        // Cast-When-Held item never takes the wear, and is looted at
+        // its remaining condition rather than degrading and breaking.
+        // (The bundle-driven rounds - RegensHealth, ItemDeteriorates,
+        // HealthLeech idle - DO run for any entity and stay ungated.)
+        if (!entity?.isPlayer) return;
+        // AUDIT 63 F13: ApplyDurabilityLoss wraps its ENTIRE body -
+        // the rate read included - in
+        // `if (!EntityEffectBroker.SyntheticTimeIncrease)`
+        // (CastWhenHeld.cs:131-136), so a fast travel, a prison
+        // sentence or the vampire fortnight costs a Cast-When-Held
+        // item no wear at all.
+        if (syntheticTimeIncrease()) return;
+        // AUDIT-TO1 F2: ...and Travel Options' own override of this very
+        // class (CastWhenHeldTO.cs:26-35) adds the second half of the
+        // guard: `&& !TravelOptionsMod.Instance.GetTravelControlUI().isShowing`.
+        // A walked journey is REAL time passing, so it raises no
+        // synthetic flag, and the line above alone billed a Cast-When-Held
+        // item one condition every four GAME minutes of the trip - about
+        // 750 points across a long crossing, where the same journey by
+        // classic fast travel costs nothing. The mod registers its
+        // override unconditionally, so this needs no setting either; it
+        // reads false in every host but the one that can run a journey.
+        // The panel being UP is the test, not the clock: a journey paused
+        // for camp sits at scale 1 with the panel showing and still wears
+        // nothing, which is the mod's behaviour.
+        if (ctx?.travelUIShowing?.()) return;
+        const rate = ctx?.isResting?.() ? HELD_DEGRADE_RATE_RESTING : HELD_DEGRADE_RATE;
+        if (round % rate === 0) enchantLowerCondition(item, 1, entity, ctx);
+      },
+    },
+  ],
+  /** CastWhenStrikes.cs - Strikes: no target or zero damage = nothing
+   *  (:its guard); else the spell lands on the TARGET with saves
+   *  rolled (AssignBundleFlags.ShowNonPlayerFailures - NOT bypassed),
+   *  and the weapon pays 10 condition. */
+  [
+    T.CastWhenStrikes,
+    {
+      flags: PAYLOAD.Strikes,
+      strikes({ param, entity, target, damage, ctx }) {
+        // AUDIT FB1018f L3-2: a blow its referee turns whole (a stand-in `warded` - the Warden's ward, the Remnant shut, the
+        // Spire's turned blows) DEALT nothing, and the class's own sourceDamage == 0 guard casts nothing and wears nothing for
+        // it (VAMPIRIC-WARD's reading, below) - its spell met the same turned body and landed nothing either
+        if (!target || damage === 0 || target.warded) return null;
+        const record = ctx?.spellsByIndex?.()?.get?.(param);
+        if (record) ctx?.applySpellToTarget?.(record, entity, target);
+        return { durabilityLoss: DURABILITY_LOSS_ON_STRIKE };
+      },
+    },
+  ],
+  /** ExtraSpellPts.cs - Held constant: +75 max magicka while the
+   *  condition holds. Params 0-3 seasons, 4-6 moons (V2c: the host's
+   *  moonPhase(param) answers off gameDate's lunar law), 7-10 near
+   *  undead/daedra/humanoids/animals inside 18 units. */
+  [
+    T.ExtraSpellPts,
+    {
+      flags: PAYLOAD.Held,
+      constant({ param, ctx, mods }) {
+        let apply = false;
+        if (param < 4)
+          apply = ctx?.season?.() === param; // DuringWinter=0..DuringFall=3, the DFU season order the caller supplies
+        else if (param <= 6) apply = ctx?.moonPhase?.(param) ?? false;
+        else apply = anyNearbyOfAffinity(ctx, param - 7, EXTRA_SPELL_PTS_NEARBY_RADIUS);
+        if (apply) mods.maxMagicka += EXTRA_SPELL_PTS_MAX_INCREASE;
+      },
+    },
+  ],
+  /** PotentVs.cs - Strikes: +5 damage against the matching affinity. */
+  [
+    T.PotentVs,
+    {
+      flags: PAYLOAD.Strikes,
+      strikes({ param, target }) {
+        if (target?.mobileType == null) return null;
+        return mobileAffinityMatches(target.mobileType, param) ? { strikesModulateDamage: POTENT_VS_DAMAGE } : null;
+      },
+    },
+  ],
+  /** RegensHealth.cs - MagicRound: +1 every 4 rounds while the
+   *  condition holds (AllTheTime / InDarkness / InSunlight). */
+  [
+    T.RegensHealth,
+    {
+      flags: PAYLOAD.Held, // RegensHealth.cs:34 - the round tick is its held bundle's
+      magicRound({ param, round, entity, ctx }) {
+        if (round % REGEN_PER_ROUNDS !== 0) return;
+        const regen =
+          param === 0 ||
+          (param === 2 && (ctx?.inDarkness?.() ?? false)) ||
+          (param === 1 && (ctx?.inSunlight?.() ?? false));
+        if (regen && entity.health < entity.maxHealth)
+          entity.health = Math.min(entity.maxHealth, entity.health + regenShare(1, 'item', entity)); // WBX6 / EVENT-RULES: held in a made level (systems/courtRules.js)
+      },
+    },
+  ],
+  /** VampiricEffect.cs - two params. AtRange (0): every 4 rounds drain
+   *  1 health from EVERY foe inside 2.25 (melee reach, the class's own
+   *  comment) into the wearer - through the pool's hurt sink, which is
+   *  the port's spelling of the CurrentHealth setter's death event.
+   *  WhenStrikes (1): the wearer heals the damage dealt. */
+  [
+    T.VampiricEffect,
+    {
+      flags: PAYLOAD.Held | PAYLOAD.Strikes,
+      magicRound({ param, round, entity, ctx }) {
+        if (param !== 0 || round % REGEN_PER_ROUNDS !== 0) return;
+        const nearby = ctx?.nearbyFoes?.(VAMPIRIC_DRAIN_RANGE) ?? [];
+        for (const foe of nearby.filter((n) => !n.spared)) {
+          // AUDIT NAV2 F55: the player's own harm passes a shipmate and a town's defender by (the host's rows say which) - the drain too, and the wearer takes nothing of theirs
+          foe.hurt?.(1, { fromPlayer: false }); // AUDIT NAV2 F55: DFU writes CurrentHealth and raises no attack (no HandleAttackFromSource) - as the player's blow the drain woke the area (a prize's yielded men) and turned a drained ally on the wearer
+          entity.health = Math.min(entity.maxHealth, entity.health + 1);
+        }
+      },
+      strikes({ param, entity, damage, target }) {
+        // FIELD BUGS 2026-10-18f VAMPIRIC-WARD (Low_Poly_Gaming: "an exploit for heals if you have a vampiric weapon"): the damage
+        // DEALT - a blow a referee's ward turns whole (a stand-in `warded`: the Warden's ward, the Remnant shut, the Spire's turned
+        // blows - scenes/eliteGates/egFight.js turnStandIn) dealt nothing, and heals nothing, as the leech's own rule says
+        // (systems/loot/lootPowers.js lootStrike, AUDIT WORLD-REWARDS B3). DFU never meets one - its target is always the entity
+        // whose health the blow then takes - so this is VampiricEffect.cs's own law told what the blow dealt, no departure.
+        if (param !== 1 || target?.warded) return null;
+        entity.health = Math.min(entity.maxHealth, entity.health + damage);
+        return null;
+      },
+    },
+  ],
+  /** IncreasedWeightAllowance.cs - Held constant: +25%/+50% carry. */
+  [
+    T.IncreasedWeightAllowance,
+    {
+      flags: PAYLOAD.Held,
+      constant({ param, mods }) {
+        mods.weightAllowanceMult = Math.max(mods.weightAllowanceMult, param === 1 ? 0.5 : 0.25);
+      },
+    },
+  ],
+  /** RepairsObjects.cs - MagicRound, player only: every 4 rounds ONE
+   *  piece mends (the C# returns inside its loop). MEND-WORN: the
+   *  piece is repairsObjectsTarget's - what is worn first, the most
+   *  worn first, a worn piece that wears itself after the rest of
+   *  what is worn and ahead of the pack (MEND-TIERS) - by
+   *  repairsObjectsMend, a fiftieth of its own condition (MEND-ARMOUR:
+   *  every piece alike), never past its condition; a weapon still on
+   *  its row's pool moves to the one pool first, as it does before a
+   *  wear (equip.js lowerCondition). */
+  [
+    T.RepairsObjects,
+    {
+      flags: PAYLOAD.Held, // RepairsObjects.cs:35
+      magicRound({ round, entity, ctx }) {
+        if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;
+        const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });
+        if (!it) return;
+        repoolWeapon(it);
+        const was = it.currentCondition;
+        it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));
+        creditOwnMend(it, was); // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells
+      },
+    },
+  ],
+  /** AbsorbsSpells.cs - Held constant: IsAbsorbingSpells. */
+  [
+    T.AbsorbsSpells,
+    {
+      flags: PAYLOAD.Held,
+      constant({ mods }) {
+        mods.absorbsSpells = true;
+      },
+    },
+  ],
+  /** EnhancesSkill.cs - Held constant: SetSkillMod(param, 15). */
+  [
+    T.EnhancesSkill,
+    {
+      flags: PAYLOAD.Held,
+      constant({ param, mods }) {
+        mods.skillMods[param] = (mods.skillMods[param] ?? 0) + ENHANCE_SKILL_MOD;
+      },
+    },
+  ],
+  /** FeatherWeight/ExtraWeight - Enchanted-only payloads: the weight
+   *  write fires at the ITEM MAKER alone, so a looted magic item's
+   *  weight is untouched, verbatim (the flag never fires on a mint). */
+  [
+    T.FeatherWeight,
+    {
+      flags: PAYLOAD.Enchanted,
+      enchanted({ item }) {
+        item.weightInKg = 0.25;
+      },
+    },
+  ],
+  [
+    T.ExtraWeight,
+    {
+      flags: PAYLOAD.Enchanted,
+      enchanted({ item }) {
+        item.weightInKg = (Number.isFinite(item.weightInKg) ? item.weightInKg : unitWeightInKg(item)) * 4;
+      },
+    },
+  ], // AUDIT-RR2 G1: `weightInKg *= 4` (ExtraWeight.cs:61) over the weight ItemBuilder always stored - the port derives it, so the base is the derived read, not an unset field (which wrote 0: a weightless item)
+  /** StrengthensArmor/WeakensArmor - Held constants on the armour
+   *  channel (FormulaHelper.cs:1158 adds both to ArmorValues[part]). */
+  [
+    T.StrengthensArmor,
+    {
+      flags: PAYLOAD.Held,
+      constant({ mods }) {
+        setIncreasedArmorValueModifier(mods, STRENGTHENS_ARMOR_VALUE);
+      },
+    },
+  ],
+  [
+    T.WeakensArmor,
+    {
+      flags: PAYLOAD.Held,
+      constant({ mods }) {
+        setDecreasedArmorValueModifier(mods, WEAKENS_ARMOR_VALUE);
+      },
+    },
+  ],
+  /** ImprovesTalents.cs - Held constant, player only: the three
+   *  improved-talent flags. */
+  [
+    T.ImprovesTalents,
+    {
+      flags: PAYLOAD.Held,
+      constant({ param, entity, mods }) {
+        if (!entity.isPlayer) return;
+        if (param === 0) mods.improvedAcuteHearing = true;
+        else if (param === 1) mods.improvedAthleticism = true;
+        else if (param === 2) mods.improvedAdrenalineRush = true;
+      },
+    },
+  ],
+  /** GoodRepWith/BadRepWith - MagicRound, player only: +-10 into the
+   *  reaction-mod array the round CLEARED (DoMagicRound:1710-1714 -
+   *  Clear then re-apply, so the mod holds exactly while equipped).
+   *  Param 5 (All) hits the five social groups. */
+  [
+    T.GoodRepWith,
+    {
+      flags: PAYLOAD.Held, // GoodRepWith.cs:34
+      magicRound({ param, entity }) {
+        applyRepMod(entity, param, REP_ADJUSTMENT);
+      },
+    },
+  ],
+  [
+    T.BadRepWith,
+    {
+      flags: PAYLOAD.Held, // BadRepWith.cs:38
+      magicRound({ param, entity }) {
+        applyRepMod(entity, param, -REP_ADJUSTMENT);
+      },
+    },
+  ],
+  /** SoulBound.cs - Enchanted consumes the filled trap (item maker);
+   *  Breaks releases the soul as a live foe
+   *  (CreateFoeSpawner(false, soulType, 1) - B1's spawner seam).
+   *
+   *  AUDIT 63 F14: the Enchanted half had been "pends" since the row
+   *  was written - the flag was declared and no arm supplied, so
+   *  doEnchantedPayloads' `row.enchanted?.(env)` was an optional call
+   *  on undefined and binding a soul cost the player nothing. The law
+   *  itself (SoulBound.cs:90-96 -> RemoveFilledTrap :129-155) lives in
+   *  mysticism.js beside fillEmptyTrap, its mirror, and arrives here
+   *  through the doors bag. The pack is DFU's
+   *  `GameManager.Instance.PlayerEntity.Items` (:135/:150); the port's
+   *  Enchanted env carries `collection` (null from enchanting.js) over
+   *  the owner's own pack. */
+  [
+    T.SoulBound,
+    {
+      flags: PAYLOAD.Enchanted | PAYLOAD.Breaks,
+      enchanted({ param, entity, collection, item }) {
+        // Only a newly consumed soul may rearm an existing binding; repairing the item cannot.
+        if (_fx.removeFilledTrap?.(collection ?? entity?.items, param)) delete item.soulBoundReleased;
+      },
+      breaks({ param, item, ctx }) {
+        if (!(param >= 0) || item.soulBoundReleased) return;
+        // Magic repairs keep the item. Consume its release BEFORE calling the host: repeated wear, reentrant
+        // callbacks and later repair/break cycles must not spawn the same soul again. The item field survives
+        // saves and transfers. Other enchantments and non-Soulbound items keep their existing break behavior.
+        item.soulBoundReleased = true;
+        ctx?.spawnFoe?.(param);
+      },
+    },
+  ],
+  /** ItemDeteriorates.cs - MagicRound: -1 condition every 4 rounds.
+   *  Params (:112-117) are AllTheTime = 0, InSunlight = 1,
+   *  InHolyPlaces = 2, and only the two CONDITIONAL ones gate the
+   *  early return (:87-89) - AllTheTime carries no condition at all,
+   *  so it degrades every fourth round wherever the wearer is. The
+   *  order is the catalogue's own ('all the time', 'in sunlight',
+   *  'in holy places' - enchantmentCatalogue.js:"costs: [-3000, -1500, -500]") and the one the
+   *  soul-forced sets speak (Daedroth/FrostDaedra/Ghost/Wraith all
+   *  force param 2 = InHolyPlaces). */
+  [
+    T.ItemDeteriorates,
+    {
+      flags: PAYLOAD.Held, // ItemDeteriorates.cs:38
+      magicRound({ param, round, entity, item, ctx }) {
+        // AUDIT 63 F13: the synthetic-time guard is the THIRD disjunct of
+        // the early return that opens MagicRound (ItemDeteriorates.cs:76-80),
+        // ahead of the `% conditionLossPerRounds` gate at :82-83 - the
+        // 2880 rounds a fast travel or a prison sentence synthesises cost
+        // an equipped item nothing.
+        if (syntheticTimeIncrease()) return;
+        if (round % CONDITION_PER_ROUNDS !== 0) return;
+        if (param === 1 && !(ctx?.inSunlight?.() ?? false)) return;
+        if (param === 2 && !(ctx?.inHolyPlace?.() ?? false)) return;
+        enchantLowerCondition(item, 1, entity, ctx);
+      },
+    },
+  ],
+  /** UserTakesDamage.cs - MagicRound: -1 health every 4 rounds while
+   *  in sunlight / a holy place. Through the damage sink so death
+   *  fires, DecreaseHealth's own behaviour. */
+  [
+    T.UserTakesDamage,
+    {
+      flags: PAYLOAD.Held, // UserTakesDamage.cs:36
+      magicRound({ param, round, ctx }) {
+        if (round % DAMAGE_PER_ROUNDS !== 0) return;
+        if (param === 0 && !(ctx?.inSunlight?.() ?? false)) return;
+        if (param === 1 && !(ctx?.inHolyPlace?.() ?? false)) return;
+        ctx?.hurtSelf?.(1);
+      },
+    },
+  ],
+  /** LowDamageVs.cs - Strikes: -5 against the matching affinity. */
+  [
+    T.LowDamageVs,
+    {
+      flags: PAYLOAD.Strikes,
+      strikes({ param, target }) {
+        if (target?.mobileType == null) return null;
+        return mobileAffinityMatches(target.mobileType, param) ? { strikesModulateDamage: LOW_DAMAGE_VS } : null;
+      },
+    },
+  ],
+  /** HealthLeech.cs - the stamp fires on Strikes/Used/Enchanted
+   *  (:78-79, its first gate, before any param logic). Params
+   *  (:132-136) are WheneverUsed = 0, UnlessUsedDaily = 1,
+   *  UnlessUsedWeekly = 2 - the catalogue's own order
+   *  (enchantmentCatalogue.js:"costs: [-4000, -500, -200]" 'Whenever used' / 'Unless used
+   *  daily' / 'Unless used weekly'), and the one DaedraSeducer's
+   *  forced set speaks (param 2 = UnlessUsedWeekly).
+   *  WheneverUsed (0) bills the wearer 8 on a strike / 16 on a use
+   *  (:84-89); UnlessUsedDaily (1) / UnlessUsedWeekly (2) leech 1
+   *  health every 4 rounds once the item has gone unused past a day /
+   *  a week of classic time (:106-113). */
+  [
+    T.HealthLeech,
+    {
+      flags: PAYLOAD.Held | PAYLOAD.Used | PAYLOAD.Strikes | PAYLOAD.Enchanted,
+      /** The Enchanted stamp (SetEnchantments' created-payload callback,
+       *  DaggerfallUnityItem.cs:1298-1299): a freshly made item starts
+       *  its day/week clock at the moment of enchanting, not at 0. */
+      enchanted({ item, nowMinutes }) {
+        if (item) item.timeHealthLeechLastUsed = nowMinutes ?? 0;
+      },
+      used({ param, item, ctx, nowMinutes }) {
+        if (item) item.timeHealthLeechLastUsed = nowMinutes ?? 0;
+        if (param === 0) ctx?.hurtSelf?.(LEECH_CAST_AMOUNT);
+        return null;
+      },
+      strikes({ param, item, ctx, nowMinutes }) {
+        if (item) item.timeHealthLeechLastUsed = nowMinutes ?? 0;
+        if (param === 0) ctx?.hurtSelf?.(LEECH_WEAPON_AMOUNT);
+        return null;
+      },
+      magicRound({ param, round, item, ctx, nowMinutes }) {
+        // AUDIT 63 F13: the same three-way guard at the TOP of MagicRound
+        // (HealthLeech.cs:101-105), ahead of the timeLeechActive
+        // computation - so the leech takes no blood across a fast travel,
+        // a prison sentence or the vampire fortnight.
+        if (syntheticTimeIncrease()) return;
+        if (param !== 1 && param !== 2) return;
+        const since = (nowMinutes ?? 0) - (item?.timeHealthLeechLastUsed ?? 0);
+        const active = param === 1 ? since > MINUTES_PER_DAY : since > MINUTES_PER_DAY * 7;
+        if (active && round % TIME_LEECH_PER_ROUNDS === 0) ctx?.hurtSelf?.(1);
+      },
+    },
+  ],
+  /** BadReactionsFrom.cs - Held: the round scans 8 units for the
+   *  param's affinity and, while affected, the constant applies -5
+   *  armour AND -5 chance-to-hit (the one core writer of the
+   *  ChanceToHitModifier channel FormulaHelper.cs:814 reads). The port
+   *  folds the scan into the constant - one recompute per round either
+   *  way. Param: 0 humanoids, 1 animals, 2 daedra (its own enum order,
+   *  distinct from PotentVs'). */
+  [
+    T.BadReactionsFrom,
+    {
+      flags: PAYLOAD.Held,
+      constant({ param, ctx, mods }) {
+        const affinity =
+          param === 0 ? AFFINITY_PARAM.Humanoid : param === 1 ? AFFINITY_PARAM.Animals : AFFINITY_PARAM.Daedra;
+        if (anyNearbyOfAffinity(ctx, affinity, BAD_REACTIONS_RANGE)) {
+          setDecreasedArmorValueModifier(mods, BAD_REACTIONS_ARMOR);
+          mods.chanceToHitMod += BAD_REACTIONS_HIT;
+        }
+      },
+    },
+  ],
+  // VisionProblems (18) / WalkingProblems (19): classic types with NO
+  // effect class anywhere in DFU - GetCombinedEnchantmentSettings
+  // still emits them and the dispatcher's unknown-key quirk below is
+  // what handles them, in DFU exactly as here.
+  /** V3 - SpecialArtifactEffect: the nine Effects/Special/* artifact
+   *  classes, keyed by the enchantment's PARAM (the artifact subtype
+   *  - GetCombinedEnchantmentSettings keys a Special row by it). The
+   *  registry row carries the union of their flags; each subtype's
+   *  own hooks live in systems/artifactEffects.js, and a subtype with
+   *  no class (Volendrung and the rest carry ordinary enchantments
+   *  only) idles rather than aborting. The Ring of Namira is NOT
+   *  here: DFU fires its callback by hand at CalculateAttackDamage's
+   *  tail, and so does the port (the registered player-struck hook,
+   *  worldTick's). */
+  [
+    T.SpecialArtifactEffect,
+    {
+      flags: PAYLOAD.Used | PAYLOAD.Held | PAYLOAD.Strikes | PAYLOAD.MagicRound,
+      used: artifactHook('used'),
+      strikes: artifactHook('strikes'),
+      constant: artifactHook('constant'),
+      magicRound: artifactHook('magicRound'),
+      unequipped: artifactHook('unequipped'), // MACE-MAX: the Held bundle's removal (UnequipHeldItem) - ungated by the flags, as the dispatcher runs every row's
+    },
+  ],
+]);
+
+/** HELD-BASE (FIELD BUGS 2026-10-18f): WHETHER A POWER WORKS OFF THE BODY - its row answers the Used payload, the one a
+ *  piece in the pack fires (useItem.js's doItemEnchantmentPayloads(PAYLOAD.Used)). The rest are read on a worn piece
+ *  (Equipped, Held: computeEnchantmentMods walks equippedEnchantedItems) or on the blow it strikes - save the two that
+ *  weigh the piece itself (Feather Weight, Extra Weight: Enchanted, read wherever it lies), and Health Leech answers
+ *  Used as a cost, not a power (AUDIT FB1018f L1-4: latent - every regular MAGIC.DEF row is one power of six kinds, Cast
+ *  When Used, Held or Strikes, Vampiric, Absorbs Spells, Enhances Skill; a piece with ANY row this answers false for
+ *  takes a base a slot takes - loot.js powersNeedWearing). A piece no slot takes carries a worn power for nothing
+ *  (loot.js createRegularMagicItem). */
+export const worksUnworn = (e) => ((REGISTRY.get(e?.type)?.flags ?? 0) & PAYLOAD.Used) !== 0;
+
+function applyRepMod(entity, param, amount) {
+  if (!entity.isPlayer) return;
+  // AUDIT 63 F6: the ARRAY is eleven (PlayerEntity.cs:128-129); the
+  // five below is GoodRepWith.cs:80-91 / BadRepWith.cs:84-95, which
+  // name Commoners..Underworld explicitly and pass ClassicParam
+  // straight through otherwise - that five is DFU's, and stays.
+  const mods = (entity.reactionMods ??= new Array(SOCIAL_GROUP_COUNT).fill(0));
+  if (param === 5) {
+    for (let g = 0; g < 5; g++) mods[g] += amount;
+  } else if (param >= 0 && param < 5) mods[param] += amount;
+}
+
+function anyNearbyOfAffinity(ctx, affinityParam, range) {
+  const nearby = ctx?.nearbyFoes?.(range);
+  if (!nearby) return false;
+  return nearby.some((f) => mobileAffinityMatches(f.mobileType, affinityParam));
+}
+
+/** DoItemEnchantmentPayloads (EntityEffectManager.cs:962-1035),
+ *  verbatim - including THE UNKNOWN-KEY ABORT QUIRK: a settings row
+ *  whose effect key the broker cannot resolve does not skip, it
+ *  RETURNS damageOut mid-walk (:985-988 `return damageOut` inside the
+ *  foreach), so an item carrying VisionProblems before a real
+ *  enchantment never runs the real one. Strikes results ACCUMULATE
+ *  into the damage (+= :1011) and the total clamps at 0 (:1030-1033);
+ *  the Breaks arm still fires on a broken item but MagicRound and
+ *  RerollEffect are gated behind currentCondition > 0 (:1018).
+ *
+ *  env: { entity, target, damage, round, nowMinutes, ctx } - entity is
+ *  the item's owner (the source side), target the struck entity for
+ *  Strikes. Answers the (possibly modulated) damage; durability losses
+ *  land on the item through equip.js's lowerCondition, whose Breaks
+ *  edge re-enters here with PAYLOAD.Breaks via the onBreak hook. */
+export function doItemEnchantmentPayloads(
+  flags,
+  item,
+  { entity = null, target = null, damage = 0, round = 0, nowMinutes = null, ctx = null, collection = null } = {},
+) {
+  let damageOut = damage;
+  ctx = mergeCtx(ctx); // E2: the host's mounted ctx rides under any per-call one
+  // AUDIT 39: the mounted classic clock, as doEnchantedPayloads reads
+  // it. The stamps written here are read back against the ABSOLUTE
+  // minute (HealthLeech's day/week gate), so a caller with no clock of
+  // its own must get the host's rather than 0 - the strike site passed
+  // a literal 0 and stamped every leech weapon as never used.
+  nowMinutes ??= ctx?.now?.() ?? 0;
+  const enchantments = itemEnchantments(item);
+  if (!enchantments) return damageOut;
+  // E2: UnequipHeldItem's bundle sweep (:1074-1084) runs for EVERY
+  // effect template, gated only by the flag - so it is one sweep per
+  // item here, before the row walk (and before the unknown-key abort
+  // can skip it: DFU aborts before its sweep too, but the abort keys
+  // - VisionProblems and friends - never pin bundles).
+  if (flags & PAYLOAD.Unequipped) _fx.removeItemPinnedEffects?.(entity, item);
+  for (const e of enchantments) {
+    const row = REGISTRY.get(e.type);
+    if (!row) {
+      // the unknown-key abort (:985-988) - VisionProblems,
+      // WalkingProblems and the artifact subtypes land here until
+      // their classes exist, exactly as DFU logs-and-returns
+      return Math.max(0, damageOut);
+    }
+    const env = { param: e.param, entity, target, item, damage, round, nowMinutes, ctx, collection };
+    if (flags & PAYLOAD.Equipped && row.flags & PAYLOAD.Equipped) row.equipped?.(env);
+    // Unequipped runs UNGATED by the row's own flags (:1001-1003 -
+    // UnequipHeldItem is called for every effect template)
+    if (flags & PAYLOAD.Unequipped) row.unequipped?.(env);
+    if (flags & PAYLOAD.Used && row.flags & PAYLOAD.Used) applyResults(row.used?.(env), env);
+    if (flags & PAYLOAD.Strikes && row.flags & PAYLOAD.Strikes) {
+      const r = row.strikes?.(env);
+      if (r?.strikesModulateDamage) damageOut += r.strikesModulateDamage;
+      // AUDIT WBX F2 (2026-09-26): a blow on the Oblivion Gate's boss wears no gear (WBX6 - world/gate/gateBoss.js's stand-in
+      // carries `spareGear`), and that is every Strikes payload's bill too: a Cast When Strikes blade paid 10 a blow and
+      // the Mace of Molag Bal the blow's damage, and a fight of hundreds of blows destroyed them
+      applyResults(target?.spareGear && r?.durabilityLoss ? { ...r, durabilityLoss: 0 } : r, env);
+    }
+    if (flags & PAYLOAD.Breaks && row.flags & PAYLOAD.Breaks) row.breaks?.(env);
+    if ((item.currentCondition ?? 1) > 0) {
+      // TWO MECHANISMS share the round: a HELD row's MagicRound() is
+      // its live bundle's per-round tick (RegensHealth, HealthLeech,
+      // ItemDeteriorates... - EntityEffectManager's bundle walk), and
+      // a row carrying the PAYLOAD.MagicRound BIT gets the payload
+      // callback :1762-1769 fires per active magic item
+      // (CastWhenHeld's degrade) - both are DFU's, and the ticked
+      // bundle is :1730-1731's `fromEquippedItem != null`. The
+      // port's pump walks equipped items once per round, so ONE gate
+      // admits both - the flags stay verbatim per class.
+      if (flags & PAYLOAD.MagicRound && row.flags & (PAYLOAD.MagicRound | PAYLOAD.Held)) row.magicRound?.(env);
+      if (flags & PAYLOAD.RerollEffect && row.flags & PAYLOAD.RerollEffect) row.reroll?.(env); // E2: RerollItemEffects' payload (:2026)
+      if (flags & PAYLOAD.Enchanted && row.flags & PAYLOAD.Enchanted) row.enchanted?.(env);
+    }
+  }
+  return Math.max(0, damageOut);
+}
+
+/** SetEnchantments' CREATED-PAYLOAD callback (DaggerfallUnityItem.cs
+ *  :1289-1300): as the item maker builds the enchantment lists it
+ *  fires EnchantmentPayloadCallback(Enchanted, param, null, null,
+ *  this) for every settings row whose effect template carries the
+ *  flag. This is NOT DoItemEnchantmentPayloads and must not be
+ *  routed through it: SetEnchantments' loop SKIPS a row whose effect
+ *  key the broker cannot resolve (`if (effectTemplate != null)`,
+ *  :1290) instead of aborting the walk, so the unknown-key quirk
+ *  above never reaches the maker. `enchantments` is the settings list
+ *  being applied, which the item does not carry yet at the DFU call
+ *  site - hence the separate argument. */
+export function doEnchantedPayloads(
+  item,
+  enchantments,
+  { entity = null, ctx = null, nowMinutes = null, collection = null } = {},
+) {
+  ctx = mergeCtx(ctx);
+  nowMinutes ??= ctx?.now?.() ?? 0; // E2: the mounted classic-minute clock, as restartHeldEnchantments reads it
+  for (const e of enchantments ?? []) {
+    // GetEffectTemplate(settings.EffectKey) (:1289) - the row is
+    // found by KEY here, so a maker settings list resolves before
+    // SetEnchantments has stored anything numeric.
+    const row = REGISTRY.get(classicEnchantmentType(e.type));
+    if (!row || !(row.flags & PAYLOAD.Enchanted)) continue;
+    row.enchanted?.({ param: e.param, entity, target: null, item, damage: 0, round: 0, nowMinutes, ctx, collection });
+  }
+}
+
+/** UseItem's result contract (:1088-1101): removeItem wins over
+ *  durability (`else if`); a durability loss bills through the
+ *  collection so a break consumes the item (enchantLowerCondition). */
+function applyResults(r, env) {
+  if (!r) return;
+  if (r.removeItem) {
+    const col = env.collection ?? env.entity?.items;
+    const i = col ? col.indexOf(env.item) : -1;
+    if (i >= 0) col.splice(i, 1);
+  } else if (r.durabilityLoss) {
+    enchantLowerCondition(env.item, r.durabilityLoss, env.entity, env.ctx, env.collection);
+  }
+}
+
+/** The constant-effect FOLD (DoConstantEffects at the round cadence):
+ *  recompute entity._enchantMods from every EQUIPPED enchanted item.
+ *  Channels and their DFU homes:
+ *    maxMagicka          - ChangeMaxMagickaModifier (ExtraSpellPts)
+ *    increasedArmorMod   - SetIncreasedArmorValueModifier
+ *    decreasedArmorMod     (StrengthensArmor / WeakensArmor,
+ *                          BadReactionsFrom) - two MIN-SET channels,
+ *                          NOT one additive one; see F122/F123 above
+ *    chanceToHitMod      - ChangeChanceToHitModifier (BadReactionsFrom)
+ *    absorbsSpells       - IsAbsorbingSpells (AbsorbsSpells)
+ *    weightAllowanceMult - SetIncreasedWeightAllowanceMultiplier
+ *    skillMods           - SetSkillMod (EnhancesSkill)
+ *    improved*           - the ImprovesTalents trio
+ *  DFU clamps current magicka to the recomputed max after the pass
+ *  (:1700-1702) - the caller owning the magicka pool applies
+ *  liveMaxMagicka below and clamps the same way. */
+export function computeEnchantmentMods(entity, ctx = null, { clampMagicka = true } = {}) {
+  ctx = mergeCtx(ctx);
+  const mods = {
+    maxMagicka: 0,
+    increasedArmorMod: 0,
+    decreasedArmorMod: 0,
+    chanceToHitMod: 0,
+    absorbsSpells: false,
+    weightAllowanceMult: 0,
+    skillMods: {},
+    improvedAcuteHearing: false,
+    improvedAthleticism: false,
+    improvedAdrenalineRush: false,
+  };
+  for (const item of equippedEnchantedItems(entity)) {
+    for (const e of itemEnchantments(item)) {
+      const row = REGISTRY.get(e.type);
+      if (!row) break; // the same unknown-key abort, per item
+      if (row.flags & PAYLOAD.Held) row.constant?.({ param: e.param, entity, item, ctx, mods });
+    }
+  }
+  entity._enchantMods = mods;
+  // ChangeMaxMagickaModifier's channel IS the live accessor's own
+  // (defineLiveMaxMagicka reads `maxMagickaModifier` - wave 28's
+  // accessor, floored at 0): the fold is its one writer, so the
+  // eleven `entity.maxMagicka` property reads across four hosts get
+  // ExtraSpellPts for free. DFU clamps current magicka to the new max
+  // after the pass (:1700-1702).
+  entity.maxMagickaModifier = mods.maxMagicka;
+  if (clampMagicka && (entity.magicka ?? 0) > (entity.maxMagicka ?? 0) && typeof entity.maxMagicka === 'number')
+    entity.magicka = entity.maxMagicka;
+  return mods;
+}
+
+/** The per-round pump (DoMagicRound:1706-1770): clear the reaction
+ *  mods, recompute the constant fold, then the MagicRound payloads for
+ *  every equipped enchanted item (activeMagicItemsInRound). Call once
+ *  per magic round for any entity that wears items - effects.js's
+ *  runMagicRoundsFor owns the call, so every host gets it. */
+export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = null } = {}) {
+  ctx = mergeCtx(ctx);
+  if (entity.isPlayer) (entity.reactionMods ??= new Array(SOCIAL_GROUP_COUNT).fill(0)).fill(0); // ClearReactionMods (PlayerEntity.cs:1567-1570 - Array.Clear over all socialGroupCount = 11 entries)
+  applyDressStanding(entity); // DRESS1 (2026-09-30, Discord "reputation buffs for clothing items"): worn clothing refills the just-cleared mods - BEFORE the early return, so plain clothes count with nothing enchanted worn
+  const items = equippedEnchantedItems(entity);
+  if (!items.length) {
+    entity._enchantMods = null;
+    return;
+  }
+  computeEnchantmentMods(entity, ctx);
+  for (const item of items) {
+    doItemEnchantmentPayloads(PAYLOAD.MagicRound, item, { entity, round, nowMinutes, ctx });
+  }
+  // E2: the REROLL scheduler (DoMagicRound :1745-1753 collects, player
+  // only, per held item with a live pinned bundle; RerollItemEffects
+  // :2001-2034 then strips those bundles and fires the RerollEffect
+  // payload if the item is still equipped, restamping the clock).
+  // ENCHANT-LOAD: the strip is the ITEM's, once, before every row
+  // recasts (:2012-2021) - not each row's, which kept only the last.
+  // HELD-CONCEAL: a pin a blow ENDED still counts - DFU keeps the bundle
+  // while its item is worn (:1739-1742) and schedules it all the same, so
+  // a broken Invisibility comes back here (concealment.js).
+  if (entity.isPlayer && entity.activeEffects?.length) {
+    for (const item of items) {
+      if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;
+      const hours = Math.floor((nowMinutes - (item.timeEffectsLastRerolled ?? nowMinutes)) / MINUTES_PER_HOUR);
+      concealBack(entity, item); // WORN-CONCEAL
+      if (hours < REROLL_MINIMUM_HOURS || item.equipSlot == null) continue;
+      _fx.removeItemPinnedEffects?.(entity, item);
+      doItemEnchantmentPayloads(PAYLOAD.RerollEffect, item, { entity, round, nowMinutes, ctx });
+      item.timeEffectsLastRerolled = nowMinutes;
+    }
+  }
+}
+
+/** WORN-CONCEAL: counts the rounds since the last blow (concealment.js resets the count) and stands `item`'s ended
+ *  concealment up again in place once WORN_CONCEAL_BACK_ROUNDS have passed. AUDIT C1: in place, never a reroll - the
+ *  piece's other powers keep their rolls and state (a busted Shield stays busted), and its 6-hour clock stands. */
+function concealBack(entity, item) {
+  for (const a of entity.activeEffects) {
+    if (a.heldItem !== item || !a.ended || !NORMAL_POWER_CONCEALMENTS.includes(a.kind)) continue;
+    a.endedRounds = (a.endedRounds ?? 0) + 1;
+    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) {
+      a.ended = false;
+      delete a.endedRounds;
+    }
+  }
+}
+
+/** E2: the RESTORE half of the held bundles. DFU serializes each
+ *  HeldMagicItem bundle with its item's UID and re-links on load
+ *  (:2240/:2307), discarding one whose item cannot resolve (:2312).
+ *  The port's save strips pinned entries instead (they carry a live
+ *  item reference) and this re-instantiates them from the worn set -
+ *  a RECAST, so no durability is billed.
+ *
+ *  ENCHANT-LOAD (2026-09-26, DragynDance on the Discord: "Reloading a
+ *  save with an enchanted item equipped makes you lose the enchantment
+ *  until you take it off and put it on again"). Three things a load
+ *  lost, all restored here:
+ *   - the CONSTANT fold (EnhancesSkill, StrengthensArmor, ExtraSpellPts,
+ *     AbsorbsSpells, IncreasedWeightAllowance, ImprovesTalents...). It
+ *     is derived state, never saved, and the equip table's rebuild does
+ *     not fold it (equip.js rebuildEquipState). DFU's constant pass runs
+ *     every frame (EntityEffectManager.Update); the port's ran only at
+ *     the first magic round - a game minute of UNPAUSED play, and never
+ *     while a window is up - so a load read every such item as bare
+ *     until it was taken off and put on again. It is refolded here,
+ *     WITHOUT DFU's clamp of magicka to the new maximum: an ExtraSpellPts
+ *     condition read before the world has its clock back (a season, a
+ *     moon, the undead nearby) must not cut the magicka the save holds -
+ *     the first round's fold, at the live clock, clamps as DFU does;
+ *   - every Cast-When-Held power, not just an item's last (the strip is
+ *     once per item, here and at the reroll - assignHeldSpell above);
+ *   - the item's own reroll clock: `timeEffectsLastRerolled` is saved
+ *     with the item (itemFields.js) and DFU's load keeps it. The recast
+ *     stamped the host clock instead - read BEFORE the load sets the
+ *     world's, so an earlier save held its six-hour reroll back by
+ *     however long had been played since. */
+export function restartHeldEnchantments(entity, ctx = null) {
+  ctx = mergeCtx(ctx);
+  const nowMinutes = ctx?.now?.() ?? 0;
+  const items = equippedEnchantedItems(entity);
+  for (const item of items) {
+    _fx.removeItemPinnedEffects?.(entity, item);
+    const at = item.timeEffectsLastRerolled ?? nowMinutes;
+    for (const e of itemEnchantments(item)) {
+      const row = REGISTRY.get(e.type);
+      if (!row) break; // the unknown-key abort, per item
+      if (e.type === T.CastWhenHeld) instantiateHeldSpell({ param: e.param, entity, item, ctx, nowMinutes: at }, true);
+    }
+  }
+  if (entity?._enchantMods || items.length) computeEnchantmentMods(entity, ctx, { clampMagicka: false });
+}
+
+function equippedEnchantedItems(entity) {
+  const out = [];
+  const slots = entity?.equip ? equipTableOf(entity) : null;
+  if (slots) {
+    for (const it of slots) if (it && isEnchantedItem(it)) out.push(it);
+  } else {
+    for (const it of entity?.items ?? []) if (it?.equipSlot != null && isEnchantedItem(it)) out.push(it);
+  }
+  return out;
+}
+
+/** The read-time consumers - each answers 0/false with no fold
+ *  computed yet, so a host that never pumps stays exactly pre-E1. */
+export const enchantChanceToHitMod = (entity) => entity?._enchantMods?.chanceToHitMod ?? 0;
+/** The COMBAT read: FormulaHelper.cs:1158 adds BOTH channels to the
+ *  struck part's armour value. */
+export const enchantArmorMod = (entity) =>
+  (entity?._enchantMods?.increasedArmorMod ?? 0) + (entity?._enchantMods?.decreasedArmorMod ?? 0);
+/** The DISPLAY read: RefreshArmourValues (PaperDoll.cs:161) shows
+ *  `Decreased - Increased` instead - the paperdoll's armour numbers
+ *  run the other way, so a Strengthens item reads +5 there and -5 in
+ *  the hit chance. */
+export const enchantArmorDisplayMod = (entity) =>
+  (entity?._enchantMods?.decreasedArmorMod ?? 0) - (entity?._enchantMods?.increasedArmorMod ?? 0);
+export const enchantSkillMod = (entity, skill) => entity?._enchantMods?.skillMods?.[skill] ?? 0;
+/** The ImprovesTalents trio (ImprovesTalents.cs:75-88), which set the
+ *  three entity flags DFU clears on every constant pass. F044 wired
+ *  the athleticism one to the fatigue law that had been computing it
+ *  and throwing it away. */
+export const entityImprovedAthleticism = (entity) => entity?._enchantMods?.improvedAthleticism ?? false;
+export const entityImprovedAcuteHearing = (entity) => entity?._enchantMods?.improvedAcuteHearing ?? false;
+export const entityImprovedAdrenalineRush = (entity) => entity?._enchantMods?.improvedAdrenalineRush ?? false;
+export const entityAbsorbsSpells = (entity) => entity?._enchantMods?.absorbsSpells ?? false;
+export const enchantWeightAllowanceMult = (entity) => entity?._enchantMods?.weightAllowanceMult ?? 0;
+/** For an entity WITHOUT the wave-28 live accessor (foes, fixtures):
+ *  the same sum the accessor computes. An accessor-bearing entity
+ *  reads its own property and this answers the identical number. */
+export const liveMaxMagicka = (entity) => {
+  const desc = entity ? Object.getOwnPropertyDescriptor(entity, 'maxMagicka') : null;
+  if (desc?.get) return entity.maxMagicka;
+  return (entity?.maxMagicka ?? 0) + (entity?._enchantMods?.maxMagicka ?? 0);
+};
+
+// The equip leaf's doors (see setEnchantmentHooks there): the fold
+// follows the worn set the moment it changes - a default-ctx fold, so
+// the season/nearby conditions settle where the host's seams answer
+// and at the NEXT pump otherwise - the broken edge fires the Breaks
+// payloads (E2: through the merged host ctx, so SoulBound's soul
+// release reaches the host's spawnFoe), and the per-item doors fire
+// the Equipped|Held / Unequipped payloads.
+setEnchantmentHooks({
+  onEquipChange: (entity) => {
+    if (entity?._enchantMods || equippedEnchantedItems(entity).length) computeEnchantmentMods(entity);
+  },
+  onItemBroken: (item, owner, say) => doItemEnchantmentPayloads(PAYLOAD.Breaks, item, { entity: owner, ctx: { say } }),
+  // E2: ItemEquipTable's payload doors - StartEquippedItem fires
+  // Equipped|Held on the arriving item (:149 -> :576) and
+  // StopEquippedItem fires Unequipped on every leaver (:163/:202/:231
+  // -> :586). nowMinutes is the ctx clock seam (ctx.now) - an
+  // unmounted host equips at minute 0, the headless charter.
+  onItemEquipped: (entity, item) => {
+    if (!isEnchantedItem(item)) return;
+    const nowMinutes = mergeCtx(null)?.now?.() ?? 0;
+    // HELD-REWEAR: decided ONCE for the piece, before its first held power restamps the clock - an item with two
+    // Cast-When-Held powers is billed for both or for neither
+    const ctx = heldEquipIsFree(item, nowMinutes) ? { heldEquipFree: true } : null;
+    doItemEnchantmentPayloads(PAYLOAD.Equipped | PAYLOAD.Held, item, { entity, nowMinutes, ctx });
+  },
+  onItemUnequipped: (entity, item) => {
+    if (!isEnchantedItem(item)) return;
+    doItemEnchantmentPayloads(PAYLOAD.Unequipped, item, { entity });
+  },
+});

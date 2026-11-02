@@ -1,0 +1,264 @@
+[
+  {
+    "name": "FB1031-L1-the-rise-narrowed",
+    "file": "src/render/windowLight.js",
+    "old": "export const WL_DUSK_RISE = 0.15;",
+    "new": "export const WL_DUSK_RISE = 0.05;",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The ease over the sun's first 0.05 of height: a step of its own in eleven minutes."
+  },
+  {
+    "name": "FB1031-L1-no-floor",
+    "file": "src/render/windowLight.js",
+    "old": "  return t > 1e-3 ? t * t * (3 - 2 * t) : 0; // the clock's night sun stands at sin(pi), 1e-16 over the horizon",
+    "new": "  return t * t * (3 - 2 * t); // the clock's night sun stands at sin(pi), 1e-16 over the horizon",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The clock's night sun at sin(pi) has a share: Day only lights by night."
+  },
+  {
+    "name": "FB1031-L1-a-line-not-a-smoothstep",
+    "file": "src/render/windowLight.js",
+    "old": "  return t > 1e-3 ? t * t * (3 - 2 * t) : 0; // the clock's night sun stands at sin(pi), 1e-16 over the horizon",
+    "new": "  return t > 1e-3 ? t : 0; // the clock's night sun stands at sin(pi), 1e-16 over the horizon",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "A kink at both ends of the ease."
+  },
+  {
+    "name": "FB1031-L1-the-step-back",
+    "file": "src/render/windowLight.js",
+    "old": "      glowGain = wlGlowGain(share) * dim;",
+    "new": "      glowGain = wlGlowGain(sunDir ? 1 : 0) * dim;",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The glow's gain by the sun's up-or-down again: the step at 17:49."
+  },
+  {
+    "name": "FB1031-L1-day-only-glow-unfaded",
+    "file": "src/render/windowLight.js",
+    "old": "      glowGain = wlGlowGain(share) * dim;",
+    "new": "      glowGain = wlGlowGain(share);",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "Day only's glow whole until the frame's kind cuts it at 18:00."
+  },
+  {
+    "name": "FB1031-L1-day-only-key-unfaded",
+    "file": "src/render/windowLight.js",
+    "old": "    const keyGain = (sunDir ? WL_SUN_GAIN : WL_MOON_GAIN) * dim,",
+    "new": "    const keyGain = sunDir ? WL_SUN_GAIN : WL_MOON_GAIN,",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "Day only's sun beam whole at a low sun."
+  },
+  {
+    "name": "FB1031-L1-day-only-never-dims",
+    "file": "src/render/windowLight.js",
+    "old": "      dim = dayOnly ? share : 1;",
+    "new": "      dim = 1;",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The part read for the moon alone."
+  },
+  {
+    "name": "FB1031-L1-day-only-keeps-the-moon",
+    "file": "src/render/windowLight.js",
+    "old": "    const moonDir = !sunDir && !dayOnly && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;",
+    "new": "    const moonDir = !sunDir && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "A moon beam under Day only at dusk."
+  },
+  {
+    "name": "FB1031-L1-renderer-share-test",
+    "file": "src/render/renderer.js",
+    "old": "'inside', light, wlDayShare(this._wl?.outside) > 0);",
+    "new": "'inside', light, wlDayShare(this._wl?.outside) > 0.3);",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "Day only cut while the dusk still has a share."
+  },
+  {
+    "name": "FB1031-L1-renderer-part-unhanded",
+    "file": "src/render/renderer.js",
+    "old": "      dayOnly: windowLightMode() === 'day',",
+    "new": "      dayOnly: false,",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The pass never told: Day only's light unfaded."
+  },
+  {
+    "name": "FB1031-L2-exp2-read-as-exp",
+    "file": "src/render/farRing.js",
+    "old": "_weatherAir.law = row.mode === 'exp2' ? 2 : 1;",
+    "new": "_weatherAir.law = 1;",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "Dynamic Skies' exp2 rows fogged as exp past the grid."
+  },
+  {
+    "name": "FB1031-L2-the-density-unread",
+    "file": "src/render/farRing.js",
+    "old": "_weatherAir.density = row.density;",
+    "new": "_weatherAir.density = 0.003;",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "Every weather fogged at the rain's density past the grid."
+  },
+  {
+    "name": "FB1031-L2-the-laws-swapped",
+    "file": "src/render/horizonHaze.js",
+    "old": "  return 1.0 - (law.x > 1.5 ? exp(-f * f) : exp(-f));",
+    "new": "  return 1.0 - (law.x > 1.5 ? exp(-f) : exp(-f * f));",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "exp read as exp2 and exp2 as exp."
+  },
+  {
+    "name": "FB1031-L2-the-linear-arm-taken",
+    "file": "src/render/horizonHaze.js",
+    "old": "  if (law.x < 0.5) return horizonHaze(",
+    "new": "  if (law.x < 1.5) return horizonHaze(",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "An exp row's far views through the closed ramp: wholly fog again."
+  },
+  {
+    "name": "FB1031-L2-the-ring-unhanded",
+    "file": "src/render/farRing.js",
+    "old": "    gl.uniform2f(this.u.uFogLaw, rf.law, rf.density);",
+    "new": "    gl.uniform2f(this.u.uFogLaw, 0, 0);",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The ring's program never told the weather's law."
+  },
+  {
+    "name": "FB1031-L2-the-band-unhanded",
+    "file": "src/render/farRing.js",
+    "old": "hold: rf.hold, law: rf.law, density: rf.density, exposure,",
+    "new": "hold: rf.hold, law: 0, density: 0, exposure,",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The band's trees wholly fog beside the ring's land."
+  },
+  {
+    "name": "FB1031-L2-the-band-not-forwarded",
+    "file": "src/render/farRing.js",
+    "old": "hold: f.hold, law: f.law, density: f.density,",
+    "new": "hold: f.hold, law: 0, density: 0,",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "_drawBand drops the law."
+  },
+  {
+    "name": "FB1031-L2-the-trees-unhanded",
+    "file": "src/render/farTrees.js",
+    "old": "    gl.uniform2f(u.uFogLaw, s.law ?? 0, s.density ?? 0); // AUDIT FB1031 L2: a weather's own factor, as the ring's",
+    "new": "    gl.uniform2f(u.uFogLaw, 0, 0); // AUDIT FB1031 L2: a weather's own factor, as the ring's",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The trees' program never told."
+  },
+  {
+    "name": "FB1031-L2-the-classic-ring-blind",
+    "file": "src/render/farRing.js",
+    "old": "ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))), 1.0);",
+    "new": "ringHaze(horizonHazeOf(vec2(0.0), vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))), 1.0);",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ],
+    "note": "The classic ring's program reads no law."
+  },
+  {
+    "name": "FB1031-L2-the-lane-ring-blind",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));   // BANTHA1: and the jungle's haze; AUDIT FB1031 L2: a weather's own factor",
+    "new": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(vec2(0.0), vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));   // BANTHA1: and the jungle's haze; AUDIT FB1031 L2: a weather's own factor",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ],
+    "note": "The lane's ring reads no law."
+  },
+  {
+    "name": "FB1031-L2-the-classic-trees-blind",
+    "file": "src/render/farTrees.js",
+    "old": "  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);",
+    "new": "  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ],
+    "note": "The classic band's trees read no law."
+  },
+  {
+    "name": "FB1031-L2-the-lane-trees-blind",
+    "file": "src/render/farTrees.js",
+    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));",
+    "new": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ],
+    "note": "The lane's band's trees read no law."
+  },
+  {
+    "name": "FB1031-L4-the-threshold-back",
+    "file": "src/scenes/shared.js",
+    "old": "  if (t >= 1) return GRAY_FOG_COLOR;",
+    "new": "  if (t > 0) return GRAY_FOG_COLOR;",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "The grey whole past the rain's density: the flip in a frame."
+  },
+  {
+    "name": "FB1031-L4-the-band-to-the-heavy-fog",
+    "file": "src/scenes/shared.js",
+    "old": "export const GRAY_FOG_FULL_DENSITY = FOG_SETTINGS.snowy.density;",
+    "new": "export const GRAY_FOG_FULL_DENSITY = FOG_SETTINGS.heavy.density;",
+    "tests": [
+      "test/render/fb1031_light.test.js",
+      "test/scenes/audit18_hosts_outer.test.js"
+    ],
+    "note": "DFU's snow no longer Color.gray."
+  },
+  {
+    "name": "FB1031-L4-a-line-not-a-smoothstep",
+    "file": "src/scenes/shared.js",
+    "old": "  const k = t * t * (3 - 2 * t), out = new Float32Array(3);",
+    "new": "  const k = t, out = new Float32Array(3);",
+    "tests": [
+      "test/render/fb1031_light.test.js"
+    ],
+    "note": "A kink at the band's ends."
+  },
+  {
+    "name": "FB1031-L4-the-mode-unread",
+    "file": "src/scenes/shared.js",
+    "old": "  if (fogSettings.mode !== 'exp' || !(fogSettings.density > RAINY_FOG_DENSITY)) return skyClearColor;",
+    "new": "  if (!(fogSettings.density > RAINY_FOG_DENSITY)) return skyClearColor;",
+    "tests": [
+      "test/render/fb1031_light.test.js",
+      "test/scenes/audit18_hosts_outer.test.js"
+    ],
+    "note": "An exp2 or a linear row greyed: SetSkyFogColor's FogMode.Exponential unread."
+  }
+]

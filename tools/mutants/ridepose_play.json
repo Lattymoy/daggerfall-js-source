@@ -1,0 +1,47 @@
+[
+  {
+    "name": "RIDEPLAY-dropped-by-the-play-out",
+    "file": "src/net/online.js",
+    "old": "    ...(to.pl ? { pl: rideAlong(from.pl, to.pl, k) } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/ridepose_play.test.js"
+    ]
+  },
+  {
+    "name": "RIDEPLAY-whole-on-one-piece",
+    "file": "src/net/online.js",
+    "old": "  if (!Array.isArray(from) || from[0] !== to[0]) return [...to];\n  return [to[0], from[1] + (to[1] - from[1]) * k,",
+    "new": "  return [...to];\n  return [to[0], from[1] + (to[1] - from[1]) * k,",
+    "tests": [
+      "test/net/eliteGates/ridepose_play.test.js"
+    ]
+  },
+  {
+    "name": "RIDEPLAY-eased-across-pieces",
+    "file": "src/net/online.js",
+    "old": "  if (!Array.isArray(from) || from[0] !== to[0]) return [...to];\n  return [to[0], from[1] + (to[1] - from[1]) * k,",
+    "new": "  if (!Array.isArray(from)) return [...to];\n  return [to[0], from[1] + (to[1] - from[1]) * k,",
+    "tests": [
+      "test/net/eliteGates/ridepose_play.test.js"
+    ]
+  },
+  {
+    "name": "RIDEPLAY-shares-the-list",
+    "file": "src/net/online.js",
+    "old": "  if (!Array.isArray(from) || from[0] !== to[0]) return [...to];\n  return [to[0], from[1] + (to[1] - from[1]) * k,",
+    "new": "  if (!Array.isArray(from) || from[0] !== to[0]) return to;\n  return [to[0], from[1] + (to[1] - from[1]) * k,",
+    "tests": [
+      "test/net/eliteGates/ridepose_play.test.js"
+    ]
+  },
+  {
+    "name": "RIDEPLAY-ridden-copy-never-drawn",
+    "file": "src/net/online.js",
+    "old": "if (s.pl && this.rideAt) { const r = { ...s }; this.rideAt(r); p.shown = r; }",
+    "new": "if (s.pl && this.rideAt) { const r = { ...s }; this.rideAt(r); }",
+    "tests": [
+      "test/net/eliteGates/ridepose_play.test.js"
+    ]
+  }
+]

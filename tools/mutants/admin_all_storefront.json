@@ -1,0 +1,110 @@
+[
+  {
+    "name": "ADMIN-SF-effects-left-to-what-was-bought",
+    "file": "server-account/src/titles.js",
+    "old": "    const own = new Set(\n      holdsAll(player, env) ? effectKeys(slot) : [...shopKeys(player, slot), ...passKeys(player, slot)],\n    );",
+    "new": "    const own = new Set([...shopKeys(player, slot), ...passKeys(player, slot)]);",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-an-admins-effect-refused",
+    "file": "server-account/src/titles.js",
+    "old": "  return effectsHeld(player, env)[slot].includes(/** @type {string} */ (key)) ? null : 'not-held';",
+    "new": "  return effectsHeld(player, {})[slot].includes(/** @type {string} */ (key)) ? null : 'not-held';",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-the-folios-glyphs-left-out",
+    "file": "server-account/src/titles.js",
+    "old": "    (Object.values(TIER_GLYPH).includes(g) ||\n      SHOP_WARES.some((w) => w.kind === 'glyph' && w.key === g) ||\n      passKeysOf(PASS_ALL_GRANTS, 'glyph').includes(g)),",
+    "new": "    (Object.values(TIER_GLYPH).includes(g) || SHOP_WARES.some((w) => w.kind === 'glyph' && w.key === g)),",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-a-pack-held",
+    "file": "server-account/src/shop.js",
+    "old": "  shopOwns(player, w.id) || (!shopRepeatable(w) && holdsAll(player, env));",
+    "new": "  shopOwns(player, w.id) || holdsAll(player, env);",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-a-ware-sold-to-an-admin",
+    "file": "server-account/src/shop.js",
+    "old": "  shopOwns(player, w.id) || (!shopRepeatable(w) && holdsAll(player, env));",
+    "new": "  shopOwns(player, w.id);",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-the-daily-card-left-to-the-row",
+    "file": "server-account/src/aurum.js",
+    "old": "held: shopOwns(row, id) || holdsAll(player, env) }",
+    "new": "held: shopOwns(row, id) }",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-a-daily-ware-sold-to-an-admin",
+    "file": "server-account/src/aurum.js",
+    "old": "  if (holdsAll(player, env)) return { error: 'aurum-held' };   // ADMIN-ALL\n",
+    "new": "",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-the-folios-card-left-to-the-row",
+    "file": "server-account/src/battlePass.js",
+    "old": "bought: (admin ? PASS_ALL_GRANTS : passItemsOf(row?.results?.[0]?.pass_items))",
+    "new": "bought: (passItemsOf(row?.results?.[0]?.pass_items))",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-the-gilded-folio-shut-to-an-admin",
+    "file": "server-account/src/battlePass.js",
+    "old": "premium: admin || !!track?.results?.length",
+    "new": "premium: !!track?.results?.length",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-the-unlock-sold-to-an-admin",
+    "file": "server-account/src/battlePass.js",
+    "old": "  if (holdsAll(player, env) || (await premiumOf(db, player.id, id))) return { error: 'pass-held' };",
+    "new": "  if (await premiumOf(db, player.id, id)) return { error: 'pass-held' };",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-an-item-sold-to-an-admin",
+    "file": "server-account/src/battlePass.js",
+    "old": "  if (holdsAll(player, env)) return { error: 'pass-held' };   // ADMIN-ALL: an admin holds every item\n",
+    "new": "",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  },
+  {
+    "name": "ADMIN-SF-the-effect-door-asks-no-list",
+    "file": "server-account/src/accounts.js",
+    "old": "  const why = effectRefusal(slot, key, player, env);",
+    "new": "  const why = effectRefusal(slot, key, player, {});",
+    "tests": [
+      "test/server/admin_all_storefront.test.js"
+    ]
+  }
+]

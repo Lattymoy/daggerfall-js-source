@@ -1,0 +1,11 @@
+{
+  "ModTitle": "Snowfall",
+  "ModVersion": "1.0.5",
+  "ModAuthor": "demifiend000",
+  "ContactInfo": "romansoldier98@gmail.com",
+  "DFUnity_Version": "1.1.1",
+  "ModDescription": "Terrain-conforming winter snow with persistent player and NPC tracks plus a streamed-terrain distance blanket.",
+  "GUID": "cc075137-bc42-4469-907c-dd49072f269e",
+  "Files": [],
+  "Dependencies": []
+}

@@ -1,0 +1,343 @@
+// PINS (2026-09-16, AUDIT SLAM R14): THE MUTATION LISTS ARE COMMITTED, so "N mutations, N dead" is a claim anyone can
+// re-run rather than a number in a chat log. The audit found that every slam slice's mutation set lived nowhere in the
+// tree, and that at least one full-suite survivor existed per file the sets were meant to cover - the sets were real,
+// the "all dead" they implied was not the whole story.
+//
+//   node tools/mutate.mjs tools/mutants/slam8.json          one list
+//   node tools/mutate.mjs tools/mutants/*.json              every list
+//   node tools/mutate.mjs --jobs 4 tools/mutants/*.json     four at a time (FLOW4, below)
+//
+// A list is a JSON array of { name, file, old, new, tests[], equivalent?, why?, syntax? }. For each: copy the file aside,
+// replace the FIRST occurrence of `old` with `new` (the record must be exact - a mutant that does not apply is
+// reported, not skipped silently - and name ONE site: a text that stands twice is aimed at whichever copy is higher
+// up, so a copy added above the one it was written for takes its mutant; test/tooling/mutantdrift.test.js's MUT-AIM holds
+// every record to one), run the named tests, restore the file byte-for-byte, and say whether the mutant
+// SURVIVED (the pins cannot fail it) or died. A survivor is a finding. A mutant marked `equivalent: true` is one the
+// slice DECIDED to leave alive - redundant code kept as belt-and-braces, say - and `why` says so; it is expected to
+// survive, reported as such, and counted as a failure only if it unexpectedly DIES (the record is then stale).
+// Exit 1 if anything unexpectedly survived, unexpectedly died, or failed to apply; 2 if a source could not be put back
+// (or a previous run's backup is still lying there); 130 if interrupted, after the file in hand is restored.
+// A record whose mutant is MEANT not to parse (a second declaration beside an import, say) carries `syntax: true`;
+// every other mutant of a .js/.mjs/.cjs file must parse, or it is reported as not a verdict (AUDIT 68).
+// FLOW4 (2026-09-26, Mac: "is there a way to really ensure we have a faster workflow with the same standards?"): `--jobs N`
+// judges N mutants at once, each worker in its own WORKSPACE - a copy of this tree's code (node_modules and the data
+// directories public/, vendor/ and bible/ linked, never copied or written) with its own TMPDIR - so the source here is
+// never touched and no worker sees another's mutant. The verdicts are the same verdicts: before any mutant, each test a
+// record names is run UNMUTATED in a workspace, and a record whose tests do not pass there (one that needs the
+// repository's own git, say) or whose file lives in a linked directory is judged here, in place, as a serial run judges
+// it - so a death is always the mutant's, never the workspace's. Output and exit codes are the serial run's, in list
+// order. Without --jobs (or with --jobs 1) nothing below the flag parse changes.
+// AUDIT SCALE M1 (2026-10-08): A DEATH IS THE MUTANT'S ONLY WHERE ITS TESTS PASS WITHOUT IT. A test file that failed in a
+// workspace was judged in place on trust, and one that did not parse at all (a title's apostrophe unescaped) failed in
+// place as well: its twenty records read "dead" against a file that could not run. Before any mutant, every test a
+// record names runs here, unmutated (serially, only those that failed in a workspace with --jobs); a record any of
+// whose tests fails is no verdict, said so, and the run fails.
+import {
+  readFileSync,
+  writeFileSync,
+  copyFileSync,
+  unlinkSync,
+  existsSync,
+  cpSync,
+  mkdtempSync,
+  symlinkSync,
+  rmSync,
+  readdirSync,
+  mkdirSync,
+  statSync,
+} from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { spawn } from 'node:child_process';
+
+let jobs = 1;
+const listArgs = [];
+for (let i = 2; i < process.argv.length; i++) {
+  const a = process.argv[i],
+    eq = /^--jobs=(\d+)$/.exec(a);
+  if (a === '--jobs' || a === '-j') {
+    jobs = Math.max(1, Number(process.argv[++i]) | 0);
+    continue;
+  }
+  if (eq) {
+    jobs = Math.max(1, Number(eq[1]) | 0);
+    continue;
+  }
+  listArgs.push(a);
+}
+const lists = listArgs.map((listPath) => [listPath, JSON.parse(readFileSync(listPath, 'utf8'))]);
+
+// AUDIT 68 X5-mutate-interrupt-loses-source: a `.mutbak` left by an interrupted run is the only clean copy of its
+// file, and this run's first copyFileSync over it would destroy it. Nothing is touched while one exists.
+const leftovers = [...new Set(lists.flatMap(([, list]) => list.map((m) => m.file)))].filter((f) =>
+  existsSync(`${f}.mutbak`),
+);
+if (leftovers.length) {
+  for (const f of leftovers)
+    console.log(`${f}.mutbak exists - a previous run was interrupted: move it back over ${f} and re-run`);
+  process.exit(2);
+}
+
+// A signal must not kill this process mid-mutant: the finally below is what puts the source back. So the signal is
+// noted, handed to the children, and the run stops once the file is restored. The children run ASYNC for the same
+// reason - a handler cannot run while spawnSync blocks, and an interrupted `node --test` exits 1 like a failing one.
+let interrupted = null;
+const children = new Set();
+for (const sig of ['SIGINT', 'SIGTERM'])
+  process.on(sig, () => {
+    interrupted = sig;
+    for (const c of children) c.kill(sig);
+  });
+
+/** `node <args>`, stdout collected in full - no buffer ceiling to overflow (AUDIT final lens C: the default 1 MiB
+ *  maxBuffer was smaller than a whole-suite TAP, and a child killed by ENOBUFS once read as "dead (0 failing)"). */
+const run = (args, opts = {}) =>
+  new Promise((resolve) => {
+    const chunks = [];
+    const child = spawn(process.execPath, args, { stdio: ['ignore', 'pipe', 'ignore'], ...opts });
+    children.add(child);
+    child.stdout.on('data', (c) => chunks.push(c));
+    child.on('error', (error) => {
+      children.delete(child);
+      resolve({ status: null, signal: null, error, stdout: '' });
+    });
+    child.on('close', (status, signal) => {
+      children.delete(child);
+      resolve({ status, signal, error: null, stdout: Buffer.concat(chunks).toString('utf8') });
+    });
+  });
+
+/** The verdict on a mutant already in place under `cwd` (the tree here when absent): its syntax, then its tests. Null
+ *  once interrupted. {kind, text}. */
+async function verdict(m, cwd, env) {
+  // AUDIT 68 X5-mutant-records-die-by-syntax-error: a mutant that does not parse fails every test that loads the
+  // file, so its "dead" says nothing about the pins the record names.
+  if (!m.syntax && /\.[cm]?js$/.test(m.file)) {
+    const chk = await run(['--check', m.file], { cwd, env });
+    if (interrupted) return null;
+    if (chk.status !== 0)
+      return { kind: 'noapply', text: `  ${m.name}: DOES NOT PARSE - not a verdict; re-aim the record by content` };
+  }
+  // The verdict parses TAP; Node's default reporter may be spec (including on Node 24).
+  const r = await run(['--test', '--test-reporter=tap', ...m.tests], { cwd, env });
+  if (interrupted) return null;
+  const failing = (r.stdout.match(/^not ok/gm) ?? []).length;
+  // A harness error is neither a death nor a survival; it is reported as itself and fails the run.
+  if (r.error || r.status === null)
+    return {
+      kind: 'noapply',
+      text: `  ${m.name}: HARNESS ERROR (${r.error?.code ?? `signal ${r.signal}`}) - not a verdict`,
+    };
+  if (m.equivalent) {
+    if (r.status === 0) return { kind: 'equivalent', text: `  ${m.name}: equivalent, as recorded - ${m.why ?? ''}` };
+    return {
+      kind: 'stale',
+      text: `  ${m.name}: recorded as equivalent but DIED (${failing} failing) - the record is stale`,
+    };
+  }
+  if (r.status === 0) return { kind: 'survived', text: `  ${m.name}: SURVIVED  <-- the pins cannot fail this` };
+  return { kind: 'dead', text: `  ${m.name}: dead (${failing} failing)` };
+}
+
+/** One mutant judged IN PLACE: the file copied aside, mutated, judged, put back byte-for-byte. */
+async function judgeInPlace(m) {
+  const src = readFileSync(m.file, 'utf8');
+  if (!src.includes(m.old))
+    return { kind: 'noapply', text: `  ${m.name}: COULD NOT APPLY - the source moved; update the record` };
+  const bak = m.file + '.mutbak';
+  copyFileSync(m.file, bak);
+  try {
+    writeFileSync(
+      m.file,
+      src.replace(m.old, () => m.new),
+    ); // a function replacer: `$&`/`$1` in `new` are text, not patterns
+    return await verdict(m);
+  } finally {
+    copyFileSync(bak, m.file);
+    unlinkSync(bak);
+    if (readFileSync(m.file, 'utf8') !== src) {
+      console.log(`  !! ${m.file} NOT RESTORED`);
+      process.exit(2);
+    }
+    if (interrupted) {
+      console.log(`\ninterrupted (${interrupted}) - ${m.file} restored, no verdict for ${m.name}`);
+      process.exit(130);
+    }
+  }
+}
+
+const counts = { dead: 0, survived: 0, equivalent: 0, stale: 0, noapply: 0 };
+const tally = (v) => {
+  counts[v.kind]++;
+  console.log(v.text);
+};
+
+// ---- FLOW4: the workspaces ---------------------------------------------------------------------------------------
+
+/** Linked into a workspace, never copied (and never mutated there): the dependencies and the data. */
+const LINKED = new Set(['node_modules', 'public', 'vendor', 'bible']);
+/** Left out of a workspace: the repository's own history and build output, and the agents' worktrees under `.claude` (each
+ *  a whole tree - copied once a job they filled a disk). */
+const LEFT_OUT = (name) =>
+  name === '.git' || name === 'dist' || name.startsWith('dist-') || name === '.wrangler' || name === '.claude';
+
+/** A copy of this tree's code in a new temporary directory, its data linked; its own TMPDIR inside it. */
+function workspace() {
+  const root = process.cwd();
+  const ws = mkdtempSync(join(tmpdir(), 'mutate-'));
+  for (const name of readdirSync(root)) {
+    if (LEFT_OUT(name)) continue;
+    const from = join(root, name),
+      to = join(ws, name);
+    if (LINKED.has(name) && statSync(from).isDirectory()) {
+      symlinkSync(from, to, 'dir');
+      continue;
+    }
+    cpSync(from, to, {
+      recursive: true,
+      filter: (p) => !/[\\/](node_modules|\.wrangler|\.git)$/.test(p) || p === from,
+    });
+    const nested = join(from, 'node_modules');
+    if (statSync(from).isDirectory() && existsSync(nested)) symlinkSync(nested, join(to, 'node_modules'), 'dir');
+  }
+  mkdirSync(join(ws, '.tmp'));
+  return ws;
+}
+const envOf = (ws) => ({ ...process.env, TMPDIR: join(ws, '.tmp'), TEMP: join(ws, '.tmp'), TMP: join(ws, '.tmp') });
+
+/** One mutant judged in a workspace: its copy there mutated, judged and put back (the tree here untouched). */
+async function judgeIn(ws, m) {
+  const path = join(ws, m.file);
+  const src = readFileSync(path, 'utf8');
+  if (!src.includes(m.old))
+    return { kind: 'noapply', text: `  ${m.name}: COULD NOT APPLY - the source moved; update the record` };
+  writeFileSync(
+    path,
+    src.replace(m.old, () => m.new),
+  );
+  try {
+    return await verdict(m, ws, envOf(ws));
+  } finally {
+    writeFileSync(path, src);
+  }
+}
+
+/** The tests among `tests` that fail HERE with no mutant in place, run one at a time (AUDIT SCALE M1). */
+async function failingHere(tests) {
+  const bad = new Set();
+  for (const f of tests) {
+    const r = await run(['--test', '--test-reporter=tap', f]);
+    if (interrupted) {
+      console.log(`\ninterrupted (${interrupted}) - nothing was mutated here`);
+      process.exit(130);
+    }
+    if (r.status !== 0) bad.add(f);
+  }
+  return bad;
+}
+/** No verdict for a record whose tests fail with no mutant (AUDIT SCALE M1), else null. */
+const unrunnable = (m, broken) => {
+  const bad = m.tests.filter((f) => broken.has(f));
+  return bad.length
+    ? {
+        kind: 'noapply',
+        text: `  ${m.name}: ITS TESTS FAIL UNMUTATED (${bad.join(', ')}) - not a verdict; make them pass first`,
+      }
+    : null;
+};
+
+async function parallel(n) {
+  // one entry a mutant, in list order; an empty list is an entry of its own so its header prints in its place
+  const all = lists.flatMap(([listPath, list]) =>
+    list.length
+      ? list.map((m, i) => ({ listPath, first: i === 0, count: list.length, m }))
+      : [{ listPath, first: true, count: 0, m: null }],
+  );
+  const spaces = Array.from({ length: n }, workspace);
+  process.on('exit', () => {
+    for (const ws of spaces) rmSync(ws, { recursive: true, force: true });
+  });
+  // THE BASELINE: every test a record names, unmutated, in a workspace - a test that cannot pass there says nothing
+  // about a mutant there, and its records are judged in place instead
+  const tests = [...new Set(all.flatMap((e) => e.m?.tests ?? []))];
+  const fails = new Set();
+  let t = 0;
+  await Promise.all(
+    spaces.map(async (ws) => {
+      while (t < tests.length && !interrupted) {
+        const f = tests[t++];
+        const r = await run(['--test', '--test-reporter=tap', f], { cwd: ws, env: envOf(ws) });
+        if (r.status !== 0) fails.add(f);
+      }
+    }),
+  );
+  if (interrupted) {
+    console.log(`\ninterrupted (${interrupted}) - nothing was mutated here`);
+    process.exit(130);
+  }
+  const inPlace = (m) => !!m && (m.tests.some((f) => fails.has(f)) || LINKED.has(m.file.split(/[\\/]/)[0]));
+  const mutants = all.filter((e) => e.m).length;
+  console.log(
+    `(${n} workspaces; ${all.filter((e) => inPlace(e.m)).length} of ${mutants} mutants judged in place${fails.size ? ` - their tests do not pass outside this tree: ${[...fails].join(', ')}` : ''})`,
+  );
+  // AUDIT SCALE M1: and a test that fails outside this tree must pass in it, or its records are no verdict
+  const broken = await failingHere([...fails]);
+  if (broken.size)
+    console.log(`(no verdict for their records - these fail here too, with no mutant: ${[...broken].join(', ')})`);
+  // the verdicts print in list order as they land
+  const out = all.map((e) => (e.m ? null : { kind: null }));
+  let printed = 0;
+  const flush = () => {
+    while (printed < all.length && out[printed]) {
+      const e = all[printed];
+      if (e.first) console.log(`\n== ${e.listPath} (${e.count} mutants)`);
+      if (e.m) tally(out[printed]);
+      printed++;
+    }
+  };
+  let next = 0;
+  const workers = spaces.map(async (ws) => {
+    while (!interrupted) {
+      let k = next;
+      while (k < all.length && (out[k] || !all[k].m || inPlace(all[k].m) || all[k].taken)) k++;
+      next = Math.max(next, k);
+      if (k >= all.length) return;
+      all[k].taken = true;
+      const v = await judgeIn(ws, all[k].m);
+      if (!v) return;
+      out[k] = v;
+      flush();
+    }
+  });
+  const here = (async () => {
+    for (let k = 0; k < all.length && !interrupted; k++) {
+      if (!all[k].m || !inPlace(all[k].m)) continue;
+      out[k] = unrunnable(all[k].m, broken) ?? (await judgeInPlace(all[k].m));
+      flush();
+    }
+  })();
+  await Promise.all([...workers, here]);
+  if (interrupted) {
+    console.log(`\ninterrupted (${interrupted}) - the sources are untouched`);
+    process.exit(130);
+  }
+  flush();
+}
+
+// ---- the run ----------------------------------------------------------------------------------------------------
+
+if (jobs <= 1) {
+  // AUDIT SCALE M1: the tests the records name, unmutated, before any mutant
+  const broken = await failingHere([...new Set(lists.flatMap(([, list]) => list.flatMap((m) => m.tests)))]);
+  if (broken.size) console.log(`(no verdict for their records - these fail with no mutant: ${[...broken].join(', ')})`);
+  for (const [listPath, list] of lists) {
+    console.log(`\n== ${listPath} (${list.length} mutants)`);
+    for (const m of list) tally(unrunnable(m, broken) ?? (await judgeInPlace(m)));
+  }
+} else {
+  await parallel(jobs);
+}
+console.log(
+  `\n${counts.dead} dead, ${counts.survived} survived, ${counts.equivalent} equivalent as recorded, ${counts.stale} stale records, ${counts.noapply} did not apply`,
+);
+process.exit(counts.survived || counts.noapply || counts.stale ? 1 : 0); // noapply counts harness errors and unparseable mutants too

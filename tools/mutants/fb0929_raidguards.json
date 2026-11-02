@@ -1,0 +1,47 @@
+[
+  {
+    "name": "FB0929-spare-only-a-pacified-defender",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    return !!g?.defender && (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere());",
+    "new": "    return !!g?.defender && g.ai.isHostile === false && (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere());",
+    "tests": [
+      "test/scenes/fb0929_raidguards.test.js"
+    ]
+  },
+  {
+    "name": "FB0929-spare-whatever-the-setting",
+    "file": "src/scenes/cityGuards.js",
+    "old": "(getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere())",
+    "new": "(true || !!raidHere())",
+    "tests": [
+      "test/scenes/fb0929_raidguards.test.js"
+    ]
+  },
+  {
+    "name": "FB0929-no-body-on-the-ray-stays-the-swing",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (guards.some((g) => !g.dead && g.defender && rayPersonDistance(eye, lookDir, g.ai.feet) < bestD)) return SWING_SPARED;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb0929_raidguards.test.js"
+    ]
+  },
+  {
+    "name": "FB0929-the-defender-behind-stays-it",
+    "file": "src/scenes/cityGuards.js",
+    "old": "rayPersonDistance(eye, lookDir, g.ai.feet) < bestD)) return SWING_SPARED;",
+    "new": "rayPersonDistance(eye, lookDir, g.ai.feet) > bestD)) return SWING_SPARED;",
+    "tests": [
+      "test/scenes/fb0929_raidguards.test.js"
+    ]
+  },
+  {
+    "name": "FB0929-a-dismissed-defender-still-stays-it",
+    "file": "src/scenes/cityGuards.js",
+    "old": "guards.some((g) => !g.dead && g.defender && rayPersonDistance(",
+    "new": "guards.some((g) => g.defender && rayPersonDistance(",
+    "tests": [
+      "test/scenes/fb0929_raidguards.test.js"
+    ]
+  }
+]

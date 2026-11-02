@@ -1,0 +1,363 @@
+// RMB block assembly: placed model matrices and ground tilemap.
+// 1:1 translation of the layout math in Daggerfall Unity's RMBLayout.cs and
+// MeshReader.GetSimpleGroundPlaneMesh (MIT, Daggerfall Workshop). Verbatim:
+//   - Subrecord matrix: T(XPos, 0, RMBDimension - ZPos) * scale,
+//     R(0, -YRotation / RotationDivisor, 0).
+//   - Building model matrix: subRecordMatrix * TRS((X, -Y, Z) * scale,
+//     euler(-XRot, -YRot, -ZRot) / RotationDivisor, modelScale). Classic data
+//     never sets model scale (fields exist only for mod injection), so scale
+//     is identity here.
+//   - Misc models: TRS((X, -Y + propsOffsetY, Z + RMBDimension) * scale, ...).
+//   - Ground tiles read GroundTiles[x][15 - y]; records >= 56 are random
+//     markers reset to grass. DFU writes tilemap INDEX 8 there, which is
+//     texture RECORD 2 (index = record * 4 + variant; TerrainTexturing's
+//     grass = 2), so our decoded tile is record 2. Ground sits at
+//     GroundOffset (-1)
+//     to minimise depth-fighting, tile size 256, 16x16 tiles.
+// Flats/billboards live in rmbFlats.js (milestone 3). Interiors and people
+// records are later features of this arc; see bible/03-World/World-Arc.md.
+
+import { ROTATION_DIVISOR, RMB_DIMENSION } from '../formats/blocksFile.js';
+import { PLACEMENTS as WINDMILL_PLACEMENTS } from './windmillMesh.js'; // WM2d: the mills Daggerfall does not stand
+import { WINDMILL_INTERIOR } from './windmillInterior.js'; // WM2g: and the inside of one
+import { GLOBAL_SCALE } from './meshReader.js';
+import { trs, multiply } from './mat4.js';
+import { GROUND_RECORD_LIMIT } from './terrain/terrainTiles.js'; // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
+
+/** RMBLayout.propsOffsetY (:37): a misc model stands this far (RMB units) under its record - a prefab standing in for
+ *  one too, the crop fields' batches among them (world/rmbFlats.js, FIELD BUGS 2026-10-04d CROPS). */
+export const PROPS_OFFSET_Y = -4;
+export const GROUND_OFFSET = -1;
+export const GROUND_TILE_SIZE = 256; // RMBTileSide mirror - value-pinned, no mesh consumer yet (AUDIT 23 wa-5)
+export const GROUND_TILE_DIM = 16;
+
+/** RMBLayout.CityGateOpenModelID / CityGateClosedModelID
+ *  (RMBLayout.cs:40-41), declared beside the bulletin board because
+ *  DFU treats them alike: both are forced STANDALONE out of the block
+ *  combiner (:857) so AddStandaloneModel can hang a component on them -
+ *  DaggerfallCityGate at :959-963, DaggerfallBulletinBoard at :965-969.
+ *  The gate component's whole law is world/city/cityGate.js. */
+export const CITY_GATE_OPEN_MODEL_ID = 446;
+export const CITY_GATE_CLOSED_MODEL_ID = 447;
+/** IsCityGate (RMBLayout.cs:1007-1011) - "Two variants of City Gate
+ *  model known", so BOTH ids answer true and a block that places the
+ *  CLOSED variant is tracked too. */
+export const isCityGate = (modelID) => modelID === CITY_GATE_OPEN_MODEL_ID || modelID === CITY_GATE_CLOSED_MODEL_ID;
+
+/** RMBLayout.BulletinBoardModelID (RMBLayout.cs:42). DFU stands this
+ *  model STANDALONE rather than folding it into the block combiner
+ *  (:857, :935) precisely so it can carry its own activation
+ *  component (:966-970), and IsBulletinBoard (:1013-1017) is the whole
+ *  test - "Only a single variant of Bulletin Board model known". */
+export const BULLETIN_BOARD_MODEL_ID = 41739;
+/** IsBulletinBoard (RMBLayout.cs:1013-1017). */
+export const isBulletinBoard = (modelID) => modelID === BULLETIN_BOARD_MODEL_ID;
+
+/**
+ * Assemble an RMB block into world placements.
+ * @param {object} dfBlock - output of BlocksFile.getBlock() (type Rmb).
+ * @param {{enhanced?:boolean, windmills?:boolean}} [opts] - `enhanced` is
+ *   the caller's skin. The mills are an enhanced-skin departure and so is
+ *   the SUBRECORD they need, which mutates the parsed block - see
+ *   attachWindmillRecord. WM3: `windmills` is the PACK's own switch
+ *   (features.js WINDMILLS_KEY), and both must be true for a mill to stand.
+ * @returns {{models:Array<{modelId:string,modelIdNum:number,matrix:Float32Array}>,
+ *   groundTiles:Array<Array<{record:number,rotated:boolean,flipped:boolean}>>}}
+ */
+/**
+ * RMBLayout.GetModelScaleVector (:74-77): a model record's scale, a zero
+ * (absent - every classic record) read as 1. Only a world-data JSON
+ * record carries one (WD1: Warm Ashes - Ships' small raid; WD3: the town packs).
+ * @returns {[number, number, number]}
+ */
+export function modelScaleVector(obj) {
+  return [obj.xScale || 1, obj.yScale || 1, obj.zScale || 1];
+}
+
+/** A misc model record's place in its block (RMBLayout's AddProps, below) - its own export (AUDIT PROP-GROUND: the town's
+ *  fabric finds a foot plate where the block stands it, world/urban/townFabricStand.js fabricBlockOf). */
+export function miscModelMatrix(obj) {
+  return trs(
+    obj.xPos * GLOBAL_SCALE,
+    (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,
+    (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
+    -obj.xRotation / ROTATION_DIVISOR,
+    -obj.yRotation / ROTATION_DIVISOR,
+    -obj.zRotation / ROTATION_DIVISOR,
+    ...modelScaleVector(obj),
+  );
+}
+
+/** WD3: the classic model Kamer's prefab REPLACES (MeshReplacement, `41600.prefab`) - in ARCH3D (record 8176) and
+ *  placed by no classic block. Kamer's own seven farms stand it through PLACEMENTS; a town mod's farm stands it among
+ *  its own records (Beautiful Villages' six - FARMAA04, 05, 07 and FARMBA05, 08, 09 - and 34 of Beautiful Cities' blocks). */
+export const WINDMILL_MODEL_ID = 41600;
+
+export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } = {}) {
+  const rmb = dfBlock.rmbBlock;
+  const models = [];
+  // WD3: Kamer's mill is DFU's replacement of model 41600 wherever it stands - so a 41600 a block's OWN records place
+  // is the mill (tower, sails, collider, hum) on the skin and switch the mills stand on, and the classic model it
+  // replaces elsewhere (DFU without his mod).
+  const millsHere = enhanced && windmills;
+  const ownMills = [];
+
+  // Exterior building models per subrecord (recordIndex feeds the
+  // interior transition - PlayerEnterExit keys interiors on it).
+  for (let recordIndex = 0; recordIndex < rmb.subRecords.length; recordIndex++) {
+    const subRecord = rmb.subRecords[recordIndex];
+    const subRecordMatrix = trs(
+      subRecord.xPos * GLOBAL_SCALE,
+      0,
+      (RMB_DIMENSION - subRecord.zPos) * GLOBAL_SCALE,
+      0,
+      -subRecord.yRotation / ROTATION_DIVISOR,
+      0,
+    );
+
+    for (const obj of subRecord.exterior.block3dObjectRecords) {
+      const modelMatrix = trs(
+        obj.xPos * GLOBAL_SCALE,
+        -obj.yPos * GLOBAL_SCALE,
+        obj.zPos * GLOBAL_SCALE,
+        -obj.xRotation / ROTATION_DIVISOR,
+        -obj.yRotation / ROTATION_DIVISOR,
+        -obj.zRotation / ROTATION_DIVISOR,
+        ...modelScaleVector(obj),
+      );
+      if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) {
+        ownMills.push({ matrix: multiply(subRecordMatrix, modelMatrix) });
+        continue;
+      }
+      models.push({
+        modelId: obj.modelId,
+        modelIdNum: obj.modelIdNum,
+        matrix: multiply(subRecordMatrix, modelMatrix),
+        recordIndex,
+        // HOME-YARD (not a DFU field): where the building itself stands in its block - the subrecord's own origin, the
+        // same for each of its models, and the frame a player's yard is laid out from (scenes/homeYards.js)
+        recordAt: [subRecordMatrix[12], subRecordMatrix[13], subRecordMatrix[14]],
+      });
+    }
+  }
+
+  // Miscellaneous scene models.
+  for (const obj of rmb.misc3dObjectRecords) {
+    const miscMatrix = miscModelMatrix(obj);
+    if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) {
+      ownMills.push({ matrix: miscMatrix });
+      continue;
+    }
+    models.push({ modelId: obj.modelId, modelIdNum: obj.modelIdNum, matrix: miscMatrix });
+  }
+
+  // WM2f: the mill's own subrecord places TWO models - a classic
+  // building (the one with the door) and the mill beside it. The
+  // building goes into `models` like any other placed model, so it
+  // takes the ordinary path: its mesh out of ARCH3D, its climate swap,
+  // its collider and its door geometry, none of which needs new code.
+  //
+  // It carries NO recordIndex, deliberately. A static door's interior is
+  // looked up as `subRecords[recordIndex].interior`, and the subrecord
+  // this building belongs to is one Kamer ADDED - it does not exist in
+  // the block the port reads. worldModes already refuses a door whose
+  // recordIndex is undefined, so the door stands and does not open,
+  // rather than throwing on a subrecord that is not there.
+  //
+  // AUDIT 39 (#18): the ATTACH is gated on the skin, as the draw is.
+  // subRecords.length is the exact building count DFU bounds on
+  // (RMBLayout.cs:553, over a fixed 32-slot BuildingDataList), so a
+  // synthetic subrecord on the classic skin would give every FARM*
+  // block one phantom building - which can take a name-pool draw and
+  // misalign every named building after it in the location. `enhanced`
+  // is false by default: a caller that does not know about skins gets
+  // the block Daggerfall shipped. Without the attach the building keeps
+  // no recordIndex, which is WM2f's state - and it is not drawn on this
+  // skin anyway (`enhancedOnly`, honoured by the hosts).
+  // WD3: Kamer's seven farms are his block overrides, and a town mod that serves its own FARMAA0x loads after his
+  // (Beautiful Cities names Windmills of Daggerfall a dependency it must load after) - in DFU his file of that name is
+  // not the one read. A block served from world data therefore stands the mills its own records place, and his
+  // PLACEMENTS stand only on the farm Daggerfall shipped.
+  const placed = dfBlock.fromWorldData ? [] : windmillsFor(dfBlock.name);
+  const mills = [...placed, ...ownMills];
+  // WM3: the skin AND the pack's own switch. `windmills` defaults TRUE
+  // so `enhanced` keeps meaning exactly what it meant to every caller
+  // that does not know there is a switch; the hosts pass the switch.
+  if (mills.length && enhanced && windmills) {
+    // the attach is for Kamer's PLACED building alone - a block's own mill stands beside the building its own records hold
+    const recordIndex = placed.length ? attachWindmillRecord(dfBlock) : -1;
+    for (const w of placed) {
+      if (!w.building) continue;
+      w.building.recordIndex = recordIndex;
+      models.push(w.building);
+    }
+  }
+
+  return { models, windmills: mills, groundTiles: buildGroundTilemap(dfBlock) };
+}
+
+/**
+ * WM2g: THE MILL'S SUBRECORD, ATTACHED - so its door has an inside.
+ *
+ * A static door's interior is looked up as
+ * `subRecords[recordIndex].interior`, and the subrecord the mill's
+ * building belongs to is one Kamer ADDED: it is not in the block the
+ * port reads out of BLOCKS.BSA. WM2f left the building without a
+ * recordIndex for exactly that reason, so its door stood and never
+ * opened.
+ *
+ * This appends the subrecord the block is missing. Its EXTERIOR IS
+ * EMPTY, deliberately - the mill and its building are placed by
+ * windmillsFor above, and a subrecord carrying them as well would
+ * stand every one of them twice. What it exists for is the interior.
+ *
+ * Idempotent, and AUDIT 39 (#20) corrected why. The old reason - that
+ * BlocksFile hands back the same parsed object every time - is false:
+ * blocksFile.js's autoDiscard is true and nothing ever clears it, so
+ * loadBlock discards the previous block on every request and an A,B,A
+ * sequence re-parses A into a NEW object (DFU is the same,
+ * BlocksFile.cs:32, which is exactly why RMBLayout.cs:45-47 keeps its
+ * own locationCache). The guard therefore covers the case that DOES
+ * arise: one parse handed to this function more than once - and it must
+ * stay, because a second append would grow the array and move the
+ * recordIndex a live door refers to.
+ *
+ * The port's stand-in for that locationCache is locationLayout, which
+ * retains the parse each grid cell was laid out from. That is NOT one
+ * object per cell (AUDIT 68 S22): consecutive cells naming one block,
+ * and every repeat of a world-data-replaced block, share a parse - so
+ * dfBlock identity names the BLOCK, and the cell is told apart by
+ * position (talkTopics' blockInstanceOf).
+ *
+ * ENHANCED SKIN ONLY - see the call site: this widens subRecords, and
+ * subRecords.length is the building count three subsystems bound on.
+ */
+export function attachWindmillRecord(dfBlock) {
+  const subs = dfBlock.rmbBlock.subRecords;
+  const already = subs.findIndex((r) => r?.windmill);
+  if (already >= 0) return already;
+  subs.push({
+    windmill: true,
+    xPos: 0,
+    zPos: 0,
+    yRotation: 0,
+    exterior: {
+      header: {
+        position: 0,
+        num3dObjectRecords: 0,
+        numFlatObjectRecords: 0,
+        numSection3Records: 0,
+        numPeopleRecords: 0,
+        numDoorRecords: 0,
+        unknown1: 0,
+        unknown2: 0,
+        unknown3: 0,
+        unknown4: 0,
+        unknown5: 0,
+        unknown6: 0,
+      },
+      block3dObjectRecords: [],
+      blockFlatObjectRecords: [],
+      blockSection3Records: [],
+      blockPeopleRecords: [],
+      blockDoorRecords: [],
+    },
+    interior: WINDMILL_INTERIOR,
+  });
+  return subs.length - 1;
+}
+
+/**
+ * WM2d: THE MILLS, PLACED - because classic Daggerfall places none.
+ *
+ * WM2b wired a rotor onto model 41600 on the strength of finding that id
+ * in Kamer's WorldData block overrides, and nothing ever turned, because
+ * those files are HIS blocks: `FARMAA01`'s declares
+ * `NumBlockDataRecords: 1` and carries TWO subrecords, `FARMAA00`'s
+ * declares 7 and puts the mill in subrecord 7. The extra subrecord in
+ * each is the mill he ADDS. No classic block stands one, so the port
+ * never placed one, so there was nothing to hang a sail on.
+ *
+ * This is the port's side of that override, and it lives HERE rather
+ * than in the hosts for the reason the rest of this module exists: the
+ * matrix a placed model gets is one law, and a mill placed by different
+ * arithmetic from its neighbours would drift from them the first time
+ * that law is touched. The subrecord frame and the model matrix are the
+ * SAME two lines the building loop above uses.
+ *
+ * Enhanced-skin only is enforced by the CALLER, not here - this module
+ * is pure layout and has no business reading a preference.
+ */
+export function windmillsFor(blockName) {
+  const out = [];
+  for (const p of WINDMILL_PLACEMENTS) {
+    if (p.block !== blockName) continue;
+    const subRecordMatrix = trs(
+      p.subX * GLOBAL_SCALE,
+      0,
+      (RMB_DIMENSION - p.subZ) * GLOBAL_SCALE,
+      0,
+      -p.subRot / ROTATION_DIVISOR,
+      0,
+    );
+    const modelMatrix = trs(
+      p.x * GLOBAL_SCALE,
+      -p.y * GLOBAL_SCALE,
+      p.z * GLOBAL_SCALE,
+      0,
+      -p.rotY / ROTATION_DIVISOR,
+      0,
+    );
+    const entry = { matrix: multiply(subRecordMatrix, modelMatrix) };
+    if (p.building) {
+      const b = p.building;
+      entry.building = {
+        modelId: String(b.modelIdNum),
+        modelIdNum: b.modelIdNum,
+        // The whole mill is an ENHANCED-SKIN departure and this half of
+        // it is an ordinary placed model, so it would otherwise ride the
+        // hosts' generic model loop straight into the 1:1 lane - a
+        // building standing in a farm that Daggerfall leaves empty. The
+        // hosts skip it on the classic skin; this flag is how they know.
+        enhancedOnly: true,
+        matrix: multiply(
+          subRecordMatrix,
+          trs(b.x * GLOBAL_SCALE, -b.y * GLOBAL_SCALE, b.z * GLOBAL_SCALE, 0, -b.rotY / ROTATION_DIVISOR, 0),
+        ),
+      };
+    }
+    out.push(entry);
+  }
+  return out;
+}
+
+/**
+ * 16x16 ground tilemap, row 0 nearest Z=0, with the verbatim
+ * GroundTiles[x][15 - y] source flip and grass override for records >= 56.
+ * DFU writes the marker as tilemap INDEX 8 (`new Color32(8, 0, 0, 8)`) in
+ * the same space as `record * 4 + variant`, i.e. texture RECORD 2 - which
+ * is TerrainTexturing.cs:44's `const byte grass = 2`. We store decoded
+ * records, so the marker is record 2, not 8.
+ * Indexed [y][x].
+ */
+export function buildGroundTilemap(dfBlock) {
+  const src = dfBlock.rmbBlock.fldHeader.groundData.groundTiles;
+  const tiles = new Array(GROUND_TILE_DIM);
+  for (let y = 0; y < GROUND_TILE_DIM; y++) {
+    tiles[y] = new Array(GROUND_TILE_DIM);
+    for (let x = 0; x < GROUND_TILE_DIM; x++) {
+      const tile = src[x][GROUND_TILE_DIM - 1 - y];
+      if (tile.textureRecord < GROUND_RECORD_LIMIT) {
+        tiles[y][x] = {
+          record: tile.textureRecord,
+          rotated: tile.isRotated,
+          flipped: tile.isFlipped,
+        };
+      } else {
+        // Random marker reset to grass: DFU's index 8 == record 2, variant 0.
+        tiles[y][x] = { record: 2, rotated: false, flipped: false };
+      }
+    }
+  }
+  return tiles;
+}

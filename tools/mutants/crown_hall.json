@@ -1,0 +1,256 @@
+[
+  {
+    "name": "CROWN-HALL-type",
+    "file": "src/systems/crownHall.js",
+    "old": "    if (f?.type !== FACTION_TYPES.Province || f.region !== region) continue;",
+    "new": "    if (f?.type !== FACTION_TYPES.Courts || f.region !== region) continue;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-region",
+    "file": "src/systems/crownHall.js",
+    "old": "    if (f?.type !== FACTION_TYPES.Province || f.region !== region) continue;",
+    "new": "    if (f?.type !== FACTION_TYPES.Province) continue;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-first-child",
+    "file": "src/systems/crownHall.js",
+    "old": "    const first = f.children?.length ? factionDict.get(f.children[0]) : null;",
+    "new": "    const first = f.children?.length ? factionDict.get(f.children[f.children.length - 1]) : null;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-individual",
+    "file": "src/systems/crownHall.js",
+    "old": "    return first?.type === FACTION_TYPES.Individual ? first.id : null;",
+    "new": "    return first ? first.id : null;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-ruler-here",
+    "file": "src/systems/crownHall.js",
+    "old": "    list.find((p) => p?.factionID === rulerId) ??",
+    "new": "    list.find((p) => p?.factionID != null) ??",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-nearest-wall",
+    "file": "src/systems/crownHall.js",
+    "old": "    if (Number.isFinite(d) && d < wall - 1e-6) {",
+    "new": "    if (Number.isFinite(d) && d > (wall === Infinity ? -1 : wall) + 1e-6) {",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-open-side",
+    "file": "src/systems/crownHall.js",
+    "old": "  const open = [-back[0], -back[1]];",
+    "new": "  const open = [back[0], back[1]];",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-wall-reach",
+    "file": "src/systems/crownHall.js",
+    "old": "  if (wall <= CROWN_HALL_WALL_M) {",
+    "new": "  if (wall <= CROWN_HALL_LOOK_M) {",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-ceiling",
+    "file": "src/systems/crownHall.js",
+    "old": "    const top = Math.min(floor + CROWN_HALL_BANNER_TOP_M, ceiling - CROWN_HALL_BANNER_CEIL_M);",
+    "new": "    const top = floor + CROWN_HALL_BANNER_TOP_M;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-room-for-cloth",
+    "file": "src/systems/crownHall.js",
+    "old": "    if (top - BANNER_H_M >= floor) {",
+    "new": "    if (top >= floor) {",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-spread",
+    "file": "src/systems/crownHall.js",
+    "old": "export const CROWN_HALL_BANNER_SIDE_M = 1.5;",
+    "new": "export const CROWN_HALL_BANNER_SIDE_M = 1.2;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-off-wall",
+    "file": "src/systems/crownHall.js",
+    "old": "      const d = wall - CROWN_HALL_BANNER_OUT_M;",
+    "new": "      const d = wall;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-right",
+    "file": "src/systems/crownHall.js",
+    "old": "      const right = [-out[2], 0, out[0]]; // AUDIT GUILD1d R4: the cloth's right from its face, never from the wall's order",
+    "new": "      const right = [out[2], 0, -out[0]]; // AUDIT GUILD1d R4: the cloth's right from its face, never from the wall's order",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-facing",
+    "file": "src/systems/crownHall.js",
+    "old": "      const face = [-side[0] * s, -side[1] * s]; // towards the aisle",
+    "new": "      const face = [side[0] * s, side[1] * s]; // towards the aisle",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-clearance",
+    "file": "src/systems/crownHall.js",
+    "old": "      if (look(at.x, at.z, [dx / len, dz / len], len + CROWN_HALL_CLEAR_M) < len + CROWN_HALL_CLEAR_M) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-step",
+    "file": "src/systems/crownHall.js",
+    "old": "      if (!Number.isFinite(under) || Math.abs(eye - under - floor) > CROWN_HALL_STEP_M) continue;",
+    "new": "      if (!Number.isFinite(under)) continue;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-floor",
+    "file": "src/systems/crownHall.js",
+    "old": "  if (!Number.isFinite(drop)) return null;",
+    "new": "  if (!Number.isFinite(drop)) return { floor: 0, banners: [], board: null, chest: null };",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-chest-model",
+    "file": "src/systems/crownHall.js",
+    "old": "export const CROWN_HALL_CHEST_MODEL = 41811;",
+    "new": "export const CROWN_HALL_CHEST_MODEL = 41812;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-mount",
+    "file": "src/scenes/worldModes.js",
+    "old": "      standCrownHall(ctx, dfLocation).catch(() => {});",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-visit",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (dungeonCtx !== ctx || dungeonLoc !== loc) return;   // a visit left meanwhile stands nothing\n",
+    "new": "    // a visit left meanwhile stands nothing\n",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-teardown",
+    "file": "src/scenes/worldModes.js",
+    "old": "    pendingDungeonWagonOpen = false;   // DISC21-B: a Yes pending was this dungeon's, never the next one's\n    crownHall = null;",
+    "new": "    pendingDungeonWagonOpen = false;   // DISC21-B: a Yes pending was this dungeon's, never the next one's\n",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-teardown2",
+    "file": "src/scenes/worldModes.js",
+    "old": "        crownHall = null;   // CROWN-HALL: nor its throne room's pieces\n        dungeonCtx.destroy();",
+    "new": "        dungeonCtx.destroy();",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-draw",
+    "file": "src/scenes/worldModes.js",
+    "old": "      drawCrownHall({ proj, view, eye: mwv.eye });",
+    "new": "      // drawCrownHall",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-board-member",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!c.member) { say(hallBoardShutLine(c.name)); return; }\n      if (!host.guildHall?.openBoard?.(c.name))",
+    "new": "      if (!host.guildHall?.openBoard?.(c.name))",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-chest-member",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!c.member) { say(CROWN_HALL_TEXT.chestShut(c.name)); return; }\n    openHallChest();",
+    "new": "    openHallChest();",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-dispatch",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (key.startsWith('crown:')) { openCrownPiece(key); return true; }",
+    "new": "    if (key.startsWith('crown:')) { return true; }",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ]
+  },
+  {
+    "name": "CROWN-HALL-crown-tier",
+    "file": "src/scenes/seatHallHost.js",
+    "old": "      const g = seat?.tier === 'crown' ? (seat.holder?.guild ?? null) : null;",
+    "new": "      const g = seat.holder?.guild ?? null;",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the seat halls moved out of bootWorld into their own host, scenes/seatHallHost.js createSeatHallHost (HOST-SPLIT)."
+  },
+  {
+    "name": "CROWN-HALL-banner",
+    "file": "src/scenes/seatHallHost.js",
+    "old": "        heraldry: seatBannerOf(seat),",
+    "new": "        heraldry: seat.holder?.guild?.heraldry ?? null,",
+    "tests": [
+      "test/systems/crownhall.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the seat halls moved out of bootWorld into their own host, scenes/seatHallHost.js createSeatHallHost (HOST-SPLIT)."
+  }
+]

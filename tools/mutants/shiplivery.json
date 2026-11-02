@@ -1,0 +1,1221 @@
+[
+  {
+    "name": "SL-parts-carrack",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "  if (hull === 1 || hull === 2 || hull === 4) return ['strake', 'accent', 'sail'];",
+    "new": "  if (hull === 1 || hull === 2) return ['strake', 'accent', 'sail'];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-parts-galley-sail",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "  if (hull === 3) return ['stain', 'sail'];",
+    "new": "  if (hull === 3) return ['stain'];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-paint-past-last",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "const paintIndex = (v) => (Number.isInteger(v) && v >= 0 && v <= PAINT_MAX ? v : null);",
+    "new": "const paintIndex = (v) => (Number.isInteger(v) && v >= 0 && v <= 15 ? v : null);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-paint-fraction",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "const paintIndex = (v) => (Number.isInteger(v) && v >= 0 && v <= PAINT_MAX ? v : null);",
+    "new": "const paintIndex = (v) => (typeof v === 'number' && v >= 0 && v <= PAINT_MAX ? v : null);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-door-field-skipped",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "    if (i == null) return null;",
+    "new": "    if (i == null) continue;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-door-hull-blind",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "  if (hull != null) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-door-none-kept",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "  return LIVERY_PARTS.some((p) => out[p]) || /** @type {any} */ (out).cloth ? out : null;",
+    "new": "  return out;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-code-nibble",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "        (v.sail << 8) |",
+    "new": "        (v.sail << 4) |",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-code-zero",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "  if (!Number.isInteger(n) || n <= 0 || n >= 1 << 24) return null;",
+    "new": "  if (!Number.isInteger(n) || n < 0 || n >= 1 << 24) return null;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ],
+    "equivalent": true,
+    "why": "A zero's four nibbles are all none, and the door answers null for a livery of none whichever way the guard reads - so no pin can tell `n <= 0` from `n < 0`. The guard is kept because it says 'as built' before the door is asked, the way the word's other readers refuse first."
+  },
+  {
+    "name": "SL-code-wide",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "  if (!Number.isInteger(n) || n <= 0 || n >= 1 << 24) return null;",
+    "new": "  if (!Number.isInteger(n) || n <= 0) return null;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-shade-flat",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "  const k = lumOf(px) / Math.max(1, lumOf(base));",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-nearest-tie-palette",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "        if (d < best || (d === best && a.f >= 0)) {",
+    "new": "        if (d < best) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-clear-painted",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "    if (out[i + 3] === 0) continue;\n    const r = out[i],",
+    "new": "    const r = out[i],",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-changed-never",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "    changed = true;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-tint-whole",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "    for (let k = 0; k < 3; k++) out[i + k] = clamp8(out[i + k] * (1 - strength) + c[k] * strength);",
+    "new": "    for (let k = 0; k < 3; k++) out[i + k] = clamp8(c[k]);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-tint-mean-blind",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "  const mean = Math.max(1, meanLum(pic)),\n    base = [mean, mean, mean];",
+    "new": "  const base = [128, 128, 128];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-tint-unclamped",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "const clamp8 = (v) => (v < 0 ? 0 : v > 255 ? 255 : Math.round(v));",
+    "new": "const clamp8 = (v) => (v < 0 ? 0 : Math.round(v) & 255);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SL-stain-strength",
+    "file": "src/systems/naval/shipLivery.js",
+    "old": "export const stainPicture = (pic, paint) => tintPicture(pic, paint, STAIN_STRENGTH);",
+    "new": "export const stainPicture = (pic, paint) => tintPicture(pic, paint, SAIL_TINT);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLA-records-all",
+    "file": "src/world/ships/shipLiveryArt.js",
+    "old": "    if (canvasOnly || !a.records.includes(record) || !families.some((f) => f.paint)) continue;",
+    "new": "    if (canvasOnly || !families.some((f) => f.paint)) continue;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ],
+    "equivalent": true,
+    "why": "With today's families no texel of an unpainted picture (her deck, spars, rigging, iron, bottom) is nearest a family's colour - every port ship's every livery was swept - so reading every picture paints the same ones. The list is kept because it is the law the owner's eye set (a family widened later must not reach her deck's grain, which it did while the families were drawn), and it spares the painter a pass over each of those pictures."
+  },
+  {
+    "name": "SLA-cloth-families",
+    "file": "src/world/ships/shipLiveryArt.js",
+    "old": "      else if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });",
+    "new": "      else if (sail)\n        out.push({\n          record,\n          picture: paintFamilies(pic, a.palette, [{ members: CANVAS, base: C.canvas, paint: sail }]).picture,\n          glow: null,\n          night: null,\n        });",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLA-unchanged-kept",
+    "file": "src/world/ships/shipLiveryArt.js",
+    "old": "    if (!changed) continue;\n    const night = a.night[record] ?? null;",
+    "new": "    const night = a.night[record] ?? null;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLA-glass-lost",
+    "file": "src/world/ships/shipLiveryArt.js",
+    "old": "    out.push({ record, picture, glow: night != null ? a.glow(record) : null, night });",
+    "new": "    out.push({ record, picture, glow: null, night });",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLA-cloth-base",
+    "file": "src/world/ships/shipLiveryArt.js",
+    "old": "    base = lumOf(C.canvas);",
+    "new": "    base = 160;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLA-accent-carrack-gilt",
+    "file": "src/world/ships/shipLiveryArt.js",
+    "old": "    accent: [CARRACK_K.ochre, CARRACK_K.ochreLit, CARRACK_K.ochreDark, ...GILT],",
+    "new": "    accent: [CARRACK_K.ochre, CARRACK_K.ochreLit, CARRACK_K.ochreDark],",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-day-glass-whole",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "          day.set(src, put(port, record, code, 'd', cutGlass(looked, glow), { opaque: true, cutout: true }));",
+    "new": "          day.set(src, put(port, record, code, 'd', looked, { opaque: true }));",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-night-dark",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "          night.set(src, put(port, record, code, 'n', looked, { opaque: true }, glow));",
+    "new": "          night.set(src, put(port, record, code, 'n', looked, { opaque: true }));",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-twin-never",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "        if (twin != null && glow) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-stain-one",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "      for (let r = 0; r < n; r++) {",
+    "new": "      for (let r = 0; r < Math.min(n, 1); r++) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-sail-never",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "    if (sail) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-day-always",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "    const own = night ? m.night : m.day;",
+    "new": "    const own = m.day;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-join-host-over",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "      j = new Map([...base, ...own]);",
+    "new": "      j = new Map([...own, ...base]);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-join-uncached",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "      by.set(own, j);\n      ownOf.set(j, own);",
+    "new": "      ownOf.set(j, own);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLP-making-made",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "    const base = made.has(key) ? made.get(key) : (begin(key, () => paint(hull, code)), null);",
+    "new": "    const base = made.has(key) ? null : (begin(key, () => paint(hull, code)), null);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLPOOL-unpainted",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));",
+    "new": "const paint = drawRemap;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLPOOL-peer-by-ledger",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    if (!mineBoats.has(boat)) return boat.livery | 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLPOOL-sea-painted",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    if (!mineBoats.has(boat)) return boat.livery | 0;",
+    "new": "    if (peerBoats.includes(boat)) return boat.livery | 0;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLPOOL-mine-unmarked",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    boats.push(boat); mineBoats.add(boat);",
+    "new": "    boats.push(boat);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPPOOL-mine-unfitted",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "fitBoats(boats, (b) => fittingsOf?.(b), _fitDeps); ",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPPOOL-peer-unfitted",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": " fitBoats(peerBoats, (b) => b.fittings, _fitDeps);",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-most-past",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "    if (out.length >= DECK_FITTINGS_MAX) break;",
+    "new": "    if (out.length > DECK_FITTINGS_MAX) break;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-model-any",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "    if (!f || typeof f !== 'object' || !isFitting(f.m) || !finite(f.x) || !finite(f.z)) continue;",
+    "new": "    if (!f || typeof f !== 'object' || !finite(f.x) || !finite(f.z)) continue;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-place-nan",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "    if (!f || typeof f !== 'object' || !isFitting(f.m) || !finite(f.x) || !finite(f.z)) continue;",
+    "new": "    if (!f || typeof f !== 'object' || !isFitting(f.m)) continue;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-reach-none",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "    if (Math.hypot(x, z) > FITTING_REACH) continue;\n    if (out.some((o) => Math.hypot(o.x - x, o.z - z) < FITTING_GAP)) continue;",
+    "new": "    if (out.some((o) => Math.hypot(o.x - x, o.z - z) < FITTING_GAP)) continue;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-gap-none",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "    if (out.some((o) => Math.hypot(o.x - x, o.z - z) < FITTING_GAP)) continue;\n    const yaw = Number.isInteger(f.yaw) ? ((f.yaw % YAW_STEPS) + YAW_STEPS) % YAW_STEPS : 0;",
+    "new": "    const yaw = Number.isInteger(f.yaw) ? ((f.yaw % YAW_STEPS) + YAW_STEPS) % YAW_STEPS : 0;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-turn-unwrapped",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "    const yaw = Number.isInteger(f.yaw) ? ((f.yaw % YAW_STEPS) + YAW_STEPS) % YAW_STEPS : 0;",
+    "new": "    const yaw = Number.isInteger(f.yaw) ? f.yaw : 0;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-place-unrounded",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "const dm = (v) => Math.round(v * 10) / 10;",
+    "new": "const dm = (v) => v;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-code-uneven",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger))\n    return [];",
+    "new": "  if (!Array.isArray(code) || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger)) return [];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-code-long",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger))\n    return [];",
+    "new": "  if (!Array.isArray(code) || code.length % 4 || !code.every(Number.isInteger)) return [];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-code-fraction",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4 || !code.every(Number.isInteger))\n    return [];",
+    "new": "  if (!Array.isArray(code) || code.length % 4 || code.length > DECK_FITTINGS_MAX * 4) return [];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DF-yaw-radians",
+    "file": "src/systems/naval/deckFittings.js",
+    "old": "export const yawDegrees = (yaw) => ((yaw % YAW_STEPS) / YAW_STEPS) * 360;",
+    "new": "export const yawDegrees = (yaw) => ((yaw % YAW_STEPS) / YAW_STEPS) * Math.PI * 2;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-old-kept",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "  if (old) old.setParent(null);\n  if (!list.length) return true;",
+    "new": "  if (!list.length) return true;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-loading-fitted",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    if (!b) {\n      all = false;\n      continue;\n    }",
+    "new": "    if (!b) continue;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-off-deck-stood",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    if (!Number.isFinite(y)) continue;\n    const node = new PrefabNode(`Fitting-${f.m}`, {",
+    "new": "    const node = new PrefabNode(`Fitting-${f.m}`, {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-foot-unlifted",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
+    "new": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, 0, -(b.min[2] + b.max[2]) / 2];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-uncentred-x",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
+    "new": "    mesh.localPosition = [0, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-uncentred-z",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];",
+    "new": "    mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], 0];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-unturned",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    const node = new PrefabNode(`Fitting-${f.m}`, {\n      position: [f.x, y, f.z],\n      rotation: quatAngleAxis(yawDegrees(f.yaw), UP),\n    }).setParent(root);",
+    "new": "    const node = new PrefabNode(`Fitting-${f.m}`, { position: [f.x, y, f.z], rotation: [0, 0, 0, 1] }).setParent(root);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-height-zero",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "      position: [f.x, y, f.z],",
+    "new": "      position: [f.x, 0, f.z],",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-restood-always",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    if (boat._fitted === key) continue;\n    let loaded = 0;",
+    "new": "    let loaded = 0;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-never-loaded",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "      load(f.m);\n      if (ctx.modelBounds?.(f.m)) loaded++;",
+    "new": "      if (ctx.modelBounds?.(f.m)) loaded++;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-unbaked-stood",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    if (list.length && !deck) continue; // her deck not baked yet: the next frame\n    boat._fitStage = stage;",
+    "new": "    boat._fitStage = stage;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-bare-deck-asked",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    const deck = list.length ? deckOf(boat.hull) : null;",
+    "new": "    const deck = deckOf(boat.hull);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-livery-hull-blind",
+    "file": "src/systems/fleet.js",
+    "old": "  const l = raw == null ? null : liveryOf(raw, r.hull);",
+    "new": "  const l = raw == null ? null : liveryOf(raw);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-livery-refusal-strips",
+    "file": "src/systems/fleet.js",
+    "old": "  if (raw != null && !l && !LIVERY_PARTS.every((p) => !raw[p])) return false; // a paint that is none at all is as built; one the door refuses is refused",
+    "new": "  if (raw != null && typeof raw !== 'object') return false; // a paint that is none at all is as built; one the door refuses is refused",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-livery-string",
+    "file": "src/systems/fleet.js",
+    "old": "  if (!r || (raw != null && typeof raw !== 'object')) return false;",
+    "new": "  if (!r) return false;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-cabin-any",
+    "file": "src/systems/fleet.js",
+    "old": "  if (!r || !isPaint(paint)) return false;",
+    "new": "  if (!r) return false;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-fittings-door",
+    "file": "src/systems/fleet.js",
+    "old": "  r.deck = fittingsOf(raw);",
+    "new": "  r.deck = raw;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-fittings-string",
+    "file": "src/systems/fleet.js",
+    "old": "  if (!r || !Array.isArray(raw)) return false;",
+    "new": "  if (!r) return false;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-livery-unsaved",
+    "file": "src/systems/fleet.js",
+    "old": "      ...(r.livery ? { livery: { ...r.livery } } : {}),\n      ...(r.cabin ? { cabin: r.cabin } : {}),",
+    "new": "      ...(r.cabin ? { cabin: r.cabin } : {}),",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-cabin-unsaved",
+    "file": "src/systems/fleet.js",
+    "old": "      ...(r.cabin ? { cabin: r.cabin } : {}),\n      ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}),",
+    "new": "      ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}),",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-cabin-saved-always",
+    "file": "src/systems/fleet.js",
+    "old": "      ...(r.cabin ? { cabin: r.cabin } : {}),",
+    "new": "      cabin: r.cabin,",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-deck-unsaved",
+    "file": "src/systems/fleet.js",
+    "old": "      ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}),\n      ...(r.plaque ? { plaque: true } : {}),",
+    "new": "      ...(r.plaque ? { plaque: true } : {}),",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-livery-restored-raw",
+    "file": "src/systems/fleet.js",
+    "old": "    r.livery = liveryOf(s.livery, r.hull); // SHIP-LIVERY: her paint, as it may be (none, or one the door refuses: as built)",
+    "new": "    r.livery = s.livery ?? null; // SHIP-LIVERY: her paint, as it may be (none, or one the door refuses: as built)",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-cabin-restored-raw",
+    "file": "src/systems/fleet.js",
+    "old": "    r.cabin = isPaint(s.cabin) ? s.cabin : 0; // CABIN-LOOK: her cabin's stain",
+    "new": "    r.cabin = s.cabin ?? 0; // CABIN-LOOK: her cabin's stain",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FLEET-deck-restored-raw",
+    "file": "src/systems/fleet.js",
+    "old": "    r.deck = fittingsOf(s.deck); // DECK-PROPS: her fittings, as the door takes them",
+    "new": "    r.deck = s.deck ?? []; // DECK-PROPS: her fittings, as the door takes them",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-row-paints",
+    "file": "src/scenes/fleetHost.js",
+    "old": "paints: liveryPartsOf(rec.hull), livery: rec.livery ?? null,",
+    "new": "paints: [], livery: rec.livery ?? null,",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-row-cabin-all",
+    "file": "src/scenes/fleetHost.js",
+    "old": "cabin: cabinShipType(rec.hull) !== SHIP_TYPES.None ? rec.cabin ?? 0 : null,",
+    "new": "cabin: rec.cabin ?? 0,",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-row-fittings",
+    "file": "src/scenes/fleetHost.js",
+    "old": "fittings: rec.deck?.length ?? 0,",
+    "new": "fittings: 0,",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-livery-partial",
+    "file": "src/scenes/fleetHost.js",
+    "old": "if ((below && !isPaint(cabin)) || !setShipLivery(uid, arg ?? null)) return",
+    "new": "if (!setShipLivery(uid, arg ?? null)) return",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-cabin-unstained",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      if (below) setShipCabin(uid, cabin);\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-cabin-all-hulls",
+    "file": "src/scenes/fleetHost.js",
+    "old": "const below = cabinShipType(rec.hull) !== SHIP_TYPES.None, cabin",
+    "new": "const below = true, cabin",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-livery-unsaid",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      if (below) setShipCabin(uid, cabin);\n      deps.changed?.();",
+    "new": "      if (below) setShipCabin(uid, cabin);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-deck-junk-clears",
+    "file": "src/scenes/fleetHost.js",
+    "old": "if (!setShipFittings(uid, arg ?? [])) return",
+    "new": "if (!setShipFittings(uid, Array.isArray(arg) ? arg : [])) return",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-deck-unsaid",
+    "file": "src/scenes/fleetHost.js",
+    "old": "return said(false, t('naval.deck.bad', 'Those fittings can\\'t be placed on this ship.'));   // none clears her deck; a thing that is no list is refused\n      deps.changed?.();",
+    "new": "return said(false, t('naval.deck.bad', 'Those fittings can\\'t be placed on this ship.'));   // none clears her deck; a thing that is no list is refused",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FH-deckplan-unopened",
+    "file": "src/scenes/fleetHost.js",
+    "old": "return said(true, t('naval.deck.opened', 'Deck plan opened.'), () => !!deps.openDeck(uid));",
+    "new": "return said(true, t('naval.deck.opened', 'Deck plan opened.'));",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "WIRE-l-always",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    ...(painted ? { l } : {}),",
+    "new": "    ...{ l },",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "WIRE-d-always",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    ...(fitted ? { d } : {}),",
+    "new": "    ...{ d },",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "WIRE-l-raw",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    const paint = Array.isArray(raw.l) && raw.l.length === raw.b.length ? liveryOfCode(raw.l[boats.length]) : null; // SHIP-LIVERY: hers, where she is painted",
+    "new": "    const paint = Array.isArray(raw.l) && raw.l.length === raw.b.length ? raw.l[boats.length] : null; // SHIP-LIVERY: hers, where she is painted",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "WIRE-d-raw",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    const fits = Array.isArray(raw.d) && raw.d.length === raw.b.length ? fittingsOfCode(raw.d[boats.length]) : []; // DECK-PROPS: hers, where she is fitted",
+    "new": "    const fits = Array.isArray(raw.d) && raw.d.length === raw.b.length ? (raw.d[boats.length] ?? []) : []; // DECK-PROPS: hers, where she is fitted",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "WIRE-key-paint-blind",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "              rec.l ?? null,\n              rec.d ?? null,",
+    "new": "              rec.d ?? null,",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "WIRE-key-fittings-blind",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "              rec.d ?? null,\n              rec.p ?? null,",
+    "new": "              rec.p ?? null,",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "PEERS-livery-unread",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "      s.boat.livery = flownLivery(owner, w.livery); // SHIP-LIVERY: her paint, her owner's word (the pool's paint shop draws it)",
+    "new": "      // SHIP-LIVERY: her paint, her owner's word (the pool's paint shop draws it)",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "PEERS-fittings-unread",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "      s.boat.fittings = w.fittings ?? []; // DECK-PROPS: and her fittings (the pool stands them in her tree)",
+    "new": "      // DECK-PROPS: and her fittings (the pool stands them in her tree)",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-glass-stained",
+    "file": "src/scenes/cabinLook.js",
+    "old": "        if (renderer.windowMasks?.has?.(key) || renderer.glassMasks?.has?.(key)) continue; // glass: lit as built\n        const [archive, record] = key.split('_').map(Number);",
+    "new": "        const [archive, record] = key.split('_').map(Number);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-twice",
+    "file": "src/scenes/cabinLook.js",
+    "old": "        if (seen.has(own)) continue;\n        seen.add(own);",
+    "new": "        seen.add(own);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-own-key",
+    "file": "src/scenes/cabinLook.js",
+    "old": "        const key = texRemap.get(own) ?? own;",
+    "new": "        const key = own;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-unset",
+    "file": "src/scenes/cabinLook.js",
+    "old": "        texRemap.set(own, `${CABIN_ARCHIVE}_${rec}`);\n      }",
+    "new": "      }",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-none-stained",
+    "file": "src/scenes/cabinLook.js",
+    "old": "  if (!rgb) return null;\n  return async (texRemap, lists, { renderer, getTexture, palette }) => {",
+    "new": "  return async (texRemap, lists, { renderer, getTexture, palette }) => {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-hook-unasked",
+    "file": "src/scenes/interiorContext.js",
+    "old": "  if (typeof opts.restyle === 'function') await opts.restyle(",
+    "new": "  if (false) await opts.restyle(",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-visit-unstained",
+    "file": "src/scenes/sailingCabin.js",
+    "old": "  const hit = {\n    dfBlock,\n    recordIndex: 0,\n    door,\n    climateBase: 2,\n    season: 0,\n    sailingCabin: cabin,\n    restyle: cabinRestyle(guest ? 0 : (fleetShip(cabin.uid)?.cabin ?? 0)),\n  }; // CABIN-LOOK: her cabin stained as her captain chose",
+    "new": "  const hit = { dfBlock, recordIndex: 0, door, climateBase: 2, season: 0, sailingCabin: cabin, restyle: null }; // CABIN-LOOK: her cabin stained as her captain chose",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-modes-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "restyle: hit.restyle ?? null,",
+    "new": "restyle: null,",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-off-deck-set",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "  if (!deck?.walkable?.(at[0], at[1])) return t('naval.deck.offDeck', \"That spot isn't on the open deck.\");",
+    "new": "  if (false) return t('naval.deck.offDeck', \"That spot isn't on the open deck.\");",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-crowd-set",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "  if (others.some((f) => Math.hypot(f.x - at[0], f.z - at[1]) < FITTING_GAP))\n    return t('naval.deck.crowded', 'Too close to another fitting.');",
+    "new": "  if (false) return t('naval.deck.crowded', 'Too close to another fitting.');",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-most-past",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    if (list.length >= DECK_FITTINGS_MAX) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-taken-never",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    const i = under(sx, sy);",
+    "new": "    const i = -1;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-turn-unwrapped",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "      yaw = (f.yaw + d + YAW_STEPS) % YAW_STEPS;",
+    "new": "      yaw = Math.max(0, f.yaw + d);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-q-forward",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    else if (e.key === 'q' || e.key === 'Q') turn(-1);",
+    "new": "    else if (e.key === 'q' || e.key === 'Q') turn(1);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-delete-none",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    else if (e.key === 'Delete' || e.key === 'Backspace') takeAway();",
+    "new": "    else if (e.key === 'Backspace') takeAway();",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-saved-raw-closed",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    if (r?.ok) close();\n    else tell(r?.text ?? t('naval.deck.bad', \"Those fittings can't be placed on this ship.\"), true);",
+    "new": "    close();\n    if (!r?.ok) tell(r?.text ?? t('naval.deck.bad', \"Those fittings can't be placed on this ship.\"), true);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-turn-anticlockwise",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "      ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
+    "new": "      ctx.rotate(-(f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-laid-unturned",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "      ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
+    "new": "      ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-laid-never",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    view.laid = laid > up * 1.1;",
+    "new": "    view.laid = false;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-laid-todeck-unswapped",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    view.laid ? [(sy - view.oy) / view.s, (sx - view.ox) / view.s] : [(sx - view.ox) / view.s, (view.oy - sy) / view.s];",
+    "new": "    view.laid ? [(sx - view.ox) / view.s, (sy - view.oy) / view.s] : [(sx - view.ox) / view.s, (view.oy - sy) / view.s];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPW-chosen-ignored",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    list.push({ m: chosen, x, z, yaw: 0 });",
+    "new": "    list.push({ m: DECK_FITTINGS[0][0], x, z, yaw: 0 });",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPD-deck-hull-blind",
+    "file": "src/scenes/deckPlanDoor.js",
+    "old": "    const deck = rec ? (deps.pool?.deckOf?.(rec.hull) ?? null) : null;",
+    "new": "    const deck = rec ? (deps.pool?.deckOf?.(2) ?? null) : null;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPD-unbaked-opened",
+    "file": "src/scenes/deckPlanDoor.js",
+    "old": "    if (!rec || !deck?.count) {",
+    "new": "    if (!rec || !deck) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPD-footprint-xy",
+    "file": "src/scenes/deckPlanDoor.js",
+    "old": "    return b ? [b.max[0] - b.min[0], b.max[2] - b.min[2]] : null;",
+    "new": "    return b ? [b.max[0] - b.min[0], b.max[1] - b.min[1]] : null;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPD-loaded-unasked",
+    "file": "src/scenes/deckPlanDoor.js",
+    "old": "    for (const [m] of DECK_FITTINGS) Promise.resolve(deps.pipeline?.getGpuMesh?.(m)).catch(() => {}); // AUDIT 2: each asked, loaded or not - the ask pins it (a house's own hold freed it under the plan)",
+    "new": "    for (const [m] of DECK_FITTINGS)\n      if (!deps.pipeline?.cpuModels?.get(m)) Promise.resolve(deps.pipeline?.getGpuMesh?.(m)).catch(() => {}); // AUDIT 2: each asked, loaded or not - the ask pins it (a house's own hold freed it under the plan)",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPD-save-elsewhere",
+    "file": "src/scenes/deckPlanDoor.js",
+    "old": "      save: (list) => deps.act(uid, 'deck', list),",
+    "new": "      save: (list) => deps.act(uid, 'livery', list),",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DPD-unshown",
+    "file": "src/scenes/deckPlanDoor.js",
+    "old": "    if (w) deps.show(w);\n    return !!w;",
+    "new": "    return !!w;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-paint-part-blind",
+    "file": "src/ui/fleetPage.js",
+    "old": "  for (const part of s.paints ?? [])\n    box.append(paintSwatches(el, PART_WORDS[part](), d[part] ?? 0, (v) => set(part, v)));",
+    "new": "  for (const part of LIVERY_PARTS) box.append(paintSwatches(el, PART_WORDS[part](), d[part] ?? 0, (v) => set(part, v)));",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-cabin-row-none",
+    "file": "src/ui/fleetPage.js",
+    "old": "  if (s.cabin != null) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-paint-stripped",
+    "file": "src/ui/fleetPage.js",
+    "old": "        act('livery', chosen);",
+    "new": "        act('livery', null);",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-strip-none",
+    "file": "src/ui/fleetPage.js",
+    "old": "  if (s.livery || s.cabin)",
+    "new": "  if (false)",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-deck-uncounted",
+    "file": "src/ui/fleetPage.js",
+    "old": "  acts.append(\n    button(\n      el,\n      s.fittings ? t('naval.deck.openN', 'Deck ({n})', { n: s.fittings }) : t('naval.deck.open', 'Deck'),\n      null,\n      () => act('deckPlan'),\n    ),\n  ); // DECK-PROPS: the plan of her deck, her fittings on it",
+    "new": "  acts.append(button(el, t('naval.deck.open', 'Deck'), null, () => act('deckPlan'))); // DECK-PROPS: the plan of her deck, her fittings on it",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-deck-elsewhere",
+    "file": "src/ui/fleetPage.js",
+    "old": "      () => act('deckPlan'),",
+    "new": "      () => act('deck'),",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-swatch-unchosen",
+    "file": "src/ui/fleetPage.js",
+    "old": "    _paint = { ...d, [k]: v };\n    rerender();",
+    "new": "    rerender();",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-svg-strake",
+    "file": "src/ui/fleetPage.js",
+    "old": "  const strake = built ? rgbOf(l.strake, built[0]) : wood,",
+    "new": "  const strake = built ? built[0] : wood,",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-svg-trim",
+    "file": "src/ui/fleetPage.js",
+    "old": "    trim = built ? rgbOf(l.accent, built[1]) : [196, 152, 62];",
+    "new": "    trim = built ? built[1] : [196, 152, 62];",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-svg-sail",
+    "file": "src/ui/fleetPage.js",
+    "old": "  const sail = rgbOf(l.sail, [214, 205, 180]),",
+    "new": "  const sail = [214, 205, 180],",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-svg-rowboat-sail",
+    "file": "src/ui/fleetPage.js",
+    "old": "    sails = hull !== 0;",
+    "new": "    sails = true;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "FP-svg-stain",
+    "file": "src/ui/fleetPage.js",
+    "old": "  const wood = stainOf ? oak.map((v, k) => Math.round(v * 0.38 + stainOf[k] * 0.62 * 0.9)) : oak;",
+    "new": "  const wood = false ? oak.map((v, k) => Math.round(v * 0.38 + stainOf[k] * 0.62 * 0.9)) : oak;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "SLPOOL-code-stale",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    if (boat._liveryRec !== rec || boat._liveryCode == null) {",
+    "new": "    if (boat._liveryCode == null) {",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-stage-ignored",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    if (boat._fitStage === stage) continue; // nothing more loaded since she was last stood\n    const deck = list.length ? deckOf(boat.hull) : null;",
+    "new": "    const deck = list.length ? deckOf(boat.hull) : null;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  },
+  {
+    "name": "DFH-cleared-never",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "      if (boat._fitted == null || boat._fitted === '') {\n        boat._fitted = '';\n        continue;\n      } // none to fit, none stood",
+    "new": "      boat._fitted = '';\n      continue;",
+    "tests": [
+      "test/systems/naval/shiplivery.test.js"
+    ]
+  }
+]

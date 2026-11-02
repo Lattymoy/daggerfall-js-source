@@ -1,0 +1,533 @@
+[
+  {
+    "name": "NODE-MARKS-the-herbs-never-marked",
+    "file": "src/scenes/herbHost.js",
+    "old": "    mark: (p) => (gone(p) ? null : PATCH_MARK), // NODE-MARKS: on the compass and lit while either harvest stands",
+    "new": "    mark: () => null, // NODE-MARKS: on the compass and lit while either harvest stands",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-a-half-taken-patch-dropped",
+    "file": "src/scenes/herbHost.js",
+    "old": "  const gone = (p) => goneIn(book, p.key, 'herbs') && goneIn(book, p.key, 'food'); // GATHER-SPEED: or being counted",
+    "new": "  const gone = (p) => goneIn(book, p.key, 'herbs') || goneIn(book, p.key, 'food'); // GATHER-SPEED: or being counted",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "NODE-MARKS-the-lift-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty, n.local[2] + tz, s, tx, ty, tz); }",
+    "new": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty + (n.lift ?? 0.3), n.local[2] + tz, s, tx, ty, tz); }",
+    "note": "NODE-OUTLINE (PIN MOVED): the walk hands each mark its place (`s`) - where its pictures are found",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-translation-dropped",
+    "file": "src/scenes/gatherHost.js",
+    "old": "          const tx = tr[0], ty = tr[1], tz = tr[2];",
+    "new": "          const tx = 0, ty = 0, tz = 0;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-farthest-first",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      out.sort((a, b) => a.d - b.d);\n      if (out.length > max) out.length = max;",
+    "new": "      out.sort((a, b) => b.d - a.d);\n      if (out.length > max) out.length = max;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-uncapped",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (out.length > max) out.length = max;",
+    "new": "",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-reach-ignored",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        if (!(d <= reach)) return;",
+    "new": "        if (!(d <= MARK_WALK_M)) return;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-professions-shut-still-marked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (book.state.open !== true || !isVec3(pos)) return out;",
+    "new": "      if (!isVec3(pos)) return out;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-a-gone-node-of-a-kind-with-no-mark-marked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        const m = k.mark ? k.mark(n, markCtx) : (k.gone(n) ? null : NODE_MARK_SIZE);",
+    "new": "        const m = k.mark ? k.mark(n, markCtx) : NODE_MARK_SIZE;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-dungeon-never-walked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      const under = !!dungeon;\n      if (under) {",
+    "new": "      const under = !!dungeon;\n      if (false) {",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-loose-nodes-never-walked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "          if (isVec3(w)) add(k, n, w[0], w[1], w[2], null);",
+    "new": "          if (isVec3(w) && false) add(k, n, w[0], w[1], w[2], null);",
+    "note": "NODE-OUTLINE (PIN MOVED): a loose node hands no place (`null` - no pictures, the glow)",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-prospector-reach-lost",
+    "file": "src/scenes/mineHost.js",
+    "old": "      return (specs('mining')[50] === 'prospector' && PROSPECTOR_MARKS[n.what]) || MINE_MARKS[n.what] || MINE_MARKS.vein;",
+    "new": "      return MINE_MARKS[n.what] || MINE_MARKS.vein;",
+    "tests": [
+      "test/scenes/nodemarks.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-a-gone-vein-marked",
+    "file": "src/scenes/mineHost.js",
+    "old": "      if (gone(n)) return null;\n      if (n.what === 'motherlode') return MOTHERLODE_MARK;",
+    "new": "      if (n.what === 'motherlode') return MOTHERLODE_MARK;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-a-felled-tree-marked",
+    "file": "src/scenes/treeHost.js",
+    "old": "    mark: (n) => (goneIn(book, n.key, 'logs') ? null : n.flat?.jungle != null ? jungleTreeMark(n.flat) : TREE_MARK),",
+    "new": "    mark: (n) => (n.flat?.jungle != null ? jungleTreeMark(n.flat) : TREE_MARK),",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "NODE-MARKS-a-school-dropped",
+    "file": "src/scenes/fishHost.js",
+    "old": "    mark: (n) => (n.school ? SCHOOL_MARK : null),",
+    "new": "    mark: () => null,",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-a-body-with-its-hide-taken-marked",
+    "file": "src/scenes/huntHost.js",
+    "old": "    mark: (b) => (goneIn(book, b.key, 'hide') ? null : BODY_MARK),",
+    "new": "    mark: () => BODY_MARK,",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "NODE-MARKS-the-order-kept",
+    "file": "src/ui/nodeMarks.js",
+    "old": "    for (let i = marks.length - 1; i >= 0; i--) {",
+    "new": "    for (let i = 0; i < marks.length; i++) {",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-opacity-flat",
+    "file": "src/ui/nodeMarks.js",
+    "old": "      put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach));",
+    "new": "      put(m.at[0], m.at[2], m.profession, 1);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-animals-dropped",
+    "file": "src/ui/nodeMarks.js",
+    "old": "  for (const v of animals ?? []) put(v[0], v[1], 'hunting', 1);",
+    "new": "",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-classic-one-colour",
+    "file": "src/ui/hud/hud.js",
+    "old": "    const rgb = nodeMarkRgb(t.mark);",
+    "new": "    const rgb = nodeMarkRgb('mining');",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-classic-opacity-dropped",
+    "file": "src/ui/hud/hud.js",
+    "old": "_nodeCol[3] = Number.isFinite(t.a) ? t.a : 1;",
+    "new": "_nodeCol[3] = 1;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-classic-bearing-ignored",
+    "file": "src/ui/hud/hud.js",
+    "old": "    const lerp = Math.min(1, Math.max(0, compassMarkerLerp(t.xz, playerXZ, heading01)));\n    const mx = boxLeft + (boxRight - boxLeft) * lerp;\n    const rgb",
+    "new": "    const lerp = 0.5;\n    const mx = boxLeft + (boxRight - boxLeft) * lerp;\n    const rgb",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-enhanced-one-colour",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    const c = nodeMarkCss(p.mark);",
+    "new": "    const c = nodeMarkCss('mining');",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-enhanced-marks-never-placed",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  drawNodeMarks(opts.nodes ?? null, opts.playerXZ ?? null, heading01);",
+    "new": "",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-no-kindling",
+    "file": "src/render/nodeGlow.js",
+    "old": "        n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) };\n        state.nodes.set(m.key, n);\n      } else\n        n.kindle =\n          m.quiet === true\n            ? Math.max(0, n.kindle - dt / NODE_GLOW_KINDLE_S)\n            : Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S); // AUDIT NODE-GLINT: a quiet mark dims as it kindled",
+    "new": "        n = { kindle: 1, seen: frame, seed: nodeGlowSeed(m.key) };\n        state.nodes.set(m.key, n);\n      } // AUDIT NODE-GLINT: a quiet mark dims as it kindled",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-no-fade",
+    "file": "src/render/nodeGlow.js",
+    "old": "      const alpha =\n        n.kindle *\n        (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) *\n        (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
+    "new": "      const alpha = n.kindle * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-the-unmarked-kept",
+    "file": "src/render/nodeGlow.js",
+    "old": "  for (const [key, n] of state.nodes) if (n.seen !== frame) state.nodes.delete(key);",
+    "new": "",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-the-cap-ignored",
+    "file": "src/render/nodeGlow.js",
+    "old": "      if (out.length >= NODE_GLOW_MAX) break;\n      if (!m || !isVec3(m.at) || !(m.w > 0) || !(m.h > 0)) continue;",
+    "new": "      if (!m || !isVec3(m.at) || !(m.w > 0) || !(m.h > 0)) continue;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-the-halo-upside-down",
+    "file": "src/render/nodeGlow.js",
+    "old": "  float up = smoothstep(0.0, 0.22, qy) * pow(max(1.0 - qy, 0.0), 1.5);",
+    "new": "  float up = smoothstep(0.0, 0.22, 1.0 - qy) * pow(max(qy, 0.0), 1.5);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-a-rate-not-whole",
+    "file": "src/render/nodeGlow.js",
+    "old": "export const NODE_GLOW_RATES = Object.freeze({ breath: 0.25, shimmer: 0.2, mote: 0.3, moteStep: 0.05, twinkle: 1.5 });",
+    "new": "export const NODE_GLOW_RATES = Object.freeze({ breath: 0.25, shimmer: 0.2, mote: 0.3, moteStep: 0.0537, twinkle: 1.5 });",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-the-alpha-ignored",
+    "file": "src/render/nodeGlow.js",
+    "old": "  o = vec4(uColor * light * uAlpha * fogFactorAt(vWorld), 1.0);",
+    "new": "  o = vec4(uColor * light * fogFactorAt(vWorld), 1.0);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-not-pulled-toward-the-eye",
+    "file": "src/render/nodeGlow.js",
+    "old": "  vec3 base = uAt + vec3(dir.x, 0.0, dir.y) * min(uPull, fl * 0.5);   // stood toward it, never past half its way",
+    "new": "  vec3 base = uAt;   // stood toward it, never past half its way",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-depth-written",
+    "file": "src/render/nodeGlow.js",
+    "old": "    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);",
+    "new": "    gl.disable(gl.CULL_FACE);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-a-node-colour-not-set",
+    "file": "src/render/nodeGlow.js",
+    "old": "      gl.uniform3f(U.uColor, g.rgb[0], g.rgb[1], g.rgb[2]);",
+    "new": "",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-glow-the-clock-unwrapped",
+    "file": "src/render/nodeGlow.js",
+    "old": "    gl.uniform1f(U.uTime, nodeGlowClock(seconds));",
+    "new": "    gl.uniform1f(U.uTime, seconds);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-glow-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "peerBodies?.drawVeiled(); auraHost.draw(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };",
+    "new": "peerBodies?.drawVeiled(); auraHost.draw(); partyPing?.draw(renderer); };",
+    "tests": [
+      "test/scenes/nodemarks.test.js",
+      "test/net/invislook.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-lit-under-the-travel-view",
+    "file": "src/scenes/world.js",
+    "old": "nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet()));",
+    "new": "nodeGlintPass.draw(nodeMarksAt(enchantFeet()));",
+    "tests": [
+      "test/scenes/nodemarks.test.js",
+      "test/net/invislook.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-dungeon-compass-unfed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "nodes: playerFeet ? withFireMarks(opts.nodeMarks?.(playerFeet) ?? null, dungeonFires, playerFeet) : null,",
+    "new": "nodes: playerFeet ? withFireMarks(null, dungeonFires, playerFeet) : null,",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ],
+    "note": "REST3 (PIN MOVED): the field now folds the campfires in (withFireMarks); re-aimed by content - the nodes unfed, the fires kept."
+  },
+  {
+    "name": "NODE-MARKS-every-kinds-loose-nodes-asked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        if (!k.looseNodesOf || !k.marksLoose) continue;",
+    "new": "        if (!k.looseNodesOf) continue;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "NODE-MARKS-the-bodies-not-walked",
+    "file": "src/scenes/huntHost.js",
+    "old": "    marksLoose: true,\n",
+    "new": "",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-compass-loses-them-under-the-travel-view",
+    "file": "src/scenes/world.js",
+    "old": "    if (!gatherHost || profBook?.state.open !== true || !feet) return null;",
+    "new": "    if (!gatherHost || profBook?.state.open !== true || travelView?.active || !feet) return null;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-built-on-the-frame",
+    "file": "src/render/nodeGlow.js",
+    "old": "        idle(make);",
+    "new": "        make();",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-built-every-frame",
+    "file": "src/render/nodeGlow.js",
+    "old": "      if (!asked && marks?.length) {",
+    "new": "      if (marks?.length) {",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-a-build-failure-costs-the-game",
+    "file": "src/render/nodeGlow.js",
+    "old": "    try {\n      pass = build(renderer.gl);\n    } catch (e) {\n      console.warn(\"[prof] the nodes' glow would not build\", e?.message ?? e);\n      pass = null;\n    }\n  }; // SENSE1: an idle build after the end builds nothing",
+    "new": "    pass = build(renderer.gl);\n  };",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-foreign-pass-only-for-a-draw",
+    "file": "src/render/nodeGlow.js",
+    "old": "      renderer.markForeignPass();",
+    "new": "      if (pass.drawn) renderer.markForeignPass();",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-fog-not-handed",
+    "file": "src/render/nodeGlow.js",
+    "old": "      pass.draw(\n        list,\n        proj,\n        view,\n        eye,\n        t,\n        {\n          mode: renderer._fogMode,\n          density: renderer._fogDensity,\n          range: renderer._fogRange,\n          camPos: renderer._camPos,\n          focus: renderer._focus,\n          haze: renderer._haze,\n        },\n        reduced(t),\n      );",
+    "new": "      pass.draw(list, proj, view, eye, t, null, reduced(t));",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-still-form-never-asked",
+    "file": "src/render/nodeGlow.js",
+    "old": "        reduced(t),",
+    "new": "        false,",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-still-clock-not-held",
+    "file": "src/render/nodeGlow.js",
+    "old": "  float tm = uTime * (1.0 - uStill);   // still: every moving part held at its seed's own place",
+    "new": "  float tm = uTime;   // still: every moving part held at its seed's own place",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-still-shimmer-kept",
+    "file": "src/render/nodeGlow.js",
+    "old": "  float band = exp(-bq * bq) * across * up * (1.0 - uStill);",
+    "new": "  float band = exp(-bq * bq) * across * up;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-still-flag-never-uploaded",
+    "file": "src/render/nodeGlow.js",
+    "old": "    gl.uniform1f(U.uStill, still ? 1 : 0);\n    gl.uniform3f(U.uEye, eye[0], eye[1], eye[2]);",
+    "new": "    gl.uniform3f(U.uEye, eye[0], eye[1], eye[2]);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-a-record-made-a-frame",
+    "file": "src/render/nodeGlow.js",
+    "old": "      const g = (state.pool[out.length] ??= {\n        at: m.at,\n        w: 0,\n        h: 0,\n        rgb,\n        alpha: 0,\n        seed: 0,\n        form: NODE_GLOW_FORM,\n        pull: NODE_GLOW_PULL,\n        mark: m,\n      });",
+    "new": "      const g = { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM, pull: NODE_GLOW_PULL, mark: m };",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-classic-nodes-drawn-last",
+    "file": "src/ui/hud/hud.js",
+    "old": "  // NODE-MARKS: every profession's nodes near (a Prospector's veins, 500 m; a Tracker's animals, 100 m) - FIRST, so the\n  drawNodeCompassMarks(renderer, nodes, playerXZ, heading01, { bx, by, bw, s });   // AUDIT: Detect markers, the party and the ships stand over them\n",
+    "new": "",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-enhanced-no-layer",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    nodeLayer().append(node);",
+    "new": "    parts.compass.append(node);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-enhanced-layer-on-top",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  if (needle && typeof parts.compass.insertBefore === 'function') parts.compass.insertBefore(layer, needle.nextSibling ?? null);",
+    "new": "  if (false) parts.compass.insertBefore(layer, needle.nextSibling ?? null);",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-enhanced-opacity-read-back",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    if (kept.a !== o) { kept.a = o; node.style.opacity = o; }",
+    "new": "    if (node.style.opacity !== o) { kept.a = o; node.style.opacity = o; }",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-enhanced-left-read-back",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    if (kept.left !== l) { kept.left = l; node.style.left = l; }",
+    "new": "    if (node.style.left !== l) { kept.left = l; node.style.left = l; }",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-motors-typed-feet-refused",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (book.state.open !== true || !isVec3(pos)) return out;",
+    "new": "      if (book.state.open !== true || !Array.isArray(pos)) return out;",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NODE-MARKS-the-renderers-typed-camera-refused",
+    "file": "src/render/nodeGlow.js",
+    "old": "  if (Array.isArray(marks) && isVec3(eye)) {",
+    "new": "  if (Array.isArray(marks) && Array.isArray(eye)) {",
+    "tests": [
+      "test/scenes/nodemarks.test.js"
+    ]
+  }
+]

@@ -1,0 +1,444 @@
+[
+  {
+    "name": "GHOSTFENCE-the-ring-nearer",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  radius: 14000,",
+    "new": "  radius: 12000,",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-ring-unwandered",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  wander: Object.freeze({ amp: 0.05, radius: 1.3, seed: 41.7 }),",
+    "new": "  wander: Object.freeze({ amp: 0, radius: 1.3, seed: 41.7 }),",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-wander-off-its-middle",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "    D.wander.amp * (2 * perlinNoise(ux * D.wander.radius + D.wander.seed, uy * D.wander.radius + D.wander.seed) - 1));",
+    "new": "    D.wander.amp * (2 * perlinNoise(ux * D.wander.radius + D.wander.seed, uy * D.wander.radius + D.wander.seed) - 1.5));",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-pylons-sparser",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  spacing: 48,",
+    "new": "  spacing: 60,",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-gate-in-the-north",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  gate: 0.75,",
+    "new": "  gate: 0.25,",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-band-cuts-corners",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "      mark(bx, ay);\n    } // a corner crossed: both its neighbours, so the line is 4-connected",
+    "new": "    } // a corner crossed: both its neighbours, so the line is 4-connected",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-gate-opens-wide",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  for (let dy = -1; dy <= 1; dy++)\n    for (let dx = -1; dx <= 1; dx++) if (band.has(keyOf(gx + dx, gy + dy))) open.add(keyOf(gx + dx, gy + dy));",
+    "new": "  for (let dy = -3; dy <= 3; dy++)\n    for (let dx = -3; dx <= 3; dx++) if (band.has(keyOf(gx + dx, gy + dy))) open.add(keyOf(gx + dx, gy + dy));",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-countryside-to-the-line",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  return d * SAMPLE_M < ghostfenceRadius(dx / d, dy / d) + D.keep;",
+    "new": "  return d * SAMPLE_M < ghostfenceRadius(dx / d, dy / d);",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-keep-a-circle",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  return d * SAMPLE_M < ghostfenceRadius(dx / d, dy / d) + D.keep;",
+    "new": "  return d * SAMPLE_M < D.radius + D.keep;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-line-box-short",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  return !!f && px >= f.x0 && px <= f.x1 && py >= f.y0 && py <= f.y1 && f.band.has(keyOf(px, py));",
+    "new": "  return !!f && px > f.x0 && px <= f.x1 && py >= f.y0 && py <= f.y1 && f.band.has(keyOf(px, py));",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-roads-through-the-gate-shut",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "    if (f.open.has(k)) continue;\n    const [x, y] = k.split(',').map(Number);",
+    "new": "    const [x, y] = k.split(',').map(Number);",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-gate-runs-to-its-foot",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "    k === f.gate",
+    "new": "    k === -1",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-countryside-inside",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  if (!steps || insideGhostfence(px, py)) return null;",
+    "new": "  if (!steps) return null;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-a-lair-on-the-line",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "site.py === py && !onGhostfence(px, py) && !redMountainLavaIn(px, py) ? lairPick",
+    "new": "site.py === py && !redMountainLavaIn(px, py) ? lairPick",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-a-road-across-the-line",
+    "file": "src/world/tamrielRoads.js",
+    "old": "for (const o of [...obstacles, ...held, ...ghostfenceRoadBlocks()]) {",
+    "new": "for (const o of [...obstacles, ...held]) {",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-ball-inward",
+    "file": "src/world/tamriel/ghostfenceModel.js",
+    "old": "        tri(rec, a, b, d);\n        tri(rec, b, e, d); // out of the ball: the rows run down from its top, the columns round toward +z",
+    "new": "        tri(rec, a, d, b);\n        tri(rec, b, d, e); // out of the ball: the rows run down from its top, the columns round toward +z",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-a-face-inward",
+    "file": "src/world/tamriel/ghostfenceModel.js",
+    "old": "    if ((m[0] - inside[0]) * n[0] + (m[1] - inside[1]) * n[1] + (m[2] - inside[2]) * n[2] < 0) {",
+    "new": "    if ((m[0] - inside[0]) * n[0] + (m[1] - inside[1]) * n[1] + (m[2] - inside[2]) * n[2] > 0) {",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-passage-shut",
+    "file": "src/world/tamriel/ghostfenceModel.js",
+    "old": "    b.box(0, -G.passage, G.passage, G.lintel[0], G.lintel[1], -G.depth * 0.7, G.depth * 0.7);",
+    "new": "    b.box(0, -G.passage, G.passage, 0, G.lintel[1], -G.depth * 0.7, G.depth * 0.7);",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-seat-its-lowest",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "    const y = groundAt(x, z),\n      low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0]));",
+    "new": "    const low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0])),\n      y = low;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ],
+    "note": "AUDIT RED-MOUNTAIN N4: the seat is the ground at the pylon's centre (it was the lowest under its plinth, burying it uphill to 24 m); the mutant seats it on the lowest again"
+  },
+  {
+    "name": "GHOSTFENCE-the-pylon-solid-its-model",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "    stand(pylonModel(), pylonSolid(), m);",
+    "new": "    stand(pylonModel(), pylonModel(), m);",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-curtain-short",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "        ax,\n        hi + CURTAIN_SOLID_TOP,",
+    "new": "        ax,\n        hi + CURTAIN.to,",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-feet-by-the-build-key",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "  noteFenceFeet(pkey, {",
+    "new": "  noteFenceFeet(key, {",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-fence-on-the-bay",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    if (!onTheBay(px, py)) standGhostfence({",
+    "new": "    if (onTheBay(px, py)) standGhostfence({",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-a-built-foot-unread",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "      if (exact.has(i)) fine[i] = /** @type {number} */ (exact.get(i));",
+    "new": "      if (false && exact.has(i)) fine[i] = /** @type {number} */ (exact.get(i));",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-middle-ring-uneased",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "        kind[i] = 1;",
+    "new": "        kind[i] = 0;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-a-built-foot-eased",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "  if (h.z > 0.5 && uMorph.z > 0.5) { vec2 d = abs(xz - uMorphFrom.xz); return mix(h.x, h.y, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))); }",
+    "new": "  if (uMorph.z > 0.5) { vec2 d = abs(xz - uMorphFrom.xz); return mix(h.x, h.y, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))); }",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-halo-unsized",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "  float r = max(${f1(GLOW.haloR)}, distance(c, uEye) * uPx * ${f1(GLOW.haloPx)});",
+    "new": "  float r = ${f1(GLOW.haloR)};",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-margin-thin",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "  margin: 250,",
+    "new": "  margin: 50,",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-middle-ring-mirrored",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "      gz = ((mid.baseY + 1 - by) * TERRAIN_SIZE) / cell + mid.radius * mid.sub;",
+    "new": "      gz = ((by - mid.baseY) * TERRAIN_SIZE) / cell + mid.radius * mid.sub;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-far-ring-off-its-centres",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "    const fi = bx - 0.5 - ring.baseX + ring.radius,",
+    "new": "    const fi = bx - ring.baseX + ring.radius,",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "GHOSTFENCE-the-glow-on-a-let-go-ring",
+    "file": "src/render/farRing.js",
+    "old": "mid: mid?.built ? this._midGround : null,",
+    "new": "mid: this._midGround,",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-crater-floor-smaller",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  if (dx * dx + dy * dy < D.floor * D.floor) return true;",
+    "new": "  if (dx * dx + dy * dy < 0.5 * D.floor * D.floor) return true;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-bed-under-the-lava",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "      const half = 0.5 * (T.halfTop + (T.halfFoot - T.halfTop) * (along / len)),",
+    "new": "      const half = 0.4 * (T.halfTop + (T.halfFoot - T.halfTop) * (along / len)),",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-run-the-whole-line",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "      run = len * T.lava;",
+    "new": "      run = len;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-pixels-unpadded",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "    const pad = 0.5 * D.trough.halfFoot * k;",
+    "new": "    const pad = 0;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-crater-pixels-short",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "    mark(f.cx - D.floor * k, f.cy - D.floor * k, f.cx + D.floor * k, f.cy + D.floor * k);",
+    "new": "    mark(f.cx - 0.4 * D.floor * k, f.cy - 0.4 * D.floor * k, f.cx + 0.4 * D.floor * k, f.cy + 0.4 * D.floor * k);",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-no-gate-span",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  return near(x - tx * h, y - ty * h, x + tx * h, y + ty * h);",
+    "new": "  return false;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-the-distance-halved",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "    return qx * qx + qy * qy < r * r;",
+    "new": "    return qx * qx + qy * qy < 0.25 * r * r;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-the-clearance-the-gate's-alone",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "export const FENCE_CLEAR = GHOSTGATE.depth + 2;",
+    "new": "export const FENCE_CLEAR = GHOSTGATE.depth;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-no-reach",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
+    "new": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR));",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-a-landmark's-reach-unread",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "    const reach = landMeasures(LAND_KINDS[raw[i + 5]], raw[i + 6]).reach * raw[i + 4];",
+    "new": "    const reach = 0;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-clearing-everywhere",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "  if (!lava && !fence) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-clearing-blind-to-lava",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
+    "new": "    return false || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-flats-uncleared",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      if (fire?.(f.x, f.z)) continue;   // LAVA-CLEAR, FENCE-CLEAR: no flat in the lava or the fence\n",
+    "new": "",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-landmarks-uncleared",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "standLandProps(px, py, fire ? clearedLandProps(fire, landProps) : landProps, ",
+    "new": "standLandProps(px, py, landProps, ",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-a-lair-on-the-lava",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "!onGhostfence(px, py) && !redMountainLavaIn(px, py) ? lairPick(",
+    "new": "!onGhostfence(px, py) ? lairPick(",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-a-lair-may-stand-on-the-lava",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "!onGhostfence(px, py) && !redMountainLavaIn(px, py) && lairPick(",
+    "new": "!onGhostfence(px, py) && lairPick(",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-a-spawn-on-the-lava",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && spawnGroundDry(",
+    "new": "d = !onGhostfence(px, py) && spawnGroundDry(",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-a-gate-on-the-line",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
+    "new": "    if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  }
+]

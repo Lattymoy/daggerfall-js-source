@@ -1,0 +1,183 @@
+[
+  {
+    "name": "SEATS3-C1-siege-claims-device-id",
+    "file": "src/scenes/world.js",
+    "old": "claimSiege(r), me: () => _seatDoor?.me() ?? null,",
+    "new": "claimSiege(r), me: () => accountId(),",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C1-royal-claims-device-id",
+    "file": "src/scenes/world.js",
+    "old": "claimRoyal(r), me: () => _seatDoor?.me() ?? null,",
+    "new": "claimRoyal(r), me: () => accountId(),",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C2-latch-cleared-by-lapse",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (h) _seatHallVisit = true;",
+    "new": "      _seatHallVisit = !!h;",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C2-hidden-back-on-the-hall",
+    "file": "src/scenes/worldModes.js",
+    "old": "const hiddenBase = interiorHome || _seatHallVisit ? _keptHidden : [...(ctx.base?.hidden() ?? []), ...(ctx.base?.roomDoors?.hidden?.() ?? [])];",
+    "new": "const hiddenBase = interiorHome || interiorSeatHall ? _keptHidden : [...(ctx.base?.hidden() ?? []), ...(ctx.base?.roomDoors?.hidden?.() ?? [])];",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ],
+    "note": "AUDIT FB1029f (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "SEATS3-C2-decor-back-on-the-hall",
+    "file": "src/scenes/worldModes.js",
+    "old": "const decor = interiorHome || _seatHallVisit ?",
+    "new": "const decor = interiorHome || interiorSeatHall ?",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C3-a-read-per-foe",
+    "file": "src/scenes/world.js",
+    "old": "for (const id of battle.foes()) { const b = duelBodyIn(near, id); if (b) out.push(b); }",
+    "new": "for (const id of battle.foes()) { const b = duelBody(id); if (b) out.push(b); }",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C3-relay-fighters-dropped",
+    "file": "src/scenes/world.js",
+    "old": "(near?.find((x) => x.id === peerId) ?? siegeNpcs?.body(peerId) ?? null)",
+    "new": "(near?.find((x) => x.id === peerId) ?? null)",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C4-towers-guild-unkeyed",
+    "file": "src/net/townSeatBook.js",
+    "old": "    if (data !== _towersOf || guild !== _towersGuild) {",
+    "new": "    if (data !== _towersOf) {",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C4-banners-nearest-lost",
+    "file": "src/scenes/world.js",
+    "old": "    all.length = BANNERS_MAX;\n    return all;",
+    "new": "    return all;",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C5-failure-unmarked",
+    "file": "src/net/townSeatBook.js",
+    "old": "      failed = !r?.ok && !SHUT.includes(r?.error); // AUDIT SEATS-3 C5",
+    "new": "      failed = false; // AUDIT SEATS-3 C5",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C5-refusal-retried",
+    "file": "src/net/townSeatBook.js",
+    "old": "      failed = !r?.ok && !SHUT.includes(r?.error); // AUDIT SEATS-3 C5",
+    "new": "      failed = !r?.ok; // AUDIT SEATS-3 C5",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C5-no-backoff",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS))",
+    "new": "      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? 0 : SEAT_RED_READ_MS))",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-C6-the-hall-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "15% at a crown, and a point more for each stage of its Market Hall.",
+    "new": "15% at a crown.",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D2-the-static-cap",
+    "file": "src/ui/marketTab.js",
+    "old": "    const listingsMax = m.book.state.listingsMax ?? MARKET_LISTINGS_MAX; // AUDIT SEATS-3 D2: the board's own cap, as the service says it",
+    "new": "    const listingsMax = MARKET_LISTINGS_MAX; // AUDIT SEATS-3 D2: the board's own cap, as the service says it",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D2-board-unsent",
+    "file": "src/ui/marketTab.js",
+    "old": "      ...at(), // AUDIT SEATS-3 D2: the board read from - the listings its Market Hall allows answered with the counts",
+    "new": "      // AUDIT SEATS-3 D2: the board read from - the listings its Market Hall allows answered with the counts",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D2-bad-cap-kept",
+    "file": "src/net/marketBook.js",
+    "old": "    if (Number.isSafeInteger(d.listingsMax) && d.listingsMax > 0) state.listingsMax = d.listingsMax; // AUDIT SEATS-3 D2",
+    "new": "    if (d.listingsMax != null) state.listingsMax = d.listingsMax; // AUDIT SEATS-3 D2",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D2-boards-one-cache",
+    "file": "src/net/marketBook.js",
+    "old": "      (q.board ?? []).join(','),\n      q.page ?? 0,",
+    "new": "      q.page ?? 0,",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D3-tithe-over-its-cap",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return seat?.holder && pct > 0 ? Math.min(Math.trunc(pct), seatTitheCap(seat)) : 0;",
+    "new": "  return seat?.holder && pct > 0 ? Math.trunc(pct) : 0;",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D3-the-tithe-unsaid",
+    "file": "src/ui/marketTab.js",
+    "old": "      const less = pct > 0 ? `${saleTax(100)}% tax and the ${pct}% Tithe` : `${saleTax(100)}% tax`;",
+    "new": "      const less = pct > 0 ? `${saleTax(100)}% tax` : `${saleTax(100)}% tax`;",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-D6-crown-lever",
+    "file": "src/ui/seatTab.js",
+    "old": "    if (slot) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/audit_seats3_client.test.js"
+    ]
+  }
+]

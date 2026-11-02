@@ -1,0 +1,842 @@
+[
+  {
+    "name": "INT11-CONFIG-TYPO-ENFORCES",
+    "file": "src/net/bossBody.js",
+    "old": "  if (o.enforce !== undefined && typeof o.enforce !== 'boolean') return BODY_DEFAULT;\n  if (o.body !== undefined && !lineOk(o.body)) return BODY_DEFAULT;",
+    "new": "  if (o.body !== undefined && !lineOk(o.body)) return BODY_DEFAULT;",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-CONFIG-LINE-UNCHECKED",
+    "file": "src/net/bossBody.js",
+    "old": "  if (o.body !== undefined && !lineOk(o.body)) return BODY_DEFAULT;\n  if (o.hull !== undefined && !lineOk(o.hull)) return BODY_DEFAULT;",
+    "new": "  if (o.hull !== undefined && !lineOk(o.hull)) return BODY_DEFAULT;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-CONFIG-LINE-UNBOUNDED",
+    "file": "src/net/bossBody.js",
+    "old": "  !!l &&\n  typeof l === 'object' &&\n  [l.depth, l.perS].every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= BODY_LINE_MAX);",
+    "new": "  !!l && typeof l === 'object' && [l.depth, l.perS].every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-CONFIG-PART-DROPPED",
+    "file": "src/net/bossBody.js",
+    "old": "    hull: Object.freeze({ depth: (o.hull ?? BODY_DEFAULT.hull).depth, perS: (o.hull ?? BODY_DEFAULT.hull).perS }),",
+    "new": "    hull: Object.freeze({ depth: (o.hull ?? BODY_DEFAULT.body).depth, perS: (o.hull ?? BODY_DEFAULT.body).perS }),",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-DEFAULT-ENFORCES",
+    "file": "src/net/bossBody.js",
+    "old": "  enforce: false,",
+    "new": "  enforce: true,",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-STRUCK-FALLEN-AGAIN",
+    "file": "src/net/bossBody.js",
+    "old": "  if (b.dn || !(b.v > 0)) return false;",
+    "new": "  if (!(b.v > 0)) return false;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-FIRST-FALL-OVERWRITTEN",
+    "file": "src/net/bossBody.js",
+    "old": "  if (b.fs == null) {",
+    "new": "  {",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-FALL-UNCOUNTED",
+    "file": "src/net/bossBody.js",
+    "old": "  b.w++;\n  if (b.fs == null) {",
+    "new": "  if (b.fs == null) {",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-ADMISSION-LOWERS",
+    "file": "src/net/bossBody.js",
+    "old": "    return false;",
+    "new": "    b.v = Math.max(0, Math.min(1, c));\n    return false;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-BUDGET-UNBOUNDED",
+    "file": "src/net/bossBody.js",
+    "old": "  const g = Math.min(s, b.m),\n    u = s - g;",
+    "new": "  const g = s,\n    u = 0;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-BUDGET-NEVER-FILLS",
+    "file": "src/net/bossBody.js",
+    "old": "    b.m = Math.min(line.depth, b.m + (line.perS * (now - b.mAt)) / 1000);",
+    "new": "    b.m = Math.min(line.depth, b.m);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-BUDGET-PAST-DEPTH",
+    "file": "src/net/bossBody.js",
+    "old": "    b.m = Math.min(line.depth, b.m + (line.perS * (now - b.mAt)) / 1000);",
+    "new": "    b.m = b.m + (line.perS * (now - b.mAt)) / 1000;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-UNMET-EVERY-WORD",
+    "file": "src/net/bossBody.js",
+    "old": "  if (u > b.u) b.o += u - b.u;",
+    "new": "  b.o += u;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-FALLEN-MENDED-ENFORCED",
+    "file": "src/net/bossBody.js",
+    "old": "  if (b.dn && enforce && !hull) return false;",
+    "new": "",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-HULL-AFLOAT-ANY",
+    "file": "src/net/bossBody.js",
+    "old": "  b.u = u;\n  if (b.dn && b.v > up) b.dn = false;",
+    "new": "  b.u = u;\n  if (b.dn && b.v > 0) b.dn = false;",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-SAID-UNMARKED",
+    "file": "src/net/bossBody.js",
+    "old": "  b.sd = true; // its game says its body: its measure means something (bodyMeasure)\n  fill(b, now, line);",
+    "new": "  fill(b, now, line);",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-RISE-AT-ONCE",
+    "file": "src/net/bossBody.js",
+    "old": "      if (enforce && now - b.dd < BODY_RISE_MS) return { ...x, dead: true };\n      bodyLife(p, now, line);",
+    "new": "      bodyLife(p, now, line);",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-COUNT-FALL-NOT-DEAD",
+    "file": "src/net/bossBody.js",
+    "old": "    return enforce && b.dn ? { ...x, dead: true } : x;",
+    "new": "    return x;",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-ONE-LIFE-RISES",
+    "file": "src/net/bossBody.js",
+    "old": "      if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return enforce ? { ...x, dead: true } : x;\n      if (enforce && now - b.dd < BODY_RISE_MS) return { ...x, dead: true };",
+    "new": "      if (enforce && now - b.dd < BODY_RISE_MS) return { ...x, dead: true };",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-LIFE-RESETS-MEASURE",
+    "file": "src/net/bossBody.js",
+    "old": "  Object.assign(b, { v: 1, m: line.depth, mAt: now, u: 0, dn: false, dd: null });",
+    "new": "  Object.assign(b, newBody(now, line));",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-OUT-NOT-DD",
+    "file": "src/net/bossBody.js",
+    "old": "export const bodyOut = (p, enforce) => !!enforce && !!p?.bd && (p.bd.dn || p.bd.dd != null);",
+    "new": "export const bodyOut = (p, enforce) => !!enforce && !!p?.bd && p.bd.dn;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT14-MEASURE-SILENT",
+    "file": "src/net/bossBody.js",
+    "old": "  if (!b?.sd) return null;",
+    "new": "  if (!b) return null;",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-KEPT-AT-KILL",
+    "file": "src/net/bossBody.js",
+    "old": "  const k = b.fs == null ? 1 : kept({ ...p, stoodMs: b.fs, dealt: b.fd }) ? 1 : 0;",
+    "new": "  const k = b.fs == null ? 1 : kept(p) ? 1 : 0;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT14-MEASURE-UNBOUNDED",
+    "file": "src/net/bossBody.js",
+    "old": "  const th = (x) => Math.max(0, Math.min(BODY_MEASURE_MAX, Math.round(x * 1000)));",
+    "new": "  const th = (x) => Math.round(x * 1000);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT14-MEASURE-VALID-K",
+    "file": "src/net/bossBody.js",
+    "old": "  Array.isArray(m) &&\n  m.length === 6 &&\n  m.every((n) => Number.isSafeInteger(n) && n >= 0 && n <= BODY_MEASURE_MAX) &&\n  m[4] <= 1;",
+    "new": "  Array.isArray(m) && m.length === 6 && m.every((n) => Number.isSafeInteger(n) && n >= 0 && n <= BODY_MEASURE_MAX);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-MARGIN-CENTRE-ONLY",
+    "file": "src/net/bossBody.js",
+    "old": "  for (let k = 0; k < 8; k++) {",
+    "new": "  for (let k = 0; k < 0; k++) {",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT15-SAY-NO-PACE",
+    "file": "src/net/bossBody.js",
+    "old": "    if (!Number.isFinite(share) || !Number.isFinite(t) || t - lastAt < BODY_SAY_MS) return false;",
+    "new": "    if (!Number.isFinite(share) || !Number.isFinite(t)) return false;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT15-SAY-NO-KEEP",
+    "file": "src/net/bossBody.js",
+    "old": "    if (v === lastV && t - lastAt < BODY_SAY_KEEP_MS) return false;",
+    "new": "    if (v === lastV) return false;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT15-SAY-REFUSED-REMEMBERED",
+    "file": "src/net/bossBody.js",
+    "old": "    if (!send(v)) return false;\n    lastV = v;\n    lastAt = t;",
+    "new": "    const sent = send(v);\n    lastV = v;\n    lastAt = t;\n    if (!sent) return false;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-JUDGE-AT-LANDING",
+    "file": "src/net/bossRef.js",
+    "old": "  else if (A.shape === 'all' || now >= a.at + BODY_AFTER_MS)\n    landing(a, live, share, (x, z) => inAttack(a, x, z, P), out);",
+    "new": "  else landing(a, live, share, (x, z) => inAttack(a, x, z, P), out);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-AFTER-POSE-UNREAD",
+    "file": "src/net/bossRef.js",
+    "old": "  return !!p0 && deepIn(test, p0[0], p0[1]) && deepIn(test, x1, z1);",
+    "new": "  return !!p0 && deepIn(test, p0[0], p0[1]);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-BEFORE-POSE-UNREAD",
+    "file": "src/net/bossRef.js",
+    "old": "  return !!p0 && deepIn(test, p0[0], p0[1]) && deepIn(test, x1, z1);",
+    "new": "  return deepIn(test, x1, z1);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-ELEMENT-COUNTED",
+    "file": "src/net/bossRef.js",
+    "old": "    share = B && !B.saved ? Math.min(1, B.pct) : 0;",
+    "new": "    share = B ? Math.min(1, B.pct) : 0;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-JUDGED-TWICE",
+    "file": "src/net/bossRef.js",
+    "old": "  a.bj = true;\n  if (!(share > 0)) return;",
+    "new": "  if (!(share > 0)) return;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-CHARGE-TWICE",
+    "file": "src/net/bossRef.js",
+    "old": "    if (a.bh.includes(b.sub)) continue;\n    const p0 = posAt(b, t0),",
+    "new": "    const p0 = posAt(b, t0),",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-SWEEP-ONE-END",
+    "file": "src/net/bossRef.js",
+    "old": "    if (!p0 || !p1 || !deepIn(test, p0[0], p0[1]) || !deepIn(test, p1[0], p1[1])) continue;",
+    "new": "    if (!p1 || !deepIn(test, p1[0], p1[1])) continue;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-HOST-ELEMENT",
+    "file": "src/net/bossRef.js",
+    "old": "    if (!B || B.el != null) {",
+    "new": "    if (!B) {",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-JUDGE-AFTER-FALL",
+    "file": "src/net/bossRef.js",
+    "old": "  if (f.fell || f.wrath) return [];\n  const out = [],",
+    "new": "  const out = [],",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT12-RING-COUNTED",
+    "file": "src/net/bossRef.js",
+    "old": "      if (A.shape === 'stomp') landing(a, live, A.pct, (x, z) => dist(x, z, a.x, a.z) <= S.r, out);",
+    "new": "      if (A.shape === 'stomp') landing(a, live, A.pct, (x, z) => dist(x, z, a.x, a.z) <= S.r1, out);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT12-SHADE-IGNORED",
+    "file": "src/net/bossRef.js",
+    "old": "      sweep(\n        a,\n        live,\n        Math.max(prev, a.at),\n        now,\n        end,\n        A.pct,\n        (x, z, t0, t1) => handSwept(a, x, z, t0, t1) && !behindPillar(a.x, a.z, x, z),\n        out,\n      );",
+    "new": "      sweep(a, live, Math.max(prev, a.at), now, end, A.pct, (x, z, t0, t1) => handSwept(a, x, z, t0, t1), out);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT12-RESET-HEARTS",
+    "file": "src/net/bossRef.js",
+    "old": "    const share = A === SD_BLOWS.pulse ? pulsePctOf(a) : A === SD_BLOWS.reset ? (f.cx ? SD_RESET_PCT : 0) : SD_END_PCT;",
+    "new": "    const share = A === SD_BLOWS.pulse ? pulsePctOf(a) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT12-ELEMENT-COUNTED",
+    "file": "src/net/bossRef.js",
+    "old": "    if (!A || !S || (S.el && A.shape !== 'all')) {",
+    "new": "    if (!A || !S || false) {",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT12-STEPS-COUNTED",
+    "file": "src/net/bossRef.js",
+    "old": "    if (share > 0)\n      for (const b of live)\n        if (deepAt((x, z) => inArena(x, z, SD_ARENA_SLACK), b, a.at)) out.push({ sub: b.sub, share });",
+    "new": "    if (share > 0) for (const b of live) if (true) out.push({ sub: b.sub, share });",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT12-CLOCK-SKIPPED",
+    "file": "src/net/bossRef.js",
+    "old": "  const blows = [f.rem?.atk, ...(f.ec ?? []).map((X) => X.body?.atk), f.clock];",
+    "new": "  const blows = [f.rem?.atk, ...(f.ec ?? []).map((X) => X.body?.atk)];",
+    "tests": [
+      "test/net/int11_body.test.js",
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT12-ECHO-SKIPPED",
+    "file": "src/net/bossRef.js",
+    "old": "  const blows = [f.rem?.atk, ...(f.ec ?? []).map((X) => X.body?.atk), f.clock];",
+    "new": "  const blows = [f.rem?.atk, f.clock];",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT12-JUDGE-AFTER-LOSS",
+    "file": "src/net/bossRef.js",
+    "old": "  if (f.fell || f.lost) return [];\n  const out = [],",
+    "new": "  const out = [],",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-HAND-COUNTED",
+    "file": "src/net/bossRef.js",
+    "old": "    return p && !b.dead && !p.wreck && serpentOnShip(p);",
+    "new": "    return p && !b.dead && !p.wreck;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-WRECK-STRUCK",
+    "file": "src/net/bossRef.js",
+    "old": "    return p && !b.dead && !p.wreck && serpentOnShip(p);",
+    "new": "    return p && !b.dead && serpentOnShip(p);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-DEAD-STRUCK",
+    "file": "src/net/bossRef.js",
+    "old": "    return p && !b.dead && !p.wreck && serpentOnShip(p);",
+    "new": "    return p && !p.wreck && serpentOnShip(p);",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-PAIR-WHOLE",
+    "file": "src/net/bossRef.js",
+    "old": "  const k = fleetShare(f.ships ?? serpentShipsFighting(f));",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-GRIP-NO-RING",
+    "file": "src/net/bossRef.js",
+    "old": "    if (c.bg == null && now >= c.at + BODY_AFTER_MS)\n      c.bg = !!ship && deepAt((x, z) => dist(x, z, c.x, c.z) <= SERPENT_ATTACK_TABLE.coil.r, ship, c.at);",
+    "new": "    if (c.bg == null && now >= c.at + BODY_AFTER_MS) c.bg = !!ship;",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-CRUSH-TWICE",
+    "file": "src/net/bossRef.js",
+    "old": "    if (c.bg && c.why === 'crushed' && !c.bcr) {\n      c.bcr = true;",
+    "new": "    if (c.bg && c.why === 'crushed') {",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-GRIP-AFTER-LET-GO",
+    "file": "src/net/bossRef.js",
+    "old": "    if (c.bg && ship && coilHolds(f, now) && dtS > 0) out.push({ sub: c.s, share: GRIP.hull * dtS * k });",
+    "new": "    if (c.bg && ship && dtS > 0) out.push({ sub: c.s, share: GRIP.hull * dtS * k });",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-EYE-NOT-JUDGED",
+    "file": "src/net/bossRef.js",
+    "old": "  if (m && now >= m.at && dtS > 0)",
+    "new": "  if (false)",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT13-JUDGE-AFTER-KILL",
+    "file": "src/net/bossRef.js",
+    "old": "  if (f.fell || f.gone) return [];\n  const out = [],",
+    "new": "  const out = [],",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "INT11-RELAY-NO-JUDGE",
+    "file": "server/src/index.js",
+    "old": "      await this._bodyCount('gate', f, GATE_SEAM.judge(f, census(), now), now, line.body);\n",
+    "new": "",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-RELAY-VT-JUNK",
+    "file": "server/src/index.js",
+    "old": "    if (m.k === 'vt') { if (f?.players[a.sub]) bodySaid(f.players[a.sub], m.v / 1000, now, line.body, { enforce: line.enforce }); return; }",
+    "new": "    if (m.k === 'vt' && f?.players[a.sub]) { bodySaid(f.players[a.sub], m.v / 1000, now, line.body, { enforce: line.enforce }); return; }",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-RELAY-ENFORCE-DEFAULT",
+    "file": "server/src/index.js",
+    "old": "  _bodyLine() { return (this._bodyCfg ??= bodyConfig(relayCfgValue(this._relayCfg, this.env, 'bossBody'))); }",
+    "new": "  _bodyLine() { return (this._bodyCfg ??= bodyConfig('{\"enforce\":true}')); }",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ],
+    "note": "SCALE5b (re-aimed by content): the line through relayCfgValue."
+  },
+  {
+    "name": "INT11-RELAY-NO-BD",
+    "file": "server/src/index.js",
+    "old": "    for (const [ws, b] of [...this._courtSockets()]) if (b.id && b.sub === sub) this._send(ws, word);   // SCALE5d part two: a copy's fighter's too (the court's own index elsewhere)\n",
+    "new": "",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ],
+    "note": "SCALE5d part two (re-aimed by content): the court's copies beside it."
+  },
+  {
+    "name": "INT11-RELAY-FALLEN-STRIKE",
+    "file": "server/src/index.js",
+    "old": "    const at = a.pose && !a.pose.dd && !bodyOut(f.players[a.sub], line.enforce) ? this._courtOf(a.pose) : null;",
+    "new": "    const at = a.pose && !a.pose.dd ? this._courtOf(a.pose) : null;",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-RELAY-CENSUS-RAW",
+    "file": "server/src/index.js",
+    "old": "      await this._gateFanKept(f, GATE_SEAM.step(f, now, this._bodiesBare(census()), rand01), now);",
+    "new": "      await this._gateFanKept(f, GATE_SEAM.step(f, now, this._bodiesBare(this._gateBodies(f)), rand01), now);",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-RELAY-NO-TRAIL",
+    "file": "server/src/index.js",
+    "old": "    if (posed && this._trailing(a)) this._trailPose(ws, m.p, now);",
+    "new": "",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-RELAY-GATE-NO-MEASURE",
+    "file": "server/src/index.js",
+    "old": "...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, GATE_SEAM.earned), ...(receiptPortents",
+    "new": "...(helped.has(sub) ? { r: 1 } : {}), ...(receiptPortents",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT12-RELAY-ONE-LIFE-KEPT",
+    "file": "server/src/index.js",
+    "old": "now, line.body, (sub) => this._sdMarkFallenAt(f.s, sub));",
+    "new": "now, line.body, null);",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT12-RELAY-NO-JUDGE",
+    "file": "server/src/index.js",
+    "old": "      await this._bodyCount('sd', f, SD_SEAM.judge(f, census(), now), now, line.body, (sub) => this._sdMarkFallenAt(f.s, sub));\n",
+    "new": "",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT12-RELAY-VT-JUNK",
+    "file": "server/src/index.js",
+    "old": "    if (m.k === 'vt') { const p = f?.players[a.sub], line = this._bodyLine(); if (p) bodySaid(p, m.v / 1000, now, line.body, { enforce: line.enforce }); return; }",
+    "new": "    if (m.k === 'vt' && f?.players[a.sub]) { const p = f.players[a.sub], line = this._bodyLine(); bodySaid(p, m.v / 1000, now, line.body, { enforce: line.enforce }); return; }",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT13-RELAY-WRECK-UNENFORCED",
+    "file": "server/src/index.js",
+    "old": "      if (m.w || !sunk) { delete me.cw; delete me.wf; const out = [];",
+    "new": "      if (true) { delete me.cw; delete me.wf; const out = [];",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT13-RELAY-WRECKED-FIRES",
+    "file": "server/src/index.js",
+    "old": "      const pose = a.pose && !a.pose.dd && !sunk && own ? this._serpentFrameOf(f, a.pose) : null;",
+    "new": "      const pose = a.pose && !a.pose.dd && own ? this._serpentFrameOf(f, a.pose) : null;",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT13-RELAY-HULL-NOT-JUDGED",
+    "file": "server/src/index.js",
+    "old": "          await this._bodyCount('serpent', f, SERPENT_SEAM.judge(f, bodies, now), now, line.hull, (sub) => this._serpentCountWreck(fights, id, f, sub, now), { sx: f.sx, sz: f.sz });\n",
+    "new": "",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT13-RELAY-HULL-AS-BODY",
+    "file": "server/src/index.js",
+    "old": "{ enforce: line.enforce, up: HULL_REFLOAT, hull: true }",
+    "new": "{ enforce: line.enforce }",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT13-RELAY-NO-WRECK",
+    "file": "server/src/index.js",
+    "old": "(sub) => this._serpentCountWreck(fights, id, f, sub, now)",
+    "new": "null",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-GATE-RECEIPT-DROPS-M",
+    "file": "src/net/gate/gateReceipt.js",
+    "old": "  ...(m !== undefined ? { m } : {}),\n  ...(p > 0 ? { p } : {}),",
+    "new": "  ...(p > 0 ? { p } : {}),",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-SD-RECEIPT-DROPS-M",
+    "file": "src/net/superDungeon/sdReceipt.js",
+    "old": "  const claims = {\n    d,\n    b: SD_RECEIPT_BOSS,\n    s,\n    c,\n    x,\n    l,\n    ...(m !== undefined ? { m } : {}),\n    i: nowS,\n    e: nowS + SD_RECEIPT_TTL_S,\n  };",
+    "new": "  const claims = { d, b: SD_RECEIPT_BOSS, s, c, x, l, i: nowS, e: nowS + SD_RECEIPT_TTL_S };",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-SERPENT-RECEIPT-DROPS-M",
+    "file": "src/net/serpent/serpentReceipt.js",
+    "old": "  const claims = { d, b, s, c, x, h, l, ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + SERPENT_RECEIPT_TTL_S };",
+    "new": "  const claims = { d, b, s, c, x, h, l, i: nowS, e: nowS + SERPENT_RECEIPT_TTL_S };",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-GATE-RECEIPT-BAD-M",
+    "file": "src/net/gate/gateReceipt.js",
+    "old": "  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false; // INT14: optional - a receipt minted before it carries none",
+    "new": "  // INT14: optional - a receipt minted before it carries none",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-SD-RECEIPT-BAD-M",
+    "file": "src/net/superDungeon/sdReceipt.js",
+    "old": "  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false; // INT14: optional - a receipt minted before it carries none",
+    "new": "  // INT14: optional - a receipt minted before it carries none",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-SERPENT-RECEIPT-BAD-M",
+    "file": "src/net/serpent/serpentReceipt.js",
+    "old": "  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false; // INT14: optional - a receipt minted before it carries none",
+    "new": "  // INT14: optional - a receipt minted before it carries none",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-GATE-CLAIM-DROPS-BODY",
+    "file": "server-account/src/accounts.js",
+    "old": "embers, c.m ? JSON.stringify(c.m) : null);",
+    "new": "embers, null);",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-SD-CLAIM-DROPS-BODY",
+    "file": "server-account/src/sds.js",
+    "old": "      .bind(c.d, player.id, c.b, c.x, c.l, title ? 1 : 0, aura ? 1 : 0, nonce, nowS, c.m ? JSON.stringify(c.m) : null), // INT14: the relay's count, kept",
+    "new": "      .bind(c.d, player.id, c.b, c.x, c.l, title ? 1 : 0, aura ? 1 : 0, nonce, nowS, null), // INT14: the relay's count, kept",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-SERPENT-CLAIM-DROPS-BODY",
+    "file": "server-account/src/serpents.js",
+    "old": "      .bind(\n        c.d,\n        player.id,\n        c.b,\n        c.h,\n        character,\n        xp,\n        nonce,\n        nowS,\n        embers,\n        c.m ? JSON.stringify(c.m) : null,\n        title ? 1 : 0,\n        aura ? 1 : 0,\n      ), // INT14: the relay's count, kept; SERPENT5: its grants",
+    "new": "      .bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, null, title ? 1 : 0, aura ? 1 : 0), // INT14: the relay's count, kept; SERPENT5: its grants",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-REVIEW-FIGHT-LEFT-OUT",
+    "file": "server-account/src/review.js",
+    "old": "  ['serpent', 'serpent_kills'],\n]);",
+    "new": "]);",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-REVIEW-RATE-UNNORMALIZED",
+    "file": "server-account/src/review.js",
+    "old": "  const rate = `CAST(ROUND((json_extract(body, '$[1]') + json_extract(body, '$[2]')) * 60.0 / MAX(json_extract(body, '$[5]'), ${BODY_MEASURE_S_MIN})) AS INTEGER)`;",
+    "new": "  const rate = `CAST(ROUND((json_extract(body, '$[1]') + json_extract(body, '$[2]')) * 1.0) AS INTEGER)`;",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-REVIEW-LOST-WRONG",
+    "file": "server-account/src/review.js",
+    "old": "      lost: await count(\" AND json_extract(body, '$[4]') = 0\"),",
+    "new": "      lost: await count(\" AND json_extract(body, '$[4]') = 1\"),",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-REVIEW-OVER-WRONG",
+    "file": "server-account/src/review.js",
+    "old": "      over: await count(\" AND json_extract(body, '$[2]') > 0\"),",
+    "new": "      over: await count(\" AND json_extract(body, '$[2]') >= 0\"),",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT14-TOOL-DAYS-UNBOUNDED",
+    "file": "tools/realmReview.mjs",
+    "old": "    return Number.isSafeInteger(days) && days >= 1 && days <= 30\n      ? { path: `/v1/mod/realm-${act}`, body: { days } }\n      : { usage: USAGE };",
+    "new": "    return { path: `/v1/mod/realm-${act}`, body: { days } };",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-WIRE-VT-UNBOUNDED",
+    "file": "src/net/wire.js",
+    "old": "  if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT11: my body's share, thousandths",
+    "new": "  if (m.k === 'vt') return { k: 'vt', v: m.v };",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT11-WIRE-OLDER-RELAY",
+    "file": "src/net/wire.js",
+    "old": "export const BOSS_REF_RELAY_MIN = 188;",
+    "new": "export const BOSS_REF_RELAY_MIN = 187;",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT15-COURT-ANY-TIME",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (alive && healLive(s) && e?.maxHealth > 0) sayBody(",
+    "new": "if (e?.maxHealth > 0) sayBody(",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT15-OLDER-RELAY-TOLD",
+    "file": "src/scenes/world.js",
+    "old": "sendBody: (v) => !!online?.bossOk && !!online?.sendGate?.({ k: 'vt', v }),",
+    "new": "sendBody: (v) => !!online?.sendGate?.({ k: 'vt', v }),",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT15-DEATH-SAVED",
+    "file": "src/scenes/world.js",
+    "old": "    setMidScreenText(BOSS_COUNT_FELL_TEXT);\n    forcePlayerDeath(playerEntity);",
+    "new": "    setMidScreenText(BOSS_COUNT_FELL_TEXT);\n    hurtPlayer(playerEntity, 1e9);",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT15-SESSION-ALWAYS-COUNTS",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.bossOk = relaySupportsBossRef(relayV);",
+    "new": "      if (primary) this.bossOk = true;",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  },
+  {
+    "name": "INT15-WRECK-PARTIAL",
+    "file": "src/scenes/serpentHost.js",
+    "old": "        { hull: Math.ceil(ship.maxHull * 2) + 1, sail: 0, crew: 0 },",
+    "new": "        { hull: Math.ceil(ship.maxHull / 2), sail: 0, crew: 0 },",
+    "tests": [
+      "test/net/int12_body_relay.test.js"
+    ]
+  }
+]

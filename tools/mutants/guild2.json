@@ -1,0 +1,589 @@
+[
+  {
+    "name": "GUILD2a-an-officer-renames",
+    "file": "src/net/guild/guildLaw.js",
+    "old": "  rename: Object.freeze([0]), // GUILD2a: the guild's own name and tag - the guildmaster's, for a price",
+    "new": "  rename: Object.freeze([0, 1]), // GUILD2a: the guild's own name and tag - the guildmaster's, for a price",
+    "tests": [
+      "test/net/guild/guild2_client.test.js",
+      "test/server/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2a-no-fortnight",
+    "file": "src/net/guild/guildLaw.js",
+    "old": "export const GUILD_RENAME_COOLDOWN_S = 14 * 24 * 3600;",
+    "new": "export const GUILD_RENAME_COOLDOWN_S = 0;",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2b-the-guildmaster-limited",
+    "file": "src/net/guild/guildVaultLaw.js",
+    "old": "  if (rank === GUILD_RANK_MASTER || !grant || !vaultLevelOk(grant.level))\n    return { level: def.level, limit: def.limit, granted: false };",
+    "new": "  if (!grant || !vaultLevelOk(grant.level)) return { level: def.level, limit: def.limit, granted: false };",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2b-the-limit-unread",
+    "file": "src/net/guild/guildVaultLaw.js",
+    "old": "export const vaultMayTake = (s, takenToday = 0) =>\n  s?.level === 'withdraw' && (s.limit === 0 || (takenToday | 0) < s.limit);",
+    "new": "export const vaultMayTake = (s, takenToday = 0) => s?.level === 'withdraw' && true;",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2c-the-device-lost-on-the-second-colour",
+    "file": "src/net/heraldryLaw.js",
+    "old": "  if (ink === field || (parted && ink === field2)) return null;",
+    "new": "  if (ink === field) return null;",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2c-the-plain-key-moved",
+    "file": "src/net/heraldryLaw.js",
+    "old": "  return h.division || h.charge ? `${base}|${h.division ?? 'plain'}|${h.field2 ?? ''}|${h.charge ?? ''}` : base;",
+    "new": "  return true ? `${base}|${h.division ?? 'plain'}|${h.field2 ?? ''}|${h.charge ?? ''}` : base;",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2c-field2-unfilled",
+    "file": "src/ui/heraldryArt.js",
+    "old": "  const divD = h?.division ? divisionPath(h.division, BANNER_BOX.w, BANNER_BOX.h) : '';",
+    "new": "  const divD = h?.division && false ? divisionPath(h.division, BANNER_BOX.w, BANNER_BOX.h) : '';",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ],
+    "note": "AUDIT BAG1 + GUILD2 (PIN MOVED): re-aimed by content - the banner's division path is one const now (G11)."
+  },
+  {
+    "name": "GUILD2-the-strip-offers-the-stores-offline",
+    "file": "src/ui/socialPanel.js",
+    "old": "    ...(g.profStores?.writs && g.profStores.open?.() === true ? [['stores', 'Stores']] : []),",
+    "new": "    ['stores', 'Stores'],",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2a-rename-in-one-press",
+    "file": "src/ui/socialPanel.js",
+    "old": "        : liveBtn('Rename', of, { run: () => arm('rename') }));",
+    "new": "        : liveBtn('Rename', of, { run: () => { const t = typed(); guildDo(g.rename(t.name, t.tag), ''); } }));",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2a-the-gold-unread",
+    "file": "src/ui/socialPanel.js",
+    "old": "                : Number(v.marks) < GUILD_RENAME_SILVER ? ",
+    "new": "                : false ? ",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2b-take-offered-to-a-depositor",
+    "file": "src/ui/socialPanel.js",
+    "old": "    const mayTake = vaultMayTake(st, st?.taken ?? 0);",
+    "new": "    const mayTake = vaultMayPut(st);",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2b-the-town-unread",
+    "file": "src/ui/socialPanel.js",
+    "old": "    const reachNow = () => g.pack?.reach?.() !== false;",
+    "new": "    const reachNow = () => true;",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ],
+    "note": "AUDIT BAG1 + GUILD2 (PIN MOVED): re-aimed by content - the town read live (M1)."
+  },
+  {
+    "name": "GUILD2b-grants-to-an-officer",
+    "file": "src/ui/socialPanel.js",
+    "old": "    const mayGrant = guildMay(me, 'vaultGrant', v.powers);",
+    "new": "    const mayGrant = guildMay(me, 'invite', v.powers);",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2b-the-reserve-never-undone",
+    "file": "src/net/guild/guildBook.js",
+    "old": "          return () => {\n            if (whole) {\n              if (!list.includes(item)) list.splice(Math.min(at, list.length), 0, item);\n            } else item.stackCount += n;\n            this.pack.changed();\n          };",
+    "new": "          return () => {};",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2b-the-taken-piece-unminted",
+    "file": "src/net/guild/guildBook.js",
+    "old": "              this.pack.add(rec);\n              this.pack.changed();",
+    "new": "              this.pack.changed();",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD2b-svc-the-daily-limit",
+    "file": "server-account/src/guildVault.js",
+    "old": "  if (!vaultMayTake(standing, takenToday(me ?? a.me, nowS))) return { error: 'guild-vault-limit' };",
+    "new": "",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "The early read is a fast path: the take's own batch decides the day's count (guild_members' UPDATE guarded by the limit, then mustChange), and the catch says guild-vault-limit off a fresh read - so a take past the limit is still refused whole. A race of the same character past both is stopped a third time by the realm record's seq."
+  },
+  {
+    "name": "GUILD2a-svc-the-fortnight",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!guildRenameOpen(renamedAt, nowS)) return { error: 'guild-rename-soon', at: guildRenameAt(renamedAt) };",
+    "new": "",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "The early read is a fast path: the rename's batch is guarded by renamed_at + the fortnight itself, and the catch says guild-rename-soon, with when the next may come, off a fresh read - a rename inside the fortnight is still refused whole, nothing paid, and said the same."
+  },
+  {
+    "name": "AUDIT-GUILD2-G1-the-piece-unread",
+    "file": "server-account/src/guildVault.js",
+    "old": "AND count = ?4 AND rec = ?5'",
+    "new": "AND count = ?4 AND (1 OR rec = ?5)'",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-G4-the-standing-unread",
+    "file": "server-account/src/guildVault.js",
+    "old": "AND rank = ?5 AND vault_level IS ?6 AND vault_limit = ?7",
+    "new": "AND (1 OR rank = ?5 AND vault_level IS ?6 AND vault_limit = ?7)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-G2-a-delete-with-pieces",
+    "file": "server-account/src/realm.js",
+    "old": "  if (master?.vault) return { error: 'guild-vault' };",
+    "new": "",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-G3-digits-refused",
+    "file": "server-account/src/guilds.js",
+    "old": "    const flat = normaliseName(w);\n    if (!flat) continue;",
+    "new": "    const flat = normaliseName(w);\n    if (!w) continue;",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-the-hall-keeps-the-old-name",
+    "file": "server-account/src/guilds.js",
+    "old": "      db.prepare('UPDATE homes SET owner_name = ? WHERE guild_id = ?').bind(n, gid),\n",
+    "new": "",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-a-swatch-by-its-own-rule",
+    "file": "src/ui/socialPanel.js",
+    "old": "const refusal = (k) => { if (k === value) return ''; const t = { ...h }; set(k, t); return heraldryOf(t) ? '' : armsWhy(t); };",
+    "new": "const refusal = (k) => (k !== HERALDRY_UNHELD || key === 'border' ? '' : armsWhy({ ...h, field: k }));",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-M1-the-town-read-once",
+    "file": "src/ui/socialPanel.js",
+    "old": "const takeOf = () => { const why = !reachNow() ? 'in a town'",
+    "new": "const takeOf = () => { const why = !reach ? 'in a town'",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-M1-a-press-out-of-town",
+    "file": "src/ui/socialPanel.js",
+    "old": "const takeRun = (run) => () => { if (reachNow()) run(); };",
+    "new": "const takeRun = (run) => () => { run(); };",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-M2-read-once-a-session",
+    "file": "src/ui/socialPanel.js",
+    "old": "guildUi.storesAsked = false; guildUi.vaultAsked = false; guildUi.shopAsked = false; if",
+    "new": "guildUi.storesAsked = false; guildUi.shopAsked = false; if",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-M2-the-page-tab-reads-nothing",
+    "file": "src/ui/socialPanel.js",
+    "old": "        if (id === 'vault') guildUi.vaultAsked = false;   // AUDIT GUILD2 M2: the vault read again at each turn to its page\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-M3-a-failed-read-keeps-the-view",
+    "file": "src/net/guild/guildBook.js",
+    "old": "      this.vaultView = null;\n      this.vaultError = r?.error ?? 'server';",
+    "new": "      this.vaultError = r?.error ?? 'server';",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-M3-taken-from-another-guilds-view",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    const seen = this.vaultNow()?.items?.find((x) => x.slot === slot) ?? null; // AUDIT GUILD2 M3: never another's view",
+    "new": "    const seen = this.vaultView?.items?.find((x) => x.slot === slot) ?? null; // AUDIT GUILD2 M3: never another's view",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-a-withdrawer-unlimited-unasked",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (x === 'withdraw' && draft.level !== 'withdraw' && m.vault?.level !== 'withdraw') draft.limit = VAULT_RANK_DEFAULTS[GUILD_RANK_OFFICER].limit;",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-the-grant-focus-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": "          if (focusLevel) level.focus?.();",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-G11-a-hole-the-first-colour-svg",
+    "file": "src/ui/heraldryArt.js",
+    "old": "        ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
+    "new": "        ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>`",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-G11-a-hole-the-first-colour-canvas",
+    "file": "src/ui/heraldryArt.js",
+    "old": "    if (p.bg && div && f2 && comp) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-G12-a-swatch-keyed-by-three",
+    "file": "src/ui/heraldrySwatch.js",
+    "old": "  const key = h ? heraldryKey(h) : ''; // AUDIT GUILD2 G12: the whole arms - a division or a device's colour changed is a new picture",
+    "new": "  const key = h ? `${h.field}/${h.border}/${h.device}` : ''; // AUDIT GUILD2 G12: the whole arms - a division or a device's colour changed is a new picture",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-G13-a-border-of-the-second-colour",
+    "file": "src/net/heraldryLaw.js",
+    "old": "  if (parted && field2 === border) return null;",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD2-G14-a-swords",
+    "file": "src/net/heraldryLaw.js",
+    "old": "  typeof device === 'string' && DEVICE.has(device)\n    ? (DEVICE_NAMES[device] ?? device[0].toUpperCase() + device.slice(1))\n    : '';",
+    "new": "  typeof device === 'string' && DEVICE.has(device) ? device[0].toUpperCase() + device.slice(1) : '';",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-K1-the-take-asked-as-any-act",
+    "file": "src/net/guild/guildBook.js",
+    "old": "        needsAnswer: true,\n        apply: (/** @type {any} */ a) => {",
+    "new": "        apply: (/** @type {any} */ a) => {",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-K1-no-piece-taken-as-done",
+    "file": "src/net/guild/guildBook.js",
+    "old": "          if (!held) this.realm.abandon?.('unknown'); // the record holds what the pack does not: a join reads it",
+    "new": "          void held; // the record holds what the pack does not: a join reads it",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-K14-an-earlier-read-shown",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    if (gen !== this._vaultGen) return r; // a later read is out: its answer is the vault",
+    "new": "    void gen; // a later read is out: its answer is the vault",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-K15-a-piece-not-held-said-as-a-count",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    if (pick < 0) return { ok: false, error: 'vault-goods' }; // AUDIT2 GUILD2 K15: the pack no longer holds it - never \"more than the stack holds\"",
+    "new": "    if (pick < 0) return { ok: false, error: 'bad-vault-count' }; // AUDIT2 GUILD2 K15: the pack no longer holds it - never \"more than the stack holds\"",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-S2-why-dropped-by-the-book",
+    "file": "src/net/guild/guildBook.js",
+    "old": "        : {\n            ok: false,\n            error: r?.error ?? 'server',\n            ...(typeof r?.why === 'string' ? { why: r.why } : {}),\n            ...(Number.isSafeInteger(r?.at) ? { at: r.at } : {}),\n            ...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}),\n          };",
+    "new": "        : { ok: false, error: r?.error ?? 'server', ...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}) };",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-S2-the-word-unsaid",
+    "file": "server-account/src/index.js",
+    "old": "        if ((r.error === 'guild-name-word' || r.error === 'guild-rank-word') && typeof r.word === 'string')",
+    "new": "        if (false)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-S7-at-dropped",
+    "file": "server-account/src/index.js",
+    "old": "        if (r.error === 'guild-rename-soon' && Number.isSafeInteger(r.at))",
+    "new": "        if (false)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-S2-the-stretched-reading-per-word",
+    "file": "server-account/src/guilds.js",
+    "old": "    if (c.kind !== 'impersonation') return c.word || w;",
+    "new": "    return c.word || w;",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-S3-the-bound-by-the-read-alone",
+    "file": "server-account/src/guildVault.js",
+    "old": "          AND ?2 < ${SHELVES_SQL} AND (SELECT COUNT(*) FROM guild_vault WHERE guild_id = ?1) < ${SHELVES_SQL}`)",
+    "new": "          AND (?2 < ${SHELVES_SQL} OR 1) AND ((SELECT COUNT(*) FROM guild_vault WHERE guild_id = ?1) < ${SHELVES_SQL} OR 1)`)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-S4-the-standing-unheld",
+    "file": "server-account/src/guildVault.js",
+    "old": "AND rank = ?11 AND vault_level IS ?12)",
+    "new": "AND (rank = ?11 OR 1) AND (vault_level IS ?12 OR 1))",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-S5-the-granter-unheld",
+    "file": "server-account/src/guildVault.js",
+    "old": "      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')})`)",
+    "new": "      AND (EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')}) OR 1)`)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-S6-no-limit-for-none-named",
+    "file": "src/net/guild/guildVaultLaw.js",
+    "old": "  const limit = asked == null ? (level === 'withdraw' ? VAULT_GRANT_LIMIT : 0) : asked;",
+    "new": "  const limit = asked == null ? 0 : asked;",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-U4-a-locked-piece-offered",
+    "file": "src/ui/socialPanel.js",
+    "old": "tradeRefusal(it) == null && !g.pack.refuses?.(it) && !isLocked(it));",
+    "new": "tradeRefusal(it) == null && !g.pack.refuses?.(it));",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-U7-the-draft-kept",
+    "file": "src/ui/socialPanel.js",
+    "old": "        if (d.grants[m.member]?.from !== from) d.grants[m.member] = { level: was, limit: m.vault?.limit ?? 0, from };",
+    "new": "        d.grants[m.member] ??= { level: was, limit: m.vault?.limit ?? 0, from };",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-U9-the-focus-dropped",
+    "file": "src/ui/socialPanel.js",
+    "old": "        if (open) stripBtns.get(id)?.focus?.();",
+    "new": "        void stripBtns;",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-U10-the-pick-a-place",
+    "file": "src/ui/socialPanel.js",
+    "old": "{ run: () => { const it = offers.includes(d.vaultPick) ? d.vaultPick : null; if (it && reachNow())",
+    "new": "{ run: () => { const it = offers[1] ?? offers[0]; if (it && reachNow())",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-U14-shut-unsaid",
+    "file": "src/ui/socialPanel.js",
+    "old": "      if (shut.size) out.push(",
+    "new": "      if (false) out.push(",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-G1-no-now",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  await renamedSince(db, rows);\n",
+    "new": "",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-G1-the-rows-time-unread",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "x.old_name === g.name && Number(x.at) >= r.at);",
+    "new": "x.old_name === g.name);",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-G2-the-first-colour-whole-svg",
+    "file": "src/ui/heraldryArt.js",
+    "old": "        ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
+    "new": "        ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>${inPart(div.id, p, div.hex)}`",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-G2-the-complement-nonzero-canvas",
+    "file": "src/ui/heraldryArt.js",
+    "old": "      inPart(p, fieldHex, comp, 'evenodd');",
+    "new": "      inPart(p, fieldHex, comp, 'nonzero');",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-G2-the-complement-nonzero-svg",
+    "file": "src/ui/heraldryArt.js",
+    "old": "  `<clipPath id=\"${clip}c\"><path d=\"${divisionComplement(divD, box.w, box.h)}\" clip-rule=\"evenodd\"/></clipPath>`;",
+    "new": "  `<clipPath id=\"${clip}c\"><path d=\"${divisionComplement(divD, box.w, box.h)}\"/></clipPath>`;",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-G3-the-shield-on-the-banners-box",
+    "file": "src/ui/heraldryArt.js",
+    "old": "  ctx.clip(shield);\n  const divD = h.division ? divisionPath(h.division, SHIELD_BOX.w, SHIELD_BOX.h) : '';",
+    "new": "  ctx.clip(shield);\n  const divD = h.division ? divisionPath(h.division, BANNER_BOX.w, BANNER_BOX.h) : '';",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-G3-field2-dropped-on-the-way",
+    "file": "src/net/heraldryLaw.js",
+    "old": "    out.field2 = field2;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-G3-charge-dropped-on-the-way",
+    "file": "src/net/heraldryLaw.js",
+    "old": "  if (charge != null && charge !== border) out.charge = charge;",
+    "new": "",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-a-rename-said-as-put-in",
+    "file": "src/ui/socialPanel.js",
+    "old": ", rename: 'renamed the guild for', grant:",
+    "new": ", grant:",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-GUILD2-D3-the-batch-fortnight-gone",
+    "file": "server-account/src/guilds.js",
+    "old": "AND (renamed_at IS NULL OR renamed_at + ?8 <= ?5)",
+    "new": "AND (?8 = ?8)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "Every rename that lands changes the name or the tag (guild-rename-same refuses one that changes neither), and the batch's UPDATE holds the name and tag it read - so a second rename racing the first is refused on the row before the fortnight clause is reached (the race pin, two renames paying once, holds either way). Kept beside the row's guard: the fortnight is the law the batch states."
+  },
+  {
+    "name": "AUDIT2-GUILD2-D3-the-batch-day-limit-gone",
+    "file": "server-account/src/guildVault.js",
+    "old": "AND (?4 = 0 OR (CASE WHEN vault_day = ?3 THEN vault_taken ELSE 0 END) < ?4)",
+    "new": "AND (?4 = ?4)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "The day's count is a member row's, and a member is ONE realm character: two of its takes racing are serialized by the realm record's sequence (prepareRealmRecord's guard), so the second is refused on the record before this guard is reached, and the early read refuses a take past the limit sequentially. Kept as belt-and-braces beside the record's guard."
+  }
+]

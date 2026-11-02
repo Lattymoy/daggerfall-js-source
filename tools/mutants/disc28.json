@@ -1,0 +1,427 @@
+[
+  {
+    "name": "DISC28-A-pause-key-not-back",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (overlayAction(e) !== 'back' && !pauseKey) return;",
+    "new": "if (overlayAction(e) !== 'back') return;",
+    "tests": [
+      "test/ui/enhanced/disc28_pause.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-A-repeat-closes",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (!e.repeat) backArmed = e.code;\n    return;\n",
+    "new": "    if (!e.repeat) { backArmed = e.code; return; }\n",
+    "tests": [
+      "test/ui/enhanced/disc28_pause.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-A-textkey-capture-eaten",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (textKeyCapture) return;\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/disc28_pause.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-A-textkey-capture-leaks",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "        textKeyCapture = null;\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/disc28_pause.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-B-court-over-no-crime",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (!court) return;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/disc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-B-surrender-to-nothing",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "            if (crimeId() === 0) return;\n            // WERE-FRIGHT: the question was a man's",
+    "new": "            // WERE-FRIGHT: the question was a man's",
+    "tests": [
+      "test/scenes/disc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-B-question-outlives-crime",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (box) box.done = true;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/disc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-B-withdrawn-question-still-shields",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    awaitingSurrenderAnswer = false;\n    if (box) box.done = true;",
+    "new": "    if (box) box.done = true;",
+    "tests": [
+      "test/scenes/disc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-B-withdraws-a-live-question",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (crimeId() !== 0 || !surrenderBox) return;",
+    "new": "    if (!surrenderBox) return;",
+    "tests": [
+      "test/scenes/disc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-B-host-never-withdraws",
+    "file": "src/scenes/world.js",
+    "old": "      arrestFlow.crimeCleared();",
+    "new": "",
+    "tests": [
+      "test/scenes/disc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-C-shop-box-no-layer",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;\n  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px;\n  z-index: 10; }",
+    "new": ".trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;\n  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }",
+    "tests": [
+      "test/ui/enhanced/disc28_shopbox.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-C-shop-box-under-the-rune",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;\n  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px;\n  z-index: 10; }",
+    "new": ".trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;\n  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px;\n  z-index: 2; }",
+    "tests": [
+      "test/ui/enhanced/disc28_shopbox.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-D-rig-blind-to-speed",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) })",
+    "new": "new PlayerWeapon({})",
+    "tests": [
+      "test/combat/disc28_speed.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-D-speed-read-once",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    this._liveSpeed = typeof v === 'function' ? v : () => v;",
+    "new": "    const x = typeof v === 'function' ? v() : v;\n    this._liveSpeed = () => x;",
+    "tests": [
+      "test/combat/disc28_speed.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-D-speed-ignored",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    return this._liveSpeed();",
+    "new": "    return 50;",
+    "tests": [
+      "test/combat/disc28_speed.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-E-zero-test-again",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "new": "  if ((dead || force) && !(entity.fatigue > 0)) entity.fatigue = respawnHealth(maxFatigue(entity));",
+    "tests": [
+      "test/systems/disc28_fatigue.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-E-dead-span-charged",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const skipped = (dead || force) && sharedClockOn() ? skipDeadMinutes(entity, worldMinutes()) : false;",
+    "new": "  const skipped = false;",
+    "tests": [
+      "test/systems/disc28_fatigue.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-E-the-rise-moves-the-day-marker",
+    "file": "src/systems/worldTick.js",
+    "old": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n",
+    "new": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n  entity.lastGameMinutes = now;\n",
+    "tests": [
+      "test/systems/disc28_fatigue.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-E-the-rise-moves-the-needs-marker",
+    "file": "src/systems/worldTick.js",
+    "old": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n",
+    "new": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n  if (entity.survival) entity.survival.lastMinute = now;\n",
+    "tests": [
+      "test/systems/disc28_fatigue.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-F-arrival-skips-boundaries",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (Number.isFinite(worldLeft) && now > Math.floor(worldLeft)) normalizeAcross(entity, Math.floor(worldLeft), now);\n",
+    "new": "",
+    "tests": [
+      "test/systems/disc28_fatigue.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-F-the-death-walks-the-characters-drift",
+    "file": "src/systems/worldTick.js",
+    "old": "    runCalendarArms(entity, s, e, { rolls, arms: DAY_ARMS.world });   // AUDIT DISC28 TM-3: then the per-minute loop's world arms",
+    "new": "    runCalendarArms(entity, s, e, { rolls, arms: DAY_ARMS.all });   // AUDIT DISC28 TM-3: then the per-minute loop's world arms",
+    "tests": [
+      "test/systems/disc28_fatigue.test.js",
+      "test/systems/auditdisc28_time.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-F-boundary-off-by-one",
+    "file": "src/systems/worldTick.js",
+    "old": "Math.floor((b - 1) / RECOVERY_INTERVAL_MINUTES) - Math.floor((a - 1) / RECOVERY_INTERVAL_MINUTES)",
+    "new": "Math.floor(b / RECOVERY_INTERVAL_MINUTES) - Math.floor(a / RECOVERY_INTERVAL_MINUTES)",
+    "tests": [
+      "test/systems/disc28_fatigue.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-F-shield-ignored",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (n <= 0 || entity.preventNormalizingReputations) return 0;",
+    "new": "  if (n <= 0) return 0;",
+    "tests": [
+      "test/systems/disc28_fatigue.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-G-rising-pass-one-way",
+    "file": "src/player/collider.js",
+    "old": "this._resolveCapsule(feet, out, height, Infinity, dy > 0);",
+    "new": "this._resolveCapsule(feet, out, height, Infinity, false);",
+    "tests": [
+      "test/player/disc28_swim.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-G-straddle-ignored",
+    "file": "src/player/collider.js",
+    "old": "&& (oneWayFloor === true || (R ? center[1] - dy : t[1] + (ly - dy)) < center[1] + oneWayFloor)\n            ",
+    "new": "",
+    "tests": [
+      "test/player/disc28_swim.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-G-rising-kills-PH1",
+    "file": "src/player/collider.js",
+    "old": "const lowOneWay = straddle ? axis : true;",
+    "new": "const lowOneWay = straddle ? false : true;",
+    "tests": [
+      "test/player/disc28_swim.test.js",
+      "test/player/ph1_physics.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-H-hang-unfloored",
+    "file": "src/characters/enemy/enemyAnchor.js",
+    "old": "  if (Number.isFinite(floorY) && floorY <= centre[1] && feet[1] < floorY) feet[1] = floorY;\n  return feet;",
+    "new": "  return feet;",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-H-floor-above-marker-lifts",
+    "file": "src/characters/enemy/enemyAnchor.js",
+    "old": "  if (Number.isFinite(floorY) && floorY <= centre[1] && feet[1] < floorY) feet[1] = floorY;",
+    "new": "  if (Number.isFinite(floorY) && feet[1] < floorY) feet[1] = floorY;",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-H-builder-reads-no-floor",
+    "file": "src/characters/enemy/enemyAnchor.js",
+    "old": "  return feetGiven ? [at[0], at[1], at[2]] : flyerSpawnFeet(at, idleH, floorUnderHang(collider, at, idleH));",
+    "new": "  return feetGiven ? [at[0], at[1], at[2]] : flyerSpawnFeet(at, idleH, null);",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-H-puppet-rehung",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "spawnDistanceType: 0 }, false, { puppet: true, feetGiven: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the owner's foe",
+    "new": "spawnDistanceType: 0 }, false, { puppet: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the owner's foe",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-finish-never-queued",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (data) this._finishedShares.push(data);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-finish-echoed",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (\n      quest.questComplete &&\n      !quest.questTombstoned &&\n      !quest._finishedBySync &&\n      this.sharedQuestNames.has(quest.questName)\n    ) {",
+    "new": "    if (quest.questComplete && !quest.questTombstoned && this.sharedQuestNames.has(quest.questName)) {",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-error-removal-sent",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (\n      quest.questComplete &&\n      !quest.questTombstoned &&\n      !quest._finishedBySync &&\n      this.sharedQuestNames.has(quest.questName)\n    ) {",
+    "new": "    if (!quest.questTombstoned && !quest._finishedBySync && this.sharedQuestNames.has(quest.questName)) {",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-finish-restored-complete",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (finishing) questData = { ...questData, questComplete: false, questTombstoned: false };\n    questData = { ...this._onThisClock(questData), ...NO_SHELF }; // TIME3: the sender's countdowns, on this character's clock",
+    "new": "    questData = { ...this._onThisClock(questData), ...NO_SHELF }; // TIME3: the sender's countdowns, on this character's clock",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-finish-never-ended",
+    "file": "src/systems/quest/machine.js",
+    "old": "      quest.endQuest();\n    } // DISC28-I: the partner's word, not an echo to send back",
+    "new": "    } // DISC28-I: the partner's word, not an echo to send back",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-getitem-not-replayed",
+    "file": "src/systems/quest/machine.js",
+    "old": "const REPLAYABLE_ONE_TIME_ACTIONS = new Set(['TeleportPc', 'GivePc', 'TrainPc', 'GetItem', 'RevealLocation']);",
+    "new": "const REPLAYABLE_ONE_TIME_ACTIONS = new Set(['TeleportPc', 'GivePc', 'TrainPc', 'RevealLocation']);",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-final-makes-a-copy",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (safe.questComplete === true || shareEnvelopeEnding(safe)) return { ok: false, reason: 'finished' };\n  const quest = machine.receiveSharedQuest(safe);",
+    "new": "  const quest = machine.receiveSharedQuest(safe);",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-signature-log-only",
+    "file": "src/systems/quest/questShare.js",
+    "old": "    for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-signature-no-trigger",
+    "file": "src/systems/quest/questShare.js",
+    "old": "    parts.push(task.triggered ? 1 : 0);\n    for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);",
+    "new": "    for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-rung-any-building",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (residencesOnly && !(buildingType >= HOUSE1 && buildingType <= HOUSE6)) return false;\n    return this.getAllActiveQuestSites().some((site) => site.buildingKey === buildingKey && site.mapId === mapId);",
+    "new": "    return this.getAllActiveQuestSites().some((site) => site.buildingKey === buildingKey && site.mapId === mapId);",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-rung-house1-4",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (residencesOnly && !(buildingType >= HOUSE1 && buildingType <= HOUSE6)) return false;",
+    "new": "    if (residencesOnly && !(buildingType >= HOUSE1 && buildingType <= BUILDING_TYPES.House4)) return false;",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-rung-any-town",
+    "file": "src/systems/quest/machine.js",
+    "old": "    return this.getAllActiveQuestSites().some((site) => site.buildingKey === buildingKey && site.mapId === mapId);",
+    "new": "    return this.getAllActiveQuestSites().some((site) => site.buildingKey === buildingKey);",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-door-on-links",
+    "file": "src/scenes/worldModes.js",
+    "old": "return questBridge.machine.isActiveQuestBuilding(questSceneCtx?.()?.mapId ?? 0, b.buildingKey, b.buildingType);",
+    "new": "return questBridge.machine.getSiteLinks(SITE_TYPES.Building, questSceneCtx?.()?.mapId ?? 0, b.buildingKey).length > 0;",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-I-host-never-sends-finish",
+    "file": "src/scenes/world.js",
+    "old": "data: { ...prepared.data, sync: 1, final: 1 }",
+    "new": "data: { ...prepared.data, sync: 1 }",
+    "tests": [
+      "test/systems/quest/disc28_quest.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-K-early-return-again",
+    "file": "src/systems/discovery.js",
+    "old": "  if (!renamed || renamed === rec.displayName) return false;   // HALL-STAMP: and a nameless Place names nothing",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/disc28_names.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-K-restamp-same-name",
+    "file": "src/systems/discovery.js",
+    "old": " || renamed === rec.displayName) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/systems/disc28_names.test.js"
+    ]
+  },
+  {
+    "name": "DISC28-K-unlearned-shown",
+    "file": "src/systems/discovery.js",
+    "old": "return r?.isQuestResource && r.pcLearnedAboutExistence ? (",
+    "new": "return r?.isQuestResource ? (",
+    "tests": [
+      "test/systems/disc28_names.test.js"
+    ]
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "name": "CD-underground-ignored",
+    "file": "src/systems/ambientEffects.js",
+    "old": "      if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
+    "new": "      if (deps.inside || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
+    "tests": [
+      "test/systems/cricketquiet.test.js"
+    ]
+  },
+  {
+    "name": "CD-clock-runs-underground",
+    "file": "src/systems/ambientEffects.js",
+    "old": "        if (this._cricketsLoop) {",
+    "new": "        this._cricketT += dt;\n        if (this._cricketsLoop) {",
+    "tests": [
+      "test/systems/cricketquiet.test.js"
+    ]
+  },
+  {
+    "name": "CD-host-says-buildings-too",
+    "file": "src/scenes/world.js",
+    "old": "underground: modes?.mode === 'dungeon', waterSurfaceY:",
+    "new": "underground: !!modes?.mode, waterSurfaceY:",
+    "tests": [
+      "test/systems/cricketquiet.test.js"
+    ]
+  }
+]

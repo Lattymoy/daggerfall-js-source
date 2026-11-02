@@ -1,0 +1,66 @@
+[
+  {
+    "name": "AUDIT-PERFURL-A3-cull-sniffs-again",
+    "file": "src/render/frustum.js",
+    "old": "  return pageParam('cull') === 'off';",
+    "new": "  return /[?&]cull=off\\b/.test(globalThis.location?.search ?? '');",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PERFURL-A3-searchParams-read",
+    "file": "src/render/airPass.js",
+    "old": "  return pageParam('air', search) !== 'off'; // PERF-URL",
+    "new": "  return new URL(`http://x/${search}`).searchParams.get('air') !== 'off';",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PERFURL-A3-constructor-aliased",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  return pageParam('volumetrics', search) !== 'off'; // PERF-URL",
+    "new": "  const P = globalThis.URLSearchParams;\n  return new P(search).get('volumetrics') !== 'off';",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PERFURL-A3-constructor-split",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  return pageParam('haze', search) !== 'off'; // PERF-URL",
+    "new": "  return new URLSearchParams(search).get('haze') !== 'off';",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PERFURL-A4-sway-parses-again",
+    "file": "src/systems/wind/windDrive.js",
+    "old": "  return pageParam('sway', search) === 'off';",
+    "new": "  return new URLSearchParams(search).get('sway') === 'off';",
+    "tests": [
+      "test/systems/perfurl_doors.test.js",
+      "test/render/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PERFURL-A5-latched-key-published",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "  'load',",
+    "new": "  'renderscale',\n  'load',",
+    "tests": [
+      "test/systems/perfurl_doors.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PERFURL-A8-knob-read-by-presence",
+    "file": "src/scenes/world.js",
+    "old": "grassDensity > 0 && pageParam('grass') !== 'off'",
+    "new": "grassDensity > 0 && !pageHas('grass')",
+    "tests": [
+      "test/tooling/doctrine.test.js"
+    ]
+  }
+]

@@ -1,0 +1,365 @@
+-- Edited by Harbinger451
+-- StartsBy: Script
+-- Questee: anyone with a pick-axe
+Quest: MiningQuestWeaker
+DisplayName: Mine for Gems or Elements
+-- Message panels
+QRC:
+
+Message:  1013
+<ce> Despite spending some time mining intensively,
+<ce> you were unable to successfully mine anything of worth!
+
+Message:  1014
+<ce> Spending some time mining intensively,
+<ce> you were able to find some _element1_!
+
+Message:  1015
+<ce> Spending some time mining intensively,
+<ce> you were able to find some _element1_
+<ce> and some _element2_!
+
+Message:  1016
+<ce> Spending some time mining intensively,
+<ce> you were able to find some _element1_,
+<ce> some _element2_ and some _element3_!
+
+Message:  1018
+<ce> Spending some time mining intensively,
+<ce> you were able to find some _gem1_!
+
+Message:  1019
+<ce> Spending some time mining intensively,
+<ce> you were able to find some _gem1_
+<ce> and some _gem2_!
+
+Message:  1020
+<ce> Spending some time mining intensively,
+<ce> you were able to find some _gem1_,
+<ce> some _gem2_ and some _gem3_!
+
+Message:  1022
+<ce> While undertaking your mining work,
+<ce> you chanced upon a _weapon_
+<ce> that someone must have lost or discarded.
+
+Message:  1023
+<ce> While undertaking your mining work,
+<ce> you chanced upon a _armor_
+<ce> that someone must have lost or discarded.
+
+Message:  1024
+<ce> While undertaking your mining work,
+<ce> you chanced upon a _magic_
+<ce> that someone must have lost or discarded.
+
+Message:  1025
+<ce> While undertaking your mining work,
+<ce> you chanced upon a _misc_
+<ce> that someone must have lost or discarded.
+
+Message:  1026
+<ce> While undertaking your mining work,
+<ce> you chanced upon a _flamable_
+<ce> that someone must have lost or discarded.
+
+Message:  1027
+<ce> While undertaking your mining work,
+<ce> you chanced upon a _trinket_
+<ce> that someone must have lost or discarded.
+
+Message:  1028
+<ce> While undertaking your mining work,
+<ce> you chanced upon a copy of the book
+<ce> _book_
+<ce> that someone must have lost or discarded.
+
+Message:  1029
+<ce> While undertaking your mining work,
+<ce> you chanced upon a _potion_
+<ce> that someone must have lost or discarded.
+
+Message:  1030
+<ce> While undertaking your mining work,
+<ce> you chanced upon a _map_
+<ce> that someone must have lost or discarded.
+
+Message:  1031
+<ce> While undertaking your mining work,
+<ce> you chanced upon _coins_ coins
+<ce> that someone must have lost or discarded.
+
+Message:  1032
+<ce> While undertaking your mining work,
+<ce> you chanced upon some _organ_.
+
+Message:  1033
+<ce> While undertaking your mining work,
+<ce> you chanced upon some _skin_.
+
+Message:  1038
+<ce> While undertaking your mining work,
+<ce> you chanced upon some _mythic_.
+
+Message:  1039
+<ce> While undertaking your mining work,
+<ce> you chanced upon some _mineral_.
+
+
+QBN:
+
+Item _element1_ element
+Item _element2_ element
+Item _element3_ element
+Item _gem1_ gem
+Item _gem2_ gem
+Item _gem3_ gem
+Item _weapon_ weapon
+Item _armor_ armor
+Item _magic_ magic_item
+Item _misc_ misc
+Item _flamable_ flamable
+Item _trinket_ trinket
+Item _book_ book
+Item _potion_ potion
+Item _map_ random_map
+Item _coins_ gold range 1 to 8
+Item _organ_ organs
+Item _skin_ skin
+Item _mythic_ mythic
+Item _mineral_ mineral
+
+-- Quest start-up:
+	pc at any dungeon5 set _atmine_
+	pick one of _gems_ _elements_
+
+variable _atmine_
+
+variable _gems_
+
+variable _elements_
+
+_desert_ task:
+    climate desert
+
+_desert2_ task:
+    climate desert2
+
+_mountain_ task:
+	climate mountain
+
+_mountainwoods_ task:
+	climate mountainwoods
+
+_weakluc_ task:
+	when attribute Luck is at least 0
+
+_evenluc_ task:
+	when attribute Luck is at least 40
+
+_strongluc_ task:
+	when attribute Luck is at least 60
+
+_verystrongluc_ task:
+	when attribute Luck is at least 80
+
+_worstchanceluc_ task:
+	when _weakluc_ and not _evenluc_
+
+_evenchanceluc_ task:
+	when _evenluc_ and not _strongluc_
+
+_goodchanceluc_ task:
+	when _strongluc_ and not _verystrongluc_
+
+_bestchanceluc_ task:
+	when _verystrongluc_
+
+_elementsbounty_ task:
+	when _elements_ and _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_
+	reduce player fatigue by 25
+	raise time by 2:00
+	pick one of _0element_ _1element_ _2element_ _2element_ _3element_
+
+_gemsbounty_ task:
+	when _gems_ and _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_
+	reduce player fatigue by 25
+	raise time by 2:00
+	pick one of _0gem_ _1gem_ _2gem_ _2gem_ _3gem_
+
+_elementsscare_ task:
+	when _elements_ and not _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_
+	reduce player fatigue by 25
+	raise time by 2:00
+	pick one of _0element_ _0element_ _1element_ _1element_ _2element_
+
+_gemsscare_ task:
+	when _gems_ and not _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_
+	reduce player fatigue by 25
+	raise time by 2:00
+	pick one of _0gem_ _0gem_ _1gem_ _1gem_ _2gem_
+
+_0element_ task:
+	say 1013
+
+_1element_ task:
+	say 1014
+	get item _element1_
+	make _element1_ permanent
+
+_2element_ task:
+	say 1015
+	get item _element1_
+	make _element1_ permanent
+	get item _element2_
+	make _element2_ permanent
+
+_3element_ task:
+	say 1016
+	get item _element1_
+	make _element1_ permanent
+	get item _element2_
+	make _element2_ permanent
+	get item _element3_
+	make _element3_ permanent
+
+_0gem_ task:
+	say 1013
+
+_1gem_ task:
+	say 1018
+	get item _gem1_
+	make _gem1_ permanent
+
+_2gem_ task:
+	say 1019
+	get item _gem1_
+	make _gem1_ permanent
+	get item _gem2_
+	make _gem2_ permanent
+
+_3gem_ task:
+	say 1020
+	get item _gem1_
+	make _gem1_ permanent
+	get item _gem2_
+	make _gem2_ permanent
+	get item _gem3_
+	make _gem3_ permanent
+
+_mined_ task:
+	when _0element_ or _1element_ or _2element_ or _3element_ or _0gem_ or _1gem_ or _2gem_ or _3gem_
+
+_bonusweak_ task:
+	when _mined_ and _worstchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_
+
+_bonuseven_ task:
+	when _mined_ and _evenchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_
+
+_bonusgood_ task:
+	when _mined_ and _goodchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_ _1bonus_
+
+_bonusbest_ task:
+	when _mined_ and _bestchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_ _1bonus_ _1bonus_
+
+_0bonus_ task:
+	end quest
+
+_1bonus_ task:
+	pick one of _randomingredient_ _randomingredient_ _randomingredient_ _randomingredient_ _randomitem_
+
+_randomitem_ task:
+	pick one of _weaponitem_ _armoritem_ _magicitem_ _bookitem_ _potionitem_ _mapitem_ _miscitem_
+	
+_randomingredient_ task:
+	pick one of _coinsitem_ _flamableitem_ _flamableitem_ _organitem_ _skinitem_ _mythicitem_ _mineralitem_ _trinketitem_
+
+_weaponitem_ task:
+	update-quest-item _weapon_ Leveled
+	say 1022
+	get item _weapon_
+	make _weapon_ permanent
+	end quest
+
+_armoritem_ task:
+	update-quest-item _armor_ Leveled
+	say 1023
+	get item _armor_
+	make _armor_ permanent
+	end quest
+
+_magicitem_ task:
+	say 1024
+	get item _magic_
+	make _magic_ permanent
+	end quest
+
+_miscitem_ task:
+	say 1025
+	get item _misc_
+	make _misc_ permanent
+	end quest
+
+_flamableitem_ task:
+	say 1026
+	get item _flamable_
+	make _flamable_ permanent
+	end quest
+
+_trinketitem_ task:
+	say 1027
+	get item _trinket_
+	make _trinket_ permanent
+	end quest
+
+_bookitem_ task:
+	say 1028
+	get item _book_
+	make _book_ permanent
+	end quest
+
+_potionitem_ task:
+	say 1029
+	get item _potion_
+	make _potion_ permanent
+	end quest
+
+_mapitem_ task:
+	say 1030
+	get item _map_
+	make _map_ permanent
+	end quest
+
+_coinsitem_ task:
+	say 1031
+	get item _coins_
+	make _coins_ permanent
+	end quest
+
+_organitem_ task:
+	say 1032
+	get item _organ_
+	make _organ_ permanent
+	end quest
+
+_skinitem_ task:
+	say 1033
+	get item _skin_
+	make _skin_ permanent
+	end quest
+
+_mythicitem_ task:
+	say 1038
+	get item _mythic_
+	make _mythic_ permanent
+	end quest
+
+_mineralitem_ task:
+	say 1039
+	get item _mineral_
+	make _mineral_ permanent
+	end quest

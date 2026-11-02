@@ -1,0 +1,358 @@
+// STATIC NPC IDENTITY - StaticNPC.cs (MIT, Daggerfall Workshop), the
+// data layer under every person standing in a shop, temple, guild hall
+// or palace. Until now the port drew those billboards and knew nothing
+// about them: no name, no gender, no race, no portrait, so every click
+// fell through to "You get no response."
+//
+// The identity is DERIVED, not stored: classic has no NPC table. A
+// person is their POSITION and their FACTION, and everything else -
+// which name they answer to, which face the talk window draws - falls
+// out of those two through a seeded PRNG. That is why the same
+// shopkeeper is the same person every time you walk in, and why they
+// differ between one building and the next.
+
+import { srand } from '../formats/dfRandom.js';
+import { getNameBankOfRegion, BANK_TYPES, GENDERS } from './nameHelper.js';
+import { personName } from './personNames.js'; // REGION-NAMES: a key - by its bank's culture alone
+import { RACES } from '../systems/races.js';
+// ONE HOME for FactionFile.FactionTypes (FactionFile.cs:530-546) - the
+// enum the parser already mints. Individual is 4; 3 is Subgroup.
+import { FACTION_TYPES } from '../formats/factionFile.js';
+import { getLocalizedFactionName } from '../systems/textManager.js'; // L10N3e: a named NPC's faction name, shown in the player's language
+
+// RR2: `flatsDict[flatId] = new FlatsFile.FlatData { faceIndex }`
+// (RoleplayRealism.cs:1017-1023) - a mod rewrites FLATS.CFG's face for a
+// flat it re-drew, keyed by the flat the person was born as, the last
+// writer winning. The pipeline's flatFaceIndex asks here first.
+const _faceOverrides = new Map();
+export function setFlatFaceOverride(archive, record, faceIndex) {
+  if (faceIndex == null) _faceOverrides.delete(`${archive}:${record}`);
+  else _faceOverrides.set(`${archive}:${record}`, faceIndex | 0);
+}
+export const flatFaceOverride = (archive, record) => _faceOverrides.get(`${archive}:${record}`) ?? null;
+export function _resetFlatFaceOverrides() {
+  _faceOverrides.clear();
+}
+
+/** StaticNPC.Context (:113-118). */
+export const NPC_CONTEXT = Object.freeze({ Custom: 0, Dungeon: 1, Building: 2 });
+
+/** StaticNPC.NPCData (:88-107) is a STRUCT, so C# has no null for it -
+ *  an unassigned one is the all-zero value, and every field reads its
+ *  enum's zero (Genders.Male, Context.Custom, BankTypes.Breton, and
+ *  `(Races)0`, which is not even a member).
+ *
+ *  AUDIT 24 (the seven-slice sweep): the port used `null`, and three
+ *  reads dereferenced it without a guard - topicTree's
+ *  GetPersonBuildingKey and its quest-topic rebuild, and sceneMount's
+ *  questor billboard pick. Every one of them is reachable: the OTHER
+ *  route to isQuestor is `add <sym> as questor` (Quest.addQuestor),
+ *  which sets the flag and never touches questorData - exactly as
+ *  C#'s Quest.cs:472 does, because there the struct is already there.
+ *  So a quest that names its own questor crashed the talk topic
+ *  rebuild. The zero struct is the value C# actually holds. */
+export const ZERO_NPC_DATA = Object.freeze({
+  hash: 0,
+  flags: 0,
+  factionID: 0,
+  nameSeed: 0,
+  gender: 0, // Genders.Male
+  race: 0, // (Races)0 - C#'s struct default, no member
+  context: NPC_CONTEXT.Custom,
+  mapID: 0,
+  locationID: 0,
+  buildingKey: 0,
+  nameBank: 0, // BankTypes.Breton
+  billboardArchiveIndex: 0,
+  billboardRecordIndex: 0,
+});
+
+/** GetPositionHash (StaticNPC.cs:333-336): int32 semantics via |0. */
+export const positionHash = (x, y, z) => (x ^ (y << 2) ^ (z >> 2)) | 0;
+
+/** SetLayoutData (StaticNPC.cs:210-224): the NPCData record from a
+ *  block person record + the scene context. */
+export function staticNpcData(
+  pn,
+  {
+    mapId = 0,
+    locationIndex = 0,
+    buildingKey = 0,
+    getFaction = null,
+    raceOfCurrentRegion = null,
+    // StaticNPC.cs:165-179 - the RMB (building) overload stamps
+    // Context.Building; the RDB one two above it stamps Dungeon. This
+    // helper serves the building path, so that is the default, and a
+    // dungeon caller says so.
+    context = NPC_CONTEXT.Building,
+  } = {},
+) {
+  const factionID = pn.factionID ?? 0;
+  return {
+    // AUDIT 24 (the seven-slice sweep): over the ZERO STRUCT, because
+    // that is what C# starts from - the layout overload writes nine of
+    // the thirteen fields and leaves the rest at their struct zeros.
+    ...ZERO_NPC_DATA,
+    hash: positionHash(pn.rawX ?? 0, pn.rawY ?? 0, pn.rawZ ?? 0),
+    flags: pn.flags ?? 0,
+    factionID,
+    billboardArchiveIndex: pn.textureArchive ?? 0,
+    billboardRecordIndex: pn.textureRecord ?? 0,
+    // C# precedence kept: position ^ (buildingKey + locationIndex)
+    nameSeed: ((pn.position ?? 0) ^ (buildingKey + locationIndex)) | 0,
+    gender: ((pn.flags ?? 0) & 32) === 32 ? GENDERS.Female : GENDERS.Male,
+    // SetLayoutData's own line (:220). AUDIT 24: the port left `race`
+    // off entirely, so QuestMCP.Oath's clicked-NPC arm - the one the
+    // main quests lean on before a questor is set - read undefined and
+    // fell through to the region every time.
+    race: raceFromFaction(factionID, getFaction, raceOfCurrentRegion ?? (() => 0)),
+    // AUDIT 24: the port left every mint at the struct's 0 (Custom),
+    // and topicTree's castle-questor test - the only reader - compared
+    // it against the STRING 'dungeon', so both halves were dead.
+    context,
+    buildingKey,
+    mapID: mapId,
+  };
+}
+
+/** SetLayoutData's EXTERIOR overload (StaticNPC.cs:180-207), the one
+ *  RMBLayout runs for a street NPC. It differs from the building
+ *  overload above in three places, and this is the first: THE GENDER
+ *  FLAG ON AN RMB FLAT RECORD IS INVALID (:185-194). The flat's own
+ *  bit 32 is thrown away and FLATS.CFG's gender column decides -
+ *  `flatCFG.gender.Contains("2")` sets the bit, anything else CLEARS
+ *  it (`flags &= 223`, i.e. ~32 in a byte). A flat FLATS.CFG does not
+ *  carry keeps the record's flags untouched, because C# only enters
+ *  the branch when GetFlatData answered true.
+ *
+ *  The other two differences are the caller's: buildingKey 0 (there is
+ *  no building above ground) and Context.Custom, not Context.Building.
+ *
+ *  Verbatim `Contains("2")`, not the port's flatGender helper: a "?2"
+ *  (a flat classic would censor in ChildGard) contains "2" and is
+ *  female here, and a gender column that is neither reads as MALE
+ *  rather than as "unknown".
+ *
+ *  @param {number} flags     the block record's own flags
+ *  @param {?object} flatData FlatsFile.getFlatData's answer, or null
+ */
+export function exteriorNpcFlags(flags, flatData) {
+  if (!flatData) return flags;
+  return String(flatData.gender ?? '').includes('2') ? flags | 32 : flags & 223;
+}
+
+/** SetLayoutData(hash, gender, factionID, nameSeed) (StaticNPC.cs:245-255)
+ *  - the DIRECT overload, the one a quest Person's click runs through.
+ *  Nine fields; note it writes NEITHER buildingKey NOR mapID (the
+ *  runtime pass at :299-306 fills the key), and it is the only
+ *  overload that stamps Context.Custom. */
+export function layoutNpcData({
+  hash,
+  gender,
+  factionID = 0,
+  nameSeed = -1,
+  getFaction = null,
+  raceOfCurrentRegion = null,
+  ...rest
+}) {
+  return {
+    ...ZERO_NPC_DATA,
+    hash,
+    flags: gender === GENDERS.Male ? 0 : 32,
+    factionID,
+    nameSeed: nameSeed === -1 ? hash : nameSeed,
+    gender,
+    race: raceFromFaction(factionID, getFaction, raceOfCurrentRegion ?? (() => 0)),
+    // Context.Custom is 0, which is also the struct's zero - this line
+    // changes nothing and is here because SetLayoutData writes it
+    // deliberately and the reader should see that it did
+    context: NPC_CONTEXT.Custom,
+    ...rest,
+  };
+}
+
+/** GetRaceFromFaction (:357-369), verbatim: a NAMED faction lends its
+ *  race, and anything else - faction 0, or a faction whose race maps
+ *  to None - takes the race of the REGION the player is standing in.
+ *  So an unfactioned villager is a local, which is what classic looks
+ *  like.
+ *
+ *  @param {number} factionId
+ *  @param {function(number):object|null} getFaction  the FACTION.TXT lookup
+ *  @param {function():number} raceOfCurrentRegion    PlayerGPS's fallback
+ */
+export function raceFromFaction(factionId, getFaction, raceOfCurrentRegion) {
+  if (factionId !== 0) {
+    // AUDIT 24 (the seven-slice sweep): C# IGNORES GetFactionData's
+    // bool (:362) and reads the `out` struct regardless - and a MISS
+    // leaves that struct at its default, whose `race` field is 0,
+    // which GetRaceFromFactionRace maps to FactionRaces.Nord. So an
+    // unresolvable faction id answers NORD in DFU, not the region's
+    // race: only a faction whose race really maps to None falls
+    // through. The port read `fd?.race` as undefined on a miss and
+    // sent it to the region, so an id the table does not hold produced
+    // a local instead of a Nord.
+    const fd = getFaction?.(factionId) ?? null;
+    const race = raceFromFactionRace(fd?.race ?? 0);
+    if (race !== null) return race;
+  }
+  return raceOfCurrentRegion();
+}
+
+/** RaceTemplate.GetRaceFromFactionRace (:109-133) over FACTION.TXT's
+ *  OWN race enum (FactionFile.cs:609-623), which is a DIFFERENT
+ *  numbering from the Races enum and not merely an offset of it:
+ *      FactionRaces  None -1, Nord 0, Khajiit 1, Redguard 2, Breton 3,
+ *                    Argonian 4, WoodElf 5, HighElf 6, DarkElf 7
+ *      Races         Breton 1, Redguard 2, Nord 3, DarkElf 4, ...
+ *  so the two orders disagree as well as the bases. Written out case
+ *  by case against the source rather than computed, because the first
+ *  draft of this function DID compute it - as "the same order, one
+ *  lower" - and every NPC in the game would have taken the wrong race
+ *  with the suite green.
+ *
+ *  FACTION.TXT also carries four values with no Races counterpart
+ *  (Skakmat 11, Orc 17, Vampire 18, Fey 19); DFU's switch has no case
+ *  for them, so they fall out as None like -1 does and send
+ *  GetRaceFromFaction to its region fallback. */
+/** RaceTemplate.GetFactionRaceFromRace (:142-167), the INVERSE of the
+ *  map below - Races back to FACTION.TXT's own race numbering. Written
+ *  out case by case for the same reason: the two orders disagree, and
+ *  computing it would be wrong in a way a green suite would not catch.
+ *  Races with no FactionRaces counterpart (Vampire 9, Werewolf 10,
+ *  Wereboar 11) have no case in C#'s switch either and fall out None. */
+export function factionRaceFromRace(race) {
+  switch (race) {
+    case RACES.Nord:
+      return 0;
+    case RACES.Khajiit:
+      return 1;
+    case RACES.Redguard:
+      return 2;
+    case RACES.Breton:
+      return 3;
+    case RACES.Argonian:
+      return 4;
+    case RACES.WoodElf:
+      return 5;
+    case RACES.HighElf:
+      return 6;
+    case RACES.DarkElf:
+      return 7;
+    default:
+      return -1; // FactionRaces.None
+  }
+}
+
+export function raceFromFactionRace(factionRace) {
+  switch (factionRace) {
+    case 0:
+      return RACES.Nord;
+    case 1:
+      return RACES.Khajiit;
+    case 2:
+      return RACES.Redguard;
+    case 3:
+      return RACES.Breton;
+    case 4:
+      return RACES.Argonian;
+    case 5:
+      return RACES.WoodElf;
+    case 6:
+      return RACES.HighElf;
+    case 7:
+      return RACES.DarkElf;
+    default:
+      return null; // None (-1), Skakmat, Orc, Vampire, Fey
+  }
+}
+
+/** GetDisplayName (:315-328), verbatim: an INDIVIDUAL faction answers
+ *  its own name - that is how a named lord is always that lord - and
+ *  everybody else is generated from their name seed, which makes them
+ *  stable for that position without anything being stored.
+ *
+ *  @param {object} data      staticNpcData's result
+ *  @param {object} [deps]
+ *  @param {function(number):object|null} [deps.getFaction]
+ *  @param {number} [deps.nameBank]  BankTypes - the CURRENT REGION's
+ *    (MapsFile.GetNameBankOfRegion). AUDIT 26 F016: this defaulted
+ *    from the NPC's race, which DFU never does anywhere -
+ *    SetRuntimeData stores `GetNameBankOfCurrentRegion()` (:309) and
+ *    GetDisplayName reads that bank (:325-326). The fallback here is
+ *    Breton because that is what GetNameBankOfCurrentRegion answers
+ *    for an unknown region (PlayerGPS.cs:421-427), NOT a race guess.
+ */
+export function staticNpcName(data, { getFaction = null, nameBank = null } = {}) {
+  const fd = getFaction?.(data.factionID) ?? null;
+  // GetDisplayName (:319) tests `factionData.type == (int)FactionTypes.Individual`.
+  if (fd && fd.type === FACTION_TYPES.Individual) return fd.name;
+  srand(data.nameSeed);
+  const bank = nameBank ?? BANK_TYPES.Breton; // F016: GetNameBankOfCurrentRegion's own fallback
+  // AUDIT 24 (wave 24): `data.gender` is the Genders enum, which is
+  // what FullName takes - C# passes `npcData.gender` straight through
+  // (:328). The string compare here was propping up the stale
+  // staticNpcData above, which wrote 'female'/'male'; that one is gone
+  // and this is the C# line.
+  const drawn = personName(bank, data.gender); // REGION-NAMES: DFU's draw, then its culture's name off it (a key: no region)
+  // QUEST-NAME-ONE (a departure): a quest Person's stand answers to the
+  // Person's own name (systems/quest/person.js personOwnName, carried as
+  // `personName` by the stand's one builder) - the name its quest's
+  // words, journal and guide say. DFU re-draws it here, and the two meet
+  // only while nothing renamed the Person (the questlines' `ql name`)
+  // and both banks agree. The draw still runs, so the classic stream
+  // stands where DFU's GetDisplayName leaves it.
+  return data.personName || drawn;
+}
+
+/** L10N3e: StaticNPC.DisplayName as DFU SHOWS it. GetDisplayName reads
+ *  the faction through GetFactionData, which hands the name back through
+ *  GetLocalizedFactionName (PersistentFactionData.cs:176) - so a named
+ *  lord is shown by a translation's name for his faction id. Everybody
+ *  else is the seeded full name, in any language.
+ *
+ *  `staticNpcName` above stays FACTION.TXT's, because it is a KEY too:
+ *  it becomes the talk partner's nameNPC, which the topic tree compares
+ *  with a quest Person's name (TalkManager.cs:3159) - so the name a
+ *  plaque, the Info line or the talk window shows is read here, where
+ *  the person is drawn, and never stored. Same arguments. */
+export function staticNpcShownName(data, deps = {}) {
+  const name = staticNpcName(data, deps);
+  const fd = deps.getFaction?.(data.factionID) ?? null;
+  return fd && fd.type === FACTION_TYPES.Individual ? getLocalizedFactionName(data.factionID, name) : name;
+}
+
+/** TextureReader.IsChildNPCTexture (:1076-1137), verbatim - the eight
+ *  archives that hold child sprites and the exact records checked in
+ *  each. AUDIT 26 F020: neither this table nor the 514 faction lived
+ *  in the port, so `isChildNPC` was read in four places and written
+ *  nowhere. */
+const CHILD_NPC_TEXTURES = Object.freeze({
+  181: Object.freeze(new Set([3])), // templePeople
+  182: Object.freeze(new Set([4, 5, 6, 18, 36, 37, 38, 42, 43, 52, 53])), // mediumCommonPeople
+  184: Object.freeze(new Set([15])), // flatPeople2
+  186: Object.freeze(new Set([4, 5, 6, 7, 19, 37, 38, 39, 43, 44, 53, 54])), // testBigFlats
+  197: Object.freeze(new Set([3])), // kludgeTown
+  334: Object.freeze(new Set([2, 3, 6, 9, 12])), // daggerfallPeople
+  346: Object.freeze(new Set([2, 3, 12, 15, 16, 18])), // wayrestPeople
+  357: Object.freeze(new Set([5, 6, 7, 8])), // sentinelPeople
+});
+export const isChildNPCTexture = (archive, record) => !!CHILD_NPC_TEXTURES[archive]?.has(record);
+
+/** StaticNPC.IsChildNPCData (:342-350): a child by TEXTURE PAIR or by
+ *  the children faction (514). DFU gates both questor arms on it
+ *  (TalkManager.cs:755-770) and the work pool (:2842). */
+export const CHILDREN_FACTION_ID = 514;
+export function isChildNPCData(data) {
+  if (!data) return false;
+  return (
+    isChildNPCTexture(data.billboardArchiveIndex, data.billboardRecordIndex) || data.factionID === CHILDREN_FACTION_ID
+  );
+}
+
+// AUDIT 26 F016: `bankForRace` and its raceKeyOf helper lived here to
+// serve the race default above. DFU has no such path - no line in
+// StaticNPC, TalkManager or anywhere else derives a name bank from a
+// race - so both are gone with the default that invented them.
+
+export { getNameBankOfRegion };

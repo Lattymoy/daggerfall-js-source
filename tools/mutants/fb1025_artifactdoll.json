@@ -1,0 +1,92 @@
+[
+  {
+    "name": "ART-DOLL-carve-out-gone",
+    "file": "src/ui/paperDoll.js",
+    "old": "  if (item.artifact && Number.isFinite(item.playerTextureRecord) && (item.group === 'Armor' || item.group === 'Weapons')) {",
+    "new": "  if (false && item.artifact && Number.isFinite(item.playerTextureRecord) && (item.group === 'Armor' || item.group === 'Weapons')) {",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "the base template's Tower Shield again"
+  },
+  {
+    "name": "ART-DOLL-any-shield",
+    "file": "src/ui/paperDoll.js",
+    "old": "  if (item.artifact && Number.isFinite(item.playerTextureRecord) && (item.group === 'Armor' || item.group === 'Weapons')) {",
+    "new": "  if (Number.isFinite(item.playerTextureRecord ?? 0) && (item.group === 'Armor' || item.group === 'Weapons')) {",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "the carve-out taken by a mundane shield"
+  },
+  {
+    "name": "ART-DOLL-weapons-left-out",
+    "file": "src/ui/paperDoll.js",
+    "old": "  if (item.artifact && Number.isFinite(item.playerTextureRecord) && (item.group === 'Armor' || item.group === 'Weapons')) {",
+    "new": "  if (item.artifact && Number.isFinite(item.playerTextureRecord) && (item.group === 'Armor')) {",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "an artifact weapon draws its base template"
+  },
+  {
+    "name": "ART-DOLL-template-record",
+    "file": "src/ui/paperDoll.js",
+    "old": "    let record = item.playerTextureRecord;",
+    "new": "    let record = t.playerTextureRecord;",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "the base template's record in the artifact archive"
+  },
+  {
+    "name": "ART-DOLL-female-as-male",
+    "file": "src/ui/paperDoll.js",
+    "old": "archive: gender === 'female' ? ARTIFACT_FEMALE_TEXTURE_ARCHIVE : ARTIFACT_MALE_TEXTURE_ARCHIVE, record, dye",
+    "new": "archive: ARTIFACT_MALE_TEXTURE_ARCHIVE, record, dye",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "433 never drawn"
+  },
+  {
+    "name": "ART-DOLL-minters-gender",
+    "file": "src/ui/paperDoll.js",
+    "old": "archive: gender === 'female' ? ARTIFACT_FEMALE_TEXTURE_ARCHIVE : ARTIFACT_MALE_TEXTURE_ARCHIVE, record, dye",
+    "new": "archive: item.playerTextureArchive, record, dye",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "GetArtifactTextureIndices verbatim: the minter's gender"
+  },
+  {
+    "name": "ART-DOLL-bump-dropped",
+    "file": "src/ui/paperDoll.js",
+    "old": "    if (item.group === 'Weapons' && item.equipSlot === EQUIP_SLOTS.RightHand && getItemHands(item) === ITEM_HANDS.Either) record += 1;\n    return { archive: gender",
+    "new": "    return { archive: gender",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "the right hand draws the left hand's record"
+  },
+  {
+    "name": "ART-DOLL-bump-every-hand",
+    "file": "src/ui/paperDoll.js",
+    "old": "    if (item.group === 'Weapons' && item.equipSlot === EQUIP_SLOTS.RightHand && getItemHands(item) === ITEM_HANDS.Either) record += 1;\n    return { archive: gender",
+    "new": "    if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Either) record += 1;\n    return { archive: gender",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "the left hand bumped too"
+  },
+  {
+    "name": "ART-DOLL-dyed",
+    "file": "src/ui/paperDoll.js",
+    "old": "dye: itemDyeColor(item), target: itemDyeTarget(item) };",
+    "new": "dye: itemDyeColor(item), target: DYE_TARGETS.WeaponsAndArmor };",
+    "tests": [
+      "test/ui/fb1025_artifactdoll.test.js"
+    ],
+    "note": "the artifact dyed by the armor swatch"
+  }
+]

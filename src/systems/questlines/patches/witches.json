@@ -1,0 +1,6 @@
+{
+  "family": "Witches",
+  "patches": {
+    "Q0C4XY04": [{"old":"_pcgetsgold_ task:\n\ttoting _heart_ and _questgiver_ clicked \n","new":"_pcgetsgold_ task:\n\twhen _qlkeep_\n","count":1},{"old":"\nQBN:","new":"\nMessage:  1900\n<ce> Thou hast it, %pcn, and still it beats!\n<ce> Quickly now, before it cools - what wouldst\n<ce> thou have of thy poor aunts for so fine a\n<ce> heart?\n\nMessage:  1901\nThe _reward_ you promised.\n\nMessage:  1902\nNothing. A gift for my aunts.\n\nQBN:","count":1},{"old":"\tclear _S.10_ \n\nvariable _exitstarter_","new":"\tclear _S.10_ \n\nvariable _exitstarter_\n\n_qlask_ task:\n\ttoting _heart_ and _questgiver_ clicked\n\task 1900 choices 1901 _qlkeep_ 1902 _qlalt_\n\nvariable _qlkeep_\nvariable _qlalt_\n\n_qlaltpath_ task:\n\twhen _qlalt_\n\tql paid\n\tchange repute with _questgiver_ by +5\n\tend quest","count":1}]
+  }
+}

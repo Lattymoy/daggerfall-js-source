@@ -1,0 +1,610 @@
+// FIX-F (Mac: "changing keybinds in classic/enhanced do not work") —
+// THE ENHANCED SKIN'S REBINDING PANE.
+//
+// The bug was not that rebinding was broken. It was that the DEFAULT
+// skin had no door to it at all: the only rebinding UI in the port is
+// the classic canvas grid (ui/controlsWindow.js on CNFG00I0.IMG),
+// reachable only from the classic pause window's `openControls`
+// (ui/pauseWindow.js). A player on the enhanced skin — which is the
+// default (systems/uiSkin.js) — pressed Escape, met Resume / Save /
+// Load / Settings / Mods / About / Exit, and there was nowhere to go.
+//
+// SO THIS IS A SECOND FACE, NOT A SECOND LAW. Every rule below is
+// ControlsConfigManager's, driven through the same two modules the
+// classic grid drives:
+//
+//   systems/controlsConfig.js — the STAGING law. createUnsavedKeybinds
+//     copies both live dicts, setUnsavedBinding writes only to the
+//     copy, checkDuplicates reports the two kinds of clash and whether
+//     the window may close, applyUnsavedKeybinds is SetAllKeyBindValues
+//     and stagedDefaults is the registry's own reset, staged (KB1).
+//   systems/inputActions.js — the registry itself, plus saveKeyBinds.
+//
+// Nothing here decides anything about keys. If the classic grid and
+// this pane ever disagree it is because one of them stopped calling
+// these functions, which is what test/ui/enhanced/enhancedControls.test.js holds.
+//
+// THE GESTURES, mirrored from ui/controlsWindow.js:
+//  - LEFT CLICK a binding arms capture; the NEXT keydown OR MOUSE
+//    BUTTON binds.
+//    ReservedKeys is empty in DFU (InputManager.cs:73
+//    `new KeyCode[] { }`, exposed :174-177), so the capture gate that
+//    consults it (DaggerfallControlsWindow.cs:410) never refuses a key —
+//    Escape included, which is why the shell's own Escape handler stands
+//    down while armed (captureArmed(), ui/enhanced/enhancedMenu.js's onKey).
+//  - a key pressed under Ctrl/Shift/Alt binds the COMBO, through the
+//    grid's own comboFromEvent — the port's narrowing of DFU's
+//    two-key gesture onto the event's three virtual flags.
+//  - RIGHT CLICK, or the row's ✕, CLEARS the binding at once, and
+//    refuses on a slot that is already unbound exactly as DFU's does
+//    (:292). DFU asks first (PromptRemoveKeybindMessage :290-320); this
+//    pane does not (UXB1-C, below clearBinding).
+//  - DEFAULTS confirms, then STAGES the registry's reset (KB1); Confirm
+//    commits it.
+//  - A KEY ANOTHER ACTION HOLDS asks before it moves (KB1, law 4) - in
+//    a tooltip beside the binding being changed, with the rows that
+//    clash marked (UXB1-D) - and offers a third answer, USE FOR
+//    BOTH (UXB1-S): the key stays and lands here too, and a press does
+//    every action on it.
+//  - A SHARED KEY is green, and each of its rows names what else it
+//    does. A CLASH DFU's law still finds (a combo against its own
+//    modifier bound bare) colours the binding - red inside the shown
+//    dict, blue across the two - and EITHER kind blocks CONFIRM with the
+//    classic window's own multipleAssignments line.
+//  - CONFIRM (DFU's Continue, UXB1-B) on a clean set applies the staged
+//    dicts and saves.
+//  - LEAVING WITHOUT CONFIRM DISCARDS. That is the whole point of a
+//    staged copy, and the shell calls discardControlsStaging() on
+//    every navigation away and on unmount.
+//
+// THE CAPTURE LISTENER IS THE PART A BROWSER GETS WRONG. It is a
+// `keydown` on the DOCUMENT with `{ capture: true }`, and it
+// preventDefault()s and stopPropagation()s what it takes, so the hosts'
+// own keydown ladders (scenes/world.js, exterior.js, worldModes.js —
+// all bubble-phase listeners on the global) never see the key being
+// bound. It is removed the instant the key lands, and again if the pane
+// is left while still armed: a window-level listener that outlives its
+// screen is the bug ui/enhanced/enhancedMenu.js's own unmount note is about.
+//
+// AND THE CAPTURE TARGET IS A <button>, NEVER AN <input>. ui/input.js
+// isTextEntryTarget answers on INPUT/TEXTAREA/contentEditable (CG2);
+// a text field here would make every host's router treat the pane as
+// a typing surface.
+
+import { saveKeyBinds, resetDefaults, ACTION_GROUPS, actionLabel } from '../../systems/inputActions.js';
+import { peerMenuBindCard, discardPeerMenuCapture } from '../peerMenuBindCard.js';   // PEERMENU1
+import { modSetting } from '../../systems/modSettings.js';   // KB1: a mod's group is drawn while the mod is on
+import { bindings, mouseCode, swingMode } from '../input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
+import {
+  createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
+  applyUnsavedKeybinds, buttonText,
+  comboFromEvent, swingHint, floatHint, sharedFloatNote, fixedKeyRows,
+  bindingHolders, replaceKeybindPromptRows, stageReplace, stagedDefaults,
+  canShareKey, stageShare, keySharers, SHARE_KEY_LABEL, unsavedEdits,
+} from '../../systems/controlsConfig.js';
+import { localizedText } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { gameSettingsText } from '../../systems/textDatabases.js';   // L10N3f: DFU's GameSettings text database, a pack's in its language
+
+/** The shell's own `el`, three lines, kept LOCAL on purpose:
+ *  ui/enhanced/enhancedMenu.js imports this module, so importing its helper
+ *  back would make the pair a cycle for the sake of a closure. */
+const el = (t, cls, txt) => {
+  const n = document.createElement(t);
+  if (cls) n.className = cls;
+  if (txt != null) n.textContent = txt;
+  return n;
+};
+
+/** KB1 (2026-09-23, Mac: "ensuring keybinds are organized and working as intended"): THE PANE DRAWS THE STANDARD'S
+ *  GROUPS - systems/inputActions.js ACTION_GROUPS, every action once, in the group a player looks for it under, with
+ *  a player's words for it. It used to draw the CLASSIC window's two faces (DFU's thirty-eight-button grid slice and
+ *  the ADVANCED popup's six) and then the port's rows in four headings after them, so Jump sat beside Transport in
+ *  one alphabet-free list of fifty and a mod's keys were not on the page at all. The classic windows keep their
+ *  art-fixed grids (ui/controlsWindow.js, ui/mouseControlsWindow.js); this pane is not their copy any more.
+ *
+ *  A MOD'S GROUP IS DRAWN WHILE THE MOD IS ON, which is the same switch its keys answer to (inputActions.js
+ *  actionLive). Off, its keys stay bound - switching it back on must not find them given away - and a bind onto one
+ *  asks first, naming the mod. */
+export function shownGroups(isOn = modIsOn) {
+  return ACTION_GROUPS.filter((grp) => !grp.mod || isOn(grp.mod));
+}
+function modIsOn(vendor) {
+  try { return !!modSetting(vendor, 'Enabled'); } catch { return false; }
+}
+
+/** ShowMultipleAssignmentsMessage's line, the string the classic grid
+ *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same
+ *  words, because it is the same refusal. */
+export const MULTIPLE_ASSIGNMENTS = 'You have multiple assignments...';
+/** UXB1-S: the head of a shared key's row line - "Also: Float up". */
+export const SHARED_KEY_PREFIX = 'Also:';
+/** ConfirmDefaultsBox (:296-317). */
+export const DEFAULTS_PROMPT = 'Are you sure you want to set default controls?';
+/** UXB1-B (2026-09-25, the UX backlog: 'Change "Continue" in keybinds to "Submit" or "Confirm"'): the commit
+ *  button's word. DFU's is ContinueButton (:69-79) because its window closes on it and the game goes on; this pane
+ *  stays open and the press SAVES, so the word says what it does. The classic grid keeps the word baked in
+ *  CNFG00I0's art. */
+export const CONFIRM_LABEL = 'Confirm';
+/** UNSAVED-MARK (FIELD BUGS 2026-10-11): a row whose staged key the registry does not hold yet says so, and the head
+ *  counts what a Confirm still owes. */
+export const UNSAVED_ROW = 'Not saved yet. Press Confirm.';
+export const unsavedCount = (n) => `${n} change${n === 1 ? '' : 's'} not saved yet. Press ${CONFIRM_LABEL} to keep ${n === 1 ? 'it' : 'them'}.`;
+
+// ── PER-VISIT STATE ──────────────────────────────────────────────
+// `unsaved` is the staged pair of dicts. It is created on the first
+// paint of the pane and DESTROYED on the way out, which is what makes
+// leaving-without-CONTINUE a discard rather than a save.
+let unsaved = null;
+let dupes = { internal: new Set(), cross: new Set(), ok: true };
+let armed = null;          // the action awaiting a key (:52 waitingForInput)
+let armedHandler = null;   // the document keydown listener while it waits
+let armedMouse = null;     // MAC-K1: and its mouse half - one arm, two doors
+let prompt = null;         // { kind: 'defaults' } | { kind: 'replace', action, code, holders, usingPrimary }
+let pendingDefaults = false;   // KB1: Defaults is staged; Confirm commits it with the live reset
+let notice = null;         // the multipleAssignments line, or the saved note
+let edited = new Set();    // UNSAVED-MARK: the shown dict's rows a Confirm still owes - read at each paint
+let repaint = () => {};
+let focusAfterPrompt = null;   // the binding that owns focus again once its modal question closes
+const PROMPT_FOCUS = Symbol('promptFocus');
+
+const refresh = () => { dupes = checkDuplicates(unsaved); };
+
+function afterPaint(fn) {
+  if (typeof globalThis.requestAnimationFrame === 'function') globalThis.requestAnimationFrame(fn);
+  else fn();
+}
+
+function openConflictTooltip(tip) {
+  afterPaint(() => {
+    if (tip.isConnected === false) return;
+    if (typeof tip.showModal === 'function' && !tip.open) tip.showModal();
+    tip[PROMPT_FOCUS]?.focus?.({ preventScroll: true });
+  });
+}
+
+function stage() {
+  if (!unsaved) {
+    unsaved = createUnsavedKeybinds(bindings());
+    refresh();
+  }
+  return unsaved;
+}
+
+/** The staged dicts, for tests and for nothing else. */
+export const controlsStaging = () => unsaved;
+/** The duplicate report the pane is currently painting. */
+export const controlsDuplicates = () => dupes;
+
+/** WHICH ACTION IS WAITING FOR A KEY, and why anyone outside asks:
+ *  ui/enhanced/enhancedMenu.js's Escape handler is a CAPTURE listener on the
+ *  global, so it runs BEFORE this module's document listener and would
+ *  eat the one key DFU is most careful to let through. It stands down
+ *  while this answers. */
+export const captureArmed = () => armed;
+
+/** AUDIT KB1 (the UI lens' fourth finding): A PROMPT STANDING IS THE PANE'S, and Escape answers it No. The prompt
+ *  card reads as a dialog (UXB1-D: beside its binding, the list inert under it) - but with no capture armed, Escape
+ *  fell through to the menu's back stack, which left the section and DISCARDED every staged bind
+ *  (discardControlsStaging) or, on the pause face, resumed. Since KB1 nearly every bind raises the replace prompt, so
+ *  a reflexive Escape there was the common way to lose a whole session of edits. ui/enhanced/enhancedMenu.js's back stack
+ *  asks this first. */
+export const controlsPromptOpen = () => prompt != null;
+export function dismissControlsPrompt() { if (prompt) answerPrompt(false); }
+
+function disarm() {
+  if (armedHandler && typeof document !== 'undefined') {
+    document.removeEventListener('keydown', armedHandler, { capture: true });
+    document.removeEventListener('mousedown', armedMouse, { capture: true });
+  }
+  armedHandler = null;
+  armedMouse = null;
+  armed = null;
+}
+
+/** The half both capture listeners share: take the code, bind it,
+ *  stand down. `e` carries the modifier flags the combo arm reads. */
+function bindCaptured(code, e) {
+  // The host's ladder must never see a key that was being BOUND: the
+  // four scene hosts listen on the global in the bubble phase, so a
+  // capture-phase stop here is the whole of that guard.
+  e.preventDefault?.();
+  e.stopPropagation?.();
+  const action = armed;
+  disarm();
+  if (!action || code == null) return;
+  // The combo arm: a captured key held under Ctrl/Shift/Alt binds the
+  // pair, anything else binds the single code.
+  const combo = comboFromEvent(code, e);
+  const next = combo ?? code;
+  notice = null;
+  // KB1 (law 4): a key another action holds is ASKED for. The staged copy used to take it and colour both rows red.
+  const holders = bindingHolders(stage(), action, next);
+  if (holders.length) { prompt = { kind: 'replace', action, code: next, holders, usingPrimary: stage().usingPrimary }; repaint(); return; }
+  setUnsavedBinding(stage(), action, next);
+  refresh();
+  repaint();
+}
+
+/** WaitForKeyPress (:380-424). The next keydown binds, whatever it is. */
+function onCaptureKey(e) { bindCaptured(e.code, e); }
+
+/**
+ * MAC-K1 (Mac: "Mouse keybindings not working properly"), and the
+ * half of WaitForKeyPress this pane never had.
+ *
+ * DFU's capture is `Input.GetKeyDown` walked over EVERY KeyCode, and
+ * Mouse0/1/2 are KeyCodes like any other - which is how three of its
+ * own defaults come to be mouse buttons (AutoRun, SwingWeapon,
+ * ActivateCenterObject). The port's capture listened for `keydown`
+ * alone, so no action could ever be MOVED onto a button and one
+ * cleared off a button could never be put back. The registry, the
+ * storage, the duplicate law and every runtime reader had taken mouse
+ * codes since AUDIT 39r; the one door a player uses had not.
+ *
+ * THE ARMING CLICK IS NOT THE BOUND ONE. `arm()` runs from the row
+ * button's `onclick`, which the browser fires after that press has
+ * already come and gone, so the listener added here can only ever see
+ * the NEXT press. And while a capture is armed the pane is inert
+ * (`act()`), exactly as DFU's `waitingForInput` makes it - so a click
+ * meant to cancel binds instead, which is the same thing Escape does
+ * on the keyboard side and for the same reason: ReservedKeys is empty.
+ */
+function onCaptureMouse(e) {
+  const code = mouseCode(e.button);
+  if (code == null) return;      // past the third button: not a binding
+  bindCaptured(code, e);
+}
+
+function arm(action) {
+  disarm();                      // one capture at a time
+  armed = action;
+  notice = null;
+  if (typeof document !== 'undefined') {
+    armedHandler = onCaptureKey;
+    armedMouse = onCaptureMouse;
+    document.addEventListener('keydown', armedHandler, { capture: true });
+    document.addEventListener('mousedown', armedMouse, { capture: true });
+  }
+  repaint();
+}
+
+/** WHILE A CAPTURE IS ARMED THE PANE IS INERT.
+ *  DaggerfallControlsWindow heads EVERY button handler with
+ *  `if (waitingForInput) return;` — Joystick (:281), Mouse (:290),
+ *  Defaults (:299), Continue (:321), CurrentBindings (:338), the
+ *  keybind button itself (:361) and the right-click remove (:372,
+ *  where it is ANDed with the unbound-slot refusal). The pending
+ *  capture is the only live gesture on the screen. The classic grid
+ *  carries the law in one line (ui/controlsWindow.js:"keybindings not working"); this face
+ *  carries it as ONE predicate wrapped round every click surface, so
+ *  a control cannot be added without it. arm()'s own leading disarm()
+ *  is then unreachable-by-click — which is DFU's shape, not a loss.
+ *
+ *  UXB1-D: ...AND WHILE A PROMPT STANDS. The prompt used to be drawn IN
+ *  PLACE of the list, so nothing under it could be pressed; it stands
+ *  in the head now, over the list it leaves in place, and the list is
+ *  the modal box's background exactly as DFU's is - only Yes and No
+ *  (never wrapped in this) answer. */
+const act = (fn) => (...a) => { if (armed || prompt) return undefined; return fn(...a); };
+
+/**
+ * LEAVING THE PANE. Drops the staged copy, so nothing that was not
+ * pushed through CONTINUE reaches the registry, and takes the capture
+ * listener with it. The shell calls this from every navigation away
+ * and from its unmount.
+ */
+export function discardControlsStaging() {
+  disarm();
+  discardPeerMenuCapture();   // PEERMENU1
+  unsaved = null;
+  dupes = { internal: new Set(), cross: new Set(), ok: true };
+  prompt = null;
+  pendingDefaults = false;
+  notice = null;
+  repaint = () => {};
+  focusAfterPrompt = null;
+}
+
+// ── THE ACTS ─────────────────────────────────────────────────────
+
+/** UXB1-C (2026-09-25, the UX backlog: "Disable the confirm button on clearing keys. It's not hard to rebind or
+ *  simply revert your settings. Having to scroll back to your key is bad"): THE ✕ CLEARS - IT DOES NOT ASK.
+ *
+ *  DFU's window asks (PromptRemoveKeybindMessage :290-320), because DFU's clear lands in a window that commits on
+ *  close. Here a clear is STAGED like every other edit: nothing reaches the registry until Confirm, and leaving the
+ *  page drops it. So the question guarded nothing - and it was drawn in place of the whole list, which threw the
+ *  player back to the top of fifty-odd rows on every answer. Ledger A's UXB1 row records the departure; the classic
+ *  grid and its ADVANCED popup keep DFU's question. DFU's refusal on a slot that carries nothing (:292) stays. */
+function clearBinding(action) {
+  if (currentDict(stage()).get(action) == null) return;
+  notice = null;
+  setUnsavedBinding(unsaved, action, null);
+  refresh();
+  repaint();
+}
+
+function answerPrompt(yes) {
+  const p = prompt;
+  prompt = null;
+  if (p?.kind === 'replace') focusAfterPrompt = p.action;
+  if (yes === 'share' && p?.kind === 'replace' && canShareKey(unsaved, p.action, p.code, p.holders)) {
+    stageShare(unsaved, p.action, p.code);   // UXB1-S: the bind lands, and every holder keeps the key
+    refresh();
+  } else if (yes === true && p?.kind === 'replace') {
+    stageReplace(unsaved, p.action, p.code, p.holders);   // KB1: the holder staged unbound, the bind lands
+    refresh();
+  } else if (yes === true && p?.kind === 'defaults') {
+    // SetDefaults (:296-317) - KB1: STAGED, as the page's own sentence
+    // says. DFU's window reset the live registry and saved it there and
+    // then; this pane told the player nothing is saved until Confirm.
+    // The defaults are staged off a copy, and Confirm runs the live
+    // reset (the joystick tail and the removal marks with it) before the
+    // staged dicts land, so what is committed is the defaults plus any
+    // edit made after them.
+    const using = unsaved.usingPrimary;
+    unsaved = stagedDefaults(bindings());
+    unsaved.usingPrimary = using;
+    pendingDefaults = true;
+    refresh();
+  }
+  repaint();
+}
+
+/** CONFIRM - DFU's CONTINUE (:69-79 / OnPop :163-171): refused while
+ *  EITHER kind of duplicate stands, and otherwise the apply and the save. */
+function applyAndSave() {
+  if (!dupes.ok) { notice = MULTIPLE_ASSIGNMENTS; repaint(); return false; }
+  if (pendingDefaults) { resetDefaults(bindings()); pendingDefaults = false; }   // KB1: the staged Defaults, committed
+  applyUnsavedKeybinds(bindings(), unsaved);
+  saveKeyBinds(bindings());
+  // Re-stage off the registry we just wrote: the pane stays open on
+  // the enhanced skin, and a stale copy would let a second CONFIRM
+  // re-apply a binding the player has since changed elsewhere.
+  unsaved = createUnsavedKeybinds(bindings());
+  refresh();
+  notice = 'Controls saved.';
+  repaint();
+  return true;
+}
+
+/** The PRIMARY/SECONDARY toggle (:135-141), refused while the SHOWN
+ *  dict clashes internally (:337-343). */
+function switchDict() {
+  if (dupes.internal.size) { notice = MULTIPLE_ASSIGNMENTS; repaint(); return; }
+  unsaved.usingPrimary = !unsaved.usingPrimary;
+  notice = null;
+  refresh();
+  repaint();
+}
+
+// ── THE PAINT ────────────────────────────────────────────────────
+
+/** UXB1-D (the UX backlog: "Is there a reason you cannot have multiple keys bound to the same action such as
+ *  jump+swim-up? If so, highlight conflicting keybinds"): WHICH ROWS A STANDING REPLACE PROMPT IS ABOUT. The prompt
+ *  names them in words; with the list left standing under it, the rows themselves say it too - the row the key is
+ *  going to (`ctl-want`) and every row that holds it now (`ctl-holder`), in the shown set. A holder in the OTHER set
+ *  is not on the page, and the prompt's "(secondary)" is where it is said. */
+export function promptMarks(p, usingPrimary) {
+  if (p?.kind !== 'replace') return { want: null, holders: new Set() };
+  return { want: p.action, holders: new Set(p.holders.filter((h) => h.primary === usingPrimary).map((h) => h.action)) };
+}
+
+function keyRow(action, label) {
+  const dict = currentDict(unsaved);
+  const code = dict.get(action);
+  const marks = promptMarks(prompt, unsaved.usingPrimary);
+  const mark = marks.want === action ? ' ctl-want' : marks.holders.has(action) ? ' ctl-holder' : '';
+  const row = el('div', `row ctl-row${mark}${edited.has(action) ? ' ctl-unsaved' : ''}`);
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', label));
+  if (edited.has(action)) main.append(el('div', 'row-sub ctl-unsaved-note', UNSAVED_ROW));   // UNSAVED-MARK
+  // SWING-LABEL: the one row whose button is not the whole answer - see swingHint.
+  if (action === 'SwingWeapon' && unsaved.usingPrimary) main.append(el('div', 'row-sub', swingHint(code ?? null, swingMode(), dict.get('ReadyWeapon') ?? null)));
+  // UXB1-D: ...and the two whose key is not the only one that moves you - see floatHint.
+  const rise = unsaved.usingPrimary ? floatHint(action, dict) : null;
+  if (rise) main.append(el('div', 'row-sub', rise));
+  // UXB1-S: A SHARED KEY SAYS SO, on every row it answers - which other actions the press does too.
+  const also = keySharers(unsaved, action, code);
+  if (also.length) main.append(el('div', 'row-sub ctl-alsos', `${SHARED_KEY_PREFIX} ${also.map((a) => actionLabel(a)).join(', ')}`));
+  row.append(main);
+
+  const ctl = el('div', 'ctl');
+  // A BUTTON, never an input (CG2): isTextEntryTarget must stay false
+  // over this pane or every host's router reads it as a typing field.
+  const dupe = dupes.internal.has(code) ? ' ctl-dupe'
+    : dupes.cross.has(code) ? ' ctl-cross' : dupes.shared?.has(code) ? ' ctl-shared' : '';   // UXB1-S: a share, marked - a clash still wins
+  const armedHere = armed === action;
+  const key = el('button', `act rowact ctl-key${dupe}${armedHere ? ' ctl-arm' : ''}`,
+    armedHere ? 'PRESS A KEY OR BUTTON' : buttonText(code, true));
+  key.setAttribute('type', 'button');
+  key.dataset.action = action;   // the probe's handle, and the test's
+  key.onclick = act(() => arm(action));
+  key.oncontextmenu = (e) => {
+    // The preventDefault stays OUTSIDE the guard: DFU's bare `return`
+    // (:372) costs nothing, but a refused right-click here would pop
+    // the browser's own context menu over an armed pane.
+    e?.preventDefault?.();
+    act(() => clearBinding(action))();
+    return false;
+  };
+  ctl.append(key);
+  if (!prompt && focusAfterPrompt === action) {
+    focusAfterPrompt = null;
+    afterPaint(() => key.focus?.({ preventScroll: true }));
+  }
+
+  const clear = el('button', 'act ctl-clear', '✕');
+  clear.setAttribute('type', 'button');
+  clear.title = 'Clear this binding';
+  clear.onclick = act(() => clearBinding(action));
+  ctl.append(clear);
+
+  // The conflict belongs to the binding the player just touched. Keep the
+  // complete question and all three answers beside that button instead of
+  // moving the player's attention to the controls card at the top.
+  if (prompt?.kind === 'replace' && prompt.action === action) {
+    const tip = promptCard(true);
+    key.className += ' ctl-tip-anchor';
+    key.setAttribute('aria-expanded', 'true');
+    key.setAttribute('aria-controls', 'ctl-key-in-use');
+    ctl.append(tip);
+    openConflictTooltip(tip);
+  }
+
+  row.append(ctl);
+  return row;
+}
+
+function promptCard(asTooltip = false) {
+  const c = el(asTooltip ? 'dialog' : 'div', `ctl-prompt${asTooltip ? ' ctl-tooltip' : ''}`);
+  if (asTooltip) {
+    c.id = 'ctl-key-in-use';
+    c.setAttribute('role', 'dialog');
+    c.setAttribute('aria-modal', 'true');
+    c.setAttribute('aria-labelledby', 'ctl-key-in-use-title');
+    c.oncancel = (e) => { e.preventDefault?.(); answerPrompt(false); };
+  }
+  const title = el('h3', null, prompt.kind === 'defaults' ? 'Default controls' : 'Key in use');
+  if (asTooltip) title.id = 'ctl-key-in-use-title';
+  c.append(title);
+  const rows = prompt.kind === 'defaults' ? [localizedText('confirmDefaultControls', DEFAULTS_PROMPT)]   // L10N3d (DaggerfallControlsWindow.cs:302)
+    : replaceKeybindPromptRows(prompt.action, prompt.code, prompt.holders, prompt.usingPrimary);
+  // UXB1-D: the one pair where the answer is "you need neither" - see sharedFloatNote.
+  const note = prompt.kind === 'replace' ? sharedFloatNote(prompt.action, prompt.holders, prompt.usingPrimary) : null;
+  for (const line of note ? [...rows, note] : rows) c.append(el('p', 'meta', line));
+  const acts = el('div', 'acts');
+  const yes = el('button', 'act primary', 'Yes');
+  yes.onclick = () => answerPrompt(true);
+  if (asTooltip) {
+    yes.setAttribute('autofocus', '');
+    c[PROMPT_FOCUS] = yes;
+  }
+  const no = el('button', 'act', 'No');
+  no.onclick = () => answerPrompt(false);
+  acts.append(yes, no);
+  // UXB1-S: THE THIRD ANSWER. The key stays where it is AND lands here - one key, both actions - wherever every holder
+  // holds this very key (a combo against its own modifier is still a clash no press resolves).
+  if (prompt.kind === 'replace' && canShareKey(unsaved, prompt.action, prompt.code, prompt.holders)) {
+    const both = el('button', 'act ctl-share', SHARE_KEY_LABEL);
+    both.onclick = () => answerPrompt('share');
+    acts.append(both);
+  }
+  c.append(acts);
+  return c;
+}
+
+/** UXB1-F (2026-09-25, the UX backlog: "Show keybinds for game features, even if they cannot be changed there"): THE
+ *  KEYS THIS PAGE CANNOT MOVE, after the ones it can - the HUD's three and the Transport window's letters
+ *  (systems/controlsConfig.js fixedKeyRows), in the STAGED sets - primary, then secondary, the order a press
+ *  resolves in - so a Transport key rebound on this page is the one its rows name. Words and keys only: nothing
+ *  here is a button, and nothing here is `ctl-row` (a row a press edits). */
+function fixedKeysCard() {
+  const c = el('div', 'card ctl-group ctl-fixed');
+  c.append(el('h3', null, FIXED_KEYS_HEAD));
+  c.append(el('p', 'meta', FIXED_KEYS_NOTE));
+  for (const r of fixedKeyRows(unsaved.primary.get('Transport') ?? unsaved.secondary.get('Transport') ?? null)) {
+    const row = el('div', 'row ctl-fixedrow');
+    const main = el('div', 'row-main');
+    main.append(el('div', 'row-name', r.label));
+    row.append(main);
+    const ctl = el('div', 'ctl');
+    ctl.append(el('span', 'ctl-fixedkey', r.key));
+    row.append(ctl);
+    c.append(row);
+  }
+  return c;
+}
+export const FIXED_KEYS_HEAD = 'Fixed keys';
+export const FIXED_KEYS_NOTE = 'These keys are listed for reference and cannot be changed.';
+
+function group(body, heading, rows) {
+  const c = el('div', 'card ctl-group');
+  c.append(el('h3', null, heading));
+  for (const [action, label] of rows) c.append(keyRow(action, label));
+  body.append(c);
+}
+
+/**
+ * THE PANE. `render` is the shell's own repaint — the same one every
+ * other enhanced pane closes over — so a bind, a prompt or a clash
+ * repaints the whole screen rather than this module reaching into a
+ * node it built.
+ */
+export function paneControls(body, { render = () => {} } = {}) {
+  repaint = render;
+  stage();
+  // UNSAVED-MARK (FIELD BUGS 2026-10-11): what a Confirm still owes, read off the registry at each paint
+  const owed = unsavedEdits(bindings(), unsaved);
+  edited = new Set(owed.filter((e) => e.primary === unsaved.usingPrimary).map((e) => e.action));
+
+  // UNSAVED-MARK: THE HOW-TO SCROLLS AWAY; THE STICKY HEAD IS THE LAW AND ITS BUTTONS. The head carried all three of
+  // the page's paragraphs: 312 px on a desktop, its top under the Settings toolbar (both sticky at the top of one
+  // scroll), and 462 px on a phone - over the very row just bound. The how-to is the page's first card now, read once.
+  const intro = el('div', 'card ctl-intro');
+  intro.append(el('h3', null, 'Controls'));
+  intro.append(el('p', 'meta',
+    'Click a binding, then press the key you want. Every key binds, Escape included. '
+    + 'Hold Ctrl, Shift or Alt while you press to bind a combination. '
+    + 'Right-click a binding, or press ✕, to clear it.'));
+  intro.append(el('p', 'meta',
+    'A key already in use asks whether to move it or use it for both. A shared key does every job it is bound to, and its rows say so. '
+    + 'Keys used inside windows (Escape, Enter, the arrows and a window\'s own letters) are not listed here.'));
+  intro.append(el('p', 'meta ctl-intro-law', `Nothing is saved until you press ${CONFIRM_LABEL}. A key not saved yet is marked on its row.`));
+  body.append(intro);
+
+  // Defaults remains a page-level question in the sticky head. A key conflict
+  // is painted by keyRow as a tooltip on the binding being changed.
+  const defaultsPrompt = prompt?.kind === 'defaults';
+  const head = el('div', `card ctl-head${defaultsPrompt ? ' ctl-asking' : ''}${owed.length ? ' ctl-owed' : ''}`);
+  if (defaultsPrompt) head.append(promptCard());
+  else {
+    head.append(el('p', 'meta',
+      `Nothing is saved until you press ${CONFIRM_LABEL}, including Defaults. Leaving this page drops your changes.`));
+
+    const acts = el('div', 'acts');
+    // L10N3f: GameSettings' primary/secondary (DaggerfallControlsWindow.cs:139, :252), a pack's in its language
+    const which = el('button', 'act ctl-which', unsaved.usingPrimary ? gameSettingsText('primary', 'Primary') : gameSettingsText('secondary', 'Secondary'));
+    which.title = 'Which of the two binding sets this page edits';
+    which.onclick = act(switchDict);
+    const defaults = el('button', 'act ctl-defaults', 'Defaults');
+    defaults.onclick = act(() => { prompt = { kind: 'defaults' }; repaint(); });
+    const cont = el('button', 'act primary ctl-continue', CONFIRM_LABEL);
+    cont.onclick = act(applyAndSave);
+    acts.append(which, defaults, cont);
+    head.append(acts);
+
+    // L10N3d: the refusal shown in the player's language (DaggerfallControlsWindow.cs:262); `notice` keeps the
+    // English, which is what the line is told apart by
+    const refusal = localizedText('multipleAssignments', MULTIPLE_ASSIGNMENTS);
+    if (owed.length) head.append(el('p', 'ctl-notice ctl-pending', unsavedCount(owed.length)));   // UNSAVED-MARK
+    if (notice) head.append(el('p', `ctl-notice${notice === MULTIPLE_ASSIGNMENTS ? ' bad' : ''}`, notice === MULTIPLE_ASSIGNMENTS ? refusal : notice));
+    if (!dupes.ok && notice !== MULTIPLE_ASSIGNMENTS) {
+      head.append(el('p', 'ctl-notice bad', refusal));
+    }
+  }
+  body.append(head);
+
+  // KB1: the standard's groups, a mod's while it is on (shownGroups above).
+  for (const grp of shownGroups()) group(body, grp.title, grp.rows.map((r) => [r.action, r.label]));
+  body.append(peerMenuBindCard(render));   // PEERMENU1: the player menu's press/hold bind (online only)
+  body.append(fixedKeysCard());   // UXB1-F
+  // TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" -
+  // the one Continue sat 53 rows above the row they had just bound, and
+  // leaving dropped the change): the head card is sticky now, and the
+  // list closes on a second Confirm, the same applyAndSave.
+  const foot = el('div', 'card ctl-foot');
+  const cont2 = el('button', 'act primary ctl-continue ctl-continue-foot', CONFIRM_LABEL);
+  cont2.onclick = act(applyAndSave);
+  foot.append(cont2);
+  body.append(foot);
+
+  // A native modal dialog makes the whole document inert. The explicit
+  // attributes keep the same keyboard law in a browser that has <dialog>
+  // but no showModal(): only this question's answers remain in the tab order.
+  if (prompt?.kind === 'replace') {
+    const tip = body.querySelector?.('.ctl-tooltip');
+    if (tip) for (const button of body.querySelectorAll?.('button') ?? []) {
+      if (!tip.contains(button)) button.setAttribute('inert', '');
+    }
+  }
+}

@@ -1,0 +1,994 @@
+// AUDIT 18 (hosts): the combat/spawn laws that the four scene hosts
+// each carried a private copy of - or, more often, that ONE host
+// carried and the others silently dropped. Everything here is a
+// verbatim DFU translation with no scene state of its own, so a host
+// cannot half-apply it any more.
+//
+// DFU sources: WeaponManager.cs, EnemyMotor.cs, EnemyEntity.cs,
+// FormulaHelper.cs, DaggerfallUnityItem.cs, PlayerActivate.cs
+// (MIT, Daggerfall Workshop).
+
+import { plainFoeLootRule, capFoeLoot, plainFoeRarityWeights, capLootList } from '../systems/foeLootCap.js';   // FOE-CAP: a plain foe's cap and ladder (RENOWN-LOOT: at the roller's Renown)
+import { renownLootQuarters, lootEased } from '../systems/renownLoot.js';   // RENOWN-LOOT: LOOT-EASE's buff by the roller's Renown
+import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
+import { effectiveLevel, lootGateLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around; MENTOR2: the gate's, the real one
+import { vampireAttackVoice } from '../systems/vampirism.js';   // V5: GetCustomRaceGenderAttackSoundData
+import { liveLycanthropy } from '../systems/lycanthropy.js';   // AUDIT 39: SuppressOptionalCombatVoices, the racial override's own gate
+import {
+  ENEMY_GROUPS, dice100,
+  enemyKnockbackApplies, weaponKnockbackSpeed, enemyWeightClassicUnits,   // MT-ii: ApplyDamageToNonPlayer's knockback
+} from '../combat/formulas.js';
+import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, playerVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice; playerVoice AUDIT 24 (wave 46)
+import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
+import { assignEnemyStartingEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';   // RRI2: EnemyEntity.AssignEnemyEquipment, the delegate
+import { rollEnemyWeaponPoison } from '../systems/poisons.js';
+import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';
+import { generateItems, addEnemyLootExtras, enemyLootTableKey, createRandomWeapon, createRandomArmor } from '../systems/loot/loot.js';   // RF2: the spawn chain's DFU half, in its one home; RRI2: MobLootKeys; LOOT7: a champion's minted piece
+import { isAmmunition } from '../systems/item/itemTemplates.js';   // LOOT7: a champion's minted piece is never ammunition
+import { enemyLootSpawned } from '../characters/enemy/enemyEntity.js';   // OH-E: EnemyEntity.OnLootSpawned
+import { conditionBasedPricesOn, randomConditionLootItems } from '../systems/roleplayRealismItems/rriRealism.js';   // RRI2: EnemyEntity.OnLootSpawned's subscriber
+import { isHumanoid } from '../systems/survival/loot.js';   // MOD: the same humanoid test SURV2's corpse food already draws its line with
+import { rollCorpseLoot, lootRarityOn, rarityRank, RARITIES, rarityEligible, applyRarity, lastPass, stampWonWeapons } from '../systems/loot/lootRarity.js';   // RF2: and the port's, after it; LOOT7: a champion's guarantee
+import { championOf } from '../systems/champions.js';   // LOOT7: the champions' traits register at import
+import { isGoldPieces, ARROW_TEMPLATE } from '../systems/inventory.js';   // PLAIN-LOOT: a plain foe's gold all of it; PARTY-LOOT: a shaft is never counted under the cap
+import { bonusShare, rollBonusSupplies, ROOM_BASE_QUARTERS } from '../systems/roomLoot.js';   // PARTY-LOOT: a player's own layer over a room's shared base
+import { wildFoeLoot } from '../systems/wild/wildZone.js';   // WILD1: the open zone's gold (wildLootAfter)
+import { liveStat, FATIGUE_DRAIN_SCALE } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
+import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME, SOUND } from '../systems/soundClips.js';
+import { bloodCentre } from './hitEffects.js';   // AUDIT 62 F19: EnemyAttack.cs:326-328's one home, the same law the four player-melee sites cite
+import { bloodHit } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { ATTRACT_RADIUS, ignoreHumanSounds, attractStep } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41); TELL2: a person's wind-up is a swing, not a voice
+import { enemyDisplayName, ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // AUDIT 24 (wave 42); TELL1: the bark a breaking blow wrings out
+import { getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3e: the enemy's name in the player's language
+import { windupHolds, windupStruck, tacticsNow, overreachOpen, poiseTrack, LOCAL_TARGET } from '../ai/tactics.js';   // TELL1: poise and the stagger (bible/12-Enhanced-AI/Feud-Arc.md section 3); TELL2: the cues' clock; TELL4: the punish window
+import { blowK, blowWeight, behind, TELL } from '../ai/tells.js';   // TELL1: a blow's weight on the poise meter; TELL2: the cues' numbers
+import { noteFeud, feudWeakBlow } from '../systems/feudLedger.js';   // RVN1: my staggers and back hits, in a fight's ledger (a leaf); RVN3: a blow of its weakness
+import { BLOW } from '../ai/blowShapes.js';   // TELL6d: the aimed shot's speed
+import { blowEffectOf, queueBlowEffect, drainBlowEffects, tickBleed } from '../systems/blowEffects.js';   // TELL6e: what a landing does to the player
+import { BLOW_VERDICT_LIFE } from '../ai/foeBlows.js';   // TELL6e: a landing's effect, only within its verdict's life
+import { markFoeThreat, setFoePoiseReader } from '../ui/hud/hudFoeTarget.js';   // TELL9: the bar's foe on a threat, its poise track
+import { HIT_TAGS, tagHit, showWord } from '../ui/hitNumbers.js';   // TELL9: the words on the hit
+import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the pacification bonus DFU reads inside its own formula
+
+// ---- DaggerfallUnityItem.GetWeaponSkillUsed / GetWeaponSkillIDAsShort ----
+/** The attack skill is a property of the weapon TEMPLATE, never of its
+ *  display name. Reading the skill out of a display-name table
+ *  (what every host
+ *  did) misses every renamed item: createRegularMagicItem overwrites
+ *  `name` with the enchantment's magic-item name, so an enchanted
+ *  Longsword trained - and rolled to hit with - Hand-to-Hand for the
+ *  rest of the game. DaggerfallUnityItem.cs:910-941 + :943-962,
+ *  keyed on Weapons (ItemEnums.cs:113..130). */
+// AUDIT-THUNDERLOCK: this was a SECOND COPY of the table - the very
+// duplicate test/systems/talk/audit24_onehome.test.js's ratchet has been naming
+// (`weaponSkillUsed  src/characters/weapons.js src/scenes/hostCombat.js`)
+// - and the port's own weapon is what made it cost something: adding
+// the Dwarven Thunderlock to characters/weapons.js left THIS copy
+// answering null, so `isBowWeapon` said false and the gun fell through
+// to the melee arc in every host. One table now, re-exported here so
+// the callers that speak this file's name keep working.
+export { weaponSkillUsed } from '../characters/weapons.js';
+import { weaponSkillUsed } from '../characters/weapons.js';
+import { monsterVolume, companionVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: the Audio tab's Monster Volume; COMPANION-VOL: and a companion's idle calls
+
+
+/** CalculateAttackDamage's skillID pick (FormulaHelper.cs:573-590):
+ *  the weapon's skill, or HandToHand with no weapon. */
+export function attackSkillOf(weapon) {
+  return weaponSkillUsed(weapon?.templateIndex) ?? SKILLS.HandToHand;
+}
+
+/** WeaponManager's `ScreenWeapon.WeaponType == WeaponTypes.Bow` test,
+ *  read off the item rather than the viewmodel. */
+export const isBowWeapon = (weapon) => attackSkillOf(weapon) === SKILLS.Archery;
+
+// ---- EnemyMotor.cs:131-137 ----
+/** A mobile has a bow attack if it has RangedAttack1 and does not cast
+ *  magic, or has BOTH ranged flags. NOTHING about the enemy's
+ *  inventory enters this: AssignEnemyStartingEquipment never rolls a
+ *  bow, so minting `rangedAttack` from an equipped bow (what every
+ *  host did) meant no enemy in the game could ever fire one. */
+export const hasBowAttack = (basics) =>
+  !!basics?.hasRangedAttack1 && (!basics?.castsMagic || !!basics?.hasRangedAttack2);
+
+// ---- RF2: THE ONE ENEMY-LOOT SEAM (2026-09-14, Mac's refactor pass) ----
+/** EnemyEntity.SetEnemyCareer's whole loot chain, in the order DFU
+ *  runs it, for every host that stands a foe: GenerateItems(LootTableKey)
+ *  on the PLAYER's level and gender (EnemyEntity.cs:328; LootTables.cs
+ *  :212/:229/:237 - AUDIT 18), the equipment chain appended and put on
+ *  (equipEnemy, :330-347), the map/potion/recipe trio (:388-397, AUDIT
+ *  24 wave 43), and then the port's own arm - loot rarity's roll over
+ *  the loot the foe carries and never the kit it wears (LR1/LR4).
+ *
+ *  Four hosts stood the same four lines each (the dungeon's two spawn
+ *  arms, the exterior foes, the watch), and the first departure from
+ *  DFU's rules had to visit all four; the next would have too. ONE
+ *  function now: a loot feature lands here, and a host says only
+ *  `spawnEnemyLoot(entity, mobileType, basics, playerEntity)`.
+ *
+ *  `rolls` is the host's stream for the trio and the rarity roll (the
+ *  exterior pool's injectable stream - a puppet stands with an empty
+ *  list and never comes here); the table roll itself stays on
+ *  Math.random as UnityEngine.Random is, which is what every host
+ *  passed before. Answers the entity's list.
+ *
+ *  MOD: a humanoid foe's loot-table roll (every non-gold category -
+ *  weapons, armour, ingredients, magic items, clothing, books,
+ *  religious items) is cut to a QUARTER of DFU's own chance (a 75%
+ *  reduction); gold is computed before that scale ever applies and
+ *  rolls at its full, unmodified rate either way. "Humanoid" is the
+ *  same line survival/loot.js's corpse food already draws: class
+ *  enemies (128+), Orcs by team, and anything the basics row marks
+ *  affinity Human - so an Orc or a Knight is cut and a Zombie or a
+ *  Daedra Lord is not. */
+const HUMANOID_LOOT_ITEM_SCALE = 0.25;   // MOD: keep a quarter of the item chance (drop 75%)
+/** PLAIN-LOOT (Mac, 2026-10-02: "reduce the loot dropped by non elite enemies by 50%"): a foe that is no elite leaves
+ *  PART of what it carries - every piece the chain put on its body (the table's, the worn kit's droppable cut, the trio
+ *  and the port's extras) kept on its own coin, after the humanoid cut; its gold all of it, as that cut leaves it.
+ *  A coin per piece and not a scale on the table's chance (AUDIT PLAIN-LOOT): DFU's ladder halves its chance at every
+ *  step and rolls it truncated to whole percent, so a scaled chance compounded down the ladder and a 1-3% one fell to
+ *  0 - the scale had kept 33-50% of the table, and nothing of a level-1 humanoid's. "Elite" is any of the three: an
+ *  ELITE FOE (`eliteFoe`), an Elite Dungeon's foe (`elite`), a LOOT7 champion.
+ *  LOOT-EASE (2026-10-05, Mac: "I think loot was way overtuned as a nerf. We need to bring their drop rates up" and
+ *  "Lets not overture the drop rates, but they definitely need a buff"): THREE PIECES IN FOUR, where PLAIN-LOOT kept
+ *  one in two. FOE-CAP's cap and plain ladder landed on the half a day later; measured through this chain, a plain
+ *  humanoid's body held 0.9 pieces and a third of them nothing but gold (1.9, an eighth bare, before PLAIN-LOOT). Half
+ *  the cut given back: 1.3 pieces, a fifth bare. */
+const PLAIN_FOE_LOOT_KEEP = 0.75;
+/** PLAIN-LOOT's own half - the live game's before LOOT-EASE, where RENOWN-LOOT's step starts. */
+const PLAIN_FOE_LOOT_KEEP_BEFORE = 0.5;
+/** RENOWN-LOOT (systems/renownLoot.js): the share a plain foe keeps at `quarters` of LOOT-EASE's buff - 62.5% at
+ *  Renown 1 online, three in four offline and at Renown 20, 87.5% at Renown 40. */
+export const plainFoeLootKeep = (quarters = renownLootQuarters()) => lootEased(PLAIN_FOE_LOOT_KEEP_BEFORE, PLAIN_FOE_LOOT_KEEP, quarters);
+const eliteLooted = (entity) => !!(entity?.eliteFoe || entity?.elite || championOf(entity));
+// ELITE: `lootDropMult` scales every item category's chance (gold untouched, as the humanoid cut);
+// `lootQualityMult` scales the rarity ladder's odds. Both 1 everywhere but an elite dungeon.
+// PARTY-LOOT (2026-10-14, Mac: "Shared base + personal bonus"): EVERY TERM OF THE ROLL IS AN ARGUMENT. A room's shared
+// base (systems/roomLoot.js) is this chain run on the room's dice and the room's terms - the party's level and gender in
+// `player`, Luck 50, RENOWN-LOOT's first stage - so nothing here may read the roller's page behind the caller's back:
+// the dice reach every draw (the table's, the kit's variant and its poison were Math.random), and `quarters`, `luck` and
+// `find` default to the roller's own (renownLootQuarters, the live Luck, legendaryFindMult) only when the caller names
+// none. `rejects`, when given, receives the pieces PLAIN-LOOT's keep let go - the personal bonus's own draw.
+export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random, lootDropMult = 1, lootQualityMult = 1, where = null, quarters = renownLootQuarters(), luck = liveStat(player, 'luck'), find = undefined, rejects = null } = {}) {
+  const itemChanceScale = (isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1) * lootDropMult;
+  const ease = quarters;   // RENOWN-LOOT: the roller's Renown, read once for the keep and the ladder alike (PARTY-LOOT: the caller's terms)
+  entity.items = generateItems(enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), { level: effectiveLevel(player), gender: player.gender }, rolls, { itemChanceScale, mobileType });   // PARTY-LOOT: on the caller's dice (it rolled Math.random whatever `rolls` said)
+  const eq = equipEnemy(entity, mobileType, effectiveLevel(player), rolls, { player });   // SOFTCAP2: a mentor's foes carry the GROUP's loot and gear
+  addEnemyLootExtras(entity.items, basics, rolls, { quarters: ease });
+  const keep = plainFoeLootKeep(ease);
+  if (!eliteLooted(entity)) entity.items = entity.items.filter((it) => { if (isGoldPieces(it) || rolls() < keep) return true; rejects?.push(it); return false; });   // PLAIN-LOOT: three pieces in four (LOOT-EASE; RENOWN-LOOT: by the roller's Renown), on the host's stream as the kit's cut is; PARTY-LOOT: what it let go, for the bonus
+  // RRI2: EnemyEntity.OnLootSpawned (EnemyEntity.cs:399) fires here, after
+  // the trio and with the kit already in Items - the mod's
+  // RandomConditionEnemyItems (RoleplayRealismItemsMod.cs:222-245) wears
+  // every armor, weapon and book on the corpse to 20-75%. The worn set is
+  // walked too: DFU's Items holds all of it, the port's droppable cut
+  // (above) does not, and a foe's cuirass is worn either way.
+  if (conditionBasedPricesOn()) randomConditionLootItems([...new Set([...entity.items, ...(eq?.worn ?? [])])], rolls);
+  enemyLootSpawned.raise({ mobileType, lootTableKey: enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), items: entity.items, worn: eq?.worn ?? [], where, rolls, roller: player });   // PARTY-LOOT: the roll's dice and roller ride the event, so a subscriber draws on the caller's terms   // OH-E: ...and every other subscriber, in the one list (the worn set is Items' too, as above)
+  // FOE-CAP (systems/foeLootCap.js): a plain foe - no title, no boss - rolls the plain ladder (outside an Elite Dungeon)
+  // and carries at most its cap, gold included; the stamp rides the entity so the death's handlers are capped too
+  const plain = plainFoeLootRule(entity, basics);
+  if (plain) entity.lootCap = plain.cap;
+  rollCorpseLoot(entity, basics, { rolls, luck, find, qualityMult: lootQualityMult, weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null, level: lootGateLevel(player) });   // PARTY-LOOT: the caller's Luck and finders; AUDIT UPDATE L4: and its level (LOOT-GATE) - a scene's first foes are rolled before any host frame; MENTOR2: a mentor's real one
+  capFoeLoot(entity);
+  return entity.items;
+}
+
+/** WILD1 (systems/wild/wildZone.js, the owner's "twice gold" - WILD2: at its ring's multiplier): a foe of the open zone's coin - after its chain
+ *  (spawnEnemyLoot, given wildLootOpts), so the cap, which folds and keeps the gold whole, has had its word. */
+/** PARTY-LOOT (bible/06-Systems/Online-Arc.md PARTY-LOOT; Mac: "Shared base + personal bonus"): A PLAYER'S OWN LAYER OVER
+ *  A ROOM'S SHARED BASE, read at their own RENOWN-LOOT stage and their Luck - the knobs' one home, as the base's are
+ *  spawnEnemyLoot's - on the dice the caller hands (`rolls`, seeded by the base's name and the character). A BODY's:
+ *  each piece PLAIN-LOOT's keep let go at the base's stage (`rejects`) kept at the step between the two keeps
+ *  (roomLoot.js bonusShare - the base's keep and the bonus's together the player's own), the supplies' share above the
+ *  base's for a foe with a table, then the plain ladder at the player's Luck, finders and stage, the sigils at the
+ *  fight's count, and the cap's room above the base (`lootCap` less the base's counted pieces - a shaft never counted).
+ *  A deep PILE's: the supplies' share alone (it has no keep). Answers the pieces, none of them the room's. */
+export function rollRoomBonus({ rolls, player, pile = false, deepPile = false, rejects = [], basics = null, mobileType = null, champion = null, level = 1, lootCap = null, baseItems = [], fighters = 1 }) {
+  const own = renownLootQuarters();
+  let pieces = [];
+  if (!pile) {
+    const share = bonusShare(plainFoeLootKeep(ROOM_BASE_QUARTERS), plainFoeLootKeep(own));
+    for (const r of rejects) if (rolls() < share) pieces.push(structuredClone(r));
+    const key = basics?.lootTableKey;
+    if (key && key !== '-') rollBonusSupplies(pieces, 'enemy', ROOM_BASE_QUARTERS, own, rolls);   // addEnemyLootExtras' own gate: a foe with a table
+    if (pieces.length) {
+      const body = { items: pieces, level, mobileType, champion };
+      rollCorpseLoot(body, basics, { rolls, luck: liveStat(player, 'luck'), weights: Number.isInteger(lootCap) ? plainFoeRarityWeights(own) : null });
+      pieces = body.items;
+    }
+  } else if (deepPile) rollBonusSupplies(pieces, 'pile', ROOM_BASE_QUARTERS, own, rolls);
+  stampWonWeapons(pieces, fighters, { rolls });
+  if (Number.isInteger(lootCap)) capLootList(pieces, Math.max(0, lootCap - baseItems.filter((it) => !(it?.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE)).length));   // FOE-CAP: the body's cap is the base's and the bonus's together (STUCK-ARROWS: a shaft is never counted)
+  return pieces;
+}
+
+export function wildLootAfter(entity) {
+  const m = wildFoeLoot(entity);   // WILD2: its ring's - x1.25 the outer to x2 the heart
+  if (m === 1) return;
+  for (const it of entity?.items ?? []) if (isGoldPieces(it)) it.stackCount = Math.max(1, Math.round(Math.max(1, it.stackCount ?? 1) * m));
+}
+
+// ---- EnemyEntity.SetEnemyCareer, the equipment chain (EnemyEntity.cs:330-347) ----
+/** DFU runs the equipment chain by careerIndex BEFORE the class arm:
+ *  Orc(7)/OrcShaman(21) -> SetEnemyEquipment(0), Centaur(8)/
+ *  OrcSergeant(12) -> (1), OrcWarlord(24) -> (2), and only then
+ *  EnemyClass -> Random.Range(0,2). equipmentVariantFor already
+ *  carries that whole table; the monster spawn path just never called
+ *  it, so five equipment-using monsters walked in naked.
+ *
+ *  Order note: GenerateItems(LootTableKey) runs FIRST (EnemyEntity.cs:
+ *  328) and the equipment items are appended after - callers must have
+ *  filled `entity.items` before calling this. */
+/** MOD: the same 75% cut spawnEnemyLoot applies to the loot-table roll,
+ *  reapplied to a humanoid's WORN gear - so a looted Knight does not
+ *  hand over its whole equipped set as a matter of course. This only
+ *  touches what lands in `entity.items` (the corpse's droppable loot);
+ *  `entity.armorValues`, `entity.weapon` and the equip-slot table below
+ *  are built from the FULL `worn` set regardless, so the foe still
+ *  fights at its real armour and swings its real weapon - it is worn,
+ *  just not always left behind. */
+export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random, { player = null } = {}) {
+  const variant = equipmentVariantFor(entity.careerIndex, entity.isClass, rolls);   // PARTY-LOOT: the caller's dice (Range(0, 2) rolled Math.random)
+  if (variant === null) return null;
+  const eq = assignEnemyStartingEquipment(entity, variant, playerLevel, { player, rolls });   // RRI2: EnemyEntity.AssignEnemyEquipment, the delegate (a mod's arm first)
+  entity.armorValues = eq.armorValues;
+  entity.weapon = eq.rightHand;
+  // S19b: ItemHelper's poisoned-weapon roll rides the spawn -
+  // class enemies + Orc/Centaur/OrcSergeant, 5% (Assassin 60%) - unless
+  // the arm rolled it in its own place (AUDIT DEX E3: RRI's monster arm,
+  // ahead of ConvertOrcish); a bare right hand rolls none (`mainWeapon != null`)
+  if (entity.weapon && !eq.poisonRolled) {
+    const pt = rollEnemyWeaponPoison(eq.poisonClass ?? mobileType, playerLevel, rolls);   // PARTY-LOOT: and its poison; DEX6: its Assassin asked as the kit's arm asks it (DEX_RRICompat: by the equipment table)
+    if (pt != null) entity.weapon.poisonType = pt;
+  }
+  // AssignEnemyStartingEquipment adds every equipped piece to the
+  // entity's items - the corpse's droppable loot.
+  entity.items = entity.items ?? [];
+  const all = equipmentItems(eq);   // everything AddItem put in Items - RRI2: an assigner's unequipped sidearm and arrow pile ride here too
+  const worn = eq.worn ?? all;
+  eq.worn = worn;
+  const droppable = isHumanoid(entity) ? all.filter(() => rolls() < HUMANOID_LOOT_ITEM_SCALE) : all;
+  entity.items.push(...droppable);
+  // AUDIT 58: AND IT PUTS THEM ON. ItemHelper.cs:1382/:1392/:1400 and
+  // :1421-1450 pair every roll with
+  // `enemyEntity.ItemEquipTable.EquipItem(item, true, false)` before
+  // `Items.AddItem(item)` - a foe's table is genuinely worn, and
+  // EnemyEntity.cs:414-421 walks it. The port wrote only the summary
+  // arrays, so `equipTableOf(target)` handed back the lazy all-null
+  // table (equip.js:"export const equipOf") for every enemy in the game and
+  // FormulaHelper.DamageEquipment's STRUCK side - the shield at
+  // FormulaHelper.cs:1095 and the struck part's armour at :1113 -
+  // could not fire once: only the attacker's own weapon ever took
+  // condition off a foe.
+  //
+  // The placement is DFU's `playEquipSounds: false` load arm, the
+  // shape rebuildEquipState already uses: the slot takes the item and
+  // nothing else runs. It does NOT go through equipItem, because that
+  // would re-derive armorValues through the generic
+  // updateEquippedArmorValues and double-subtract over the
+  // SetEnemyEquipment pass above, which owns the Feet-exclusive bound
+  // (EnemyEntity.cs:414) and the class/monster clamps.
+  //
+  // The port's `item.equipSlot` mark is deliberately NOT written: it
+  // is this port's device for the PLAYER's list filter
+  // (FilterLocalItems) and the save relink, and DFU's items carry no
+  // such field - the equip state lives in the entity's table, which
+  // dies with the entity. Marking a foe's gear would hide its own
+  // corpse's loot from every inventory tab. Nothing needs the mark:
+  // DamageEquipment reads the table, and a break unequips through
+  // DaggerfallUnityItem.UnequipItem's identity scan (equip.js's
+  // unequipItem), which is how DFU finds the slot too.
+  // AUDIT DEX E2: `worn` is the table as the arm's EquipItems left it (a two-hander a shield took off is not in it), so
+  // GetEquipSlot over it, in AddItem order, lays each piece where it stood.
+  const slots = equipTableOf(entity);
+  for (const it of worn) {
+    const slot = getEquipSlot(entity, it);   // GetEquipSlot routes the shield to LeftHand and each piece to its own slot
+    if (slot === EQUIP_SLOTS.None || slots[slot]) continue;
+    slots[slot] = it;
+  }
+  return eq;
+}
+
+// ---- WeaponManager.cs:72 / :419-436 ----
+/** "According to DF Chronicles and verified in classic." Spent on
+ *  EVERY swing that reaches the hit frame, hit or miss. */
+export const SWING_WEAPON_FATIGUE_LOSS = 11;
+/** BALANCE1 (2026-09-27, Mac: fatigue "drain[s] a little too fast"): what a
+ *  swing CHARGES here - DFU's 11 above, on the port's exertion scale
+ *  (statMods FATIGUE_DRAIN_SCALE), truncated as the minute's drain is. */
+export const SWING_FATIGUE_COST = Math.trunc(SWING_WEAPON_FATIGUE_LOSS * FATIGUE_DRAIN_SCALE);
+
+/** The tally half of the same block: the weapon's own skill (or
+ *  HandToHand for a bare-handed/werecreature swing) AND CriticalStrike,
+ *  once per connecting swing. CriticalStrike was tallied nowhere in the
+ *  port, so a skill that feeds every to-hit roll could never advance. */
+export function tallySwingSkills(player, weapon, weight = 1) {
+  // TWO-HANDS (AUDIT 2, bible/05-Combat/Two-Hands.md): `weight` - an off-hand blow is DUAL.OFF_DAMAGE of a swing here too
+  // (PlayerWeapon.blowWeight), its fraction carried on the player to the next swing, so a pair trains as fast a second
+  // as its damage edge allows, not its blow rate. A swing of weight 1 - every other - tallies once, as DFU's does.
+  const w = Number.isFinite(weight) ? Math.max(0, Math.min(1, weight)) : 1;
+  if (w < 1 && player && typeof player === 'object') {
+    const owed = (_swingTallyCarry.get(player) ?? 0) + w;
+    _swingTallyCarry.set(player, owed >= 1 - 1e-9 ? Math.max(0, owed - 1) : owed);
+    if (owed < 1 - 1e-9) return;
+  }
+  tallySkill(player, attackSkillOf(weapon), 1);
+  tallySkill(player, SKILLS.CriticalStrike, 1);
+}
+const _swingTallyCarry = new WeakMap();
+
+// ---- FormulaHelper.CalculateBackstabChance (FormulaHelper.cs:975-990) ----
+/** The tally is INSIDE the chance calculation in DFU, so every
+ *  back-facing swing counts a Backstabbing use whether or not the x3
+ *  roll lands. No host tallied it, so Backstabbing could never rise. */
+export function backstabChanceOf(player, isEnemyFacingAwayFromPlayer, foe = null) {
+  if (!isEnemyFacingAwayFromPlayer) return 0;
+  if (foe?.entity?.revenant?.edge?.watchful === true) return 0;   // RVN2: a Watchful revenant - never unaware, no backstab (nor its tally)
+  tallySkill(player, SKILLS.Backstabbing, 1);
+  return skillValue(player, SKILLS.Backstabbing);
+}
+
+// ---- GetBonusOrPenaltyByEnemyType, the PlayerEntity arm (FormulaHelper.cs:1037-1053) ----
+/** DFU: `else if (target is PlayerEntity)` -> Undead when the player
+ *  has vampirism, otherwise "Player is assumed humanoid". The port has
+ *  no vampirism (diseases.js routes stage-one infection away), so the
+ *  Undead arm is unreachable and the player is always Humanoid.
+ *  Passing `targetGroup: null` - what all three enemy-vs-player call
+ *  sites did - made the whole modifier dead against the player. */
+// AUDIT 18: retired. calculateAttackDamage no longer takes a targetGroup -
+// bonusOrPenaltyByEnemyType derives it from the TARGET ENTITY, and the
+// player's isPlayer flag selects DFU's "player is assumed humanoid" arm
+// (FormulaHelper.cs:1048). Passing a group in was an ignored key.
+
+// ---- WeaponManager.cs:609-615, the ZERO-damage connected swing ----
+export const PARRY_1 = 428;          // SoundClips.Parry1
+export const PARRY_SOUND_COUNT = 9;  // Random.Range(0, 9)
+// AUDIT 64 F45: the two arms of the zero-damage fork do NOT share a
+// volume. EnemySounds.cs:134-141 PlayParrySound ends
+// `PlayOneShot(sound, 1, 1.1f)`; EnemySounds.cs:143-156 PlayMissSound
+// ends `PlayOneShot(weapon.GetSwingSound())`, i.e. PlayOneShot's
+// default volumeScale 1f (DaggerfallAudioSource.cs:188). Its own name,
+// not ENEMY_HIT_VOLUME - that constant is EnemySounds.cs:130
+// (PlayHitSound), a different DFU line that happens to share the value.
+export const PARRY_VOLUME = 1.1;     // EnemySounds.cs:139
+
+/**
+ * A swing that CONNECTED but dealt no damage. DFU:
+ *   if ((!arrowHit && !enemy.ParrySounds) || strikingWeapon == null)
+ *       ScreenWeapon.PlaySwingSound();
+ *   else if (enemy.ParrySounds)
+ *       enemySounds.PlayParrySound();     // Parry1 + Range(0,9), at the ENEMY
+ * The hosts instead played WeaponManager.cs:483's WALL-hit pair
+ * (Hit2 / Parry6) - a branch DFU's own comment marks "not in classic".
+ * @returns {{sound:number, at:'player'|'enemy'}|null}
+ */
+export function zeroDamageHitSound({ weapon = null, arrowHit = false, parrySounds = false, roll = 0 } = {}) {
+  if ((!arrowHit && !parrySounds) || !weapon) return { sound: swingSoundFor(weapon), at: 'player' };
+  if (parrySounds) return { sound: PARRY_1 + Math.floor(roll * PARRY_SOUND_COUNT), at: 'enemy' };
+  return null;
+}
+
+// ---- C2-slice (AUDIT 23 combat-9/17): the enemy melee frame's sound
+// tail + the combat voices, shared so every host speaks the same. ----
+
+/** EnemySounds.PlayMissSound: an attack that whiffed (out of reach)
+ *  or lost the hit roll - armed foes ring their weapon's swing clip,
+ *  barehanded the high pitch (swingSoundFor's null arm IS that). */
+export const enemyMissSound = (weapon) => swingSoundFor(weapon);
+
+/** MobileTypes.Knight_CityWatch - the one class id whose voice is
+ *  FORCED male whatever the mobile rolled (EnemyAttack.cs:220/:357). */
+export { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
+
+/** The foe's voice gender per the source's pick: the mobile's
+ *  gender, with the city-watch knight forced male. */
+const foeVoiceGender = (f) =>
+  (f.gender === 'female' && f.mobileType !== KNIGHT_CITY_WATCH ? 'female' : 'male');
+
+/** The foe's spawn-rolled voice race (EnemySounds:72 rolls it once
+ *  per foe); the port rolls lazily at first use and caches - one
+ *  race per foe, same as the spawn roll. */
+const foeVoiceRace = (f, rolls) => (f.voiceRace ??= rollVoiceRace(rolls));
+
+/** The 20% enemy-class ATTACK voice at the melee damage frame
+ *  (EnemyAttack.cs:217-226), behind the CombatVoices setting.
+ *  Returns { clip, pitchLift } or null. */
+export function enemyAttackVoice(f, rolls = Math.random) {
+  if (!combatVoicesEnabled() || !f.entity?.isClass) return null;
+  if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
+  return combatVoice({ race: foeVoiceRace(f, rolls), gender: foeVoiceGender(f), isAttack: true, rolls });
+}
+
+/** AUDIT-RR F18: EnemySounds.PlayCombatVoice(gender, isAttack = false, heavyDamage = true)
+ *  called DIRECTLY (EnhancedRiding.cs:195) - no CombatVoices gate, no dice, monsters
+ *  too: the race/gender heavy pain sound (EnemySounds.cs:158-177). */
+export function enemyHeavyPainVoice(f, rolls = Math.random) {
+  if (!f) return null;
+  // AUDIT-RR2 G2: the component's OWN gender pick (:190-194): Male only for a rolled male or the city watch; a monster
+  // (MobileGender.Unspecified) and a female take the FEMALE clip - not WeaponManager's male default
+  const gender = (f.gender === 'male' || f.mobileType === KNIGHT_CITY_WATCH) ? 'male' : 'female';
+  return combatVoice({ race: foeVoiceRace(f, rolls), gender, isAttack: false, heavyDamage: true, rolls });
+}
+
+/** The 40% enemy-class PAIN voice when the player's hit lands
+ *  (WeaponManager.cs:597-607); heavyDamage = damage >= maxHealth/4.
+ *  Returns { clip, pitchLift } or null. */
+export function enemyPainVoice(f, damage, rolls = Math.random) {
+  if (!combatVoicesEnabled() || !f.entity?.isClass || damage <= 0) return null;
+  if (!dice100(PAIN_VOICE_CHANCE, rolls())) return null;
+  return combatVoice({
+    race: foeVoiceRace(f, rolls), gender: foeVoiceGender(f), isAttack: false,
+    heavyDamage: isHeavyDamage(damage, f.entity.maxHealth ?? 0), rolls,
+  });
+}
+
+/** RacialOverrideEffect.SuppressOptionalCombatVoices
+ *  (RacialOverrideEffect.cs:37-40, false by default). LycanthropyEffect
+ *  .cs:105-108 is the ONE override and it returns isTransformed - a
+ *  transformed lycanthrope has its own attack voices (the beast bark
+ *  the hosts play on a landed hit), so the human grunt and scream are
+ *  silenced while the beast is out. Vampirism does not override it; it
+ *  overrides the CLIP instead (the grunt below). Asked AHEAD of the
+ *  Dice100 draw at both sites, exactly as DFU asks it, so the roll
+ *  stream is unchanged. */
+export const suppressOptionalCombatVoices = (entity) => !!liveLycanthropy(entity)?.isTransformed;
+
+/** The PLAYER's 20% attack grunt at the hit frame - never for a bow
+ *  (WeaponManager.cs:385-389). V5: the racial override's clip rides
+ *  GetRaceGenderAttackSound's own order (DaggerfallEntity.cs:979-988)
+ *  - the 20% FIRE chance stays here, the OVERRIDE picks the clip, so
+ *  a vampire grunts as a vampire, by gender. Returns
+ *  { clip, pitchLift } or null. */
+export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
+  if (!combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity) || isBow) return null;
+  if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
+  const vamp = vampireAttackVoice(playerEntity, rolls);
+  // AUDIT 58: the hard 0 is DFU's. PlayAttackVoice applies the lift in
+  // the `customSound == SoundClips.None` arm only (FPSWeapon.cs:313
+  // -320); the override arm at :323 is a bare
+  // `PlayOneShot(customSound, 0, 1f)` at the source's own pitch.
+  if (vamp != null) return { clip: vamp, pitchLift: 0 };
+  // AUDIT 24 (wave 46): playerVoice, not combatVoice. FPSWeapon
+  // .PlayAttackVoice:315 calls GetRaceGenderAttackSound DIRECTLY and
+  // never touches PlayCombatVoice, so the male High Elf -> Wood Elf
+  // swap does NOT apply to the player - it is EnemySounds' handling
+  // of NPCs, by its own comment. A male High Elf player has been
+  // grunting as a Wood Elf since the C2 slice.
+  return playerVoice({
+    race: RACES[playerEntity.race] ?? 1, gender: playerEntity.gender ?? 'male', isAttack: true, rolls,
+  });
+}
+
+/** CLIMB4 (the Enhanced Climbing arc - bible/03-World/Parkour-Arc.md): the player's EFFORT on a hard climb - a pull-up
+ *  from a hang, a leap's launch, a fall caught, the grip gone - in the attack grunt's own voice: the port's departure
+ *  (DFU's climber climbs in silence), so it rides the attack grunt's gates exactly (the CombatVoices switch, a
+ *  transformed lycanthrope's silence) and its clip (a vampire's override, else GetRaceGenderAttackSound by race and
+ *  gender). WHEN is the caller's (player/climb/climbSounds.js: a chance per move, never two within seconds). Returns
+ *  { clip, pitchLift } or null. */
+export function playerClimbStrain(playerEntity, rolls = Math.random) {
+  if (!playerEntity || !combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity)) return null;
+  const vamp = vampireAttackVoice(playerEntity, rolls);
+  if (vamp != null) return { clip: vamp, pitchLift: 0 };
+  return playerVoice({
+    race: RACES[playerEntity.race] ?? 1, gender: playerEntity.gender ?? 'male', isAttack: true, rolls,
+  });
+}
+
+/**
+ * PlayerFootsteps.RemoveHealth (:347-364) - the player's pain voice,
+ * which the port had never played. The clip tables were ported with
+ * the C2 slice and the ENEMY side has used them since; the player
+ * took every hit in the game in silence.
+ *
+ * Forty percent, the player's own race and gender, heavyDamage at a
+ * quarter of MAX health, and the same 0..0.3 pitch lift. Returns
+ * `{ clip, pitchLift }` or null - the host owns the audio device.
+ *
+ * WHICH HITS SCREAM is narrower than "the player was damaged", and it
+ * is not the same set the damage FLASH rides. Both hang off the
+ * `RemoveHealth` message, but Unity's SendMessage reaches every
+ * component and a direct C# call reaches one:
+ *
+ *   - EnemyAttack.cs:406 SENDS it -> PlayerHealth (flash) AND
+ *     PlayerFootsteps (voice). A blow, or an arrow through BowDamage.
+ *   - DaggerfallAction.cs:739/:768 SEND it -> both. The damage traps.
+ *   - PlayerHealth.cs:57 CALLS ITS OWN RemoveHealth for fall damage
+ *     -> the flash only. PlayerFootsteps never hears it; its own
+ *     ApplyPlayerFallDamage arm (:306-311) plays the FallDamage clip
+ *     and nothing else.
+ *
+ * So a fall flashes the screen and does not make you cry out, and
+ * that is a real distinction in the source rather than an oversight
+ * in the port.
+ */
+export function playerPainVoice(playerEntity, damage, rolls = Math.random) {
+  if (!combatVoicesEnabled() || suppressOptionalCombatVoices(playerEntity) || !(damage > 0)) return null;
+  if (!dice100(PAIN_VOICE_CHANCE, rolls())) return null;
+  return playerVoice({
+    race: RACES[playerEntity.race] ?? 1,
+    gender: playerEntity.gender ?? 'male',
+    isAttack: false,
+    heavyDamage: isHeavyDamage(damage, playerEntity.maxHealth ?? 0),
+    rolls,
+  });
+}
+
+/** The two player-voice sites play the same way - one shot, at the
+ *  listener, pitch-lifted. AUDIT 58: the lift is APPLIED here now.
+ *  FPSWeapon.cs:316-319 (the attack grunt) and PlayerFootsteps.cs:359
+ *  -362 (the pain cry) both read the source's pitch, add
+ *  Random.Range(0, 0.3f), play the one shot and put the pitch back -
+ *  so the played rate is `1 + pitchLift`. The engine's one-shot took
+ *  no pitch until this audit, and the value was computed at both
+ *  producers and dropped at every one of the thirteen play sites. */
+export function playPlayerVoice(audio, voice) {
+  if (!voice || !(voice.clip >= 0)) return null;
+  audio?.playOneShot?.(voice.clip, 1, 1 + (voice.pitchLift ?? 0));
+  return voice.clip;
+}
+
+// ---- PlayerActivate.cs:85 ----
+/** CorpseActivationDistance = 150 * GlobalScale = 3.75. The hosts left
+ *  corpses on activationTargets' 128-unit default (3.2), so a body was
+ *  out of reach over half a metre before DFU says it is. */
+// AUDIT 24 (wave 24): PlayerActivate.cs's reach constants have one
+// home in player/activate.js.
+export { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
+
+// ---- EnemySounds through the host's devices (AUDIT 24, wave 41) ----
+// The decisions and the clock live in characters/enemy/enemySounds.js; these
+// two are the seam where a pool's collider and audio device meet them,
+// so all three pools cast the same ray and play at the same rolloff.
+
+/** SetVolumeScale's probe (:236-251) - the port's collider holds
+ *  static geometry and action doors and nothing else, which is
+ *  precisely the two things DFU dampens for, so a clear cast to the
+ *  player IS "nothing between". DFU's ray is unbounded and returns
+ *  first-hit, then ignores a hit on the player; bounding it at the
+ *  player's distance is the same test with the same answer. */
+export function enemySoundOccluded(collider, feet, playerFeet) {
+  if (!collider?.raycast || !playerFeet) return false;
+  const dx = playerFeet[0] - feet[0], dy = playerFeet[1] - feet[1], dz = playerFeet[2] - feet[2];
+  const d = Math.hypot(dx, dy, dz);
+  if (!(d > 1e-6)) return false;
+  const hit = collider.raycast(feet, [dx / d, dy / d, dz / d], d);
+  return Number.isFinite(hit) && hit < d - 1e-3;
+}
+
+/**
+ * One foe's FixedUpdate (:79-98) plus the play. Returns the clip
+ * played, or null.
+ *
+ * The source sits a metre above the feet - the port's established
+ * enemy-sound height, which the dungeon's inline copy already used -
+ * and rolls off LINEARLY to the attract radius, because that is what
+ * `LinearRolloff = true` with `maxDistance = AttractRadius` (:57-60)
+ * means and DFU's own comment says why: an inverse curve leaves the
+ * sound "audible almost everywhere".
+ */
+export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, collider = null, hearing = 1, companion = false } = {}) {
+  if (!source || !feet) return null;
+  const dx = (playerFeet?.[0] ?? 0) - feet[0];
+  const dy = (playerFeet?.[1] ?? 0) - feet[1];
+  const dz = (playerFeet?.[2] ?? 0) - feet[2];
+  // No player position yet: the counter still steps, exactly as DFU's
+  // does with playerInAttractRadius false.
+  const dist = playerFeet ? Math.hypot(dx, dy, dz) : Infinity;
+  const out = source.tick(attractStep(source, dt, companion), dist, () => enemySoundOccluded(collider, feet, playerFeet), { companion });   // QUIET-COMPANIONS; MONSTER-QUIET: a monster's clock at 40%
+  if (out) playEnemyClip(audio, out, feet, hearing, companion ? companionVolume() : 1);   // COMPANION-VOL: a companion's idle call on its own volume
+  return out;
+}
+
+/** PlayAttackSound's play, and the attract one's - the same device
+ *  settings, because in DFU they are the same AudioSource. CF1:
+ *  `hearing` is acuteHearingMultiplier(playerEntity) - DFU scales the
+ *  enemy AudioSource's maxDistance at spawn (DaggerfallEnemy.Start
+ *  :62-70); the port scales it here, on the one seam every enemy
+ *  clip rides. */
+export function playEnemyClip(audio, out, feet, hearing = 1, scale = 1) {
+  if (!out || out.clip == null) return null;
+  if (!(scale > 0)) return null;   // COMPANION-VOL: a muted call is never played (no 0-gain voice taken from the pool)
+  audio?.play3d?.(out.clip, [feet[0], feet[1] + 1, feet[2]], out.volume * monsterVolume() * scale,   // MONSTER-VOL; COMPANION-VOL: `scale`
+    { maxDistance: ATTRACT_RADIUS * hearing, distanceModel: 'linear' });
+  return out.clip;
+}
+
+// ---- MT-ii: ApplyDamageToNonPlayer (EnemyAttack.cs:303-392) ----
+/**
+ * One enemy's blow landing on ANOTHER enemy - the whole payload DFU
+ * runs when senses.Target is a foe rather than the player. It lived
+ * nowhere in the port, because until MT-i no foe could hold a foe as
+ * its target.
+ *
+ * Everything the source does, in its order: the damage roll, the
+ * attacker's own normal-power concealment break, the hit sound,
+ * blood, knockback (its OWN guard - see enemyKnockbackApplies), the
+ * 40% class pain voice, the miss/parry fork, the Strikes payload,
+ * the health write, and MakeEnemyHostileToAttacker on the target.
+ *
+ * THREE THINGS DFU DOES *NOT* DO HERE, and the port must not either:
+ *   - onMonsterHit. FormulaHelper calls it in the weaponless MONSTER
+ *     arm against the PLAYER only; a rat biting an orc infects
+ *     nothing. (The exterior pool's own comment already records the
+ *     same rule for its arrow and city-watch paths.)
+ *   - the damage FLASH. That is the player's ShowPlayerDamage.
+ *   - the Dodging tally. The player's, at the player's own hit.
+ *
+ * The caller owns its pool's death handling: `dealDamage(target,
+ * damage)` is the target pool's damageFoe, so a foe killed by
+ * another foe runs the same soul-trap/corpse/notice chain a
+ * player-killed one does - EnemyEntity.DecreaseHealth is one method
+ * in DFU and this is the port's one seam onto it.
+ *
+ * @returns the damage dealt (0 for a miss), as the source returns it.
+ */
+export function applyDamageToNonPlayer(attacker, target, {
+  weapon = null, direction = null, bowAttack = false,
+  dealDamage, calculateAttackDamage, audio = null, rolls = Math.random,
+  hitEffects = null,
+  // AUDIT 58: THE TWO SEAMS CalculateAttackDamage OWNS AND THIS
+  // PAYLOAD NEVER OFFERED. FormulaHelper.cs:691-696 inflicts the
+  // weapon's poison inside the formula for EVERY attacker/target pair
+  // - `if (damage > 0 && weapon.poisonType != Poisons.None) {
+  // InflictPoison(attacker, target, weapon.poisonType, false);
+  // weapon.poisonType = Poisons.None; }` - with no player gate, and
+  // EnemyAttack.cs:314 routes foe-vs-foe damage straight through it.
+  // The port hoisted the inflict onto a hook but kept the CLEAR
+  // unconditional (formulas.js), so with no hook the blade's dose was
+  // SPENT and nothing was poisoned. `say` is DamageEquipment's break
+  // line: ItemBreaks PopupMessages whatever the owner
+  // (DaggerfallUnityItem.cs:1198-1203), so a foe's shield breaking
+  // speaks in DFU too.
+  onInflictPoison = null, say = null,
+} = {}) {
+  if (!target || !attacker) return 0;   // :305-306, `senses.Target == null`
+  const aEnt = attacker.entity, tEnt = target.entity;
+  // AUDIT 39: the monster multi-attack gate reads the PLAYER's Reflexes
+  // setting even when the player is nowhere in the strike
+  // (FormulaHelper.cs:551/:654), and neither entity here carries it.
+  // Every pool seeds its striker's melee timer from the same field
+  // (`new EnemyAttack({ ..., reflexes: playerEntity.reflexes })`), so
+  // the value the game holds is already on the attacker's record.
+  const damage = calculateAttackDamage(aEnt, tEnt, { weapon, rolls, playerReflexes: attacker.attack?.reflexes ?? null, onInflictPoison, say });
+  // :316-317 - the ATTACKER's normal-power concealment breaks on a
+  // landed blow, whoever it landed on.
+  if (damage > 0 && attacker.breakConcealment) attacker.breakConcealment();
+  const at = target.ai?.feet ?? [0, 0, 0];
+  const mid = [at[0], at[1] + (target.ai?.height ?? 1.8) / 2, at[2]];
+  if (damage > 0) {
+    // :323 PlayHitSound at the TARGET (hitSoundFor is the port's one
+    // home for EnemySounds.PlayHitSound's weapon-aware clip), then
+    // :325-333 the blood splash at the target's centre + height/8.
+    // AUDIT 62 F19: `bloodPos = senses.Target.transform.position +
+    // targetController.center` and only THEN `bloodPos.y +=
+    // targetController.height / 8` (EnemyAttack.cs:326-328). The
+    // capsule is BOTTOM-justified (SetupDemoEnemy.cs:55-71 moves
+    // controller.center, never the transform), so transform + center is
+    // the capsule CENTRE - feet + height/2 - and the splash sits five
+    // eighths up, which is exactly bloodCentre. This site had dropped
+    // the centre term and bled the target at its shins while its own
+    // comment named the right point; the four player-melee sites for
+    // the same DFU lines (dungeonContext.js, exteriorFoes.js,
+    // cityGuards.js) have used the shared law all along.
+    audio?.play3d?.(hitSoundFor(weapon), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+    hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0, bloodCentre(at, target.ai?.height ?? 1.8), null, bloodHit(damage, tEnt));   // BLOOD1b: foe-on-foe bleeds by its blow too
+    // :336-350 - the knockback, on the ATTACKER-class guard. TELL1: never on a foe winding up - the blow HOLDS there and
+    // the target's own door weighs it on the poise meter (windupDoor below), shoving it only when it breaks
+    if (target.ai && !tEnt?.staffBoss && !windupHolds(target.ai) && enemyKnockbackApplies(target.ai.knockbackSpeed ?? 0, aEnt?.isClass,
+      tEnt?.basics?.weight)) {
+      // EW1: the TARGET's kit, not the attacker's
+      const w = enemyWeightClassicUnits(tEnt?.isClass, tEnt?.gender, tEnt?.basics?.weight, tEnt?.items);
+      if (w > 0) {
+        target.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
+        target.ai.knockbackDir = direction ?? target.ai.knockbackDir;
+      }
+    }
+    // :353-363 - the 40% pain voice, class targets only, the
+    // Knight_CityWatch id forced male (enemyPainVoice IS that law)
+    const v = enemyPainVoice(target, damage, rolls);
+    if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16 });
+  } else {
+    // :366-375 - the miss/parry fork. The MISS rings at the ATTACKER
+    // (`sounds`, its own component); the PARRY at the target.
+    const parries = !!tEnt?.basics?.parrySounds;
+    const z = zeroDamageHitSound({ weapon, arrowHit: bowAttack, parrySounds: parries, roll: rolls() });
+    if (z) {
+      const where = z.at === 'enemy' ? at : (attacker.ai?.feet ?? at);
+      // AUDIT 64 F45: and the two arms differ in VOLUME as well as in
+      // place - parry at EnemySounds.cs:139's 1.1f, miss at
+      // EnemySounds.cs:143-156's default 1f. The player-side copies
+      // pass 1.1 on BOTH arms and are right to: the player's miss arm
+      // is FPSWeapon.PlaySwingSound (FPSWeapon.cs:304, 1.1f), not
+      // EnemySounds.PlayMissSound.
+      audio?.play3d?.(z.sound, where, z.at === 'enemy' ? PARRY_VOLUME : 1, { maxDistance: 16 });
+    }
+  }
+  // :378-385 the Strikes payload, then :387 DecreaseHealth. The
+  // enchantment door is the caller's (it owns the item seam); the
+  // health write is the pool's own damageFoe, so death runs whole.
+  dealDamage?.(target, damage);
+  // :389-391 - and the struck foe turns on whoever hit it.
+  target.ai?.makeEnemyHostileToAttacker?.(attacker, attacker.ai?.feet ?? null);
+  return damage;
+}
+
+// ---- TELL1: THE POISE DOOR (bible/12-Enhanced-AI/Feud-Arc.md section 3) ----
+/**
+ * One law for the three damage doors (exteriorFoes.damageFoe, cityGuards.damageGuard, the dungeon's damageFoe), asked
+ * where each writes DFU's knockback. A blow landing on a foe WINDING UP holds: its weight - its damage by its kind
+ * (ai/tells.js blowK: the striker's weapon, an arrow, a spell's landing), from behind the wind-up's locked facing half
+ * again - goes on the foe's poise meter (ai/tactics.js windupStruck). Answers null when the foe is not winding up (the
+ * door's knockback stands, DFU's to the bit), else the brain's word: 'hold' (the door writes no shove and plays no
+ * Hurt), 'break' (the wind-up only broke - its last stagger too recent - and the blow knocks as DFU's does) or
+ * 'stagger' (the door writes the breaking blow's shove at TELL.STAGGER_KNOCK). TELL4: a foe OVERREACHED (its blow
+ * missed) is open too - the first blow that lands staggers it ('stagger'), unless its last stagger is too recent (null).
+ *
+ * `opts`: the door's `kind`, the striking `weapon` (the player's), `round` (a spell's later round), `peer` (TELL8: and
+ * `wc`, its class as the peer judged it - net/wire.js hitClassOf), `striker`
+ * (a foe's record - its own weapon, its own body for a monster), `from` (where the blow came from), `claws` (the
+ * player in a beast's form), `weight` (DFU's weight in classic units, or a function answering it - read only when the
+ * foe is winding up). `fx`: the pool's `audio`, `hitEffects`, `shake` (the player's own blow only) and `rolls`.
+ */
+export function windupDoor(f, damage, { kind = 'melee', weapon = null, round = false, peer = false, striker = null, from = null, claws = false, weight = 0, wc = null, fromPlayer = true, element = null } = {}, fx = {}) {   // AUDIT TELL U6: `fromPlayer` the pool's provenance - a foe's own spell, a SetHealth(0), is nobody's word
+  const mine = fromPlayer && !peer && !striker;
+  if (f?.ai && overreachOpen(f.ai)) {   // TELL4: no meter to weigh - the blow lands, and the first staggers it
+    const word = windupStruck(f.ai, f.entity, typeof weight === 'function' ? weight() : weight, 0);
+    windupFeedback(word, f, fx);
+    if (mine) { windupTag(word, f, true); feudNoteWord(word, f, false); }   // TELL9: my blow's word; RVN1: its ledger
+    return word;
+  }
+  if (!f?.ai || !windupHolds(f.ai)) return null;
+  const blow = f.ai._tac.blow;
+  // TELL8 (10.4): a PEER's blow weighs its class as the peer judged it against its puppet (`wc` - its K, its back
+  // flag, its weakness); without one, K_PEER and never from behind (`from` is no peer's feet here)
+  const k = peer ? (wc ? wc.k : blowK({ kind, round, peer }))
+    : striker
+      ? blowK({ kind, weapon: striker.entity?.weapon ?? null, claws: !isClassEnemyId(striker.mobileType ?? 0), round, peer })
+      : blowK({ kind, weapon, claws, round, peer });
+  const back = peer ? !!wc?.back : behind(blow.origin, blow.yaw, from);
+  const watchful = f.entity?.revenant?.edge?.watchful === true;   // RVN2: a Watchful revenant's poise takes no back multiplier
+  // RVN3 (Feud-Arc.md 14.1): a blow of its weakness weighs x POISE_WEAK - a peer's as it judged it, mine or a foe's here
+  const weak = peer ? !!wc?.weak : !round && feudWeakBlow(f.entity, { kind, weapon: striker ? (striker.entity?.weapon ?? null) : weapon, element, attacker: striker?.entity ?? (fromPlayer ? { isPlayer: true } : null) });
+  const v = blowWeight(damage, k, { back: back && !watchful, weak });
+  const w = typeof weight === 'function' ? weight() : weight;
+  const word = windupStruck(f.ai, f.entity, w, v);
+  windupFeedback(word, f, fx);
+  if (mine) { windupTag(word, f, false); feudNoteWord(word, f, back); }   // TELL9: my blow's word; RVN1: its ledger
+  return word;
+}
+/** RVN1 (Feud-Arc.md section 12): my blow on a telegraphing foe, in its fight's ledger - a stagger it dealt, and a blow
+ *  at its back (judged as the poise judges it: behind the wind-up's own facing). */
+function feudNoteWord(word, f, back) {
+  if (word === 'stagger') noteFeud(f?.entity, 'staggers');
+  if (back) noteFeud(f?.entity, 'backHits');
+}
+/** TELL9 (section 11.2): the word my own blow on a telegraphing foe raises with its number (ui/hitNumbers.js tagHit) -
+ *  "Stagger" at a break that staggers, "Holds" on a wind-up it does not break, "Open" on an overreached foe it could
+ *  not stagger (its last stagger too recent). A break inside the stagger guard says nothing: the mark going out says it.
+ *  The door asks it for the player's blow alone - a peer's (`peer`) and a foe's (`striker`) are their screens' or none.
+ *  Answers the word. */
+export function windupTag(word, f, open) {
+  const tag = word === 'stagger' ? HIT_TAGS.stagger : word === 'hold' ? HIT_TAGS.hold : (open && !word) ? HIT_TAGS.open : null;
+  if (tag) tagHit(f?.entity ?? null, tag);
+  return tag;
+}
+// TELL9 (section 11.1): the target bar's poise track reads the brain through this host - the HUD's leaf imports none
+setFoePoiseReader((f) => poiseTrack(f?.ai));
+/** TELL1: what a blow on a wind-up sounds and looks like. A stagger: the Weapon Widget's clang spark at the chest, a
+ *  hit and the foe's own bark low (a person's voice stays DFU's - the watch's alone speaks), a small kick of the
+ *  camera for the player's own blow. A hold: the parry ring of a kind DFU gives one (`parrySounds`). */
+export function windupFeedback(word, f, { audio = null, hitEffects = null, shake = null, rolls = Math.random } = {}) {
+  if (!word || !f?.ai) return;
+  const at = bloodCentre(f.ai.feet, f.ai.height ?? 1.8);
+  const basics = ENEMY_BASICS[f.mobileType];
+  if (word === 'stagger') {
+    hitEffects?.showMissEffect?.('clang', at, { scale: 2.5 });
+    audio?.play3d?.(SOUND.Hit2, at, 1, { maxDistance: 16 });
+    if (basics?.barkSound != null && (!isClassEnemyId(f.mobileType) || (f.mobileType === KNIGHT_CITY_WATCH && !f.quietVoice))) audio?.play3d?.(basics.barkSound, at, 1, { maxDistance: 16, pitch: 0.7 });   // HALT-ONE: the living watch's stagger is a person's - its one voice is its call (cityGuards.js)
+    shake?.(0.6);
+  } else if (word === 'hold' && basics?.parrySounds) {
+    audio?.play3d?.(PARRY_1 + Math.floor(rolls() * PARRY_SOUND_COUNT), at, PARRY_VOLUME, { maxDistance: 16 });
+  }
+}
+
+// ---- TELL2: THE EAR (bible/12-Enhanced-AI/Feud-Arc.md section 4.3) ----
+const NO_CUES = Object.freeze([]);   // AUDIT TELL U9: what a foe with nothing telegraphed plays
+/** RVN11 (bible/12-Enhanced-AI/Feud-Arc.md 22.1): the host's ear for a wind-up at me as it begins (`fn(f, blow)`) - a
+ *  Devoted companion's warning of one behind me. */
+let _windupAtMe = null;
+export function setWindupAtMeListener(fn) { _windupAtMe = typeof fn === 'function' ? fn : null; }
+/**
+ * A telegraphed blow's three cues, in the world boss's order (world/gate/gateBoss.js BOSS_CUES), each once, through the
+ * foes' own device settings (playEnemyClip's: a metre above the feet, linear to the attract radius by `hearing`):
+ *   WIND as it winds up - the kind's bark at TELL.WIND_PITCH (a person, whom DFU keeps mute, a low swing instead);
+ *   RELEASE TELL.RELEASE_LEAD before its landing - the low swing at TELL.RELEASE_PITCH;
+ *   LAND at the strike frame that follows its landing (the sprite's `meleeSeq`) - the kind's attack sound, always
+ *   (DFU's half-the-time roll stays on its plain swings).
+ * A wind-up that breaks plays neither of the last two; a feint (TELL5) no WIND, and its cut's plain blow the LAND. TELL4: a perfect dodge rings at its
+ * landing - `SOUND.Parry6` at TELL.PERFECT_PITCH. TELL9: a wind-up at me makes its foe the target bar's (markFoeThreat)
+ * and a perfect dodge says "Perfect" (ui/hitNumbers.js); RVN11: the host hears a wind-up at me begin (setWindupAtMeListener). Called once a frame per live foe, after its sprite's update. Answers the cues it played this frame (tests).
+ */
+export function tellCues(f, audio, hearing = 1, now = tacticsNow()) {
+  const ai = f?.ai;
+  if (!ai) return null;
+  const s = ai._tac, b = s?.state === 'windup' ? s.blow : s?.state === 'dash' ? s.dash?.blow ?? null : null;   // TELL6: a charge's run is its landing still to come
+  const c = f._tellCue ?? (f._tellCue = { blow: null, released: false, land: false, seq: 0 });
+  if (!b && !c.blow && !c.land) return NO_CUES;   // AUDIT TELL U9: a foe with nothing telegraphed costs nothing a frame
+  const played = [];
+  const at = [ai.feet[0], ai.feet[1] + 1, ai.feet[2]];
+  const play = (clip, pitch, volume = 1) => {
+    if (clip == null) return;
+    audio?.play3d?.(clip, at, volume, { maxDistance: ATTRACT_RADIUS * hearing, distanceModel: 'linear', pitch });
+    played.push(clip);
+  };
+  const row = ENEMY_BASICS[f.mobileType];
+  if (b && c.blow !== b) {
+    c.blow = b; c.released = false; c.land = false;
+    if (s.key === LOCAL_TARGET) { markFoeThreat(f); try { _windupAtMe?.(f, b); } catch { /* a warning is no blow's business */ } }   // TELL9: a foe winding up at me takes the target bar; RVN11: the host hears it begin
+    if (!b.feint) {
+      // RVN5 (Feud-Arc.md 16.1): a signature's WIND deeper (`b.windPitch`)
+      if (ignoreHumanSounds(f.mobileType) || f.quietVoice) play(SOUND.SwingMediumPitch, b.windPitch ? TELL.WIND_CLASS_PITCH * (b.windPitch / TELL.WIND_PITCH) : TELL.WIND_CLASS_PITCH, TELL.WIND_CLASS_VOLUME);   // HALT-ONE: the living watch's wind-up is a person's low swing - never its Halt
+      else play(row?.barkSound, b.windPitch ?? TELL.WIND_PITCH);
+    }
+  }
+  if (b && !c.released && now >= b.land - TELL.RELEASE_LEAD) { c.released = true; play(SOUND.SwingLowPitch, TELL.RELEASE_PITCH); }
+  if (b) c.seq = f.mobile?.meleeSeq ?? 0;   // the strikes counted while it is held - the next one is its own
+  else if (c.blow) {
+    // landed (the brain stamped its landing at or after this blow's), or broken - only a landing strikes; its strike may
+    // already be this frame's (the sprite stepped past the release before this call)
+    const landed = ai._blowLandedAt != null && ai._blowLandedAt >= c.blow.land - 1e-6;
+    c.land = (landed && c.blow.kind !== 'aimed' && c.blow.kind !== 'pyre' && (ai._blowHold === false || ai._blowHold === 'spent'))   // TELL4: a miss strikes too, then stands spent; TELL6d: a shot strikes nothing - its arrow flies; RVN5: nor a pyre - its blast is its cast's sound
+      || c.blow.cut != null;   // TELL5: a cut feint's plain blow sounds at its strike
+    // TELL4 (6.2): a perfect dodge - the bright parry ring, at the landing
+    if (landed && ai._perfectAt != null && ai._perfectAt >= c.blow.land - 1e-6) { play(SOUND.Parry6, TELL.PERFECT_PITCH); showWord(HIT_TAGS.perfect, 'perfect'); }   // TELL9: and says so
+    c.blow = null;
+  }
+  if (c.land && (f.mobile?.meleeSeq ?? 0) !== c.seq) {
+    c.land = false;
+    if (!ignoreHumanSounds(f.mobileType)) play(row?.attackSound, 1);
+  }
+  return played;
+}
+
+// ---- TELL6e: WHAT A LANDING DOES TO YOU (bible/12-Enhanced-AI/Feud-Arc.md section 8.2) ----
+/** A foe's blow's damage reached the player (`dmg`, at `playerFeet`): a telegraphed blow that landed there queues what
+ *  its shape does (systems/blowEffects.js); anything else - a plain swing, a stale landing, a roll that did nothing -
+ *  spends the word and does nothing. Each pool asks it where its blow's damage is decided. */
+export function landBlowEffect(f, dmg, playerFeet, now = tacticsNow()) {
+  const w = f?.ai?._blowFx;
+  if (!w) return null;
+  f.ai._blowFx = null;
+  if (!(dmg > 0) || now - w.at > BLOW_VERDICT_LIFE || !playerFeet) return null;
+  const fx = blowEffectOf(w.kind, w.iron);
+  queueBlowEffect(fx, dmg, [playerFeet[0] - f.ai.feet[0], playerFeet[2] - f.ai.feet[2]], f.entity ?? null);
+  return fx;
+}
+
+/** TELL6e: the player's frame, in every host before its motor's update - the queued landings applied (the motor's
+ *  push, rattle and knockdown, the camera's dip) and a bleed's tick through the host's own `hurt(n)`. */
+export function playerBlowFrame({ motor = null, entity = null, shake = null, hurt = null } = {}) {
+  drainBlowEffects({ motor, entity, shake });
+  if (entity && hurt) tickBleed(entity, hurt);
+}
+
+// ---- TELL6d: THE AIMED SHOT'S LOOSE (bible/12-Enhanced-AI/Feud-Arc.md section 8.1) ----
+/** The aimed shot the brain landed on this archer, taken by the loose that spends it (null: a plain shot). */
+export function takeAimedShot(ai) {
+  const shot = ai?._blowShot;
+  if (!shot?.fired) return null;
+  ai._blowShot = null;
+  return shot;
+}
+/** An arrow's `dir` (DFU's aim at the target's live transform, its dip and all) turned onto the shot's locked bearing -
+ *  its pitch kept, its heading the line the ground showed. A plain shot's unchanged. */
+export function aimedDirection(dir, shot) {
+  if (!shot || !Number.isFinite(shot.yaw)) return dir;
+  const h = Math.hypot(dir[0], dir[2]);
+  return [Math.sin(shot.yaw) * h, dir[1], Math.cos(shot.yaw) * h];
+}
+/** The arrow's own word for an aimed shot: x1.3 as fast (BLOW.aimed.speed), and its damage weighed at contact. */
+export function aimedArrowMeta(shot) {
+  return shot ? { aimed: true, speedScale: BLOW.aimed.speed } : null;
+}
+/** The formulas' `blowInfo` for an arrow that struck the player (`m` its record). */
+export function aimedBlowInfo(m) { return m?.aimed ? AIMED_INFO : null; }
+const AIMED_INFO = Object.freeze({ aimed: true });
+
+// ---- GameManager.MakeEnemiesHostile (ROAD-B, hostility model) ----
+/**
+ * GameManager.cs:790-806, verbatim - "Make all enemies in an area go
+ * hostile":
+ *
+ *     foreach (DaggerfallEntityBehaviour entityBehaviour in
+ *              ActiveGameObjectDatabase.GetActiveEnemyBehaviours())
+ *         if (EntityType == EnemyMonster || EntityType == EnemyClass)
+ *             if (enemyMotor) enemyMotor.IsHostile = true;
+ *
+ * ONE field, and nothing else. No target, no GiveUpTimer, no
+ * remembered position - that is MakeEnemyHostileToAttacker, which DFU
+ * calls SEPARATELY, right after this one, at both sites that want both
+ * (DaggerfallEntityBehaviour.cs:250-261, PlayerActivate.cs:1662-1671).
+ * The port's own `makeHostileToPlayer` is that other law; calling it
+ * from here would give every foe in the room the player's position for
+ * free, which is exactly the bug the two-call shape avoids.
+ *
+ * The EntityTypes filter is satisfied by construction here: every
+ * record in a port pool is an EnemyEntity of one of those two types
+ * (EnemyMonster or EnemyClass) - the pools mint nothing else. The
+ * `if (enemyMotor)` guard is NOT free, so it stays: a record whose AI
+ * has not landed yet (cityGuards' spawn crosses two awaits) has no
+ * motor to write, and a dead one is not in ActiveGameObjectDatabase at
+ * all (EnemyDeath destroys the GameObject).
+ *
+ * "In an area" is the ACTIVE DATABASE, which is one database for the
+ * whole scene - so a caller hands this the union of every live pool
+ * its host owns, the same join `questFoeInstances` makes.
+ *
+ * @param {Iterable} foes live pool records ({ ai, dead })
+ * @returns {number} how many were NOT already hostile (the wiring's
+ *   test seam; DFU's own loop returns nothing and writes blind)
+ */
+export function makeEnemiesHostile(foes) {
+  let flipped = 0;
+  for (const f of foes ?? []) {
+    if (!f || f.dead || !f.ai) continue;
+    if (!f.ai.isHostile) flipped++;
+    f.ai.isHostile = true;
+  }
+  return flipped;
+}
+
+// ---- First-encounter language pacification (AUDIT 24, wave 42) ----
+/**
+ * EnemySenses.cs:504-527. On the FIRST time an enemy detects the
+ * player, its language skill is rolled: a success stands it down
+ * (`motor.IsHostile = false`) and tallies the skill by THREE - DFU's
+ * BCHG over classic's one, "to make raising language skills easier" -
+ * and a failure tallies ONE, except for Etiquette and Streetwise,
+ * which get nothing for failing.
+ *
+ * The port had the formulas (`enemyLanguageSkill`,
+ * `calculateEnemyPacification`) and the motor raised `justEncountered`
+ * for every pool - and exactly one caller consumed it, inline in the
+ * dungeon frame body. Above ground no monster and no watchman was ever
+ * talked down, in a game where language skills are a third of the
+ * stealth build.
+ *
+ * DFU's guards: `!questBehaviour` (a quest foe cannot be pacified) and
+ * the entity being EnemyMonster or EnemyClass. `isQuestFoe` carries
+ * the first; the pools only ever hold the second.
+ */
+export function tryLanguagePacification(ai, entity, mobileType, playerEntity, {
+  sheathed = false, enemyLanguageSkill, calculateEnemyPacification, say = () => {}, isQuestFoe = false,
+} = {}) {
+  if (!ai?.justEncountered) return null;
+  ai.justEncountered = false;   // the EDGE is consumed whatever happens next
+  if (isQuestFoe) return null;
+  if (entity?.pacifyImmune) return null;   // WB8a: the gate's Warden hears no tongue - no roll, no tally, no line
+  const lang = enemyLanguageSkill(entity);
+  if (lang === -1) return null;   // Skills.None - most monsters have no tongue
+  // X11: COMPREHEND LANGUAGES. DFU reads the live effect off
+  // PlayerEffectManager inside CalculateEnemyPacification itself
+  // (FormulaHelper.cs:377-380); the port hands it in, because
+  // combat/formulas.js cannot import systems/effects.js without the
+  // cycle its concealment leaf exists to dodge. This is the one seam
+  // all three enemy pools share, so one read covers dungeon foes,
+  // exterior foes and the city watch alike.
+  const comprehend = comprehendLanguagesChance(playerEntity);
+  if (calculateEnemyPacification(playerEntity, lang, sheathed, undefined, comprehend)) {
+    ai.isHostile = false;
+    // languagePacified %e/%s. L10N3e: %e is GetLocalizedEnemyName's (EnemySenses.cs:519) - the name in the player's
+    // language; the sentence around it is still the port's own (L10N3d's recorded difference from DFU's row).
+    say(`${getLocalizedEnemyName(mobileType, enemyDisplayName(mobileType) ?? 'The enemy')} is pacified by your ${SKILL_NAMES[lang]} skill.`);
+    tallySkill(playerEntity, lang, 3);
+    return { pacified: true, lang };
+  }
+  // :525-526 - a failed roll still counts as USING a monster tongue,
+  // but Etiquette and Streetwise get nothing for being ignored.
+  if (lang !== SKILLS.Etiquette && lang !== SKILLS.Streetwise) tallySkill(playerEntity, lang, 1);
+  return { pacified: false, lang };
+}
+

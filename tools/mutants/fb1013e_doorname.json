@@ -1,0 +1,20 @@
+[
+  {
+    "name": "DOOR-NAME-the-plaque-reads-the-box",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const bd = doorBuilding(entry);\n",
+    "new": "      const bd = buildingUnderRay(eye, dir);\n",
+    "tests": [
+      "test/systems/fb1013e_doorname.test.js"
+    ]
+  },
+  {
+    "name": "DOOR-NAME-the-door-names-nothing",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const bd = entry ? buildingDataForDoor?.(entry) ?? null : null;",
+    "new": "    const bd = null;",
+    "tests": [
+      "test/systems/fb1013e_doorname.test.js"
+    ]
+  }
+]

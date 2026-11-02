@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Studio</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #14141a; color: #cfcfda; font-family: -apple-system, system-ui, sans-serif; padding: 16px; }
+  h1 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  h2 { font-size: 14px; font-weight: 600; margin: 22px 0 4px; }
+  p.hint { font-size: 12px; color: #8a8a99; margin-bottom: 10px; max-width: 760px; line-height: 1.5; }
+  code { background: #23232e; border-radius: 4px; padding: 1px 5px; font-size: 11px; }
+  #bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+  input[type=search] { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 6px; padding: 8px 10px; font-size: 13px; width: 260px; max-width: 100%; }
+  label { font-size: 12px; color: #9a9ab0; }
+  #status { font-size: 12px; color: #8a8a99; }
+  .set p.hint { margin-bottom: 8px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .cell { background: #1c1c24; border: 1px solid #2a2a34; border-radius: 8px; padding: 8px; width: 156px; text-align: center; }
+  .cell.own { border-color: #c8a13a; }
+  .pics { display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 64px; }
+  .pics canvas, .pics img { image-rendering: pixelated; max-width: 136px; max-height: 136px; border-radius: 4px;
+    background: repeating-conic-gradient(#2a2a34 0% 25%, #202028 0% 50%) 0 0 / 12px 12px; }
+  .cell.own .pics canvas, .cell.own .pics img { max-width: 66px; }
+  .cell .n { font-size: 11px; color: #cfcfda; margin-top: 6px; line-height: 1.35; }
+  .cell .k { font-size: 10px; color: #6a6a80; margin-top: 2px; }
+  .cell .by { font-size: 10px; color: #c8a13a; margin-top: 2px; word-break: break-all; }
+  .cell button { margin-top: 6px; background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 5px 12px; font-size: 11px; cursor: pointer; }
+  .cell button:hover { background: #2e2e3a; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<h1>The studio</h1>
+<p class="hint">The pictures of the eight models the game paints for itself, as painted (the game lays Daggerfall's
+palette over them when it loads). Download a template, repaint it,
+and drop it in your folder under <code>public/art/studio/&lt;you&gt;/</code> with the name it downloads with. The game wears
+it on the next load. Outlined pictures already have a studio picture (left: the studio's, right: the painted one it
+replaces). A picture marked <b>glass</b> is cut where it is clear; every other one is drawn solid. The rules are in <code>public/art/studio/README.md</code>; Daggerfall's own textures take the same names, and
+<code>archive-sheet.html</code> numbers them from your own copy of the game.</p>
+<div id="bar">
+  <input type="search" id="find" placeholder="find: cart, sail, 38181_1-0 ...">
+  <label><input type="checkbox" id="mine"> only studio pictures</label>
+  <span id="status">painting...</span>
+</div>
+<div id="sets"></div>
+<script type="module" src="./src/tools/studioLab.js"></script>
+</body>
+</html>

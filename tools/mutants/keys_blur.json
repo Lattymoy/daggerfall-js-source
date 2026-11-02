@@ -1,0 +1,92 @@
+[
+  {
+    "name": "KEYS-BLUR-blur-unheard",
+    "file": "src/ui/input.js",
+    "old": "  win.addEventListener?.('blur', up);",
+    "new": "  win.addEventListener?.('focus', up);",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "a blur lets nothing go"
+  },
+  {
+    "name": "KEYS-BLUR-hidden-any",
+    "file": "src/ui/input.js",
+    "old": "const hidden = () => { if (win.document?.visibilityState === 'hidden') up(); };",
+    "new": "const hidden = () => { up(); };",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "shown again, the keys held are let go"
+  },
+  {
+    "name": "KEYS-BLUR-no-up-edge",
+    "file": "src/ui/input.js",
+    "old": "    for (const code of held) if (keys.delete(code)) noteKeyUp(edges, code);",
+    "new": "    for (const code of held) keys.delete(code);",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "a key no listener let go never notes its up"
+  },
+  {
+    "name": "KEYS-BLUR-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR",
+    "new": "  void keys;   // KEYS-BLUR",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "the streaming world - the sea's host - holds a key across a blur"
+  },
+  {
+    "name": "AUDIT-FB1029e-S3-no-keyup",
+    "file": "src/ui/input.js",
+    "old": "    for (const code of held) keyUp(code);\n",
+    "new": "",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "the host's own keyup never runs - a window's held set keeps the key"
+  },
+  {
+    "name": "AUDIT-FB1029e-S3-mouse-too",
+    "file": "src/ui/input.js",
+    "old": "    const held = [...keys].filter((code) => !MOUSE_CODES.includes(code));",
+    "new": "    const held = [...keys];",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "a mouse button let go from the key set alone - the swing's own state left held"
+  },
+  {
+    "name": "AUDIT-FB1029e-S4-pad-kept",
+    "file": "src/ui/gamepadInput.js",
+    "old": "  globalThis.window?.addEventListener?.('blur', onFocusLost);",
+    "new": "  void onFocusLost;",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "a stick held across a blur never presses again"
+  },
+  {
+    "name": "AUDIT-FB1029e-S6-exterior-unwired",
+    "file": "src/scenes/exterior.js",
+    "old": "  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR",
+    "new": "  void keys;   // KEYS-BLUR",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "the fixed city holds a key across a blur"
+  },
+  {
+    "name": "AUDIT-FB1029e-S6-dungeon-unwired",
+    "file": "src/scenes/dungeon.js",
+    "old": "  letGoOnBlur(keys, keyEdge);   // KEYS-BLUR",
+    "new": "  void keys;   // KEYS-BLUR",
+    "tests": [
+      "test/ui/keys_blur.test.js"
+    ],
+    "note": "the dungeon holds a key across a blur"
+  }
+]

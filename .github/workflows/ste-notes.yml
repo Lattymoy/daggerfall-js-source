@@ -1,0 +1,58 @@
+# STE-NOTES (2026-10-26, the owner: "The law for patch notes is now
+# ASD-STE100 Simplified Technical English (STE)"): A PULL REQUEST'S PATCH
+# NOTES, READ FOR STE. The notes live in the description (REL6), not in the
+# tree, so `verify` never sees them: this check reads the description when
+# the pull request opens, every time the description is edited and on every
+# push, and fails on each place the notes break a rule of STE a machine can
+# read (scripts/steNotes.mjs - sentence and paragraph lengths, semicolons,
+# -ing forms, contractions, complex verbs). A description with no patch
+# notes passes. The rest of STE - the dictionary's words in their approved
+# meanings - is the reviewer's (bible/01-Overview/Desktop-App.md, STE-NOTES).
+#
+# The file is ste-notes.yml, not patch-notes.yml: REL6's sweep refuses any
+# file named for patch notes (PATCH_NOTES_PATH_RE).
+#
+# pull_request, never pull_request_target: it runs the pull request's own
+# script with a read-only token, and the description reaches the script
+# through the environment as data - it is never pasted into the script.
+name: ste-notes
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ste-notes-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ste:
+    name: patch notes in STE
+    # a closed pull request's description is the release's (REL7), and its merge ref is gone
+    if: github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # nothing here pushes; no token is left in .git/config
+          # steNotes.mjs, and what desktopRelease.mjs loads beside patchNotesOf (ste_notes.test.js runs it from these alone)
+          sparse-checkout: |
+            scripts
+            tools/lib
+            app/lib
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Read the patch notes for STE
+        shell: bash
+        env:
+          DESCRIPTION: ${{ github.event.pull_request.body }}
+        run: |
+          set -o pipefail
+          printf '%s' "$DESCRIPTION" > "$RUNNER_TEMP/description.md"
+          node scripts/steNotes.mjs "$RUNNER_TEMP/description.md" | tee -a "$GITHUB_STEP_SUMMARY"

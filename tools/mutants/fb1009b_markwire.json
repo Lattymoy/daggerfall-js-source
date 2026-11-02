@@ -1,0 +1,30 @@
+[
+  {
+    "name": "MARK-WIRE-the-volatile-list-spelled-out-without-it",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', ...RECEIVER_MARKS]);",
+    "new": "export const TRADE_VOLATILE_FIELDS = Object.freeze(['stackCount', 'value', 'equipSlot', 'questItem']);",
+    "tests": [
+      "test/systems/fb1009b_markwire.test.js",
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARK-WIRE-the-moved-record-keeps-the-mark",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "    for (const k of RECEIVER_MARKS) delete rec[k];",
+    "new": "    for (const k of RECEIVER_MARKS) if (k !== 'acquired') delete rec[k];",
+    "tests": [
+      "test/systems/fb1009b_markwire.test.js"
+    ]
+  },
+  {
+    "name": "MARK-WIRE-the-mark-off-the-list",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "  'acquired',\n  'wagonEntry',",
+    "new": "  'wagonEntry',",
+    "tests": [
+      "test/systems/fb1009b_markwire.test.js"
+    ]
+  }
+]

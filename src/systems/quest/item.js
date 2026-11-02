@@ -1,0 +1,383 @@
+// THE QUEST ITEM (Q1 declaration + Q2b-ii mint) - Item.cs. Five
+// declaration shapes tried in DFU's alternation order: class+subclass,
+// class+template, artifact NAME, NAME key N (books/potions), bare
+// NAME - plus the "range LOW to HIGH" option and the gold special
+// case (not in the lookup table). Q2b-ii ships the MINT: the create
+// ladder verbatim (Item.cs:220-231) - MagicItems and Books and the
+// potion shape short-circuit BEFORE the random-subclass arm, gold
+// carries the classic level/guild/region reward formula with integer
+// division at every step, artifacts expand their MAGIC.DEF template,
+// clothing takes a random dye, and every minted item is quest-linked
+// (uid + symbol) EXCEPT the modded "class N template M" form, which
+// C# leaves unlinked (Item.cs:221-222 - it survives quest end). Draws ride the quest's injectable roll (Ledger A
+// engine-PRNG rule; DFU uses UnityEngine.Random throughout). Player /
+// guild / region facts come through quest.hooks, which the machine
+// now builds BEFORE the parse. The MagicItems/Artifacts arms need the
+// MAGIC.DEF registry (loot.js setMagicItemTemplates - hosts register
+// it); headless, they mint a pendingMagicDef stand-in instead of
+// throwing, so the no-ARENA2 corpus gate stands (Ledger A row).
+//
+// Corpus reality (the backlog scan): `key N` books/potions appear on
+// ZERO corpus lines, and the potion arm (class 1 subclass 1) on none
+// either - both ship minimal shapes, cited, rather than fictional
+// completeness. A2 closed the book half: the arm is now Item.cs:345
+// verbatim (CreateBook / CreateRandomBook out of systems/books.js),
+// so a quest book carries its id and the book FILE's price.
+
+import { QuestResource, matchFirst } from './questResource.js';
+import { Symbol as QuestSymbol } from './symbol.js';
+import { parseInt as questParseInt } from './parseUtils.js';
+import { itemsTable } from './tables.js';
+import {
+  createRegularMagicItem,
+  createArtifact,
+  getMagicItemTemplates,
+  createPotion,
+  createRandomPotion, // AUDIT 63 F20: Item.cs:350's own two makers
+  ITEM_GROUP_NAME_BY_CLASS,
+  BOOK_TEMPLATE,
+} from '../loot/loot.js';
+import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../item/itemTemplates.js';
+import { createBook, createRandomBook } from '../books.js'; // A2: ItemBuilder.CreateBook / CreateRandomBook
+import { goldStack, isGoldPieces } from '../inventory.js';
+import { itemLongName, shownItemName } from '../item/itemInfo.js'; // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to; L10N3e: an artifact's shortName, as shown
+import { alterReward } from '../guild/guilds.js';
+import { CLOTHING_DYES } from '../../characters/dyes.js';
+
+/** DaggerfallUnityItem.MakePermanent (DaggerfallUnityItem.cs:1240-
+ *  1248): drops quest-item status so the item survives quest end. */
+export function makeItemPermanent(dfItem) {
+  if (dfItem?.questItem) {
+    dfItem.questUID = 0;
+    dfItem.questSymbol = null;
+    dfItem.questItem = false;
+    delete dfItem.questClone; // HEART-KEPT: a plain item is no quest's clone either
+  }
+}
+
+const DECL = [
+  /(Item|item) (?<s1>[a-zA-Z0-9_.-]+) item class (?<itemClass>\d+) subclass (?<itemSubClass>\d+)/,
+  /(Item|item) (?<s2>[a-zA-Z0-9_.-]+) item class (?<c2>\d+) template (?<itemTemplate>\d+)/,
+  /(Item|item) (?<s3>[a-zA-Z0-9_.-]+) (?<artifact>artifact) (?<n3>[a-zA-Z0-9_.-]+)/,
+  /(Item|item) (?<s4>[a-zA-Z0-9_.-]+) (?<n4>[a-zA-Z0-9_.-]+) key (?<itemKey>\d+)/,
+  /(Item|item) (?<s5>[a-zA-Z0-9_.-]+) (?<n5>[a-zA-Z0-9_.-]+)/,
+];
+const OPTIONS = /range (?<rangeLow>\d+) to (?<rangeHigh>\d+)/g;
+
+export class Item extends QuestResource {
+  constructor(parentQuest, line = null) {
+    super(parentQuest);
+    this.itemName = '';
+    this.itemKey = -1;
+    this.itemClass = -1;
+    this.itemSubClass = -1;
+    this.itemTemplate = -1;
+    this.artifact = false;
+    this.isGold = false;
+    this.rangeLow = -1;
+    this.rangeHigh = -1;
+    // Q2b use-tracking (Item.cs:46-47,71-86): the world's "use item
+    // from inventory" path (useItem.js at Q4's item wiring) sets
+    // useClicked while an ItemUsedDo action watches; actionWatching
+    // tells the inventory UI a quest is listening.
+    this.useClicked = false;
+    this.actionWatching = false;
+    // Q2b-ii lifecycle flags (Item.cs:48-50)
+    this.allowDrop = false;
+    this.playerDropped = false;
+    this.madePermanent = false;
+    this.daggerfallUnityItem = null;
+    if (line !== null) this.setResource(line);
+  }
+
+  get isItem() {
+    return true;
+  }
+
+  /** ExpandMacro (Item.cs:236-260): _symbol_ and =symbol_ both
+   *  answer the item's name - an artifact its SHORT name, gold its
+   *  STACK COUNT, everything else `GetLongName` (:304-307), which is
+   *  `ResolveItemLongName(item, false)`.
+   *
+   *  MAC-D (2026-09-17, Mac: "I was given a quest to find a book, but
+   *  the book's name was just *Book*"). This line used to return
+   *  `it.name` - the raw field, which for a book is the TEMPLATE's
+   *  name - under a note that said: "ResolveItemLongName's
+   *  material/condition prefix half is the inventory arc's label
+   *  maker; the port's shop windows speak the same plain template name
+   *  today, so the long name here is name ?? template name - one
+   *  convention." That was true when it was written and stopped being
+   *  true at D7, which ported `ResolveItemLongName` whole. The quest
+   *  machine went on naming a Daedric Broadsword "Broadsword", a
+   *  potion "Glass Bottle", a quest letter "Parchment" - and a book
+   *  "Book", which is the one a player read out loud.
+   *
+   *  `differentiatePlantIngredients` is FALSE here because :306 passes
+   *  false: a quest asking for a plant names the plant, not its
+   *  (northern) variant. `getQuest` is the letter arm's, taken from
+   *  the quest this resource belongs to rather than a machine lookup -
+   *  a letter in a quest names its own quest's signoff. */
+  expandMacro(macroType) {
+    if (macroType !== 1 && macroType !== 5) return false; // NameMacro1/DetailsMacro
+    const it = this.daggerfallUnityItem;
+    if (!it) return false;
+    // L10N3e: Item.cs:245's shortName, which SetArtifact minted in the
+    // player's language (DaggerfallUnityItem.cs:602) - the port's item
+    // keeps the canonical name (LegacyGetArtifactSubType reads it), so
+    // it is looked up where it is shown, by its MAGIC.DEF template
+    if (this.artifact) return it.shortName ?? shownItemName(it) ?? false;
+    if (isGoldPieces(it)) return String(it.stackCount ?? 0); // AUDIT 68 S29-item-gold-test: Item.cs:236's IsOfTemplate, one spelling
+    const long = itemLongName(it, {
+      differentiatePlantIngredients: false,
+      getQuest: (uid) => (uid === this.parentQuest?.uid ? this.parentQuest : null),
+    });
+    return long || it.name || it.shortName || false;
+  }
+
+  setResource(line) {
+    super.setResource(line);
+    const match = matchFirst(line, DECL);
+    if (!match) return;
+    const g = match.groups;
+    this.symbol = new QuestSymbol(g.s1 ?? g.s2 ?? g.s3 ?? g.s4 ?? g.s5);
+    this.itemName = g.n3 ?? g.n4 ?? g.n5 ?? '';
+    if (g.itemClass != null || g.c2 != null) this.itemClass = questParseInt(g.itemClass ?? g.c2);
+    if (g.itemSubClass != null) this.itemSubClass = questParseInt(g.itemSubClass);
+    if (g.itemTemplate != null) this.itemTemplate = questParseInt(g.itemTemplate);
+    if (g.artifact) this.artifact = true;
+    if (g.itemKey != null) this.itemKey = questParseInt(g.itemKey);
+    if (this.itemName === 'gold') this.isGold = true;
+
+    const optionsLine = line.slice(match.index + match[0].length);
+    for (const option of optionsLine.matchAll(OPTIONS)) {
+      if (option.groups.rangeLow != null) this.rangeLow = questParseInt(option.groups.rangeLow);
+      if (option.groups.rangeHigh != null) this.rangeHigh = questParseInt(option.groups.rangeHigh);
+    }
+
+    // The create ladder (Item.cs:220-231), branch order verbatim.
+    if (this.itemClass !== -1 && this.itemSubClass !== -1 && !this.isGold) {
+      this.daggerfallUnityItem = this._createItem(this.itemClass, this.itemSubClass);
+    } else if (this.itemClass !== -1 && this.itemTemplate > 0 && !this.isGold) {
+      // ItemBuilder.CreateItem(group, TEMPLATE index) - the modded-item
+      // form; classic templates resolve straight off the table.
+      // Q2b-ii VERIFY: C# does NOT LinkQuestItem on this arm
+      // (Item.cs:221-222 assigns the builder's item raw; only the
+      // class/subclass mint at :370 and CreateGold at :430 link) - a
+      // template-form item survives quest end and no sweep matches it.
+      this.daggerfallUnityItem = this._templateItem(
+        ITEM_GROUP_NAME_BY_CLASS[this.itemClass],
+        this.itemTemplate,
+        this._rolls(),
+      );
+    } else if (this.itemName && !this.isGold) {
+      this.daggerfallUnityItem = this._createItemByName(this.itemName, this.itemKey);
+    } else if (this.isGold) {
+      this.daggerfallUnityItem = this._createGold(this.rangeLow, this.rangeHigh);
+    } else {
+      throw new Error(`Could not create Item from line ${line}`);
+    }
+  }
+
+  /** MakePermanent (Item.cs:278-297): flags the virtual item, the
+   *  current instance, and every matching item the player holds (C#
+   *  iterates ExportQuestItems; the sweep is the host's inventory). */
+  makePermanent() {
+    this.madePermanent = true;
+    if (this.daggerfallUnityItem) makeItemPermanent(this.daggerfallUnityItem);
+    this.parentQuest?.hooks?.makeHeldQuestItemsPermanent?.(this.parentQuest.uid, this.symbol);
+  }
+
+  /** Dispose (Item.cs:258-268): a still-quest-linked item leaves the
+   *  player's collection when the quest ends. */
+  dispose() {
+    super.dispose();
+    if (this.daggerfallUnityItem && this.daggerfallUnityItem.questItem) {
+      this.parentQuest?.hooks?.removeItemFromPlayer?.(this.daggerfallUnityItem);
+    }
+  }
+
+  // ---- the mint (Item.cs:325-470) ----
+
+  _rolls() {
+    return this.parentQuest?.rolls ?? Math.random;
+  }
+
+  _link(dfItem) {
+    // LinkQuestItem (DaggerfallUnityItem.cs:1230-1236)
+    dfItem.questItem = true;
+    dfItem.questUID = this.parentQuest?.uid ?? 0;
+    dfItem.questSymbol = this.symbol?.clone() ?? null;
+    return dfItem;
+  }
+
+  /** The SetItem laws every template-backed mint carries
+   *  (DaggerfallUnityItem.cs:538-573): condition = the template's
+   *  hitPoints (the port's AUDIT 23 items-5 mintCondition law), and a
+   *  Paintings item draws its message identity from
+   *  Random.Range(0, 65536) (:571) - both were skipped by the first
+   *  draft (Q2b-ii VERIFY). */
+  _templateItem(groupName, templateIndex, rolls) {
+    const item = mintCondition({
+      group: groupName,
+      templateIndex,
+      name: ITEM_TEMPLATES[templateIndex]?.name,
+    });
+    if (groupName === 'Paintings') item.message = rollPaintingMessage(rolls);
+    return item;
+  }
+
+  /** CreateItem(name, key): class/subclass from the Quests-Items
+   *  table's p1/p2; an unknown name THROWS, as DFU. */
+  _createItemByName(itemName, itemKey) {
+    const table = itemsTable();
+    if (!table.hasValue(itemName)) {
+      throw new Error(`Could not find Item name ${itemName} in items table`);
+    }
+    const p1 = questParseInt(table.getValue('p1', itemName));
+    const p2 = questParseInt(table.getValue('p2', itemName));
+    return this._createItem(p1, p2, itemKey);
+  }
+
+  /** CreateItem(class, subclass, key) - the special-group ladder THEN
+   *  the random-subclass arm, order verbatim. */
+  _createItem(itemClass, itemSubClass, itemKey = -1) {
+    if (itemClass === -1) throw new Error(`Tried to create Item with class ${itemClass}`);
+    const rolls = this._rolls();
+    let result;
+    if (itemClass === 4) {
+      // MagicItems: CreateRegularMagicItem(subClass, level, gender, race)
+      const templates = getMagicItemTemplates();
+      if (templates) {
+        result = createRegularMagicItem(
+          templates,
+          this.parentQuest?.hooks?.playerLevel?.() ?? 0,
+          this.parentQuest?.hooks?.playerGender?.() ?? 'male',
+          rolls,
+          itemSubClass,
+        );
+      } else {
+        // No MAGIC.DEF registered (the headless corpus gate) - a loud
+        // stand-in instead of a throw; hosts register the file.
+        result = { group: 'MagicItems', pendingMagicDef: true, name: this.itemName || 'magic item' };
+      }
+    } else if (itemClass === 5) {
+      // Artifacts reach the DaggerfallUnityItem ctor in C# and expand
+      // their MAGIC.DEF template via SetArtifact.
+      const templates = getMagicItemTemplates();
+      result = templates
+        ? createArtifact(
+            templates,
+            itemSubClass,
+            // D9: SetArtifact reads PlayerEntity.Gender for the texture
+            // archive (ItemHelper.cs:521) - the same hook the magic-item
+            // mint above already asks for.
+            { gender: this.parentQuest?.hooks?.playerGender?.() ?? 'male' },
+          )
+        : { group: 'Artifacts', pendingMagicDef: true, artifactIndex: itemSubClass, name: this.itemName };
+    } else if (itemClass === 7) {
+      // Item.cs:343-345 verbatim: `(itemKey != -1) ?
+      // ItemBuilder.CreateBook(itemKey) : ItemBuilder.CreateRandomBook()`.
+      // A2 closed the E1 book-file-pricing ledger row this arm was
+      // waiting on, so both forms leave through books.js and carry the
+      // BOOK FILE's price. CreateBook answers null for an id no book
+      // file backs; the port keeps the old template mint for that case
+      // rather than handing the quest machine a null resource.
+      result =
+        itemKey !== -1
+          ? (createBook(itemKey) ?? mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: itemKey }))
+          : createRandomBook(rolls);
+    } else if (itemClass === 1 && itemSubClass === 1) {
+      // Item.cs:347-351 verbatim: `(itemKey != -1) ?
+      // ItemBuilder.CreatePotion(itemKey) : ItemBuilder.CreateRandomPotion()`.
+      // AUDIT 63 F20: this arm used to mint the bottle inline, which
+      // bypassed the PotionRecipeKey setter's BOTH side effects
+      // (DaggerfallUnityItem.cs:395-397) - a quest potion carried the
+      // Glass Bottle's basePrice of 1 and the bottle's own icon - and
+      // flattened the itemKey === -1 branch onto a keyless bottle
+      // where DFU rolls a random recipe. Both makers are loot.js's,
+      // which is where the setter lives.
+      result = itemKey !== -1 ? createPotion(itemKey) : createRandomPotion(rolls);
+    } else {
+      // Random subclass, then the generic template item
+      const groupName = ITEM_GROUP_NAME_BY_CLASS[itemClass];
+      const groupIndices = GROUP_TEMPLATE_INDICES[groupName];
+      if (!groupIndices) throw new Error(`Tried to create Item with unknown class ${itemClass}`);
+      if (itemSubClass === -1) itemSubClass = Math.floor(rolls() * groupIndices.length);
+      result = this._templateItem(groupName, groupIndices[itemSubClass], rolls);
+    }
+    // Randomise clothing dye (ItemBuilder.RandomClothingDye)
+    if (result.group === 'MensClothing' || result.group === 'WomensClothing') {
+      result.dye = CLOTHING_DYES[Math.floor(rolls() * CLOTHING_DYES.length)];
+    }
+    return this._link(result);
+  }
+
+  /** CreateGold(rangeLow, rangeHigh) - the classic reward formula
+   *  with C#'s integer division at every step: playerMod = level/2+1,
+   *  or guild rank+1 on a faction quest with factionMod = the
+   *  faction's power; clamp 10; amount = Range(150*pm, 200*pm+1)
+   *  * (PriceAdjustment/2 + 500)/1000 * (factionMod+50)/100; the
+   *  guild's AlterReward last (FightersGuild's rank bonus). */
+  _createGold(rangeLow, rangeHigh) {
+    const rolls = this._rolls();
+    const hooks = this.parentQuest?.hooks;
+    let amount = 0;
+    if (rangeLow === -1 || rangeHigh === -1) {
+      let playerMod = Math.trunc((hooks?.playerLevel?.() ?? 0) / 2) + 1;
+      let factionMod = 50;
+      let guild = null;
+      if ((this.parentQuest?.factionId ?? 0) !== 0) {
+        guild = hooks?.getGuild?.(this.parentQuest.factionId) ?? null;
+        if (guild && !guild.isNonMember) {
+          playerMod = guild.rank + 1;
+          factionMod = guild.power;
+        }
+      }
+      if (playerMod > 10) playerMod = 10;
+      const regionPriceMod = Math.trunc((hooks?.regionPriceAdjustment?.() ?? 0) / 2);
+      const lo = 150 * playerMod,
+        hi = 200 * playerMod + 1;
+      const draw = lo + Math.floor(rolls() * (hi - lo)); // Random.Range(lo, hi)
+      amount = Math.trunc((Math.trunc((draw * (regionPriceMod + 500)) / 1000) * (factionMod + 50)) / 100);
+      // C# dispatches guild.AlterReward VIRTUALLY - a NonMemberGuild
+      // carries the base identity whatever its group, so the group-
+      // keyed port must gate on the flag (Q2b-ii VERIFY: an FG
+      // non-member record with a rank would have taken the bonus).
+      if (guild && !guild.isNonMember) amount = alterReward(guild.guildGroup, guild.rank, amount);
+    } else {
+      amount = rangeLow + Math.floor(rolls() * (rangeHigh + 1 - rangeLow));
+    }
+    if (amount < 1) amount = 1;
+    return this._link(goldStack(amount));
+  }
+
+  // ---- the save envelope (Q4-iv; Item.cs:440-486) ----
+
+  getSaveData() {
+    return {
+      artifact: this.artifact,
+      useClicked: this.useClicked,
+      actionWatching: this.actionWatching,
+      allowDrop: this.allowDrop,
+      playerDropped: this.playerDropped,
+      madePermanent: this.madePermanent,
+      item: this.daggerfallUnityItem ? structuredClone(this.daggerfallUnityItem) : null,
+      ...(this.goldPaid ? { goldPaid: true } : {}), // QUEST-AUDIT III GOLD-ONCE: the port's own, written only once paid
+    };
+  }
+
+  /** RestoreSaveData: C# reconstructs via new DaggerfallUnityItem
+   *  (ItemData_v1); the port's minted items are plain data, so the
+   *  clone IS the reconstruction. */
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    this.artifact = dataIn.artifact;
+    this.useClicked = dataIn.useClicked;
+    this.actionWatching = dataIn.actionWatching;
+    this.allowDrop = dataIn.allowDrop;
+    this.playerDropped = dataIn.playerDropped;
+    this.madePermanent = dataIn.madePermanent;
+    this.daggerfallUnityItem = dataIn.item ? structuredClone(dataIn.item) : null;
+    this.goldPaid = dataIn.goldPaid === true;
+  }
+}

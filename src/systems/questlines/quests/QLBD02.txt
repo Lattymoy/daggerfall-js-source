@@ -1,0 +1,217 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE BURNING DOORS, step 2 of 5.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: Ysolde's letter is the offer. A coven of Dagon's Faithful in a remote dungeon, as a Mages Guild quest
+-- sends one (M0B30Y04's `reveal` and `place foe`): find it, slay its Summoner, take the rite-book the Summoner carries
+-- (`give item` to a foe before it is placed, as B0B81Y02's map). The branch is the player's, asked when the book is in
+-- hand: read it, or carry it to Ysolde shut (the Mages Guild's standing, on the sheet). Lore: the faithful's rite is the
+-- port's own, as "On the Burning Doors" tells it (systems/portBooks.js).
+Quest: QLBD02
+DisplayName: The Faithful
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        Ysolde Marnhel has given the coven up for lost,
+<ce>                   and the rite-book with it.
+
+QuestComplete:  [1004]
+<ce>        "The Guild pays for what it learns, %pcf, and
+<ce>          so do I." Ysolde counts _gold_ gold into
+<ce>                         your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A letter from Ysolde Marnhel. A coven of Dagon's
+ Faithful meets in __coven_, and its Summoner,
+ =summoner_, carries the rite-book they open the
+ breaches by. She wants the Summoner dead and the
+ book brought to her at _hall_ in __hall_,
+ with its clasp unbroken.
+
+Message:  1011
+%pcn,
+
+     The coven I spoke of meets in __coven_.
+ There are not many of them, but one is a Summoner,
+ and the Summoner carries their book. Every rite
+ they have ever spoken is written in it.
+
+     Kill the Summoner. Bring me the book, and bring
+ it shut - a rite-book is not written for the one
+ who carries it, and it knows the difference. I
+ will be at _hall_ in __hall_.
+
+<ce>                              Ysolde Marnhel
+
+Message:  1012
+<ce>         The Mages Guild's courier finds you again, and
+<ce>           again says only one thing: "From the Master
+<ce>               Conjurer." Then the courier is gone.
+
+Message:  1013
+<ce>          =summoner_ falls, and the chant breaks off
+<ce>        mid-word. Somewhere below, a brazier gutters out,
+<ce>          as if something on the far side of it had
+<ce>                     stopped breathing.
+
+Message:  1014
+Ysolde Marnhel? She has been asking the Guild for maps of old places.
+<--->
+The Master Conjurer is waiting on someone. She keeps watching the door.
+<--->
+They say Marnhel has found where the fire-worshippers meet.
+
+Message:  1015
+<ce>         Sulphur on the air, and old smoke. Somewhere
+<ce>         below, voices are chanting a name you would
+<ce>                     rather not learn.
+
+Message:  1020
+<ce>       Among the Summoner's things is the rite-book:
+<ce>       black hide, shut with a clasp of red iron that
+<ce>       is still warm. Ysolde wants it unopened. The
+<ce>                clasp would give at a touch.
+
+Message:  1021
+Open it. Read what the faithful read.
+
+Message:  1022
+Leave it shut. It is Ysolde's to open.
+
+Message:  1023
+<ce>       The pages are thin as skin, and the ink is not
+<ce>       ink. Most of it is one name, written over and
+<ce>       over in a hand that grows larger as it goes.
+<ce>
+<ce>       Then the rite: a ring of braziers, the sigil
+<ce>       burned into the earth, blood, and a count. The
+<ce>       door comes at the end of the count, it says,
+<ce>       whatever the faithful do - they only make the
+<ce>       wound wider. Break the ring before the count is
+<ce>       done, and the door opens weak.
+<ce>
+<ce>       You close the book. Your hands smell of smoke.
+
+Message:  1024
+%qdt:
+ =summoner_ is dead, and I have read the
+ Summoner's rite-book, though Ysolde Marnhel asked
+ me not to. I must still bring it to her at
+ _hall_ in __hall_.
+
+Message:  1025
+%qdt:
+ =summoner_ is dead, and the rite-book is mine,
+ its clasp still shut. I must bring it to Ysolde
+ Marnhel at _hall_ in __hall_.
+
+Message:  1026
+<ce>       Ysolde takes the book and looks at the clasp,
+<ce>              then at you, for a long moment.
+<ce>
+<ce>       "You opened it. I told you not to. Well - what
+<ce>        is read is read. Sit, and tell me all of it,
+<ce>        every word you can still see when you close
+<ce>        your eyes. It spares me reading it myself."
+<ce>
+<ce>       "The Guild will hear the seal was broken. I
+<ce>        will not lie for you. But I will pay for what
+<ce>        you carried out of that book."
+
+Message:  1027
+<ce>       Ysolde turns the book over in her hands and
+<ce>         runs a thumb along the unbroken clasp.
+<ce>
+<ce>       "Still shut. Good. Most would have looked - I
+<ce>        would have, at your age, and been sorry." She
+<ce>        wraps it in the Guild's gray cloth.
+<ce>
+<ce>       "The Guild will know who brought this to it
+<ce>        whole. That counts for something in Wayrest,
+<ce>        and for more than something with me."
+
+-- Symbols used in the QRC file:
+--
+--               %pcf occurs 1 time.
+--               %pcn occurs 1 time.
+--               %qdt occurs 3 times.
+--           __coven_ occurs 2 times.
+--             _gold_ occurs 1 time.
+--             _hall_ occurs 4 times.
+--            __hall_ occurs 4 times.
+--         =summoner_ occurs 4 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _ritebook_ item class 10 subclass 12
+Item _gold_ gold range 300 to 600
+
+Person _ysolde_ faction The_Mages_Guild female anyInfo 1014
+
+Place _hall_ remote magery
+Place _coven_ remote dungeon
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+Foe _summoner_ is Sorcerer
+Foe _faithful_ is Mage
+Foe _faithful2_ is Mage
+
+--	Quest start-up:
+	ql name _ysolde_ Ysolde_Marnhel
+	place npc _ysolde_ at _hall_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	reveal _coven_
+	give item _ritebook_ to _summoner_
+	place foe _summoner_ at _coven_
+	place foe _faithful_ at _coven_
+	place foe _faithful2_ at _coven_
+	pc at _coven_ set _atcoven_ saying 1015
+	have _ritebook_ set _hasbook_
+	start timer _wait_
+
+variable _atcoven_
+
+_slain_ task:
+	killed 1 _summoner_ saying 1013
+
+_hasbook_ task:
+	ask 1020 choices 1021 _readit_ 1022 _keptshut_
+
+variable _readit_
+variable _keptshut_
+
+_reading_ task:
+	when _readit_
+	say 1023
+	log 1024 step 1
+
+_shut_ task:
+	when _keptshut_
+	log 1025 step 1
+
+_handed_ task:
+	toting _ritebook_ and _ysolde_ clicked
+
+_paidread_ task:
+	when _handed_ and _readit_
+	say 1026
+	outcome _read_
+	give pc _gold_
+	end quest
+
+_paidshut_ task:
+	when _handed_ and _keptshut_
+	say 1027
+	outcome _sealed_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

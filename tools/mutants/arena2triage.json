@@ -1,0 +1,257 @@
+[
+  {
+    "name": "ARENA2-TRIAGE-the-books-folder-by-literal-again",
+    "file": "vite.config.js",
+    "old": "const books = join(root, onDisk('BOOKS'));",
+    "new": "const books = join(root, 'BOOKS');",
+    "tests": [
+      "test/tooling/audit68_repo.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-the-book-by-its-url-case",
+    "file": "vite.config.js",
+    "old": "          try { file = readdirSync(books).find((f) => f.toUpperCase() === name.toUpperCase()) ?? name; } catch { /* no books folder */ }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/audit68_repo.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-a-missing-book-crashes-the-door",
+    "file": "vite.config.js",
+    "old": "=== name.toUpperCase()) ?? name; } catch",
+    "new": "=== name.toUpperCase()); } catch",
+    "tests": [
+      "test/tooling/audit68_repo.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-answer-asks-nothing",
+    "file": "src/scenes/townTalk.js",
+    "old": "const a = answerText(row); _questionsAsked++; return a;",
+    "new": "const a = answerText(row); return a;",
+    "why": "killed by audit18 social F4 against the player's own data (ARENA2_PATH): the ask no longer turns the next question into the follow-up (TalkManager.cs:2040)",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-a-selection-refresh-is-a-question",
+    "file": "src/scenes/townTalk.js",
+    "old": "          : questionText(row)),",
+    "new": "          : (_questionsAsked++, questionText(row))),",
+    "why": "killed by audit18 social F4 against the player's own data (ARENA2_PATH): a selection refresh reads the follow-up where it asks nothing (GetQuestionText, :1298)",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-a-new-conversation-keeps-the-count",
+    "file": "src/scenes/townTalk.js",
+    "old": "    _questionsAsked = 0;\n    // U8b: the native TALK01I0 window",
+    "new": "    // U8b: the native TALK01I0 window",
+    "why": "killed by audit18 social F4 against the player's own data (ARENA2_PATH): the second conversation opens on the follow-up (StartNewConversation, :867-871)",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-verdict-leaves-dip-raw",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      dip: String(court.daysInPrison),",
+    "new": "      dip: '%dip',",
+    "why": "killed by audit18 social F2 against the player's own data (ARENA2_PATH): 8055 shows its %dip raw",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-court-names-nobody",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      pcn: name,",
+    "new": "      pcn: '',",
+    "why": "killed by audit18 social F2 against the player's own data (ARENA2_PATH): 8062 and 8063 lose the player's name",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-court-draws-both-dice",
+    "file": "src/systems/court.js",
+    "old": "  const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
+    "new": "  const punishmentType = (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) && failed2 ? 2 : 0;",
+    "why": "killed by audit18 social F2 against the player's own data (ARENA2_PATH): the banishment's second roll is drawn and the defense reads the wrong number (AUDIT 21 F5's short-circuit)",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js",
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-plea-pays-the-whole-fine",
+    "file": "src/systems/court.js",
+    "old": "  court.fine >>= 1;\n  court.daysInPrison >>= 1;",
+    "new": "  court.daysInPrison >>= 1;",
+    "why": "killed by audit18 social F6 against the player's own data (ARENA2_PATH): the plea's fine is not halved - 800 left where 900 is",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-fine-leaves-the-counter-whole",
+    "file": "src/systems/court.js",
+    "old": "    player.goldPieces = purse - amount;",
+    "new": "    player.goldPieces = purse;",
+    "why": "killed by audit18 social F6 against the player's own data (ARENA2_PATH): the purse is E4's GoldPieces counter, and the fine never leaves it",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-a-zero-day-release-shows-a-verdict",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    // releasing in this case, so player is left with 1 health\").\n    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n    fillVitalSigns(playerEntity);\n    release();",
+    "new": "    // releasing in this case, so player is left with 1 health\").\n    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n    fillVitalSigns(playerEntity);\n    release();\n    courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }));",
+    "why": "killed by audit18 social F6 against the player's own data (ARENA2_PATH): the plea shows a verdict box, and state 2 shows 8055 twice",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-banishment-is-no-release",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      fillVitalSigns(playerEntity);\n      release();\n      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED,",
+    "new": "      fillVitalSigns(playerEntity);\n      courtBox(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED,",
+    "why": "killed by AUDIT 21 F8 against the player's own data (ARENA2_PATH): banishment no longer pays the release's four hours",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-release-costs-three-hours",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "export const RELEASE_MINUTES = 240;",
+    "new": "export const RELEASE_MINUTES = 180;",
+    "why": "killed by AUDIT 21 F8 against the player's own data (ARENA2_PATH): RaiseTime(240 * 60), the literal (DaggerfallCourtWindow.cs:485)",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-sentence-serves-no-days",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "          advanceDays(days);",
+    "new": "          advanceDays(0);",
+    "why": "killed by AUDIT 21 F8 against the player's own data (ARENA2_PATH): a no-gold sentence served on the prison screen's countdown moves the clock by no whole day",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-countdown-never-reaches-zero",
+    "file": "src/ui/prisonScreen.js",
+    "old": "    if (this.daysInPrisonLeft === 0) {",
+    "new": "    if (this.daysInPrisonLeft === -1) {",
+    "why": "killed by AUDIT 21 F8 against the player's own data (ARENA2_PATH): the harness's serve() ticks the countdown to its zero (UpdatePrisonScreen :465-480) and the sentence never ends",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-4-the-sentence-credited-after-the-days",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      raiseRepForSentence(playerEntity, court);\n      const days = result.days;",
+    "new": "      const days = result.days;",
+    "why": "killed by AUDIT 21 F8 against the player's own data (ARENA2_PATH): state 3 credits the sentence (:259) before the days elapse, sampled from inside the skip",
+    "tests": [
+      "test/systems/audit18_systems_social.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-3-the-kit-never-reaches-the-body",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  entity.items.push(...droppable);",
+    "new": "  entity.items.push();",
+    "why": "killed by 'the watch spawns EQUIPPED' against the player's own data (ARENA2_PATH): the watchman's kit is not on his corpse",
+    "tests": [
+      "test/scenes/audit18_hosts_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-3-the-quarter-keeps-nothing",
+    "file": "src/scenes/hostCombat.js",
+    "old": "all.filter(() => rolls() < HUMANOID_LOOT_ITEM_SCALE)",
+    "new": "all.filter(() => rolls() < 0)",
+    "why": "killed by 'the watch spawns EQUIPPED' against the player's own data (ARENA2_PATH): the loot rebalance's quarter keeps no worn piece, even on a roll of 0",
+    "tests": [
+      "test/scenes/audit18_hosts_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-3-the-watch-rolls-on-its-own-entity",
+    "file": "src/scenes/cityGuards.js",
+    "old": "spawnEnemyLoot(entity, GUARD_MOBILE_TYPE, basics, playerEntity, { rolls: rand });",
+    "new": "spawnEnemyLoot(entity, GUARD_MOBILE_TYPE, basics, entity, { rolls: rand });",
+    "why": "killed by 'the watch spawns EQUIPPED' against the player's own data (ARENA2_PATH): the watch hands the one loot seam its own entity, not the PLAYER (RF2)",
+    "tests": [
+      "test/scenes/audit18_hosts_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-3-the-watchmans-body-opens-no-window",
+    "file": "src/scenes/cityGuards.js",
+    "old": "return openCorpseLoot(guards.find((g) => g.id === id), { playerEntity, say: say2, openWindow });",
+    "new": "return openCorpseLoot(guards.find((g) => g.id === id), { playerEntity, say: say2, openWindow: null });",
+    "tests": [
+      "test/scenes/cityguards.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-5-the-fan-a-triangle-short",
+    "file": "src/world/meshReader.js",
+    "old": "      for (let tri = 0; tri < plane.points.length - 2; tri++) {",
+    "new": "      for (let tri = 0; tri < plane.points.length - 3; tri++) {",
+    "why": "killed by 'c2/S7 mesh 99900 is a real, whole model' against the player's own data (ARENA2_PATH): each plane's fan is a triangle short, so the submeshes no longer tile the index buffer - ARENA-FIX re-aim: against this ARENA2 that pin no longer fails it (it survived at the tree before ARENA-FIX too), so the colosseum's rebuild out of ARCH3D (5,138 triangles, test/world/arena/arena1_model.test.js) holds it as well",
+    "tests": [
+      "test/ui/automap/roadc_automap_pick.test.js",
+      "test/world/arena/arena1_model.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-5-the-arrow-falls-back-to-the-quad",
+    "file": "src/ui/automap/automapWindow.js",
+    "old": "if (this.deps.arrowMesh) renderer.drawMesh(this.deps.arrowMesh, mk.matrix, this.deps.texRemap);",
+    "new": "if (false) renderer.drawMesh(this.deps.arrowMesh, mk.matrix, this.deps.texRemap);",
+    "tests": [
+      "test/ui/automap/roadc_automap_pick.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-5-the-grid-cut-off-the-background",
+    "file": "src/ui/automap/automapWindow.js",
+    "old": "export const GRID_CUTOUT = Object.freeze({ x: 78, y: 171, w: 27, h: 19 });",
+    "new": "export const GRID_CUTOUT = Object.freeze({ x: 298, y: 171, w: 27, h: 19 });",
+    "tests": [
+      "test/ui/automap/roadc_automap_window.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-5-a-foyer-loadid-a-door-off",
+    "file": "src/world/actionSystem.js",
+    "old": "export const CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS = Object.freeze([29331574, 29331622]);",
+    "new": "export const CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS = Object.freeze([29331575, 29331622]);",
+    "tests": [
+      "test/world/roadb_castle.test.js"
+    ]
+  },
+  {
+    "name": "ARENA2-TRIAGE-5-the-frames-cut-at-eight",
+    "file": "src/formats/textureFile.js",
+    "old": "    return this._records[record].frameCount;",
+    "new": "    return Math.min(8, this._records[record].frameCount);",
+    "why": "killed by 'seducer: archive 284 carries the transform records' against the player's own data (ARENA2_PATH): the transform runs to frame 8, so records 22 and 23 need nine",
+    "tests": [
+      "test/characters/enemy/road_a5_seducer.test.js"
+    ]
+  }
+]

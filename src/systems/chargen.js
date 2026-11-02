@@ -1,0 +1,421 @@
+import { SKILLS, SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS, levelUpSkillSum } from './skills.js';
+import { spellPointsFor } from '../combat/formulas.js'; // U10
+import { mintCharacterId } from './characterId.js'; // CHARID1
+import { CLASSIC_GAME_START_TIME } from './gameDate.js'; // AUDIT 23: the skill-check anchor
+import { liveStat, STAT_KEYS_ORDER, FATIGUE_MULTIPLIER } from './statMods.js'; // wave 28: MaxMagicka reads LiveIntelligence
+import { renownHpOf, renownMpOf, foldMpOf, spireHpOf } from './renownLayer.js'; // RENOWN1: Renown's online health and magicka, on top of both live maximums; EG15: and the folds' magicka; EG-ZR: and the Spire's Stoneskin
+
+// Character creation (Systems S3). Verbatim ports from DFU
+// StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
+// FormulaHelper.cs (MIT, Daggerfall Workshop). This slice replaces
+// the pre-chargen placeholder player (maxHealth 50, flat skills 30,
+// stats 50s) with the real rolled entity - that placeholder carries
+// its own notes at characters/playerEntity.js:"through systems/chargenSession.js"/characters/playerEntity.js:"import { SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS }"/characters/playerEntity.js:"raceId: 1,"/characters/playerEntity.js:"gender: 'male',", and
+// systems/chargenSession.js is the path that supersedes it (:239
+// finishChargen -> applyCharacter). Nothing pends HERE.
+//
+// Verbatim rules:
+//   - stats: career base attribute + Range(0, 10+1) each;
+//     bonus pool = Range(6, 14+1) free points
+//   - skills: all 35 default to Range(3, 6+1); the career's 3 primary
+//     = 28 + Range(0, 3+1); 3 major = 18 + ...; 6 minor = 13 + ...;
+//     +6 distributable per skill group
+//   - max health at level 1 = 25 + career.HitPointsPerLevel;
+//     each level-up adds Range(hp/2, hp inclusive) + the endurance
+//     modifier (floor(END/10) - 5), floored at 1 (classic seeds
+//     DFRandom with the frame counter here - an arbitrary reseed;
+//     our uniform slot matches the role, approved stance)
+//   - reflexes default Average (2)
+// THE UI ARC SHIPPED, so the pools are distributed BY HAND, as
+// classic does: ui/chargen.js:"export { MAX_STAT_VALUE };" is the verbatim rollout
+// arithmetic (statUp clamped at MAX_STAT_VALUE, statDown floored at
+// the rolled value, skillUp/skillDown per group pool - StatsRollout /
+// SkillsRollout), spent per spinner at :1147 spendStat and :1173
+// spendSkill, and chargenSession.js:"export function finishChargen" finishChargen hands the
+// hand-distributed result to applyCharacter. The headless policy
+// below (one point at a time into the LOWEST of the eligible set,
+// pool exhausted so the character stays classic-legal) survives only
+// as the documented degraded paths named at spendPoolLowest.
+
+export const CLASS_CAREERS = Object.freeze([
+  'Mage',
+  'Spellsword',
+  'Battlemage',
+  'Sorcerer',
+  'Healer',
+  'Nightblade',
+  'Bard',
+  'Burglar',
+  'Rogue',
+  'Acrobat',
+  'Thief',
+  'Assassin',
+  'Monk',
+  'Archer',
+  'Ranger',
+  'Barbarian',
+  'Warrior',
+  'Knight',
+]);
+
+// ---- StatsRollout constants + Reroll, verbatim ----
+export const STAT_MIN_BONUS_ROLL = 0;
+export const STAT_MAX_BONUS_ROLL = 10;
+export const STAT_MIN_BONUS_POOL = 6;
+export const STAT_MAX_BONUS_POOL = 14;
+export { STAT_KEYS_ORDER }; // AUDIT 68 S24-stat-keys-duplicate: statMods.js owns DFCareer.Stats order; the UI imports it here
+const STAT_KEYS = STAT_KEYS_ORDER;
+
+export function rollStats(career, rolls = Math.random) {
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo)); // inclusive, per the source comment
+  const stats = {};
+  for (const k of STAT_KEYS) stats[k] = career[k] + range(STAT_MIN_BONUS_ROLL, STAT_MAX_BONUS_ROLL);
+  const bonusPool = range(STAT_MIN_BONUS_POOL, STAT_MAX_BONUS_POOL);
+  return { stats, bonusPool };
+}
+
+// CHAR1 (2026-09-15, a player through Mac: "show the total dice rolls
+// in the enhanced character creator"): WHAT THE DICE ACTUALLY GAVE.
+// Neither screen ever said it. Eight values are rolled - a career
+// floor plus 0..10 each - and a bonus pool of 6..14 is rolled beside
+// them, and the only way to know whether a roll was a good one was to
+// add eight numbers by eye before deciding whether to press Reroll.
+export function statTotal(stats) {
+  let n = 0;
+  for (const k of STAT_KEYS) n += stats?.[k] ?? 0;
+  return n;
+}
+
+// ---- SkillsRollout constants + Reroll, verbatim ----
+export const SKILL_DEFAULT_MIN = 3;
+export const SKILL_DEFAULT_MAX = 6;
+export const PRIMARY_SKILL_MIN = 28;
+export const MAJOR_SKILL_MIN = 18;
+export const MINOR_SKILL_MIN = 13;
+export const SKILL_BONUS_ROLL_MAX = 3;
+export const BONUS_POOL_PER_SKILL_GROUP = 6;
+
+export function rollSkills(career, rolls = Math.random) {
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo));
+  const skills = new Array(SKILL_COUNT);
+  for (let i = 0; i < SKILL_COUNT; i++) skills[i] = range(SKILL_DEFAULT_MIN, SKILL_DEFAULT_MAX);
+  for (const id of career.primarySkills) skills[id] = PRIMARY_SKILL_MIN + range(0, SKILL_BONUS_ROLL_MAX);
+  for (const id of career.majorSkills) skills[id] = MAJOR_SKILL_MIN + range(0, SKILL_BONUS_ROLL_MAX);
+  for (const id of career.minorSkills) skills[id] = MINOR_SKILL_MIN + range(0, SKILL_BONUS_ROLL_MAX);
+  return {
+    skills,
+    groupPools: {
+      primary: BONUS_POOL_PER_SKILL_GROUP,
+      major: BONUS_POOL_PER_SKILL_GROUP,
+      minor: BONUS_POOL_PER_SKILL_GROUP,
+    },
+  };
+}
+
+// ---- Starting spells (S6), verbatim ----
+// StartGameBehaviour.SetStartingSpells: classes with index > 6 have
+// no starting spells; 0..6 use the StartingSpells asset's sets
+// (SpellIDs into SPELLS.STD). The custom-class Spellsword rule (any
+// primary/major magic skill -> set 1) is LIVE as of U20a; it lives
+// with the builder's other laws (systems/customClass.js
+// customSpellSetIndex) and finishChargen picks the set through it.
+export const STARTING_SPELL_SETS = Object.freeze({
+  0: [1, 37, 2, 97, 8], // Mage: Fenrik's Door Jam, Slowfalling, Buoyancy, Balyna's Balm, Shock
+  1: [8, 44, 37], // Spellsword: Shock, Chameleon, Slowfalling
+  2: [8, 2, 37], // Battlemage
+  3: [1, 37, 2, 97, 8], // Sorcerer (the Mage set)
+  4: [97, 2, 1, 37], // Healer
+  5: [44, 2], // Nightblade
+  6: [37], // Bard
+});
+
+/** HEAL1 (2026-09-23, co-op): THE HEALER'S SECOND HEAL - the class
+ *  starts able to heal ANOTHER player, not only itself. It is Balyna's
+ *  Balm (SPELLS.STD 97, the self heal the Healer set already carries)
+ *  with its effects copied field for field and the range turned from
+ *  CasterOnly to ByTouch - so it heals exactly as hard as the Balm at
+ *  every level, and costs the same (TARGET_COST_MULT is 1.0 for both).
+ *  Online the touch lands on a party mate through ALLY-CAST's cast
+ *  frame (systems/allyCast.js), which the target resolves as a self-cast
+ *  at the caster's level: no save, the Balm's own magnitude.
+ *
+ *  A MADE spell, not a SPELLS.STD record: it rides the save whole as
+ *  every custom spell does (save.js keeps `custom` spells as objects),
+ *  under one fixed negative index of its own, far below the ones the
+ *  spellmaker mints from -1 down, so a check for "already has it" is one
+ *  compare and the quick slot keys it like any other spell. */
+export const HEALER_CAREER_INDEX = 4;
+export const HEAL_OTHER_SOURCE_SPELL = 97; // Balyna's Balm
+export const HEAL_OTHER_INDEX = -1000;
+export const HEAL_OTHER_NAME = "Balyna's Healing Touch";
+export function healOtherSpell(spellsByIndex) {
+  const src = spellsByIndex?.get?.(HEAL_OTHER_SOURCE_SPELL);
+  if (!src || !Array.isArray(src.effects)) return null;
+  return {
+    effects: src.effects.map((e) => ({ ...e })), // the Balm's own numbers, empty slots and all
+    element: src.element,
+    rangeType: 1, // ByTouch: another player, or a foe, in arm's reach
+    cost: 0,
+    name: HEAL_OTHER_NAME,
+    icon: src.icon,
+    index: HEAL_OTHER_INDEX,
+    custom: true,
+  };
+}
+
+/** The spells a new character KNOWS: set members resolved against
+ *  the loaded SPELLS.STD map; missing records skip loudly (the
+ *  source's own error path). HEAL1: a Healer also knows the touch
+ *  version of its Balm. */
+// ---- StartGameBehaviour.AssignStartingSpells, the delegate (:87, :116) ----
+/** `public PlayerStartingSpells AssignStartingSpells { get; set; }`,
+ *  defaulted to SetStartingSpells and reassigned by a mod (Roleplay &
+ *  Realism: Items' AssignSkillSpellbook, under skillBasedStartingSpells).
+ *  A registered assigner answers the list from the CAREER (its skills),
+ *  or null to let SetStartingSpells' set answer. */
+let _spellsAssigner = null;
+export function setStartingSpellsAssigner(fn) {
+  _spellsAssigner = typeof fn === 'function' ? fn : null;
+}
+export function assignStartingSpells(careerIndex, spellsByIndex, career = null) {
+  return _spellsAssigner?.(career, spellsByIndex) ?? startingSpells(careerIndex, spellsByIndex);
+}
+
+export function startingSpells(careerIndex, spellsByIndex) {
+  const set = STARTING_SPELL_SETS[careerIndex];
+  if (!set || !spellsByIndex) return [];
+  const out = [];
+  for (const id of set) {
+    const sp = spellsByIndex.get(id);
+    if (sp) out.push(sp);
+    else console.warn(`[chargen] starting spell ${id} missing from SPELLS.STD`);
+  }
+  if (careerIndex === HEALER_CAREER_INDEX) {
+    const touch = healOtherSpell(spellsByIndex);
+    if (touch) out.push(touch);
+  }
+  return out;
+}
+
+// ---- Magicka (S4a), verbatim ----
+// DFCareer.GetSpellPointMultiplier: (bitfield & 0x1C00) >> 8 ->
+// {0: x3.00, 4: x2.00, 8: x1.75, 12: x1.50, 16: x1.00, 20: x0.50};
+// FormulaHelper.SpellPoints = floor(INT x multiplier).
+export const SPELL_POINT_MULTIPLIERS = Object.freeze({ 0: 3.0, 4: 2.0, 8: 1.75, 12: 1.5, 16: 1.0, 20: 0.5 });
+export function spellPointMultiplier(abilityFlagsAndSpellPointsBitfield) {
+  return SPELL_POINT_MULTIPLIERS[(abilityFlagsAndSpellPointsBitfield & 0x1c00) >> 8] ?? 1.0;
+}
+// U10 / ONE DFU MEMBER, ONE EXPORT: FormulaHelper.SpellPoints lives
+// with the other six derived stats; re-exported under the name the
+// chargen callers already use.
+export const spellPoints = spellPointsFor;
+
+// ---- FormulaHelper HP, verbatim ----
+export const hitPointsModifier = (endurance) => Math.floor(endurance / 10) - 5;
+export const rollMaxHealthLevel1 = (career) => 25 + career.hitPointsPerLevel;
+
+export function hitPointsPerLevelUp(career, endurance, rolls = Math.random) {
+  const minRoll = Math.trunc(career.hitPointsPerLevel / 2);
+  const maxRoll = career.hitPointsPerLevel;
+  let add = minRoll + Math.floor(rolls() * (maxRoll + 1 - minRoll)); // random_range_inclusive
+  add += hitPointsModifier(endurance);
+  return add < 1 ? 1 : add;
+}
+
+/** The HEADLESS pool policy: one point at a time into the lowest of
+ *  the eligible set. The chargen UI replaced it on the shipping
+ *  creation path (ui/chargen.js spendStat/spendSkill), so what is
+ *  left is a documented fallback, and every caller is a degraded or
+ *  headless path: the ?class= wizard skip (chargenSession.js:"export async function applyHeadlessChargen"
+ *  applyHeadlessChargen), the no-FONT-art escapes in
+ *  scenes/dungeonContext.js (:1705 chargenInputFallback, :4162 and
+ *  :4172 the font-less level-up, each console.warn'd first), and
+ *  advancement.js's level-up when no host supplied onLevelUp. */
+export function spendPoolLowest(values, keysOrIds, pool) {
+  let p = pool;
+  while (p > 0) {
+    let low = keysOrIds[0];
+    for (const k of keysOrIds) if (values[k] < values[low]) low = k;
+    values[low] += 1;
+    p--;
+  }
+}
+
+/**
+ * Roll + apply the whole character onto the SHARED player entity
+ * (mutates in place so every consumer sees it). Idempotent via
+ * entity.chargenDone.
+ */
+export function createCharacter(playerEntity, career, careerIndex, { rolls = Math.random, name = career.name } = {}) {
+  const { stats, bonusPool } = rollStats(career, rolls);
+  spendPoolLowest(stats, STAT_KEYS, bonusPool); // headless policy; U2b's hand-distribution shipped and owns the live path
+  const { skills, groupPools } = rollSkills(career, rolls);
+  spendPoolLowest(skills, career.primarySkills, groupPools.primary);
+  spendPoolLowest(skills, career.majorSkills, groupPools.major);
+  spendPoolLowest(skills, career.minorSkills, groupPools.minor);
+  return applyCharacter(playerEntity, career, careerIndex, { name, stats, skills, rolls });
+}
+
+/** Apply FINISHED chargen values (the U2b flow's hand-distributed
+ *  stats/skills, or the headless roll above) onto the shared entity -
+ *  the health/magicka/sum derivations live here ONCE. */
+export function applyCharacter(
+  playerEntity,
+  career,
+  careerIndex,
+  { name = career.name, gender, race, raceId, faceIndex, stats, skills, rolls = Math.random } = {},
+) {
+  const maxHealth = rollMaxHealthLevel1(career);
+  const maxMagicka = spellPoints(
+    stats.intelligence,
+    spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000),
+  ); // absent bitfield -> x1.00
+  Object.assign(playerEntity, {
+    maxMagicka,
+    magicka: maxMagicka,
+    fatigue: (stats.strength + stats.endurance) * FATIGUE_MULTIPLIER, // SetEntityDefaults: currentFatigue = MaxFatigue (S15)
+    name,
+    gender: gender ?? playerEntity.gender ?? 'male',
+    // S3c/U9: the IDENTITY the paperdoll and the race tables read
+    // (RaceTemplate art + GetBodyMorphology). Defaulted so the
+    // headless createCharacter path stays valid.
+    race: race ?? playerEntity.race ?? 'Breton',
+    raceId: raceId ?? playerEntity.raceId ?? 1,
+    faceIndex: faceIndex ?? playerEntity.faceIndex ?? 0,
+    career,
+    careerIndex,
+    level: 1,
+    maxHealth,
+    health: maxHealth,
+    stats,
+    skills,
+    skillUses: new Array(SKILL_COUNT).fill(0), // TallySkill counters (S3b consumes them)
+    // PlayerEntity.skillsRecentlyRaised (:70): the uint[2] the char
+    // sheet highlights raised skills from, minted with the character
+    // exactly as the tally counters above are. A4: minted fresh HERE
+    // because the port assigns onto the module singleton - a new
+    // character must not open the sheet with the previous character's
+    // skills highlighted.
+    skillsRecentlyRaised: new Array(SKILLS_RECENTLY_RAISED_WORDS).fill(0),
+
+    // AUDIT 23 (entity-laws lane): DFU anchors timeOfLastSkillIncreaseCheck
+    // at NOW on AssignCharacter (PlayerEntity.cs:881); a fresh game's now
+    // is the classic start minute, so the first raise check honors the
+    // full 360-minute interval instead of passing immediately at 0.
+    lastSkillCheckTime: CLASSIC_GAME_START_TIME,
+    chargenDone: true,
+    characterId: mintCharacterId(), // CHARID1: born with an id - a namesake can never write over this character's slot
+  });
+  // S3b: the level-up sums anchor at creation (SetCurrentLevelUpSkillSum
+  // over the starting skills = the starting sum, verbatim).
+  playerEntity.startingLevelUpSkillSum = levelUpSkillSum(playerEntity); // AUDIT 68 S24-levelup-sum-duplicate: the one home, not an inline copy
+  playerEntity.currentLevelUpSkillSum = playerEntity.startingLevelUpSkillSum;
+  defineLiveMaxMagicka(playerEntity);
+  defineLiveMaxHealth(playerEntity); // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied
+  return playerEntity;
+}
+
+/** DISC10-E L4: DaggerfallEntity.MaxHealth (:258) is a GETTER over
+ *  GetMaxHealth (:463-472):
+ *
+ *      if (MaxHealthLimiter < 1) return maxHealth;
+ *      return (MaxHealthLimiter < maxHealth) ? MaxHealthLimiter : maxHealth;
+ *
+ *  and RawMaxHealth (:261, :495-498) is the stored value with no limiter.
+ *  The lycanthrope's unsated urge sets the limiter (LycanthropyEffect.cs
+ *  :230-237, computed off RawMaxHealth) and DFU clamps through this getter
+ *  everywhere a heal or a full-heal reads MaxHealth. The port wrote
+ *  `maxHealthLimiter` and nothing read it: every heal, rest and potion
+ *  went straight past the ceiling the urge is there to lower.
+ *
+ *  The same installed accessor as defineLiveMaxMagicka below, on the same
+ *  two paths (chargen, and save.js's load arm) - a property because every
+ *  host reads `entity.maxHealth` as one, exactly as C#'s do. The SETTER is
+ *  MaxHealth's own (`set { maxHealth = value; }`): it writes the RAW value.
+ *  `rawMaxHealth` reads it back - what the limiter is computed from, what
+ *  a level-up adds to, and what the save keeps (SerializablePlayer.cs:118). */
+export function defineLiveMaxHealth(entity) {
+  const desc = Object.getOwnPropertyDescriptor(entity, 'maxHealth');
+  if (desc && desc.get) return entity; // already live
+  let stored = desc ? desc.value : 0;
+  Object.defineProperty(entity, 'maxHealth', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      // RENOWN1: Renown's online health ON TOP of the stored value (systems/renownLayer.js) - never in it, so a
+      // level-up (which adds to `rawMaxHealth`) and the save (which keeps it) never carry the layer.
+      // AUDIT RENOWN1 GAME-4: and on top of the LIMITER too. The limiter is computed off the raw value
+      // (lycanthropy.js), so capping raw + layer with it took the whole layer away the minute the urge began - a
+      // Renown 50 werewolf at 247 of 247 fell to 100 of 100. The limiter caps Daggerfall's own maximum; the layer
+      // rides above whatever Daggerfall allows ("On top").
+      const limiter = this.maxHealthLimiter;
+      const own = limiter >= 1 && limiter < stored ? limiter : stored; // "Limiter must be 1 or greater"
+      return own + renownHpOf(this) + spireHpOf(this); // EG-ZR: and the Spire's Stoneskin, on the same terms
+    },
+    set(v) {
+      stored = v;
+    },
+  });
+  Object.defineProperty(entity, 'rawMaxHealth', {
+    configurable: true,
+    enumerable: false, // a view on the stored value, not a second field to serialize
+    get() {
+      return stored;
+    },
+    set(v) {
+      stored = v;
+    },
+  });
+  return entity;
+}
+
+/** DaggerfallEntity.MaxMagicka (:264) is a GETTER over GetMaxMagicka
+ *  (:475-482) over GetRawMaxMagicka (:484-491):
+ *
+ *      if (career != null && this == PlayerEntity)
+ *          return FormulaHelper.SpellPoints(stats.LiveIntelligence, career.SpellPointMultiplierValue);
+ *      else
+ *          return maxMagicka;
+ *
+ *  ...plus MaxMagickaModifier, floored at 0.
+ *
+ *  AUDIT 24 (wave 28): the port stored a SNAPSHOT taken at chargen from
+ *  the BASE intelligence, so the ceiling never moved again. LiveIntelligence
+ *  is permanent + effect mods (DaggerfallStats.cs:155-163), and the port
+ *  already tracks those - statMods.liveStat reflects every
+ *  fortify/drain/transfer for all eight attributes - so a Drain
+ *  Intelligence moved every OTHER consumer and left the magicka ceiling,
+ *  the rest-recovery rate (maxMagicka/8) and the absorption headroom
+ *  frozen at their chargen values.
+ *
+ *  Installed as a real accessor rather than a helper function because
+ *  eleven call sites across four hosts read `entity.maxMagicka` as a
+ *  property, exactly as C#'s do. The SETTER keeps the stored value for
+ *  the non-player arm (enemies are "set by level elsewhere", :487). */
+export function defineLiveMaxMagicka(entity) {
+  const desc = Object.getOwnPropertyDescriptor(entity, 'maxMagicka');
+  if (desc && desc.get) return entity; // already live
+  let stored = desc ? desc.value : 0;
+  Object.defineProperty(entity, 'maxMagicka', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      const career = this.career;
+      const raw = career
+        ? spellPoints(
+            liveStat(this, 'intelligence'),
+            spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000),
+          )
+        : stored;
+      // RENOWN1: and Renown's online magicka, a term of the sum the magic round never rewrites
+      // (systems/renownLayer.js) - inside the floor, so a magery that makes the character unable still leaves 0.
+      // EG15: and the folds' magicka beside it (entityMods.js's channel - the Battlemage's Bearing), on the same terms
+      const effective = raw + (this.maxMagickaModifier ?? 0) + renownMpOf(this) + foldMpOf(this);
+      return effective < 0 ? 0 : effective;
+    },
+    set(v) {
+      stored = v;
+    },
+  });
+  return entity;
+}

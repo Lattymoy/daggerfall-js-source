@@ -1,0 +1,412 @@
+// U20a: the CUSTOM-CLASS BUILDER's laws - CreateCharCustomClass +
+// CreateCharReputationWindow (MIT, Daggerfall Workshop), pure. The
+// window itself draws in ui/chargenArt.js; everything a test can pin
+// without art lives here.
+
+import { SKILL_NAMES, SKILL_COUNT, MAGIC_SKILLS } from './skills.js'; // DFCareer.MagicSkills lives there
+import {
+  ADVANTAGE_KEYS,
+  DISADVANTAGE_KEYS,
+  ONLY_ONE_KEYS,
+  MAX_ITEMS,
+  secondaryListFor,
+  advDisAdjustment,
+  cannotAdd,
+} from './specialAdvantages.js'; // UXB1-H: an imported pick passes the window's own gates
+import { localizedStrings } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+
+// CreateCharCustomClass.cs:29-34
+export const HP_MIN = 4; // minHpPerLevel
+export const HP_MAX = 30; // maxHpPerLevel
+export const HP_DEFAULT = 8; // defaultHpPerLevel
+export const DIFFICULTY_MIN = -12; // minDifficultyPoints
+export const DIFFICULTY_MAX = 40; // maxDifficultyPoints
+
+// StatsRollout.cs:234,260 - the freeEdit clamp band, and
+// DaggerfallStats.cs:28 - every attribute starts at the default 50.
+export const FREE_EDIT_MIN = 10;
+export const FREE_EDIT_MAX = 75;
+export const STAT_DEFAULT = 50;
+
+/** UpdateDifficulty's point tally (:481-495): +1 per HP above the
+ *  default, -2 per HP below, plus the advantage/disadvantage
+ *  adjustments (U20b - 0 until that window ships). */
+export function difficultyPoints(hp, advantageAdjust = 0, disadvantageAdjust = 0) {
+  const base = hp >= HP_DEFAULT ? hp - HP_DEFAULT : -(2 * (HP_DEFAULT - hp));
+  return base + advantageAdjust + disadvantageAdjust;
+}
+
+/** The advancement-multiplier law (:498):
+ *  0.3 + 2.7 * (points + 12) / 52. */
+export function advancementMultiplier(points) {
+  return 0.3 + (2.7 * (points + 12)) / 52;
+}
+
+/** The difficulty dagger's Y (:500-511): up from 115 toward 46 for
+ *  positive points, down toward 186 for negative - C#'s (int) casts
+ *  truncate. The dagger is CUST08I0 (24x9) at x 220. */
+export const DAGGER_Y_MIN = 46; // minDaggerY - the top of the gauge, the hardest class the art can show
+export const DAGGER_Y_MAX = 186; // maxDaggerY - the bottom, the easiest
+export const DAGGER_Y_DEFAULT = 115; // defaultDaggerY
+export function daggerY(points) {
+  if (points >= 0) return Math.max(DAGGER_Y_MIN, Math.trunc(DAGGER_Y_DEFAULT - 37 * (points / 40)));
+  return Math.min(DAGGER_Y_MAX, Math.trunc(DAGGER_Y_DEFAULT + 41 * (-points / 12)));
+}
+
+/** UXB1-I (2026-09-25, the UX backlog: "Restore the difficulty dagger or some other similar visual indicator"): THE
+ *  DAGGER'S PLACE ON ITS TRACK, 0 at the bottom (maxDaggerY, the easiest) to 1 at the top (minDaggerY, the hardest)
+ *  - daggerY itself, normalised, so the enhanced gauge stands exactly where the classic dagger does, lopsided scale
+ *  and truncation included (37px for 40 points above the default, 41px for 12 below). */
+export const daggerFraction = (points) => (DAGGER_Y_MAX - daggerY(points)) / (DAGGER_Y_MAX - DAGGER_Y_MIN);
+
+/** CG1 - AnimateDagger (CreateCharCustomClass.cs:515-531) as data.
+ *  Every UpdateDifficulty ends by spawning a trail panel AT the
+ *  dagger's (already-moved) position at full alpha, fading
+ *  `255 * timeLeft / 1s` and removed at zero - so a spot the dagger
+ *  leaves within a second keeps a fading ghost there, and rapid
+ *  changes leave a chain of them. A trail under the dagger's CURRENT
+ *  position is an identical sprite over an identical sprite -
+ *  invisible - which is why detecting the y CHANGE at draw time is
+ *  observationally DFU's spawn-on-every-UpdateDifficulty. */
+export const DAGGER_TRAIL_LINGER_S = 1.0; // daggerTrailLingerTime (:35)
+
+/** Advance the trail set for this frame's dagger position. `state` is
+ *  the caller's bag ({} to start); `now` in seconds, any monotonic
+ *  clock. Returns the live trails as draw entries { y, alpha 0..1 },
+ *  oldest first (Components.Add order - later trails draw on top). */
+export function tickDaggerTrails(state, y, now) {
+  state.trails ??= [];
+  if (state.lastY == null) state.lastY = y;
+  if (y !== state.lastY) {
+    state.trails.push({ y, born: now });
+    state.lastY = y;
+  }
+  for (let i = state.trails.length - 1; i >= 0; i--) {
+    if (now - state.trails[i].born >= DAGGER_TRAIL_LINGER_S) state.trails.splice(i, 1);
+  }
+  return state.trails.map((t) => ({ y: t.y, alpha: 1 - (now - t.born) / DAGGER_TRAIL_LINGER_S }));
+}
+
+/** The skill list the pickers draw from: all 35 display names,
+ *  alphabetical "a la classic" (:196-199), MINUS the ones already
+ *  assigned - SkillPicker_OnItemPicked removes the pick from the
+ *  list and returns the replaced skill to it, so no slot can ever
+ *  duplicate another. */
+export function availableSkills(assigned) {
+  const taken = new Set(assigned.filter((s) => s != null));
+  const out = [];
+  for (let id = 0; id < SKILL_COUNT; id++) if (!taken.has(id)) out.push(id);
+  out.sort((a, b) => SKILL_NAMES[a].localeCompare(SKILL_NAMES[b]));
+  return out;
+}
+
+/** A fresh DFCareer carries NOTHING but the HP default and the x0.50
+ *  spell-point multiplier (:161-165); every flag field is the C#
+ *  default 0. The port stores the multiplier the way its readers do -
+ *  Times_0_50 = 20 encoded in the bitfield's 0x1C00 band (20 << 8). */
+/** U20b: `points` is the FULL difficulty tally - HP plus the two
+ *  special-advantage adjusts - because UpdateDifficulty recomputes
+ *  createdClass.AdvancementMultiplier from it on every change
+ *  (CreateCharCustomClass.cs:477-498), so by exit time the multiplier
+ *  already carries them. It defaults to the HP-only tally, which is
+ *  what the value was for the whole of U20a. */
+export function buildCustomCareer({ name, hp, skills, stats, points = null }) {
+  return {
+    resistanceFlags: 0,
+    immunityFlags: 0,
+    lowToleranceFlags: 0,
+    criticalWeaknessFlags: 0,
+    abilityFlagsAndSpellPointsBitfield: 20 << 8, // SpellPointMultipliers.Times_0_50
+    rapidHealing: 0,
+    regeneration: 0,
+    unknown1: 0,
+    spellAbsorptionFlags: 0,
+    attackModifierFlags: 0,
+    forbiddenMaterialsFlags: 0,
+    weaponArmorShieldsBitfield: 0,
+    primarySkills: skills.slice(0, 3),
+    majorSkills: skills.slice(3, 6),
+    minorSkills: skills.slice(6, 12),
+    name,
+    hitPointsPerLevel: hp,
+    advancementMultiplier: advancementMultiplier(points ?? difficultyPoints(hp)),
+    // the wizard copies the builder's WORKING stats onto the career's
+    // base attributes (DaggerfallStartNewGameWizard.cs:392-399)
+    strength: stats.strength,
+    intelligence: stats.intelligence,
+    willpower: stats.willpower,
+    agility: stats.agility,
+    endurance: stats.endurance,
+    personality: stats.personality,
+    speed: stats.speed,
+    luck: stats.luck,
+  };
+}
+
+/** BiogFile.GetClassAffinityIndex (:519-558): the custom class's
+ *  twelve skills scored against each standard class's twelve; the
+ *  HIGHEST count wins, strictly-greater so ties keep the first. This
+ *  picks the biography quiz (BIOG<affinity>T0). */
+export function classAffinityIndex(customSkills, careers) {
+  let highestAffinity = 0;
+  let selectedIndex = 0;
+  for (let i = 0; i < careers.length; i++) {
+    const c = careers[i].career ?? careers[i];
+    const classSkills = new Set([...c.primarySkills, ...c.majorSkills, ...c.minorSkills]);
+    let affinity = 0;
+    for (const s of customSkills) if (classSkills.has(s)) affinity++;
+    if (affinity > highestAffinity) {
+      highestAffinity = affinity;
+      selectedIndex = i;
+    }
+  }
+  return selectedIndex;
+}
+
+/** SetStartingSpells' custom arm (StartGameBehaviour.cs:809-823): a
+ *  custom class with at least one MAGIC skill among its primaries or
+ *  majors uses the SPELLSWORD starting set (index 1); none otherwise. */
+export function customSpellSetIndex(career) {
+  const six = [...career.primarySkills, ...career.majorSkills];
+  return six.some((s) => MAGIC_SKILLS.includes(s)) ? 1 : null;
+}
+
+/** The help picker's topics -> TEXT.RSC ids (:176-185, the
+ *  localization keys' English strings, in DFU's insertion order).
+ *  L10N3d: each [title, id] pair's title is read by its DFU key, in
+ *  the player's language, when the picker lists it. */
+const HELP_TITLES = localizedStrings({
+  helpAttributes: 'Attributes',
+  helpClassName: 'Class Name',
+  helpGeneral: 'General',
+  helpReputations: 'Reputations',
+  helpSkillAdvancement: 'Skill Advancement',
+  helpSkills: 'Skills',
+  helpSpecialAdvantages: 'Special Advantages',
+  helpSpecialDisadvantages: 'Special Disadvantages',
+});
+const helpTopic = (key, id) => Object.freeze(Object.defineProperty([key, id], 0, { get: () => HELP_TITLES[key] }));
+export const HELP_TOPICS = Object.freeze([
+  helpTopic('helpAttributes', 2402),
+  helpTopic('helpClassName', 2401),
+  helpTopic('helpGeneral', 2400),
+  helpTopic('helpReputations', 2406),
+  helpTopic('helpSkillAdvancement', 2407),
+  helpTopic('helpSkills', 2403),
+  helpTopic('helpSpecialAdvantages', 2404),
+  helpTopic('helpSpecialDisadvantages', 2405),
+]);
+
+// ---- CreateCharReputationWindow (CUST03I0) ----
+
+// :36-41 - the bar geometry and its own colours (DFU literals).
+export const REP_BAR_TOP = 24,
+  REP_BAR_BOTTOM = 128,
+  REP_BAR_MIDDLE = 76;
+export const REP_GREEN = [0.388, 0.549, 0.223, 1];
+export const REP_RED = [0.58, 0.031, 0, 1];
+export const REP_EXIT = Object.freeze([129, 165, 33, 14]); // exitButtonRect
+export const REP_GROUPS = Object.freeze(['merchants', 'peasants', 'scholars', 'nobility', 'underworld']);
+/** CC-REP: the ledger's reach - a bar is 0..50px in 5px steps, so a
+ *  group's reputation is -10..+10 (UpdateRep's `height / 5`). */
+export const REP_MAX = 10;
+/** CC-REP (2026-09-16, Ember: "Class creation menu seems to be missing a
+ *  reputation setting"): ONE STEP on one group's bar - the same value law
+ *  as a bar click (an integer, -REP_MAX..REP_MAX, and JS's negative zero
+ *  normalised as UpdateRep's short would), reachable from a control
+ *  shaped for a thumb rather than a pixel faked from one. Answers the
+ *  next value, or null for a group the window does not have. */
+export function repStep(reps, group, dir) {
+  if (!REP_GROUPS.includes(group)) return null;
+  const next = Math.max(-REP_MAX, Math.min(REP_MAX, (reps?.[group] ?? 0) + (dir < 0 ? -1 : 1)));
+  return next || 0;
+}
+
+/** RoundNearestBarHeight (:243-259): 5px steps with the verbatim
+ *  quirk - a remainder of exactly 4 rounds UP, 1..3 round DOWN -
+ *  capped at the bar's 50px. */
+export function roundNearestBarHeight(number) {
+  const ret = number % 5 > 3 ? 5 * Math.trunc((number + 4) / 5) : 5 * Math.trunc(number / 5);
+  return ret > 50 ? 50 : ret;
+}
+
+/** RepPanel_OnMouseClick (:255-281 + UpdateRep): a click inside the
+ *  bar band picks the column by x threshold (>=134 underworld, >=101
+ *  nobility, >=68 scholars, >=35 peasants, else merchants) and sets
+ *  that group's rep to +-(height/5), sign by which side of the middle
+ *  the click fell. Returns null outside the band. */
+export function repClick(x, y) {
+  if (y < REP_BAR_TOP || y > REP_BAR_BOTTOM) return null;
+  const group =
+    x >= 134 ? 'underworld' : x >= 101 ? 'nobility' : x >= 68 ? 'scholars' : x >= 35 ? 'peasants' : 'merchants';
+  // UpdateRep computes repVal from the rounded height on EVERY click:
+  // a click exactly on the middle line matches neither of its two
+  // strict ifs, so no bar changes - but repVal is still sign 1 * 0 / 5
+  // = ZERO, and that is what the group is set to. (DFU's own quirk
+  // rides along: the previously drawn bar stays on screen beside the
+  // new 0 label. The port derives its bars FROM the value, so it
+  // cannot show that stale bar - a documented visual departure; the
+  // value, which is what the character carries, is verbatim.)
+  const nearestHeight = roundNearestBarHeight(Math.trunc(Math.abs(REP_BAR_MIDDLE - y)));
+  const sign = y < REP_BAR_MIDDLE ? 1 : -1;
+  // `|| 0`: -1 * 0 is JS's negative zero, which C#'s short cannot hold
+  return { group, value: sign * (nearestHeight / 5) || 0 };
+}
+
+/** UpdatePointsToDistribute (:283-287): the ledger the exit gate
+ *  reads - the NEGATED sum, zero when balanced. */
+export function repPointsToDistribute(reps) {
+  // `|| 0` normalizes JS's NEGATIVE ZERO: DFU's ledger is a C# short,
+  // where -(short)0 is 0, and -0 leaks into deepEqual comparisons and
+  // any Object.is-based check the save layer might make.
+  return -REP_GROUPS.reduce((a, g) => a + (reps[g] ?? 0), 0) || 0;
+}
+
+// ---- UXB1-H: a custom class, to a file and back ----
+//
+// (2026-09-25, the UX backlog: "Export/Import class from file/clipboard.") DFU has no such door - a custom class
+// lives only in the character it made - so this is the port's own, and it is a DOCUMENT of the builder's choices,
+// not of the career built from them: the name, the hit points, the twelve skills in their three groups, the eight
+// attributes, the two special lists and the five reputations. Everything the builder's windows would have refused
+// is refused on the way back in, by the same laws (the HP band, the freeEdit band, the skill picker's no-duplicate
+// rule, the special windows' only-one / seven-item / cannot-add gates, the rep band), and the builder's own exit
+// gates still stand between an imported class and the game - an unbalanced pool or a dagger in the red is loaded,
+// shown, and refused at Create exactly as a hand-built one would be.
+
+export const CLASS_FILE_FORMAT = 'daggerfall-enhanced/custom-class';
+export const CLASS_FILE_VERSION = 1;
+const SKILL_GROUP_SIZES = Object.freeze([
+  ['primary', 3],
+  ['major', 3],
+  ['minor', 6],
+]);
+
+/** The builder's state as a document (plain JSON). `c` is ChargenFlow.custom. */
+export function customClassDoc(c) {
+  const skillName = (id) => (id == null ? null : (SKILL_NAMES[id] ?? null));
+  let at = 0;
+  const skills = {};
+  for (const [group, n] of SKILL_GROUP_SIZES) {
+    skills[group] = c.skills.slice(at, at + n).map(skillName);
+    at += n;
+  }
+  const picks = (list) => list.map(({ primary, secondary }) => (secondary ? { primary, secondary } : { primary }));
+  return {
+    format: CLASS_FILE_FORMAT,
+    version: CLASS_FILE_VERSION,
+    name: c.className,
+    hitPointsPerLevel: c.hp,
+    skills,
+    attributes: { ...c.stats },
+    advantages: picks(c.advantages),
+    disadvantages: picks(c.disadvantages),
+    reputations: Object.fromEntries(REP_GROUPS.map((g) => [g, c.reps?.[g] ?? 0])),
+  };
+}
+
+const STAT_KEYS = Object.freeze([
+  'strength',
+  'intelligence',
+  'willpower',
+  'agility',
+  'endurance',
+  'personality',
+  'speed',
+  'luck',
+]);
+
+/**
+ * A class document read back: `{ ok: true, value, skipped }` - the builder's fields, every one through its law -
+ * or `{ ok: false, error }` in the player's words. `skipped` names the special picks the windows would not have
+ * taken (in the order they were read, against what was already taken - the windows' own order). A string is parsed
+ * as JSON first.
+ */
+export function parseCustomClassDoc(input) {
+  const fail = (error) => ({ ok: false, error });
+  let doc = input;
+  if (typeof input === 'string') {
+    try {
+      doc = JSON.parse(input);
+    } catch {
+      return fail('That is not a class file. It could not be read.');
+    }
+  }
+  if (!doc || typeof doc !== 'object' || doc.format !== CLASS_FILE_FORMAT)
+    return fail('That is not a DFO Online class file.');
+  if (!Number.isInteger(doc.version) || doc.version < 1) return fail('That class file has no valid version number.');
+  if (doc.version > CLASS_FILE_VERSION) return fail('That class file was made by a newer version of the game.');
+  // AUDIT UXB1: the name box types printable characters alone; a file could carry anything - a line break into the
+  // classic font's one-line label, or a bidi override that turns the name around wherever another player reads it
+  const name = typeof doc.name === 'string' ? doc.name.replace(/[\p{Cc}\p{Cf}]/gu, '').trim() : '';
+  const hp = doc.hitPointsPerLevel;
+  if (!Number.isInteger(hp) || hp < HP_MIN || hp > HP_MAX)
+    return fail(`Hit points per level must be a whole number from ${HP_MIN} to ${HP_MAX}.`);
+  // the twelve skills: by name (any case) or by id, all distinct - the picker never offers a skill twice
+  const byName = new Map(SKILL_NAMES.map((n, i) => [String(n).toLowerCase(), i]));
+  const skillId = (v) =>
+    Number.isInteger(v) && v >= 0 && v < SKILL_COUNT
+      ? v
+      : typeof v === 'string' && byName.has(v.trim().toLowerCase())
+        ? byName.get(v.trim().toLowerCase())
+        : undefined;
+  const skills = [];
+  for (const [group, n] of SKILL_GROUP_SIZES) {
+    const row = doc.skills?.[group];
+    if (!Array.isArray(row) || row.length !== n) return fail(`A class has ${n} ${group} skills.`);
+    for (const v of row) {
+      if (v == null) {
+        skills.push(null);
+        continue;
+      }
+      const id = skillId(v);
+      if (id === undefined) return fail(`"${v}" is not a skill.`);
+      skills.push(id);
+    }
+  }
+  const chosen = skills.filter((id) => id != null);
+  if (new Set(chosen).size !== chosen.length) return fail('A skill can only be chosen once.');
+  // the eight attributes, each in the freeEdit band
+  const stats = {};
+  for (const k of STAT_KEYS) {
+    const v = doc.attributes?.[k];
+    if (!Number.isInteger(v) || v < FREE_EDIT_MIN || v > FREE_EDIT_MAX)
+      return fail(
+        `${k[0].toUpperCase()}${k.slice(1)} must be a whole number from ${FREE_EDIT_MIN} to ${FREE_EDIT_MAX}.`,
+      );
+    stats[k] = v;
+  }
+  // the reputations, each in the bar's reach
+  const reps = {};
+  for (const g of REP_GROUPS) {
+    const v = doc.reputations?.[g] ?? 0;
+    if (!Number.isInteger(v) || Math.abs(v) > REP_MAX)
+      return fail(`A reputation is a whole number from -${REP_MAX} to ${REP_MAX}.`);
+    reps[g] = v || 0;
+  }
+  // the special picks, through the windows' own gates, in order
+  const skipped = [];
+  const advantages = [],
+    disadvantages = [];
+  const take = (entries, keys, list, other) => {
+    for (const e of Array.isArray(entries) ? entries : []) {
+      const primary = e?.primary;
+      const secondary = typeof e?.secondary === 'string' ? e.secondary : '';
+      const second = keys.includes(primary) ? secondaryListFor(primary) : null;
+      const valid = keys.includes(primary) && (second ? second.includes(secondary) : secondary === '');
+      const item = valid ? { primary, secondary, difficulty: advDisAdjustment(primary, secondary) } : null;
+      if (
+        !item ||
+        list.length >= MAX_ITEMS ||
+        (ONLY_ONE_KEYS.includes(primary) && list.some((x) => x.primary === primary)) ||
+        cannotAdd(item, list, other)
+      ) {
+        skipped.push(e);
+        continue;
+      }
+      list.push(item);
+    }
+  };
+  take(doc.advantages, ADVANTAGE_KEYS, advantages, disadvantages);
+  take(doc.disadvantages, DISADVANTAGE_KEYS, disadvantages, advantages);
+  return { ok: true, value: { name, hp, skills, stats, reps, advantages, disadvantages }, skipped };
+}

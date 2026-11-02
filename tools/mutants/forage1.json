@@ -1,0 +1,292 @@
+[
+  {
+    "name": "FORAGE1-1-the-day-starts-at-six",
+    "file": "src/systems/foraging/foragingCore.js",
+    "old": "export const isForagingDaylight = (hour) => !(hour <= 6 || hour >= 18);",
+    "new": "export const isForagingDaylight = (hour) => !(hour <= 5 || hour >= 18);",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-2-the-load-refuses-only-past-the-maximum",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "      return w.carriedWeight >= w.maxEncumbrance;",
+    "new": "      return w.carriedWeight > w.maxEncumbrance;",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-3-the-net-asks-water-before-enemies",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "  [FT.FishingNet]: Object.freeze(['inside', 'dungeon', 'town', 'daylight', 'enemies', 'encumbered', 'water']), // IL_1aa4-IL_1c45",
+    "new": "  [FT.FishingNet]: Object.freeze(['inside', 'dungeon', 'town', 'daylight', 'water', 'enemies', 'encumbered']), // IL_1aa4-IL_1c45",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-4-desert2-is-not-desert",
+    "file": "src/systems/foraging/foragingCore.js",
+    "old": "export const isDesertClimate = (climate) => climate === CLIMATES.Desert || climate === CLIMATES.Desert2;",
+    "new": "export const isDesertClimate = (climate) => climate === CLIMATES.Desert;",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-5-the-band-edge-moves",
+    "file": "src/systems/foraging/foragingCore.js",
+    "old": "export const attributeBand = (v) => (v <= 39 ? 0 : v <= 59 ? 1 : v <= 79 ? 2 : 3);",
+    "new": "export const attributeBand = (v) => (v <= 40 ? 0 : v <= 59 ? 1 : v <= 79 ? 2 : 3);",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-6-a-wood-axe-list-drifts",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "      [0, 0, 1, 2, 3],",
+    "new": "      [0, 0, 1, 2, 2],",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-7-hearthfire-is-summer",
+    "file": "src/systems/foraging/foragingCore.js",
+    "old": "export const isWinterMonth = (monthValue) => monthValue >= 8 || monthValue <= 1;",
+    "new": "export const isWinterMonth = (monthValue) => monthValue >= 9 || monthValue <= 1;",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-8-the-mountain-is-not-block-d",
+    "file": "src/systems/foraging/foragingCore.js",
+    "old": "  if (climate === CLIMATES.Mountain || isWinterMonth(monthValue)) return 'D';",
+    "new": "  if (isWinterMonth(monthValue)) return 'D';",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-9-the-fatigue-floor-is-zero",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "export const reduceFatigueBy = (current, max, percent) => Math.max(1, Math.trunc(current - (max * percent) / 100));",
+    "new": "export const reduceFatigueBy = (current, max, percent) => Math.max(0, Math.trunc(current - (max * percent) / 100));",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js",
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-10-a-patch-that-misses-is-silent",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "    if (found !== p.count) throw new Error(`${label}: ${name} holds \"${p.old.trim()}\" ${found} times, not ${p.count}`);",
+    "new": "    if (false) throw new Error(`${label}: ${name} holds \"${p.old.trim()}\" ${found} times, not ${p.count}`);",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-11-q11-unmended-the-wagon-searched-in-the-pack",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "  const wagon = searchNonQuest(entity?.wagonItems, itemClass, itemSubClass);",
+    "new": "  const wagon = searchNonQuest(entity?.items, itemClass, itemSubClass);",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-12-a-quest-item-counts",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "  return (list ?? []).filter((it) => it && it.group === group && it.templateIndex === itemSubClass && !it.questItem);",
+    "new": "  return (list ?? []).filter((it) => it && it.group === group && it.templateIndex === itemSubClass);",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-13-raise-time-to-parses-bare",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "  /raise time to (?<hoursTo>\\d+):(?<minutesTo>\\d+)raise time by (?<hours>\\d+):(?<minutes>\\d+) saying (?<sayingID>\\d+)/,",
+    "new": "  /raise time to (?<hoursTo>\\d+):(?<minutesTo>\\d+)/,",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-14-a-use-wears-two",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  lowerCondition(item, 1, entity, (line) => popupMessage(line), collection);",
+    "new": "  lowerCondition(item, 2, entity, (line) => popupMessage(line), collection);",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-15-the-switch-is-ignored",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  }\n  if (!foragingOn() || !entity) return null;",
+    "new": "  }\n  if (!entity) return null;",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-16-the-console-gives-tools-online",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  if (isOnlinePage()) return FORAGING_COMMAND.refusedOnline;",
+    "new": "  if (false) return FORAGING_COMMAND.refusedOnline;",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-17-a-food-gives-raw-fatigue",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + f.fatigue * FATIGUE_MULTIPLIER); // IncreaseFatigue(n, true)",
+    "new": "  entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + f.fatigue); // IncreaseFatigue(n, true)",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-18-a-refusal-wears-the-tool",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "    return { kind: 'foraging', refused: true }; // DFU's false falls to NextVariant: nothing visible",
+    "new": "    wear(item, collection, entity);\n    return { kind: 'foraging', refused: true }; // DFU's false falls to NextVariant: nothing visible",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-19-the-shelves-ignore-the-switch",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  if (foragingOn()) return FORAGING_TEMPLATES.map((t) => t.index);",
+    "new": "  return FORAGING_TEMPLATES.map((t) => t.index);",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-20-one-mod-only-on-the-shelf",
+    "file": "src/systems/item/itemTemplates.js",
+    "old": "export const customItemsForGroup = (group) => _customItemProviders.flatMap((p) => p(group) ?? []);",
+    "new": "export const customItemsForGroup = (group) => _customItemProviders[0](group) ?? [];",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-21-the-list-left-unmended",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "      { old: ', Commoner, ', new: ', Commoners, ', count: 2 },",
+    "new": "      { old: ', Commoner, ', new: ', Commoner, ', count: 2 },",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js",
+      "test/systems/quest/foragefix.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-22-a-crlf-checkout-throws",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "  let out = text.replace(/\\r\\n?/g, '\\n');",
+    "new": "  let out = text;",
+    "tests": [
+      "test/systems/quest/foragefix.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-23-an-unpatched-nan-refuses",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "      return w.carriedWeight >= w.maxEncumbrance;",
+    "new": "      return !(w.carriedWeight < w.maxEncumbrance);",
+    "tests": [
+      "test/systems/foraging/forage1_law.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-24-raise-time-zero-kept",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "    if (a.hours + a.minutes + a.hoursTo + a.minutesTo === 0) return null; // CreateNew's own refusal: DFU drops the line",
+    "new": "    // CreateNew's own refusal: DFU drops the line",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-25-by-saying-its-own-alternative",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "  /raise time by (?<hours>\\d+):(?<minutes>\\d+)/,",
+    "new": "  /raise time by (?<hours>\\d+):(?<minutes>\\d+) saying (?<sayingID>\\d+)/,\n  /raise time by (?<hours>\\d+):(?<minutes>\\d+)/,",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-26-fatigue-past-the-maximum",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "      e.fatigue = Math.min(maxFatigue(e), Math.max(1, fatigue)); // then CurrentFatigue's setter clamps to the maximum",
+    "new": "      e.fatigue = Math.max(1, fatigue); // then CurrentFatigue's setter clamps to the maximum",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-27-a-lost-quest-still-wears",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  if (started) wear(item, collection, entity);",
+    "new": "  wear(item, collection, entity);",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-28-a-food-eaten-off-the-stack",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  if (f.magicka) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + f.magicka); // IncreaseMagicka\n  if (collection) {",
+    "new": "  if (f.magicka) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + f.magicka); // IncreaseMagicka\n  if (collection && (item.stackCount ?? 1) > 1) item.stackCount -= 1;\n  else if (collection) {",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-29-the-command-outlives-the-switch",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "  if (!foragingOn()) return `Command ${FORAGING_COMMAND.name.toUpperCase()} not found.`;",
+    "new": "",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-30-a-refused-press-strikes-gold",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (res?.refused) {\n    if (res.text && !res.said) say?.(res.text);\n    return { kind: 'refused', name: r.name, result: res };\n  }\n  // UI2: AND WHAT HAS NO USE SAYS SO. UseItem's catch-all does nothing and says nothing (DFU's own - the pack's click",
+    "new": "  // UI2: AND WHAT HAS NO USE SAYS SO. UseItem's catch-all does nothing and says nothing (DFU's own - the pack's click",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-31-a-duel-is-no-enemy",
+    "file": "src/scenes/world.js",
+    "old": "exterior ? (duelEnemyNear() || areEnemiesNearby(exteriorFoePool(), { resting: true })) :",
+    "new": "exterior ? areEnemiesNearby(exteriorFoePool(), { resting: true }) :",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FORAGE1-32-the-list-read-unpatched",
+    "file": "src/scenes/quest/questData.js",
+    "old": "        if (name.startsWith('QuestList-')) tables.set(name, patched);",
+    "new": "        if (name.startsWith('QuestList-')) tables.set(name, text);",
+    "tests": [
+      "test/systems/forage2_tools.test.js"
+    ]
+  }
+]

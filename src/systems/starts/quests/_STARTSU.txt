@@ -1,0 +1,127 @@
+-- START2 (2026-10-24; bible/06-Systems/Alternate-Starts-Arc.md section 9): THE EMPEROR'S COMMISSION, Sumurset's start -
+-- a sorcerer's hall near Alinor (systems/starts/starts.js STARTS: the nearest of the kinds its story wants, a quest item's marker
+-- in it; StartSiteSumurset's row names it to the world, quest/place.js). Under the contract every start keeps: the commission
+-- is opened when the player chooses, and _BRISIEN begins in the city of Daggerfall. Its tie to the main story is
+-- the Mantella's - a scholar's last note. A `say` ends its task's tick (Quest.cs QuestBreak), so each task's popup is its last word.
+Quest: _STARTSU
+DisplayName: The Emperor's Commission
+-- Message panels
+QRC:
+
+RumorsDuringQuest:  [1005]
+The scholar who studied the Mantella was found dead in __lair_. Nobody will say how.
+<--->
+The Mantella is a legend. Scholars who chase legends come to bad ends.
+<--->
+An Imperial ship has waited in Alinor's harbor for a week. Nobody has come to board her.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A scholar of the Mantella was to hand me the
+ Emperor's sealed orders. She was found dead in
+ the hall near Alinor where she kept her notes,
+ __lair_.
+ The orders are still inside.
+
+Message:  1011
+%qdt:
+ I found the Emperor's sealed commission on the
+ scholar's desk in
+ __lair_.
+ Its seal is unbroken. I can break it whenever I
+ am ready.
+
+Message:  1012
+%qdt:
+ I broke the Emperor's seal. He charges me to lay
+ the shade of King Lysandus to rest, and to learn
+ what became of a letter he sent to the Queen of
+ Daggerfall. I am to make for the city of
+ Daggerfall in the Iliac Bay, where his agent will
+ find me. His writ pays my passage on any ship
+ bound there.
+
+Message:  1020
+<ce>     The scholar who was to meet you in Alinor
+<ce>     with the Emperor's sealed orders was found
+<ce>     dead in the hall where she worked, and no
+<ce>      one has dared go back in. Her notes, and
+<ce>      your orders, are still somewhere inside.
+
+Message:  1022
+<ce>     On the scholar's desk you find the oilskin
+<ce>     case, the commission inside still sealed.
+<ce>
+<ce>       Her last note lies beside it, the ink
+<ce>     hardly dry: "The Mantella is no jewel. It
+<ce>      is a soul, and the Bay is where it will
+<ce>                  be fought for."
+<ce>
+<ce>        When you break the seal is yours to
+<ce>                      choose.
+
+Message:  1023
+<ce>         You have reached Daggerfall, as the
+<ce>        Emperor's orders bade you, and as they
+<ce>       also bade you, you burn them. His agent
+<ce>                here will find you.
+
+Message:  1030
+<ce>            By the Hand of Uriel Septim VII
+ 
+%pcn,
+ 
+     The shade of King Lysandus walks the streets
+ of Daggerfall by night. Learn what torments him,
+ and lay his spirit to rest. Learn also whether
+ Our letter to the Queen of Daggerfall reached
+ her, and what became of it.
+ 
+     The Iliac Bay is rife with rebels against Our
+ throne. Speak of this to no one. Make for the
+ city of Daggerfall, and burn this letter there.
+ Our agent will find you.
+ 
+     This letter is Our writ of passage. Any master
+ in a harbor of the Empire will carry you to
+ Daggerfall at Our expense.
+ 
+<ce>                    Uriel Septim VII
+
+-- Symbols used in the QRC file:
+--
+--              %pcn occurs 1 time.
+--              %qdt occurs 3 times.
+
+QBN:
+Item _commission_ letter used 1030
+
+Place _lair_ permanent StartSiteSumurset
+Place _daggerfall_ permanent DaggerfallCity1
+
+--	Quest start-up:
+	place item _commission_ at _lair_
+	reveal _lair_
+	pc at _daggerfall_ set _incity_
+	_commission_ used do _opened_
+	log 1010 step 0
+	say 1020
+
+_found_ task:
+	clicked item _commission_
+	log 1011 step 1
+	remove log step 0
+	say 1022
+
+_opened_ task:
+	log 1012 step 2
+	remove log step 0
+	remove log step 1
+	reveal _daggerfall_
+
+variable _incity_
+
+_reported_ task:
+	when _opened_ and _incity_
+	start quest _BRISIEN
+	end quest saying 1023

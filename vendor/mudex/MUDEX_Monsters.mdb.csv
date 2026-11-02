@@ -1,0 +1,36 @@
+ID,Name,Level,MinDamage,MaxDamage,MinHealth,MaxHealth,ArmorValue
+0,Rat,1,1,2,15,25,8
+3,Giant Bat,2,1,4,5,15,4
+4,Grizzly Bear,4,1,20,50,100,7
+5,Sabertooth Tiger,4,8,25,40,80,2
+6,Spider,2,4,10,20,50,6
+7,Orc,6,8,15,30,60,5
+9,Werewolf,8,8,30,25,50,1
+12,Orc Segreant,9,10,30,40,100,2
+14,Wereboar,8,5,25,80,120,7
+16,Giant,10,10,30,150,200,3
+17,Zombie,5,1,5,60,100,7
+19,Mummy,15,5,15,120,190,-2
+20,Giant Scorpion,4,10,15,15,70,2
+21,Orc Shaman,15,8,30,50,110,6
+24,Orc Warlord,19,15,50,80,150,-5
+30,Vampire Ancient,20,25,60,80,200,-8
+31,Daedra Lord,21,40,100,100,240,-10
+32,Lich,20,80,110,60,200,-8
+33,Ancient Lich,21,100,130,80,210,-12
+35,Fire Atronach,16,15,30,25,130,6
+36,Iron Atronach,16,5,15,25,130,-4
+37,Flesh Atronach,16,5,15,100,300,6
+38,Ice Atronach,21,5,15,25,130,6
+256,Goblin,2,4,15,10,20,2
+258,Lizard Man,4,5,8,20,40,4
+259,Lizard Warrior,8,8,18,25,70,0
+262,Wolf,5,2,12,15,30,5
+263,Snow Wolf,10,3,15,20,60,2
+264,Hell Hound,15,5,30,30,90,-2
+269,Minotaur,15,30,50,100,150,0
+275,Vengeful King Lysandus,26,60,100,125,200,-15
+278,Boar,6,5,20,30,80,5
+280,Mountain Lion,8,5,15,20,70,3
+282,Ogre,13,30,50,40,100,2
+285,Dremora Churl,6,5,20,20,60,5

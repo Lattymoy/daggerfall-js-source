@@ -1,0 +1,164 @@
+[
+  {
+    "name": "FALL-KEPT-the-save-forgets-the-fall",
+    "file": "src/scenes/worldQuickSave.js",
+    "old": "transport: player.transportMode, fall: player.fallSnapshot() },",
+    "new": "transport: player.transportMode },",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-street-drops-the-fall",
+    "file": "src/scenes/world.js",
+    "old": "if (walkMode && (inside || !extras.interior)) player.restoreFall(extras.pose?.fall);",
+    "new": "if (walkMode && inside) player.restoreFall(extras.pose?.fall);",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-building-drops-the-fall",
+    "file": "src/scenes/world.js",
+    "old": "if (walkMode && (inside || !extras.interior)) player.restoreFall(extras.pose?.fall);",
+    "new": "if (walkMode && !extras.interior) player.restoreFall(extras.pose?.fall);",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-reposition-keeps-the-fall",
+    "file": "src/scenes/world.js",
+    "old": "if (walkMode && (inside || !extras.interior)) player.restoreFall(extras.pose?.fall);",
+    "new": "if (walkMode) player.restoreFall(extras.pose?.fall);",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-hold-drops-the-fall",
+    "file": "src/scenes/world.js",
+    "old": "        player.restoreFall(fall);\n        _seasonHoldKey = null;",
+    "new": "        _seasonHoldKey = null;",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-dungeon-save-forgets-the-fall",
+    "file": "src/scenes/worldModes.js",
+    "old": "crouching: !!player.crouching, fall: player.fallSnapshot() }),",
+    "new": "crouching: !!player.crouching }),",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-host-law-drops-the-fall",
+    "file": "src/scenes/worldModes.js",
+    "old": "player.spawn(p[0], p[1], p[2]); player.restoreFall(fall); player.stopAutorun(); };",
+    "new": "player.spawn(p[0], p[1], p[2]); player.stopAutorun(); };",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-context-drops-the-fall",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "setPlayerPos(extras.position, extras.pose?.fall);",
+    "new": "setPlayerPos(extras.position);",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-warp-keeps-the-fall",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          setPlayerPos(p);\n",
+    "new": "          setPlayerPos(p, extras.pose?.fall);\n",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-a-grounded-body-carries-no-fall",
+    "file": "src/player/motor.js",
+    "old": "return this.falling ? { above:",
+    "new": "return this.falling && !this.grounded ? { above:",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-rise-carried-from-the-save",
+    "file": "src/player/motor.js",
+    "old": "{ above: this.fallStart - this.pos[1], velY: this.velY }",
+    "new": "{ above: Math.max(0, this.fallStart - this.pos[1]), velY: this.velY }",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-restore-not-falling",
+    "file": "src/player/motor.js",
+    "old": "    this.falling = true;\n    this.fallStart = this.pos[1] + Math.min(FALL_CARRY_MAX,",
+    "new": "    this.fallStart = this.pos[1] + Math.min(FALL_CARRY_MAX,",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-velocity-reset",
+    "file": "src/player/motor.js",
+    "old": "    if (Number.isFinite(fall.velY)) this.velY = Math.min(FALL_CARRY_MAX_SPEED, Math.max(-FALL_CARRY_MAX_SPEED, fall.velY));\n",
+    "new": "",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-a-torn-number-restores-a-fall",
+    "file": "src/player/motor.js",
+    "old": "if (!Number.isFinite(fall?.above)) return;",
+    "new": "if (fall?.above == null) return;",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-a-torn-speed-restored",
+    "file": "src/player/motor.js",
+    "old": "if (Number.isFinite(fall.velY)) this.velY =",
+    "new": "if (fall.velY != null) this.velY =",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-height-unbounded",
+    "file": "src/player/motor.js",
+    "old": "this.fallStart = this.pos[1] + Math.min(FALL_CARRY_MAX, Math.max(-FALL_CARRY_MAX, fall.above));",
+    "new": "this.fallStart = this.pos[1] + fall.above;",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-speed-unbounded",
+    "file": "src/player/motor.js",
+    "old": "this.velY = Math.min(FALL_CARRY_MAX_SPEED, Math.max(-FALL_CARRY_MAX_SPEED, fall.velY));",
+    "new": "this.velY = fall.velY;",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  },
+  {
+    "name": "FALL-KEPT-the-bound-not-the-worlds",
+    "file": "src/player/motor.js",
+    "old": "export const FALL_CARRY_MAX = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
+    "new": "export const FALL_CARRY_MAX = MAX_TERRAIN_HEIGHT;",
+    "tests": [
+      "test/systems/save/fb0930_fallkept.test.js"
+    ]
+  }
+]

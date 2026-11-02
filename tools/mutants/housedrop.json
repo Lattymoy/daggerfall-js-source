@@ -1,0 +1,146 @@
+[
+  {
+    "name": "HOUSE-plan-ignores-floor",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (groundRefusal) return { ok: false, refusal: { reason: 'ground', text: groundRefusal } };",
+    "new": "  void groundRefusal;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-gold-ignores-floor",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (groundRefusal && !usingWagon) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null };",
+    "new": "  void groundRefusal;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-wagon-is-floor",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (groundRefusal && !usingWagon) return",
+    "new": "  if (groundRefusal) return",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-session-wagon-refused",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
+    "new": "  if (state.usingBag || state.chooseOne) return null;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-session-merchant-refused",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
+    "new": "  if (state.usingWagon || state.usingBag) return null;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-session-chest-refused",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (deps.loot && !deps.loot.playerOwned) return null;",
+    "new": "  void deps;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-session-own-pile-free",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (deps.loot && !deps.loot.playerOwned) return null;",
+    "new": "  if (deps.loot) return null;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-classic-asks-nothing",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "        groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }), storeRefusal: storeRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop",
+    "new": "        groundRefusal: null, storeRefusal: storeRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-classic-gold-silent",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "if (!plan.ok) { if (plan.refusal?.reason === 'ground' || plan.refusal?.reason === 'store') this._refuse(plan.refusal); return; }",
+    "new": "if (!plan.ok) return;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-enhanced-stow-asks-nothing",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    getQuest: deps.getQuest ?? null,\n    groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session),   // HOUSE-DROP: a floor that refuses a drop",
+    "new": "    getQuest: deps.getQuest ?? null,\n    storeRefusal: storeRefusalOf(deps, session),",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-enhanced-gold-silent",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  else if (!plan.ok && (plan.refusal?.reason === 'ground' || plan.refusal?.reason === 'store')) notice = plan.refusal.text;",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-torch-drops-anyway",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    const no = dropRefusal?.() ?? null; // HOUSE-DROP: a floor that refuses a light - said, and the light stays in hand\n    if (no) {\n      say(no);\n      return;\n    }",
+    "new": "    const no = null;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-torch-thrown-anyway",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    const no = dropRefusal?.() ?? null; // HOUSE-DROP: and a thrown one lands on the same floor\n    if (no) {\n      say(no);\n      return;\n    }",
+    "new": "    const no = null;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-rig-drops-word",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "createHandheldTorches({ audio, say, torches, dropRefusal });",
+    "new": "createHandheldTorches({ audio, say, torches });",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-owner-refused",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorHome && !interiorHome.own && mode === 'interior' ?",
+    "new": "interiorHome && mode === 'interior' ?",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  },
+  {
+    "name": "HOUSE-close-drops-anyway",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (no) { for (const it of [...items]) takeOneInto(playerEntity, items, it); say(no); return null; }",
+    "new": "      void no;",
+    "tests": [
+      "test/systems/housedrop.test.js"
+    ]
+  }
+]

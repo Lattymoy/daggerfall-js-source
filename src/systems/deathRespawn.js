@@ -1,0 +1,488 @@
+// ONLINE DEATH: RESPAWN INSTEAD OF LOAD (D-ONLINE1).
+//
+// Classic Daggerfall single-player death: PlayerDeath's 3-second fall
+// and fade, then straight to the title menu - "you die, you load a
+// save" (scenes/shared.js endRunToTitleMenu). That is the wrong cost
+// for an online session: the rest of the party is still playing, and
+// ending the whole run - or reloading a save that unwinds everyone's
+// progress - is not what one death in co-op should mean.
+//
+// So in online play this REPLACES that ending: the same death
+// sequence plays (the camera sink, the fade, the sound), then instead
+// of the death video and the title menu, the player wakes up at the
+// nearest fitting safe point - a temple, a town, a graveyard, or (if
+// they died underground) the dungeon's own door - with a short line
+// of flavor text saying so, and a fraction of their health back.
+//
+// This is an ORIGINAL addition, not a DFU or classic system. It reuses
+// the SAME teleport core the vampire-turn cemetery transfer already
+// rides (scenes/world.js `_teleportToPixel`, `transferToCemeteryArm`'s
+// exact pattern - a random cemetery in the CURRENT region, off the
+// same mapTable this module searches) - no new teleport machinery,
+// just a different, distance-based pick of where to land, and three
+// kinds to choose among instead of one.
+import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { cureAllOfKind } from './effects.js'; // DEATHLOOP1
+import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js'; // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
+import { sharedClockOn, worldMinutes, skipDeadMinutes } from './worldTick.js'; // DISC28-E: the dead live no minutes
+import { SD_REALM_TEXT } from '../world/superDungeon/sdRealm.js'; // AUDIT SD II (L6 F4): the Shattered Hour's own waking
+
+const SAFE_KINDS = Object.freeze([
+  { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
+  {
+    kind: 'city',
+    match: (e) =>
+      e.locationType === LOCATION_TYPES.TownCity ||
+      e.locationType === LOCATION_TYPES.TownHamlet ||
+      e.locationType === LOCATION_TYPES.TownVillage,
+  },
+  // The same subtype `randomCemeteryLocationIndex` reads (systems/infection.js) -
+  // a GRAVEYARD location whose dungeonType is specifically the small Cemetery,
+  // not the other dungeon shapes a Graveyard-type location can carry.
+  {
+    kind: 'graveyard',
+    match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery,
+  },
+]);
+
+/**
+ * The nearest of the three safe kinds to a map pixel, searched over the
+ * CURRENT region's own mapTable - the same single-region scope
+ * `transferToCemeteryArm` already accepts for a cemetery alone (a
+ * region runs to hundreds of map pixels; a same-region nearest almost
+ * always finds something, and a location across a region seam would
+ * not read as "close" to anyone). Returns { kind, locationIndex,
+ * mapPixel } or null when the region carries none of the three at all
+ * - vanishingly rare, but not a throw; the caller falls back to
+ * whatever it already had (see respawnOnlinePlayer's own fallback).
+ */
+export function nearestSafeLocation(mapTable, mapPixelXY, accept = null) {
+  // WILD1: `accept(hit)` - a hit the caller turns down is no answer (the open zone's rise: a town outside the mountains)
+  let best = null;
+  let bestDist = Infinity;
+  for (let i = 0; i < (mapTable?.length ?? 0); i++) {
+    const e = mapTable[i];
+    if (!e) continue;
+    const found = SAFE_KINDS.find((t) => t.match(e));
+    if (!found) continue;
+    const px = longitudeLatitudeToMapPixel(e.longitude, e.latitude);
+    const dx = px.x - mapPixelXY.x,
+      dz = px.y - mapPixelXY.y;
+    const d2 = dx * dx + dz * dz;
+    if (d2 >= bestDist) continue;
+    const hit = { kind: found.kind, locationIndex: i, mapPixel: px };
+    if (accept && !accept(hit)) continue;
+    bestDist = d2;
+    best = hit;
+  }
+  return best;
+}
+
+/**
+ * SEA-RISE (2026-09-27, Yugi on Discord: "Underwater Deathloop - My character just autoran into the ocean, stuck at
+ * the bottom because of my loot"): THE SEA'S OWN REGION HOLDS NO SAFE PLACE. An open-sea pixel is politic 64, region
+ * 31 (formats/mapsFile.js getRegionIndexAt), whose table carries a crux and two moorings - none of the three kinds - so
+ * the respawn stood the player where they fell: the carved seafloor, with the loot that sank them and one breath, to
+ * drown and rise there again. When the region answers none, the nearest of the three in ANY region. One region
+ * resident at a time and the one resident before put back - world/roadsProducer.js settlementsOf's sweep. Returns
+ * nearestSafeLocation's shape, or null when no region carries one (no map at all).
+ */
+export function nearestSafeLocationAnywhere(maps, mapPixelXY, accept = null) {
+  // WILD1: `accept`, nearestSafeLocation's own
+  const before = maps?._lastRegion ?? -1;
+  let best = null;
+  let bestDist = Infinity;
+  for (let r = 0; r < (maps?.regionCount ?? 0); r++) {
+    const hit = nearestSafeLocation(maps.getRegion(r)?.mapTable ?? [], mapPixelXY, accept);
+    if (!hit) continue;
+    const dx = hit.mapPixel.x - mapPixelXY.x,
+      dz = hit.mapPixel.y - mapPixelXY.y;
+    const d2 = dx * dx + dz * dz;
+    if (d2 < bestDist) {
+      bestDist = d2;
+      best = hit;
+    }
+  }
+  if (before >= 0 && typeof maps?.loadRegion === 'function') maps.loadRegion(before);
+  return best;
+}
+
+/**
+ * AUDIT TESA II P2/P3 (bible/03-World/Arena-Provinces.md, A2-4's rise): THE NEAREST SAFE PLACE OF THE WORLD - the three
+ * kinds (SAFE_KINDS) over places no region's table holds: the world's registry's (world/worldWide/worldPlaces.js - the
+ * Bay's MAPS.BSA rows and the places past the Bay, each `{ type, dungeonType, px, py }`) and any list beside them (the
+ * host's: the countryside's towns it stood), the nearest by the crow's flight that `accept` takes (nearestSafeLocation's
+ * own arm). Past the Bay the regions' tables hold no town, so the rise there, the open zone's and /unstuck read this: a
+ * town of the province where the player stands, never a Bay town a continent away, and never the water where they fell.
+ * Answers nearestSafeLocation's shape (`locationIndex` -1: no region's row; `place` the registry's), or null.
+ * @param {Iterable<Iterable<{ type?: number, locationType?: number, dungeonType?: number, px: number, py: number }>>} lists
+ * @param {{ x: number, y: number }} mapPixelXY @param {((hit: any) => boolean)|null} [accept]
+ */
+export function nearestSafePlace(lists, mapPixelXY, accept = null) {
+  let best = null;
+  let bestDist = Infinity;
+  for (const list of lists) {
+    for (const p of list) {
+      const e = { locationType: p.type ?? p.locationType, dungeonType: p.dungeonType };
+      const found = SAFE_KINDS.find((t) => t.match(e));
+      if (!found) continue;
+      const dx = p.px - mapPixelXY.x,
+        dz = p.py - mapPixelXY.y;
+      const d2 = dx * dx + dz * dz;
+      if (d2 >= bestDist) continue;
+      const hit = { kind: found.kind, locationIndex: -1, mapPixel: { x: p.px, y: p.py }, place: p };
+      if (accept && !accept(hit)) continue;
+      bestDist = d2;
+      best = hit;
+    }
+  }
+  return best;
+}
+
+const FLAVOR = Object.freeze({
+  temple: [
+    'The temple priests found you at death\u2019s door and pulled you back through it. You wake on cool stone, a healer\u2019s hand still warm on your chest.',
+    'The Divines were not ready for you yet. You wake on the temple steps, the chanting still fading from your ears.',
+  ],
+  city: [
+    'You wake in an alley just outside the gates, alive against the odds and with no idea how you got here.',
+    'A passing guard found you and dragged you to the city gate. You come to just outside the walls, owing him one.',
+  ],
+  graveyard: [
+    'You claw your way up through loose earth. It was not your grave. Not yet.',
+    'You wake among the headstones, cold and very much alive, brushing the dirt from your clothes.',
+  ],
+  dungeon: [
+    'You wake in the open air, the dungeon door standing behind you and no memory of the walk out.',
+    'Something dragged you out before the dark could keep you. You come to just outside the entrance.',
+  ],
+  // AUDIT SD II (L6 F4): a death in the Shattered Hour is the Hour's own - its words, as the gate's court casts out in
+  // its own ("You are cast out of the Burning Court.")
+  hour: [SD_REALM_TEXT.died],
+});
+
+/** One flavor line for the kind that took the player back - `roll`
+ *  injectable so a test can pin the pick. */
+export function respawnFlavorText(kind, roll = Math.random) {
+  const pool = FLAVOR[kind] ?? FLAVOR.city;
+  return pool[Math.min(pool.length - 1, Math.floor(roll() * pool.length))];
+}
+
+// How much health a respawn leaves the player with - not full (a
+// death online should still cost something) and not none (they need
+// to be able to walk away from whatever killed them).
+export const RESPAWN_HEALTH_FRACTION = 0.5;
+export const respawnHealth = (maxHealth) => {
+  // MAC-D3: ...and it answers a LIVING number for any input. A
+  // corrupt or absent maxHealth used to come back through
+  // Math.max(1, NaN), which is NaN - and a NaN health is neither
+  // alive (health > 0 is false) nor dead (health <= 0 is false), so
+  // the player stands up with a health bar that no comparison can
+  // ever satisfy. One is the floor for everything that is not a
+  // usable number.
+  const m = Number.isFinite(maxHealth) ? maxHealth : 0;
+  return Math.max(1, Math.floor(m * RESPAWN_HEALTH_FRACTION));
+};
+
+// ONLINE-UNDERGROUND-LOAD1 (Lost, 2026-09-19: "online mode only saves the game if you close it - when closed in a
+// dungeon it should spawn you near a city, graveyard, temple etc when loading into an online game again").
+//
+// Online, leaving the page saves every slot the character has (world.js's beforeunload arm), and a save made
+// underground is keyed `dungeon:<id>` with the dungeon's own map pixel in its envelope (dungeonContext's
+// dungeonHome). Loading it used to put the player back inside that dungeon, at the saved spot. Online the boot load
+// now takes the SAME search a death takes - the nearest temple, town or graveyard, over the region the dungeon
+// stands in - and lands on that place's start marker. Not a death: no health is taken and no line about dying is
+// said (the wake lines below are their own pool, not FLAVOR's).
+//
+// The one dungeon this never applies to is the tutorial's (D-ONLINE2's own reading: it is the one door out that is
+// not a mercy) - that exception is the CALLER's, because it is read off the configured start cell, which is a
+// setting and not this module's business.
+
+/** Where an online load lands a character saved underground: the nearest safe place to the dungeon's pixel, or,
+ *  when the region carries none of the three, the dungeon's own door (the pixel itself). `kind` names the place. */
+export function undergroundWakeSpot(mapTable, pixel) {
+  const safe = nearestSafeLocation(mapTable, pixel);
+  return safe
+    ? { kind: safe.kind, mapPixel: safe.mapPixel }
+    : { kind: 'dungeon', mapPixel: { x: pixel.x, y: pixel.y } };
+}
+
+const WAKE_FLAVOR = Object.freeze({
+  temple: 'You fell asleep underground and wake on the temple steps. Someone carried you out while you were away.',
+  city: 'You fell asleep underground and wake just outside the city gate. Someone carried you out while you were away.',
+  graveyard: 'You fell asleep underground and wake among the headstones. Someone carried you out while you were away.',
+  dungeon:
+    'You fell asleep underground and wake outside the dungeon door. Someone carried you out while you were away.',
+});
+
+/** The one line said when an online load wakes a character above ground; an unknown kind reads as the city's. */
+export const undergroundWakeText = (kind) => WAKE_FLAVOR[kind] ?? WAKE_FLAVOR.city;
+
+// ── DEATHLOOP1: A REVIVAL HAS TO END WHAT KILLED THEM ────────────
+//
+// SquidKamer on Discord (2026-09-22): "Respawn after poison and likely
+// disease and other things can cause a deathloop. Probably should do
+// something about that. Its basically permanent death for your
+// character." He is right, and MAC-D3 did not cover it: that fix put
+// the heal FIRST so no frame could see a dead player with no death
+// screen, which closed the window between reviving and landing. This
+// is the other half - the health comes back and THE CAUSE DOES NOT
+// GO AWAY. A poisoned character wakes at half health, the poison ticks
+// them straight back to zero, and the respawn runs again, for ever.
+//
+// So: every path that puts a living player back into the world ends
+// the drains that are still running. It is not a general cure, and the
+// line is drawn on RATE, because that is what decides whether a
+// revival is real:
+//
+//   CLEARED - poison, continuous damage, and health transfer. These
+//   tick on the combat round, so they empty a half-full health bar in
+//   seconds. Leaving them running makes the revival a lie: the player
+//   never gets far enough to do anything about them.
+//
+//   KEPT - diseases, infections included. A disease's HEA column falls
+//   ONCE PER CLASSIC DAY (systems/diseases.js - `data.HEA && sinks.hurt`),
+//   so half of max health is days of walking, which is enough to reach
+//   the temple that cures it. (DISC24-D: the disease stays, but its STAT
+//   damage may not hold a stat at zero across the revival - that kills
+//   every 0.2 seconds, not once a day. See liftZeroedStats below.) And they must be kept for a second
+//   reason that is not about rate at all: vampirism and lycanthropy
+//   are carried as `kind: 'disease'` entries (systems/infection.js),
+//   so a blanket cure here would let a player shake off an infection
+//   by dying on purpose - the cheapest cure in the game, at a
+//   graveyard, for free. [FIELD BUGS 2026-10-05 DEATH-HOLDS: this said
+//   "Paralysis is kept for the same rate reason: it does not drain
+//   anything, and it wears off" - and it does not wear off across a
+//   death: the death screen holds the tick and skipDeadMinutes runs no
+//   magic round, so a ghost's Paralyze woke with the player, every round
+//   left, beside the ghost. It is ended now - endDeathHolds below.]
+//
+// A revival that lands somewhere safe is the whole promise of the
+// online death. This is what makes the promise true.
+export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth']);
+
+/** End the drains that would empty the bar again before the player can
+ *  act. Answers the kinds it actually removed, so a caller can say so
+ *  and a pin can read it. */
+export function endLethalDrains(entity) {
+  const had = new Set((entity?.activeEffects ?? []).map((a) => a?.kind));
+  const cleared = LETHAL_DRAINS.filter((k) => had.has(k));
+  for (const kind of cleared) cureAllOfKind(entity, kind);
+  return cleared;
+}
+
+/**
+ * FIELD BUGS 2026-10-05 DEATH-HOLDS (Discord, BrixBlox: "after dying to
+ * a ghost the paralysis effect still continued after respawning").
+ *
+ * DFU HAS NO REVIVAL, AND ITS DEATH ENDS EVERY EFFECT. PlayerEntity's
+ * SetHealth raises OnDeath at zero (PlayerEntity.cs:1199-1213),
+ * EntityEffectManager.Entity_OnDeath sets wipeAllBundles (:2163-2167)
+ * and the next Update wipes them all (:221-226, WipeAllBundles
+ * :772-779). Offline the port's death is DFU's (a load restores the
+ * save's own effects); online the revival IS the next life, and it kept
+ * whatever the killer had cast that the drains above do not name - a
+ * ghost's or a spider's Paralyze held the player frozen beside the foe
+ * that killed them, the time dead running none of its rounds
+ * (skipDeadMinutes), so it woke with every round it had.
+ *
+ * So the revival also ends what a foe holds the player BY - the
+ * paralysis, the Wraith's silence (effects.js '19,255'), and the
+ * fatigue and magicka drains (a fatigue drain defeats the fatigue floor
+ * set below and collapses the player again; a magicka drain empties the
+ * pool the next fight needs). Not a wipe: the KEPT list above stands (a
+ * disease, an infection, a stat's drain eased by liftZeroedStats), and
+ * the player's own buffs and enchantments are theirs. Answers the kinds
+ * it ended.
+ */
+export const DEATH_HOLDS = Object.freeze([
+  'paralyze',
+  'silenced',
+  'continuousDamageFatigue',
+  'continuousDamageSpellPoints',
+]);
+
+export function endDeathHolds(entity) {
+  const had = new Set((entity?.activeEffects ?? []).map((a) => a?.kind));
+  const released = DEATH_HOLDS.filter((k) => had.has(k));
+  for (const kind of released) cureAllOfKind(entity, kind);
+  return released;
+}
+
+/**
+ * DEATHLOOP2 (2026-09-22, DragynDance on Discord: "my game keeps
+ * spamming a wailing sound at me", with "I almost died in privateers
+ * hold due to freezing to death" and "as soon as I stepped outside my
+ * health bar started draaaaining").
+ *
+ * THE WAILING IS THE DEATH SOUND, ONE PER LOOP. PlayerDeathSequence
+ * plays the character's own Pain3 in its CONSTRUCTOR, and every host
+ * builds a fresh DeathScreen each time death is raised (all four are
+ * guarded against STACKING one over another, so it is not that) - so a
+ * player who dies, revives and dies again hears the wail once per turn
+ * of the loop, with the survival notices behind it.
+ *
+ * AND DEATHLOOP1 ONLY CLOSED HALF OF IT. That fix ended the `poison`,
+ * `continuousDamage` and `transferHealth` entries still draining the
+ * bar - effects on the entity - and stopped there. The cold is not an
+ * effect: survival/needs.js computes the felt temperature fresh every
+ * tick from the climate, the month, the hour, the weather, what is
+ * worn, how WET it is, and the race (an Argonian carries RACE_TEMP
+ * -10, the coldest of the eight), and its harm is DELIBERATELY LETHAL
+ * - needs.js says so where the floor is withheld: "the bare-skin harms
+ * leave the last five points BECAUSE they are not meant to kill, and
+ * this one is."
+ *
+ * That lethality is the design and is left alone. What is not the
+ * design is the LOOP: a character revived at half health in the same
+ * weather, still soaked, with the exposure counter still full, takes
+ * the same killing tick again before they can walk anywhere. So the
+ * revival clears the two survival fields that CARRY the death across
+ * it - the accumulated `exposure` and the `wet` that is defeating the
+ * clothes - exactly as it clears a poison, and for the same reason.
+ * Neither is the weather: step back out into a mountain night in a
+ * loincloth and it will kill you again, which is the system working.
+ */
+export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0, wet: 0 });
+
+/** Clear the stored survival state that would re-kill on the next harm
+ *  tick. Answers the fields it actually reset. */
+export function endLethalExposure(entity) {
+  const s = entity?.survival;
+  if (!s || typeof s !== 'object') return [];
+  const cleared = [];
+  for (const [k, v] of Object.entries(REVIVED_SURVIVAL_RESET)) {
+    if ((s[k] ?? 0) !== v) {
+      s[k] = v;
+      cleared.push(k);
+    }
+  }
+  return cleared;
+}
+
+/**
+ * DISC24-D (2026-09-24, Lynk on Discord, "Stuck in death loop": "After
+ * leveling up to 5 online and putting stats in my character had low
+ * health so I rested then when I woke up it was stuck in a constant
+ * death loop").
+ *
+ * A STAT AT ZERO KILLS EVERY 0.2 SECONDS, WHATEVER THE HEALTH. DFU's
+ * UpdateEntityMods tail (systems/statMods.js killIfAnyLiveStatZero)
+ * sets the health to 0 whenever any live stat is 0, and the revival
+ * never looked at the stats: it restored the health, kept the disease
+ * (rightly - see KEPT above) and kept the disease's accumulated
+ * negative statMods with it. A plague day that landed while the player
+ * slept (the rest itself runs no real seconds, so the kill waits for
+ * the first frame after waking) left a live 0; the player died on
+ * waking, stood up at half health with the same 0, and died again on
+ * the first frame - for ever. Offline the first death ends the run, as
+ * DFU's does; online the revival IS the next life, so it must not hand
+ * over the state that ends it.
+ *
+ * So every stat the revival finds at a live 0 is stood back up at the
+ * respawn fraction of its PERMANENT value - the health's own law - by
+ * trimming what holds it down, disease damage first (the course runs
+ * on; only today's hold on this stat is eased), then a drain. Nothing
+ * past that: a stat is lifted to the fraction and no further, the
+ * disease entry and its clock stay, and a stat that is not at zero is
+ * not touched. Answers the stats it stood up.
+ */
+export function liftZeroedStats(entity) {
+  const lifted = [];
+  for (const stat of STAT_KEYS_ORDER) {
+    const permanent = entity?.stats?.[stat];
+    if (permanent == null || liveStat(entity, stat) > 0) continue;
+    const target = respawnHealth(permanent);
+    for (const hold of holdsOn(entity, stat)) {
+      if (!(hold.get() < 0)) continue;
+      hold.set(0);
+      const live = liveStat(entity, stat);
+      if (live >= target) {
+        hold.set(-(live - target));
+        break;
+      } // give back all but the lift
+    }
+    if (liveStat(entity, stat) > 0) lifted.push(stat);
+  }
+  return lifted;
+}
+
+/** What pushes a stat below its permanent value and may be eased: each
+ *  disease's accumulated statMods entry, then each drain or transfer on
+ *  that stat - as a signed contribution, got and set. (A poison's is
+ *  gone already - endLethalDrains; the needs' entry is capped by
+ *  liveStat itself.) */
+function holdsOn(entity, stat) {
+  const holds = [];
+  for (const a of entity.activeEffects ?? []) {
+    if (a?.kind === 'disease' && a.statMods)
+      holds.push({
+        get: () => a.statMods[stat] ?? 0,
+        set: (v) => {
+          a.statMods[stat] = v;
+        },
+      });
+  }
+  for (const a of entity.activeEffects ?? []) {
+    if ((a?.kind === 'drainAttribute' || a?.kind === 'transferAttribute') && a.stat === stat)
+      holds.push({
+        get: () => -(a.magnitude ?? 0),
+        set: (v) => {
+          a.magnitude = -v;
+        },
+      });
+  }
+  return holds;
+}
+
+/** THE ONE REVIVAL. Health back to the respawn fraction if they are at
+ *  or below zero, and the fast drains ended - in that order, and
+ *  together, because either alone is the bug: health with the poison
+ *  still on is SquidKamer's loop, and a cure with no health is a
+ *  corpse that cannot be hurt any further.
+ *
+ *  `force` re-asserts the health even on a living entity (the respawn
+ *  path pays the death's cost up front); without it an already-living
+ *  player keeps the health they have - it is not a free heal, it is a
+ *  floor under zero. [AUDIT LIVED1 K: the prison release no longer
+ *  comes here - its days are served on the prisoner's own clock and it
+ *  refills in both lanes, as DFU's does (arrestFlow.js).] */
+export function reviveForPlay(entity, { force = false } = {}) {
+  if (!entity) return { revived: false, cleared: [] };
+  const dead = !(entity.health > 0);
+  if (dead || force) entity.health = respawnHealth(entity.maxHealth);
+  // DEATHLOOP2: the effects AND the exposure. Either alone leaves a
+  // loop - the poison one for a poisoned character, the cold one for a
+  // freezing one, and the second is what a player actually reported.
+  const cleared = endLethalDrains(entity),
+    exposure = endLethalExposure(entity);
+  // FIELD BUGS 2026-10-05 DEATH-HOLDS: ...and what the killer held them by - a paralysis woke with every round it had.
+  const released = dead || force ? endDeathHolds(entity) : [];
+  // DISC24-D: ...and a stat held at zero, the loop Lynk reported - after
+  // the drains end, so a poison's own stat damage is gone before this
+  // measures what is left. On a living release too: a live 0 kills
+  // within 0.2 seconds, so handing one over is handing over the death.
+  const lifted = liftZeroedStats(entity);
+  // AUDIT DISC19: ...and the fatigue, when there is none - a player who
+  // died of exhaustion stood up at zero, and the next drain collapsed
+  // them again beside the foes that had caught them. The same fraction
+  // and the same floor as the health - LAST, because its ceiling is
+  // (live STR + live END) x 64 and the two lines above may raise both.
+  //
+  // DISC28-E (Discord: "dying infinitely from fatigue ... respawn at 0% fatigue"): a FLOOR, not a zero test. The
+  // zero test handed back a player who died with a sliver - a blow landing while exhausted, an online collapse that
+  // paid its eighth - at 0-12% of the pool, and the next walking drain collapsed them again beside the same foes.
+  // The respawn's fatigue is at least the health's fraction; more than that is kept. A living release (no force) is
+  // untouched, as its health is.
+  if (dead || force)
+    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));
+  // DISC28-E: ...and the minutes spent dead are not the BODY's to pay (worldTick.js skipDeadMinutes). Online the shared
+  // clock ran through the death screen with nothing ticking under it, and the first tick after this charged the whole
+  // span - stamina drain, needs, magic rounds - to the body just revived. AUDIT DISC28 TM-2/3/4, as LIVED1 has them:
+  // the skip bills the body nothing (the character's own clock stood under the screen, so no marker of theirs moved and
+  // none needs carrying, and the encounter loop rolls none of it) while the WORLD's half of the calendar runs through
+  // it - the day block's world half and the powers and conditions, as for any minute the world ran. Offline there is
+  // no such span (a death is a load).
+  const skipped = (dead || force) && sharedClockOn() ? skipDeadMinutes(entity, worldMinutes()) : false;
+  return { revived: dead || force, cleared, exposure, lifted, skipped, released };
+}

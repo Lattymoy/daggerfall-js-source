@@ -1,0 +1,277 @@
+[
+  {
+    "name": "run-clock-1.5x",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      footstepTimer += 1.5 * FIXED_DELTA_TIME;",
+    "new": "      footstepTimer += 1.0 * FIXED_DELTA_TIME;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "half-speed-volume",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      volumeScale = 0.6;",
+    "new": "      volumeScale = 1.0;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "cart-not-gated",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    if (isRiding(m.transportMode)) footstepTimer = 0; // DRAGON5: a rider of any mount, the dragon too",
+    "new": "    if (m.transportMode === 'Horse') footstepTimer = 0; // DRAGON5: a rider of any mount, the dragon too",
+    "note": "Re-aimed by content (DRAGON5): every mount silences the feet (isRiding), the cart among them.",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "swim-distance-drops-y",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      distance += Math.hypot(\n        position[0] - lastPosition[0],\n        position[1] - lastPosition[1],\n        position[2] - lastPosition[2],\n      );",
+    "new": "      distance += Math.hypot(position[0] - lastPosition[0], 0, position[2] - lastPosition[2]);",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "plate-reroll-writes-plate",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      leatherSwayInterval = swayReroll(); // [verbatim] Object.cs:191 - the same slip",
+    "new": "      plateSwayInterval = swayReroll();",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "legs-weight-3",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "export const SWAY_WEIGHTS = Object.freeze([2, 1, 1, 3, 1, 4]);",
+    "new": "export const SWAY_WEIGHTS = Object.freeze([2, 1, 1, 3, 1, 3]);",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "iron-boots-not-plate",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      const mat = nativeMaterialValue(boots);\n      if (mat >= ARMOR_MATERIAL.Iron) currentClimateFootsteps = cur('PlateFootsteps');",
+    "new": "      const mat = nativeMaterialValue(boots);\n      if (mat > ARMOR_MATERIAL.Iron) currentClimateFootsteps = cur('PlateFootsteps');",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "refresh-at-249",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "export const REFRESH_SLOTS_TICKS = 250; // Object.cs:71",
+    "new": "export const REFRESH_SLOTS_TICKS = 249; // Object.cs:71",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "floor-walk-stone-before-wood",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    if (checkBuildingClimateFloorTypeTables('Wood_Floor', key)) return FLOOR_TYPE.Wood;\n    if (checkBuildingClimateFloorTypeTables('Stone_Floor', key)) return FLOOR_TYPE.Stone;",
+    "new": "    if (checkBuildingClimateFloorTypeTables('Stone_Floor', key)) return FLOOR_TYPE.Stone;\n    if (checkBuildingClimateFloorTypeTables('Wood_Floor', key)) return FLOOR_TYPE.Wood;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ],
+    "equivalent": true,
+    "why": "the three archive tables are disjoint (pinned against the .cs), so the order of the three checks at one material cannot be observed"
+  },
+  {
+    "name": "no-trimstart",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "  return `${m[1].replace(/^0+/, '')}_${m[2]}`;",
+    "new": "  return `${m[1]}_${m[2]}`;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "exterior-gate-removed",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    if (\n      lastTileMapIndex !== currentTileMapIndex ||\n      lastClimateIndex !== currentClimateIndex ||\n      lastSeason !== currentSeason\n    ) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "winter-before-path",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      else if (checkClimateTileTables('Path', currentTileMapIndex)) checkToUseArmorFootsteps();\n      else if (currentSeason === SEASON.Winter && isSnowyClimate(currentClimateIndex)) {",
+    "new": "      else if (\n        currentSeason === SEASON.Winter &&\n        isSnowyClimate(currentClimateIndex) &&\n        !checkClimateTileTables('Path', currentTileMapIndex)\n      ) {\n        if (false) {\n        }",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "subtropical-snows",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "export const isSnowyClimate = (c) =>\n  !(c === CLIMATES.Desert || c === CLIMATES.Desert2 || c === CLIMATES.Rainforest || c === CLIMATES.Subtropical);",
+    "new": "export const isSnowyClimate = (c) => !(c === CLIMATES.Desert || c === CLIMATES.Desert2 || c === CLIMATES.Rainforest);",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "roll-last-steps-up",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    else if (randChoice === clips.length - 1) randChoice--;",
+    "new": "    else if (randChoice === clips.length - 1) randChoice = 0;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "coinflip-inverted",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "export const coinFlip = (random) => rangeInt(random, 0, 1 + 1) !== 0;",
+    "new": "export const coinFlip = (random) => rangeInt(random, 0, 1 + 1) === 0;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "landing-scale-1",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "export const LANDING_VOLUME_SCALE = 4; // Object.cs:504/512/519 - 4f * FootstepVolumeMulti",
+    "new": "export const LANDING_VOLUME_SCALE = 1; // Object.cs:504/512/519 - 4f * FootstepVolumeMulti",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "footstep-play-ungated",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      if (s.AllowFootstepSounds) play(rollFootstep(currentClimateFootsteps), volumeScale * s.FootstepVolumeMulti);",
+    "new": "      play(rollFootstep(currentClimateFootsteps), volumeScale * s.FootstepVolumeMulti);",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ],
+    "equivalent": true,
+    "why": "Object.cs:170's gate guards a play the clock zeroing at :131 already prevents (the timer never reaches the interval with the switch off) - redundancy in the mod, kept because the source keeps it"
+  },
+  {
+    "name": "swim-splash-gated",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "        play(rollFootstep(currentClimateFootsteps), volumeScale * s.FootstepVolumeMulti); // NOT gated on AllowFootstepSounds [verbatim]",
+    "new": "        if (s.AllowFootstepSounds) play(rollFootstep(currentClimateFootsteps), volumeScale * s.FootstepVolumeMulti);",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "pause-ignored",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    if (m.paused) return; // GameManager.IsGamePaused || LoadInProgress\n    // TravelOptionsCheck: Travel Options is not a vendored mod here, so the SendModMessage arm is the \"not installed\" arm (false)",
+    "new": "    // TravelOptionsCheck: Travel Options is not a vendored mod here, so the SendModMessage arm is the \"not installed\" arm (false)",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "airborne-swimmer-returns",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    if (!m.grounded && !playerSwimming) return;",
+    "new": "    if (!m.grounded) return;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "ticks-unbounded",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "export const MAX_TICKS_PER_FRAME = 5; // the hosts' 0.1 s dt cap, in ticks",
+    "new": "export const MAX_TICKS_PER_FRAME = 50; // the hosts' 0.1 s dt cap, in ticks",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "leather-on-stone-is-tile",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "        else currentClimateFootsteps = cur('PathFootsteps');",
+    "new": "        else currentClimateFootsteps = cur('TileFootsteps');",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "boots-read-off-legs",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    worn.boots = slots[EQUIP_SLOTS.Feet] ?? null;",
+    "new": "    worn.boots = slots[EQUIP_SLOTS.LegsArmor] ?? null;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "close-reads-stale-settings",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      syncSettings();\n      if (!active()) return;",
+    "new": "      if (!active()) return;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "missing-clip-ignored",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "    const success = results.every(Boolean);",
+    "new": "    const success = true;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "tile-minus-one-is-water",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      if (currentTileMapIndex === 0) {",
+    "new": "      if (currentTileMapIndex <= 0) {",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "null-building-skips-walk",
+    "file": "src/systems/immersiveFootsteps.js",
+    "old": "      currInteriorFloorType = buildingType === -1 ? FLOOR_TYPE.Tile : interiorFloorType(materials);",
+    "new": "      currInteriorFloorType =\n        buildingType == null || buildingType === -1 ? FLOOR_TYPE.Tile : interiorFloorType(materials);",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "the-classic-footstep-ungated-by-the-one-gate",
+    "file": "src/systems/betterAmbience.js",
+    "old": "  if (immersiveFootsteps.ownsStride()) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "host-off-terrain-water",
+    "file": "src/scenes/exterior.js",
+    "old": "tileMapIndex: _surf.tileIndex ?? -1,",
+    "new": "tileMapIndex: _surf.tileIndex ?? 0,",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  },
+  {
+    "name": "enhanced-close-silent",
+    "file": "src/ui/inventoryDoor.js",
+    "old": "    immersiveFootsteps.onInventoryClose(deps.entity ?? null);",
+    "new": "",
+    "tests": [
+      "test/systems/if1_immersivefootsteps.test.js"
+    ]
+  }
+]

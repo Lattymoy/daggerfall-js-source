@@ -1,0 +1,101 @@
+[
+  {
+    "name": "AUDIT-GN-T2-held-on-her-detour-the-same-side",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      const sides = e.detour ? [-(e.side ?? 1), e.side ?? 1] : [1, -1];",
+    "new": "      const sides = [1, -1];",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T2-arrive-under-full-sail",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      const sails = left >= ARRIVE_EASE_M ? 1 : Math.max(ARRIVE_SAILS, left / ARRIVE_EASE_M);",
+    "new": "      const sails = 1;",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T2-arrive-eased-to-nothing",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      const sails = left >= ARRIVE_EASE_M ? 1 : Math.max(ARRIVE_SAILS, left / ARRIVE_EASE_M);",
+    "new": "      const sails = left >= ARRIVE_EASE_M ? 1 : left / ARRIVE_EASE_M;",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T3-the-bend-flat",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    return d > range ? Math.max(b, closeIn) : b;",
+    "new": "    return b;",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T4b-her-pictures-never-registered",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        art.register(addVendorTextures);\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T4b-her-glass-never-glows",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    const glow = artOf(archive).glow(night);",
+    "new": "    const glow = null;",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T4b-her-glow-not-a-replacement",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "toColor32(glow), { replacement: !pipeline.isClassicArt?.(archive) });",
+    "new": "toColor32(glow));",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T4c-berthing-to-a-boat-under-way",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "new": "    !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T4c-berthing-with-her-way-lost",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const berthing =\n    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "new": "  const berthing = still && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T4c-berthing-into-a-closed-berth",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const berthing =\n    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "new": "  const berthing = still && !ship.route?.lost && d <= lookout(ship).dist;",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN-T4c-berthing-beyond-her-lookout",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const berthing =\n    still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
+    "new": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater);",
+    "tests": [
+      "test/systems/naval/auditgalleon_sea.test.js"
+    ]
+  }
+]

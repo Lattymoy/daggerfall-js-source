@@ -1,0 +1,186 @@
+[
+  {
+    "name": "SHADOWFANG-glyph-gradient-its-own-copy",
+    "file": "src/ui/playerBadge.js",
+    "old": "  shadowfang: Object.freeze([...TITLE_GRADIENT.shadowfang].reverse()),",
+    "new": "  shadowfang: Object.freeze([[...SHADOW_CRIMSON], [...SHADOW_BLACK]]),",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-stops-swapped",
+    "file": "src/ui/playerBadge.js",
+    "old": "  shadowfang: Object.freeze([SHADOW_BLACK, SHADOW_CRIMSON]),",
+    "new": "  shadowfang: Object.freeze([SHADOW_CRIMSON, SHADOW_BLACK]),",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-eye-the-gradients-red",
+    "file": "src/ui/playerBadge.js",
+    "old": "  shadowfang: Object.freeze({ path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_EYE }),",
+    "new": "  shadowfang: Object.freeze({ path: 'M9.3 4.7L11.8 5.5L9.8 6.2Z', rgba: SHADOW_CRIMSON }),",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-mark-another-glyphs",
+    "file": "src/ui/playerBadge.js",
+    "old": "  shadowfang: '>', // SHADOW-FANG: the wolf's muzzle, facing the way the glyph's does",
+    "new": "  shadowfang: '^', // SHADOW-FANG: the wolf's muzzle, facing the way the glyph's does",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-still-an-apostle",
+    "file": "server-account/wrangler.toml",
+    "old": "APOSTLE_HANDLES = \"\"",
+    "new": "APOSTLE_HANDLES = \"SirMcMobdon\"",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-list-crossed",
+    "file": "server-account/src/titles.js",
+    "old": "  shadowfang: 'SHADOW_FANG_HANDLES',",
+    "new": "  shadowfang: 'APOSTLE_HANDLES',",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-glyph-without-the-title",
+    "file": "server-account/src/titles.js",
+    "old": "  shadowfang: 'shadowfang',",
+    "new": "  shadowfang: 'apostle',",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ],
+    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
+  },
+  {
+    "name": "SHADOWFANG-vocabulary-without-the-glyph",
+    "file": "src/net/identityToken.js",
+    "old": "  'hierophant',\n  'shadowfang',\n  'penitent',\n  'herald',",
+    "new": "  'hierophant',\n  'penitent',\n  'herald',",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ],
+    "note": "SEAT1c (PIN MOVED) and HERALD (RE-AIMED), each by content; the merge of main re-aimed it over both - herald after the penitent, the seats' after herald."
+  },
+  {
+    "name": "SHADOWFANG-paint-shadow-left-on",
+    "file": "src/ui/playerBadge.js",
+    "old": "    out.textShadow = 'none';",
+    "new": "    out.textShadow = '';",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-paint-edge-dropped",
+    "file": "src/ui/playerBadge.js",
+    "old": "    out.filter = `drop-shadow(1px 0 0 ${edge}) drop-shadow(0 1px 0 ${edge}) drop-shadow(0 1px 0 #000)`;",
+    "new": "    out.filter = 'drop-shadow(0 1px 0 #000)';",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-paint-solid-leaves-gradient",
+    "file": "src/ui/playerBadge.js",
+    "old": "  const out = Object.fromEntries(TITLE_PAINT_KEYS.map((k) => [k, '']));",
+    "new": "  const out = {};",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-namelayer-paints-every-frame",
+    "file": "src/ui/nameLayer.js",
+    "old": "        if (tag.titled !== titleKey) {",
+    "new": "        if (true) {",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-namelayer-key-skipped",
+    "file": "src/ui/nameLayer.js",
+    "old": "          for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];",
+    "new": "          for (const k of TITLE_PAINT_KEYS.slice(1)) tag.title.style[k] = paint[k];",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-one-shared-gradient-id",
+    "file": "src/ui/playerBadge.js",
+    "old": "    const id = `dfglyph-grad-${++gradientSerial}`;",
+    "new": "    const id = `dfglyph-grad-${gradientSerial}`;",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-glyph-no-gradient",
+    "file": "src/ui/playerBadge.js",
+    "old": "  const stops = Array.isArray(g.gradient) && g.gradient.length > 1 ? g.gradient : null;",
+    "new": "  const stops = null;",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-edge-a-fixed-colour",
+    "file": "src/ui/playerBadge.js",
+    "old": "    path.setAttribute('fill', `url(#${id})`);\n    path.setAttribute('stroke', 'currentColor');",
+    "new": "    path.setAttribute('fill', `url(#${id})`);\n    path.setAttribute('stroke', '#d3193c');",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
+  },
+  {
+    "name": "SHADOWFANG-card-word-unwrapped",
+    "file": "src/ui/characterSlots.js",
+    "old": "        b.append(word);",
+    "new": "        b.textContent = TITLE_TEXT[key] ?? key;",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
+  },
+  {
+    "name": "SHADOWFANG-classic-one-tint",
+    "file": "src/net/remotePlayers.js",
+    "old": "        if (title.gradient) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-classic-edge-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "          drawText(renderer, font, title.text, tx + Math.max(1, Math.round(s)), ty + Math.max(1, Math.round(s)), s, title.edge ?? title.rgba ?? [1, 1, 1, 1]);\n",
+    "new": "          \n",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  },
+  {
+    "name": "SHADOWFANG-classic-letters-reversed",
+    "file": "src/net/remotePlayers.js",
+    "old": "letters.length > 1 ? i / (letters.length - 1) : 0",
+    "new": "letters.length > 1 ? 1 - i / (letters.length - 1) : 0",
+    "tests": [
+      "test/ui/shadowfang.test.js"
+    ]
+  }
+]

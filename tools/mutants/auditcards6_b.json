@@ -1,0 +1,222 @@
+[
+  {
+    "name": "AC6-B1-stake-lifted",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "    g.escrow = forKeeps ? liftCard(d.entity.items, g.session.stake) : null;",
+    "new": "    g.escrow = forKeeps ? mintIliacCard(g.session.stake) : null;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B1-stake-drawn",
+    "file": "src/systems/iliac/iliacTableSession.js",
+    "old": "    this.stake = this.forKeeps && this.state ? forfeitCard(player.deck, this.unit) : null;",
+    "new": "    this.stake = this.forKeeps && this.state ? forfeitCard(patron.deck, this.unit) : null;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js",
+      "test/systems/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B1-win-returns",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "      if (held) addItem(d.entity.items, held);\n      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, today(), foe.name);",
+    "new": "      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, today(), foe.name);",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B1-draw-returns",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
+    "new": "    }",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B1-settle-draw",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "    if (!s?.over || s.settled) return;",
+    "new": "    if (!s?.prize || s.settled) return;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B1-take-said",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "      if (held) d.say(`${foe.name} takes a card from your deck: ${cardById(held.card)?.name ?? 'a card'}.`);\n    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
+    "new": "    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B2-reveil",
+    "file": "src/systems/iliac/iliacPatrons.js",
+    "old": "  for (const hd of copy.holdings) for (const inst of hd.sides[1 - p]) if (veiled.has(inst.uid)) inst.down = true;",
+    "new": "",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B3-own-line",
+    "file": "src/world/iliacCloth.js",
+    "old": "  const d1 = [-d0[0], -d0[1]];",
+    "new": "  const d1 = d0[0] * d1raw[0] + d0[1] * d1raw[1] > -0.2 ? [-d0[0], -d0[1]] : d1raw;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js",
+      "test/systems/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B3-viewer-chair",
+    "file": "src/world/iliacCloth.js",
+    "old": "  const me = viewer === 1 ? d1raw : d0;",
+    "new": "  const me = viewer === 1 ? d1 : d0;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B3-edge-own",
+    "file": "src/world/iliacCloth.js",
+    "old": "  const from = [d0, d1raw];",
+    "new": "  const from = dirs;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B4-dot-stands",
+    "file": "src/scenes/worldModes.js",
+    "old": "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before && !tickInFlight()) standFromCardTable(); });",
+    "new": "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B5-day-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "      day: cardDay, key: cardTableKey(), grade: iliacGrade(quality),",
+    "new": "      day: cardDay(), key: cardTableKey(), grade: iliacGrade(quality),",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B5-day-read",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "  const today = () => (typeof d.day === 'function' ? d.day() : d.day);",
+    "new": "  const today = () => d.day;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B6-tie",
+    "file": "src/systems/iliac/iliacTableSession.js",
+    "old": "  const keys = Object.keys(next).sort(\n    (a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0),\n  );",
+    "new": "  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0));",
+    "tests": [
+      "test/systems/auditcards6_b.test.js",
+      "test/systems/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B7-peer-chair",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (takenSeats(seats, host.seatedPeers?.() ?? []).includes(chair)) return [];",
+    "new": "",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B10-row-tab",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "    n.setAttribute('tabindex', '0');\n    n.setAttribute('role', 'button');",
+    "new": "    n.setAttribute('role', 'button');",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B10-row-keys",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "    n.addEventListener('keydown', (e) => {\n      if (!ACTIVATE.has(e.key)) return;\n      e.preventDefault?.();\n      e.stopPropagation?.();\n      fn();\n    });\n  };",
+    "new": "  };",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B10-refocus",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "      refocus(kept);\n    },",
+    "new": "    },",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B10-fallback-hand",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "    for (const n of [at(key), keyed.find((x) => x.getAttribute('data-focus').startsWith('pick-'))])\n      if (n && took(n)) return;",
+    "new": "    for (const n of [at(key)]) if (n && took(n)) return;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B10-tab-walk",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "  root.addEventListener('keydown', (e) => {\n    if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.();\n  });",
+    "new": "",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B10-button-keys",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "        b.addEventListener('keydown', (e) => {\n          if (ACTIVATE.has(e.key)) e.stopPropagation?.();\n        });",
+    "new": "",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B10-starts-in-panel",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "  try {\n    root.focus?.({ preventScroll: true });\n  } catch {\n    /* a page that cannot focus */\n  } // AUDIT CARDS-6 B10: the keyboard starts in the panel",
+    "new": "  // AUDIT CARDS-6 B10: the keyboard starts in the panel",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B11-cap",
+    "file": "src/systems/iliac/iliacPatrons.js",
+    "old": "export const ILIAC_THINK_TRIALS = 64;",
+    "new": "export const ILIAC_THINK_TRIALS = 400;",
+    "tests": [
+      "test/systems/auditcards6_b.test.js",
+      "test/systems/cards10_table.test.js"
+    ]
+  },
+  {
+    "name": "AC6-B13-closed",
+    "file": "src/scenes/iliacTableGame.js",
+    "old": "    staked: () => !g.closed && g.phase === 'playing' && !!g.session?.forKeeps, // AUDIT CARDS-6 B13: a closed game stakes nothing",
+    "new": "    staked: () => g.phase === 'playing' && !!g.session?.forKeeps, // AUDIT CARDS-6 B13: a closed game stakes nothing",
+    "tests": [
+      "test/systems/auditcards6_b.test.js"
+    ]
+  }
+]

@@ -1,0 +1,124 @@
+[
+  {
+    "name": "RVN-OWNERS-CHOICE-a-peers-whole-kills",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  return !!whole && !!fromPlayer && !peer;",
+    "new": "  return !!whole && !!fromPlayer;",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ]
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-a-foes-whole-kills",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  return !!whole && !!fromPlayer && !peer;",
+    "new": "  return !!whole && !peer;",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ]
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-any-whole-kills",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  return !!whole && !!fromPlayer && !peer;",
+    "new": "  return !!whole;",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ]
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-a-blow-not-whole-kills",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  return !!whole && !!fromPlayer && !peer;",
+    "new": "  return !!fromPlayer && !peer;",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ]
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-street-kneel-any-whole",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (fates && revenantMayYield(f)) {",
+    "new": "      if (fates && !_whole && revenantMayYield(f)) {",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-17g RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone."
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-street-peer-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f);",
+    "new": "{ if (!ownersWholeKill(_whole, { fromPlayer }) && revenantWillHolds(f)) tearAway(f);",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-17g RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone. A peer read as the owner passes the will: a party member's stood rank 3 kneels instead of tearing away."
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-street-stand-any-whole",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantLastStandDue(f)) {",
+    "new": "      if (!_whole && f.entity?.revenant?.id && revenantLastStandDue(f)) {",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ]
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-street-whole-kill-withheld",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "{ if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f);",
+    "new": "{ if (revenantWillHolds(f)) tearAway(f);",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-17g RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone. My kill's pass at this gate is now the will alone: withheld, my Disintegrate on an unbroken rank 3 tears it away."
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-street-stand-whole-kill-withheld",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && revenantLastStandDue(f)) {",
+    "new": "      if (f.entity?.revenant?.id && revenantLastStandDue(f)) {",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ]
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-dungeon-kneel-any-whole",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (opts.fates && (!onlineRoom() || !isRoomFoe(foe)) && revenantMayYield(foe)) {",
+    "new": "      if (opts.fates && !_whole && (!onlineRoom() || !isRoomFoe(foe)) && revenantMayYield(foe)) {",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-17g RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone."
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-dungeon-stand-any-whole",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (foe.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe)) {",
+    "new": "      if (!_whole && foe.entity?.revenant?.id && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe)) {",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ]
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-dungeon-whole-kill-withheld",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(foe)) tearAwayDungeonFoe(foe);",
+    "new": "{ if (revenantWillHolds(foe)) tearAwayDungeonFoe(foe);",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-17g RVN-OWN-KNEEL (PIN MOVED): re-aimed by content - the owner's own whole blow passes the stand and the will and kneels it; the yield gate asks ownersWholeKill of the will alone. My kill's pass at this gate is now the will alone."
+  },
+  {
+    "name": "RVN-OWNERS-CHOICE-the-dungeon-stand-whole-kill-withheld",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (foe.entity?.revenant?.id && !ownersWholeKill(_whole, { fromPlayer, peer }) && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe)) {",
+    "new": "      if (foe.entity?.revenant?.id && (!onlineRoom() || !isRoomFoe(foe)) && revenantLastStandDue(foe)) {",
+    "tests": [
+      "test/systems/revenant/fb1016b_rvnownerschoice.test.js"
+    ]
+  }
+]

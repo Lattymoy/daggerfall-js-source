@@ -1,0 +1,679 @@
+// Player activation ray. Verbatim Daggerfall Unity PlayerActivate
+// constants (MIT, Daggerfall Workshop): the ray reaches classic's
+// farthest view distance, individual targets gate on their activation
+// distance (doors/default 128 * GlobalScale).
+// Target picking (ours): activatables are tested as world AABBs (their
+// model's transformed corner box - doors and levers are box-like), the
+// nearest in-reach hit wins, and a collider raycast rejects targets
+// occluded by closer world geometry.
+
+// AUDIT 24 (wave 23): MeshReader.GlobalScale has one home
+// (world/meshReader.js), which every other module in the port already
+// imports it from. This file declared a second 0.025 - agreeing, as
+// duplicates do until they do not.
+import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { isActionDoorObject } from '../world/actionSystem.js'; // MC-2: ActionDoorCheck's own classifier (PlayerActivate.cs:374 vs :380)
+import { noteBodyStack } from './lootStack.js'; // LOOT-STACK: the ray notes the pile of bodies its winner stands at the front of
+import { localizedText } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { crowdKinHidden } from '../net/gate/gateCrowd.js'; // RPT1026-EVENTS CROWD-KIN: a cut player's own foes are no target
+/** The pick's pardon (m): a surface met this far outside a target's box is still that target's own face (the box is
+ *  the mesh's, rounded). AUDIT DELVE C8: one home - the dungeon's look round reads it (systems/dungeon/dungeonSense.js). */
+export const PICK_PARDON_M = 0.15;
+
+export { GLOBAL_SCALE };
+
+// PlayerActivate.cs:76-88, the WHOLE set. Three of these used to live
+// in systems/talk/talk.js instead, and wave 22 of this audit added a fourth
+// there without noticing the first three - which is how a duplicate
+// set gets built one honest commit at a time. talk.js re-exports these
+// now.
+export const RAY_DISTANCE = 3072 * GLOBAL_SCALE; // 76.8
+export const DEFAULT_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE; // 3.2
+export const DOOR_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE;
+export const TREASURE_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE;
+export const PICKPOCKET_DISTANCE = 128 * GLOBAL_SCALE;
+export const STATIC_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
+export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
+/** AUDIT 58 (talk lane): TextManager 'youAreTooFarAway'
+ *  (Master Localization CSV Files/Internal_Strings.csv:22 -
+ *  `youAreTooFarAway,You are too far away...`), the ONE string every
+ *  reach refusal in PlayerActivate speaks: the static-NPC arm
+ *  (PlayerActivate.cs:763), the mobile-NPC arm (:780), the pickpocket
+ *  arm (:790) and the bulletin board (:712). It lives here because it
+ *  is PlayerActivate's, not any one caller's - systems/bulletinBoard.js
+ *  spelled it correctly and scenes/townTalk.js spelled the same key
+ *  'You are too far away.' with a full stop, so one localized key was
+ *  shipping as two different sentences in one session. */
+export const TOO_FAR_AWAY_TEXT = 'You are too far away...';
+/** The refusal as the player reads it, for every reach that speaks it. */
+export const tooFarAwayText = () => localizedText('youAreTooFarAway', TOO_FAR_AWAY_TEXT);
+/** AUDIT 58 (talk lane): TextManager 'youSee'
+ *  (Internal_Strings.csv:53 - `youSee,You see %s.`), the WHOLE of
+ *  PresentNPCInfo (PlayerActivate.cs:1484-1486): one HUD line naming
+ *  the NPC, with %s replaced by StaticNPC.DisplayName. It is what
+ *  ActivateStaticNPC's Info arm does and the only thing it does
+ *  (:755-757) - the other three modes fall to StaticNPCClick. */
+export const YOU_SEE_TEXT = 'You see %s.';
+/** PresentNPCInfo's one line, macro-replaced (:1486). */
+export const presentNpcInfoText = (displayName) =>
+  localizedText('youSee', YOU_SEE_TEXT).replaceAll('%s', displayName ?? '');
+// PlayerActivate.cs:85 - corpses reach FURTHER than everything else
+// (150 classic units, not 128). It is deliberate, not incidental:
+// ActivateLootContainer (:866-874) exempts CorpseMarker from the
+// TreasureActivationDistance gate and re-tests it at :938 against
+// CorpseActivationDistance. AUDIT 18: this constant was missing, so
+// corpse targets fell back to the 128-unit default.
+export const CORPSE_ACTIVATION_DISTANCE = 150 * GLOBAL_SCALE; // 3.75
+
+/** Axis-aligned bounds of a model's positions under a matrix. */
+export function worldAabb(positions, m) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let minZ = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let maxZ = -Infinity;
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i];
+    const y = positions[i + 1];
+    const z = positions[i + 2];
+    const wx = m[0] * x + m[4] * y + m[8] * z + m[12];
+    const wy = m[1] * x + m[5] * y + m[9] * z + m[13];
+    const wz = m[2] * x + m[6] * y + m[10] * z + m[14];
+    if (wx < minX) minX = wx;
+    if (wx > maxX) maxX = wx;
+    if (wy < minY) minY = wy;
+    if (wy > maxY) maxY = wy;
+    if (wz < minZ) minZ = wz;
+    if (wz > maxZ) maxZ = wz;
+  }
+  return { min: [minX, minY, minZ], max: [maxX, maxY, maxZ] };
+}
+
+/** CASTLE1: is `p` inside `aabb`, grown by `skin` on every side. */
+export function boxContains(aabb, p, skin = 0) {
+  return (
+    p[0] >= aabb.min[0] - skin &&
+    p[0] <= aabb.max[0] + skin &&
+    p[1] >= aabb.min[1] - skin &&
+    p[1] <= aabb.max[1] + skin &&
+    p[2] >= aabb.min[2] - skin &&
+    p[2] <= aabb.max[2] + skin
+  );
+}
+
+const boxVolume = (b) => (b.max[0] - b.min[0]) * (b.max[1] - b.min[1]) * (b.max[2] - b.min[2]);
+
+/**
+ * FB1020e OFFERING-RAY: THE RAY'S BOX - world corners as `{ min, max }`, which rayAabb, boxContains and the pick read.
+ * Not the culling box's 6-array (render/frustum.js flatBatchAabb, a batch's `_box`): a producer holding one converts
+ * it, as the streaming host's boards and graves do. A Hearth Offering handed the ray its 6-array, and every press in
+ * the street it stood in threw out of rayAabb (bible/01-Overview/bugs/Field-Bugs-2026-10-20e.md).
+ * @typedef {{ min: number[], max: number[] }} RayBox
+ */
+/** ...and one entrant of the pick: its key, its box, the distance it wins at and the reach it answers within (MC-2).
+ *  @typedef {{ key: string | number, aabb: RayBox, distance?: number, reach?: number }} RayTarget */
+
+/** Slab ray-AABB; distance along unit dir or null. */
+export function rayAabb(origin, dir, aabb) {
+  let tMin = 0;
+  let tMax = Infinity;
+  for (let a = 0; a < 3; a++) {
+    if (Math.abs(dir[a]) < 1e-9) {
+      if (origin[a] < aabb.min[a] || origin[a] > aabb.max[a]) return null;
+      continue;
+    }
+    const inv = 1 / dir[a];
+    let t0 = (aabb.min[a] - origin[a]) * inv;
+    let t1 = (aabb.max[a] - origin[a]) * inv;
+    if (t0 > t1) {
+      const s = t0;
+      t0 = t1;
+      t1 = s;
+    }
+    if (t0 > tMin) tMin = t0;
+    if (t1 < tMax) tMax = t1;
+    if (tMin > tMax) return null;
+  }
+  return tMin;
+}
+
+/** objectAabb's measured boxes, per object (AUDIT 68 S15-objectaabb-vertex-walk). */
+const _liveBoxes = new WeakMap();
+
+/**
+ * AUDIT 63 F37: the world box a RAY must test against one action
+ * object - the collider DFU's Physics.Raycast actually meets.
+ *
+ * A posed object measures LIVE. DaggerfallAction.TweenToEnd
+ * (Internal/DaggerfallAction.cs:361-379) is iTween.RotateBy (:378) and
+ * iTween.MoveTo (:379) on the GameObject, so its MeshCollider travels
+ * with the transform, and both ray sites read a live hit:
+ * PlayerActivate.cs:381-385 (ActionCheck -> Receive(Direct)) and
+ * WeaponManager.cs:459-464
+ * (WeaponEnvDamage -> Receive(Attack)). The port's precomputed `aabb`
+ * is the AT-REST placement box (dungeonContext writes it for the
+ * collision-trigger pass, which wants exactly that), so preferring it
+ * left a moved platform unclickable at its new pose while its ghost
+ * still answered - and shadowed - the ray at the old one.
+ *
+ * Recomputing (rather than translating a baseAabb the way _applyFlat
+ * does) is required: a model mover carries ActionRotation as well as
+ * ActionTranslation, and an offset-shifted box is wrong under
+ * rotation. Objects with no mesh - effects, relays, moveFlats - keep
+ * their stored box, which is the only one they have.
+ */
+export function objectAabb(o) {
+  if (!o) return null;
+  if (o.cpu && o.matrix) {
+    // AUDIT 68 S15-objectaabb-vertex-walk: a pose change REPLACES
+    // o.matrix (ActionSystem._applyMatrix), never writes into it, so the
+    // box keyed on the two identities it was measured from is exact -
+    // and a parked lever is walked once, not every frame. The box is
+    // shared: its readers never write it.
+    const memo = _liveBoxes.get(o);
+    if (memo && memo.matrix === o.matrix && memo.positions === o.cpu.positions) return memo.box;
+    const box = worldAabb(o.cpu.positions, o.matrix);
+    _liveBoxes.set(o, { matrix: o.matrix, positions: o.cpu.positions, box });
+    return box;
+  }
+  return o.aabb ?? null;
+}
+
+/**
+ * Build activation targets from an ActionSystem's live objects - ONE
+ * source for both scenes (audit 2026-08-16: the scenes built targets
+ * inline with worldAabb(o.cpu.positions, o.matrix) and CRASHED on
+ * effect objects, which carry a precomputed aabb and no cpu/matrix;
+ * relay objects carry neither and are chain-only, never targets).
+ * AUDIT 65 MC-2: the two kinds this one pool holds are NOT gated
+ * alike in DFU. An ACTION DOOR is dispatched off the ray's hit
+ * (ActionDoorCheck, :374 -> ActivateActionDoor) and refuses out loud
+ * inside the handler - `hit.distance > DoorActivationDistance` ->
+ * SetMidScreenText(youAreTooFarAway), :686-689 - so it must reach the
+ * handler to speak, which means competing for the pick at the RAY's
+ * own reach and carrying its real one. An action RECORD is gated in
+ * the Update ladder itself and is SILENT - `if (ActionCheck(hit, out
+ * action) && hit.distance <= DefaultActivationDistance)` (:380-383),
+ * no else, no line - so it keeps the narrow pre-gate exactly as it is.
+ * isActionDoorObject (world/actionSystem.js:"export const isActionDoorObject") is the port's spelling
+ * of that GetComponent<DaggerfallActionDoor> everywhere else.
+ *
+ * @param {Map<string, object>} objects - ActionSystem.objects
+ * @param {number} distance - activation reach for every target.
+ */
+export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) {
+  const targets = [];
+  for (const o of objects.values()) {
+    const aabb = objectAabb(o);
+    if (!aabb) continue;
+    if (isActionDoorObject(o))
+      targets.push({ key: o.key, aabb, distance: RAY_DISTANCE, reach: distance, door: true }); // :686-689 speaks; AUDIT TACT C5: a DOOR (doorDistanceOf)
+    else targets.push({ key: o.key, aabb, distance, meshCollider: hasMeshCollider(o) }); // :380-383 is silent
+  }
+  return targets;
+}
+
+/** DISC19-E (Discord: "Cant enter Mannimarcos room ... even if i bash it
+ *  doesnt make a sound"): the action objects DFU gives a MeshCollider - a
+ *  placed MODEL carrying a record (AddStandaloneModel ->
+ *  CreateDaggerfallMeshGameObject, GameObjectHelper.cs:196-206): movers,
+ *  special doors (a standalone model too - AUDIT DISC19), and the
+ *  relays/effects minted from a placement (modelIdNum set). An ACTION
+ *  door is a BoxCollider sized to its bounds (RDBLayout.cs:1147-1155) and
+ *  an acting flat a BoxCollider (RDBLayout.cs:977-987): their box IS the
+ *  hit. */
+export const hasMeshCollider = (o) =>
+  !!o &&
+  (o.kind === 'action' ||
+    (o.kind === 'door' && o.special === true) ||
+    ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));
+
+/**
+ * QG1 - the FOE half of PlayerActivate's quest-resource click arm
+ * (PlayerActivate.cs:325-339): an activate ray landing on a live foe
+ * that carries a QuestResourceBehaviour, within the DEFAULT activation
+ * distance. The CALLER owns the two law gates that sit around the C#
+ * call - `currentMode != Info` and the non-consuming fall-through (the
+ * C# arm does not return; the rest of the activation ladder still
+ * runs) - because both are the host ladder's, not the pick's.
+ *
+ * The body is the port's own foe volume: feet + ai.height, the 0.45
+ * half-width the missile hit test uses (spellcast.js) - foes are
+ * billboards and carry no mesh AABB. Occlusion is pickActivatable's
+ * posture: solid world strictly in front blocks the click.
+ *
+ * @param {Array<object>} foes - live pool entries ({ai, dead, questBehaviour})
+ * @returns {object|null} the nearest clicked quest foe
+ */
+export function pickQuestFoe(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
+  return pickFoeAlong(eye, dir, foes, collider, distance, (f) => !!f.questBehaviour)?.foe ?? null;
+}
+
+/**
+ * TI1 - THE LOCK-ON PICK: the same box, the same occlusion, ANY live
+ * foe. The quest-foe click above is this with `questBehaviour` as the
+ * accept; the touch lock-on (player/lockOn.js) wants the foe under the
+ * finger whether or not a quest owns it. One law, two accepts - a
+ * second copy of the box would drift from the first (the exact way
+ * F-C2's three swing thresholds once did).
+ * @returns {object|null} the nearest live foe the ray hits
+ */
+export function pickFoe(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
+  return pickFoeAlong(eye, dir, foes, collider, distance, () => true)?.foe ?? null;
+}
+
+/** AUDIT 63 F33: the same pick, WITH the hit distance.
+ *  ActivateMobileEnemy's steal arm gates on `hit.distance >
+ *  PickpocketDistance` (PlayerActivate.cs:832-836) - DFU reads the
+ *  distance off the one RaycastHit its ray already produced, so the
+ *  pick has to hand it back rather than have the caller re-measure
+ *  against a different volume.
+ *  @returns {{foe: object, distance: number}|null} */
+export function pickFoeHit(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
+  return pickFoeAlong(eye, dir, foes, collider, distance, () => true);
+}
+
+/** The volume `pickFoeAlong` strikes: the foe's controller, at its
+ *  feet. ONE expression, because `liveFoeTargets` below hands the same
+ *  box to `pickActivatableHit` and the two sweeps must agree on what
+ *  the ray hit.
+ *
+ *  AUDIT-WH2 L2-F6: and the same goes for the SKIP above the box.
+ *  `liveFoeTargets`/`liveFoeFor` refused a foe with no `entity` and
+ *  `pickFoeAlong` never did, so a record in that state took the press
+ *  and was invisible to the plaque - one expression for the box and two
+ *  for the pool is the same drift one rung up. Unreachable today (both
+ *  pools attach `entity` before a record enters them) and pinned so it
+ *  stays that way. */
+export function foeAabb(f) {
+  const feet = f?.ai?.feet;
+  if (!feet || crowdKinHidden(f)) return null; // RPT1026-EVENTS CROWD-KIN: undrawn with their cut owner, so no box - neither the plaque's sweep nor the press's finds it
+  const h = f.ai?.height ?? 1.8;
+  const half = 0.45;
+  return {
+    min: [feet[0] - half, feet[1], feet[2] - half],
+    max: [feet[0] + half, feet[1] + h, feet[2] + half],
+  };
+}
+
+/**
+ * WORLD-HOVER (AUDIT-WH H2): THE LIVE FOES, as activation targets.
+ *
+ * Every host's PRESS races a living enemy - `tryMobileEnemyActivate`,
+ * which sweeps the pool itself (PlayerActivate.ActivateMobileEnemy,
+ * :800-841) - and no host's PLAQUE did, so a foe standing between the
+ * crosshair and a shopfront lost the readout's race outright and the
+ * door behind it drew its name. This is the family, in the shape the
+ * hover's one seam already takes, so each host stands it beside the
+ * rest rather than sweeping a second time.
+ *
+ * The RAY's distance with the MOD's own 6.4 beside it: World Tooltips
+ * names a live entity only inside MobileNPCActivationDistance
+ * (.cs:297-320) while the press has no distance gate on the Info arm
+ * at all, and AUDIT 65 MC-2's law is that a family reaches for the ray
+ * and carries its handler's reach.
+ *
+ * `idOf` is the pool's own stable handle - the same one its corpse
+ * keys use - so a namer can find the foe again after the list has been
+ * spliced (AUDIT 39).
+ */
+export function liveFoeTargets(foes, keyPrefix, { idOf = null } = {}) {
+  const targets = [];
+  let i = -1;
+  for (const f of foes ?? []) {
+    i += 1;
+    if (!f || f.dead) continue; // AUDIT-WH2 L2-F6: `!f.entity` came off - the PRESS's own sweep (pickFoeAlong, below) never had it, and the two sweeps must agree on what the ray hit
+    const aabb = foeAabb(f);
+    if (!aabb) continue;
+    targets.push({
+      key: `${keyPrefix}:${idOf ? idOf(f) : i}`,
+      aabb,
+      distance: RAY_DISTANCE,
+      reach: MOBILE_NPC_ACTIVATION_DISTANCE,
+      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion
+      ...(isCompanion(f) ? { ally: true } : {}), // FB1012d ALLY-YIELDS: he yields to what answers behind him (peacefulFoePass marks his hit, raceWinner reads it)
+    });
+  }
+  return targets;
+}
+
+/** AUDIT TACT C5/C7: how far along the ray the nearest DOOR of a host's targets is (the ones marked `door`: an exit,
+ *  an action door) - Infinity for none. The door click's pass is for a door, never a shelf or a chest behind a guard. */
+export function doorDistanceOf(eye, dir, targets, collider) {
+  const doors = (targets ?? []).filter((t) => t?.door === true);
+  return doors.length ? (pickActivatableHit(eye, dir, doors, collider)?.distance ?? Infinity) : Infinity;
+}
+
+/** TACT3d: the plaque's half of mobileEnemyActivate's `yieldsToDoor` - a foe hit on a PEACEFUL foe (liveFoeTargets'
+ *  `peaceful`) with a door, or the ladder's other winner, within the door's reach behind it is no hit, so the plaque
+ *  names what the press opens. FB1012d ALLY-YIELDS: and the one seam every plaque's foe passes through, so a hit on a
+ *  COMPANION (liveFoeTargets' `ally`) leaves it marked - the race (activationRace.js raceWinner) passes him by for what
+ *  answers behind him, as the press's `allyYields` does, in every mode. */
+export function peacefulFoePass(foeHit, targets, doorBehind, mode = null) {
+  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return { ...foeHit, ally: true }; // FB1012d ALLY-YIELDS
+  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE))
+    return foeHit; // AUDIT TACT C5: a pickpocket is asked of him
+  return targets.find((t) => t.key === foeHit.key)?.peaceful ? null : foeHit;
+}
+
+/** WHICH live foe a key names - `corpseEntryFor`'s twin, over the same
+ *  list and the same identity `liveFoeTargets` minted from. */
+export function liveFoeFor(foes, key, keyPrefix, { idOf = null } = {}) {
+  if (typeof key !== 'string' || !key.startsWith(`${keyPrefix}:`)) return null;
+  let i = -1;
+  for (const f of foes ?? []) {
+    i += 1;
+    if (!f || f.dead) continue; // AUDIT-WH2 L2-F6: `!f.entity` came off - the PRESS's own sweep (pickFoeAlong, below) never had it, and the two sweeps must agree on what the ray hit
+    if (`${keyPrefix}:${idOf ? idOf(f) : i}` === key) return f;
+  }
+  return null;
+}
+
+function pickFoeAlong(eye, dir, foes, collider, distance, accept) {
+  let best = null;
+  let bestD = Infinity;
+  for (const f of foes ?? []) {
+    if (!f || f.dead || !accept(f)) continue;
+    const aabb = foeAabb(f);
+    if (!aabb) continue;
+    const d = rayAabb(eye, dir, aabb);
+    if (d === null || d > distance || d >= bestD) continue;
+    const wall = collider?.raycast?.(eye, dir, d) ?? Infinity;
+    if (Number.isFinite(wall) && wall < d - 0.05) continue;
+    best = f;
+    bestD = d;
+  }
+  return best ? { foe: best, distance: bestD } : null;
+}
+
+/**
+ * Pick the nearest activatable the eye ray hits within reach and sight.
+ * @param {Array<{key:string, aabb:{min,max}, distance?:number, reach?:number, yields?:boolean}>} targets
+ * @returns {string|null} target key
+ */
+export function pickActivatable(eye, dir, targets, collider) {
+  return pickActivatableHit(eye, dir, targets, collider)?.key ?? null;
+}
+
+/**
+ * AUDIT 63 F33 (review round): the SAME pick, with the winning hit's
+ * distance handed back.
+ *
+ * DFU fires ONE ray and dispatches on the ONE RaycastHit it produces
+ * (PlayerActivate.cs:314 `Physics.Raycast(ray, out hit, RayDistance,
+ * playerLayerMask)`); every check below it - the action door (:374),
+ * the loot container (:388), the static NPC (:402), the mobile NPC
+ * (:412) and the mobile ENEMY (:419) - reads `hit.transform` off that
+ * same hit (MobileEnemyCheck, :1243-1248). So a foe is dispatched only
+ * when the foe IS the nearest thing the ray met: a chest at arm's
+ * length always beats a foe standing behind it.
+ *
+ * The port has no unified raycast - each kind of target is picked from
+ * its own pool - so a host that wants DFU's answer has to compare the
+ * two picks by DISTANCE, which means this one has to return it.
+ *
+ * AUDIT 65 MC-2: and its REACH with it. DFU's ray is cast once at
+ * RayDistance (:76) and every handler it dispatches into gates the
+ * distance ITSELF, out loud - the static door (:501-504), the action
+ * door (:686-689), the bulletin board (:709-712), ladders and shelves
+ * (:850-853), the loot container (:868-873) and the corpse (:936-941)
+ * each answer `hit.distance > <its own constant>` with
+ * SetMidScreenText(youAreTooFarAway) and return. A target whose
+ * `distance` is widened to RAY_DISTANCE so it can WIN the pick
+ * therefore carries its real `reach` beside it, and the ladder speaks
+ * the refusal when the winner came back out of reach. This is the
+ * bulletin board's idiom (scenes/worldModes.js:"had one. The click") given a
+ * field, not a second pick: one ray, one winner, the gate downstream.
+ * Targets that were never widened answer `reach === distance`, which
+ * the pre-gate has already enforced, so they can never refuse.
+ *
+ * LOOT-STACK (Janome: "a toggle key to switch between the inventories of
+ * enemies stacked on top of each other"): the winner is answered as it
+ * is, and when it is a BODY with others behind it inside their reach,
+ * the pile is noted for the loot window's tabs (player/lootStack.js
+ * holds the law). Here, and not at the call sites, so every reader of
+ * the ray - the presses, the plaque - reads the one pile.
+ *
+ * PR-WAGON1 (2026-09-24, a player's report Mac relayed: "Players can
+ * grief other players with the wagon by putting it in front of dungeon
+ * entryways and building entrances"; Mac's choice: "Others' wagons
+ * don't block"): A TARGET THAT YIELDS. Another player's team - their
+ * wagon and their horse, live or kept (scenes/horseCartPool.js marks
+ * both `yields: true`: the producer's word, as LOOT-STACK's `body` is)
+ * - stands no collider in this world, and the one ray passes through
+ * it as the player now walks through it. It answers the ray only when
+ * the ray met nothing FIRM: every other target the ray strikes, at any
+ * distance - the door behind it, the dungeon's mouth, the body, the
+ * person, my own team - is the hit exactly as if the team were not
+ * there (a far one refusing out loud, MC-2's law), and a ray that meets
+ * nothing else names the team ("Owned by ...") and presses it.
+ * `firmFirst` below is the law and its ONE home: this pick reads it
+ * over a target list, and player/activationRace.js over the families'
+ * picks, so a team in the horse cart pool cannot take the ray from a
+ * door in the host's own.
+ *
+ * @returns {{key:string, distance:number, reach:number, yields?:boolean}|null}
+ */
+/**
+ * DISC10: the slab test in a RIGID box's own frame - `m` a column-major rotation and translation with no scale (the
+ * cart's trs), `box` its local [minX..maxZ]; a rigid map keeps lengths, so `t` is the world distance. An axis-aligned
+ * box drawn around a turned body bulges past it at every diagonal: EOTB's cart, trailing a rider at 45 degrees, took
+ * a forward look over empty road and named "Wagon", flickering through every turn.
+ */
+export function rayObb(origin, dir, m, box) {
+  const rx = origin[0] - m[12],
+    ry = origin[1] - m[13],
+    rz = origin[2] - m[14];
+  const o = [rx * m[0] + ry * m[1] + rz * m[2], rx * m[4] + ry * m[5] + rz * m[6], rx * m[8] + ry * m[9] + rz * m[10]];
+  const d = [
+    dir[0] * m[0] + dir[1] * m[1] + dir[2] * m[2],
+    dir[0] * m[4] + dir[1] * m[5] + dir[2] * m[6],
+    dir[0] * m[8] + dir[1] * m[9] + dir[2] * m[10],
+  ];
+  return rayAabb(o, d, { min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] });
+}
+
+export function pickActivatableHit(eye, dir, targets, collider) {
+  const nearest = (list) => nearestActivatableHit(eye, dir, list, collider);
+  return noteBodyStack(firmFirst(targets, nearest), targets, nearest); // PR-WAGON1: another player's team yields
+}
+
+/** PR-WAGON1: does this target - or the hit it won - yield the ray? Its
+ *  producer's word, and nothing else. */
+export const yieldsRay = (t) => !!t && t.yields === true;
+
+/**
+ * PR-WAGON1: THE RAY'S FIRM ANSWER FIRST. `nearest` over the entrants
+ * that hold their ground, and over the ones that yield only when that
+ * found nothing - an occluded or out-of-range firm target is nothing,
+ * as it is to the pick. `nearest` is the reader's OWN nearest-hit law
+ * (the pick's over targets, the race's over picks), so the yield
+ * changes which entrants race and never how they race. A list with
+ * nothing yielding in it is raced as it always was, with no copy made.
+ */
+export function firmFirst(entrants, nearest) {
+  if (!entrants.some(yieldsRay)) return nearest(entrants);
+  return nearest(entrants.filter((e) => !yieldsRay(e))) ?? nearest(entrants.filter(yieldsRay));
+}
+
+/**
+ * FB1012d ALLY-YIELDS (Discord bug-reports, 2026-10-12, "Companion Inventory prioritized over looting, taking helm, and
+ * other context options": "you need to get them to move before you can loot an item since it keeps opening their
+ * inventory instead"). A COMPANION - the companion layer's body (scenes/crewAshore.js `companion`: a crew hand ashore, a
+ * sworn revenant) or another player's (`peer:`) - is a foe the ray strikes like any other, so one standing at the
+ * player's heel between the crosshair and a body, a pile, a boat's helm, a door or a shelf was the nearest hit and
+ * took the press: his pack, every time. He walks where the player walks, so he stood there every time.
+ *
+ * He YIELDS: whatever the press would take were he not there - the ladder's own winner behind him - takes it when it
+ * ANSWERS from where the player stands, a firm pick inside its own reach. Not anything the ray meets (PR-WAGON1's law,
+ * `firmFirst`): his pack is storage the player reaches every day, and indoors a shelf, a door or a bed stands on the
+ * ray behind him on nearly every look, so "anything else" made him unreachable and answered "You are too far away"
+ * from a shelf across the room. A thing behind him out of its reach would only refuse, so he takes the press - and with
+ * nothing behind him, he is the hit as ever. Another player's team, which yields itself, is no rival (`answersPress`).
+ * The press asks `allyYields` (mobileEnemyActivate.js tryMobileEnemyActivate, each host handing its ladder's winner as
+ * `behind`); the plaque asks the same `answersPress` of the race's other winner (activationRace.js raceWinner, the
+ * foe's hit marked `ally` by `peacefulFoePass` off `liveFoeTargets`), so it names what the press takes.
+ */
+export const isCompanion = (f) => !!f && f.companion != null;
+/** FB1012d ALLY-YIELDS: a pick the press would ACT on from here - firm (PR-WAGON1: a pick that yields is never a
+ *  rival), and inside its own reach (MC-2: past it, its handler only refuses). A pick with no reach answers nothing. */
+export const answersPress = (p) => !!p && !yieldsRay(p) && p.distance <= p.reach;
+/** FB1012d ALLY-YIELDS: a companion under the ray passes the press to what answers behind him. */
+export const allyYields = (foe, behind) => isCompanion(foe) && answersPress(behind);
+
+/** The ray's nearest hit - DFU's one raycast, as the port spells it (the
+ *  law documented above). LOOT-STACK's stack walks it too, over the bodies
+ *  behind the front one, so each member is found as the front one was. */
+function nearestActivatableHit(eye, dir, targets, collider) {
+  let bestKey = null;
+  let bestDist = Infinity;
+  let bestAabb = null;
+  let bestReach = DEFAULT_ACTIVATION_DISTANCE;
+  let bestNoSurface = false;
+  let bestYields = false;
+  let targetKeys = null; // CASTLE1: the keys, minted only when a box holds the eye
+  let firstHit; // DISC19-E: the one surface DFU's ray meets, cast lazily
+  for (const target of targets) {
+    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb); // DISC10: a turned body's own box where it has one
+    if (d === null) continue;
+    // CASTLE1 (DragynDance, 2026-09-22: "Entering castle daggerfall
+    // removes your ability to interact with anything, so you are unable
+    // to leave, talk to the guard, or open any doors"): THE EYE INSIDE
+    // A BOX. The slab test answers 0 for a box the ray starts in, and 0
+    // beats every real distance - so a large action model whose AABB
+    // takes in the start marker (Castle Daggerfall's foyer piece, six
+    // metres square) won every click from anywhere inside it: the exit
+    // door a pace away, the guard and every door lost to it, and a load
+    // put the player back on the same marker. DFU casts against MESH
+    // colliders (PlayerActivate.cs:314), so an object you stand inside
+    // is hit only where the ray meets its geometry, and the door
+    // surface in front of you is nearer. The port's word for "where the
+    // ray meets geometry" is the collider: a containing box's hit is
+    // the collider's surface hit, and only when that hit lies inside
+    // the box (a triangle's home is its own AABB); a ray that leaves
+    // the box before meeting anything never struck this object. A
+    // `noSurface` target (a flat) has no geometry to meet at all.
+    if (d === 0 && boxContains(target.aabb, eye)) {
+      if (target.noSurface === true) continue;
+      const reach = target.distance ?? DEFAULT_ACTIVATION_DISTANCE;
+      const hit = collider.raycastHit
+        ? collider.raycastHit(eye, dir, reach)
+        : { dist: collider.raycast(eye, dir, reach), key: null };
+      if (!Number.isFinite(hit.dist)) continue;
+      // An action door, a mover and a special door own their collider
+      // bucket under their own key (actionSystem.js addMesh(o.key)): a
+      // surface ANOTHER target owns is that target's, never this one's.
+      // The static bucket names nobody, so the box decides there.
+      if (hit.key != null && hit.key !== target.key) {
+        targetKeys ??= new Set(targets.map((t) => t.key));
+        if (targetKeys.has(hit.key)) continue;
+      }
+      if (
+        !boxContains(
+          target.aabb,
+          [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist],
+          PICK_PARDON_M,
+        )
+      )
+        continue;
+      d = hit.dist;
+    } else if (target.meshCollider === true && collider.raycastHit) {
+      // DISC19-E: CASTLE1's law for a box merely ENTERED. A mesh
+      // collider is met only at its triangles, so when the first surface
+      // the ray meets is ANOTHER target's own bucket (the King of Worms'
+      // door, standing 5 cm inside the corridor piece's box), the ray
+      // never struck this object.
+      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);
+      if (firstHit.key != null && firstHit.key !== target.key) {
+        targetKeys ??= new Set(targets.map((t) => t.key));
+        // Another target's surface inside this box, or nearer than the box was entered, is that target's (the King
+        // of Worms' door, 5 cm inside the corridor piece). A surface past the box - a door behind a chair - is not.
+        if (
+          targetKeys.has(firstHit.key) &&
+          (boxContains(
+            target.aabb,
+            [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist],
+            PICK_PARDON_M,
+          ) ||
+            !(firstHit.dist > d))
+        )
+          continue;
+      }
+      // AUDIT WHERE-ROBES P3: and when the first surface IS its own, it is struck there and not at its box's entry - a
+      // decor dresser's mirror behind a candle on its top took the candle's press, the bug WHERE-ROBES fixed for the
+      // building's own furniture. Only its own surface moves it: a piece whose box stands with no bucket of its own (a
+      // model with no geometry to collide) is still met at its box, as before.
+      if (firstHit.key === target.key) d = Math.max(d, firstHit.dist);
+    } else if (target.surface === true && collider.raycastHit && d <= bestDist) {
+      // A box entered past the best can lose only further: no cast. WHERE-ROBES (FIELD BUGS 2026-10-04c): CASTLE1's law
+      // for a box merely ENTERED whose triangles sit in the collider's SHARED bucket (a building's furniture, filed
+      // under the interior's key). DFU meets furniture only at its mesh (PlayerActivate.cs:314); the box is mostly air
+      // - a shelf's open front, the space over a mattress - and a quest item there is a trigger sphere
+      // (GameObjectHelper.cs:1158) DFU's ray reaches FIRST, so O0A0AL00's robes could not be picked up off a bed. The
+      // furniture is struck at the first surface the ray meets, only inside its box: a ray that crosses the box and
+      // meets nothing of it never struck it.
+      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); // the one cast, DISC19-E's arm's too
+      if (!Number.isFinite(firstHit.dist)) continue;
+      if (
+        !boxContains(
+          target.aabb,
+          [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist],
+          PICK_PARDON_M,
+        )
+      )
+        continue;
+      d = Math.max(d, firstHit.dist);
+    }
+    if (d > bestDist) continue;
+    // Two boxes struck at the same distance - the foyer piece and the
+    // exit door standing in it, both holding the eye and both claiming
+    // the one surface the ray met: the TIGHTER box is the likelier
+    // owner of a surface both enclose. A strict later-loses tie keeps
+    // the pre-CASTLE1 order for everything else.
+    if (d === bestDist && (bestAabb === null || boxVolume(target.aabb) >= boxVolume(bestAabb))) continue;
+    if (d > (target.distance ?? DEFAULT_ACTIVATION_DISTANCE)) continue;
+    bestKey = target.key;
+    bestDist = d;
+    bestAabb = target.aabb;
+    // MC-2: a family that was not widened has no `reach` of its own, and
+    // its pick reach IS its handler's constant.
+    bestReach = target.reach ?? target.distance ?? DEFAULT_ACTIVATION_DISTANCE;
+    bestNoSurface = target.noSurface === true;
+    bestYields = yieldsRay(target);
+  }
+  if (bestKey === null) return null;
+  // Occlusion: solid world strictly in front of the target blocks it -
+  // UNLESS the blocking hit lies inside the target's own box (thin or
+  // diagonal meshes sit well inside their AABB, so their own surface
+  // legitimately lands nearer than the AABB entry).
+  //
+  // FIX-D: ...and only a target that HAS a surface in the collider gets
+  // that pardon. A `noSurface` target is a flat - no collider at all -
+  // so a hit inside its box is never its own face: it is the door or
+  // the wall its box stands against, and it blocks. Without this, a
+  // world fire whose box met a door through the wall was named and lit
+  // through it.
+  const wall = collider.raycast(eye, dir, bestDist - 0.05);
+  if (wall < bestDist - 0.05) {
+    if (bestNoSurface) return null;
+    const hx = eye[0] + dir[0] * wall;
+    const hy = eye[1] + dir[1] * wall;
+    const hz = eye[2] + dir[2] * wall;
+    const b = bestAabb;
+    const skin = PICK_PARDON_M;
+    const inside =
+      hx >= b.min[0] - skin &&
+      hx <= b.max[0] + skin &&
+      hy >= b.min[1] - skin &&
+      hy <= b.max[1] + skin &&
+      hz >= b.min[2] - skin &&
+      hz <= b.max[2] + skin;
+    if (!inside) return null;
+  }
+  // PR-WAGON1: a yielding winner says so, so the race over the families'
+  // picks (activationRace.js) reads the law off the hit it was handed.
+  return bestYields
+    ? { key: bestKey, distance: bestDist, reach: bestReach, yields: true }
+    : { key: bestKey, distance: bestDist, reach: bestReach };
+}

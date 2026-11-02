@@ -1,0 +1,113 @@
+[
+  {
+    "name": "BAL5-the-thorns-cap-at-25",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "export const THORNS_CAP = 10;",
+    "new": "export const THORNS_CAP = 25;",
+    "tests": [
+      "test/systems/bal5_blowback.test.js",
+      "test/systems/loot4_procs.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-the-thorns-past-the-floor",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  const back = f && !f.dead ? paidBack(f, n) : 0;",
+    "new": "  const back = f && !f.dead ? n : 0;",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-spite-past-the-floor",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  const back = f ? paidBack(f, Math.max(1, Math.round((took * v.back) / 100))) : 0;",
+    "new": "  const back = f ? Math.max(1, Math.round((took * v.back) / 100)) : 0;",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-the-last-point-taken",
+    "file": "src/systems/playerDoor.js",
+    "old": "  return Math.max(0, Math.min(n, Math.ceil(h) - 1));",
+    "new": "  return Math.max(0, Math.min(n, Math.ceil(h)));",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-the-floor-dropped",
+    "file": "src/systems/playerDoor.js",
+    "old": "  return Math.max(0, Math.min(n, Math.ceil(h) - 1));",
+    "new": "  return n;",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-a-fraction-floored",
+    "file": "src/systems/playerDoor.js",
+    "old": "  return Math.max(0, Math.min(n, Math.ceil(h) - 1));",
+    "new": "  return Math.max(0, Math.min(n, Math.floor(h) - 1));",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-a-nothing-passed",
+    "file": "src/systems/playerDoor.js",
+    "old": "  if (!(n > 0)) return 0;",
+    "new": "  if (!(n > 0)) return n;",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-a-record-without-health-spared",
+    "file": "src/systems/playerDoor.js",
+    "old": "  if (!Number.isFinite(h)) return n;",
+    "new": "  if (!Number.isFinite(h)) return 0;",
+    "tests": [
+      "test/systems/bal5_blowback.test.js",
+      "test/systems/set3_powers.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-the-retired-flavour-drawn",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const all = list.filter((f) => !f.retired);   // BAL5: a retired flavour is the law's, never a draw's",
+    "new": "  const all = list;",
+    "tests": [
+      "test/systems/bal5_blowback.test.js",
+      "test/systems/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-the-mark-dropped",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    { type: T.CastWhenHeld, param: 24, retired: true },      // Troll's Blood",
+    "new": "    { type: T.CastWhenHeld, param: 24 },      // Troll's Blood",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-the-flavour-struck-from-the-law",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    { type: T.CastWhenHeld, param: 24, retired: true },      // Troll's Blood",
+    "new": "    // BAL5 mutant: struck",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  },
+  {
+    "name": "BAL5-the-card-says-nothing",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "        (v) => `Enemies that hit you take ${v.back}% of the damage back. This never kills them`,",
+    "new": "        (v) => `Enemies that hit you take ${v.back}% of the damage back`,",
+    "tests": [
+      "test/systems/bal5_blowback.test.js"
+    ]
+  }
+]

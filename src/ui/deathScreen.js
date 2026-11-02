@@ -1,0 +1,322 @@
+// THE DEATH SCREEN (UI arc, D1). This module was ui/inventory.js and
+// held three windows; two of them retired onto their classic art and
+// the third is what is left, so the file finally carries its name.
+//
+//   (The keyed INVENTORY window that lived here is DELETED at U26.
+//   It was the dungeon host's until that slice swapped in the classic
+//   ui/native/nativeInventory.js window, after which nothing imported it.
+//   Its one law - EquipItem excludes exactly Weapons/Arrow and hands
+//   everything else to the equip table - was never the window's: it
+//   lives in systems/equip.js, where every host now reaches it.)
+//
+//   (The keyed SPELLBOOK window that lived here is DELETED at U42,
+//   which puts DaggerfallSpellBookWindow on the real SPBK00I0.IMG in
+//   ui/spellbookWindow.js - list, icons, effect panels, delete,
+//   rename, sort and the guilds' buy mode. Its `knownSpells` helper
+//   went with it: the interim "an empty book lists the file's ranged
+//   damage spells" fallback had been dead for players since S3c gave
+//   chargen real starting spells, and the two flight probes that
+//   still wanted that list read spellcast.rangedDamageSpells now.)
+//
+// Death (D1): health 0 opens this through the ONE hurtPlayer door and
+// it drives PlayerDeath's whole sequence - the camera sinks a
+// quarter-capsule below the feet, the HUD fades black over two
+// seconds, the classic death sound plays, and three seconds in the
+// host runs ANIM0012.VID and returns to the title menu (DFU's
+// TitleMenuFromDeath). ENTER skips to that end; the F11 hint is the
+// real quickload binding (InputManager.SetupDefaults: F9/F11).
+
+import { drawText, measureText } from './text.js';
+import { PlayerDeathSequence, DEATH_TIME_BEFORE_RESET } from '../systems/playerDeath.js'; // D1
+import { playerEntity } from '../characters/playerEntity.js'; // D1: the death clip's race/gender
+import { audio } from '../systems/audio.js';
+import { isEnhanced } from '../systems/uiSkin.js'; // DEATH2: the enhanced skin paints its own
+import { drawEnhancedDeath, removeEnhancedDeath } from './enhanced/enhancedDeath.js';
+import { EYE_HEIGHT } from '../player/motor.js'; // DEATH3: the standing eye the fall starts from
+import { isOnlinePage } from '../systems/online/onlineLane.js'; // DEATH4: the online screen counts down, the offline one waits
+import { stateDeathLoss, deathGoldLoss, deathPenaltyLine } from '../systems/deathPenalty.js'; // DEATH-PENALTY: the screen says what the respawn is about to take
+import { isCasual } from '../systems/legacy/casual.js'; // CASUAL-LIFE: a Casual death states no loss
+import { goldPiecesOf } from '../systems/inventory.js'; // DEATH-PENALTY: the purse the loss is read off
+import { wildDeath, wildDeathLines, wildDeathSlain, WILD_DEATH_HOLD_S } from '../systems/wild/wildZone.js'; // WILD1: a death in the open zone holds two minutes, Enter or not
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+import { t } from '../systems/textManager.js'; // L10N4: the classic face's words in the player's language
+
+/** L10N4: what a host's hint SAYS. The hosts hand the English hint - FIX-E's law is in it (no F11 where there is no
+ *  quickload) and the enhanced face reads its keys off it - so the screen keeps it as given and shows its words; a
+ *  Legacy rise's hint (BAL4 riseHint) is the same hint with Enter raising. */
+const HINT_TEXT = Object.freeze({
+  'ENTER end   F11 load': () => t('death.hint.endLoad', 'ENTER end   F11 load'),
+  'ENTER end': () => t('death.hint.end', 'ENTER end'),
+  'ENTER rise   F11 load': () => t('death.hint.riseLoad', 'ENTER rise   F11 load'),
+  'ENTER rise': () => t('death.hint.rise', 'ENTER rise'),
+});
+const hintText = (hint) => HINT_TEXT[hint]?.() ?? hint;
+
+/** DEATH4 (Discord, 2026-09-23: "don't let it fade away automatically in
+ *  offline mode, only in online mode - and give it 10 seconds"). On the
+ *  enhanced skin the screen no longer ends itself three seconds in
+ *  (DFU's TimeBeforeReset, which the classic skin keeps): OFFLINE it
+ *  waits for the player - Enter ends the run, F11 loads - and ONLINE it
+ *  respawns on its own after this many seconds, or at once on Enter. */
+// DEATH6 (Discord, 2026-09-23: "a 60 second cooldown or skip it with Enter - the same time it takes till his
+// corpse disappears"): the wait is the body's own life on the others' screens (net/remotePlayers.js CORPSE_MS), so a
+// player who waits it out rises as their body fades, and Enter still rises at once.
+export const ONLINE_RESPAWN_SECONDS = 60;
+/** DEATH-15: online, in the zone too, Enter
+ *  rises after this many seconds; the rest of the minute is for a party member's Resurrect. */
+export const DEATH_RISE_MIN_S = 0;
+/** DEATH-10: online, Enter rises at once and the screen rises on its own after this; the body still lies the minute. */
+export const DEATH_AUTO_RISE_S = 10;
+
+const DIM = [0.5, 0.5, 0.45, 1];
+
+/** DEATH3 (Discord, 2026-09-23: "the character when he dies should not
+ *  sink into the ground - make it fall backwards, looking up in the
+ *  air"). THE ENHANCED SKIN'S FALL, in place of DFU's sink.
+ *
+ *  DFU drops the eye to a quarter of the capsule BELOW the feet
+ *  (deathCameraTarget) - the view goes through the floor. The classic
+ *  skin keeps that law byte for byte. On the enhanced skin the body
+ *  falls backwards instead: the eye accelerates down to lie just off
+ *  the ground, lands with a small jolt, and the view tips up to the sky
+ *  - the last thing a fallen fighter sees. Pure over the sequence's own
+ *  clock, so every host that already reads `drop` gets the fall. */
+export const FALL_REST_EYE = 0.25; // metres: the eye of a body lying on its back
+export const FALL_TIME = 0.75; // seconds from standing to the ground
+export const FALL_LOOK_UP = 1.3; // radians of pitch at rest - the sky, short of straight up
+export const FALL_LOOK_TIME = 1.25; // the head tips back a beat slower than the body drops
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+export function fallCurve(elapsed) {
+  const e = Math.max(0, Number(elapsed) || 0);
+  const p = clamp01(e / FALL_TIME);
+  let drop = p * p; // a fall accelerates
+  // THE LANDING: one small bounce off the ground, then still.
+  const after = e - FALL_TIME;
+  if (after > 0 && after < 0.28) drop -= 0.07 * Math.sin((after / 0.28) * Math.PI);
+  const q = clamp01(e / FALL_LOOK_TIME);
+  let look = 1 - (1 - q) ** 3; // the head goes back fast and settles
+  // ...and the jolt of the impact snaps it a touch further, then back.
+  if (after > 0 && after < 0.35) look += 0.06 * Math.sin((after / 0.35) * Math.PI);
+  return { drop, look };
+}
+/** BAL4: the classic face's hint over a death Project Legacy will raise - its Enter raises the player (F11 still loads). */
+export const riseHint = (hint) => String(hint ?? '').replace(/ENTER end/, 'ENTER rise');
+
+/** D1: the death screen DRIVES PlayerDeath's sequence - the camera
+ *  sinks, the HUD fades to black over two seconds, the classic death
+ *  sound plays once, and three seconds in the host's onReset runs
+ *  (the death video, then the title menu: DFU's
+ *  StartMethods.TitleMenuFromDeath). ENTER skips straight to that
+ *  reset rather than reloading the same scene, which is where DFU's
+ *  death lands you; F11 still quickloads, the port's own affordance
+ *  and the reason the hint is drawn. `drop` is read by each host's
+ *  frame to sink its camera - one player, one death, one law. */
+export class DeathScreen {
+  constructor({
+    eyeHeight,
+    capsuleHeight,
+    onReset = null,
+    entity = playerEntity,
+    hint = 'ENTER end   F11 load',
+    online = undefined,
+    rises = null,
+    penalty = true,
+    wall = () => Date.now(),
+  } = {}) {
+    noteFirstUse('death'); // TUT1: the page waits beneath this screen (it keeps the top) and is read after it
+    this.done = false;
+    // RISE-STUCK: the screen keeps the top of its host's stack until it
+    // goes - a box pushed while it is up waits beneath (ui/windowStack.js
+    // holdsTop), so the rise's replace takes THIS window, not the box.
+    this.holdsTop = true;
+    // DUPE-LOAD (2026-10-11): the ONE window a quickload is pressed from under (its "F11 load" hint, FIX-E) - the world
+    // host's arm and routeKey's both ask this, and every other window keeps its keys, as DFU's HUD takes no QuickLoad
+    // under a window. A load from under the pack, a loot window or a counter restored the save while the window still
+    // held what it had taken off the old one, and its close handed it back: a drop doubled the purse every load.
+    this.loadsUnder = true;
+    this.hint = hint; // FIX-E: a host with no quickload (the fixed city) draws no F11 - a hint that is a lie is worse than none
+    // MERGE AUDIT: the death clip is the character's OWN race/gender
+    // Pain3 whenever CombatVoices is on (it ships on), so the sequence
+    // needs an identity. It reads the shared player entity here - ONE
+    // seam, the way onReset is one seam - rather than making all four
+    // hosts remember to pass a race they all already import.
+    // DEATH3: the fall is the enhanced skin's; the classic keeps DFU's sink.
+    this.fall = isEnhanced();
+    // AUDIT 28 B5: a host whose death never respawns online (the fixed city, the standalone dungeon) says so - its
+    // screen counts no online respawn down and shows no loss it will never take
+    this.online = online ?? isOnlinePage();
+    // BAL4 (bible/05-Combat/Balance-Arc.md section 6): AN OFFLINE DEATH PROJECT LEGACY WILL RAISE IS A RESPAWN TOO. The
+    // host whose reset asks Legacy first hands `rises` (the outcome is decided before this screen goes up - Legacy's
+    // onDeath runs first, playerEntity.js hearDeath); the fixed city and the standalone dungeon hand none, and never
+    // rise. Read once, here: the screen says Rise where it said End the journey, and states the respawn's loss.
+    this.rises = !this.online && !!rises?.();
+    // DEATH-PENALTY (Mac: "and it should be shown in the death screen"): the gold the respawn will take,
+    // read HERE, once - and STATED (systems/deathPenalty.js stateDeathLoss): the respawn takes exactly this, capped
+    // at the purse, whatever the purse did while the player lay dead (AUDIT 28 B5: a mate's bounty clear pays the
+    // dead too, and the respawn took its share of the bigger purse). A death with no respawn (the run ends) takes none.
+    const respawns = this.online || this.rises;
+    // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 24): a made level whose law exempts DEATH-PENALTY (the Spire's -
+    // systems/madeLevel.js) hands `penalty: false`: the respawn takes nothing, so the screen states nothing
+    // CASUAL-LIFE (bible/06-Systems/Legacy-Arc.md section 6): nor a Casual character's - its death costs nothing
+    this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;
+    if (respawns) stateDeathLoss(this.goldLoss);
+    this.goldLossLine = deathPenaltyLine(this.goldLoss); // drawn ONCE: the enhanced face redraws every frame and the words must not change under the player
+    this.clock = 0; // DEATH4: the enhanced screen's own clock (the sequence's stops short of its reset)
+    // REZ-BLOODLINE AUDIT R2: and online, the wall clock it never runs behind (tick) - from the death
+    this._wall = wall;
+    this._fellAt = wall();
+    this.eyeHeight = Number.isFinite(eyeHeight) ? eyeHeight : EYE_HEIGHT;
+    this._view = null; // { cam, pitch } - the pitch to hand back if the run goes on (an online respawn)
+    this.sequence = new PlayerDeathSequence({
+      eyeHeight,
+      capsuleHeight,
+      onReset: () => {
+        // DEATH3: a respawn comes back to the world looking where the
+        // player was looking, not at the sky the body fell into.
+        if (this._view) {
+          this._view.cam.pitch = this._view.pitch;
+          this._view = null;
+        }
+        onReset?.();
+      },
+      race: entity?.raceId ?? null,
+      gender: entity?.gender ?? null,
+      playSound: (clip) => audio.playOneShot(clip, 1),
+    });
+  }
+  get drop() {
+    if (!this.fall) return this.sequence.drop;
+    return fallCurve(this.sequence.elapsed).drop * Math.max(0, this.eyeHeight - FALL_REST_EYE);
+  }
+  /** DEATH3: the fall's pitch, written onto the host's camera after its
+   *  `drop` line. The pitch the player had is kept on the first call and
+   *  eased toward the sky from there. No-op on the classic skin. */
+  tiltView(cam) {
+    if (!this.fall || !cam || this.sequence.reset) return;
+    if (!this._view) this._view = { cam, pitch: Number(cam.pitch) || 0 };
+    const { look } = fallCurve(this.sequence.elapsed);
+    const from = this._view.pitch;
+    cam.pitch = from + (FALL_LOOK_UP - from) * look;
+  }
+  tick(dt) {
+    // classic OFFLINE: DFU's three seconds, untouched. AUDIT CONTRIB A5: online the hold is the screen's on EITHER skin -
+    // the classic's three seconds respawned the player and cleared the body their party could raise (RESURRECT1,
+    // PCORPSE3) before anyone could reach it; the wait is the body's minute whatever the skin draws.
+    if (!this.fall && !this.online) {
+      this.sequence.tick(dt);
+      return;
+    }
+    // DEATH4: the sequence runs its fall, fade and sound as ever but is
+    // HELD a hair short of its own reset - the reset is this screen's to
+    // call: the online countdown, or the player's Enter (input below).
+    this.clock += Math.max(0, Number(dt) || 0);
+    // REZ-BLOODLINE AUDIT R2 (FIELD BUGS 2026-10-16b): ONLINE THE WAIT IS THE WALL CLOCK'S. The hosts hand a clamped dt (a
+    // frame counts a tenth of a second however long it took), and the hold a party's Resurrect raises through is the wall
+    // clock's on the page and at the realm (scenes/legacyHost.js REZ_HOLD_MS, server-account/src/legacy.js realmRaise):
+    // below ten frames a second the open zone's two minutes outlasted it, the screen saying "RISING IN 15" while a
+    // Resurrect was refused "fallen for good". Never behind the frames' own count either (a dt longer than the wall's).
+    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);
+    if (this.online && this.clock >= this.holdSeconds) {
+      this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1);
+      return;
+    }
+    const room = DEATH_TIME_BEFORE_RESET - 1e-3 - this.sequence.elapsed;
+    this.sequence.tick(Math.max(0, Math.min(Number(dt) || 0, room)));
+  }
+  /** RESURRECT1: the view handed back without a reset - a resurrection closes the screen in place. */
+  restoreView() {
+    if (this._view) {
+      this._view.cam.pitch = this._view.pitch;
+      this._view = null;
+    }
+    removeEnhancedDeath(); // AUDIT CONTRIB A4: the veil goes with the screen, not STALE_MS after it - the risen see at once
+  }
+  /** WILD1 (systems/wild/wildZone.js): a death in the open zone - read live, since the world host says so the frame after the
+   *  screen goes up. The owner: "When a player dies by mobs he has to wait 2mins till respawn" - and at a player's hand
+   *  "the body ... disappears in 2 minutes and with it the player can only then respawn". */
+  get wild() {
+    return this.online ? wildDeath() : null;
+  }
+  /** DEATH6 / WILD1: the online wait - the body's minute, or the zone's two. WILD-REJOIN: less what a death the referee
+   *  told this page of had lain before it came back (systems/wild/wildZone.js `served`). */
+  get holdSeconds() {
+    return this.wild ? WILD_DEATH_HOLD_S - (this.wild.served ?? 0) : DEATH_AUTO_RISE_S;
+  }
+  /** DEATH-15: may Enter rise now? Offline always; online once the minimum has passed (a rejoin's served time counts). */
+  get canRise() {
+    return !this.online || this.clock + (this.wild?.served ?? 0) >= DEATH_RISE_MIN_S;
+  }
+  /** DEATH4: whole seconds left before an online respawn, or null offline. */
+  get respawnIn() {
+    if (!this.online) return null;
+    return Math.max(0, Math.ceil(this.holdSeconds - this.clock));
+  }
+  input(action) {
+    // ENTER ends the run now; the sequence's own reset is the timer. DEATH-15: online only after the minimum, zone or not
+    if (action === 'confirm' && this.canRise) this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1);
+  }
+  draw(renderer, canvas, font, s) {
+    // FadeHUDToBlack over the death: the world dims to black behind
+    // the text rather than sitting under a fixed red wash.
+    const fade = this.sequence.fade;
+    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [
+      0.05,
+      0.01,
+      0.01,
+      0.35 + 0.6 * fade,
+    ]);
+    // DEATH2 (Discord, 2026-09-23: "make it enhanced style with You died
+    // and make it look deathly - enhanced/online only"): the enhanced
+    // skin draws the words as a DOM layer over the same fade; the classic
+    // skin keeps the canvas text below, untouched.
+    if (isEnhanced() && typeof document !== 'undefined') {
+      drawEnhancedDeath(this, fade);
+      return;
+    }
+    const died = t('death.title', 'YOU HAVE DIED');
+    drawText(
+      renderer,
+      font,
+      died,
+      (canvas.width - measureText(font.fnt, died) * s) / 2,
+      canvas.height / 2 - 10 * s,
+      s,
+      [0.9, 0.2, 0.15, 1],
+    );
+    const hint = this.online
+      ? !this.canRise
+        ? t('death.risingInWild', 'RISING IN {n}', { n: this.respawnIn })
+        : t('death.risingIn', 'RISING IN {n}   ENTER now', { n: this.respawnIn })
+      : hintText(this.rises ? riseHint(this.hint) : this.hint); // DEATH-15: Enter said once it rises   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"   // BAL4: a Legacy rise's Enter raises
+    drawText(
+      renderer,
+      font,
+      hint,
+      (canvas.width - measureText(font.fnt, hint) * s) / 2,
+      canvas.height / 2 + 6 * s,
+      s,
+      DIM,
+    );
+    // WILD1: the zone's lines on the classic face, under the hold (the enhanced face draws its own)
+    let wy = canvas.height / 2 + (this.goldLoss > 0 ? 38 : 22) * s;
+    for (const l of [wildDeathSlain(this.wild), ...wildDeathLines(this.wild)].filter(Boolean)) {
+      // PVP-HUD: "Slain by" first
+      const up = l.toUpperCase();
+      drawText(renderer, font, up, (canvas.width - measureText(font.fnt, up) * s) / 2, wy, s, [0.85, 0.35, 0.25, 1]);
+      wy += 12 * s;
+    }
+    if (this.goldLoss > 0) {
+      // DEATH-PENALTY: the classic face says it too, one line under the hold
+      const loss = t('death.goldLoss', 'DEATH CLAIMS {gold} GOLD', { gold: this.goldLoss });
+      drawText(
+        renderer,
+        font,
+        loss,
+        (canvas.width - measureText(font.fnt, loss) * s) / 2,
+        canvas.height / 2 + 22 * s,
+        s,
+        [0.9, 0.2, 0.15, 1],
+      );
+    }
+  }
+}

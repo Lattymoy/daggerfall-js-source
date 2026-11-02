@@ -1,0 +1,228 @@
+[
+  {
+    "name": "NAV-C-the-level-gate-off",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "  const pool = SHIP_CLASSES.filter((c) => c.faction === faction && c.minLevel <= Math.max(1, level | 0));",
+    "new": "  const pool = SHIP_CLASSES.filter((c) => c.faction === faction);",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-crown-not-asked",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (f === 'navy') return (contact.notoriety ?? notoriety)(ship.names?.crown ?? null) >= NAVY_HUNTS;",
+    "new": "    if (f === 'navy') return (contact.notoriety ?? notoriety)(null) >= NAVY_HUNTS;",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-memory-forever",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true; // a blow, answered by every temper",
+    "new": "  if (ship.provoked.has(contact.id)) return true; // a blow, answered by every temper",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-beam-soundings-dropped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half) || !isWater(x - r[0] * half, z - r[2] * half))\n      return false;",
+    "new": "    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half)) return false;",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-swings-port-first",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "export const AVOID_SWINGS = Object.freeze([25, -25, 50, -50, 80, -80, 115, -115, 150, -150, 180]);",
+    "new": "export const AVOID_SWINGS = Object.freeze([-25, 25, -50, 50, -80, 80, -115, 115, -150, 150, 180]);",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-lead-still",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    p = [target[0] + rel[0] * t, target[1], target[2] + rel[2] * t];",
+    "new": "    p = [target[0], target[1], target[2]];",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-broadside-bearing",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  battery('starboard', 90, RUN_OUT_DEG, BEAR_DEG);",
+    "new": "  battery('starboard', -90, RUN_OUT_DEG, BEAR_DEG);",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-flagship-running",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    (ship.cls.faction === 'pirate' &&\n      !ship.cls.flagship &&\n      ship.damage.hullShare() < PIRATE_RUNS_AT &&\n      (threat || enemy)) ||",
+    "new": "    (ship.cls.faction === 'pirate' && ship.damage.hullShare() < PIRATE_RUNS_AT && (threat || enemy)) ||",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-stillness-never-counted",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return (\n    !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL || (ship.stillFor.get(enemy.id) ?? 0) >= GRAPPLE_STILL_S\n  );",
+    "new": "  return !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL;",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-grapple-range-ignored",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "        : bearingTo(ship, q.pos).dist <= GRAPPLE_RANGE;",
+    "new": "        : true;",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-struck-fighting",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (st === SHIP_STATES.struck || st === SHIP_STATES.prize || ship.boarded) {",
+    "new": "  if (st === SHIP_STATES.prize || ship.boarded) {",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-tactic-ignored",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (\n    ship.cls.tactic === 'bow' &&\n    ship.guns.ready('bow') &&\n    d <= bowReach * PRESENT_WITHIN &&\n    Math.abs(bearing) <= BOW_SWING * DEG\n  ) {",
+    "new": "  if (false && d <= bowReach * PRESENT_WITHIN && Math.abs(bearing) <= BOW_SWING * DEG) {",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-oars-dropped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (ship.hull === HULL.LargeGalley) best = Math.max(best, ship.cls.speed * OARS_FLOOR);",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-ring",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "        const d = SPAWN_RING[0] + rng() * (SPAWN_RING[1] - SPAWN_RING[0]);",
+    "new": "        const d = rng() * SPAWN_RING[1];",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-in-sight-of-a-player",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "        if (nearest(pos) < SPAWN_CLEAR) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-count-not-advanced",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      const seed = hash32(ctx.seedBase >>> 0, count++);",
+    "new": "      const seed = hash32(ctx.seedBase >>> 0, count);",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-an-engaged-ship-let-go",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      for (const s of ctx.ships ?? [])\n        if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
+    "new": "      for (const s of ctx.ships ?? []) if (!s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-density-ignored",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      if (alive >= (ctx.density ?? 0) + (distress ? 1 : 0) || random() >= SHIP_SPAWN_CHANCE) return out;",
+    "new": "      if (random() >= SHIP_SPAWN_CHANCE) return out;",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-two-flagships",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      if (cls?.flagship && (ctx.ships ?? []).some((s) => s.classId === cls.id)) cls = classFor(faction, 1, rng()); // one flagship at a time",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-hunter-not-aimed",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "        const yaw = hunter ? toPlayer : toPlayer + (rng() < 0.5 ? 1 : -1) * (0.6 + rng() * 0.9);",
+    "new": "        const yaw = toPlayer + (rng() < 0.5 ? 1 : -1) * (0.6 + rng() * 0.9);",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-port-weights-dropped",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "    w.merchant += PORT_WEIGHTS.merchant;\n    w.navy += PORT_WEIGHTS.navy;\n    w.pirate *= PORT_PIRATE_K;",
+    "new": "    w.pirate *= PORT_PIRATE_K;",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-stream-left-moved",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "    setSeed(saved);",
+    "new": "    /* left where the name moved it */",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-crown-ignored",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "  const crown = shipClass.faction === 'navy' ? (crownIn ?? crownOf(0, 0, null, regionIndex)) : null;",
+    "new": "  const crown = shipClass.faction === 'navy' ? CROWNS[0] : null;",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js",
+      "test/systems/naval/shipnames.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-the-farthest-capital",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "    if (d < bd) {",
+    "new": "    if (d > bd || bd === Infinity) {",
+    "tests": [
+      "test/systems/naval/nav_c_ships.test.js"
+    ]
+  },
+  {
+    "name": "NAV-C-a-sea-ship-mine",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    seaBoats.push(boat);\n    return boat;",
+    "new": "    boats.push(boat);\n    return boat;",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  }
+]

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "BR-every-block-read-again",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    return setLocationTiles(loc, mapsFile, own ? blocksFile : shared, scratch.fill(0));",
+    "new": "    return setLocationTiles(loc, mapsFile, blocksFile, scratch.fill(0));",
+    "tests": [
+      "test/world/terrain/bootrects.test.js"
+    ]
+  },
+  {
+    "name": "BR-the-pin-unasked",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "(door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true)",
+    "new": "false",
+    "tests": [
+      "test/world/terrain/bootrects.test.js"
+    ]
+  },
+  {
+    "name": "BR-a-door-that-cannot-say-taken-as-none",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "(door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true)",
+    "new": "(door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? false)",
+    "tests": [
+      "test/world/terrain/bootrects.test.js"
+    ]
+  },
+  {
+    "name": "BR-a-place-with-no-indices-shared",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned",
+    "new": "door !== null && ((door.locationPinned",
+    "tests": [
+      "test/world/terrain/bootrects.test.js"
+    ]
+  },
+  {
+    "name": "BR-as-dropped",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    const loc = as ? { ...dfLocation, ...as } : dfLocation;",
+    "new": "    const loc = dfLocation;",
+    "tests": [
+      "test/world/terrain/bootrects.test.js"
+    ]
+  },
+  {
+    "name": "BR-any-pin-answered-pinned",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  return !!pin && !!(pin.out?.size || pin.in?.size);",
+    "new": "  return !!pin;",
+    "tests": [
+      "test/world/terrain/bootrects.test.js"
+    ]
+  },
+  {
+    "name": "BR-no-door-reads-through",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    const own = door !== null && (",
+    "new": "    const own = door === null || (",
+    "tests": [
+      "test/world/terrain/bootrects.test.js"
+    ]
+  }
+]

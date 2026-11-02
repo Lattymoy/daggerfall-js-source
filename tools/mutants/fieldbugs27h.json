@@ -1,0 +1,408 @@
+[
+  {
+    "name": "ESC-BOOK-arm-before-close",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "() => { close(); return bag[arm](); }",
+    "new": "() => { const r = bag[arm](); close(); return r; }",
+    "tests": [
+      "test/ui/escbook.test.js"
+    ]
+  },
+  {
+    "name": "ESC-BOOK-door-without-arm",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "() => { close(); return bag[arm](); } : undefined);",
+    "new": "() => { close(); return bag[arm](); } : () => close());",
+    "tests": [
+      "test/ui/escbook.test.js"
+    ]
+  },
+  {
+    "name": "ESC-BOOK-handoff-relocks",
+    "file": "src/ui/pauseDoor.js",
+    "old": "if (action === 'handoff') return;",
+    "new": "if (action === 'handoff') { hooks.relock?.(); return; }",
+    "tests": [
+      "test/ui/escbook.test.js"
+    ]
+  },
+  {
+    "name": "ESC-BOOK-stats-door-resumes",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "b.onclick = () => { handoff(fn); };",
+    "new": "b.onclick = () => { onAction('resume'); if (fn() === false) onAction('resume'); };",
+    "tests": [
+      "test/ui/escbook.test.js"
+    ]
+  },
+  {
+    "name": "ESC-BOOK-building-street-bag",
+    "file": "src/scenes/worldModes.js",
+    "old": "({ inventory: () => interiorInventory(), pause: () => interiorPauseHooks() });",
+    "new": "({ inventory: () => interiorInventory() });",
+    "tests": [
+      "test/ui/f5quests.test.js"
+    ]
+  },
+  {
+    "name": "ESC-BOOK-builder-ignores-bag",
+    "file": "src/scenes/world.js",
+    "old": "pause: pause ?? (() => pauseDoorHooks()),",
+    "new": "pause: () => pauseDoorHooks(),",
+    "tests": [
+      "test/ui/escbook.test.js"
+    ]
+  },
+  {
+    "name": "ESC-BOOK-f6-factory",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "if (toPack) pack();",
+    "new": "if (toPack) hooks.inventory?.();",
+    "tests": [
+      "test/ui/escbook.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-OUT-no-reread",
+    "file": "src/combat/shieldWidget.js",
+    "old": "    } else if (w.stale) updateShieldTextures(item); // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it",
+    "new": "    } // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it",
+    "tests": [
+      "test/combat/shieldout.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-OUT-never-stale",
+    "file": "src/combat/shieldWidget.js",
+    "old": "    if (w.lastStep !== step - 1) w.stale = true;",
+    "new": "    if (w.lastStep !== step - 1) w.stale = false;",
+    "tests": [
+      "test/combat/shieldout.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-OUT-stale-forever",
+    "file": "src/combat/shieldWidget.js",
+    "old": "    w.stale = false;\n    // Awake's tail (IL 0xb9): the shield OPENS in its stance rather than",
+    "new": "    // Awake's tail (IL 0xb9): the shield OPENS in its stance rather than",
+    "tests": [
+      "test/combat/shieldout.test.js"
+    ]
+  },
+  {
+    "name": "SEA-RISE-region-only",
+    "file": "src/scenes/world.js",
+    "old": "const safe = nearestSafeLocation(mapTable, px) ?? nearestSafeLocationAnywhere(maps, px);",
+    "new": "const safe = nearestSafeLocation(mapTable, px);",
+    "tests": [
+      "test/player/searise.test.js"
+    ]
+  },
+  {
+    "name": "SEA-RISE-first-not-nearest",
+    "file": "src/systems/deathRespawn.js",
+    "old": "    if (d2 < bestDist) {",
+    "new": "    if (!best) {",
+    "tests": [
+      "test/player/searise.test.js"
+    ]
+  },
+  {
+    "name": "SEA-RISE-resident-dropped",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  if (before >= 0 && typeof maps?.loadRegion === 'function') maps.loadRegion(before);\n  return best;",
+    "new": "  return best;",
+    "tests": [
+      "test/player/searise.test.js"
+    ]
+  },
+  {
+    "name": "SEA-RISE-autorun-kept",
+    "file": "src/scenes/world.js",
+    "old": "    player.stopAutorun();   // SEA-RISE",
+    "new": "    // player.stopAutorun();   // SEA-RISE",
+    "tests": [
+      "test/player/searise.test.js"
+    ]
+  },
+  {
+    "name": "SEA-RISE-run-latch-kept",
+    "file": "src/player/motor.js",
+    "old": "    this._autorun = false;\n    this._toggleRun = false;\n  }",
+    "new": "    this._autorun = false;\n  }",
+    "tests": [
+      "test/player/searise.test.js"
+    ]
+  },
+  {
+    "name": "SEA-RISE-breath-under-window",
+    "file": "src/scenes/world.js",
+    "old": "if (!_overlayHeld) _dwBreathTimer += dt;",
+    "new": "_dwBreathTimer += dt;",
+    "tests": [
+      "test/player/searise.test.js"
+    ]
+  },
+  {
+    "name": "LIST-FIT-grid-tile",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "  display: flex; align-items: center; justify-content: center; }",
+    "new": "  align-items: center; justify-content: center; }",
+    "tests": [
+      "test/ui/enhanced/listfit.test.js"
+    ]
+  },
+  {
+    "name": "MAP-KEEP-live-kept-on-restore",
+    "file": "src/systems/automap/automap.js",
+    "old": "  // cleared the whole store it had just restored.\n  _inside = false;\n  _liveKey = null;\n  _live = null;\n",
+    "new": "  // cleared the whole store it had just restored.\n",
+    "tests": [
+      "test/systems/automap/mapkeep.test.js"
+    ]
+  },
+  {
+    "name": "MAP-KEEP-teardown-forgets",
+    "file": "src/systems/automap/automap.js",
+    "old": "if (wasInside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0)",
+    "new": "if (getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0)",
+    "tests": [
+      "test/systems/automap/mapkeep.test.js"
+    ]
+  },
+  {
+    "name": "MAP-KEEP-build-fresh",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ fromLoad: !!opts.automapFromLoad }",
+    "new": "{ fromLoad: false }",
+    "tests": [
+      "test/systems/automap/mapkeep.test.js"
+    ]
+  },
+  {
+    "name": "MAP-KEEP-load-fresh",
+    "file": "src/scenes/world.js",
+    "old": "{ locationKey: extras.locationKey, fromLoad: true, recorded: starts.resumesAt(pixel) ? undefined : extras.dungeon ?? {} }",
+    "new": "{ locationKey: extras.locationKey, fromLoad: false, recorded: starts.resumesAt(pixel) ? undefined : extras.dungeon ?? {} }",
+    "tests": [
+      "test/systems/automap/mapkeep.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS W3): a start's dungeon through the quest's own entry."
+  },
+  {
+    "name": "MAP-KEEP-transition-drops-arm",
+    "file": "src/scenes/worldModes.js",
+    "old": "          automapFromLoad: fromLoad,",
+    "new": "          automapFromLoad: false,",
+    "tests": [
+      "test/systems/automap/mapkeep.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-held-item-endable",
+    "file": "src/systems/mysticism.js",
+    "old": "  if (!bundle || bundle.bundleType === 'HeldMagicItem') return false;",
+    "new": "  if (!bundle) return false;",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-duel-endable",
+    "file": "src/systems/mysticism.js",
+    "old": "  return entries.length > 0 && entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
+    "new": "  return entries.length > 0 && entries.every((a) => !a.permanent && ENDABLE_KINDS.has(a.kind));",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-one-help-enough",
+    "file": "src/systems/mysticism.js",
+    "old": "  return entries.length > 0 && entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
+    "new": "  return entries.length > 0 && entries.some((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-silence-endable",
+    "file": "src/systems/mysticism.js",
+    "old": "    ...Object.values(BUFF_KINDS).filter((k) => k !== 'silenced'),",
+    "new": "    ...Object.values(BUFF_KINDS),",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-refusal-ends",
+    "file": "src/systems/mysticism.js",
+    "old": "  if (!canEndBundle(bundle)) return null;",
+    "new": "  if (!bundle) return null;",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-hud-all-endable",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "endable: canEndBundle(b),",
+    "new": "endable: true,",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-tile-without-bundle",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "      endable: !!e.endable && e.bundleId != null, // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)",
+    "new": "      endable: !!e.endable, // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-classic-any-button",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "if (button !== 2 || windowUp || !cursorActive()) return false;\n  const at = hudPointer();",
+    "new": "if (windowUp || !cursorActive()) return false;\n  const at = hudPointer();",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-classic-look-held",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "if (button !== 2 || windowUp || !cursorActive()) return false;\n  const at = hudPointer();",
+    "new": "if (button !== 2 || windowUp) return false;\n  const at = hudPointer();",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-classic-item-icon",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "if (!hit?.endable) return false;",
+    "new": "if (!hit) return false;",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-press-swings",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "{ event?.preventDefault?.(); return true; }",
+    "new": "{ return true; }",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-widget-ungated",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "const ending = cursorActive() && !overlayOpen() && !controllerLook();",
+    "new": "const ending = !overlayOpen() && !controllerLook();",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "BUFF-END-stats-end-any",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (canEndBundle(b)) {\n      const end = el('button', 'act', t('pause.effects.end', 'End'));",
+    "new": "    if (b) {\n      const end = el('button', 'act', t('pause.effects.end', 'End'));",
+    "tests": [
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-no-first-wait",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "Object.freeze({ delay: 400, every: 100, fast: 40, fastAfter: 10 })",
+    "new": "Object.freeze({ delay: 100, every: 100, fast: 40, fastAfter: 10 })",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-late-quicken",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "n < HOLD_REPEAT.fastAfter ? HOLD_REPEAT.every",
+    "new": "n <= HOLD_REPEAT.fastAfter ? HOLD_REPEAT.every",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-four-digits",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "\\d{1,3}\\s*$/.test",
+    "new": "\\d{1,4}\\s*$/.test",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-unclamped",
+    "file": "src/systems/spell/spellMaker.js",
+    "old": "  next[field] = clampSetting(field, Number(value), effectKey); // ABSORB-NERF: the effect's own range",
+    "new": "  next[field] = Number(value); // ABSORB-NERF: the effect's own range",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-no-pair-rule",
+    "file": "src/systems/spell/spellMaker.js",
+    "old": "  next[field] = clampSetting(field, Number(value), effectKey); // ABSORB-NERF: the effect's own range\n  return applyPairRules(next, field);",
+    "new": "  next[field] = clampSetting(field, Number(value), effectKey);\n  return next;",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-disabled-takes",
+    "file": "src/ui/spell/spellMakerWindow.js",
+    "old": "    if (!this.enabled(field) || !Number.isFinite(Number(value))) return;",
+    "new": "    if (!Number.isFinite(Number(value))) return;",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-walk-skips-set",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "if (b.down) out.push(b.down); if (b.set) out.push(b.set); if (b.up) out.push(b.up);",
+    "new": "if (b.down) out.push(b.down); if (b.up) out.push(b.up);",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-release-clicks",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "if (hold.n > 0) { swallowClick = true;",
+    "new": "if (hold.n > 99999) { swallowClick = true;",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-view-no-setter",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "set: live((v) => ed.setValue(field, v)),",
+    "new": "set: undefined,",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-STEP-presses-what-stands-there",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "      const fn = btn && !btn.disabled && btn.dataset.a != null ? acts[Number(btn.dataset.a)] : null;",
+    "new": "      const fn = btn && !btn.disabled && btn.dataset.a != null ? acts[Number(btn.dataset.a)] : acts[h.pos];",
+    "tests": [
+      "test/ui/enhanced/holdstep.test.js"
+    ]
+  }
+]

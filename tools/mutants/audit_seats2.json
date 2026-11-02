@@ -1,0 +1,218 @@
+[
+  {
+    "name": "AUDIT-SEATS2-L1-cap-unpassed",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const t = titheCap == null ? titheStanding(tier, tithe) : titheStanding(tier, tithe, titheCap); // AUDIT SEATS-2 L1: the Market Hall's cap",
+    "new": "  const t = titheStanding(tier, tithe); // AUDIT SEATS-2 L1: the Market Hall's cap",
+    "tests": [
+      "test/net/audit_seats2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-L1-cap-param",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export function titheStanding(tier, pct, cap = TITHE_CAP[tier] ?? 0) {",
+    "new": "export function titheStanding(tier, pct, _cap = TITHE_CAP[tier] ?? 0) {\n  const cap = TITHE_CAP[tier] ?? 0;",
+    "tests": [
+      "test/net/audit_seats2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-L1-seat-cap",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const seatTitheCap = (seat) => marketHallTitheCap(TITHE_CAP[seat?.tier] ?? 0, seat?.forts?.market ?? 0);",
+    "new": "export const seatTitheCap = (seat) => marketHallTitheCap(TITHE_CAP[seat?.tier] ?? 0, 0);",
+    "tests": [
+      "test/net/audit_seats2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-L1-tab",
+    "file": "src/ui/seatTab.js",
+    "old": "    const cap = seatTitheCap(seat); // AUDIT SEATS-2 L1: the Market Hall's point a tier, as the service's titheCapAt",
+    "new": "    const cap = TITHE_CAP[seat.tier] ?? 0; // AUDIT SEATS-2 L1: the Market Hall's point a tier, as the service's titheCapAt",
+    "tests": [
+      "test/net/audit_seats2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-L1-turning",
+    "file": "server-account/src/seatTurning.js",
+    "old": "titheCap: marketHallTitheCap(TITHE_CAP[h.tier] ?? 0, f.market ?? 0) }",
+    "new": "titheCap: TITHE_CAP[h.tier] ?? 0 }",
+    "tests": [
+      "test/net/audit_seats2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-L2-revolt-bind",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    if (then !== me.guild_id && b.kind !== 'revolt') return { error: 'sign-unbound' }; // AUDIT SEATS-2 L2: a revolt won no Right - its week asks no bind (7.7)",
+    "new": "    if (then !== me.guild_id) return { error: 'sign-unbound' }; // AUDIT SEATS-2 L2: a revolt won no Right - its week asks no bind (7.7)",
+    "tests": [
+      "test/net/seat2b_revolt_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-L3-crown-gate",
+    "file": "src/net/fortLaw.js",
+    "old": "      : id === 'gatehouse' && seatTier === 'crown'",
+    "new": "      : id === 'gatehouse' && seatTier === 'palace-never'",
+    "tests": [
+      "test/net/audit_seats2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-L5-apothecary",
+    "file": "src/net/fortLaw.js",
+    "old": "export const APOTHECARY_OPEN = true;",
+    "new": "export const APOTHECARY_OPEN = false;",
+    "tests": [
+      "test/net/audit_seats2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-L6-window-bucket",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (await overRate({ db, nowS }, `seat-window:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' }; // AUDIT SEATS-2 L6 (Appendix B: \"windows 5, edicts 5\"): the window's own five",
+    "new": "  if (await overRate({ db, nowS }, `seat-lever:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' }; // AUDIT SEATS-2 L6 (Appendix B: \"windows 5, edicts 5\"): the window's own five",
+    "tests": [
+      "test/net/audit_seats2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-R1-reach",
+    "file": "server/src/index.js",
+    "old": "    if (!siegeNpcInReach(n, by.pose, b.ground ?? null)) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/net/audit_seats2_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-R1-provoke",
+    "file": "server/src/index.js",
+    "old": "    siegeNpcProvoked(n, a.sub, now);",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/audit_seats2_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-R1-leash",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "    (SIEGE_NPC[n.kind]?.leashM ?? 0) + (SIEGE_NPC[n.kind]?.landM ?? 0) &&",
+    "new": "    (SIEGE_NPC[n.kind]?.aggroM ?? 0) + (SIEGE_NPC[n.kind]?.landM ?? 0) &&",
+    "tests": [
+      "test/net/audit_seats2_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-R1-down",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  if (!n || n.down || !sub) return;",
+    "new": "  if (!n || !sub) return;",
+    "tests": [
+      "test/net/audit_seats2_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-R2-now",
+    "file": "server/src/index.js",
+    "old": "this._siegeFan([siegeFieldFrame(b, this._siegeCounts(s), now)]);   // AUDIT SEATS-2 R2",
+    "new": "this._siegeFan([siegeFieldFrame(b, this._siegeCounts(s))]);   // AUDIT SEATS-2 R2",
+    "tests": [
+      "test/net/audit_seats2_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-R3-clamp",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  th: Math.min(Math.floor(b.throne), (SIEGE_THRONE[b.tier] ?? SIEGE_THRONE.palace).holdS),",
+    "new": "  th: Math.floor(b.throne),",
+    "tests": [
+      "test/net/audit_seats2_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C1-throttle",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (nowMs - _hallsReadAt < 1000) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C1-load",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (h && !was) loadHomeDecor();",
+    "new": "      if (h && was) loadHomeDecor();",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C1-crown",
+    "file": "src/scenes/worldModes.js",
+    "old": "    _crownTried = ctx;   // AUDIT SEATS-2 C1",
+    "new": "    // AUDIT SEATS-2 C1",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C1-call",
+    "file": "src/scenes/worldModes.js",
+    "old": "    seatHallsFrame(performance.now());",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C2-fall",
+    "file": "src/net/siege/siegeLink.js",
+    "old": "          if (was?.down && down === 1) return { ...was, hp, max };",
+    "new": "          if (was?.down && down === 2) return { ...was, hp, max };",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C5-board",
+    "file": "src/scenes/world.js",
+    "old": "    if (townTalk.overlay !== board) { try { w?.dispose?.(); } catch { /* already gone */ } return false; }\n    if (!w) return false;\n",
+    "new": "    if (!w) return false;\n",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C6-visitor",
+    "file": "src/scenes/worldModes.js",
+    "old": " else if (interiorSeatHall && !interiorHome) { say(CROWN_HALL_TEXT.chestShut(interiorSeatHall.name)); return; }",
+    "new": "",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C4-out",
+    "file": "src/scenes/world.js",
+    "old": "(seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }",
+    "new": "(seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { void 0; }",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS2-C4-dead",
+    "file": "src/scenes/world.js",
+    "old": "(seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) {",
+    "new": "(seatOut())) {",
+    "tests": [
+      "test/net/siege/audit_seats2_client.test.js"
+    ]
+  }
+]

@@ -1,0 +1,403 @@
+// Enemy equipment (C8 E4b). Verbatim ports from DFU ItemHelper.cs
+// (AssignEnemyStartingEquipment), ItemBuilder.cs (materialsByModifier),
+// FormulaHelper.cs (RandomMaterial/RandomArmorMaterial),
+// DaggerfallUnityItem.cs (material/shield armor values, slot -> body
+// part), DaggerfallEntity.cs (UpdateEquippedArmorValues) and
+// EnemyEntity.cs (SetEnemyEquipment clamps + the variant table) -
+// MIT, Daggerfall Workshop.
+//
+// Body parts (ArmorValues indices, = the struck-body-part range):
+//   0 Head, 1 RightArm, 2 LeftArm, 3 Chest, 4 Hands, 5 Legs, 6 Feet
+// Weapon items here carry what the formulas consume:
+//   { name, templateIndex, material (0..9), flags }. The damage span
+//   is NOT stored - baseDamageMin/Max resolve the template on every
+//   swing, exactly as GetBaseDamageMin/Max do.
+// Unity Random slots stay uniform rolls, as in DFU itself.
+
+import {
+  mintCondition,
+  templateByIndex,
+  itemBaseValue,
+  setItemFields,
+  materialValue,
+} from '../systems/item/itemTemplates.js'; // AUDIT 23 (items-5); F103: SetItem's value; MAC-N1: the one export that writes it; OH-E: the material's value line, one home
+import { dice100, formulaOverride } from './formulas.js'; // UL1: RandomMaterial / RandomArmorMaterial consult the registry
+import { weaponMinDamage, weaponMaxDamage } from '../characters/weapons.js'; // RRI2: CalculateWeaponMin/MaxDamage through their one home, so a registered override (weaponBalance) reaches the mint
+import { materialArmorValue, itemArmorValue, BODY_PARTS } from '../systems/armorMaterials.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js'; // AUDIT 24 (wave 41): one home
+import { ARROW_TEMPLATE } from '../systems/inventory.js'; // X11b: CreateWeapon's one special case
+import { HAND_WRAPS_TEMPLATE } from '../characters/handWrapsIds.js'; // HAND-WRAPS: minted cloth
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js'; // RRI2: a custom piece's body part is its class's equip slot
+
+export { materialArmorValue };
+
+// ---- Weapons enum (template indices) - the roll ranges are numeric ----
+export const WEAPONS_ENUM = Object.freeze({
+  Dagger: 113,
+  Tanto: 114,
+  Staff: 115,
+  Shortsword: 116,
+  Wakazashi: 117,
+  Broadsword: 118,
+  Saber: 119,
+  Longsword: 120,
+  Katana: 121,
+  Claymore: 122,
+  'Dai-Katana': 123,
+  Mace: 124,
+  Flail: 125,
+  Warhammer: 126,
+  'Battle Axe': 127,
+  'War Axe': 128,
+  'Short Bow': 129,
+  'Long Bow': 130,
+});
+const WEAPON_BY_INDEX = Object.freeze(Object.fromEntries(Object.entries(WEAPONS_ENUM).map(([k, v]) => [v, k])));
+
+export const ARMOR_ENUM = Object.freeze({
+  Cuirass: 102,
+  Gauntlets: 103,
+  Greaves: 104,
+  Left_Pauldron: 105,
+  Right_Pauldron: 106,
+  Helm: 107,
+  Boots: 108,
+  Buckler: 109,
+  Round_Shield: 110,
+  Kite_Shield: 111,
+  Tower_Shield: 112,
+});
+// AUDIT 24 (wave 24): ItemEnums.BodyParts has one home in
+// systems/armorMaterials.js.
+export { BODY_PARTS } from '../systems/armorMaterials.js';
+// GetBodyPartForEquipSlot, expressed piece -> part (each piece owns one slot)
+const PIECE_BODY_PART = Object.freeze({
+  107: 0, // Helm -> Head
+  106: 1, // Right pauldron -> RightArm
+  105: 2, // Left pauldron -> LeftArm
+  102: 3, // Cuirass -> Chest
+  103: 4, // Gauntlets -> Hands
+  104: 5, // Greaves -> Legs
+  108: 6, // Boots -> Feet
+});
+const SHIELD_VALUE = Object.freeze({ 109: 1, 110: 2, 111: 3, 112: 4 });
+const SHIELD_PARTS = Object.freeze({
+  109: [2, 4], // Buckler: LeftArm, Hands
+  110: [2, 4, 5], // Round: + Legs
+  111: [2, 4, 5], // Kite: same
+  112: [0, 2, 4, 5], // Tower: + Head
+});
+
+/** DaggerfallUnityItem.GetShieldProtectedBodyParts (:1082-1095), verbatim:
+ *  Buckler LeftArm+Hands, Round and Kite add Legs, Tower adds Head.
+ *  Anything that is not a shield protects nothing. Exported so the table
+ *  can be pinned against the C# - AUDIT 18's re-measurement found the
+ *  only assertion in the suite that pinned it was vacuous. */
+export const shieldProtectedBodyParts = (templateIndex) => SHIELD_PARTS[templateIndex] ?? [];
+
+// ---- ItemBuilder.materialsByModifier + FormulaHelper.RandomMaterial ----
+export const MATERIALS_BY_MODIFIER = Object.freeze([64, 128, 10, 21, 13, 8, 5, 3, 2, 5]);
+export function randomMaterial(playerLevel, rolls = Math.random) {
+  const o = formulaOverride('randomMaterial')?.(playerLevel, rolls); // UL1: TryGetOverride("RandomMaterial")
+  if (o !== undefined) return o;
+  let levelModifier = playerLevel - 10;
+  levelModifier *= levelModifier >= 0 ? 2 : 4;
+  const randomModifier = Math.floor(rolls() * 256); // Range(0, 256)
+  let combined = Math.max(0, Math.min(256, levelModifier + randomModifier));
+  let material = 0; // iron
+  while (MATERIALS_BY_MODIFIER[material] < combined) {
+    combined -= MATERIALS_BY_MODIFIER[material++];
+  }
+  return material;
+}
+
+// ---- ArmorMaterialTypes + RandomArmorMaterial ----
+export const ARMOR_MATERIAL = Object.freeze({ Leather: 0x0000, Chain: 0x0100, PLATE_BASE: 0x0200 });
+export function randomArmorMaterial(playerLevel, rolls = Math.random) {
+  const o = formulaOverride('randomArmorMaterial')?.(playerLevel, rolls); // UL1: TryGetOverride("RandomArmorMaterial")
+  if (o !== undefined) return o;
+  const roll = 1 + Math.floor(rolls() * 100); // Dice100.Roll
+  if (roll >= 70) {
+    if (roll >= 90) return ARMOR_MATERIAL.PLATE_BASE + randomMaterial(playerLevel, rolls);
+    return ARMOR_MATERIAL.Chain;
+  }
+  return ARMOR_MATERIAL.Leather;
+}
+
+// ---- GetMaterialArmorValue (non-shield) ----
+// AUDIT 24 (wave 23): a SECOND implementation of
+// DaggerfallUnityItem.GetMaterialArmorValue lived here, with its own
+// copy of the ten-step plate ladder (iron 7 through daedric 21),
+// next to the one in systems/armorMaterials.js - the module whose own
+// header records that this exact function had ALREADY been ported
+// twice once before, and that the two copies drifted (both inventing
+// Chain2 = 0x0101 where DFU has 0x0103). The two agreed over every
+// input from -2 to 0x0300 the day this was found. Re-exported now,
+// so the next drift cannot happen at all.
+
+/** ItemBuilder mints every weapon through DaggerfallUnityItem.SetItem,
+ *  which sets `flags = 0` (DaggerfallUnityItem.cs:565); the only other
+ *  writers are the artifact mask (:617, 0x820) and the classic-save
+ *  importer (:1563), and neither touches bit 0x10. AUDIT 18: the port
+ *  minted 0x10 on every EDGED weapon by intent, which inverted
+ *  FormulaHelper.cs:742-744 - DFU halves EVERY weapon's damage against
+ *  a Skeletal Warrior, and the port halved only blunt ones. Reproduced
+ *  bug-for-bug: no port site mints the bit. */
+export function createWeapon(templateIndex, material, rolls = Math.random) {
+  // X11b: THE ARROW BRANCH MOVES IN. ItemBuilder.CreateWeapon
+  // (:353-370) is ONE function with two arms, and the port had it in
+  // two places: this one (the melee/bow arm) and an inline copy of the
+  // arrow arm in loot.createRandomWeapon. A third copy was about to be
+  // written for the Create Item spell, which is exactly the drift the
+  // ONE DFU MEMBER, ONE EXPORT rule exists to stop (and exactly how
+  // armorArchive came to have two incompatible definitions).
+  //
+  // The arm makes THREE writes and runs NO ApplyWeaponMaterial
+  // (:359-364): the stack Range(1, 21), `currentCondition = 0` - "not
+  // sure if this is necessary, but classic does it" - and
+  // nativeMaterialValue = 0, whatever material the caller asked for.
+  // maxCondition stays the template's hitPoints because the material
+  // pass never runs.
+  // AUDIT 39 F103: every arm carries SetItem's `value =
+  // itemTemplate.basePrice` (DaggerfallUnityItem.cs:563) through
+  // SetItemPropertiesByMaterial's multiplier (ItemBuilder.cs:649) -
+  // no DFU item exists without one, and the trade window's cost walk
+  // reads item.value raw.
+  if (templateIndex === ARROW_TEMPLATE) {
+    return {
+      group: 'Weapons',
+      name: templateByIndex(ARROW_TEMPLATE)?.name ?? 'Arrow',
+      templateIndex: ARROW_TEMPLATE,
+      material: 0,
+      flags: 0,
+      stackCount: 1 + Math.floor(rolls() * 20),
+      maxCondition: templateByIndex(ARROW_TEMPLATE)?.hitPoints ?? 0,
+      currentCondition: 0,
+      value: itemBaseValue({ group: 'Weapons', templateIndex: ARROW_TEMPLATE, material: 0 }),
+    };
+  }
+  return weaponOfMaterial(templateIndex, material);
+}
+
+/** CreateItem then ApplyWeaponMaterial (ItemBuilder.cs:365-369): SetItem's
+ *  fresh weapon (DaggerfallUnityItem.cs:538-573) with the material pass
+ *  run over it - CreateWeapon's melee arm, and the re-mint There's a
+ *  Hole in the Bottom of the Ocean's UpgradeLoot runs over EVERY weapon,
+ *  the arrow included (world/oceanHoles.js upgradeLoot). CreateWeapon
+ *  never sends the arrow here; the mod does, and then the material's
+ *  multiplier lands on it, because `value *= 3 * mult` (:649) is a write
+ *  to a stored field - itemBaseValue's ammunition floor is the arrow
+ *  ARM's, not this pair's. */
+export function weaponOfMaterial(templateIndex, material) {
+  if (templateIndex === HAND_WRAPS_TEMPLATE) material = 0; // HAND-WRAPS: cloth - no metal, whatever the roll (systems/handWraps.js)
+  const t = templateByIndex(templateIndex);
+  const name = WEAPON_BY_INDEX[templateIndex] ?? t?.name; // AUDIT-RR2 G12: SetItem's `shortName = itemTemplate.name` (DaggerfallUnityItem.cs:551) - the class enum has no 513/514
+  return mintCondition({
+    name,
+    templateIndex,
+    group: 'Weapons',
+    material,
+    flags: 0,
+    value: t ? materialValue(t.basePrice, material) : 1, // F103: SetItem's basePrice through SetItemPropertiesByMaterial (:649)
+    minDamage: weaponMinDamage(templateIndex),
+    maxDamage: weaponMaxDamage(templateIndex),
+  }); // AUDIT 23 (items-5): the condition mints with the item
+}
+
+/** CreateArmor (ItemBuilder.cs:428-436): CreateItem then ApplyArmorSettings - SetItem's fresh piece at the material,
+ *  its variant given (UpgradeLoot's re-mint keeps the piece's own) or left to the mint. The corpse's pieces and There's a
+ *  Hole in the Bottom of the Ocean's UpgradeLoot mint through it. */
+export const armorOfMaterial = (templateIndex, material, variant = null) =>
+  mintCondition(setItemFields({ group: 'Armor', templateIndex, material, ...(variant != null ? { variant } : {}) }));
+
+/** Weapons.Arrow's template index - ItemBuilder.CreateWeapon's one
+ *  special case, and IsItemStackable's. systems/inventory.js declares
+ *  it; re-exported here because this is the module that branches on
+ *  it, and a second literal 131 is how the first drift starts. */
+export { ARROW_TEMPLATE };
+
+/**
+ * AssignEnemyStartingEquipment + SetEnemyEquipment, verbatim: rolls
+ * the loadout, then the armor-value pass (init 100 = no armor; each
+ * piece SUBTRACTS materialValue*5 on its body part; shields subtract
+ * shieldValue*5 on their protected parts, material-blind; class
+ * clamp >60 -> 60; monsters keep the BETTER of equipment vs their
+ * definition's armorValue*5 - the DFU rule).
+ * @returns { rightHand, leftHand, armorPieces, armorValues }
+ */
+export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.random) {
+  const eq = rollEnemyEquipment(entity, variant, playerLevel, rolls);
+  return { ...eq, armorValues: enemyArmorValues(entity, eq.armorPieces) };
+}
+
+/** RRI2: the two halves DFU keeps apart - ItemHelper.AssignEnemyStartingEquipment
+ *  (the rolls, EnemyEntity.cs:407) and the armor-value pass that follows it
+ *  (:410-421) - are separate exports now, because Roleplay & Realism: Items
+ *  replaces the FIRST (`EnemyEntity.AssignEnemyEquipment = ...`) and keeps the
+ *  second. assignEnemyEquipment above is still the pair. */
+export function rollEnemyEquipment(entity, variant, playerLevel, rolls = Math.random) {
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo)); // Range(lo, hi+1)
+  let itemLevel = playerLevel;
+  if (entity.isClass && entity.mobileType === KNIGHT_CITY_WATCH) itemLevel = 1; // city watch: iron/steel only
+  let rightHand = null,
+    leftHand = null;
+  const armorPieces = [];
+  let chance = 0;
+  if (variant === 0) {
+    rightHand = createWeapon(range(WEAPONS_ENUM.Broadsword, WEAPONS_ENUM.Longsword), randomMaterial(itemLevel, rolls));
+    chance = 50;
+    const shield = range(ARMOR_ENUM.Buckler, ARMOR_ENUM.Round_Shield);
+    if (dice100(chance, rolls())) {
+      leftHand = { templateIndex: shield, shield: true };
+      armorPieces.push({ piece: shield, material: randomArmorMaterial(itemLevel, rolls), shield: true });
+    } else if (dice100(chance, rolls())) {
+      leftHand = createWeapon(range(WEAPONS_ENUM.Dagger, WEAPONS_ENUM.Shortsword), randomMaterial(itemLevel, rolls));
+    }
+  } else {
+    rightHand = createWeapon(
+      range(WEAPONS_ENUM.Claymore, WEAPONS_ENUM['Battle Axe']),
+      randomMaterial(itemLevel, rolls),
+    );
+    if (variant === 1) chance = 75;
+    else if (variant === 2) chance = 90;
+  }
+  for (const piece of [
+    ARMOR_ENUM.Helm,
+    ARMOR_ENUM.Right_Pauldron,
+    ARMOR_ENUM.Left_Pauldron,
+    ARMOR_ENUM.Cuirass,
+    ARMOR_ENUM.Greaves,
+    ARMOR_ENUM.Boots,
+  ]) {
+    if (dice100(chance, rolls())) armorPieces.push({ piece, material: randomArmorMaterial(itemLevel, rolls) });
+  }
+  // poisoned-weapon chance pends the poison system (Systems arc)
+  return { rightHand, leftHand, armorPieces };
+}
+
+/** RRI2: GetBodyPartForEquipSlot for a piece the classic table does not
+ *  name - a custom armor class's `GetEquipSlot` (the Hauberk's
+ *  ChestArmor, the Sollerets' Feet), mapped onto the same body parts. */
+const SLOT_BODY_PART = Object.freeze({
+  Head: BODY_PARTS.Head,
+  RightArm: BODY_PARTS.RightArm,
+  LeftArm: BODY_PARTS.LeftArm,
+  ChestArmor: BODY_PARTS.Chest,
+  Gloves: BODY_PARTS.Hands,
+  LegsArmor: BODY_PARTS.Legs,
+  Feet: BODY_PARTS.Feet,
+});
+const pieceBodyPart = (piece) => PIECE_BODY_PART[piece] ?? SLOT_BODY_PART[customItemClass(piece)?.equipSlot] ?? null;
+
+/** EnemyEntity.SetEnemyEquipment's armor-value pass (EnemyEntity.cs:410-421),
+ *  verbatim: init 100 = no armor; each piece SUBTRACTS its material value
+ *  x5 on its body part (a custom piece's `item` answers through its own
+ *  GetMaterialArmorValue - RRI2); shields subtract shieldValue x5 on their
+ *  protected parts, material-blind; class clamp >60 -> 60; monsters keep
+ *  the BETTER of equipment vs their definition's armorValue x5. */
+export function enemyArmorValues(entity, armorPieces) {
+  const armorValues = new Array(7).fill(100);
+  for (const a of armorPieces) {
+    if (a.shield) {
+      const bonus = SHIELD_VALUE[a.piece] ?? 0;
+      for (const part of SHIELD_PARTS[a.piece] ?? []) armorValues[part] -= bonus * 5;
+    } else {
+      // EnemyEntity.cs:414 `for (i = EquipSlots.Head (12); i <
+      // EquipSlots.Feet (26); i++)` - Feet is the EXCLUSIVE bound, so
+      // the boots AssignEnemyStartingEquipment just equipped never
+      // reach UpdateEquippedArmorValues. AUDIT 18: the port ran them
+      // through the same loop as every other piece, so a well-armoured
+      // class enemy's Feet came out below the 60 clamp. They stay in
+      // armorPieces - the corpse still drops them, as DFU's
+      // Items.AddItem gives it.
+      const part = pieceBodyPart(a.piece);
+      if (part == null || part === BODY_PARTS.Feet) continue; // RRI2: the Feet bound holds for a custom piece worn there (the Sollerets, the leather Boots) exactly as for the classic Boots
+      armorValues[part] -= (a.item ? itemArmorValue(a.item) : materialArmorValue(a.material)) * 5;
+    }
+  }
+  if (entity.isClass) {
+    for (let i = 0; i < 7; i++) if (armorValues[i] > 60) armorValues[i] = 60;
+  } else {
+    const def = entity.armor ?? 0; // already armorValue*5
+    for (let i = 0; i < 7; i++) if (armorValues[i] > def) armorValues[i] = def;
+  }
+  return armorValues;
+}
+
+// ---- EnemyEntity.AssignEnemyEquipment, the delegate (EnemyEntity.cs:133) ----
+/** `public static EnemyStartingEquipment AssignEnemyEquipment =
+ *  DaggerfallUnity.Instance.ItemHelper.AssignEnemyStartingEquipment;` - a
+ *  mod assigns its own (Roleplay & Realism: Items does, under
+ *  realisticEnemyEquipment). The port's seam: a registered assigner answers
+ *  the same shape as assignEnemyEquipment, or null to let ItemHelper's
+ *  arm run. */
+let _assigner = null;
+export function setEnemyEquipmentAssigner(fn) {
+  _assigner = typeof fn === 'function' ? fn : null;
+}
+/** The assigner on the delegate now (null: ItemHelper's) - what a mod that takes the delegate over replaced (DEX6). */
+export const enemyEquipmentAssigner = () => _assigner;
+export function assignEnemyStartingEquipment(
+  entity,
+  variant,
+  playerLevel,
+  { player = null, rolls = Math.random } = {},
+) {
+  const custom = _assigner?.(entity, variant, playerLevel, { player, rolls });
+  return custom ?? assignEnemyEquipment(entity, variant, playerLevel, rolls);
+}
+
+/** G3: DFU adds EVERY equipped piece to enemyEntity.Items
+ *  (AssignEnemyStartingEquipment's Items.AddItem after each
+ *  EquipItem) - that inventory is the corpse's droppable loot. The
+ *  shield rides armorPieces (its armor item), so a shield leftHand
+ *  marker is skipped; a leftHand WEAPON is its own item. */
+export function equipmentItems(eq) {
+  if (eq.items) return eq.items; // RRI2: an assigner that minted its own records (with their conditions) hands them over as they are
+  const items = [];
+  // AUDIT 58: the SAME record, not a copy. ItemHelper.cs:1382-1383
+  // equips `weapon` and then adds THAT instance to Items, so the blade
+  // the foe swings (entity.weapon), the one in its right hand slot and
+  // the one its corpse drops are one object - which is why a dose
+  // spent by FormulaHelper.cs:695 is spent on the loot too.
+  if (eq.rightHand) items.push(eq.rightHand);
+  if (eq.leftHand && !eq.leftHand.shield) items.push(eq.leftHand);
+  // AUDIT 58: ItemBuilder.CreateArmor mints a condition with the piece
+  // (items-5); these records had none, so a struck foe's cuirass had
+  // nothing to bill even once its equip table existed.
+  // MAC-N1 (Mac: "Weapon and Armorsmiths dont want to pay for loot"):
+  // and CreateArmor runs SetItem FIRST (ItemBuilder.cs:301 ->
+  // DaggerfallUnityItem.cs:555/:563 - the name and the VALUE), which
+  // these records also had none of. A weapon off the same corpse
+  // carries both (createWeapon above); the cuirass beside it carried
+  // neither, so staging it at an armorer summed the lot to NaN and the
+  // smith offered 0 for everything in the deal. Through the one export.
+  for (const a of eq.armorPieces) items.push(armorOfMaterial(a.piece, a.material));
+  return items;
+}
+
+/** The arrow a bow hit leaves in its TARGET - EnemyAttack.cs:145-147
+ *  and WeaponManager.cs:555-557 are the same three lines:
+ *  `ItemBuilder.CreateWeapon(Weapons.Arrow, WeaponMaterialTypes.None);
+ *  arrow.stackCount = 1; Items.AddItem(arrow)`. CreateWeapon's arrow
+ *  arm (createWeapon above) is what mints it, so the shaft carries
+ *  SetItem's name and value and the arm's `currentCondition = 0`.
+ *
+ *  MAC-N1: SEVEN hosts spelt this as a bare `{ group, name,
+ *  templateIndex, material, stackCount }` literal - no value, no
+ *  condition - so a quiver begun by a recovered shaft (a bowman with
+ *  no arrows of their own) priced at NaN when sold. One minter now;
+ *  the `stackCount = 1` is DFU's own overwrite of the arm's random
+ *  stack. */
+export function bowDamageArrow() {
+  return { ...createWeapon(ARROW_TEMPLATE, 0), stackCount: 1 };
+}
+
+/** SetEnemyCareer's equipment-variant table, verbatim. */
+export function equipmentVariantFor(careerIndex, isClass, rolls = Math.random) {
+  if (careerIndex === 7 || careerIndex === 21) return 0; // Orc = 7, OrcShaman = 21 (EntityEnums.cs, verified)
+  if (careerIndex === 8 || careerIndex === 12) return 1; // Centaur, OrcSergeant
+  if (careerIndex === 24) return 2; // OrcWarlord
+  if (isClass) return Math.floor(rolls() * 2); // Range(0, 2)
+  return null; // no equipment
+}

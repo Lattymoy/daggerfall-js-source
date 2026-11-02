@@ -1,0 +1,183 @@
+[
+  {
+    "name": "LOOT21-late-finds-rolled-early",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (find.late === true || find.final === true) continue;   // LOOT21",
+    "new": "    if (find.final === true) continue;   // LOOT21",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-every-find-rolled-late",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (find.late !== true || find.final === true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (chance > 0 &&",
+    "new": "    if (find.final === true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (chance > 0 &&",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-a-draw-for-nothing",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (find.late !== true || find.final === true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (chance > 0 && rolls() * 1000 < chance)",
+    "new": "    if (find.late !== true || find.final === true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (rolls() * 1000 < chance)",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-door-never-finds-them",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - after all of it\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-welkynd-a-shard",
+    "file": "src/systems/ayleidStones.js",
+    "old": "    worldTextureRecord: 5,",
+    "new": "    worldTextureRecord: 2,",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-a-gem-a-slot-takes",
+    "file": "src/systems/ayleidStones.js",
+    "old": "  mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: WELKYND_STONE_TEMPLATE }));",
+    "new": "  mintCondition(setItemFields({ group: 'Gems', templateIndex: WELKYND_STONE_TEMPLATE }));",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-welkynd-in-the-early-roll",
+    "file": "src/systems/ayleidStones.js",
+    "old": "registerUniqueFind({\n  id: 'welkynd-stone',\n  minTier: WELKYND_STONE_TIER,\n  weight: 1,\n  late: true,\n  mint: () => [welkyndStone()],\n});",
+    "new": "registerUniqueFind({ id: 'welkynd-stone', minTier: WELKYND_STONE_TIER, weight: 1, mint: () => [welkyndStone()] });",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-welkynd-at-five",
+    "file": "src/systems/ayleidStones.js",
+    "old": "export const WELKYND_STONE_TIER = 6;",
+    "new": "export const WELKYND_STONE_TIER = 5;",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-varla-at-eight",
+    "file": "src/systems/ayleidStones.js",
+    "old": "export const VARLA_STONE_TIER = 10;",
+    "new": "export const VARLA_STONE_TIER = 8;",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-wasted-on-a-full-pool",
+    "file": "src/systems/ayleidStones.js",
+    "old": "  if (!(max > 0) || (Number(entity.magicka) || 0) >= max) return { kind: 'text', text: STONE_TEXT.welkyndFull };",
+    "new": "  if (!(max > 0)) return { kind: 'text', text: STONE_TEXT.welkyndFull };",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-pool-unfilled",
+    "file": "src/systems/ayleidStones.js",
+    "old": "  entity.magicka = max;\n  spend(item, list);",
+    "new": "  spend(item, list);",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-a-stack-spent-whole",
+    "file": "src/systems/ayleidStones.js",
+    "old": "  if ((item.stackCount ?? 1) > 1) {\n    item.stackCount -= 1;\n    return;\n  }\n  const i = Array.isArray(list) ? list.indexOf(item) : -1;",
+    "new": "  const i = Array.isArray(list) ? list.indexOf(item) : -1;",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-welkynd-never-spent",
+    "file": "src/systems/ayleidStones.js",
+    "old": "  spend(item, list);\n  return { kind: 'text', text: STONE_TEXT.welkynd };",
+    "new": "  return { kind: 'text', text: STONE_TEXT.welkynd };",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-plain-pieces-mended",
+    "file": "src/systems/ayleidStones.js",
+    "old": "        (it) =>\n          it &&\n          isEnchanted(it) &&\n          Number.isFinite(it.maxCondition) &&\n          (it.currentCondition ?? it.maxCondition) < it.maxCondition,",
+    "new": "        (it) => it && Number.isFinite(it.maxCondition) && (it.currentCondition ?? it.maxCondition) < it.maxCondition,",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-pack-mended",
+    "file": "src/systems/ayleidStones.js",
+    "old": "    ? equipTableOf(entity).filter(",
+    "new": "    ? (entity.items ?? []).filter(",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-whole-pieces-counted",
+    "file": "src/systems/ayleidStones.js",
+    "old": "          (it.currentCondition ?? it.maxCondition) < it.maxCondition,",
+    "new": "          (it.currentCondition ?? it.maxCondition) <= it.maxCondition,",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-wasted-on-whole-pieces",
+    "file": "src/systems/ayleidStones.js",
+    "old": "  if (!pieces.length) return { kind: 'text', text: STONE_TEXT.varlaWhole };\n  const was = pieces.map((it) => it.currentCondition);",
+    "new": "  const was = pieces.map((it) => it.currentCondition);",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-nothing-mended",
+    "file": "src/systems/ayleidStones.js",
+    "old": "  for (const it of pieces) it.currentCondition = it.maxCondition;\n  pieces.forEach((it, i) => creditOwnMend(it, was[i])); // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells",
+    "new": "  pieces.forEach((it, i) => creditOwnMend(it, was[i])); // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-unregistered",
+    "file": "src/systems/worldTick.js",
+    "old": "import './ayleidStones.js';   // LOOT21: the Ayleid stones - their rows, their late finds and their uses register at its import\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot21_stones.test.js"
+    ]
+  },
+  {
+    "name": "LOOT21-the-room-without-them",
+    "file": "src/systems/testRoom.js",
+    "old": "  put(welkyndStone());\n",
+    "new": "",
+    "tests": [
+      "test/systems/lr1_lootrarity.test.js",
+      "test/systems/loot21_stones.test.js"
+    ]
+  }
+]

@@ -1,0 +1,377 @@
+[
+  {
+    "name": "WB8c-the-strike-at-the-old-reach",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  const r = P.atk[A.key].r;",
+    "new": "  const r = A.r;",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-cone-holds-the-old-body",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "      return d <= r && (d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);",
+    "new": "      return d <= r && (d <= 1.8 || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-lane-the-old-body",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "      return !!e && segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= Math.max(A.width / 2, P.bossR);",
+    "new": "      return !!e && segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= Math.max(A.width / 2, 1.8);",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-charge-sweeps-the-old-body",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  return segmentDistance(px, pz, a[0], a[1], b[0], b[1]) <= Math.max(A.width / 2, P.bossR);",
+    "new": "  return segmentDistance(px, pz, a[0], a[1], b[0], b[1]) <= Math.max(A.width / 2, 1.8);",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-ground-always-fire",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "    el: P.el,",
+    "new": "    el: 'fire',",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-ground-the-table-s",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "    G = A ? P.atk[A.key].pool : null;",
+    "new": "    G = A && 'pool' in A ? A.pool : null;",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-throw-fire-s-alone",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
+    "new": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el === 'fire' && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-blow-by-the-table-s-name",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
+    "new": "  return { pct: L.pct, base: L.base, el: L.el, name: A.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-court-asks-fire-s-throw",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (so.saved) dmg = savedShare(dmg, save(e, so.el));",
+    "new": "    if (so.saved) dmg = savedShare(dmg, save(e));",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-resist-said-as-fire",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (dmg <= 0) { say(COURT_STRIKE_TEXT.resisted(so.name)); return; }",
+    "new": "    if (dmg <= 0) { say(COURT_STRIKE_TEXT.resisted('Hellfire')); return; }",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-court-lays-no-scar",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (A && P.atk[A.key].pool && !marked(pooled, atk) && t >= atk.at) {",
+    "new": "    if (A && 'pool' in A && !marked(pooled, atk) && t >= atk.at) {",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-ground-bites-as-fire",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    const el = p.el ?? 'fire';   // WB8b",
+    "new": "    const el = 'fire';   // WB8b",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-marks-said-every-frame",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (!marksSaid) { marksSaid = true; if (P.md",
+    "new": "    if (!marksSaid) { if (P.md",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-an-unmarked-warden-speaks",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (P.md && !s.fell && s.wrath == null) marksAt = t; }",
+    "new": "if (!s.fell && s.wrath == null) marksAt = t; }",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ],
+    "equivalent": true,
+    "why": "WB13b: nothing is said on stepping in any more, and an unmarked Warden's card is no card (marksViewOf(null) is null) - the P.md check is belt and braces, kept"
+  },
+  {
+    "name": "WB8c-a-stale-feeding-said",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (t - s.fed.at <= FED_LATE_MS) { say(COURT_MARKS_TEXT.fed(bossOf(s).name, s.fed.ns));",
+    "new": "if (true) { say(COURT_MARKS_TEXT.fed(bossOf(s).name, s.fed.ns));",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-a-feeding-said-every-frame",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "{ fedHeard = s.fed.at; if (t - s.fed.at <= FED_LATE_MS)",
+    "new": "{ if (t - s.fed.at <= FED_LATE_MS)",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-turn-s-card-the-first-turn-s",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "const c = courtPhaseCard(s.phase, s.pt); if (c && !(s.phase === 3 && rjCarded)) beat = { kind: 'phase'",
+    "new": "const c = courtPhaseCard(2, s.pt); if (c && !(s.phase === 3 && rjCarded)) beat = { kind: 'phase'",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/net/gate/wb13e_beats.test.js"
+    ],
+    "note": "WB13e: the turn's words became its card (its numeral, its name, its one order) - the aspect's words went with the second order"
+  },
+  {
+    "name": "WB8c-my-blows-meet-the-old-body",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "height: P.bossH, radius: P.bossR, warded:",
+    "new": "height: P.bossH, radius: 1.8, warded:",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-sprite-its-old-size",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    const w = sz.w * body.scale * P.size, h = sz.h * body.scale * P.size;",
+    "new": "    const w = sz.w * body.scale, h = sz.h * body.scale;",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-mark-the-burning-ember",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "markEmber = ember === EMBER_COLOR ? MARK_COLOR : markColorOf(ember);",
+    "new": "markEmber = MARK_COLOR;",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-mark-about-the-old-body",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "_mark = markShape([0, 0], 0, markEmber, P.bossR); }",
+    "new": "_mark = markShape([0, 0], 0, markEmber); }",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-glow-at-the-old-chest",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  const [x, y, z] = courtToDungeon(cx, P.bossH * GLOW_UP_SHARE, cz);",
+    "new": "  const [x, y, z] = courtToDungeon(cx, BOSS_H * GLOW_UP_SHARE, cz);",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-glow-the-table-s-colour",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "    const color = attackColor(A, P) ?? ember;",
+    "new": "    const color = ATTACK_COLORS[A.key] ?? ember;",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-ember-always-burning",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "export const emberColor = (P) => ASPECT_COLORS[P?.aspect?.id]?.ember ?? EMBER_COLOR;",
+    "new": "export const emberColor = (P) => EMBER_COLOR;",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-his-colours-unread",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "export const attackColor = (A, P) => ASPECT_COLORS[P?.aspect?.id]?.[A.key] ?? ATTACK_COLORS[A.key];",
+    "new": "export const attackColor = (A, P) => ATTACK_COLORS[A.key];",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-wrath-in-his-aspect-s-voice",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  if (!cue || isDagons(A) || !P?.atk?.[A.key]?.el || !(aspect in ASPECT_CUE_IDS)) return cue; // Dagon's Wrath is Dagon's - WB9c: and his Reckoning",
+    "new": "  if (!cue || !P?.atk?.[A.key]?.el || !(aspect in ASPECT_CUE_IDS)) return cue; // Dagon's Wrath is Dagon's - WB9c: and his Reckoning",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-his-voice-unchanged",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "    return { id: ASPECT_CUE_IDS[aspect], pitch: cue.pitch, volume: cue.volume, reach: cue.reach, at: cue.at };",
+    "new": "    return { ...cue, id: cue.id, pitch: cue.pitch, volume: cue.volume, reach: cue.reach, at: cue.at };",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-telegraph-the-old-reach",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    r: A.shape === 'spokes' || wheel ? A.len : (P.atk[A.key].r ?? 0),",
+    "new": "    r: A.shape === 'spokes' || wheel ? A.len : (A.r ?? 0),",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-telegraph-the-old-body",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    body: wedges ? 0 : P.bossR,",
+    "new": "    body: wedges ? 0 : BOSS_R,",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-telegraph-fire-s-colour",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    color: tether ? (held ? attackColor(A, P) : TELEGRAPH_EDGE_SAFE) : torment ? TORMENT_COLOR : attackColor(A, P),",
+    "new": "    color: tether\n      ? held\n        ? attackColor(A, P)\n        : TELEGRAPH_EDGE_SAFE\n      : torment\n        ? TORMENT_COLOR\n        : attackColor(A, BASE_PROFILE),",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-an-epithet-unmarked",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "    epithet: P.md ? P.aspect.epithet : '',",
+    "new": "    epithet: P.aspect.epithet,",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-callout-the-table-s-name",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "          text: PC.atk[A.key].name,",
+    "new": "          text: A.name,",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-an-empty-trials-line-shown",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "    parts.marks.style.display = view ? '' : 'none';",
+    "new": "    parts.marks.style.display = '';",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-card-without-marks",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "      ...(Number.isFinite(fell)\n        ? [`${boss.name} has fallen`]\n        : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])]),",
+    "new": "      ...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, ...(pt ? [pt] : [])]),",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-marks-said-every-line",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "        if ((line === 'omen' || line === 'rise' || line === 'open') && marksDay !== t.day) {",
+    "new": "        if ((line === 'omen' || line === 'rise' || line === 'open') && true) {",
+    "tests": [
+      "test/ui/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-herald-mute-on-marks",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "new": "    text: `${RITE_OMEN_LINE}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-feeding-forgotten",
+    "file": "src/net/gate/gateLink.js",
+    "old": "      fed: same ? (s.fed ?? null) : null,",
+    "new": "      fed: null,",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-state-forgets-the-marks",
+    "file": "src/net/gate/gateLink.js",
+    "old": "      md: g.md ?? null,",
+    "new": "      md: null,",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-the-feeding-unfolded",
+    "file": "src/net/gate/gateLink.js",
+    "old": "      return { ...s, hp: g.h, max: g.m, fed: { ns: g.ns, at: g.at }, heardAt: now }; // WB8b: the health his feeding left, and who fed him (AUDIT PRE-MERGE 0929 W1-3: every one of the beat's)",
+    "new": "      return s; // WB8b: the health his feeding left, and who fed him (AUDIT PRE-MERGE 0929 W1-3: every one of the beat's)",
+    "tests": [
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-his-frost-flashes",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!el) flashPlayerDamage(dmg);",
+    "new": "      if (!fire) flashPlayerDamage(dmg);",
+    "tests": [
+      "test/net/gate/wb4_gate_boss.test.js"
+    ]
+  },
+  {
+    "name": "WB8c-his-venom-against-fire-s-throw",
+    "file": "src/scenes/world.js",
+    "old": "  poison: Object.freeze([ELEMENTS.DiseaseOrPoison, EFFECT_FLAGS.Poison]),",
+    "new": "  poison: Object.freeze([ELEMENTS.Fire, EFFECT_FLAGS.Fire]),",
+    "tests": [
+      "test/net/gate/wb4_gate_boss.test.js"
+    ]
+  }
+]

@@ -1,0 +1,614 @@
+{
+  "Version": "1",
+  "Sections": [
+    {
+      "Name": "Enemy Loot",
+      "Description": "Controls physical presentation of corpse inventories.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Value": true,
+          "Name": "Physical Enemy Drops",
+          "Description": "Show enabled enemy categories in the world. Corpse contents remain unchanged.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Min": 0,
+          "Max": 400,
+          "Value": 200,
+          "Name": "Impulse Strength",
+          "Description": "Enemy launch strength in percent. 200 is the default and slider midpoint (the previous maximum); 400 doubles that launch velocity. 0 adds no launch velocity (items still fall). Does not affect player throws.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Enemy Categories",
+      "Description": "Disabled categories remain lootable in the corpse. Applies to tracked corpses and future deaths. Enchanted equipment and quest-tagged items follow their base category.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Value": true,
+          "Name": "Weapons",
+          "Description": "Show weapons as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Arrows",
+          "Description": "Show arrows as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Armor",
+          "Description": "Show armor as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Clothing",
+          "Description": "Show clothing as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Ingredients",
+          "Description": "Show ingredients as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Gold",
+          "Description": "Show gold as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Potions",
+          "Description": "Show potions as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Books",
+          "Description": "Show books as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Gems",
+          "Description": "Show gems as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Jewellery",
+          "Description": "Show jewellery as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Maps",
+          "Description": "Show maps as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Magic Items",
+          "Description": "Show magic items as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Religious Items",
+          "Description": "Show religious items as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Quest Items",
+          "Description": "Show quest items as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Transportation",
+          "Description": "Show transportation as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "Other Items",
+          "Description": "Show other items as physical enemy drops. Other Items covers remaining and unknown groups.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Item Sizes",
+      "Description": "World size in metres: longest visible dimension for weapons/armor/clothing, height for other categories. Applies to newly created visuals; reload your save to update existing ones. Manual scroll scaling multiplies this height.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.8,
+          "Name": "Weapons",
+          "Description": "Base size for weapons. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.32,
+          "Name": "Arrows",
+          "Description": "Base size for arrows. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.65,
+          "Name": "Armor",
+          "Description": "Base size for armor. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.52,
+          "Name": "Clothing",
+          "Description": "Base size for clothing. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Ingredients",
+          "Description": "Base size for ingredients. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Gold",
+          "Description": "Base size for gold. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Potions",
+          "Description": "Base size for potions. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Books",
+          "Description": "Base size for books. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Gems",
+          "Description": "Base size for gems. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Jewellery",
+          "Description": "Base size for jewellery. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Maps",
+          "Description": "Base size for maps. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Magic Items",
+          "Description": "Base size for magic items. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Religious Items",
+          "Description": "Base size for religious items. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Quest Items",
+          "Description": "Base size for quest items. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Transportation",
+          "Description": "Base size for transportation. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0.1,
+          "Max": 1.5,
+          "Value": 0.4,
+          "Name": "Other Items",
+          "Description": "Base size for other items. Detection volume scales with the sprite.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Interaction",
+      "Description": "Controls physical-item placement interaction.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Value": "P",
+          "Name": "Placement Mode Key",
+          "Description": "While holding an item, toggle billboard/fixed placement. Enter a Unity KeyCode name such as P, F10, or Keypad5.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+        },
+        {
+          "Value": "O",
+          "Name": "Freeze Placement Key",
+          "Description": "Freeze a held or targeted item in place without changing billboard/flat mode. Hold Activate to adjust it; release leaves it frozen at the new position. Tap Activate to pick it up directly, even while frozen. Press the freeze key again to restore physics. Enter a Unity KeyCode name.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+        },
+        {
+          "Value": "LeftControl",
+          "Name": "Scroll Mode Key",
+          "Description": "While holding an item, press to toggle the scroll wheel between Scaling and Rotating, with HUD feedback. Rotation tilts the sprite by normally 3 degrees per notch without changing billboard/flat mode. The chosen scroll mode is remembered between grabs and stored with your save. Enter a Unity KeyCode name; either Ctrl key works when set to LeftControl or RightControl.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+        },
+        {
+          "Value": false,
+          "Name": "Character Item Collision",
+          "Description": "Players and enemies push loose items sideways along the ground instead of stepping onto them. Movement speed determines push strength. Items are not character platforms; frozen, pinned and held items are not pushed. Off by default.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Weapon Sizes",
+      "Description": "Size overrides in metres. 0 inherits Item Sizes. Positive values below 0.10 use 0.10 metres. Reload your save to update existing visuals. Unrecognized custom templates inherit their category size.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Dagger",
+          "Description": "Override longest visible artwork dimension for dagger. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Tanto",
+          "Description": "Override longest visible artwork dimension for tanto. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Staff",
+          "Description": "Override longest visible artwork dimension for staff. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Shortsword",
+          "Description": "Override longest visible artwork dimension for shortsword. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Wakazashi",
+          "Description": "Override longest visible artwork dimension for wakazashi. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Broadsword",
+          "Description": "Override longest visible artwork dimension for broadsword. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Saber",
+          "Description": "Override longest visible artwork dimension for saber. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Longsword",
+          "Description": "Override longest visible artwork dimension for longsword. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Katana",
+          "Description": "Override longest visible artwork dimension for katana. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Claymore",
+          "Description": "Override longest visible artwork dimension for claymore. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Dai Katana",
+          "Description": "Override longest visible artwork dimension for dai katana. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Mace",
+          "Description": "Override longest visible artwork dimension for mace. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Flail",
+          "Description": "Override longest visible artwork dimension for flail. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Warhammer",
+          "Description": "Override longest visible artwork dimension for warhammer. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Battle Axe",
+          "Description": "Override longest visible artwork dimension for battle axe. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "War Axe",
+          "Description": "Override longest visible artwork dimension for war axe. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Short Bow",
+          "Description": "Override longest visible artwork dimension for short bow. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Long Bow",
+          "Description": "Override longest visible artwork dimension for long bow. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Arrow",
+          "Description": "Override longest visible artwork dimension for arrow. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Armor Sizes",
+      "Description": "Size overrides in metres. 0 inherits Item Sizes. Positive values below 0.10 use 0.10 metres. Reload your save to update existing visuals. Unrecognized custom templates inherit their category size.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Cuirass",
+          "Description": "Override longest visible artwork dimension for cuirass. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Gauntlets",
+          "Description": "Override longest visible artwork dimension for gauntlets. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Greaves",
+          "Description": "Override longest visible artwork dimension for greaves. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Pauldrons",
+          "Description": "Override longest visible artwork dimension for both left and right pauldrons. 0 uses the Armor category size.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Helm",
+          "Description": "Override longest visible artwork dimension for helm. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Boots",
+          "Description": "Override longest visible artwork dimension for boots. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Buckler",
+          "Description": "Override longest visible artwork dimension for buckler. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Round Shield",
+          "Description": "Override longest visible artwork dimension for round shield. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Kite Shield",
+          "Description": "Override longest visible artwork dimension for kite shield. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        },
+        {
+          "Min": 0,
+          "Max": 1.5,
+          "Value": 0,
+          "Name": "Tower Shield",
+          "Description": "Override longest visible artwork dimension for tower shield. 0 uses the category size; scroll scaling still applies.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+        }
+      ],
+      "$version": "v1"
+    }
+  ]
+}

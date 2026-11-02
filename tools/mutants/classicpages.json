@@ -1,0 +1,97 @@
+[
+  {
+    "name": "CLASSICPAGES-no-prof-arm",
+    "file": "src/ui/pauseDoor.js",
+    "old": "  if (profPageAt(hooks.at)) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/systems/classicpages.test.js"
+    ]
+  },
+  {
+    "name": "CLASSICPAGES-closed-opens-anyway",
+    "file": "src/ui/pauseDoor.js",
+    "old": "    if (!profPagesShown()) { hudText(profPagesClosedLine()); return null; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/classicpages.test.js"
+    ]
+  },
+  {
+    "name": "CLASSICPAGES-closed-unsaid",
+    "file": "src/ui/pauseDoor.js",
+    "old": "    if (!profPagesShown()) { hudText(profPagesClosedLine()); return null; }",
+    "new": "    if (!profPagesShown()) { return null; }",
+    "tests": [
+      "test/systems/classicpages.test.js"
+    ]
+  },
+  {
+    "name": "CLASSICPAGES-prof-at-any-page",
+    "file": "src/ui/pauseDoor.js",
+    "old": "export const profPageAt = (at) => PROF_PAGE_SECTIONS.some(([id]) => id === at);",
+    "new": "export const profPageAt = (at) => !!at;",
+    "tests": [
+      "test/systems/classicpages.test.js"
+    ]
+  },
+  {
+    "name": "CLASSICPAGES-forge-never-offered",
+    "file": "src/ui/professions/profPages.js",
+    "old": "export const forgeOffered = () => profPagesShown();",
+    "new": "export const forgeOffered = () => profPagesShown() && false;",
+    "tests": [
+      "test/systems/classicpages.test.js",
+      "test/net/audit29_client.test.js"
+    ]
+  },
+  {
+    "name": "CLASSICPAGES-key-unrouted",
+    "file": "src/ui/input.js",
+    "old": "    case 'Professions': return ctx.togglePause && ctx.sailing?.() !== true ? (ctx.togglePause({ at: 'professions', setPlayerPos }), true) : false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/classicpages.test.js"
+    ],
+    "note": "HELM-KEYS' merge (PIN MOVED): the arm asks whether the host sails, re-aimed by content."
+  },
+  {
+    "name": "CLASSICPAGES-key-lands-on-stats",
+    "file": "src/ui/input.js",
+    "old": "ctx.togglePause({ at: 'professions', setPlayerPos })",
+    "new": "ctx.togglePause({ at: 'stats', setPlayerPos })",
+    "tests": [
+      "test/systems/classicpages.test.js"
+    ]
+  },
+  {
+    "name": "CLASSICPAGES-key-unbound",
+    "file": "src/systems/inputActions.js",
+    "old": "  Object.freeze(['ArrowDown', 'Professions', 'BoatSailDown']),\n",
+    "new": "",
+    "tests": [
+      "test/systems/classicpages.test.js",
+      "test/systems/inputactions.test.js"
+    ],
+    "note": "HELM-KEYS' merge (PIN MOVED): the key is a default share on the down arrow now - its share is the binding."
+  },
+  {
+    "name": "CLASSICPAGES-where-line-no-key",
+    "file": "src/scenes/gatherHost.js",
+    "old": "${key ? ` ${key} opens your Professions.` : ''}",
+    "new": "",
+    "tests": [
+      "test/systems/classicpages.test.js"
+    ],
+    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
+  },
+  {
+    "name": "CLASSICPAGES-key-opens-at-the-helm",
+    "file": "src/ui/input.js",
+    "old": "ctx.togglePause && ctx.sailing?.() !== true ?",
+    "new": "ctx.togglePause ?",
+    "tests": [
+      "test/systems/classicpages.test.js"
+    ]
+  }
+]

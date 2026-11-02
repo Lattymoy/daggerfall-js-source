@@ -1,0 +1,11 @@
+[
+  {
+    "name": "PERF-FOG-the-probe-stops-checking-that-the-uniform-survives-the-link",
+    "file": "tools/perfSunShaderProbe.mjs",
+    "old": "    const loc = linked ? r.gl.getUniformLocation(prog, 'uFogColor') : null;",
+    "new": "    const loc = linked ? true : null;",
+    "tests": [
+      "test/render/perffog_uniform.test.js"
+    ]
+  }
+]

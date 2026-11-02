@@ -1,0 +1,245 @@
+[
+  {
+    "name": "PERFARENA-give-no-join",
+    "file": "src/render/renderer.js",
+    "old": "  const joinsPrev = i > 0 && free[i - 2] + free[i - 1] === at;",
+    "new": "  const joinsPrev = false;",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-take-past-fit",
+    "file": "src/render/renderer.js",
+    "old": "    if (free[i + 1] < quads) continue;",
+    "new": "    if (free[i + 1] <= quads) continue;",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-offset-dropped",
+    "file": "src/render/renderer.js",
+    "old": "      gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0);   // PERF-ARENA",
+    "new": "      gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);   // PERF-ARENA",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-corner-at-zero",
+    "file": "src/render/renderer.js",
+    "old": "      gl.bufferSubData(gl.ARRAY_BUFFER, q0 * BB_QUAD_VERT_BYTES, verts);",
+    "new": "      gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts);",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-index-winding",
+    "file": "src/render/renderer.js",
+    "old": "      indices[io] = b; indices[io + 1] = b + 2; indices[io + 2] = b + 1;",
+    "new": "      indices[io] = b; indices[io + 1] = b + 1; indices[io + 2] = b + 2;",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-shadow-offset",
+    "file": "src/render/shadowPass.js",
+    "old": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0);   // PERF-ARENA",
+    "new": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);   // PERF-ARENA",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-air-offset",
+    "file": "src/render/airPass.js",
+    "old": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0); // PERF-ARENA: a still batch's range of its arena's indices",
+    "new": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0); // PERF-ARENA: a still batch's range of its arena's indices",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-double-free",
+    "file": "src/render/renderer.js",
+    "old": "    if (batch._arena) { this._bbArenaFree(batch); return; }   // PERF-ARENA: its range back to its arena",
+    "new": "    if (batch._q0 != null && batch._quads) { arenaGive(this._bbArenas[0].free, batch._q0, batch._quads); batch.vao = null; return; }   // PERF-ARENA: its range back to its arena",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-move-at-zero",
+    "file": "src/render/renderer.js",
+    "old": "    gl.bufferSubData(gl.ARRAY_BUFFER, batch._arena ? batch._q0 * BB_QUAD_VERT_BYTES : 0, verts, 0, count * 20);",
+    "new": "    gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, count * 20);",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-dynamic-shared",
+    "file": "src/render/renderer.js",
+    "old": "    if (!dynamic && count > 0 && this._bbArenas) {",
+    "new": "    if (count > 0 && this._bbArenas) {",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-no-spill",
+    "file": "src/render/renderer.js",
+    "old": "      if (at >= 0) { a.taken = at; if (key != null) this._bbArenaOfKey.set(key, a); return a; }",
+    "new": "      if (at >= 0 || a === this._bbArenas[this._bbArenas.length - 1]) { a.taken = Math.max(0, at); if (key != null) this._bbArenaOfKey.set(key, a); return a; }",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-never-let-go",
+    "file": "src/render/renderer.js",
+    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {   // AUDIT PERF-ARENA A6: an arena not standing (-1) is never spliced",
+    "new": "    if (false) {",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-first-let-go",
+    "file": "src/render/renderer.js",
+    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {   // AUDIT PERF-ARENA A6: an arena not standing (-1) is never spliced",
+    "new": "    if (at >= 0 && a.free.length === 2 && a.free[1] === a.cap) {",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-shadow-trusted",
+    "file": "src/render/renderer.js",
+    "old": "    this._lastVao = undefined;\n",
+    "new": "",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA-snow-on-the-arena",
+    "file": "src/render/snowfallSurface.js",
+    "old": "    if (this.renderer?._bindVao) this.renderer._bindVao(null);\n    else gl.bindVertexArray(null);\n    gl.bindBuffer(gl.ARRAY_BUFFER, uv);",
+    "new": "    gl.bindBuffer(gl.ARRAY_BUFFER, uv);",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA2-no-growth",
+    "file": "src/render/renderer.js",
+    "old": "const gl = this.gl, cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);",
+    "new": "const gl = this.gl, cap = Math.max(BB_ARENA_QUADS, quads);",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA2-unbounded",
+    "file": "src/render/renderer.js",
+    "old": "const gl = this.gl, cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);",
+    "new": "const gl = this.gl, cap = Math.max(last ? last * 2 : BB_ARENA_QUADS, quads);",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "PERFARENA2-no-home",
+    "file": "src/render/renderer.js",
+    "old": "    const home = key != null ? this._bbArenaOfKey.get(key) : undefined;",
+    "new": "    const home = undefined;",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-stale-home",
+    "file": "src/render/renderer.js",
+    "old": "      for (const [k, home] of this._bbArenaOfKey) if (home === a) this._bbArenaOfKey.delete(k);   // PERF-ARENA2: no record homes in a deleted arena",
+    "new": "      // (mutant) the homes kept",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-cap-ignores-batch",
+    "file": "src/render/renderer.js",
+    "old": "cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);",
+    "new": "cap = last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS;",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-no-home-on-first-fit",
+    "file": "src/render/renderer.js",
+    "old": "      if (at >= 0) { a.taken = at; if (key != null) this._bbArenaOfKey.set(key, a); return a; }",
+    "new": "      if (at >= 0) { a.taken = at; return a; }",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-not-rebound",
+    "file": "src/render/renderer.js",
+    "old": "    for (const a of this._bbArenas) { this._bindVao(a.vao); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); }\n",
+    "new": "",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-old-kept",
+    "file": "src/render/renderer.js",
+    "old": "    if (had) gl.deleteBuffer(had.ib);\n",
+    "new": "",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-delete-shared",
+    "file": "src/render/renderer.js",
+    "old": "      gl.deleteVertexArray(a.vao); gl.deleteBuffer(a.vb);   // AUDIT PERF-ARENA A4: the index buffer is every arena's",
+    "new": "      gl.deleteVertexArray(a.vao); gl.deleteBuffer(a.vb); gl.deleteBuffer(this._bbIndex.ib);",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-homes-unbounded",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._bbArenaOfKey.size > BB_ARENA_HOMES_MAX) this._bbArenaOfKey.clear();",
+    "new": "    // (mutant) the homes never start over",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-splice-unguarded",
+    "file": "src/render/renderer.js",
+    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {",
+    "new": "    if (at !== 0 && a.free.length === 2 && a.free[1] === a.cap) {",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ARENA-dynamic-keeps-vao",
+    "file": "src/render/renderer.js",
+    "old": "    batch.vao = null;   // AUDIT PERF-ARENA A7: as destroyBillboardBatch - a list still holding it skips it (no VAO), never draws a deleted one\n",
+    "new": "",
+    "tests": [
+      "test/render/perfarena.test.js"
+    ]
+  }
+]

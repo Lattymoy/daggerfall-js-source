@@ -1,0 +1,209 @@
+[
+  {
+    "name": "TACT3a-same-pool-pushed",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (group[i] === group[j]) continue; // the pool's own spaceFoes has the pair\n      const b = bodies[j].ai.feet,",
+    "new": "      const b = bodies[j].ai.feet,",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3a-no-push-cap",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  for (let i = 0; i < n; i++)\n    if (nudge(bodies[i].ai, push[i * 2], push[i * 2 + 1], FOE_SPACING_SPEED * dt, collider)) moved++;",
+    "new": "  for (let i = 0; i < n; i++) if (nudge(bodies[i].ai, push[i * 2], push[i * 2 + 1], Infinity, collider)) moved++;",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3a-skip-ignored",
+    "file": "src/characters/foeSpacing.js",
+    "old": "    for (const f of pool ?? [])\n      if (!skip(f)) {\n        bodies.push(f);\n        group.push(g);\n      }",
+    "new": "    for (const f of pool ?? []) {\n      bodies.push(f);\n      group.push(g);\n    }",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3a-edge-rule-off",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  const r = collider.move(feet, px, 0, pz, sweepHeight(ai), !airborne);\n  if (!airborne && ((r && !r.grounded) || !supported(collider, ai, feet))) {",
+    "new": "  const r = collider.move(feet, px, 0, pz, sweepHeight(ai), !airborne);\n  if (false) {",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3b-pass-through-cleared",
+    "file": "src/characters/foeSpacing.js",
+    "old": "        if (Math.sign(da) !== side && Math.abs(da) > 0.3) break; // on its way through",
+    "new": "        if (false) break; // on its way through",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3b-sill-sanctuary",
+    "file": "src/characters/foeSpacing.js",
+    "old": "        if (Math.sign(da) !== side && Math.abs(da) > 0.3) break; // on its way through",
+    "new": "        if ((Math.sign(da) !== side && Math.abs(da) > 0.3) || Math.abs(da) < DOORWAY_DEPTH) break; // on its way through",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3b-wrong-side",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      const need = side * DOORWAY_DEPTH - along; // to the threshold's edge on its own side",
+    "new": "      const need = DOORWAY_DEPTH - along; // to the threshold's edge on its own side",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3b-no-clear-cap",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (nudge(ai, nx * need, nz * need, DOORWAY_CLEAR_SPEED * dt, collider)) moved++;",
+    "new": "      if (nudge(ai, nx * need, nz * need, Infinity, collider)) moved++;",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3b-storey-ignored",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (dy < -2.5 || dy > 1) continue; // another storey",
+    "new": "      if (dy < -2.5) continue; // another storey",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3b-width-ignored",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (Math.abs(along) >= DOORWAY_DEPTH || Math.abs(across) >= DOORWAY_HALF_WIDTH) continue;",
+    "new": "      if (Math.abs(along) >= DOORWAY_DEPTH) continue;",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3c-stack-kept",
+    "file": "src/scenes/cityGuards.js",
+    "old": "  const lane = i === 0 ? 0 : (i % 2 ? 1 : -1) * Math.ceil(i / 2) * GUARD_INDOOR_LANE;",
+    "new": "  const lane = 0;",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3c-not-past-sill",
+    "file": "src/scenes/cityGuards.js",
+    "old": "  const inset = GUARD_INDOOR_INSET - GUARD_INDOOR_DOOR_OFFSET;",
+    "new": "  const inset = 0;",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3c-through-walls",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (!collider?.move) { spot[0] += dx; spot[2] += dz; continue; }",
+    "new": "    { spot[0] += dx; spot[2] += dz; continue; }",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3c-arm-unwired",
+    "file": "src/scenes/cityGuards.js",
+    "old": "await spawnGuardAt(indoorWatchSpot(at, door.normal, i, collider), 0, playerFeet ?? null);",
+    "new": "await spawnGuardAt([...at], 0, playerFeet ?? null);",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3d-press-no-yield",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (yieldsToDoor(hit.foe, deps.doorBehind, mode)) return false; // TACT3d: the door behind takes the click",
+    "new": "  if (false) return false; // TACT3d: the door behind takes the click",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3d-hostile-yields",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  return !hostileToMe(foe) && Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE;",
+    "new": "  return Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE;",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3d-any-distance",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  return !hostileToMe(foe) && Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE;",
+    "new": "  return !hostileToMe(foe) && Number.isFinite(doorBehind);",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3d-plaque-unmarked",
+    "file": "src/player/activate.js",
+    "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
+    "new": "      ...{}, // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3d-plaque-any-distance",
+    "file": "src/player/activate.js",
+    "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE))\n    return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
+    "new": "  if (!foeHit || mode === 'steal' || !Number.isFinite(doorBehind)) return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3-street-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      if (cityGuards.guards.length || exteriorFoes.foes.length) clearDoorways(",
+    "new": "      if (false) clearDoorways(",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3-building-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "      spaceAcross([interiorFoes?.foes ?? [], interiorGuards?.guards ?? []], interiorCtx.collider, foeFrameDt(foeDt), own);\n",
+    "new": "\n",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3d-street-press-unwired",
+    "file": "src/scenes/world.js",
+    "old": "              doorBehind: _race.doorDistance,   // TACT3d: a peaceful guard is no door (the race below, read when the arm runs)\n",
+    "new": "\n",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  },
+  {
+    "name": "TACT3a-no-share",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      const share = 0.5 * (FOE_SPACING_GAP - d); // half each, as spaceFoes",
+    "new": "      const share = 0; // half each, as spaceFoes",
+    "tests": [
+      "test/player/tact3.test.js"
+    ]
+  }
+]

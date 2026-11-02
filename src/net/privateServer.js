@@ -1,0 +1,78 @@
+// @ts-check
+// A private server on a player's own PC (app/lib/privateHost.mjs). The shell's launcher hosts or joins one and
+// hands the page its loopback address (app/preload.cjs). A local character then plays online there, signed in by
+// the host's own key. From the world's boot the page reaches no account service, so nothing reaches the realm.
+// A realm character comes as a copy: the title menu still reaches the service, so Copy to offline works there.
+import { relayUrl, sanitizeName } from './wire.js';
+import { appStorage } from '../systems/appStorage.js';
+
+/** The private server this page plays on - `{ url }` - or null for the main servers.
+ *  @param {any} [shell] the desktop shell's bridge (window.daggerShell) */
+export function privateServer(shell = /** @type {any} */ (globalThis).daggerShell) {
+  const url = relayUrl(shell?.privateServer?.url);
+  return url && url.startsWith('ws://') ? { url } : null;
+}
+
+let running = false;
+/** @type {null | (() => Promise<string|null>)} */
+let runMinter = null;
+/** The world's boot on a private server starts the run: from then on the page reaches no account service. */
+export function startPrivateRun() { running = true; }
+/** Whether this page's world plays on a private server (accountClient.js serviceBase). */
+export const privateRunOn = () => running;
+/** The host's minter for this run, or null off a private run (accountClient.js accountTokenMinter). */
+export const privateRunMinter = () => (running ? runMinter : null);
+
+const SUBJECT_KEY = 'dfo.privateSubject';
+/** This device's account id on private servers: random, made once, kept in the app's storage (identityToken.js ID_RE).
+ *  @param {any} storage  appStorage() */
+export function privateSubject(storage) {
+  try {
+    const kept = storage?.getItem?.(SUBJECT_KEY);
+    if (typeof kept === 'string' && /^p[0-9a-f]{24}$/.test(kept)) return kept;
+  } catch { /* unreadable: a new one */ }
+  const made = 'p' + [...globalThis.crypto.getRandomValues(new Uint8Array(12))].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  try { storage?.setItem?.(SUBJECT_KEY, made); } catch { /* unsaved: this run's own */ }
+  return made;
+}
+
+/**
+ * The session's minter on a private server: the host's front signs a guest token for this device and the character's
+ * name (POST /private/token). Null on any failure, as accountClient.js accountTokenMinter answers, so the session's
+ * own retry and refusal paths hold.
+ * @param {{ url: string }} server
+ * @param {{ fetch: typeof globalThis.fetch, subject: () => string, name: () => unknown }} deps
+ */
+export function privateMinter(server, { fetch, subject, name }) {
+  const at = server.url.replace(/^ws/, 'http') + '/private/token';
+  return async () => {
+    try {
+      const shown = sanitizeName(String(name() ?? '')) || 'Traveller';
+      const res = await fetch(at, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ s: subject(), n: shown }) });
+      if (!res.ok) return null;
+      const got = await res.json();
+      return typeof got?.tok === 'string' ? got.tok : null;
+    } catch { return null; }
+  };
+}
+
+/**
+ * The world's boot on a private server: starts the run, so the realm's door refuses a realm character (also one being
+ * born online) and the account minter hands over to the host's. Answers `{ url, online }` or null; `online` takes a
+ * local character online once the realm's checks have run.
+ * @param {URLSearchParams} params  the boot's
+ * @param {(p: URLSearchParams) => void} publish  the lane's publishBootParams
+ * @param {() => unknown} name  the character's name, read at each mint
+ */
+export function privateBoot(params, publish, name) {
+  const server = privateServer();
+  if (!server) return null;
+  startPrivateRun();
+  runMinter = privateMinter(server, { fetch: (url, init) => globalThis.fetch(url, init), subject: () => privateSubject(appStorage()), name });
+  if (params.has('realmnew')) { params.delete('realmnew'); params.set('online', ''); params.set('realm', 'private'); params.set('load', ''); }
+  const realm = params.has('realm');
+  return {
+    url: server.url,
+    online: () => { if (!realm && !params.has('online')) { params.set('online', ''); publish(params); } },
+  };
+}

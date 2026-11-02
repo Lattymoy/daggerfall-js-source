@@ -1,0 +1,138 @@
+[
+  {
+    "name": "KTK-a-stage-word-unfolded",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "        sg: w.sg,",
+    "new": "        sg: s.sg,",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-fall-unfolded",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "        fell: { at: w.at, top: w.top, n: w.n },",
+    "new": "        fell: s.fell,",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-body-fall-unfolded",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "          return { ...B, x: p[0], z: p[1], h: 0, down: w.at, mv: null, sw: w.sw === 1 ? 1 : 0 };",
+    "new": "          return { ...B, x: p[0], z: p[1], h: B.h, down: w.at, mv: null, sw: w.sw === 1 ? 1 : 0 };",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content): the fall's fold steps its walk first."
+  },
+  {
+    "name": "KTK-a-wave-said-twice",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      if (w.k === 'wave' && fresh(w.at)) once(`wave${state.n}.${w.w}`, KT_LINK_TEXT.wave[w.w]);",
+    "new": "      if (w.k === 'wave' && fresh(w.at)) say(KT_LINK_TEXT.wave[w.w]);",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-appetite-unsaid",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      } else if (w.k === 'cl' && state.sg === KT_STAGE.engine && !was.cl?.nd && w.nd)",
+    "new": "      } else if (w.k === 'cl' && state.sg === KT_STAGE.engine && !was.cl?.nd && w.nd < 0)",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-fall-unsaid",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      } else if (w.k === 'fell' && fresh(w.at)) once(`fell${state.n}`, KT_LINK_TEXT.fell(w.top));",
+    "new": "      } else if (w.k === 'fell' && fresh(w.at)) once(`fell${state.n}`, '');",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-joined-without-the-room-word",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      if (w.k === 'ws' && w.me === 1) {",
+    "new": "      if (w.k === 'ws') {",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-in-said-every-frame",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      return t - inAt >= KT_IN_RETRY_MS;",
+    "new": "      return t - inAt >= 0;",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-still-in-after-the-fall",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "    joined: () => !!state.ws && state.ws.fi > 0 && mine === state.ws.fi && !state.ws.lost && !state.ws.fell,",
+    "new": "    joined: () => !!state.ws && state.ws.fi > 0 && mine === state.ws.fi && !state.ws.lost,",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-older-game-forgotten",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      if (refused && (refused.m === 2 || (refused.fi === (state.ws?.fi ?? 0) && t - state.heardAt < KT_HEARD_MS)))",
+    "new": "      if (refused && (refused.m === 9 || (refused.fi === (state.ws?.fi ?? 0) && t - state.heardAt < KT_HEARD_MS)))",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-body-blow-owed",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "        if (ktWholeBridge(b) && !paidKeys.has(paidKey(ws.fi, b.i)) && !owed.some((o) => o.i === b.i && o.fi === ws.fi))",
+    "new": "        if (!!b && !paidKeys.has(paidKey(ws.fi, b.i)) && !owed.some((o) => o.i === b.i && o.fi === ws.fi))",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-paid-blow-owed-again",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      owed = owed.filter((o) => o.i !== i);",
+    "new": "      void i;",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-carrier-unread",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      return !!m && (state.cl?.ca ?? []).some((c) => c[0] === m);",
+    "new": "      return !!m && (state.cl?.ca ?? []).some((c) => c[0] === `${m}?`);",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-voyage-begun-on-a-fragment",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "  if (s.n < 0) return s; // nothing but a whole state starts a voyage",
+    "new": "  if (s.n < -1) return s; // nothing but a whole state starts a voyage",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-cell-counted-one-behind",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "        if (state.sg === KT_STAGE.engine)\n          say(KT_LINK_TEXT.banked(w.n, Math.min(state.cl?.nd ?? 0, (state.cl?.bk ?? 0) + 1), state.cl?.nd ?? 0));",
+    "new": "        if (state.sg === KT_STAGE.engine) say(KT_LINK_TEXT.banked(w.n, state.cl?.bk ?? 0, state.cl?.nd ?? 0));",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  }
+]

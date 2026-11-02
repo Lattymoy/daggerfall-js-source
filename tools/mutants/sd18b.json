@@ -1,0 +1,227 @@
+[
+  {
+    "name": "SD18B-the-ending-last",
+    "file": "src/ui/superDungeon/sdMarksView.js",
+    "old": "      kind: 'aspect',",
+    "new": "      kind: 'trial',",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-shock-said-lightning-to-resist",
+    "file": "src/ui/superDungeon/sdMarksView.js",
+    "old": "      tip: `Resist ${el === 'Lightning' ? 'shock' : el.toLowerCase()} to blunt its own blows and brass. ${SD_MARK_TIPS[E.id]}`,",
+    "new": "      tip: `Resist ${el.toLowerCase()} to blunt its own blows and brass. ${SD_MARK_TIPS[E.id]}`,",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-view-made-every-frame",
+    "file": "src/ui/superDungeon/sdMarksView.js",
+    "old": "  if (had) return had;\n  const E = sdEndingOf(mk),",
+    "new": "  const E = sdEndingOf(mk),",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-no-sign",
+    "file": "src/ui/superDungeon/sdMarksView.js",
+    "old": "      path: I.d,\n      fill: I.fill,\n    }),",
+    "new": "    }),",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-never-goes",
+    "file": "src/ui/superDungeon/sdMarksView.js",
+    "old": "    if (!(age >= 0) || age >= SD_MARKS_ARRIVE_MS) return null;",
+    "new": "    if (!(age >= 0)) return null;",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-never-fades",
+    "file": "src/ui/superDungeon/sdMarksView.js",
+    "old": "    alpha = Math.min(1, age / 250, (SD_MARKS_ARRIVE_MS - age) / SD_MARKS_FADE_MS);",
+    "new": "    alpha = Math.min(1, age / 250);",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-stone-the-first",
+    "file": "src/ui/superDungeon/sdMarksView.js",
+    "old": "    had = { E: E0, k: E0 ? SD_STONES.findIndex((st) => st.key === E0.id) : -1 };",
+    "new": "    had = { E: E0, k: E0 ? 0 : -1 };",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-stone-still",
+    "file": "src/ui/superDungeon/sdMarksView.js",
+    "old": "  const b =\n    SD_STONE_LIGHT.gain *\n    (1 - SD_STONE_LIGHT.breathe + SD_STONE_LIGHT.breathe * Math.sin(t * Math.PI * 2 * SD_STONE_LIGHT.hz));",
+    "new": "  const b = SD_STONE_LIGHT.gain * (1 - SD_STONE_LIGHT.breathe + SD_STONE_LIGHT.breathe * Math.sin(0));",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-the-tables'-signs",
+    "file": "src/ui/gate/gateMarksView.js",
+    "old": "  r.icon.innerHTML = markIconHtml(m, 20); // SD18b: the Hour's own signs",
+    "new": "  r.icon.innerHTML = markIconSvg(m.id, 20); // SD18b: the Hour's own signs",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-own-signs-unfilled",
+    "file": "src/ui/gate/gateMarksView.js",
+    "old": "  const paint = m.fill\n    ? 'fill=\"currentColor\"'\n    : 'fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"';",
+    "new": "  const paint = 'fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"';",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-no-row",
+    "file": "src/ui/superDungeon/sdRemnantBar.js",
+    "old": "    marksView: sdMarksViewOf(s.mk),",
+    "new": "    marksView: null,",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-wake-the-table's",
+    "file": "src/scenes/superDungeon/sdArenaRead.js",
+    "old": "      if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show('wake', s.op, sdWakeText(s.mk));",
+    "new": "      if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show('wake', s.op, SD_BEAT_TEXT.wake);",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-ground-plain",
+    "file": "src/scenes/superDungeon/sdArenaRead.js",
+    "old": "    ground: (el && SD_ELEMENT_GROUND[el]) || SD_BURNING_GROUND,",
+    "new": "    ground: SD_BURNING_GROUND,",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-untinted",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    color: sdTint(A.key, S.el),",
+    "new": "    color: SD_BLOW_COLOR[A.key],",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-tint-whole",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    c = Object.freeze(base.map((v, i) => v + (E[i] - v) * SD_TINT_LEAN));",
+    "new": "    c = E;",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-pool-fire",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "        color: SD_ELEMENT_COLOR[g[0].el] ?? SD_POOL_COLOR,\n        style: SD_ELEMENT_STYLE[g[0].el] ?? TELEGRAPH_STYLE.fire,",
+    "new": "        color: SD_POOL_COLOR,\n        style: TELEGRAPH_STYLE.fire,",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-unsaved",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    strike(el ? savedShare(dmg, save(e, el)) : dmg, el ? { name, el } : { name });",
+    "new": "    strike(dmg, el ? { name, el } : { name });",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-unelemented",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    strike(el ? savedShare(dmg, save(e, el)) : dmg, el ? { name, el } : { name });",
+    "new": "    strike(el ? savedShare(dmg, save(e, el)) : dmg, { name });",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-hit's-element-dropped",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
+    "new": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), null);",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-brass-unnamed",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, false, p.el ?? null);",
+    "new": "    land(SD_BLOWS_TEXT.burning, p.pct, p.base, false, p.el ?? null);",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-arc-forty-eight",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "  const tabs = o?.fray ?? SD_FRAY_MAX,",
+    "new": "  const tabs = SD_FRAY_MAX,",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-no-magic-save",
+    "file": "src/scenes/world.js",
+    "old": "  magic: Object.freeze([ELEMENTS.Magic, EFFECT_FLAGS.Magic]),   // SD18b: the Underking's Ending - the Remnant's blows in magic\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-hidden-as-the-street's",
+    "file": "src/scenes/world.js",
+    "old": " && modes?.sdRealmSlot?.() == null) drawGateMarksCard(null);",
+    "new": ") drawGateMarksCard(null);",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "    if (marks || _sdMarksUp) { drawGateMarksCard(marks, { hidden }); _sdMarksUp = !!marks; }   // SD18b\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-no-stone",
+    "file": "src/scenes/world.js",
+    "old": "      const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds(), _sdStoneLight);",
+    "new": "      const stone = null;",
+    "tests": [
+      "test/net/superDungeon/sd18b_seen.test.js"
+    ]
+  }
+]

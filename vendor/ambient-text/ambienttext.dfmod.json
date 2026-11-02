@@ -1,0 +1,15 @@
+{
+    "ModTitle": "ambienttext",
+    "ModVersion": "1.8",
+    "ModAuthor": "Regnier",
+    "ContactInfo": "forums.dfworkshop.net",
+    "DFUnity_Version": "1.1.1",
+    "ModDescription": "Environmental and locational unobtrusive ambient text popups. For immersion.",
+    "GUID": "ce0210ee-89cc-4ad7-a0d5-908fde918ce9",
+    "Files": [
+        "Assets/Game/Mods/AmbientTextMod/Scripts/AmbientText.cs",
+        "Assets/Game/Mods/AmbientTextMod/Scripts/AmbientTextMod.cs",
+        "Assets/Game/Mods/AmbientTextMod/AmbientText.dfmod.json",
+        "Assets/Game/Mods/AmbientTextMod/modsettings.json"
+    ]
+}

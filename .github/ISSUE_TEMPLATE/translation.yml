@@ -1,0 +1,39 @@
+name: Translation fix
+description: A word or sentence the game shows in your language that reads wrong, or a filled review sheet.
+title: "[l10n <language tag>] "
+labels: ["translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. A person's translation always outranks the machine's drafts: a fix you send is kept as yours from then on.
+        If you can edit the file yourself, a pull request to `locales/<tag>/Port_Strings.csv` is the quickest way in (see `locales/README.md`).
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Its name and tag, as the game's Language row shows it (for example "Français (fr)", "Português (pt-BR)").
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where it is shown
+      description: The screen or moment, and the text as the game shows it now. A screenshot helps.
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: What it should say
+      description: Your wording. Keep any `{name}`-style placeholder exactly as it is written.
+  - type: textarea
+    id: sheet
+    attributes:
+      label: A review sheet
+      description: Or attach a filled review sheet (`node tools/l10nReview.mjs --export <tag>`, the `fix` column filled) and a maintainer will import it.
+  - type: input
+    id: credit
+    attributes:
+      label: Credit
+      description: The name you would like the About pane to credit you by, if any (it goes into `locales/<tag>/translators.json`).

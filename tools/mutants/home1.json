@@ -1,0 +1,516 @@
+[
+  {
+    "name": "HOME1-claim-a-guest-owns",
+    "file": "server-account/src/homes.js",
+    "old": "  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeRegionOk(region) || !Number.isSafeInteger(price)",
+    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeRegionOk(region) || !Number.isSafeInteger(price)",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "ARENA4b (PIN MOVED, re-aimed by content): homes.js arenaMoveHome asks the same guest's question first - aimed at the claim's, whose next line reads `buildingKey`. FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): holdDeed asks the same guest's question - aimed at the claim's, whose next line asks the price. MERGE OF MAIN INTO FIELD BUGS 2026-10-04d (PIN MOVED, re-aimed by content): HOME-PRICE asks the claim's price by `Number.isSafeInteger` now - aimed at the claim's line, which holdDeed's (asking the layout) does not share."
+  },
+  {
+    "name": "HOME1-claim-cap-unread",
+    "file": "server-account/src/homes.js",
+    "old": "paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));",
+    "new": "paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP + 1, mapId, ...layoutMatchBinds(layout));",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew.",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-claim-cap-per-account",
+    "file": "server-account/src/homes.js",
+    "old": "WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ? AND deed = 0) < ?",
+    "new": "WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND ? IS NOT NULL AND region = ? AND deed = 0) < ?",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the cap counts the homes bought (`deed = 0`)."
+  },
+  {
+    "name": "HOME1-claim-two-owners",
+    "file": "server-account/src/homes.js",
+    "old": "INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)",
+    "new": "INSERT OR REPLACE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the deed's hold is an INSERT OR IGNORE too - aimed at the claim's, whose column list ends at `layout`. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "HOME1-claim-repeat-refused",
+    "file": "server-account/src/homes.js",
+    "old": "heldByAccount(held, player, claim.character) ? { ok: true, repeat: true,",
+    "new": "heldByAccount(held, player, claim.character) && false ? { ok: true, repeat: true,",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the account's already."
+  },
+  {
+    "name": "HOME1-claim-rate-unread",
+    "file": "server-account/src/homes.js",
+    "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };\n  // DECOR-ROOMY: the ground its price was set from",
+    "new": "  // DECOR-ROOMY: the ground its price was set from",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): holdDeed counts the same hour - aimed at the claim's, whose next line is realmClaim. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "HOME1-release-anyones",
+    "file": "server-account/src/homes.js",
+    "old": "DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price",
+    "new": "DELETE FROM homes WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL AND guild_id IS NULL AND deed = 0 RETURNING price",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "HOME1-entry-anyones",
+    "file": "server-account/src/homes.js",
+    "old": "UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND player = ?",
+    "new": "UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-entry-any-word",
+    "file": "server-account/src/homes.js",
+    "old": "  if (!homeEntryOk(entry)) return { error: 'bad-entry' };\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-town-shows-a-character",
+    "file": "server-account/src/homes.js",
+    "old": "...(mine ? { character: h.char_id } : {})",
+    "new": "character: h.char_id",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-town-all-mine",
+    "file": "server-account/src/homes.js",
+    "old": "const mine = h.player === player.id;",
+    "new": "const mine = true;",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-cap-four",
+    "file": "src/net/homeLaw.js",
+    "old": "export const HOME_CAP = 3;",
+    "new": "export const HOME_CAP = 4;",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-party-matched-on-nothing",
+    "file": "src/net/homeLaw.js",
+    "old": "  if (home.entry === 'party') return (partyNames ?? []).some((n) => sameName(n, home.owner));",
+    "new": "  if (home.entry === 'party') return (partyNames ?? []).some(() => true);",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-private-open",
+    "file": "src/net/homeLaw.js",
+    "old": "  if (home.entry === 'public') return true;",
+    "new": "  if (home.entry !== 'party') return true;",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-price-bound-off-by-one",
+    "file": "src/net/homeLaw.js",
+    "old": "  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "new": "  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v < HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "HOME-PRICE (PIN MOVED, re-aimed by content): the price is a range now, floor and top. AUDIT HOME-PRICE (PIN MOVED, re-aimed by content): the price is whole hundreds too (L2)."
+  },
+  {
+    "name": "HOME1-route-wall-gone",
+    "file": "server-account/src/index.js",
+    "old": "        if (accountKind(who.player) !== 'linked') return no('homes-need-account', 403, origin);\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-taken-not-a-conflict",
+    "file": "server-account/src/index.js",
+    "old": "r.error === 'home-taken' || r.error === 'home-cap' || r.error === 'home-arena' ? 409",
+    "new": "r.error === 'home-cap' || r.error === 'home-arena' ? 409",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "ARENA4b (PIN MOVED, re-aimed by content): the claim's 409s carry `home-arena` (the arena stands there)."
+  },
+  {
+    "name": "HOME1-client-claim-route-misspelt",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/homes/claim',",
+    "new": "post('/v1/home/claim',",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-client-secret-in-the-body",
+    "file": "src/net/accountClient.js",
+    "old": "return s && (as == null || s.id === as) ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };",
+    "new": "return s && (as == null || s.id === as) ? call({ fetch, base: serviceBase(storage) }, path, { ...body, secret: s.secret }) : { ok: false, error: 'no-session' };",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-faction-house-for-sale",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  if (t === BUILDING_TYPES.House2 && (bd.factionId ?? 0) !== 0) return false;\n  return (",
+    "new": "  return (",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-quest-building-for-sale",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  bd.hasInterior !== false &&\n  !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  bd.hasInterior !== false;",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-one-scene-for-both",
+    "file": "src/net/homeScene.js",
+    "old": "  `OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;",
+    "new": "  `DaggerfallInterior [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-refund-whole",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeRefund = (price) =>\n  Math.trunc((Number.isSafeInteger(price) && price > 0 ? price : 0) * DEED_SELL_MULT);",
+    "new": "export const homeRefund = (price) => Math.trunc((Number.isSafeInteger(price) && price > 0 ? price : 0) * 1);",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-public-shut",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  if (homeMayEnter(home, { partyNames }) || questSite) return 'enter';",
+    "new": "  if (questSite) return 'enter';",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-quest-rung-lost",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  if (homeMayEnter(home, { partyNames }) || questSite) return 'enter';",
+    "new": "  if (homeMayEnter(home, { partyNames })) return 'enter';",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-two-asks-in-flight",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    const flying = asking.get(id);\n    // FB1001 (LOOK-STALE, HOMES-FORCE): a forced ask is asked AFTER the flight it finds - never answered by it (ASYNC\n    // NEVER DROPS): that flight set out before whatever forced this one (a look painted, a room rented), and its answer\n    // does not hold it. The one exception is a forced flight that set out after my last write: its answer is the one asked\n    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);\n    const f = failed.get(id);",
+    "new": "    const f = failed.get(id);",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-time-unread",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    if (!force && had && now() - had.at < ttlMs) return Promise.resolve(true);",
+    "new": "    if (!force && had) return Promise.resolve(true);",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-failure-forgets-the-town",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "          if (!Array.isArray(list)) return fail(id);",
+    "new": "          if (!Array.isArray(list)) {\n            fail(id);\n            towns.delete(id);\n            return false;\n          }",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "HOMES-SHED (PIN MOVED, re-aimed by content): an unanswered ask is counted by `fail`, which answers what was known - the mutant forgets the town after it, on the same branch."
+  },
+  {
+    "name": "HOME1-no-wait-after-a-failure",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    if (!force && f && now() - f.at < homeRetryMs(f.n)) return Promise.resolve(!!had);\n    const gen = writesTo(id);",
+    "new": "    const gen = writesTo(id);",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "HOMES-SHED (PIN MOVED, re-aimed by content): the wait is `homeRetryMs` of the failures in a row now - the mutant takes the gate that asks it away, as it took the flat one."
+  },
+  {
+    "name": "HOME1-the-claims-character",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "      region,\n      character: me,",
+    "new": "      region,\n      character: null,",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "HOME1-no-read-back",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    ensure(id, { force: true });\n  }",
+    "new": "  }",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-door-waits-on-a-slow-town",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    return Promise.race([ensure(id), late]).finally(() => clearTimeout(timer));",
+    "new": "    return ensure(id).finally(() => clearTimeout(timer));",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-service-asked-short-of-gold",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    if (!afford(price)) return { ok: false, error: 'gold' };\n    const layout = homeClaimLayout(mapId);",
+    "new": "    const layout = homeClaimLayout(mapId);",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-second-ask-gone",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    if (!afford(price)) {\n      await homes.release(mapId, buildingKey);\n      return { ok: false, error: 'gold' };\n    }\n    pay(price);",
+    "new": "    pay(price);",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-refusal-paid-for",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    if (!r.ok) return r;\n    if (!afford(price)) {",
+    "new": "    if (!afford(price)) {",
+    "tests": [
+      "test/server/home1.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "HOME1-credited-before-the-service-agrees",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  if (!r.ok) return r;\n  const refund = homeRefund(r.price);\n  const decorBack = r.decorBack ?? 0; // DECOR1e: its placed pieces' half, as the service summed it\n  credit(refund + decorBack);",
+    "new": "  const refund = homeRefund(r.price);\n  const decorBack = r.decorBack ?? 0; // DECOR1e: its placed pieces' half, as the service summed it\n  credit(refund + decorBack);\n  if (!r.ok) return r;",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-bag-forgets-home",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "    home: !!home,",
+    "new": "    home: false,",
+    "tests": [
+      "test/server/home1.test.js",
+      "test/systems/loot/auditworld6a.test.js",
+      "test/systems/talk/world6.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-homes-memory-names-its-cupboards",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "      loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }), // HOME1: a home's cupboards are its owner's alone",
+    "new": "      loot: interiorLootRecords(ctx, [...seen], tooBig, { room }), // HOME1: a home's cupboards are its owner's alone",
+    "tests": [
+      "test/server/home1.test.js",
+      "test/systems/loot/auditworld6a.test.js",
+      "test/systems/talk/world6.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-peers-word-lands-on-the-chest",
+    "file": "src/world/interior/interiorShared.js",
+    "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - the memory's landing hands on `carried`",
+    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
+    "new": "  applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
+    "tests": [
+      "test/server/home1.test.js",
+      "test/systems/loot/auditworld6a.test.js",
+      "test/systems/talk/world6.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-refused-act-names-a-cupboard",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "  const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room }); // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it",
+    "new": "  const l = interiorLootRecords(ctx, keys, tooBig, { room }); // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it",
+    "tests": [
+      "test/server/home1.test.js",
+      "test/systems/loot/auditworld6a.test.js",
+      "test/systems/talk/world6.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-locked-home-picked",
+    "file": "src/scenes/worldModes.js",
+    "old": "          if (door === 'locked') { townTalk?.say?.(homeLockedLine(home)); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-no-offer-at-the-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "            if (prompt === 'offer') { openHomeOffer(bd, price, hit, entries); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-visitor-rifles-the-cupboard",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (c && interiorHome && !interiorHome.own) { say(homeBelongsLine(interiorHome)); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-my-home-in-the-buildings-scene",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interiorHome?.own) return homeSceneName(homeTownOf(interiorBuilding), key);\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-visit-latches-nothing",
+    "file": "src/scenes/worldModes.js",
+    "old": "      interiorHome = home;   // HOME1: the visit's latch, committed with the identity and its three latches\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-scene-unkept-on-entry",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (home?.own) addPermanentScene(sceneCache(), homeSceneName(homeTownOf(building), building.buildingKey));\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-room-bag-forgets-home",
+    "file": "src/scenes/worldModes.js",
+    "old": "{ owned, home: !!interiorHome, net:",
+    "new": "{ owned, net:",
+    "tests": [
+      "test/server/home1.test.js",
+      "test/systems/loot/auditworld6a.test.js",
+      "test/systems/talk/world6.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-peers-act-lands-on-the-chest",
+    "file": "src/scenes/worldModes.js",
+    "old": "+ (!_intShared.home && Array.isArray(data.l) ? applyInteriorLoot(",
+    "new": "+ (Array.isArray(data.l) ? applyInteriorLoot(",
+    "tests": [
+      "test/server/home1.test.js",
+      "test/systems/loot/auditworld6a.test.js",
+      "test/systems/talk/world6.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-home-keeps-no-room",
+    "file": "src/scenes/worldModes.js",
+    "old": "(!interiorHome && houseOwnedAt(b, b?.buildingKey))",
+    "new": "houseOwnedAt(b, b?.buildingKey)",
+    "tests": [
+      "test/server/home1.test.js",
+      "test/systems/loot/auditworld6a.test.js",
+      "test/systems/talk/world6.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-bank-sells-online",
+    "file": "src/ui/bankWindow.js",
+    "old": "      if (online) {\n        this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null };\n        return;\n      }\n      const d = buyHouseDecision({",
+    "new": "      const d = buyHouseDecision({",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-registry-built-offline",
+    "file": "src/scenes/world.js",
+    "old": "  const homesApi = params.has('online')",
+    "new": "  const homesApi = true",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-door-keyed-by-the-players-town",
+    "file": "src/scenes/world.js",
+    "old": "townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, ",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-a-quest-picks-a-home",
+    "file": "src/systems/quest/place.js",
+    "old": "      if (world.isPlayerHome?.(location.mapTableData?.mapId, buildingKey)) continue;   // HOME1: nor a player's online home (a departure: DFU has one player)\n",
+    "new": "",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME1-the-model-unread-at-the-door",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "    modelIdNum: model?.modelIdNum ?? null,\n    hasInterior: hasInteriorModels(sub),",
+    "new": "    hasInterior: hasInteriorModels(sub),",
+    "tests": [
+      "test/server/home1.test.js"
+    ]
+  }
+]

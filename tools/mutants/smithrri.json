@@ -1,0 +1,88 @@
+[
+  {
+    "name": "SMITH-RRI-flail-ingots",
+    "file": "src/net/recipeLaw.js",
+    "old": "  product('lightflail', 'Light Flail', 'weapon', 514, 3, [",
+    "new": "  product('lightflail', 'Light Flail', 'weapon', 514, 4, [",
+    "tests": [
+      "test/net/smithrri.test.js"
+    ],
+    "note": "The Light Flail off the Mace's and the Flail's row."
+  },
+  {
+    "name": "SMITH-RRI-flail-fitting",
+    "file": "src/net/recipeLaw.js",
+    "old": "    [COPPER, 1],\n    [LEATHER, 1],\n  ]), // SMITH-RRI",
+    "new": "    [COPPER, 1],\n    [OAK, 1],\n  ]), // SMITH-RRI",
+    "tests": [
+      "test/net/smithrri.test.js"
+    ]
+  },
+  {
+    "name": "SMITH-RRI-axe-ingots",
+    "file": "src/net/recipeLaw.js",
+    "old": "  product('archersaxe', \"Archer's Axe\", 'weapon', 513, 2, [",
+    "new": "  product('archersaxe', \"Archer's Axe\", 'weapon', 513, 3, [",
+    "tests": [
+      "test/net/smithrri.test.js"
+    ],
+    "note": "The Archer's Axe off half the Battle Axe's ingots."
+  },
+  {
+    "name": "SMITH-RRI-axe-fitting",
+    "file": "src/net/recipeLaw.js",
+    "old": "    [COPPER, 1],\n    [OAK, 1],\n  ]), // SMITH-RRI",
+    "new": "    [COPPER, 1],\n    [LEATHER, 1],\n  ]), // SMITH-RRI",
+    "tests": [
+      "test/net/smithrri.test.js"
+    ]
+  },
+  {
+    "name": "SMITH-RRI-template-swapped",
+    "file": "src/net/recipeLaw.js",
+    "old": "  product('archersaxe', \"Archer's Axe\", 'weapon', 513, 2, [",
+    "new": "  product('archersaxe', \"Archer's Axe\", 'weapon', 514, 2, [",
+    "tests": [
+      "test/net/smithrri.test.js"
+    ]
+  },
+  {
+    "name": "SMITH-RRI-flail-dropped",
+    "file": "src/net/recipeLaw.js",
+    "old": "  product('lightflail', 'Light Flail', 'weapon', 514, 3, [\n    [COPPER, 1],\n    [LEATHER, 1],\n  ]), // SMITH-RRI\n  product('archersaxe', \"Archer's Axe\", 'weapon', 513, 2, [",
+    "new": "  product('archersaxe', \"Archer's Axe\", 'weapon', 513, 2, [",
+    "tests": [
+      "test/net/smithrri.test.js",
+      "test/net/craft2_patterns.test.js",
+      "test/net/firstbudget_law.test.js"
+    ]
+  },
+  {
+    "name": "SMITH-RRI-anvil-guard-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "(metal == null || family === 'tools' || r.metal === metal) && anvilMakes(r));",
+    "new": "(metal == null || family === 'tools' || r.metal === metal));",
+    "tests": [
+      "test/net/smithrri.test.js"
+    ]
+  },
+  {
+    "name": "SMITH-RRI-anvil-guard-class-unasked",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const anvilMakes = (r) => !RRI_CLASSES[r.templateIndex] || !!customItemClass(r.templateIndex);",
+    "new": "const anvilMakes = (r) => !RRI_CLASSES[r.templateIndex] || !!RRI_CLASSES[r.templateIndex];",
+    "tests": [
+      "test/net/smithrri.test.js"
+    ]
+  },
+  {
+    "name": "SMITH-RRI-anvil-guard-everything",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const anvilMakes = (r) => !RRI_CLASSES[r.templateIndex] || !!customItemClass(r.templateIndex);",
+    "new": "const anvilMakes = (r) => !!customItemClass(r.templateIndex);",
+    "tests": [
+      "test/net/smithrri.test.js",
+      "test/net/craft2_patterns.test.js"
+    ]
+  }
+]

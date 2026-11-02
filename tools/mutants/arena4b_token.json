@@ -1,0 +1,71 @@
+[
+  {
+    "name": "ARENA4B-TOK-ANOTHERS",
+    "file": "server-account/src/realm.js",
+    "old": "        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?',",
+    "new": "        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? OR r.player = ?',",
+    "tests": [
+      "test/server/arena4b_token.test.js"
+    ],
+    "note": "SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
+  },
+  {
+    "name": "ARENA4B-TOK-SUMMARY-UNREAD",
+    "file": "server-account/src/realm.js",
+    "old": "  const lv = row.level_seen ?? summary?.level;",
+    "new": "  const lv = 12;",
+    "tests": [
+      "test/server/arena4b_token.test.js"
+    ],
+    "note": "SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
+  },
+  {
+    "name": "ARENA4B-TOK-BOUND",
+    "file": "server-account/src/realm.js",
+    "old": "    cl: Number.isSafeInteger(lv) && lv >= 1 && lv <= REALM_LEVEL_CLAIM_MAX ? lv : null,",
+    "new": "    cl: Number.isSafeInteger(lv) && lv >= 0 ? lv : null,",
+    "tests": [
+      "test/server/arena4b_token.test.js"
+    ],
+    "note": "SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
+  },
+  {
+    "name": "ARENA4B-TOK-OFFLINE",
+    "file": "server-account/src/index.js",
+    "old": "const cl = facts.cl;",
+    "new": "const cl = facts.cl ?? 5;",
+    "tests": [
+      "test/server/arena4b_token.test.js"
+    ],
+    "note": " SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
+  },
+  {
+    "name": "ARENA4B-TOK-VALID-ZERO",
+    "file": "src/net/identityToken.js",
+    "old": "export const characterLevelIssuable = (cl) =>\n  Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "new": "export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) && cl >= 0 && cl <= CHARACTER_LEVEL_MAX;",
+    "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's characterLevelIssuable is the one validation.",
+    "tests": [
+      "test/server/arena4b_token.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TOK-VALID-FRACTION",
+    "file": "src/net/identityToken.js",
+    "old": "export const characterLevelIssuable = (cl) =>\n  Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "new": "export const characterLevelIssuable = (cl) => cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's characterLevelIssuable is the one validation.",
+    "tests": [
+      "test/server/arena4b_token.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4B-TOK-MINT-DROPPED",
+    "file": "src/net/identityToken.js",
+    "old": "  if (who?.cl !== undefined) claims.cl = who.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
+    "new": "  // cl   // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
+    "tests": [
+      "test/server/arena4b_token.test.js"
+    ]
+  }
+]

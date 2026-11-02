@@ -1,0 +1,129 @@
+[
+  {
+    "name": "YARD-BLOCK-a-the-block-unmerged",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "        if (yards.length) remerge(block, yards);",
+    "new": "        if (false) remerge(block, yards);",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-b-the-yards-not-gathered",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "      for (const entry of parts.into) into.push(entry);",
+    "new": "      if (!into.length) for (const entry of parts.into) into.push(entry);",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-c-the-pools-drawing-merged-pieces",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (!e.gpu || e.merged) continue;\n",
+    "new": "      if (!e.gpu) continue;\n",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "YARD-BLOCK-d-the-merge-kept-after-its-piece-went",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "          dropMerge(owner);\n          owner.changed = true;",
+    "new": "          owner.changed = true;",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-e-the-landing-unheard",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  const changed = () => { if (merge) { mergeDue = true; changedAt = merge.now(); merge.changed?.(); } };",
+    "new": "  const changed = () => { if (merge) { mergeDue = true; changedAt = merge.now(); } };",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-f-the-settle-unread",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "        if (block.changedAt > settledBefore) continue;\n        const yards = [...block.yards].filter(inRange);",
+    "new": "        const yards = [...block.yards].filter(inRange);",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-g-the-range-unread",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "        const yards = [...block.yards].filter(inRange);",
+    "new": "        const yards = [...block.yards];",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-h-the-budget-unread",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "        if (made > 0 && clock() - started >= YARD_BLOCK_MERGE_BUDGET_MS) break;\n        if (yards.length) remerge(block, yards);",
+    "new": "        if (yards.length) remerge(block, yards);",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-i-the-order-unsorted",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "      due.sort((a, b) => a.block.distance - b.block.distance);\n      const started = clock();",
+    "new": "      const started = clock();",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-j-the-verdict-unread",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "        const seen = cull ? cull((mesh.wbox ??= transformedAabb(mesh.box, mesh.matrix))) : DECOR_DRAW;",
+    "new": "        const seen = DECOR_DRAW;",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-k-the-recentre-unread",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "          merged.mesh.matrix = decorMergeMatrix(origin);\n          merged.mesh.wbox = null;",
+    "new": "          merged.mesh.wbox = null;",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-l-the-flats-unmerged",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "        if (group) group.push(...entries);\n        else keyed.set(key, [...entries]);\n      }",
+    "new": "      }",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-m-the-leave-unheard",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "      if (!block.yards.size && blocks.get(block.key) === block) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  },
+  {
+    "name": "YARD-BLOCK-n-the-old-merge-dropped-before-the-new",
+    "file": "src/scenes/yardBlockMerge.js",
+    "old": "        due.push({ block, yards });",
+    "new": "        dropMerge(block);\n        due.push({ block, yards });",
+    "tests": [
+      "test/scenes/yardblock.test.js"
+    ]
+  }
+]

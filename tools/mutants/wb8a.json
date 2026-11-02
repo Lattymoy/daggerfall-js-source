@@ -1,0 +1,112 @@
+[
+  {
+    "name": "WB8a-the-warden-says-nothing",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  e.pacifyImmune = true;\n  return e;",
+    "new": "  return e;",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-the-arm-sways-the-warden",
+    "file": "src/systems/effects.js",
+    "old": "      if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-the-arm-refuses-silently",
+    "file": "src/systems/effects.js",
+    "old": "      if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }",
+    "new": "      if (target.pacifyImmune) { continue; }",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-spellSways-blind-to-charm",
+    "file": "src/systems/effects.js",
+    "old": "export const spellSways = (sp) => (sp?.effects ?? []).some((e) => e && (isPacifyEffect(e) || isCharmEffect(e)));",
+    "new": "export const spellSways = (sp) => (sp?.effects ?? []).some((e) => e && isPacifyEffect(e));",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-the-tongue-reaches-the-warden",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (entity?.pacifyImmune) return null;   // WB8a",
+    "new": "  // WB8a",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-the-flag-door-sways-anyone",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (r.pacify && foe.ai && !foe.entity?.pacifyImmune) foe.ai.isHostile = false;",
+    "new": "    if (r.pacify && foe.ai) foe.ai.isHostile = false;",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js",
+      "test/systems/pacify.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-a-sway-passes-through-him",
+    "file": "src/scenes/hostMagic.js",
+    "old": "isSoulTrapEffect(e)) || spellSways(sp))) return [];",
+    "new": "isSoulTrapEffect(e)))) return [];",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js",
+      "test/net/gate/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-a-sway-missile-flies-past-him",
+    "file": "src/scenes/hostMagic.js",
+    "old": "isSoulTrapEffect(e)) || spellSways(sp) });",
+    "new": "isSoulTrapEffect(e)) });",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-his-refusal-unsaid",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "      say(BOSS_SWAY_TEXT(boss.entity.name));\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-his-refusal-every-blow",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    if (sways && now() - swayToldAt >= BOSS_SWAY_TELL_MS) {",
+    "new": "    if (sways) {",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-a-sway-alone-is-not-spent-at-him",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    if (!harm) return laid || sways;",
+    "new": "    if (!harm) return laid;",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  },
+  {
+    "name": "WB8a-the-refusal-said-constantly",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "export const BOSS_SWAY_TELL_MS = 4000;",
+    "new": "export const BOSS_SWAY_TELL_MS = 0;",
+    "tests": [
+      "test/systems/wb8a_never_swayed.test.js"
+    ]
+  }
+]

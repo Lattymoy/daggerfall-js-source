@@ -1,0 +1,93 @@
+[
+  {
+    "name": "ORE-MAP-a-the-signature-unsaid",
+    "file": "src/ui/oreMapTip.js",
+    "old": "  else if (sig) {",
+    "new": "  else if (false) {",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the crown's own ore unsaid - its line one push now, a province's richness after it."
+  },
+  {
+    "name": "ORE-MAP-b-silver-held-back",
+    "file": "src/ui/oreMapTip.js",
+    "old": "    ...new Set([...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores]),",
+    "new": "    ...new Set([\n      ...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER - 1)),\n      ...ores,\n    ]),",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "ORE-MAP-c-gold-said-free",
+    "file": "src/ui/oreMapTip.js",
+    "old": "    ...new Set([...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores]),",
+    "new": "    ...new Set([\n      ...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER + 1)),\n      ...ores,\n    ]),",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "ORE-MAP-d-disputed-said-unwitnessed",
+    "file": "src/ui/oreMapTip.js",
+    "old": "  if (factConfirmed(fact)) lines.push(withDeep(t('ore.tip.witnessed', WITNESSED)));",
+    "new": "  if (fact?.state === 'confirmed') lines.push(withDeep(t('ore.tip.witnessed', WITNESSED)));",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "ORE-MAP-e-the-card-offline",
+    "file": "src/scenes/world.js",
+    "old": "      oreAt: profBook ? oreMapAt : null,",
+    "new": "      oreAt: oreMapAt,",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "ORE-MAP-f-asked-every-hover",
+    "file": "src/scenes/world.js",
+    "old": "        _oreAsked.add(k);\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "ORE-MAP-g-the-stood-pixel-left-on-its-old-word",
+    "file": "src/scenes/gatherHost.js",
+    "old": "return book.askPixels(list).then((changed) => { for (const c of changed ?? []) restandAt(c.x, c.y); return changed; });",
+    "new": "return book.askPixels(list).then((changed) => changed);",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "ORE-MAP-h-the-card-never-asked",
+    "file": "src/ui/heldMap.js",
+    "old": "    const ore = readTip(this.deps.oreAt?.(px, py, () => this._refreshTip()) ?? null);",
+    "new": "    const ore = null;",
+    "tests": [
+      "test/ui/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "ORE-MAP-i-the-refresh-not-handed",
+    "file": "src/ui/heldMap.js",
+    "old": "    const ore = readTip(this.deps.oreAt?.(px, py, () => this._refreshTip()) ?? null);",
+    "new": "    const ore = readTip(this.deps.oreAt?.(px, py) ?? null);",
+    "tests": [
+      "test/ui/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "ORE-MAP-j-the-card-left-off-the-answer",
+    "file": "src/ui/heldMap.js",
+    "old": "      ...(ore ? { tip: ore } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/ui/heldmap.test.js"
+    ]
+  }
+]

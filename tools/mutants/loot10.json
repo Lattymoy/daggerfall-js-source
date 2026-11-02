@@ -1,0 +1,365 @@
+[
+  {
+    "name": "LOOT10-unknown-record-a-find",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (item?.rarity === 'legendary' && typeof item.legendary === 'string' && legendaryById(item.legendary))",
+    "new": "  if (item?.rarity === 'legendary' && typeof item.legendary === 'string')",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-aetheric-no-find",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (item?.rarity === 'aetheric' && typeof item.aetheric === 'string' && aethericById(item.aetheric))\n    return { kind: 'aetheric', id: item.aetheric };",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-said-twice",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (!key || foundDay(key.kind, key.id) != null) return false;",
+    "new": "  if (!key) return false;",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-unsaid",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "    hudText(CODEX_FIND(rec?.name ?? item.name ?? '', key.kind));",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-unheard",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "    audio.playOneShot?.(SOUND.LevelUp, 1);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-quiet-ignored",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (!quiet && !presentCodexFind(item, key.kind)) {",
+    "new": "  if (true && !presentCodexFind(item, key.kind)) {",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-noted-off",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (!lootRarityOn()) return false;\n  const key = codexKey(item);",
+    "new": "  const key = codexKey(item);",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-sweep-blind-to-the-worn",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  for (const it of [...(entity.items ?? []), ...worn]) if (noteFind(it, { quiet })) n++;",
+    "new": "  for (const it of [...(entity.items ?? [])]) if (noteFind(it, { quiet })) n++;",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-backfill-forever",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  _backfill = false;\n  let n = 0;",
+    "new": "  let n = 0;",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-backfill-never",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "    _backfill = !r || typeof r !== 'object' || r.fill === true;",
+    "new": "    _backfill = false;",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-old-save-unmarked",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  newSaveData: () => ({ ...empty(), fill: true }),",
+    "new": "  newSaveData: () => empty(),",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-new-game-keeps",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  newGame: () => {\n    _codex = empty();\n    _backfill = false;\n  },",
+    "new": "  newGame: () => {},",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-record-keeps-the-unknown",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "      if (!RECORD_OF[kind](id)) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-record-negative-day",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "      if (!ID_RE.test(id) || !Number.isSafeInteger(day) || day < 0) continue;",
+    "new": "      if (!ID_RE.test(id) || !Number.isSafeInteger(day)) continue;",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-save-forgets",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  getSaveData: () => ({\n    legendary: { ..._codex.legendary },\n    aetheric: { ..._codex.aetheric },\n    gilded: { ..._codex.gilded },\n  }),",
+    "new": "  getSaveData: () => empty(),",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-take-unseen",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "registerTakeListener(CODEX, (item) => {\n  noteFind(item);\n});",
+    "new": "registerTakeListener(CODEX, null);",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-round-sweeps-anyone",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (entity?.isPlayer) sweepCodex(entity);",
+    "new": "  sweepCodex(entity);",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-unfound-named",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "      name: day != null ? r.name : null,",
+    "new": "      name: r.name,",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-unfound-power-shown",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "      power: day != null ? p : null,",
+    "new": "      power: p,",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-no-hint",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',",
+    "new": "      hint: '',",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-any-group",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries().filter((r) => foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)))",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ],
+    "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
+  },
+  {
+    "name": "LOOT10-imprint-unfound",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries().filter((r) => recordFitsGroup(r, item) && powerFits(item, powerOf(r.id)))",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ],
+    "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
+  },
+  {
+    "name": "LOOT10-imprint-unknown",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-worn",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (typeof item.imprint === 'string') return 'imprinted';",
+    "new": "  if (typeof item.imprint === 'string') return 'imprinted';",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-twice",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (typeof item.imprint === 'string') return 'imprinted';",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-short-of-shards",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (shardsHeld(player?.items) < IMPRINT_PRICE.shards) return 'shards';",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-short-of-gold",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (totalGoldAmount(player) < IMPRINT_PRICE.gold) return 'gold';",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-unpaid-shards",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  spendShards(player.items, IMPRINT_PRICE.shards);\n  deductGold(player, IMPRINT_PRICE.gold);",
+    "new": "  deductGold(player, IMPRINT_PRICE.gold);",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-cheap",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "export const IMPRINT_PRICE = Object.freeze({ shards: 20, gold: 5000 });",
+    "new": "export const IMPRINT_PRICE = Object.freeze({ shards: 10, gold: 5000 });",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-a-magic",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (item?.rarity !== 'rare') return 'not';",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-imprint-off",
+    "file": "src/systems/loot/lootCodex.js",
+    "old": "  if (!lootRarityOn()) return 'off';\n  if (item?.rarity !== 'rare') return 'not';",
+    "new": "  if (item?.rarity !== 'rare') return 'not';",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-card-silent",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  { const im = imprintLine(item); if (im) out.push(im); }   // LOOT10: a Rare's imprinted power\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-wire-another-group",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "recordFitsGroup(legendaryById(item.imprint), item) && powerFits(item, powerOf(item.imprint))",
+    "new": "!!legendaryById(item.imprint) && powerFits(item, powerOf(item.imprint))",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ],
+    "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
+  },
+  {
+    "name": "LOOT10-wire-on-a-magic",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "|| (item.rarity === 'rare' && typeof item.imprint === 'string' &&",
+    "new": "|| (typeof item.imprint === 'string' &&",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-wire-unchecked",
+    "file": "src/systems/loot/loot.js",
+    "old": "  if (!validImprint(out)) return null; // LOOT10: an imprint only as the Reforge makes one",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-power-sleeps",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "it?.rarity === 'rare' ? it.imprint : null, it?.rarity",
+    "new": "null, it?.rarity",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-tabs-for-one-page",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  if (pages.length < 2) tabs.setAttribute('hidden', '');",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-codex-button-off",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (lootRarityOn()) {\n      const codex = el('button', 'act codexbtn', 'Codex');",
+    "new": "    if (true) {\n      const codex = el('button', 'act codexbtn', 'Codex');",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-guild-no-imprint",
+    "file": "src/scenes/worldModes.js",
+    "old": "      imprint: (item, id) => imprintPiece(item, id, playerEntity),",
+    "new": "      imprint: null,",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "LOOT10-game-never-registers",
+    "file": "src/scenes/world.js",
+    "old": " import '../systems/loot/lootCodex.js';",
+    "new": "",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  }
+]

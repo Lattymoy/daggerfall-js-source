@@ -1,0 +1,155 @@
+[
+  {
+    "name": "MWBOW1-the-first-person-bow-is-never-posed",
+    "file": "src/combat/fpArm.js",
+    "old": "      posePartClocks(built.arm, weaponClockValue(), { frameTime: partClock });   // MW-BOW1: the bow draws, the arrow with it\n",
+    "new": "",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-third-person-bow-is-never-posed",
+    "file": "src/combat/fpArm.js",
+    "old": "          posePartClocks(t.arm, weaponClockValue(), { frameTime: partClock });   // MW-BOW1: the bow draws, the arrow with it\n",
+    "new": "",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-weapon-clock-never-moves",
+    "file": "src/combat/fpArm.js",
+    "old": "        noteWeaponClock();   // MW-BOW1: before stepUpper ends the section - the group's state keeps its last time\n",
+    "new": "",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-a-ranged-clock-reads-the-files-own-time",
+    "file": "src/combat/fpArm.js",
+    "old": "    const start = ranged ? getStartTime((actionSource || rig()).keys, weaponGroup) : 0;\n",
+    "new": "    const start = 0;\n",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-clock-outlives-its-group",
+    "file": "src/combat/fpArm.js",
+    "old": "  const weaponClockValue = () => (weaponClock.group && weaponClock.group === weaponGroup ? weaponClock.value : 0);\n",
+    "new": "  const weaponClockValue = () => weaponClock.value;\n",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-arrow-part-carries-no-node",
+    "file": "src/combat/fpArm.js",
+    "old": "                if (pre) preClip = { nif: weaponNif, node: ARROW_FALLBACK_NODE };\n",
+    "new": "",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-piece-drops-the-node",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "            preClip: part.preClip ? { ...part.preClip, local: batch.positions, localNormals: batch.normals ?? null } : null,\n",
+    "new": "            preClip: null,\n",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-every-slot-on-the-weapon-clock",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "    if (p.kind !== 'rigid' || !slots.has(p.slot)) continue;\n",
+    "new": "    if (p.kind !== 'rigid') continue;\n",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-keys-are-not-read",
+    "file": "src/formats/morrowind/mwPartClock.js",
+    "old": "  const track = pc.tracks.get(rec);",
+    "new": "  const track = null;",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-controller-function-skipped",
+    "file": "src/formats/morrowind/mwPartClock.js",
+    "old": "  const s = sampleTrack(track, controllerTime(track.timing, value));",
+    "new": "  const s = sampleTrack(track, value);",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-morph-weighs-nothing",
+    "file": "src/formats/morrowind/mwPartClock.js",
+    "old": "    if (!w) continue;",
+    "new": "    if (w !== 12345) continue;",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-autoplay-ignored",
+    "file": "src/formats/morrowind/mwPartClock.js",
+    "old": "export const clockFor = (animFlags, value, frameTime) => ((animFlags & ANIM_FLAG_AUTOPLAY) !== 0 ? frameTime : value);",
+    "new": "export const clockFor = (animFlags, value) => value;",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-autoplay-node-ignored-for-the-arrow",
+    "file": "src/formats/morrowind/mwPartClock.js",
+    "old": "  for (const r of chain) if (r.type === 'NiBSAnimationNode' || r.type === 'NiBSParticleNode') flags = r.flags | 0;\n  return clockFor(flags, value, frameTime);",
+    "new": "  return clockFor(flags, value, frameTime);",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-a-base-of-another-count-morphs",
+    "file": "src/formats/morrowind/mwPartClock.js",
+    "old": "        if (list.length > 1 && shapeData?.vertices && list[0].vectors.length === shapeData.vertices.length) {",
+    "new": "        if (list.length > 1 && shapeData?.vertices) {",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-a-base-alone-morphs",
+    "file": "src/formats/morrowind/mwPartClock.js",
+    "old": "        if (list.length > 1 && shapeData?.vertices && list[0].vectors.length === shapeData.vertices.length) {",
+    "new": "        if (list.length > 0 && shapeData?.vertices && list[0].vectors.length === shapeData.vertices.length) {",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-a-skinned-shape-morphs",
+    "file": "src/formats/morrowind/mwPartClock.js",
+    "old": "      } else if (\n        c.type === 'NiGeomMorpherController' &&\n        !morphs.has(rec) &&\n        GEOMETRY_TYPES.has(rec.type) &&\n        !(rec.skin >= 0)\n      ) {",
+    "new": "      } else if (c.type === 'NiGeomMorpherController' && !morphs.has(rec) && GEOMETRY_TYPES.has(rec.type)) {",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  },
+  {
+    "name": "MWBOW1-the-chain-is-not-carried",
+    "file": "src/formats/morrowind/mwNifMesh.js",
+    "old": "        emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);",
+    "new": "        emit(rec, nextWorld, nextProps, [rec], animFlags, parentRef);",
+    "tests": [
+      "test/formats/morrowind/mwbow1.test.js"
+    ]
+  }
+]

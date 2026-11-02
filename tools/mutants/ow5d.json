@@ -1,0 +1,112 @@
+[
+  {
+    "name": "OW5b-D1-find-reach-short",
+    "file": "src/scenes/world.js",
+    "old": "  const TV_FIND_REACH = 4;",
+    "new": "  const TV_FIND_REACH = 1;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "The find's reach one pixel: a keep two pixels off, 942 m from the feet, is never found (AUDIT OW5 D1's list, kept at the merge)."
+  },
+  {
+    "name": "OW5b-D1-lairs-spend-the-twelve",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  const inGrid = (g) => (!g.found || g.spawn) && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;",
+    "new": "  const inGrid = () => false;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A '?' on the ground the view shows spends one of the twelve: twelve found about, and the keep next door has no mark."
+  },
+  {
+    "name": "OW5b-D2-forgotten-renewed",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "        host._locIndexGen += 1;   // AUDIT OW4 D5\n        locationIndex.delete(key);\n        return null;",
+    "new": "        host._locIndexGen += 1;   // AUDIT OW4 D5\n        _spawnLedger.forget(key);\n        locationIndex.delete(key);\n        return null;",
+    "tests": [
+      "test/world/spawneddungeons.test.js"
+    ],
+    "note": "The expired spawn's row is forgotten: the pure roll stands the same dungeon again on a fresh seven days."
+  },
+  {
+    "name": "OW5b-D2-index-trusted",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "    if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, host._spawnClock()) && !_insideSpawn(key)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/world/spawneddungeons.test.js"
+    ],
+    "note": "The build takes the index's word for a spawn it holds: it stands again at every rebuild whatever its clocks say."
+  },
+  {
+    "name": "OW5b-D2-build-skips-the-ask",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;",
+    "new": "    const dfLocation = capitalBuildView(locationIndex.get(key) || spawnedDungeonAt(px, py), px, py, host.state.current) || null;",
+    "tests": [
+      "test/world/spawneddungeons.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): the ask's answer passes through capitalBuildView (a far slice's view)."
+  },
+  {
+    "name": "OW5b-D2-gone-while-standing",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "return b ? b.location == null : _spawnLedger.expired(key, host._spawnClock()); };",
+    "new": "return _spawnLedger.expired(key, host._spawnClock()); };",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A spawn still standing on built ground is gone from the Overworld: no plate, its walk refused, the dungeon in plain view."
+  },
+  {
+    "name": "OW5b-D3-door-left-behind",
+    "file": "src/scenes/world.js",
+    "old": "point: { pixel: pix, x: n.x, z: n.z, door }, name: TRAVEL_VIEW_TEXT.spot }",
+    "new": "point: { pixel: pix, x: n.x, z: n.z }, name: TRAVEL_VIEW_TEXT.spot }",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The walk's door is not kept with it: the map's Resume walks a far spawn as a bare spot."
+  },
+  {
+    "name": "OW5b-D3-resume-reads-the-index",
+    "file": "src/scenes/world.js",
+    "old": "r.point.pixel, { door: r.point.door ?? null, roads });",
+    "new": "r.point.pixel, { door: r.point.door ?? (locationIndex.get(`${r.point.pixel.x},${r.point.pixel.y}`) ? locationWorldRect(locationIndex.get(`${r.point.pixel.x},${r.point.pixel.y}`), r.point.pixel.x, r.point.pixel.y) : null), roads });",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A spot clicked on a place's pixel resumes as that place's door, its end moved to the rect's edge."
+  },
+  {
+    "name": "OW5b-D3-member-reads-the-index",
+    "file": "src/scenes/world.js",
+    "old": "      const there = summary ? null : tvLocationAt(tw.x, tw.y);",
+    "new": "      const there = summary ? null : locationIndex.get(`${tw.x},${tw.y}`);",
+    "tests": [
+      "test/systems/travel/tv8_party_walk.test.js"
+    ],
+    "note": "A member reads its own index: the leader's far spawn, never built for them, is a bare spot (the peaks refuse it)."
+  },
+  {
+    "name": "OW5b-D3-no-would-be-spawn",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": " ?? (params.has('online') && !inEtherLaw(x, y) && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);",
+    "new": " ?? null;",
+    "tests": [
+      "test/systems/travel/tv8_party_walk.test.js"
+    ],
+    "note": "What stands on an unbuilt pixel is only ever the index's."
+  },
+  {
+    "name": "OW5b-D4-reset-behind-the-pose",
+    "file": "src/scenes/world.js",
+    "old": "  function applyPose(pose) {\n    overworldLoadReset();   // AUDIT OW5b D4: a load without a pose is a load all the same\n    if (!pose) return;",
+    "new": "  function applyPose(pose) {\n    if (!pose) return;\n    overworldLoadReset();",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A save without a pose loads with the last run's chases, rudder and '?'s."
+  }
+]

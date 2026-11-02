@@ -1,0 +1,838 @@
+// SURV3 - THE CAMPS A HOST STANDS: the pool one host owns, on the
+// dropped torches' shape (scenes/droppedTorches.js) - the pure law is
+// systems/survival/camp.js; this is the ground, the sprite, the mesh,
+// the light, the ray and the menu.
+//
+// A camp's FIRE is TEXTURE.210 record 1 (the town brazier's flame, the
+// lights archive at 12 fps - FlatAnim picks the rate off the archive)
+// as one billboard batch, base-aligned at the spot, with a point light
+// over it while it burns. A TENT is model 41606 through the host's
+// pipeline (the wagon's getGpuMesh law, player/eyeOfTheBeholder/eotbWagon.js), stood
+// TENT_BEHIND behind its fire and facing it. Both are one activation
+// target at CAMP_REACH under the host's one ray; Info and Talk name it,
+// Grab and Steal open the menu (a list picker: rest, cook, stoke, pack).
+//
+// THE CLOCK is the world's minute (worldMinutes): a fire dies at its
+// minute whether the player lived through it or slept, and burnt down
+// it stands cold (REST2) - only a fire with no fuel of its own, an Ember
+// Jar's or an old save's kit fire, is swept with its embers (camp.js
+// campExpired; AUDIT C&C I10: this said every kit fire). THE GROUND is the host's: snapshot/restore
+// in the host's own frame (the save envelope and the scene cache, in
+// natives outdoors), collectPixel with the streaming host's sweep,
+// offsetAll with the floating origin, destroyAll on a transition.
+//
+// ONLINE, two doors. `wireRecords` says this player's own camps
+// (a cell's foes frame carries them beside the foes; a world room's
+// act frame and memory carry them as `c`); `applyOwner` lands another's
+// through validCampRecord, replacing that owner's and no one else's;
+// `sweepOwners` drops an owner whose stream has gone quiet, the cell's
+// own law for its puppets.
+import { GLOBAL_SCALE, RAY_DISTANCE } from '../player/activate.js';
+import { worldMinutes, sharedClockOn } from '../systems/worldTick.js';   // REST2: online the fires are every player's, the arc on or off
+import { FlatAnim } from '../render/flatAnimation.js';
+import { trs, multiply, wrapAngle } from '../world/mat4.js';
+import { intoDeck, outOfDeck } from '../systems/naval/navalDeck.js';   // DECK-CAMP: a camp on a boat's deck rides her frame
+import { localAabb, transformedAabb } from '../render/frustum.js';
+import { drawSeen } from './decor/decorRoom.js';   // PERF-WAGON: a tent by the street's view test
+import { ListPickerWindow } from '../ui/listPicker.js';
+import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV-TIERS: Off keeps what stands and uses none of it (shown, below); SURV-OFFSIGHT: it sees another's (seen)
+import {
+  TENT_MODEL, FIRE_FLAT, FIRE_LIGHT_RANGE, CAMP_REACH, CAMP_KIND, CAMP_TEXT, CAMPS_PER_OWNER,
+  placeCampItem, packCamp, stokeFire, canStoke, fireLit, campExpired, tentNear as tentInReach, tentPos, nearestFire, campInfoText, campMenu, campSpot, campDecision,
+  cookables, cookFood, hasSkillet, campWire, mergeOwnerCamps, BY_FIRE_REACH, FIRE_MINUTES, spendCampNight,
+  strikeCamp,   // FIELD BUGS 2026-10-04d CAMP-CAP: a placing at the cap strikes the oldest
+  validDeck, deckYaw, TENT_BEHIND,
+} from '../systems/survival/camp.js';
+import { isCampfireKit, CAMPFIRE_USES } from '../systems/survival/items.js';   // REST2: the Campfire is online's for everyone
+import { isBedroll, isEmberJar, isFirewood, spendCharge, REST_ITEM_TEXT, FIREWOOD_NIGHTS, BEDROLL_CHANNEL_SECONDS } from '../systems/rest/restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood
+import { REST_KIND } from '../systems/survival/rest.js';   // AUDIT SURV-TIERS (the third pass): a camp's rest tends its tent's fire
+import { hearthNear, hearthAabb } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
+import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a camp's fire named by its camp
+import { hasBag } from '../net/bagLaw.js';   // FB1020c BAG-COOK: the Materials Bag's raw food at the fire
+
+/** The light hangs this far over the flame's base. */
+export const FIRE_LIGHT_UP = 0.6;
+/** The eye's box over a fire (a flame is about a metre tall) and a tent (its mesh's own bounds, or this). */
+export const FIRE_HALF = 0.5;
+/** AUDIT SURV-TIERS (the third pass): the fires whose light the host is handed - the nearest few, in reach of the eye. */
+export const CAMP_LIGHT_REACH = 64;
+export const CAMP_LIGHTS_MAX = 4;
+const within = (a, b, reach) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) <= reach;   // nearestFire's own measure
+const NO_CAMPS = Object.freeze([]);
+/** CAMP-GROUND's probe, one home - a camp's placement and REST6's Bedroll lay on the same ground (AUDIT REST-PARTY):
+ *  surfaceHit, mesh or terrain, whichever is nearer; a collider without that door keeps the bucket raycast, not null. */
+const groundProbe = (col) => (col?.surfaceHit ? (o, d, m) => col.surfaceHit(o, d, m).dist
+  : (col?.raycast ? (o, d, m) => col.raycast(o, d, m) : null));
+/** DECK-CAMP: a camp of this player's whose boat is gone - packed, laid up, sailed off with her owner - for this long
+ *  (s), the boats settled (never a load's or a re-anchor's passing absence), is packed back into the pack. */
+export const DECK_GONE_S = 2;
+/** REST2: a world fire's rows - nobody's to pack or stoke, so rest and cook alone. */
+const HEARTH_ROWS = Object.freeze([Object.freeze({ key: 'rest', text: CAMP_TEXT.menuRest }), Object.freeze({ key: 'cook', text: CAMP_TEXT.menuCook })]);
+
+/**
+ * deps = { renderer, getTexture, uploadRecordFrame, meshes ({ getGpuMesh, cpuModels } - the host's pipeline), entity (the player),
+ *          camera() -> { feet, yaw }, collider() (raycast(origin, dir, max) -> distance), place() -> { insideBuilding,
+ *          insideDungeon, inTown, enemiesNearby, inWater }, pixelKeyAt(pos) (the streaming host's, or null),
+ *          say(line), showOverlay(win), openRest(camp), advanceMinutes(n) (the character's clock - online their own, LIVED1),
+ *          selfId() (this player's online id, or null), onChanged() (the host's online publish),
+ *          hearths() -> [{x, y, z}] (HEARTH1: the world's own cooking fires in the host's frame - the braziers
+ *            and fire bowls survival/hearth.js picks out of the lantern list the host already builds; a host
+ *            that passes none has none, which is what every caller did before this),
+ *          fieldCook() (PROF9: whether the player stands as a Field Cook - a night at their own Campfire spends no
+ *            fuel, Professions-Arc 3.3 under REST2; a host that passes none never keeps one) }
+ */
+export function createCamps({
+  renderer = null, getTexture = null, uploadRecordFrame = null, meshes = null, entity = null,
+  camera = () => null, collider = () => null, place = () => ({}), pixelKeyAt = () => null,
+  say = () => {}, showOverlay = null, openRest = null, advanceMinutes = null, selfId = () => null, onChanged = null,
+  hearths = null,   // HEARTH1: the host's own braziers and fire bowls, in the host's frame - see below
+  fieldCook = null,   // PROF9: a Field Cook's own Campfire keeps its fuel (survival/camp.js spendCampNight)
+  // DECK-CAMP: the host's boats - `at(pos)` -> { ref: { mine: true, uid } | { peer, uid }, m } for the boat whose deck
+  // stands under a camp's spot (m her node's world matrix), or null; `resolve(ref)` -> { m } while she stands to be
+  // seen, { hidden: true } while she is out of sight or not known yet, { gone: true } once she is no more. A host that
+  // passes none (a dungeon's, the standalone street's) stands every camp where it was placed.
+  deck = null,
+} = {}) {
+  const camps = [];   // { rec, batch, anim, pixelKey, mine }
+  let _nextId = 0;
+  let _fire = null;   // { count, size } once TEXTURE.210 record 1 is up
+  let _fireLoading = null;
+  let _tent = null;   // { gpu, box } once model 41606 is up
+  let _tentLoading = null;
+  const _owners = new Map();   // owner -> { at }
+  const now = () => worldMinutes();
+  // AUDIT SURV-TIERS (the third pass): MINE IS THE POOL'S WORD, NOT THE RECORD'S. `rec.owner` is the online id a
+  // camp was placed under, and that id is minted once per TAB (net/online.js) - so a camp pitched online was a
+  // stranger's in the next tab and offline: no "Pack up the camp" (the gear was lost for good), Info saying "You
+  // see a camp.", the cap full of tents that never burn out, and with the arc Off the player's own tent drawn. An
+  // entry with no owner is this player's - placed here or restored from their own save - and every camp a peer's
+  // word stands carries its sender (applyOwner, below).
+  const mine = (c) => c.owner == null;
+
+  function ensureFire() {
+    if (_fire || _fireLoading || !getTexture) return;
+    _fireLoading = Promise.resolve(getTexture(FIRE_FLAT.archive)).then((t) => {
+      if (!t) return;
+      const count = t.getFrameCount?.(FIRE_FLAT.record) ?? 1;
+      for (let i = 0; i < count; i++) uploadRecordFrame?.(FIRE_FLAT.archive, FIRE_FLAT.record, i);
+      const size = t.getSize(FIRE_FLAT.record);
+      _fire = { count, size: { w: size.width * GLOBAL_SCALE, h: size.height * GLOBAL_SCALE } };
+      for (const c of camps) if (!c.batch) mountFire(c);
+    }).catch((e) => console.warn('[camps] the fire would not load', e));
+  }
+  function ensureTent() {
+    if (_tent || _tentLoading || !meshes?.getGpuMesh) return;
+    _tentLoading = Promise.resolve(meshes.getGpuMesh(TENT_MODEL)).then((gpu) => {
+      const cpu = meshes.cpuModels?.get?.(TENT_MODEL);
+      _tent = { gpu: gpu ?? null, box: cpu?.positions ? localAabb(cpu.positions) : null };
+    }).catch((e) => console.warn('[camps] the tent would not load', e));
+  }
+  function mountFire(c) {
+    if (c.batch || !_fire || !renderer?.createBillboardBatch) return;
+    // DECK-CAMP: a fire on a deck is built about its own foot and moved by the batch's origin each frame (navalCrew.js's
+    // way) - never rebuilt as she sails
+    c.batch = renderer.createBillboardBatch(FIRE_FLAT.archive, FIRE_FLAT.record, _fire.size, [c.rec.deck ? [0, 0, 0] : c.rec.pos]);
+    if (c.rec.deck) c.batch.origin = [c.rec.pos[0], c.rec.pos[1], c.rec.pos[2]];
+    c.batch.frame = 0;
+    c.anim = _fire.count > 1 ? new FlatAnim(FIRE_FLAT.archive, _fire.count, false) : null;
+  }
+  function unmount(c) {
+    if (c.batch) { renderer?.destroyBillboardBatch?.(c.batch); c.batch = null; }
+  }
+  function remount(c) { unmount(c); mountFire(c); }
+
+  /** Stand one record (a fresh placing, a restore, an owner's word). */
+  function stand(rec, { owner = null } = {}) {
+    // DECK-CAMP: a camp on a deck is her's, not a pixel's - the streaming sweep never takes it where she sailed from
+    const c = { rec, batch: null, anim: null, pixelKey: rec.deck ? null : pixelKeyAt?.(rec.pos) ?? null, owner, hidden: !!rec.deck, deckM: null, goneFor: 0 };
+    camps.push(c);
+    ensureFire(); mountFire(c);
+    if (rec.kind === CAMP_KIND.Tent) ensureTent();
+    return c;
+  }
+  function drop(c) {
+    unmount(c);
+    const i = camps.indexOf(c);
+    if (i >= 0) camps.splice(i, 1);
+  }
+  const own = () => camps.filter(mine).map((c) => c.rec);
+  /**
+   * AUDIT SURV-TIERS: OFF KEEPS THE CAMPS; IT DOES NOT BURN THEM.
+   *
+   * The pool refused to restore or relay a camp with the arc off (AUDIT
+   * SURV B), so a save LOADED with the arc Off dropped every camp in it
+   * (the next save then had none), and an Off host dropped its peers' camps from the room it
+   * hands on - Off destroyed the ground under the tiers' own promise
+   * that switching it back finds the world where it was. So the DATA is
+   * the world's in every tier: the burn, the save, the scene cache and
+   * the wire keep every camp. What Off takes away is THIS player's USE
+   * of them - the menu, the warmth and the rest a fire makes - which is
+   * every door that reads `shown()`.
+   *
+   * SURV-OFFSIGHT (2026-09-23, Mac: "No, not off.. theres no reason to
+   * have it in off, really only being able to see other people's
+   * campfires makes sense"). WHAT OFF SEES IS NOT WHAT IT USES. Another
+   * player's camp is part of the world the room shares - they sit at
+   * that fire and sleep in that tent - so the doors of SIGHT read
+   * `seen()`: every camp with the arc on, and with it Off every camp that
+   * is not this player's. Sight is the flame, its light and the tent -
+   * and (AUDIT SURV-TIERS, the third pass) the ray, the name and the
+   * look, since a tent the ray passed through had handed the click to
+   * the door behind it. With the arc Off the click opens nothing. This
+   * player's own camps, stood while the arc was on, stay out of sight
+   * with the rest of the arc.
+   */
+  // REST2 (bible/06-Systems/Rest-Arc.md section 3): ONLINE THE FIRES ARE EVERYONE'S. A rest online is an act at a fire
+  // or a bed (systems/rest/restAct.js), so the Campfire, the camps it stands and the world's braziers are the rest's, not the
+  // arc's alone: online every door below opens with the arc Off too. Offline Off is SURV-OFFSIGHT's, unchanged.
+  // ENDLESS PROVISIONS (2026-10-04, Mac: the Campfire Kit and Rations for everyone - "i can use and find all those without
+  // climates and calories"): A CAMP IS EVERY TIER'S. It is placed, seen, named, rested at, cooked at, stoked and packed with
+  // the arc Off, offline too - `seen` is every camp, and the ray, the menu and the click read it. What stays the arc's offline
+  // is the WARMTH: `shown` (byFire, the felt temperature's fire) and a world hearth's menu - there is no felt temperature
+  // to warm. This supersedes SURV-OFFSIGHT's "Off sees, never uses".
+  const usable = () => survivalOn() || sharedClockOn();
+  // DECK-CAMP: a camp on a boat out of sight (Come Sail Away hides her past a pixel, and indoors) is out of sight with her
+  const visible = (c) => !c.hidden;
+  const shown = () => (usable() ? camps.filter(visible) : NO_CAMPS);
+  const seen = () => camps.filter(visible);
+
+  /** THE PLACING: the pack's use of Camping Equipment or a Campfire Kit lands here (useItem's 'pitchCamp' / 'placeFire'). */
+  function placeItem(item, list) {
+    // REST6: the Bedroll and Firewood are uses, not camps - the Bedroll's spot and its rest, Firewood's fire
+    if (isFirewood(item)) return feedFire(item, list);
+    if (isBedroll(item)) return layBedroll(item, list);
+    // ENDLESS PROVISIONS: no arc gate - a camp is stood in every tier (`seen`, above); the camp law's own checks below
+    // CAMP-SILENT (2026-09-22, DragynDance on Discord: "camp kits don't
+    // work for me"). USING AN ITEM ALWAYS SAYS SOMETHING. Every other
+    // arm below refuses with words - in town, indoors, foes near, no
+    // ground, worn out - and this one returned false with NO message at
+    // all, so a player whose host could not answer for the ground got
+    // an item that did nothing and no reason. That is the shape INFO1
+    // closed in the HUD a day earlier from the other end: a row with
+    // nothing in it. A refusal the player cannot see is a bug report
+    // nobody can act on, including us - "doesn't work" is all they can
+    // say, because it is all the game told them.
+    const cam = camera?.();
+    if (!cam?.feet) { say(CAMP_TEXT.noSpot); return false; }
+    const col = collider?.();
+    const r = placeCampItem(item, list, {
+      now: now(), owner: selfId?.() ?? null, feet: cam.feet, yaw: cam.yaw ?? 0,
+      // CAMP-GROUND (2026-09-22, Mac: "camping not working in the world
+      // because of flat terrain"). THE PROBE WAS ASKING THE WRONG DOOR.
+      // `raycast` walks the collider's TRIANGLE BUCKETS alone, and
+      // outside the ground is not a mesh - it is `heightAt`, the
+      // terrain sampler. So a ray cast straight down from a player
+      // standing in open country hits NOTHING, campSpot answered a null
+      // ground, and campDecision refused with "There is no level ground
+      // here" - everywhere outdoors, on the flattest meadow in Daggerfall.
+      //
+      // `surfaceHit` is the door built for exactly this and is two days
+      // old: MAC-BUG W5, "blood doesn't work outside", the same
+      // collider, the same mistake, fixed there and never carried here.
+      // Its own note says who it is for - "a caller that reads 'nothing'
+      // as 'no surface' is right indoors and silently wrong in the whole
+      // outdoors". It answers whichever is NEARER, mesh or terrain, so a
+      // camp under a walkway still finds the walkway.
+      probe: groundProbe(col),
+      place: place?.() ?? {}, standing: own().length, id: `${selfId?.() ?? 'me'}:${++_nextId}:${Math.trunc(now())}`,
+    });
+    if (r.text) say(r.text);
+    if (!r.ok) return false;
+    const struck = strikeOldest(r.strike);   // FIELD BUGS 2026-10-04d CAMP-CAP: at the cap my oldest goes, before this one stands
+    // DECK-CAMP: placed on a boat's deck, it is hers - its point and heading in her frame, by her number
+    const on = deck?.at?.(r.camp.pos) ?? null;
+    if (on?.m && on.ref) {
+      const d = validDeck({ ...on.ref, local: intoDeck(on.m, r.camp.pos, [0, 0, 0]), yaw: r.camp.yaw - deckYaw(on.m) });
+      if (d) r.camp.deck = d;
+    }
+    const c = stand(r.camp);
+    if (r.camp.deck && on?.m) { c.hidden = false; c.deckM = on.m; }
+    if (struck) say(struck);
+    onChanged?.();
+    return true;
+  }
+  /**
+   * FIELD BUGS 2026-10-04d CAMP-CAP (Discord, 2026-10-04, several players: "Placing 5 or so tents around the world and
+   * leaving them behind means I can no longer place any new tents or campfires at all", "I'm completely locked out of
+   * camping anywhere"). THE CAP STRIKES THE OLDEST; IT NEVER REFUSES. This pool holds every camp of mine wherever it
+   * stands - the streaming sweep spares them (AUDIT SURV B), the save carries them all and a load stands them all -
+   * and no camp burns away (REST2), so four left anywhere refused every placing after them with "You have enough camps
+   * standing already.", and only a walk back to one undid it. Now the first `n` of mine go: the oldest, as this pool
+   * holds them in the order they were placed (a placing appends; a load and a teleport stand the save's rows in the
+   * order the pool wrote them). Each is packed where it stands, as the menu's Pack packs it (camp.js strikeCamp), its
+   * gear into the pack - and so it leaves every store at once: this pool now; the next save, which holds the pack it
+   * went into (no save holds both); and the room, told by the placing's one onChanged AFTER the strike (a cell's full
+   * foes frame, a dungeon's act, which its host's memory follows). A copy anywhere else - a peer's view, a room's
+   * memory not yet told - is never this pool's own, so no door mints the gear twice. Answers the one line, or null.
+   */
+  function strikeOldest(n) {
+    let line = null;
+    for (const c of camps.filter(mine).slice(0, n | 0)) {
+      const r = strikeCamp(c.rec);
+      if (r.item && entity) (entity.items ??= []).push(r.item);   // CAMP-CAP: home as act's Pack hands it
+      drop(c);
+      line = r.text;
+    }
+    return line;
+  }
+
+  /**
+   * DECK-CAMP: EVERY CAMP ON A DECK POSED OFF HER, once a frame after the boats moved (the host's, before its lights and
+   * its world pass): its point out of her frame, its heading turned with her, the flame's batch moved. Out of sight
+   * (or not known yet - a load's boats still standing) it is hidden with her. A camp of this player's whose boat is
+   * gone for DECK_GONE_S is packed back into the pack, the gear and its charges with it (packCamp) - a peer's waits on
+   * its owner's word.
+   */
+  function ride(dt = 0) {
+    if (!deck?.resolve) return;
+    let changed = false;
+    for (let i = camps.length - 1; i >= 0; i--) {
+      const c = camps[i], d = c.rec.deck;
+      if (!d) continue;
+      const at = deck.resolve(d) ?? { hidden: true };
+      if (at.m) {
+        c.deckM = at.m;
+        c.rec.pos = outOfDeck(at.m, d.local, c.rec.pos);
+        c.rec.yaw = wrapAngle(deckYaw(at.m) + d.yaw);
+        c.hidden = false; c.goneFor = 0;
+        if (c.batch) c.batch.origin = [c.rec.pos[0], c.rec.pos[1], c.rec.pos[2]];
+        continue;
+      }
+      c.hidden = true; c.deckM = null;
+      if (!at.gone || !mine(c)) { c.goneFor = 0; continue; }
+      c.goneFor += Math.max(0, dt);
+      if (c.goneFor < DECK_GONE_S) continue;
+      const r = packCamp(c.rec);
+      if (r.item && entity) (entity.items ??= []).push(r.item);
+      say(CAMP_TEXT.packedWithBoat);
+      drop(c);
+      changed = true;
+    }
+    if (changed) onChanged?.();
+  }
+
+  // ---- REST6: FIREWOOD AND THE BEDROLL -------------------------------------------------------------------------------
+  /** Firewood: FIREWOOD_NIGHTS more nights to your own placed Campfire in reach (relit if it was cold), else to the
+   *  pack's emptiest; one stick off the stack. Never an Ember Jar's (it is one night's). */
+  function feedFire(item, list) {
+    const feet = camera?.()?.feet;
+    const t = now();
+    const near = feet ? camps.filter((c) => mine(c) && visible(c) && c.rec.kind === CAMP_KIND.Fire && !c.rec.jar && !!c.rec.fuel && within(c.rec.pos, feet, BY_FIRE_REACH)) : [];   // AUDIT REST-PARTY B5: never an old save's kit fire; AUDIT C&C: nor one out of sight
+    // AUDIT REST III B3: the emptiest of mine in reach WITH ROOM, as H11 has the pack's - four may stand, and the first
+    // found took the stick only to refuse it ("all the fuel it can take") while a cold one beside it had none left
+    const placed = near.filter((c) => (c.rec.wear | 0) < CAMPFIRE_USES).sort((a, b) => (a.rec.wear | 0) - (b.rec.wear | 0))[0] ?? null;
+    // AUDIT REST-PARTY B5: a kit holds what its own maxCondition says - an old save's five-use kit fed to eight read 160% and
+    // sold for it (RRI's condition price); full is its own cap, never the new item's
+    const capOf = (it) => Math.min(CAMPFIRE_USES, it.maxCondition ?? CAMPFIRE_USES);
+    const kits = (entity?.items ?? []).filter((it) => isCampfireKit(it));
+    // AUDIT REST II H11: the emptiest with ROOM - a full old five-use kit is "emptier" than a Campfire at six of eight,
+    // and took the stick only to refuse it ("all the fuel it can take") while the Campfire beside it had room
+    const packed = kits.filter((it) => (it.currentCondition ?? 0) < capOf(it)).sort((a, b) => (a.currentCondition ?? 0) - (b.currentCondition ?? 0))[0] ?? null;
+    const take = () => { if ((item.stackCount ?? 1) > 1) item.stackCount -= 1; else { const i = (list ?? []).indexOf(item); if (i >= 0) list.splice(i, 1); } };
+    if (placed) {
+      placed.rec.wear = Math.min(CAMPFIRE_USES, (placed.rec.wear | 0) + FIREWOOD_NIGHTS);
+      if (!fireLit(placed.rec, t)) { stokeFire(placed.rec, t); if (_fire && !placed.batch) mountFire(placed); }
+      take(); onChanged?.();
+      say(REST_ITEM_TEXT.firewoodFed(placed.rec.wear));
+      return true;
+    }
+    if (packed) {
+      packed.currentCondition = Math.min(capOf(packed), (packed.currentCondition ?? 0) + FIREWOOD_NIGHTS);
+      take();
+      say(REST_ITEM_TEXT.firewoodFed(packed.currentCondition));
+      return true;
+    }
+    say(near.length || kits.length ? REST_ITEM_TEXT.firewoodFull : REST_ITEM_TEXT.firewoodNone);
+    return false;
+  }
+  /** The Bedroll laid: where a camp could stand (a fire's law - so in a dungeon too), on the ground ahead, and the rest
+   *  begun on it at once. Not a camp - nothing on the wire, nothing saved: it is a spot, and the item stays in the
+   *  pack, a night slept on it spending one of its nights (spendNightNear). */
+  let _bedroll = null;   // { item, list, pos }
+  function layBedroll(item, list) {
+    if ((item.currentCondition ?? 0) <= 0) { say(REST_ITEM_TEXT.bedrollWorn); return false; }
+    const cam = camera?.();
+    if (!cam?.feet) { say(CAMP_TEXT.noSpot); return false; }
+    const col = collider?.();
+    const spot = campSpot(cam.feet, cam.yaw ?? 0, groundProbe(col));
+    const d = campDecision(CAMP_KIND.Fire, { ...(place?.() ?? {}), ground: spot.ground });
+    if (!d.ok) { say(d.text); return false; }
+    _bedroll = { item, list: list ?? entity?.items ?? null, pos: spot.pos };
+    say(REST_ITEM_TEXT.bedrollLaid);
+    openRest?.(null);
+    return true;
+  }
+  const bedrollNear = (pos) => !!_bedroll && !!pos && (entity?.items ?? []).includes(_bedroll.item) && within(_bedroll.pos, pos, BY_FIRE_REACH);   // AUDIT REST F10: still in THIS pack (a load replaces it)
+  /** The host's rest point here (REST1's restPoint, REST6's Bedroll): a lit fire in reach, else the Bedroll laid. */
+  const restPointAt = (pos) => (fireNear(pos) ? { kind: 'camp', where: 'fire' }
+    : bedrollNear(pos) ? { kind: 'rough', where: 'bedroll', channelSeconds: BEDROLL_CHANNEL_SECONDS } : null);
+
+  /** The burn: a fire dies at its minute and stands cold; one with no fuel of its own goes with its embers (campExpired). */
+  function tick(dt) {
+    const t = now();
+    tendWhileResting(t);
+    for (let i = camps.length - 1; i >= 0; i--) {
+      const c = camps[i];
+      if (c.owner == null && campExpired(c.rec, t)) { drop(c); onChanged?.(); continue; }   // AUDIT REST F12: mine - a peer's goes with its owner's word
+      if (c.batch) {
+        if (!fireLit(c.rec, t)) { unmount(c); continue; }   // embers: no flame
+        if (c.anim) c.batch.frame = c.anim.tick(dt);
+      } else if (fireLit(c.rec, t) && _fire) mountFire(c);   // stoked: the flame is back
+    }
+  }
+  /**
+   * SURV3's word, kept at last (AUDIT SURV-TIERS, the third pass): "a tent's fire can be stoked (a rest will)" - and
+   * nothing did, so a tent pitched at dusk went cold under its sleeper at four and they woke Deadly cold beside it.
+   * A camp's rest at your own tent tends its fire: it burns through the night and its full span past the waking - and
+   * at your own Campfire while it has fuel (AUDIT REST-PARTY B2), in every tier (ENDLESS PROVISIONS). An Ember Jar's
+   * fire is never tended: it has no fuel to burn (AUDIT C&C I10: this said a kit's fire, and nothing tended with the arc
+   * Off).
+   */
+  function tendWhileResting(t) {
+    if (!entity?.isResting || entity.restKind !== REST_KIND.Camp) return;   // ENDLESS PROVISIONS: a camp used in every tier is tended in every tier
+    const feet = camera?.()?.feet;
+    if (!feet) return;
+    for (const c of camps) {
+      const tended = c.rec.kind === CAMP_KIND.Tent || (c.rec.kind === CAMP_KIND.Fire && !!c.rec.fuel);   // AUDIT REST-PARTY B2: and my own Campfire - an offline night moves the world's minutes, so one lit before the rest burned out under its sleeper, who woke beside a cold fire and spent no charge (spendNightNear asks a lit one): the fuel was free offline
+      if (!mine(c) || !visible(c) || !tended || (c.rec.wear | 0) <= 0 || !fireLit(c.rec, t) || !within(c.rec.pos, feet, BY_FIRE_REACH)) continue;   // AUDIT C&C: never one out of sight
+      if ((c.rec.litUntil ?? 0) - t > FIRE_MINUTES - 60) continue;   // tended within the hour: one word on the wire an hour, not a frame
+      c.rec.litUntil = t + FIRE_MINUTES;
+      onChanged?.();
+    }
+  }
+  /** AUDIT REST II H3: the tending, asked by a rest that moves the clock where no frame runs (the dungeon's rest window
+   *  holds its frame, so its tick never saw the night - an offline Campfire burned out under its sleeper, B2's free night
+   *  again underground). */
+  const tend = () => tendWhileResting(now());
+  const batches = () => seen().map((c) => c.batch).filter(Boolean);
+  /**
+   * The fires' lights for the host's list. AUDIT SURV-TIERS (the third pass): the NEAREST few in reach of the eye.
+   * The hosts prepend these to the scene's lamps as they do a player's own light, ahead of the renderer's sixteen,
+   * so a room of campers took every slot at any distance - four peers' fires eight hundred metres off put out a
+   * town's street lamps (SURV-OFFSIGHT had carried it into Off).
+   */
+  function lights() {
+    const t = now();
+    const feet = camera?.()?.feet;
+    const lit = seen().filter((c) => fireLit(c.rec, t));
+    const near = feet
+      ? lit.map((c) => [c, Math.hypot(c.rec.pos[0] - feet[0], c.rec.pos[1] - feet[1], c.rec.pos[2] - feet[2])]).filter(([, d]) => d <= CAMP_LIGHT_REACH).sort((a, b) => a[1] - b[1]).map(([c]) => c)
+      : lit;
+    return near.slice(0, CAMP_LIGHTS_MAX).map((c) => adoptLight({ x: c.rec.pos[0], y: c.rec.pos[1] + FIRE_LIGHT_UP, z: c.rec.pos[2], range: FIRE_LIGHT_RANGE }, c.rec));   // LIGHT-ID: the camp's fire, frame to frame
+  }
+  /** A tent's matrix. DECK-CAMP: on a deck, laid in her frame - she rolls and pitches it with her. */
+  const tentMatrix = (c) => {
+    const rec = c.rec, d = rec.deck;
+    if (d && c.deckM) {
+      // her node's rotation alone (its columns unit - a hull's model scale is hers, never the tent's), at the tent's
+      // own point on her deck, turned on her by the camp's heading
+      const m = c.deckM, R = new Float32Array(16);
+      for (let k = 0; k < 3; k++) {
+        const n = Math.hypot(m[4 * k], m[4 * k + 1], m[4 * k + 2]) || 1;
+        for (let i = 0; i < 3; i++) R[4 * k + i] = m[4 * k + i] / n;
+      }
+      const at = outOfDeck(m, [d.local[0] - Math.sin(d.yaw) * TENT_BEHIND, d.local[1], d.local[2] - Math.cos(d.yaw) * TENT_BEHIND], [0, 0, 0]);
+      R[12] = at[0]; R[13] = at[1]; R[14] = at[2]; R[15] = 1;
+      return multiply(R, trs(0, 0, 0, 0, d.yaw * 180 / Math.PI, 0));
+    }
+    const p = tentPos(rec);
+    return trs(p[0], p[1], p[2], 0, rec.yaw * 180 / Math.PI, 0);
+  };
+  /** The tents, in the host's world pass. PERF-WAGON: `cull` the host's view test over each tent's box where it
+   *  stands - the model's own, its target's (decorRoom.js drawSeen: drawn, cast alone or neither); none, or no box,
+   *  every tent drawn as before. Answers how many were drawn on screen. */
+  function draw(r = renderer, texRemap = null, cull = null) {
+    if (!_tent?.gpu || !r?.drawMesh) return 0;
+    let n = 0;
+    for (const c of seen()) if (c.rec.kind === CAMP_KIND.Tent) {
+      const m = tentMatrix(c);
+      if (drawSeen(r, cull, cull && _tent.box ? transformedAabb(_tent.box, m) : null, _tent.gpu, m, texRemap)) n++;
+    }
+    return n;
+  }
+
+  /** The eye's targets: the fire's box and, for a tent, the mesh's bounds.
+   *  HEARTH1: and a box on every world fire, so a brazier answers the
+   *  ray as a camp does - the box its collector measured off the sprite
+   *  (FIX-D: the flame alone could only be guessed around, and the guess
+   *  reached across a door). */
+  function targets() {
+    const out = [];
+    const wf = worldFires();
+    if (wf) for (let i = 0; i < wf.length; i++) {
+      // FIX-D: the SPRITE's own box (survival/hearth.js hearthAabb), not
+      // one guessed around the flame - and `noSurface`, because a flat
+      // has no collider, so every wall the ray meets in front of it is a
+      // wall and never the fire's own face (player/activate.js).
+      const aabb = hearthAabb(wf[i]);
+      if (aabb) out.push({ key: `hearth:${i}`, aabb, distance: RAY_DISTANCE, reach: CAMP_REACH, noSurface: true });
+    }
+    for (const c of seen()) {   // AUDIT SURV-TIERS (the third pass): sight - a seen camp stops the ray
+      const p = c.rec.pos;
+      out.push({ key: `camp:${c.rec.id}`, aabb: { min: [p[0] - FIRE_HALF, p[1], p[2] - FIRE_HALF], max: [p[0] + FIRE_HALF, p[1] + 1, p[2] + FIRE_HALF] }, distance: RAY_DISTANCE, reach: CAMP_REACH });
+      if (c.rec.kind === CAMP_KIND.Tent) {
+        const m = tentMatrix(c);
+        const tp = tentPos(c.rec);
+        const box = _tent?.box ? transformedAabb(_tent.box, m) : [tp[0] - 1.5, tp[1], tp[2] - 1.5, tp[0] + 1.5, tp[1] + 2, tp[2] + 1.5];
+        out.push({ key: `camp:${c.rec.id}`, aabb: { min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] }, distance: RAY_DISTANCE, reach: CAMP_REACH });
+      }
+    }
+    return out;
+  }
+  const forKey = (key) => seen().find((c) => `camp:${c.rec.id}` === key) ?? null;   // the name and the look are sight; the menu below is use
+  /** WORLD-HOVER: the port's OWN world objects, named through World
+   *  Tooltips' extension API (vendor .cs:228-257) rather than wedged
+   *  into its ladder - the mod has no word for a camp because
+   *  Daggerfall has no camps. A tent and its fire share one `camp:`
+   *  key (two boxes, one subject), so the kind decides the word; a
+   *  `hearth:` is any world fire, which HEARTH1 stood a box on. */
+  function hoverName(key) {
+    // AUDIT-WH C1: the type guard `activate` eleven lines below has
+    // carried since HEARTH1, and this did not. The EXTERIOR door key is
+    // a bare NUMBER (worldModes' `key: i`), this namer is rung one of
+    // the host ladder, and that ladder runs ABOVE exteriorHoverName's
+    // own `typeof key === 'number'` test - so `key.startsWith` threw
+    // inside the frame body and killed requestAnimationFrame on the
+    // commonest interaction in a town. A namer is handed EVERY key the
+    // ray can win, not only the ones this module mints.
+    if (typeof key !== 'string') return null;
+    // REST2: and the plaque's rows - the loot plaque's list of actions (systems/worldHover.js resolveHover), the camp
+    // menu's own keys as the ids, so the lit row is what a press does (activate's `lit`)
+    if (key.startsWith('hearth:')) {
+      const title = hearths?.()?.[Number(key.slice(7))]?.placed ? 'Campfire' : 'Fire';   // REST3: a dungeon's placed fire is a Campfire (world/dungeon/dungeonFires.js)
+      return usable() ? { title, actions: HEARTH_ROWS.map((r) => ({ id: r.key, label: r.text })) } : { title };
+    }
+    const c = forKey(key);
+    if (!c) return null;
+    // AUDIT REST II H13: an Ember Jar's fire is no Campfire - it has no fuel to count and nothing to pick up
+    const jar = c.rec.kind === CAMP_KIND.Fire && !!c.rec.jar;
+    const out = { title: c.rec.kind === CAMP_KIND.Tent ? 'Camp' : jar ? (mine(c) ? 'Your Ember Jar fire' : 'Ember Jar fire') : mine(c) ? 'Your Campfire' : 'Campfire' };
+    if (c.rec.kind === CAMP_KIND.Fire && mine(c) && !jar) out.subs = [CAMP_TEXT.fuelLeft(c.rec.wear | 0)];
+    out.actions = campMenu(c.rec, now(), mine(c), { online: sharedClockOn() }).map((r) => ({ id: r.key, label: r.text }));   // ENDLESS PROVISIONS: every tier's
+    return out;
+  }
+  /** Info and Talk name it; Grab and Steal open the menu. REST2: `lit` is the plaque's lit row (quickLoot.js
+   *  plaqueActionFor) - a press does that row; with no plaque (the classic skin, touch) the menu opens as ever. */
+  function activate(key, mode, lit = null) {
+    // HEARTH1: a world fire is not a camp. It cannot be rested AT as an
+    // act (the rest window reads `byFire` and already sees it), stoked
+    // or packed - it is nobody's - so the only thing it opens is the
+    // cooking list, and Info and Talk say what it is.
+    if (typeof key === 'string' && key.startsWith('hearth:')) {
+      if (mode === 'info' || mode === 'dialogue') { say(CAMP_TEXT.seeHearth); return true; }
+      // REST2: a world fire rests too - its rows are Rest and Cook; the plaque's lit one, or the list without a plaque
+      if (lit === 'rest') { restAtHearth(); return true; }
+      if (lit === 'cook' || !sharedClockOn()) { openCook(null); return true; }   // offline the cooking list, as HEARTH1 opened it
+      openHearthMenu();
+      return true;
+    }
+    const c = forKey(key);
+    if (!c) return false;
+    if (mode === 'info' || mode === 'dialogue') { say(campInfoText(c.rec, now(), mine(c))); return true; }
+    if (lit && campMenu(c.rec, now(), mine(c), { online: sharedClockOn() }).some((r) => r.key === lit)) { act(c, lit); return true; }
+    openMenu(c);
+    return true;
+  }
+  /** AUDIT C&C (lens I): A WORLD FIRE'S REST IS THE FIRE'S, AND SO IS ITS REACH - a camp's has been since AUDIT
+   *  SURV-TIERS' third pass (act's 'rest', below). The ray meets a fire's sprite up to CAMP_REACH from the eye, and the
+   *  rest's place (each host's `restKind`) reads the feet against the flame, which a collector stands as high as the top
+   *  of its flat - so the Rest row opened a rough night at the far edge of a brazier. It asks what the place will. */
+  function restAtHearth() {
+    const feet = camera?.()?.feet;
+    if (!feet || !fireNear(feet)) { say(CAMP_TEXT.restCloser); return; }
+    openRest?.(null);
+  }
+  /** REST2: a world fire's own list, where no plaque stands: rest or cook. */
+  function openHearthMenu() {
+    const win = new ListPickerWindow({ items: HEARTH_ROWS.map((r) => r.text), onPick: (i) => { if (HEARTH_ROWS[i]?.key === 'rest') restAtHearth(); else openCook(null); } });
+    if (showOverlay) showOverlay(win); else openCook(null);
+    return win;
+  }
+  /** REST2: a night slept at your own camp in reach spends one of its charges (camp.js spendCampNight) - the
+   *  Campfire's fuel, the tent's wear - and says so when the last is gone. A friend's fire costs you nothing, and a
+   *  Field Cook's own Campfire nothing (PROF9). */
+  function spendNightNear(pos) {
+    if (!pos) return false;
+    let best = null, bestD = BY_FIRE_REACH;
+    for (const c of camps) {
+      if (!mine(c) || !visible(c) || !fireLit(c.rec, now())) continue;   // AUDIT C&C: never one out of sight
+      const d = Math.hypot(c.rec.pos[0] - pos[0], c.rec.pos[1] - pos[1], c.rec.pos[2] - pos[2]);
+      if (d <= bestD) { best = c; bestD = d; }
+    }
+    if (!best) {
+      // REST6: no fire of mine - a night on the Bedroll laid here spends one of its nights (a fire in reach was the point)
+      if (fireNear(pos) || !bedrollNear(pos)) return false;
+      if (spendCharge(_bedroll.item, _bedroll.list)) { say(REST_ITEM_TEXT.bedrollWorn); _bedroll = null; }
+      return true;
+    }
+    const r = spendCampNight(best.rec, now(), fieldCook?.() === true);
+    if (r.kept) return true;
+    if (!r.spent) return false;
+    if (r.empty) { say(best.rec.jar ? CAMP_TEXT.embersOut : best.rec.kind === CAMP_KIND.Fire ? CAMP_TEXT.outOfFuel : CAMP_TEXT.campWorn); unmount(best); }
+    onChanged?.();
+    return true;
+  }
+  function openMenu(c) {
+    const rows = campMenu(c.rec, now(), mine(c), { online: sharedClockOn() });
+    // AUDIT C&C I11: a camp with nothing to do at it - online a friend's cold one, since its one row, a Cook that only
+    // refused, went - says what it is, as Info does, rather than opening an empty list
+    if (!rows.length) { say(campInfoText(c.rec, now(), mine(c))); return null; }
+    const win = new ListPickerWindow({ items: rows.map((r) => r.text), onPick: (i) => act(c, rows[i]?.key) });
+    if (showOverlay) showOverlay(win); else act(c, rows[0]?.key);
+    return win;
+  }
+  function act(c, key) {
+    if (!camps.includes(c)) return;
+    if (key === 'rest') {
+      // AUDIT SURV-TIERS (the third pass): THE REST IS THE FIRE'S, AND SO IS ITS REACH. The menu opens from a tent's
+      // far side, up to seven metres from its fire, and the rest it opened was priced where the player stood - bare
+      // ground: Hard's gate refused a lit camp's own sleeper ("It is too cold to sleep here"), or the night was the
+      // rough one, stiff morning and all. It is offered where it is a camp's rest, and a cold camp of your own is
+      // stoked for it (SURV3: "a rest will") - AUDIT C&C I1: whatever its menu would stoke, a Campfire with fuel too,
+      // and said only when it lit
+      const feet = camera?.()?.feet;
+      if (!feet || !within(c.rec.pos, feet, BY_FIRE_REACH)) { say(CAMP_TEXT.restCloser); return; }
+      if (canStoke(c.rec, now(), mine(c)) && stokeFire(c.rec, now())) { remount(c); say(c.rec.kind === CAMP_KIND.Fire ? CAMP_TEXT.relit : CAMP_TEXT.stoked); onChanged?.(); }
+      openRest?.(c.rec);
+      return;
+    }
+    if (key === 'stoke') {
+      // REST2: a cold Campfire relights while it has fuel; with none, Firewood first
+      if (!stokeFire(c.rec, now())) { say(CAMP_TEXT.noFuel); return; }
+      remount(c); say(c.rec.kind === CAMP_KIND.Fire ? CAMP_TEXT.relit : CAMP_TEXT.stoked); if (c.owner == null) onChanged?.();
+      return;
+    }
+    if (key === 'pack') {
+      if (!mine(c)) { say(CAMP_TEXT.notYours); return; }
+      const r = packCamp(c.rec);
+      if (r.item && entity) (entity.items ??= []).push(r.item);
+      drop(c); say(r.text); onChanged?.();
+      return;
+    }
+    if (key === 'cook') openCook(c);
+  }
+  /** The cooking list. HEARTH1: `c` is the camp whose fire this is, or
+   *  NULL for one of the world's own - a brazier burns for ever and
+   *  belongs to nobody, so there is no burn-down test to make.
+   *  FB1020c BAG-COOK: the pack's raw food, then the Materials Bag's -
+   *  a netted Raw Fish goes into the bag first (materialsBag.js
+   *  mintCarried), and the list read the pack alone, so a bag's owner
+   *  was told "You have nothing to cook." over a bag of fish. Read after
+   *  the pack as DFU's potion maker reads the wagon after it
+   *  (DaggerfallPotionMakerWindow.cs Refresh), and only while the pack
+   *  holds a bag (a sold bag's list is nobody's); the cooked food goes
+   *  into the pack. */
+  function openCook(c) {
+    const items = entity?.items ?? [];
+    const bag = hasBag(items) ? (entity?.bagItems ?? []) : [];
+    const raw = [...cookables(items).map((it) => [it, items]), ...cookables(bag).map((it) => [it, bag])];
+    if (!raw.length) { say(CAMP_TEXT.nothingToCook); return null; }
+    if (c && !fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }
+    const win = new ListPickerWindow({
+      items: raw.map(([it]) => ((it.stackCount ?? 1) > 1 ? `${it.name} (${it.stackCount})` : it.name)),
+      onPick: (i) => {
+        const [it, from] = raw[i];
+        const r = cookFood(it, from, { skillet: hasSkillet(items), into: items });
+        if (!r) return;
+        say(r.text);
+        advanceMinutes?.(r.minutes);
+      },
+    });
+    if (showOverlay) showOverlay(win);
+    return win;
+  }
+
+  /**
+   * HEARTH1: the world's own fires, live off the host's door.
+   *
+   * A brazier does not move, burn down or belong to anyone, so there is
+   * no pool and no record - the host hands over the positions it read
+   * out of the block it was already reading, and this asks them the
+   * same question it asks the camps.
+   *
+   * AUDIT HEARTH1 F1: AND IT IS BEHIND THE MOD'S OWN SWITCH. The camps
+   * never needed one here - nothing can be PLACED with Climates &
+   * Calories off, so the pool is empty and every question about it
+   * answers no by itself. A brazier is in the world whether the mod is
+   * on or not, so without this gate the survival arc leaked out through
+   * it: a fire bowl answered the activation ray with a cooking list and
+   * reported `byFire` to a law nobody had turned on. Off, every seam is
+   * DFU's - that is the arc's own sentence and this is where it was
+   * about to stop being true. (AUDIT SURV-TIERS: the camps did need one
+   * - a camp stood before the switch went off stayed standing, and a
+   * peer's arrived regardless. `seen` and `shown` are theirs now; this
+   * is the braziers'.)
+   */
+  const worldFires = () => (usable() && hearths ? hearths() : null);   // REST2: online a brazier is a rest point, the arc on or off
+
+  /**
+   * The needs law's `byFire`: within BY_FIRE_REACH of a lit fire.
+   *
+   * HEARTH1 (Mac: "Does this version of C&C not let you use braziers as
+   * extra campfires to cook from?"): anyone's CAMP, and now the world's
+   * own braziers and fire bowls with them. A fire is a fire - it warms
+   * you, dries you and makes a rest a camp's rest (SURV4 reads this
+   * through `restKind`), and a player standing over a roaring brazier
+   * had been as cold and as roughly rested as one standing in a field.
+   */
+  const byFire = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now())
+    || hearthNear(worldFires(), pos, BY_FIRE_REACH);   // AUDIT HEARTH1 F2: the FIRST fire in reach, not the nearest - this runs every frame
+  /**
+   * AUDIT SURV-TIERS: the WORLD's answer to the same question - anyone's
+   * lit camp or one of the world's fires in reach - in EVERY tier. The
+   * rest's PLACE reads it (each host's `restKind`; scenes/shared.js
+   * createRestDeps): where a sleep is, is the world's, and a party
+   * follower mirrors it - a follower beside an Off leader's fire sees
+   * the fire. Everything this player USES reads `byFire`, which is Off's
+   * to hide.
+   */
+  const fireNear = (pos) => !!nearestFire(seen().map((c) => c.rec), pos, now())   // AUDIT C&C (lens I): a camp out of sight answers no reach - a deck camp hidden with her boat still found its fire at its last posed point
+    || hearthNear(hearths ? hearths() : null, pos, BY_FIRE_REACH);
+  /** AUDIT C&C I2: a tent this player uses in reach - the roof a rest at it sleeps under (the hosts' `sheltered`). */
+  const tentNear = (pos) => tentInReach(shown().map((c) => c.rec), pos);
+
+  /** DestroyLightSources' twin: every transition and every load. */
+  function destroyAll() {
+    for (const c of camps) unmount(c);
+    camps.length = 0;
+    _bedroll = null;   // REST6: a spot, not a camp - the scene's teardown takes it up
+    _owners.clear();
+  }
+  /** The streaming host's sweep: a camp on an evicted pixel goes with it - it comes back from the scene cache. */
+  function collectPixel(key) {
+    for (let i = camps.length - 1; i >= 0; i--) if (camps[i].pixelKey === key) { unmount(camps[i]); camps.splice(i, 1); }
+  }
+  /** A floating-origin recenter moves the pool. */
+  function offsetAll(offset) {
+    const [dx, dy, dz] = offset;
+    for (const c of camps) {
+      c.rec.pos[0] += dx; c.rec.pos[1] += dy; c.rec.pos[2] += dz;
+      if (c.rec.deck) { if (c.batch) c.batch.origin = [c.rec.pos[0], c.rec.pos[1], c.rec.pos[2]]; }   // DECK-CAMP: moved, never rebuilt (ride poses it off her next)
+      else if (c.batch) remount(c);
+    }
+    if (_bedroll) { _bedroll.pos[0] += dx; _bedroll.pos[1] += dy; _bedroll.pos[2] += dz; }   // AUDIT REST F10: the laid spot rides the origin too
+  }
+  /** AUDIT LANDFORMS II G1: THE GROUND MOVED UNDER A PIXEL - a rebuild the reference never makes (the road network
+   *  landing, which the landforms cut metres into the land; a late World of Daggerfall pack; the gate's clearing) -
+   *  and what lies in its box [x0, x1) x [z0, z1) rides it by `dy(x, z)`, the ground's own move under it (world.js's
+   *  publish). Left where it lay, a camp hung over a cut or lay buried in a fill - up to 28 m - and the next save kept it so. */
+  function groundMoved(x0, z0, x1, z1, dy) {
+    const inBox = (p) => p[0] >= x0 && p[0] < x1 && p[2] >= z0 && p[2] < z1;
+    for (const c of camps) {
+      if (c.rec.deck || !inBox(c.rec.pos)) continue;   // DECK-CAMP: a deck's camp rides her, never the ground
+      const d = dy(c.rec.pos[0], c.rec.pos[2]);
+      if (!d) continue;
+      c.rec.pos[1] += d;
+      if (c.batch) remount(c);
+    }
+    if (_bedroll && inBox(_bedroll.pos)) _bedroll.pos[1] += dy(_bedroll.pos[0], _bedroll.pos[2]);
+  }
+  /** This player's own camps for the save and the scene cache, in the host's frame. */
+  const snapshot = (toWorld = (p) => p) => own().map((rec) => { const p = toWorld(rec.pos); return { ...rec, pos: [p[0], p[1], p[2]] }; });
+  function restore(list, fromWorld = (p) => p) {
+    // AUDIT SURV B: a MERGE by id, not a clear-and-stand - the save's list and a peer's memory join what stands
+    for (const r of Array.isArray(list) ? list : []) {
+      if (!r || typeof r !== 'object' || !Array.isArray(r.pos) || r.pos.length !== 3 || !(r.kind === CAMP_KIND.Tent || r.kind === CAMP_KIND.Fire)) continue;
+      if (r.id != null && camps.some((c) => c.owner == null && c.rec.id === String(r.id))) continue;
+      // AUDIT SURV-TIERS (the third pass): the id counter goes on from the save's - it began again at nought in a new
+      // page, so a camp pitched in the minute the saved one was stood under its id, and the next load stood one of two
+      const n = /^[^:]+:(\d+)(?::|$)/.exec(String(r.id ?? ''));
+      if (n) _nextId = Math.max(_nextId, Number(n[1]));
+      const p = fromWorld(r.pos);
+      const deckAt = validDeck(r.deck);   // DECK-CAMP: on her deck still - posed off her once she stands again
+      stand({ id: String(r.id ?? `me:${++_nextId}`), owner: r.owner ?? null, kind: r.kind, pos: [p[0], p[1], p[2]], yaw: Number(r.yaw) || 0, litUntil: Number.isFinite(r.litUntil) ? r.litUntil : null, wear: r.wear | 0, placedAt: r.placedAt ?? null, ...(r.jar === true ? { jar: true } : {}), ...(r.fuel === true ? { fuel: true } : {}), ...(deckAt ? { deck: deckAt } : {}) });   // REST6: an Ember Jar's fire stays one; AUDIT REST F12: a Campfire its own fuel
+      if (own().length >= CAMPS_PER_OWNER) break;
+    }
+  }
+
+  /**
+   * AUDIT SURV-TIERS (the third pass): A LOAD'S FIRST ACT. This player's own camps are the save's to say, and
+   * `restore` merges (AUDIT SURV B) - so a quickload after pitching kept the pitched tent AND handed the gear back
+   * (packing it made two), and loading another character stood the first one's camps as theirs. Every host's load
+   * drops the player's own before it restores; a peer's stand on their owner's word.
+   */
+  function dropOwn() {
+    let n = 0;
+    for (let i = camps.length - 1; i >= 0; i--) if (mine(camps[i])) { drop(camps[i]); n++; }
+    _bedroll = null;   // AUDIT REST F10
+    if (n) onChanged?.();   // AUDIT REST II H1: the room hears they went, as packOwnFires' walk out says it - never a peer's ghost fire
+  }
+  /** AUDIT REST F1: leaving a scene that keeps nothing of mine (a dungeon): my own Campfires back into the pack with the
+   *  fuel they have, said once - never an Ember Jar's. Answers how many. AUDIT REST II H4: `quiet` leaves the saying to
+   *  the caller - a dungeon's own HUD is torn down with the dungeon, so a line said into it was never seen. */
+  function packOwnFires({ quiet = false } = {}) {
+    let n = 0;
+    for (let i = camps.length - 1; i >= 0; i--) {
+      const c = camps[i];
+      if (!mine(c) || c.rec.kind !== CAMP_KIND.Fire || c.rec.jar || !c.rec.fuel) continue;   // AUDIT REST-PARTY B5: nor an old save's kit fire - it goes with the dungeon, as it always did
+      const r = packCamp(c.rec);
+      if (r.item && entity) { (entity.items ??= []).push(r.item); n++; }
+      drop(c);
+    }
+    if (n) { if (!quiet) say(CAMP_TEXT.carriedOut); onChanged?.(); }
+    return n;
+  }
+
+  // ---- ONLINE ----
+  /** My camps as the wire says them. */
+  const wireRecords = (toWire = (p) => p) => own().map((rec) => campWire(rec, toWire));
+  /** Another's word: their camps replace theirs, through the door. */
+  function applyOwner(owner, records, toScene = (p) => p, nowMs = 0) {
+    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;
+    // AUDIT SURV-TIERS (the third pass): a record that stands as this player's own is theirs, whoever relays it - a
+    // room's memory keys each camp by the id it was placed under, and in a new tab that is not this one's, so the
+    // save's fire stood twice (once unpackable)
+    const ownIds = new Set(own().map((rec) => rec.id));
+    const theirs = Array.isArray(records) ? records.filter((r) => !ownIds.has(r?.i)) : records;
+    // AUDIT 68 S18-camps-applyowner-dead: the owner's word, parsed - every camp handed in beside it was that owner's,
+    // so the merge kept none of them, and the `before` map was written and never read
+    const fresh = mergeOwnerCamps([], owner, theirs, toScene, selfId?.() ?? null);
+    // keep a batch whose record is unchanged in place; re-stand the rest. DECK-CAMP: a camp on a deck is unchanged while
+    // it stays where it is ON HER - its scene point moves with her every frame
+    const moved = (r, rec) => (r.deck || rec.deck
+      ? !r.deck || !rec.deck || !!r.deck.mine !== !!rec.deck.mine || r.deck.peer !== rec.deck.peer || r.deck.uid !== rec.deck.uid
+        || r.deck.local.some((v, i) => Math.abs(v - rec.deck.local[i]) > 0.01)
+      : r.pos.some((v, i) => Math.abs(v - rec.pos[i]) > 0.01));
+    for (const c of camps.filter((x) => x.owner === owner)) {
+      const r = fresh.find((x) => x.id === c.rec.id);
+      if (!r || r.kind !== c.rec.kind || moved(r, c.rec)) drop(c);
+      else { c.rec.litUntil = r.litUntil; c.rec.wear = r.wear; if (!c.rec.deck) c.rec.yaw = r.yaw; fresh.splice(fresh.indexOf(r), 1); }
+    }
+    for (const r of fresh) stand(r, { owner });
+    _owners.set(owner, { at: nowMs });
+    return true;
+  }
+  /** AUDIT REST-PARTY B3: A PEER'S FIRE GONE COLD, ITS OWNER NOWHERE HERE - a dungeon room's memory of a player who left
+   *  it (a tab closed underground; an exit packs its own since). REST2 made a Campfire cold, not gone, and AUDIT REST F12
+   *  left a peer's fire to its owner's word, so a ghost stood in the room's memory for every later joiner for ever. Lit,
+   *  it is a fire anyone may rest at till its minute; cold, only its owner could relight it. A present owner's cold
+   *  fire stands. Answers how many went. */
+  function sweepColdAbsent(alive) {
+    if (!alive?.has) return 0;
+    const t = now();
+    let n = 0;
+    for (let i = camps.length - 1; i >= 0; i--) {
+      const c = camps[i];
+      if (c.owner == null || alive.has(c.owner) || c.rec.kind !== CAMP_KIND.Fire || fireLit(c.rec, t)) continue;
+      drop(c);
+      n++;
+    }
+    return n;
+  }
+  /** An owner gone from the room, or quiet past staleMs, takes their camps with them. */
+  function sweepOwners(alive, nowMs, staleMs = 0) {
+    for (const [owner, o] of [..._owners]) {
+      if (alive?.has?.(owner) && !(staleMs > 0 && nowMs - o.at > staleMs)) continue;
+      for (let i = camps.length - 1; i >= 0; i--) if (camps[i].owner === owner) drop(camps[i]);
+      _owners.delete(owner);
+    }
+  }
+
+  return {
+    placeItem, ride, tick, tend, batches, lights, draw, targets, hoverName, activate, openMenu, openCook, byFire, fireNear, tentNear, spendNightNear,   // DECK-CAMP: ride; AUDIT C&C I2: tentNear
+    restPointAt, bedrollNear, packOwnFires,   // REST6; AUDIT REST F1
+    destroyAll, dropOwn, collectPixel, offsetAll, groundMoved, snapshot, restore, wireRecords, applyOwner, sweepOwners, sweepColdAbsent,
+    get camps() { return camps; }, own,
+    usable,   // AUDIT DECOR-USE D6: whether the world's fires answer here - a placed one too (systems/decor/decorUse.js)
+  };
+}

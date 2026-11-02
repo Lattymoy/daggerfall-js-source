@@ -1,0 +1,103 @@
+[
+  {
+    "name": "AUDIT0929-D1-the-beneath-arm-dropped",
+    "file": "src/world/actionSystem.js",
+    "old": "  if (len > 0 && dy / len < WALK_ON_DIR_Y) return 'WalkOn';",
+    "new": "  if (false) return 'WalkOn';",
+    "tests": [
+      "test/player/audit0929_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D2-a-side-heard-unpressed",
+    "file": "src/world/actionSystem.js",
+    "old": "  if (wish && !(wish[0] * dx + wish[1] * dz > 0)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/player/audit0929_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D1-the-ray-for-every-flag",
+    "file": "src/world/actionSystem.js",
+    "old": "  if (o.triggerFlag === TRIGGER_FLAGS.Collision01 && ownSurfaceUnderFeet(surfaces, o.key, feet)) return 'WalkOn';\n  return 'WalkInto';\n}",
+    "new": "  if (ownSurfaceUnderFeet(surfaces, o.key, feet)) return 'WalkOn';\n  return 'WalkInto';\n}",
+    "tests": [
+      "test/player/audit0929_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D1-no-contact-answered",
+    "file": "src/world/actionSystem.js",
+    "old": "  if (!at) return null;\n  const dx",
+    "new": "  if (!at) return 'WalkInto';\n  const dx",
+    "tests": [
+      "test/player/audit0929_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D1-the-chain-its-feet-alone",
+    "file": "src/player/collider.js",
+    "old": "      for (let i = 0; i < n; i++) {\n        let ly = feet[1] + CAPSULE_RADIUS + (axis * i) / (n - 1) - t[1];",
+    "new": "      for (let i = 0; i < 1; i++) {\n        let ly = feet[1] + CAPSULE_RADIUS + (axis * i) / (n - 1) - t[1];",
+    "tests": [
+      "test/player/audit0929_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D1-beneath-unfiltered",
+    "file": "src/player/collider.js",
+    "old": "              if (!(len > 0 && cy / len < beneath)) continue;",
+    "new": "              /* beneath unfiltered */",
+    "tests": [
+      "test/player/audit0929_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D2-triggerSurfaces-collision01-alone",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (standable && hasActionCollision(standable)) triggerSurfaces.addMesh(",
+    "new": "      if (standable?.triggerFlag === TRIGGER_FLAGS.Collision01) triggerSurfaces.addMesh(",
+    "tests": [
+      "test/world/disc29_throne.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D2-the-press-unread-in-the-pass",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      wish = _wish;",
+    "new": "      /* no press */",
+    "tests": [
+      "test/player/audit0929_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D2-the-motor-keeps-no-yaw",
+    "file": "src/player/motor.js",
+    "old": "    this.moveStrafe = input.strafe || 0; this.moveYaw = yaw;",
+    "new": "    this.moveStrafe = input.strafe || 0;",
+    "tests": [
+      "test/player/audit0929_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D2-the-bag-drops-the-yaw",
+    "file": "src/player/motor.js",
+    "old": "    yaw: Number.isFinite(player.moveYaw) ? player.moveYaw : NaN,",
+    "new": "    yaw: NaN,",
+    "tests": [
+      "test/player/audit0929_actions.test.js",
+      "test/player/ww2_idlebob.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-D3-the-stashes-unrepaired",
+    "file": "src/systems/save/save.js",
+    "old": ", ...stashedItemLists(snap), ...heldItemLists(snap)];",
+    "new": ", ...heldItemLists(snap)];",
+    "tests": [
+      "test/systems/disc29_rarity.test.js",
+      "test/systems/disc21.test.js"
+    ]
+  }
+]

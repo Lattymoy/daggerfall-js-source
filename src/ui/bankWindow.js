@@ -1,0 +1,634 @@
+// B2 - THE BANKING WINDOW: DaggerfallBankingWindow (MIT, Daggerfall
+// Workshop / Lypyl, Hazelnut) on real ARENA2 art.
+//
+// THE NATIVE-WINDOW RULE, element by element:
+// - the panel is BANK00I0.IMG, which ships 225x181 - exactly
+//   mainPanel.Size (:77). Read with the port's own ImgFile.
+// - Center/Middle on the 320x200 native panel (:78-79), so it sits at
+//   ((320-225)/2, (200-181)/2) = (48, 10) with the same half-pixel
+//   rounding every other centred panel in the port uses.
+// - FOUR LABELS the window keeps live (:81-106): the account total at
+//   (150,14), the player's gold at (156,24) - which appends the
+//   WAGON's gold in parentheses when the cart carries any - the loan
+//   due at (96,34) and the due DATE at (71,44).
+// - TEN BUTTONS in two columns of five (:108-183), all 45x8: deposit
+//   and withdraw at y58, the two letter-of-credit buttons at y76,
+//   repay and borrow at y94, buy/sell house at y112, buy/sell ship at
+//   y130. Exit is (92,159,40,19).
+// - ONE NUMERIC INPUT at (113,146,103,12), nine characters (:185-190).
+//   It is DISABLED until a button opens it, which is the whole
+//   interaction model: a button chooses a transaction TYPE, the field
+//   takes the amount, Return commits it.
+//
+// The laws are systems/banking.js's - every refusal, every gate and
+// the arithmetic. This file is the panel, the hit rects and the box.
+//
+// H2 opened the HOUSE half of this: BUY HOUSE reaches
+// ui/bankPurchaseWindow.js now, and the refusals above it are the
+// law's. D6 opened the SHIP half against the same window: the two
+// fixed ship scenes at map pixels (2,2) and (5,5) were never the
+// blocker - banking.js has carried SHIP_COORDS and
+// SHIP_INTERIOR_MAP_IDS since H3 and the SELL path already adds and
+// drops both - what was missing was DFU's else arm at :463, which
+// pushes BankPurchasePopup with a NULL house list. So BUY SHIP in a
+// port town now opens the shipyard instead of answering NOT_PORT_TOWN
+// on the one case that should succeed. DFU binds each button to a
+// DaggerfallShortcut hotkey; the accelerators here are the port's own
+// (Ledger A).
+
+import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js'; // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { typedChar } from './input.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
+import {
+  TRANSACTION_TYPE,
+  TRANSACTION_RESULT,
+  bankButtonEnabled,
+  toggleTransactionInput,
+  parseTransactionAmount,
+  borrowDecision,
+  buyHouseDecision,
+  buyShipDecision,
+  sellDecision,
+  houseOfferText,
+  accountTotal,
+  loanedTotal,
+  loanDueDate,
+  calculateMaxBankLoan,
+  depositGold,
+  withdrawGold,
+  depositAllLetters,
+  withdrawLetter,
+  repayLoan,
+  borrowLoan,
+  shipSellPrice,
+  empireRefusalLines,
+  empireDefaultOwed,
+  empireGarnishLines, // REALM P0.3: online, the Empire is one lender
+  goldRegion, // EMPIRE-ACCOUNT: online, one account at every branch
+} from '../systems/banking.js';
+import { REGION_NAMES } from '../formats/mapsFile.js'; // REALM P0.3: the branch another loan or default stands in
+import { expandMacroValues } from '../systems/quest/questMacros.js'; // MH1: the ONE walk
+import { localizedText, getLocalizedRegionName } from '../systems/textManager.js'; // L10N3d: the TOO_HEAVY line; L10N3e: %reg's region shown
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+
+/** mainPanel.Size (:77) - and the size BANK00I0.IMG ships. */
+export const BANK_PANEL_W = 225,
+  BANK_PANEL_H = 181;
+export const BANK_PANEL_X = Math.round((320 - BANK_PANEL_W) / 2); // 48
+export const BANK_PANEL_Y = Math.round((200 - BANK_PANEL_H) / 2); // 10
+
+/** The four live labels (:81-106), panel-relative. */
+export const BANK_LABELS = Object.freeze({
+  account: [150, 14],
+  inventory: [156, 24],
+  loanDue: [96, 34],
+  loanBy: [71, 44],
+});
+
+/** The ten buttons, the exit and the field (:108-190), panel-relative.
+ *  Two columns at x120 and x172, five rows on an 18-pixel stride. */
+export const BANK_RECTS = Object.freeze({
+  depositGold: [120, 58, 45, 8],
+  withdrawGold: [172, 58, 45, 8],
+  depositLetters: [120, 76, 45, 8],
+  withdrawLetter: [172, 76, 45, 8],
+  loanRepay: [120, 94, 45, 8],
+  loanBorrow: [172, 94, 45, 8],
+  buyHouse: [120, 112, 45, 8],
+  sellHouse: [172, 112, 45, 8],
+  buyShip: [120, 130, 45, 8],
+  sellShip: [172, 130, 45, 8],
+  exit: [92, 159, 40, 19],
+  input: [113, 146, 103, 12],
+});
+/** TextBox.Numeric, MaxCharacters 9 (:188-190). */
+export const AMOUNT_FIELD = Object.freeze({ numeric: true, maxCharacters: 9 });
+
+/** The button -> transaction type each one opens (:370-396). Three
+ *  are NOT here because they decide before they open anything. */
+const OPENS = Object.freeze({
+  depositGold: TRANSACTION_TYPE.Depositing_gold,
+  withdrawGold: TRANSACTION_TYPE.Withdrawing_gold,
+  withdrawLetter: TRANSACTION_TYPE.Withdrawing_Letter,
+  loanRepay: TRANSACTION_TYPE.Repaying_loan,
+});
+
+/** MARKS1: the Marks sale's amount field - the PORT'S entry, never one of DFU's transaction types (online, the Bank of
+ *  the Empire buys Marks for gold; PROF0 10.5). Reached from the enhanced face's "Sell Marks" alone. */
+export const MARKS_ENTRY = 'marks';
+/** The line under the counting while the service answers. */
+export const MARKS_COUNTING = 'The Bank counts your silver...';
+
+/** "cannotCarryGold" - the one result that is NOT a TEXT.RSC record,
+ *  so the window supplies its own line (:308-309). */
+export const CANNOT_CARRY_GOLD = 'You cannot carry that much gold.';
+
+let _art = null;
+/** BOX1's seam, as every other art-gated window carries it. */
+export function _setBankArtForTests(art) {
+  _art = art;
+}
+export async function preloadBankArt(deps) {
+  if (_art) return;
+  try {
+    _art = await loadImg(deps, 'BANK00I0.IMG');
+  } catch {
+    console.warn('[bank] BANK00I0 unavailable; the banking window stays closed');
+  }
+}
+export const bankArtLoaded = () => !!_art;
+
+const inRect = ([rx, ry, rw, rh], x, y) =>
+  x >= rx + BANK_PANEL_X && y >= ry + BANK_PANEL_Y && x < rx + BANK_PANEL_X + rw && y < ry + BANK_PANEL_Y + rh;
+
+/**
+ * hooks:
+ *   accounts()     -> the per-region account array
+ *   regionIndex()  -> PlayerGPS.CurrentRegionIndex
+ *   player         the purse seam banking.js's transactions take
+ *   level()        -> for CalculateMaxBankLoan
+ *   now()          -> classic minutes
+ *   wagonGold()    -> the cart's gold, for the parenthesised label
+ *   rows(textId)   -> the host's TEXT.RSC reader
+ *   dueDateText(minutes, { short }) -> GetLoanDueDateString (AUDIT LIVED1 P:
+ *                    `short` for the classic label's room online)
+ *   playerName(), cityName(), regionName()  -> AUDIT 64 F25: the three
+ *                    GLOBAL macro producers the bank records quote
+ *                    (%pcn, %cn, %reg); an unwired one leaves its
+ *                    token verbatim
+ *   ownsHouse(), ownsShip(), housesForSale(), isPortTown(), houseSellPrice()
+ *   ownedHouseResolved() -> AUDIT 64 F26: GetBuildingSummary's bool
+ *   crossedDeed(kind) -> RESTORE: the bank's words for a deed that came through customs, or null
+ *   housesFull()   -> HOUSES-3: the region holds its three houses (Buy House refuses)
+ *   houseOffers()  -> HOUSES-3: the region's houses the bank buys back in this town, each { price, crossed } (crossed:
+ *                    the customs' words, or null), offered in turn; sellHouse(i) sells the i-th. A host with none
+ *                    offers the one house the four hooks above name (Daggerfall's one house a region)
+ *   openPurchase()  -> H2: mounts the purchase window; false if it cannot
+ *   onClose()
+ */
+export class BankWindow {
+  constructor(hooks) {
+    noteFirstUse('bank'); // TUT1
+    this.hooks = hooks;
+    this.done = false;
+    this.isChoiceWindow = true; // raw codes through the overlay seam
+    this.transactionType = TRANSACTION_TYPE.None;
+    this.value = '';
+    this.box = null;
+  }
+
+  _close() {
+    this.done = true;
+    noticeRelease(this);
+    this.hooks.onClose?.();
+  }
+  get accounts() {
+    return this.hooks.accounts();
+  }
+  get region() {
+    return this.hooks.regionIndex();
+  }
+
+  /** UpdateButtons (:252-265), through the law. MARKS1: the Marks sale is the port's own - open, held, nothing typed. */
+  enabled(button) {
+    if (button === 'sellMarks') {
+      const m = this.hooks.marks;
+      return (
+        !!m &&
+        m.open() === true &&
+        (m.balance() ?? 0) > 0 &&
+        !m.pending() &&
+        this.transactionType === TRANSACTION_TYPE.None &&
+        !this.box
+      );
+    }
+    return bankButtonEnabled(button, {
+      transactionType: this.transactionType,
+      accounts: this.accounts,
+      regionIndex: this.region,
+    });
+  }
+
+  /** AUDIT 64 F25 - THE MACRO PASS EVERY BOX RUNS.
+   *
+   *  DaggerfallBankingWindow is an IMacroContextProvider whose
+   *  GetMacroDataSource answers a BankingMacroDataSource (:489-492),
+   *  and GeneratePopup builds every box but TOO_HEAVY with
+   *  `messageBox.SetTextTokens((int)result, this)` (:311), which runs
+   *  MacroHelper.ExpandMacros over the record against the window's own
+   *  BankingMacroDataSource: `Amount()` answers the `amount` argument
+   *  GeneratePopup has just stored (:306, :505-508) and `MaxLoan()`
+   *  answers FormulaHelper.CalculateMaxBankLoan() (:509-512) - the ONE
+   *  override of that member in all of DFU, so %ml exists only in a
+   *  bank record. The port stored `amount` where nothing read it and
+   *  handed the raw record text to the box, so the player read a
+   *  literal "%a" on both sell offers and "%ml" on any over-cap loan.
+   *
+   *  ExpandMacros is the WHOLE table, not those two: the same records
+   *  carry the global macros too (Internal_RSC.csv:615-682 - 282's
+   *  %cn, 285's %pcn, 288's %pcn and %reg), and 282 fires on the
+   *  ordinary buy-a-house path, so a %a/%ml-only pass would still print
+   *  "%cn" to every new homeowner. A symbol the host supplies no
+   *  producer for is left VERBATIM, which is GetValue's own ladder
+   *  (MacroHelper.cs:503-527) rather than a hole in the sentence. */
+  _macros(amount) {
+    return {
+      a: String(amount), // MacroHelper.cs:50
+      ml: () => String(calculateMaxBankLoan(this.hooks.level?.() ?? 1)), // :139
+      cn: this.hooks.cityName?.() ?? null, // :67, CityName :567-574
+      pcn: this.hooks.playerName?.() ?? null, // :152, PlayerName :779-782
+      reg: this._shownRegionName(), // :211, RegionInContext :1049-1057
+    };
+  }
+
+  /** L10N3e: %reg's region AS SHOWN - RegionInContext falls to
+   *  CurrentRegion, PlayerGPS.CurrentLocalizedRegionName (MacroHelper.cs
+   *  :1053, :590), here the window's one region; the host's canonical
+   *  name is the fallback, and no producer leaves the token standing. */
+  _shownRegionName() {
+    if (!this.hooks.regionName) return null;
+    const canonical = () => this.hooks.regionName() ?? null;
+    const i = this.hooks.regionIndex?.();
+    return Number.isInteger(i) ? getLocalizedRegionName(i, canonical) : canonical();
+  }
+
+  /** GeneratePopup (:299-337). NONE says nothing at all; TOO_HEAVY is
+   *  the one result with no record behind it - it takes SetText, never
+   *  SetTextTokens (:308-309), so no macro pass runs over it. */
+  _popup(result, amount = 0) {
+    if (result === TRANSACTION_RESULT.NONE) return;
+    const values = this._macros(amount);
+    const rows =
+      result === TRANSACTION_RESULT.TOO_HEAVY
+        ? [{ text: localizedText('cannotCarryGold', CANNOT_CARRY_GOLD), center: true }]
+        : (this.hooks.rows?.(result) ?? []).map((r) =>
+            typeof r === 'string' ? expandMacroValues(r, values) : { ...r, text: expandMacroValues(r.text, values) },
+          );
+    // THREE results ask rather than tell (:313-334), not one: the
+    // letter deposit and BOTH sell offers. H3 - the two sell arms
+    // raised a click-anywhere box and no sale, so a player could
+    // accept an offer and keep the house.
+    const ASKS = {
+      [TRANSACTION_RESULT.DEPOSIT_LOC]: () =>
+        this._garnished(() => depositAllLetters(this.accounts, this.region, this.hooks.player)),
+      // MakeTransaction(Sell_house / Sell_ship, 0, regionIndex)
+      // (:355, :364) - the amount is IGNORED on both, because the
+      // price is the deed's, not the player's to name.
+      [TRANSACTION_RESULT.SELL_HOUSE_OFFER]: () => this.hooks.sellHouse?.(),
+      [TRANSACTION_RESULT.SELL_SHIP_OFFER]: () => this.hooks.sellShip?.(),
+    };
+    const onYes = ASKS[result] ?? null;
+    this.box = {
+      rows: rows.length ? rows : [{ text: String(result), center: true }],
+      buttons: onYes ? 'YesNo' : null,
+      amount,
+      onYes,
+    };
+  }
+
+  /** REALM P0.3: a box of the Empire's own lines, which no Daggerfall record says. */
+  _lines(lines) {
+    this.box = { rows: lines.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null };
+  }
+
+  /** REALM P0.3: a deposit, and the Empire's garnish said when a default took some of it - the account shows less than
+   *  was paid in (banking.js garnishDeposit, online only). */
+  _garnished(deposit) {
+    const owed = empireDefaultOwed(this.accounts);
+    const result = deposit();
+    const taken = owed - empireDefaultOwed(this.accounts);
+    if (taken > 0) this._lines(empireGarnishLines(taken));
+    return result;
+  }
+
+  _openInput(type) {
+    this.transactionType = toggleTransactionInput(this.transactionType, type);
+    this.value = '';
+  }
+
+  /** HandleTransactionInput -> MakeTransaction (:280-295, :286-336). */
+  _commit() {
+    const amount = parseTransactionAmount(this.value);
+    const type = this.transactionType;
+    this._openInput(TRANSACTION_TYPE.None);
+    if (amount == null) return; // int.TryParse: nothing at all
+    if (type === MARKS_ENTRY) {
+      this._sellMarks(amount);
+      return;
+    } // MARKS1: the port's own
+    const a = this.accounts,
+      r = this.region,
+      p = this.hooks.player;
+    let result = TRANSACTION_RESULT.NONE;
+    switch (type) {
+      case TRANSACTION_TYPE.Depositing_gold:
+        result = this._garnished(() => depositGold(a, r, amount, p));
+        break;
+      case TRANSACTION_TYPE.Withdrawing_gold:
+        result = withdrawGold(a, r, amount, p);
+        break;
+      case TRANSACTION_TYPE.Withdrawing_Letter:
+        result = withdrawLetter(a, r, amount, p);
+        break;
+      case TRANSACTION_TYPE.Repaying_loan:
+        result = repayLoan(a, r, amount, p).result;
+        break;
+      case TRANSACTION_TYPE.Borrowing_loan:
+        result = borrowLoan(a, r, amount, { level: this.hooks.level?.() ?? 1, nowMinutes: this.hooks.now?.() ?? 0 });
+        break;
+      default:
+        return;
+    }
+    this._popup(result, amount);
+  }
+
+  /** MARKS1: the sale, asked of the service; the box counts until it answers, then says what the Bank paid (into this
+   *  region's account - the host's credit) or why not. */
+  _sellMarks(amount) {
+    this.box = { rows: [{ text: MARKS_COUNTING, center: true }], buttons: null, amount: 0, onYes: null, waiting: true };
+    const done = (r) => {
+      if (this.done) return;
+      this.box = { rows: [{ text: r?.text ?? MARKS_COUNTING, center: true }], buttons: null, amount: 0, onYes: null };
+    };
+    Promise.resolve(this.hooks.sellMarks?.(amount)).then(done, () => done(null));
+  }
+
+  _button(name) {
+    if (!this.enabled(name)) return;
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    if (name === 'sellMarks') {
+      this.transactionType = MARKS_ENTRY;
+      this.value = '';
+      return;
+    } // MARKS1
+    if (OPENS[name]) {
+      this._openInput(OPENS[name]);
+      return;
+    }
+    if (name === 'depositLetters') {
+      this._popup(TRANSACTION_RESULT.DEPOSIT_LOC);
+      return;
+    }
+    if (name === 'loanBorrow') {
+      const d = borrowDecision(this.accounts, this.region);
+      // DFU closes any open input on BOTH refusals (:403, :408)
+      if (d.kind === 'refuse') {
+        this._openInput(TRANSACTION_TYPE.None);
+        if (d.empireRegion != null)
+          this._lines(empireRefusalLines(d, (i) => REGION_NAMES[i] ?? '')); // REALM P0.3: another branch's
+        else this._popup(d.result);
+        return;
+      }
+      this._openInput(d.transactionType);
+      return;
+    }
+    if (name === 'buyHouse') {
+      // HOME1: online the bank sells no house. Mac chose the door ("At its front door"), not the bank, for an online
+      // home - and this list is Daggerfall's own house, which the account service never hears of, so a house bought
+      // here online could be anybody's online home tomorrow. The host answers the lines; offline it answers none.
+      const online = this.hooks.onlineHomeLines?.() ?? null;
+      if (online) {
+        this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null };
+        return;
+      }
+      const d = buyHouseDecision({
+        housesFull: !!this.hooks.housesFull?.(),
+        housesForSale: this.hooks.housesForSale?.() ?? 0,
+      });
+      // H2: 'pick' reaches the purchase window at last. The refusals
+      // are still the law's - the region's three owned (HOUSES-3, said
+      // in the bank's words counted to three), nothing for sale - and
+      // a host with no purchase window falls back to DFU's own answer
+      // for a missing directory (:433-434).
+      if (d.kind === 'refuse') {
+        if (d.lines) this._lines(d.lines);
+        else this._popup(d.result);
+        return;
+      }
+      if (!this.hooks.openPurchase?.()) this._popup(TRANSACTION_RESULT.NO_HOUSES_FOR_SALE);
+      return;
+    }
+    if (name === 'buyShip') {
+      const d = buyShipDecision({ ownsShip: this.hooks.ownsShip?.(), isPortTown: this.hooks.isPortTown?.() });
+      // D6: BuyShipButton_OnMouseClick (:455-464). The two refusals
+      // are the law's, and the else arm has NO fallback popup of its
+      // own - unlike BUY HOUSE, which answers NO_HOUSES_FOR_SALE for
+      // a missing directory (:433-434), the ships list is a fixed pair
+      // that cannot be empty, so DFU pushes unconditionally.
+      if (d.kind === 'refuse') {
+        this._popup(d.result);
+        return;
+      }
+      this.hooks.openShipPurchase?.();
+      return;
+    }
+    if (name === 'sellHouse') {
+      // AUDIT 64 F26: SellHouseButton_OnMouseClick (:440-453) is THREE
+      // nested conditions, not one - OwnsHouse (:443), the current
+      // BuildingDirectory existing at all (:446), and that directory
+      // resolving OwnedHouseKey (:449) - with no else on any of them.
+      // Ownership is region-keyed (DaggerfallBankManager.cs:136) while
+      // the directory holds only this location's buildings, so the
+      // inner two are independently false in every other town of the
+      // region, and the port raised an offer priced at 0 there. A host
+      // that wires no resolver is a host with NO building directory,
+      // which is :446's silent false arm - hence `=== true`, not a
+      // lenient default DFU has no counterpart for.
+      // HOUSES-3: a region holds three houses, and this town may stand more than one of them - each offered in turn
+      this._offerHouse(this.hooks.houseOffers?.() ?? this._oneHouseOffer());
+      return;
+    }
+    if (name === 'sellShip') {
+      const crossed = this.hooks.crossedDeed?.('ship'); // RESTORE: nor a ship
+      if (crossed) {
+        this._lines(crossed);
+        return;
+      }
+      const ship = this.hooks.ownedShip?.() ?? -1;
+      const d = sellDecision('ship', { owns: ship >= 0, price: shipSellPrice(ship) });
+      if (d.kind === 'offer') this._popup(d.result, d.price);
+    }
+  }
+
+  /** The house a host of Daggerfall's one house a region names, as an offer list: RESTORE's crossed words, else DFU's three
+   *  nested conditions (AUDIT 64 F26) - owned, a directory, the key resolved in it - or none. */
+  _oneHouseOffer() {
+    const crossed = this.hooks.crossedDeed?.('house');
+    if (crossed) return [{ crossed }];
+    const resolved = this.hooks.ownedHouseResolved?.() === true;
+    return this.hooks.ownsHouse?.() && resolved ? [{ price: this.hooks.houseSellPrice?.() ?? 0, crossed: null }] : [];
+  }
+
+  /** HOUSES-3: THE TOWN'S HOUSES, OFFERED IN TURN from `from` - Yes sells the one offered (sellHouse(i)), No offers the next.
+   *  One the bank does not buy back is passed by (RESTORE: online, what came through customs), and said only where it
+   *  was all there was to offer; none at all is Daggerfall's silence (:443-451 has no else). */
+  _offerHouse(offers, from = 0) {
+    for (let i = from; i < offers.length; i++) {
+      if (offers[i].crossed) continue;
+      const d = sellDecision('house', { owns: true, price: offers[i].price ?? 0 });
+      this._popup(d.result, d.price);
+      if (offers.length > 1)
+        this.box.rows = [...this.box.rows, { text: houseOfferText(i + 1, offers.length), center: true }];
+      this.box.onYes = () => this.hooks.sellHouse?.(i);
+      this.box.onNo = () => this._offerHouse(offers, i + 1);
+      return;
+    }
+    const crossed = from === 0 ? offers.find((o) => o.crossed)?.crossed : null;
+    if (crossed) this._lines(crossed);
+  }
+
+  _dismissBox(button = null) {
+    if (this.box?.waiting) return; // MARKS1: the counting box stays until the service answers
+    const b = this.box;
+    this.box = null;
+    if (b?.buttons === 'YesNo' && button === MB_BUTTONS.Yes) b.onYes?.();
+    else if (b?.buttons === 'YesNo' && button === MB_BUTTONS.No) b.onNo?.(); // HOUSES-3: the town's next house (Escape closes)
+  }
+
+  input(code, e = null) {
+    if (this.box) {
+      if (this.box.buttons === 'YesNo') {
+        if (code === 'KeyY') this._dismissBox(MB_BUTTONS.Yes);
+        else if (code === 'KeyN') this._dismissBox(MB_BUTTONS.No);
+        else if (code === 'Escape') this._dismissBox(); // HOUSES-3: a close, never the No that offers the next house
+      } else this._dismissBox();
+      return;
+    }
+    // Update (:212-223): Return commits an OPEN transaction and does
+    // nothing otherwise - it is not a close.
+    if (code === 'Enter') {
+      if (this.transactionType !== TRANSACTION_TYPE.None) this._commit();
+      return;
+    }
+    // AUDIT 63 F45: the BACK BUTTON cancels UNCONDITIONALLY.
+    // DaggerfallBankingWindow is a DaggerfallPopupWindow (:24) and
+    // never assigns AllowCancel, so DaggerfallPopupWindow.Update
+    // (:70-74) runs `if (allowCancel && GetBackButtonUp())
+    // CancelWindow()` on every frame, and CancelWindow (:88-93) posts
+    // wmCloseWindow. The open amount field does not stop it:
+    // GetBackButtonUp is a raw Escape read (InputManager.cs:1070-1073)
+    // and TextBox only ABSORBS the key so it does not become a typed
+    // character (TextBox.cs:404-406). This window's own Update
+    // (:212-227) has no Escape arm at all - there is no field-cancel
+    // in DFU. So Escape mid-amount closes the bank, the typed value
+    // discarded, while the EXIT BUTTON in the same state does nothing
+    // (:473-478): the two paths are MEANT to disagree.
+    // KeyE is the port's own accelerator for that exit button (the
+    // Ledger A note in this file's header - DFU gives exitButton no
+    // HotKey), so it keeps the button's gate. No ButtonClick here:
+    // CancelWindow plays none; only ExitButton_OnMouseClick does.
+    if (code === 'Escape' || (code === 'KeyE' && this.transactionType === TRANSACTION_TYPE.None)) {
+      this._close();
+      return;
+    }
+    if (this.transactionType !== TRANSACTION_TYPE.None) {
+      if (code === 'backspace' || code === 'Backspace') {
+        this.value = this.value.slice(0, -1);
+        return;
+      }
+      const ch = typedChar(code, e);
+      if (ch && /^[0-9]$/.test(ch) && this.value.length < AMOUNT_FIELD.maxCharacters) this.value += ch;
+      return;
+    }
+  }
+
+  click(vx, vy) {
+    if (this.box) {
+      if (this.box.buttons === 'YesNo') {
+        const hit = this._boxLayout ? messageBoxHit(this._boxLayout, vx, vy) : null;
+        if (hit !== null) this._dismissBox(hit);
+      } else this._dismissBox();
+      return true;
+    }
+    if (inRect(BANK_RECTS.exit, vx, vy)) {
+      // AUDIT 26 F140: ExitButton_OnMouseClick (:473-478) - the sound
+      // always fires, but EXIT is a NO-OP while an amount is being
+      // typed (`if (!transactionInput.Enabled) CloseWindow()`).
+      // AUDIT 63 F45 corrected the reason given here: this gate is the
+      // BUTTON's alone. The back button is NOT gated
+      // (DaggerfallPopupWindow.cs:70-74 - allowCancel is true and this
+      // window never clears it), so in DFU Escape closes the bank
+      // mid-amount while this click does nothing. The two paths
+      // disagree on purpose.
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      if (this.transactionType === TRANSACTION_TYPE.None) this._close();
+      return true;
+    }
+    for (const name of Object.keys(OPENS).concat([
+      'depositLetters',
+      'loanBorrow',
+      'buyHouse',
+      'sellHouse',
+      'buyShip',
+      'sellShip',
+    ])) {
+      if (inRect(BANK_RECTS[name], vx, vy)) {
+        this._button(name);
+        return true;
+      }
+    }
+    return inRect([0, 0, BANK_PANEL_W, BANK_PANEL_H], vx, vy);
+  }
+
+  /** UpdateLabels (:239-250). The inventory line appends the WAGON's
+   *  gold in parentheses when the cart carries any - one label, two
+   *  purses, which is how a player sees at a glance what a deposit
+   *  can actually reach.
+   *
+   *  AUDIT 58: and the line itself is `playerEntity.GetGoldAmount()`
+   *  (:241) - coins PLUS every letter of credit in the pack
+   *  (PlayerEntity.cs:1313-1316) - not the bare coin counter. This
+   *  window read the coins alone, on the one screen whose DEPOSIT
+   *  LETTERS button (:377-389, banking.depositAllLetters) hands the
+   *  bank exactly the paper the label was denying the player held. */
+  labels() {
+    const a = this.accounts,
+      r = this.region;
+    const wagon = this.hooks.wagonGold?.() ?? 0;
+    // bankPurse supplies both quantities (worldModes.js): `totalGold`
+    // is GetGoldAmount, `gold` the coins the deposit/withdraw arms
+    // move. A host that wires only the coin reader still draws.
+    const purse = this.hooks.player.totalGold?.() ?? this.hooks.player.gold();
+    return {
+      account: String(accountTotal(a, goldRegion(a, r))), // EMPIRE-ACCOUNT: online, the Empire's account at every branch
+      inventory: wagon > 0 ? `${purse} (+${wagon})` : String(purse),
+      loanDue: String(loanedTotal(a, r)),
+      loanBy: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '', // AUDIT LIVED1 P: the parchment's room
+      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '', // ...and the enhanced face's whole words
+    };
+  }
+
+  draw(renderer, canvas, font) {
+    if (!_art) {
+      this._close();
+      return;
+    }
+    const m = nativeMetrics(canvas);
+    // ParentPanel.BackgroundColor = ScreenDimColor (:74), which is
+    // Color.clear - the letterbox is NOT painted.
+    drawScreenDimBackdrop(renderer, canvas);
+    drawImg(renderer, _art, m, BANK_PANEL_X, BANK_PANEL_Y);
+    const L = this.labels();
+    for (const [key, [x, y]] of Object.entries(BANK_LABELS)) {
+      shadowText(renderer, font, L[key], m, BANK_PANEL_X + x, BANK_PANEL_Y + y);
+    }
+    // the field, when a transaction has opened it
+    if (this.transactionType !== TRANSACTION_TYPE.None) {
+      const [ix, iy] = BANK_RECTS.input;
+      shadowText(renderer, font, `${this.value}_`, m, BANK_PANEL_X + ix + 2, BANK_PANEL_Y + iy + 2);
+    }
+    if (noticeFrame(this, this.box && this.box.buttons !== 'YesNo' ? this.box.rows : null)) {
+      this._boxLayout = null;
+      return;
+    }
+    if (this.box) {
+      const buttons = this.box.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
+      this._boxLayout = layoutMessageBox(font, this.box.rows, buttons);
+      drawMessageBox(renderer, m, font, this._boxLayout);
+    } else this._boxLayout = null;
+  }
+}

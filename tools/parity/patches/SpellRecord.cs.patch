@@ -1,0 +1,49 @@
+--- /tmp/claude-0/-home-user-project-dagger/1515f936-8347-5cbe-b4ea-21fede5b6b72/scratchpad/dfu/Assets/Scripts/API/Save/SpellRecord.cs	2026-08-19 00:32:45.129080243 +0000
++++ /tmp/claude-0/-home-user-project-dagger/1515f936-8347-5cbe-b4ea-21fede5b6b72/scratchpad/diff/cs/api/SpellRecord.cs	2026-08-19 01:20:04.541270468 +0000
+@@ -19,42 +19,11 @@
+     /// Spell record.
+     /// SaveTreeRecordTypes = 0x09
+     /// </summary>
+-    public class SpellRecord : SaveTreeBaseRecord
++    // HARNESS: SpellRecord's SaveTree plumbing (base class, ctor, CopyTo,
++    // ReadNativeSpellData) removed - it is classic-save-tree machinery, not part of
++    // SPELLS.STD parsing. The nested SpellRecordData below is verbatim.
++    public class SpellRecord
+     {
+-        SpellRecordData parsedData;
+-
+-        public SpellRecordData ParsedData
+-        {
+-            get { return parsedData; }
+-            set { parsedData = value; }
+-        }
+-
+-        public SpellRecord()
+-        {
+-        }
+-
+-        public SpellRecord(BinaryReader reader, int length)
+-            : base(reader, length)
+-        {
+-            ReadNativeSpellData();
+-        }
+-
+-        public void CopyTo(SpellRecord other)
+-        {
+-            base.CopyTo(other);
+-            other.parsedData = this.parsedData;
+-        }
+-
+-        public void ReadNativeSpellData()
+-        {
+-            if (recordType != RecordTypes.Spell)
+-                return;
+-            if (RecordData == null)
+-                return;
+-
+-            DaggerfallSpellReader.ReadSpellData(RecordData, out parsedData);
+-        }
+-
+         [Serializable]
+         public class SpellRecordData
+         {

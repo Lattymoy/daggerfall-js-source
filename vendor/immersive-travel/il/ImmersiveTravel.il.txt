@@ -1,0 +1,3129 @@
+==== TYPE .<Module> (fields: [])
+==== TYPE ImmersiveTravel.ImmersiveTravel (fields: ['mod', 'Settings', '<BasicRoadsEnabled>k__BackingField', '<HiddenMapLocationsEnabled>k__BackingField', '<TravelOptionsEnabled>k__BackingField', '<WODEnabled>k__BackingField', 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'])
+
+---- ImmersiveTravel::get_BasicRoadsEnabled rva=2050
+  maxstack=8 locals_sig=None size=6
+  IL_0251: ldsfld         ImmersiveTravel::<BasicRoadsEnabled>k__BackingField
+  IL_0256: ret            
+
+---- ImmersiveTravel::set_BasicRoadsEnabled rva=2057
+  maxstack=8 locals_sig=None size=7
+  IL_0258: ldarg.0        
+  IL_0259: stsfld         ImmersiveTravel::<BasicRoadsEnabled>k__BackingField
+  IL_025e: ret            
+
+---- ImmersiveTravel::get_HiddenMapLocationsEnabled rva=205f
+  maxstack=8 locals_sig=None size=6
+  IL_0260: ldsfld         ImmersiveTravel::<HiddenMapLocationsEnabled>k__BackingField
+  IL_0265: ret            
+
+---- ImmersiveTravel::set_HiddenMapLocationsEnabled rva=2066
+  maxstack=8 locals_sig=None size=7
+  IL_0267: ldarg.0        
+  IL_0268: stsfld         ImmersiveTravel::<HiddenMapLocationsEnabled>k__BackingField
+  IL_026d: ret            
+
+---- ImmersiveTravel::get_TravelOptionsEnabled rva=206e
+  maxstack=8 locals_sig=None size=6
+  IL_026f: ldsfld         ImmersiveTravel::<TravelOptionsEnabled>k__BackingField
+  IL_0274: ret            
+
+---- ImmersiveTravel::set_TravelOptionsEnabled rva=2075
+  maxstack=8 locals_sig=None size=7
+  IL_0276: ldarg.0        
+  IL_0277: stsfld         ImmersiveTravel::<TravelOptionsEnabled>k__BackingField
+  IL_027c: ret            
+
+---- ImmersiveTravel::get_WODEnabled rva=207d
+  maxstack=8 locals_sig=None size=6
+  IL_027e: ldsfld         ImmersiveTravel::<WODEnabled>k__BackingField
+  IL_0283: ret            
+
+---- ImmersiveTravel::set_WODEnabled rva=2084
+  maxstack=8 locals_sig=None size=7
+  IL_0285: ldarg.0        
+  IL_0286: stsfld         ImmersiveTravel::<WODEnabled>k__BackingField
+  IL_028b: ret            
+
+---- ImmersiveTravel::Init rva=208c
+  maxstack=3 locals_sig=token(0x11000001) size=717
+  IL_0298: ldstr          "[ImmersiveTravel] initializing mod"
+  IL_029d: call           UnityEngine.Debug::Log
+  IL_02a2: ldarg.0        
+  IL_02a3: ldfld          DaggerfallWorkshop.Game.Utility.ModSupport.InitParams::Mod
+  IL_02a8: stsfld         ImmersiveTravel::mod
+  IL_02ad: ldsfld         ImmersiveTravel::mod
+  IL_02b2: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::GetSettings
+  IL_02b7: stsfld         ImmersiveTravel::Settings
+  IL_02bc: ldstr          "[ImmersiveTravel] checking for other mods to integrate"
+  IL_02c1: call           UnityEngine.Debug::Log
+  IL_02c6: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_02cb: ldstr          "BasicRoads"
+  IL_02d0: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::GetMod
+  IL_02d5: stloc.0        
+  IL_02d6: ldloc.0        
+  IL_02d7: brfalse.s      737
+  IL_02d9: ldloc.0        
+  IL_02da: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::get_Enabled
+  IL_02df: br.s           738
+  IL_02e1: ldc.i4.0       
+  IL_02e2: call           ImmersiveTravel::set_BasicRoadsEnabled
+  IL_02e7: call           ImmersiveTravel::get_BasicRoadsEnabled
+  IL_02ec: brfalse.s      760
+  IL_02ee: ldstr          "[ImmersiveTravel] BasicRoads mod detected"
+  IL_02f3: call           UnityEngine.Debug::Log
+  IL_02f8: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_02fd: ldstr          "TravelOptions"
+  IL_0302: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::GetMod
+  IL_0307: stloc.1        
+  IL_0308: ldloc.1        
+  IL_0309: brtrue.s       795
+  IL_030b: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_0310: ldstr          "TravelOptions_IT_compat"
+  IL_0315: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::GetMod
+  IL_031a: stloc.1        
+  IL_031b: ldloc.1        
+  IL_031c: brfalse.s      806
+  IL_031e: ldloc.1        
+  IL_031f: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::get_Enabled
+  IL_0324: br.s           807
+  IL_0326: ldc.i4.0       
+  IL_0327: call           ImmersiveTravel::set_TravelOptionsEnabled
+  IL_032c: call           ImmersiveTravel::get_TravelOptionsEnabled
+  IL_0331: brfalse.s      829
+  IL_0333: ldstr          "[ImmersiveTravel] TravelOptions mod detected"
+  IL_0338: call           UnityEngine.Debug::Log
+  IL_033d: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_0342: ldstr          "Hidden Map Locations"
+  IL_0347: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::GetMod
+  IL_034c: stloc.2        
+  IL_034d: ldloc.2        
+  IL_034e: brfalse.s      856
+  IL_0350: ldloc.2        
+  IL_0351: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::get_Enabled
+  IL_0356: br.s           857
+  IL_0358: ldc.i4.0       
+  IL_0359: call           ImmersiveTravel::set_HiddenMapLocationsEnabled
+  IL_035e: call           ImmersiveTravel::get_HiddenMapLocationsEnabled
+  IL_0363: brfalse.s      879
+  IL_0365: ldstr          "[ImmersiveTravel] Hidden Map Locations mod detected"
+  IL_036a: call           UnityEngine.Debug::Log
+  IL_036f: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_0374: ldstr          "World of Daggerfall"
+  IL_0379: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::GetMod
+  IL_037e: stloc.3        
+  IL_037f: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_0384: ldstr          "World of Daggerfall - Terrain"
+  IL_0389: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::GetMod
+  IL_038e: stloc.s        local(0x0004)
+  IL_0390: ldloc.3        
+  IL_0391: brfalse.s      936
+  IL_0393: ldloc.3        
+  IL_0394: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::get_Enabled
+  IL_0399: brfalse.s      936
+  IL_039b: ldloc.s        local(0x0004)
+  IL_039d: brfalse.s      936
+  IL_039f: ldloc.s        local(0x0004)
+  IL_03a1: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::get_Enabled
+  IL_03a6: br.s           937
+  IL_03a8: ldc.i4.0       
+  IL_03a9: call           ImmersiveTravel::set_WODEnabled
+  IL_03ae: call           ImmersiveTravel::get_BasicRoadsEnabled
+  IL_03b3: brfalse.s      959
+  IL_03b5: ldstr          "[ImmersiveTravel] WOD and WOD terrain detected"
+  IL_03ba: call           UnityEngine.Debug::Log
+  IL_03bf: call           ImmersiveTravel::get_TravelOptionsEnabled
+  IL_03c4: brtrue.s       983
+  IL_03c6: ldc.i4.s       32
+  IL_03c8: ldtoken        typedef:ImmersiveTravel.CarriageMap
+  IL_03cd: call           System.Type::GetTypeFromHandle
+  IL_03d2: call           DaggerfallWorkshop.Game.UserInterfaceWindows.UIWindowFactory::RegisterCustomUIWindow
+  IL_03d7: ldsfld         ImmersiveTravel::Settings
+  IL_03dc: ldstr          "General"
+  IL_03e1: ldstr          "DisableNormalTravel"
+  IL_03e6: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_03eb: brfalse.s      1022
+  IL_03ed: ldc.i4.s       33
+  IL_03ef: ldtoken        typedef:ImmersiveTravel.ImmersiveTravelPopUp
+  IL_03f4: call           System.Type::GetTypeFromHandle
+  IL_03f9: call           DaggerfallWorkshop.Game.UserInterfaceWindows.UIWindowFactory::RegisterCustomUIWindow
+  IL_03fe: ldstr          "[ImmersiveTravel] registering factions"
+  IL_0403: call           UnityEngine.Debug::Log
+  IL_0408: ldc.i4         8642
+  IL_040d: ldloca.s       local(0x0005)
+  IL_040f: initobj        typeref:FactionData
+  IL_0415: ldloca.s       local(0x0005)
+  IL_0417: ldc.i4         8642
+  IL_041c: stfld          FactionData::id
+  IL_0421: ldloca.s       local(0x0005)
+  IL_0423: ldc.i4.0       
+  IL_0424: stfld          FactionData::parent
+  IL_0429: ldloca.s       local(0x0005)
+  IL_042b: ldc.i4.s       15
+  IL_042d: stfld          FactionData::type
+  IL_0432: ldloca.s       local(0x0005)
+  IL_0434: ldstr          "Carriage Drivers"
+  IL_0439: stfld          FactionData::name
+  IL_043e: ldloca.s       local(0x0005)
+  IL_0440: ldc.i4.m1      
+  IL_0441: stfld          FactionData::summon
+  IL_0446: ldloca.s       local(0x0005)
+  IL_0448: ldc.i4.m1      
+  IL_0449: stfld          FactionData::region
+  IL_044e: ldloca.s       local(0x0005)
+  IL_0450: ldc.i4.s       100
+  IL_0452: stfld          FactionData::power
+  IL_0457: ldloca.s       local(0x0005)
+  IL_0459: ldc.i4.m1      
+  IL_045a: stfld          FactionData::face
+  IL_045f: ldloca.s       local(0x0005)
+  IL_0461: ldc.i4.m1      
+  IL_0462: stfld          FactionData::race
+  IL_0467: ldloca.s       local(0x0005)
+  IL_0469: ldc.i4.1       
+  IL_046a: stfld          FactionData::sgroup
+  IL_046f: ldloca.s       local(0x0005)
+  IL_0471: ldc.i4.s       16
+  IL_0473: stfld          FactionData::ggroup
+  IL_0478: ldloc.s        local(0x0005)
+  IL_047a: call           DaggerfallConnect.Arena2.FactionFile::RegisterCustomFaction
+  IL_047f: brfalse.s      1278
+  IL_0481: ldc.i4         8643
+  IL_0486: ldloca.s       local(0x0005)
+  IL_0488: initobj        typeref:FactionData
+  IL_048e: ldloca.s       local(0x0005)
+  IL_0490: ldc.i4         8643
+  IL_0495: stfld          FactionData::id
+  IL_049a: ldloca.s       local(0x0005)
+  IL_049c: ldc.i4         8642
+  IL_04a1: stfld          FactionData::parent
+  IL_04a6: ldloca.s       local(0x0005)
+  IL_04a8: ldc.i4.s       15
+  IL_04aa: stfld          FactionData::type
+  IL_04af: ldloca.s       local(0x0005)
+  IL_04b1: ldstr          "Sailors"
+  IL_04b6: stfld          FactionData::name
+  IL_04bb: ldloca.s       local(0x0005)
+  IL_04bd: ldc.i4.m1      
+  IL_04be: stfld          FactionData::summon
+  IL_04c3: ldloca.s       local(0x0005)
+  IL_04c5: ldc.i4.m1      
+  IL_04c6: stfld          FactionData::region
+  IL_04cb: ldloca.s       local(0x0005)
+  IL_04cd: ldc.i4.s       100
+  IL_04cf: stfld          FactionData::power
+  IL_04d4: ldloca.s       local(0x0005)
+  IL_04d6: ldc.i4.m1      
+  IL_04d7: stfld          FactionData::face
+  IL_04dc: ldloca.s       local(0x0005)
+  IL_04de: ldc.i4.m1      
+  IL_04df: stfld          FactionData::race
+  IL_04e4: ldloca.s       local(0x0005)
+  IL_04e6: ldc.i4.1       
+  IL_04e7: stfld          FactionData::sgroup
+  IL_04ec: ldloca.s       local(0x0005)
+  IL_04ee: ldc.i4.s       16
+  IL_04f0: stfld          FactionData::ggroup
+  IL_04f5: ldloc.s        local(0x0005)
+  IL_04f7: call           DaggerfallConnect.Arena2.FactionFile::RegisterCustomFaction
+  IL_04fc: br.s           1279
+  IL_04fe: ldc.i4.0       
+  IL_04ff: brtrue.s       1293
+  IL_0501: ldstr          "[ImmersiveTravel] Error: could not register custom factions!"
+  IL_0506: call           UnityEngine.Debug::Log
+  IL_050b: br.s           1359
+  IL_050d: ldstr          "[ImmersiveTravel] registering services"
+  IL_0512: call           UnityEngine.Debug::Log
+  IL_0517: ldc.i4         8642
+  IL_051c: ldnull         
+  IL_051d: ldftn          ImmersiveTravel::CarriageTravelService
+  IL_0523: newobj         CustomMerchantService::.ctor
+  IL_0528: ldstr          "Fast Travel"
+  IL_052d: call           DaggerfallWorkshop.Game.Guilds.Services::RegisterMerchantService
+  IL_0532: pop            
+  IL_0533: ldc.i4         8643
+  IL_0538: ldnull         
+  IL_0539: ldftn          ImmersiveTravel::ShipTravelService
+  IL_053f: newobj         CustomMerchantService::.ctor
+  IL_0544: ldstr          "Fast Travel"
+  IL_0549: call           DaggerfallWorkshop.Game.Guilds.Services::RegisterMerchantService
+  IL_054e: pop            
+  IL_054f: ldsfld         ImmersiveTravel::mod
+  IL_0554: ldc.i4.1       
+  IL_0555: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_IsReady
+  IL_055a: ldstr          "[ImmersiveTravel] finished mod init"
+  IL_055f: call           UnityEngine.Debug::Log
+  IL_0564: ret            
+
+---- ImmersiveTravel::CarriageTravelService rva=2368
+  maxstack=4 locals_sig=token(0x11000002) size=64
+  IL_0574: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_0579: ldc.i4.0       
+  IL_057a: ldc.i4.0       
+  IL_057b: callvirt       DaggerfallWorkshop.Game.GameManager::AreEnemiesNearby
+  IL_0580: brfalse.s      1436
+  IL_0582: call           DaggerfallWorkshop.Game.TextManager::get_Instance
+  IL_0587: ldstr          "cannotTravelWithEnemiesNearby"
+  IL_058c: ldc.i4.0       
+  IL_058d: ldc.i4.0       
+  IL_058e: callvirt       DaggerfallWorkshop.Game.TextManager::GetLocalizedText
+  IL_0593: ldc.i4.0       
+  IL_0594: ldnull         
+  IL_0595: call           DaggerfallWorkshop.Game.DaggerfallUI::MessageBox
+  IL_059a: pop            
+  IL_059b: ret            
+  IL_059c: call           DaggerfallWorkshop.Game.DaggerfallUI::get_UIManager
+  IL_05a1: ldc.i4.1       
+  IL_05a2: newobj         CarriageMap::.ctor
+  IL_05a7: stloc.0        
+  IL_05a8: call           DaggerfallWorkshop.Game.DaggerfallUI::get_UIManager
+  IL_05ad: ldloc.0        
+  IL_05ae: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_05b3: ret            
+
+---- ImmersiveTravel::ShipTravelService rva=23b4
+  maxstack=4 locals_sig=token(0x11000003) size=63
+  IL_05c0: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_05c5: ldc.i4.0       
+  IL_05c6: ldc.i4.0       
+  IL_05c7: callvirt       DaggerfallWorkshop.Game.GameManager::AreEnemiesNearby
+  IL_05cc: brfalse.s      1512
+  IL_05ce: call           DaggerfallWorkshop.Game.TextManager::get_Instance
+  IL_05d3: ldstr          "cannotTravelWithEnemiesNearby"
+  IL_05d8: ldc.i4.0       
+  IL_05d9: ldc.i4.0       
+  IL_05da: callvirt       DaggerfallWorkshop.Game.TextManager::GetLocalizedText
+  IL_05df: ldc.i4.0       
+  IL_05e0: ldnull         
+  IL_05e1: call           DaggerfallWorkshop.Game.DaggerfallUI::MessageBox
+  IL_05e6: pop            
+  IL_05e7: ret            
+  IL_05e8: call           DaggerfallWorkshop.Game.DaggerfallUI::get_UIManager
+  IL_05ed: newobj         SeafarersMap::.ctor
+  IL_05f2: stloc.0        
+  IL_05f3: call           DaggerfallWorkshop.Game.DaggerfallUI::get_UIManager
+  IL_05f8: ldloc.0        
+  IL_05f9: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_05fe: ret            
+
+---- ImmersiveTravel::.ctor rva=23ff
+  maxstack=8 locals_sig=None size=7
+  IL_0600: ldarg.0        
+  IL_0601: call           UnityEngine.MonoBehaviour::.ctor
+  IL_0606: ret            
+==== TYPE ImmersiveTravel.CarriageMap (fields: ['CreatedByNPC', 'path_roads', 'path_tracks', 'pathsData', 'roadColor', 'trackColor', 'markedLocationId', 'MarkLocationColor', 'discoveredMapSummaries', 'revealedLocationTypes', 'drawRoads', 'drawTracks', 'clearerMapDots', 'regionLockedCarriages', 'capitalMapIDs'])
+
+---- CarriageMap::.ctor rva=2408
+  maxstack=6 locals_sig=None size=239
+  IL_0614: ldarg.0        
+  IL_0615: ldc.i4.m1      
+  IL_0616: stfld          CarriageMap::markedLocationId
+  IL_061b: ldarg.0        
+  IL_061c: ldc.i4         255
+  IL_0621: ldc.i4         235
+  IL_0626: ldc.i4.5       
+  IL_0627: ldc.i4         255
+  IL_062c: newobj         UnityEngine.Color32::.ctor
+  IL_0631: stfld          CarriageMap::MarkLocationColor
+  IL_0636: ldarg.0        
+  IL_0637: ldarg.1        
+  IL_0638: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::.ctor
+  IL_063d: ldsfld         CarriageMap::drawRoads
+  IL_0642: brtrue.s       1611
+  IL_0644: ldsfld         CarriageMap::drawTracks
+  IL_0649: brfalse.s      1668
+  IL_064b: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_0650: ldstr          "BasicRoads"
+  IL_0655: ldstr          "getPathData"
+  IL_065a: ldc.i4.0       
+  IL_065b: box            typeref:System.Int32
+  IL_0660: ldsfld         <>c::<>9__14_0
+  IL_0665: dup            
+  IL_0666: brtrue.s       1663
+  IL_0668: pop            
+  IL_0669: ldsfld         <>c::<>9
+  IL_066e: ldftn          <>c::<.ctor>b__14_0
+  IL_0674: newobj         DaggerfallWorkshop.Game.Utility.ModSupport.DFModMessageCallback::.ctor
+  IL_0679: dup            
+  IL_067a: stsfld         <>c::<>9__14_0
+  IL_067f: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::SendModMessage
+  IL_0684: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_0689: ldstr          "BasicRoads"
+  IL_068e: ldstr          "getPathData"
+  IL_0693: ldc.i4.1       
+  IL_0694: box            typeref:System.Int32
+  IL_0699: ldsfld         <>c::<>9__14_1
+  IL_069e: dup            
+  IL_069f: brtrue.s       1720
+  IL_06a1: pop            
+  IL_06a2: ldsfld         <>c::<>9
+  IL_06a7: ldftn          <>c::<.ctor>b__14_1
+  IL_06ad: newobj         DaggerfallWorkshop.Game.Utility.ModSupport.DFModMessageCallback::.ctor
+  IL_06b2: dup            
+  IL_06b3: stsfld         <>c::<>9__14_1
+  IL_06b8: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::SendModMessage
+  IL_06bd: call           ImmersiveTravel::get_HiddenMapLocationsEnabled
+  IL_06c2: brfalse.s      1787
+  IL_06c4: ldarg.0        
+  IL_06c5: newobj         ::.ctor
+  IL_06ca: stfld          CarriageMap::discoveredMapSummaries
+  IL_06cf: ldarg.0        
+  IL_06d0: newobj         ::.ctor
+  IL_06d5: stfld          CarriageMap::revealedLocationTypes
+  IL_06da: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_06df: ldstr          "Hidden Map Locations"
+  IL_06e4: ldstr          "getRevealedLocationTypes"
+  IL_06e9: ldnull         
+  IL_06ea: ldarg.0        
+  IL_06eb: ldftn          CarriageMap::<.ctor>b__14_2
+  IL_06f1: newobj         DaggerfallWorkshop.Game.Utility.ModSupport.DFModMessageCallback::.ctor
+  IL_06f6: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::SendModMessage
+  IL_06fb: ldarg.0        
+  IL_06fc: ldarg.2        
+  IL_06fd: stfld          CarriageMap::CreatedByNPC
+  IL_0702: ret            
+
+---- CarriageMap::.ctor rva=2504
+  maxstack=6 locals_sig=None size=239
+  IL_0710: ldarg.0        
+  IL_0711: ldc.i4.m1      
+  IL_0712: stfld          CarriageMap::markedLocationId
+  IL_0717: ldarg.0        
+  IL_0718: ldc.i4         255
+  IL_071d: ldc.i4         235
+  IL_0722: ldc.i4.5       
+  IL_0723: ldc.i4         255
+  IL_0728: newobj         UnityEngine.Color32::.ctor
+  IL_072d: stfld          CarriageMap::MarkLocationColor
+  IL_0732: ldarg.0        
+  IL_0733: ldarg.1        
+  IL_0734: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::.ctor
+  IL_0739: ldsfld         CarriageMap::drawRoads
+  IL_073e: brtrue.s       1863
+  IL_0740: ldsfld         CarriageMap::drawTracks
+  IL_0745: brfalse.s      1920
+  IL_0747: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_074c: ldstr          "BasicRoads"
+  IL_0751: ldstr          "getPathData"
+  IL_0756: ldc.i4.0       
+  IL_0757: box            typeref:System.Int32
+  IL_075c: ldsfld         <>c::<>9__15_0
+  IL_0761: dup            
+  IL_0762: brtrue.s       1915
+  IL_0764: pop            
+  IL_0765: ldsfld         <>c::<>9
+  IL_076a: ldftn          <>c::<.ctor>b__15_0
+  IL_0770: newobj         DaggerfallWorkshop.Game.Utility.ModSupport.DFModMessageCallback::.ctor
+  IL_0775: dup            
+  IL_0776: stsfld         <>c::<>9__15_0
+  IL_077b: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::SendModMessage
+  IL_0780: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_0785: ldstr          "BasicRoads"
+  IL_078a: ldstr          "getPathData"
+  IL_078f: ldc.i4.1       
+  IL_0790: box            typeref:System.Int32
+  IL_0795: ldsfld         <>c::<>9__15_1
+  IL_079a: dup            
+  IL_079b: brtrue.s       1972
+  IL_079d: pop            
+  IL_079e: ldsfld         <>c::<>9
+  IL_07a3: ldftn          <>c::<.ctor>b__15_1
+  IL_07a9: newobj         DaggerfallWorkshop.Game.Utility.ModSupport.DFModMessageCallback::.ctor
+  IL_07ae: dup            
+  IL_07af: stsfld         <>c::<>9__15_1
+  IL_07b4: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::SendModMessage
+  IL_07b9: call           ImmersiveTravel::get_HiddenMapLocationsEnabled
+  IL_07be: brfalse.s      2039
+  IL_07c0: ldarg.0        
+  IL_07c1: newobj         ::.ctor
+  IL_07c6: stfld          CarriageMap::discoveredMapSummaries
+  IL_07cb: ldarg.0        
+  IL_07cc: newobj         ::.ctor
+  IL_07d1: stfld          CarriageMap::revealedLocationTypes
+  IL_07d6: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_07db: ldstr          "Hidden Map Locations"
+  IL_07e0: ldstr          "getRevealedLocationTypes"
+  IL_07e5: ldnull         
+  IL_07e6: ldarg.0        
+  IL_07e7: ldftn          CarriageMap::<.ctor>b__15_2
+  IL_07ed: newobj         DaggerfallWorkshop.Game.Utility.ModSupport.DFModMessageCallback::.ctor
+  IL_07f2: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::SendModMessage
+  IL_07f7: ldarg.0        
+  IL_07f8: ldc.i4.0       
+  IL_07f9: stfld          CarriageMap::CreatedByNPC
+  IL_07fe: ret            
+
+---- CarriageMap::Setup rva=2600
+  maxstack=5 locals_sig=None size=87
+  IL_080c: ldarg.0        
+  IL_080d: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::Setup
+  IL_0812: ldarg.0        
+  IL_0813: ldarg.0        
+  IL_0814: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionTextureOverlayPanelRect
+  IL_0819: call           UnityEngine.Rect::get_width
+  IL_081e: conv.i4        
+  IL_081f: ldarg.0        
+  IL_0820: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionTextureOverlayPanelRect
+  IL_0825: call           UnityEngine.Rect::get_height
+  IL_082a: conv.i4        
+  IL_082b: mul            
+  IL_082c: ldc.i4.s       25
+  IL_082e: mul            
+  IL_082f: newarr         typeref:UnityEngine.Color32
+  IL_0834: stfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsPixelBuffer
+  IL_0839: ldarg.0        
+  IL_083a: ldarg.0        
+  IL_083b: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionTextureOverlayPanelRect
+  IL_0840: call           UnityEngine.Rect::get_width
+  IL_0845: conv.i4        
+  IL_0846: ldc.i4.5       
+  IL_0847: mul            
+  IL_0848: ldarg.0        
+  IL_0849: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionTextureOverlayPanelRect
+  IL_084e: call           UnityEngine.Rect::get_height
+  IL_0853: conv.i4        
+  IL_0854: ldc.i4.5       
+  IL_0855: mul            
+  IL_0856: ldc.i4.5       
+  IL_0857: ldc.i4.0       
+  IL_0858: newobj         UnityEngine.Texture2D::.ctor
+  IL_085d: stfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsTexture
+  IL_0862: ret            
+
+---- CarriageMap::CreatePopUpWindow rva=2664
+  maxstack=5 locals_sig=token(0x11000004) size=474
+  IL_0870: ldarg.0        
+  IL_0871: ldfld          CarriageMap::CreatedByNPC
+  IL_0876: brtrue.s       2182
+  IL_0878: ldarg.0        
+  IL_0879: ldnull         
+  IL_087a: stfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::popUp
+  IL_087f: ldarg.0        
+  IL_0880: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::CreatePopUpWindow
+  IL_0885: ret            
+  IL_0886: ldarg.0        
+  IL_0887: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_088c: ldfld          MapSummary::ID
+  IL_0891: call           DaggerfallConnect.Arena2.MapsFile::GetPixelFromPixelID
+  IL_0896: stloc.0        
+  IL_0897: ldarg.0        
+  IL_0898: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::teleportationTravel
+  IL_089d: brfalse.s      2297
+  IL_089f: ldc.i4.s       29
+  IL_08a1: ldc.i4.3       
+  IL_08a2: newarr         typeref:System.Object
+  IL_08a7: dup            
+  IL_08a8: ldc.i4.0       
+  IL_08a9: ldarg.0        
+  IL_08aa: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_08af: stelem.ref     
+  IL_08b0: dup            
+  IL_08b1: ldc.i4.1       
+  IL_08b2: ldarg.0        
+  IL_08b3: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_08b8: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::get_TopWindow
+  IL_08bd: stelem.ref     
+  IL_08be: dup            
+  IL_08bf: ldc.i4.2       
+  IL_08c0: ldarg.0        
+  IL_08c1: stelem.ref     
+  IL_08c2: call           DaggerfallWorkshop.Game.UserInterfaceWindows.UIWindowFactory::GetInstanceWithArgs
+  IL_08c7: castclass      typeref:DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTeleportPopUp
+  IL_08cc: stloc.1        
+  IL_08cd: ldloc.1        
+  IL_08ce: ldloc.0        
+  IL_08cf: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTeleportPopUp::set_DestinationPos
+  IL_08d4: ldloc.1        
+  IL_08d5: ldarg.0        
+  IL_08d6: ldarg.0        
+  IL_08d7: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_08dc: ldfld          MapSummary::MapIndex
+  IL_08e1: ldc.i4.0       
+  IL_08e2: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::GetLocationNameInCurrentRegion
+  IL_08e7: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTeleportPopUp::set_DestinationName
+  IL_08ec: ldarg.0        
+  IL_08ed: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_08f2: ldloc.1        
+  IL_08f3: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_08f8: ret            
+  IL_08f9: ldarg.0        
+  IL_08fa: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_08ff: ldfld          MapSummary::LocationType
+  IL_0904: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_0909: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerGPS
+  IL_090e: stloc.2        
+  IL_090f: ldloc.2        
+  IL_0910: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentMapPixel
+  IL_0915: ldfld          DaggerfallConnect.Utility.DFPosition::X
+  IL_091a: ldloc.2        
+  IL_091b: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentMapPixel
+  IL_0920: ldfld          DaggerfallConnect.Utility.DFPosition::Y
+  IL_0925: call           CarriageMap::BorderingRegionIndex
+  IL_092a: stloc.3        
+  IL_092b: call           CarriageMap::IsDestinationValid
+  IL_0930: brfalse        2562
+  IL_0935: ldsfld         CarriageMap::regionLockedCarriages
+  IL_093a: brfalse        2515
+  IL_093f: ldarg.0        
+  IL_0940: ldloc.2        
+  IL_0941: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentMapID
+  IL_0946: call           CarriageMap::isCapital
+  IL_094b: brfalse.s      2400
+  IL_094d: ldarg.0        
+  IL_094e: ldarg.0        
+  IL_094f: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_0954: ldfld          MapSummary::MapID
+  IL_0959: call           CarriageMap::isCapital
+  IL_095e: brtrue.s       2515
+  IL_0960: ldloc.3        
+  IL_0961: ldarg.0        
+  IL_0962: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_0967: ldfld          MapSummary::RegionIndex
+  IL_096c: beq.s          2515
+  IL_096e: ldarg.0        
+  IL_096f: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_0974: ldarg.0        
+  IL_0975: ldc.i4.0       
+  IL_0976: ldc.i4.m1      
+  IL_0977: newobj         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::.ctor
+  IL_097c: stloc.s        local(0x0004)
+  IL_097e: ldarg.0        
+  IL_097f: ldloc.2        
+  IL_0980: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentMapID
+  IL_0985: call           CarriageMap::isCapital
+  IL_098a: brfalse.s      2459
+  IL_098c: ldloc.s        local(0x0004)
+  IL_098e: ldstr          "To reach that location, you must travel to the capital of that region and take a carriage from there."
+  IL_0993: ldnull         
+  IL_0994: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_0999: br.s           2472
+  IL_099b: ldloc.s        local(0x0004)
+  IL_099d: ldstr          "This carriage won't travel outside the region. Find a carriage in the capital or travel by sea."
+  IL_09a2: ldnull         
+  IL_09a3: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_09a8: ldloc.s        local(0x0004)
+  IL_09aa: ldc.i4.5       
+  IL_09ab: ldc.i4.1       
+  IL_09ac: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_09b1: pop            
+  IL_09b2: ldloc.s        local(0x0004)
+  IL_09b4: ldarg.0        
+  IL_09b5: ldftn          CarriageMap::<CreatePopUpWindow>b__17_0
+  IL_09bb: newobj         OnButtonClickHandler::.ctor
+  IL_09c0: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::add_OnButtonClick
+  IL_09c5: ldarg.0        
+  IL_09c6: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_09cb: ldloc.s        local(0x0004)
+  IL_09cd: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_09d2: ret            
+  IL_09d3: ldarg.0        
+  IL_09d4: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_09d9: ldarg.0        
+  IL_09da: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_09df: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::get_TopWindow
+  IL_09e4: ldarg.0        
+  IL_09e5: newobj         ImmersiveTravelPopUp::.ctor
+  IL_09ea: stloc.s        local(0x0005)
+  IL_09ec: ldloc.s        local(0x0005)
+  IL_09ee: ldloc.0        
+  IL_09ef: callvirt       ImmersiveTravelPopUp::SetEndPosition
+  IL_09f4: ldarg.0        
+  IL_09f5: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_09fa: ldloc.s        local(0x0005)
+  IL_09fc: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_0a01: ret            
+  IL_0a02: ldarg.0        
+  IL_0a03: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_0a08: ldarg.0        
+  IL_0a09: ldc.i4.0       
+  IL_0a0a: ldc.i4.m1      
+  IL_0a0b: newobj         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::.ctor
+  IL_0a10: stloc.s        local(0x0006)
+  IL_0a12: ldloc.s        local(0x0006)
+  IL_0a14: ldstr          "The driver won't take you to this type of location."
+  IL_0a19: ldnull         
+  IL_0a1a: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_0a1f: ldloc.s        local(0x0006)
+  IL_0a21: ldc.i4.5       
+  IL_0a22: ldc.i4.1       
+  IL_0a23: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_0a28: pop            
+  IL_0a29: ldloc.s        local(0x0006)
+  IL_0a2b: ldarg.0        
+  IL_0a2c: ldftn          CarriageMap::<CreatePopUpWindow>b__17_1
+  IL_0a32: newobj         OnButtonClickHandler::.ctor
+  IL_0a37: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::add_OnButtonClick
+  IL_0a3c: ldarg.0        
+  IL_0a3d: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_0a42: ldloc.s        local(0x0006)
+  IL_0a44: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_0a49: ret            
+
+---- CarriageMap::IsDestinationValid rva=284c
+  maxstack=3 locals_sig=token(0x11000005) size=266
+  IL_0a58: ldsfld         ImmersiveTravel::Settings
+  IL_0a5d: stloc.0        
+  IL_0a5e: ldarg.0        
+  IL_0a5f: ldc.i4.s       13
+  IL_0a61: bne.un.s       2680
+  IL_0a63: ldloc.0        
+  IL_0a64: ldstr          "AllowedDestinations"
+  IL_0a69: ldstr          "Covens"
+  IL_0a6e: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0a73: brtrue         2912
+  IL_0a78: ldarg.0        
+  IL_0a79: ldc.i4.7       
+  IL_0a7a: beq.s          2693
+  IL_0a7c: ldarg.0        
+  IL_0a7d: ldc.i4.4       
+  IL_0a7e: beq.s          2693
+  IL_0a80: ldarg.0        
+  IL_0a81: ldc.i4.s       10
+  IL_0a83: bne.un.s       2714
+  IL_0a85: ldloc.0        
+  IL_0a86: ldstr          "AllowedDestinations"
+  IL_0a8b: ldstr          "Dungeons"
+  IL_0a90: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0a95: brtrue         2912
+  IL_0a9a: ldarg.0        
+  IL_0a9b: ldc.i4.s       12
+  IL_0a9d: bne.un.s       2740
+  IL_0a9f: ldloc.0        
+  IL_0aa0: ldstr          "AllowedDestinations"
+  IL_0aa5: ldstr          "Graveyards"
+  IL_0aaa: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0aaf: brtrue         2912
+  IL_0ab4: ldarg.0        
+  IL_0ab5: ldc.i4.3       
+  IL_0ab6: bne.un.s       2765
+  IL_0ab8: ldloc.0        
+  IL_0ab9: ldstr          "AllowedDestinations"
+  IL_0abe: ldstr          "Farms"
+  IL_0ac3: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0ac8: brtrue         2912
+  IL_0acd: ldarg.0        
+  IL_0ace: ldc.i4.s       11
+  IL_0ad0: beq.s          2779
+  IL_0ad2: ldarg.0        
+  IL_0ad3: ldc.i4.8       
+  IL_0ad4: beq.s          2779
+  IL_0ad6: ldarg.0        
+  IL_0ad7: ldc.i4.s       14
+  IL_0ad9: bne.un.s       2797
+  IL_0adb: ldloc.0        
+  IL_0adc: ldstr          "AllowedDestinations"
+  IL_0ae1: ldstr          "Dungeons"
+  IL_0ae6: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0aeb: brtrue.s       2912
+  IL_0aed: ldarg.0        
+  IL_0aee: ldc.i4.s       9
+  IL_0af0: beq.s          2806
+  IL_0af2: ldarg.0        
+  IL_0af3: ldc.i4.5       
+  IL_0af4: bne.un.s       2824
+  IL_0af6: ldloc.0        
+  IL_0af7: ldstr          "AllowedDestinations"
+  IL_0afc: ldstr          "Temples"
+  IL_0b01: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0b06: brtrue.s       2912
+  IL_0b08: ldarg.0        
+  IL_0b09: ldc.i4.6       
+  IL_0b0a: bne.un.s       2846
+  IL_0b0c: ldloc.0        
+  IL_0b0d: ldstr          "AllowedDestinations"
+  IL_0b12: ldstr          "Taverns"
+  IL_0b17: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0b1c: brtrue.s       2912
+  IL_0b1e: ldarg.0        
+  IL_0b1f: brtrue.s       2867
+  IL_0b21: ldloc.0        
+  IL_0b22: ldstr          "AllowedDestinations"
+  IL_0b27: ldstr          "Cities"
+  IL_0b2c: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0b31: brtrue.s       2912
+  IL_0b33: ldarg.0        
+  IL_0b34: ldc.i4.1       
+  IL_0b35: bne.un.s       2889
+  IL_0b37: ldloc.0        
+  IL_0b38: ldstr          "AllowedDestinations"
+  IL_0b3d: ldstr          "Hamlets"
+  IL_0b42: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0b47: brtrue.s       2912
+  IL_0b49: ldarg.0        
+  IL_0b4a: ldc.i4.2       
+  IL_0b4b: bne.un.s       2910
+  IL_0b4d: ldloc.0        
+  IL_0b4e: ldstr          "AllowedDestinations"
+  IL_0b53: ldstr          "Villages"
+  IL_0b58: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_0b5d: ret            
+  IL_0b5e: ldc.i4.0       
+  IL_0b5f: ret            
+  IL_0b60: ldc.i4.1       
+  IL_0b61: ret            
+
+---- CarriageMap::UpdateMapLocationDotsTexture rva=2962
+  maxstack=8 locals_sig=None size=30
+  IL_0b63: ldarg.0        
+  IL_0b64: call           CarriageMap::HMLDiscoveredLocations
+  IL_0b69: ldarg.0        
+  IL_0b6a: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::selectedRegion
+  IL_0b6f: ldc.i4.s       61
+  IL_0b71: beq.s          2938
+  IL_0b73: ldarg.0        
+  IL_0b74: callvirt       CarriageMap::UpdateMapLocationDotsTextureWithPaths
+  IL_0b79: ret            
+  IL_0b7a: ldarg.0        
+  IL_0b7b: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::UpdateMapLocationDotsTexture
+  IL_0b80: ret            
+
+---- CarriageMap::ZoomMapTextures rva=2984
+  maxstack=6 locals_sig=token(0x11000006) size=247
+  IL_0b90: ldarg.0        
+  IL_0b91: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::ZoomMapTextures
+  IL_0b96: ldarg.0        
+  IL_0b97: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::get_RegionSelected
+  IL_0b9c: brfalse        3206
+  IL_0ba1: ldarg.0        
+  IL_0ba2: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoom
+  IL_0ba7: brfalse        3206
+  IL_0bac: ldarg.0        
+  IL_0bad: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionTextureOverlayPanelRect
+  IL_0bb2: call           UnityEngine.Rect::get_width
+  IL_0bb7: conv.i4        
+  IL_0bb8: stloc.0        
+  IL_0bb9: ldarg.0        
+  IL_0bba: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionTextureOverlayPanelRect
+  IL_0bbf: call           UnityEngine.Rect::get_height
+  IL_0bc4: conv.i4        
+  IL_0bc5: stloc.1        
+  IL_0bc6: ldloc.0        
+  IL_0bc7: ldarg.0        
+  IL_0bc8: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomfactor
+  IL_0bcd: ldc.i4.2       
+  IL_0bce: mul            
+  IL_0bcf: div            
+  IL_0bd0: stloc.2        
+  IL_0bd1: ldloc.1        
+  IL_0bd2: ldarg.0        
+  IL_0bd3: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomfactor
+  IL_0bd8: ldc.i4.2       
+  IL_0bd9: mul            
+  IL_0bda: div            
+  IL_0bdb: stloc.3        
+  IL_0bdc: ldarg.0        
+  IL_0bdd: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomPosition
+  IL_0be2: ldfld          UnityEngine.Vector2::x
+  IL_0be7: conv.i4        
+  IL_0be8: ldloc.2        
+  IL_0be9: sub            
+  IL_0bea: stloc.s        local(0x0004)
+  IL_0bec: ldloc.1        
+  IL_0bed: conv.r4        
+  IL_0bee: ldarg.0        
+  IL_0bef: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomPosition
+  IL_0bf4: ldfld          UnityEngine.Vector2::y
+  IL_0bf9: neg            
+  IL_0bfa: ldloc.3        
+  IL_0bfb: conv.r4        
+  IL_0bfc: sub            
+  IL_0bfd: add            
+  IL_0bfe: conv.i4        
+  IL_0bff: ldc.i4.s       12
+  IL_0c01: add            
+  IL_0c02: stloc.s        local(0x0005)
+  IL_0c04: ldloc.s        local(0x0004)
+  IL_0c06: ldc.i4.0       
+  IL_0c07: bge.s          3086
+  IL_0c09: ldc.i4.0       
+  IL_0c0a: stloc.s        local(0x0004)
+  IL_0c0c: br.s           3112
+  IL_0c0e: ldloc.s        local(0x0004)
+  IL_0c10: ldloc.0        
+  IL_0c11: ldarg.0        
+  IL_0c12: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomfactor
+  IL_0c17: div            
+  IL_0c18: add            
+  IL_0c19: ldloc.0        
+  IL_0c1a: blt.s          3112
+  IL_0c1c: ldloc.0        
+  IL_0c1d: ldloc.0        
+  IL_0c1e: ldarg.0        
+  IL_0c1f: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomfactor
+  IL_0c24: div            
+  IL_0c25: sub            
+  IL_0c26: stloc.s        local(0x0004)
+  IL_0c28: ldloc.s        local(0x0005)
+  IL_0c2a: ldc.i4.0       
+  IL_0c2b: bge.s          3122
+  IL_0c2d: ldc.i4.0       
+  IL_0c2e: stloc.s        local(0x0005)
+  IL_0c30: br.s           3148
+  IL_0c32: ldloc.s        local(0x0005)
+  IL_0c34: ldloc.1        
+  IL_0c35: ldarg.0        
+  IL_0c36: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomfactor
+  IL_0c3b: div            
+  IL_0c3c: add            
+  IL_0c3d: ldloc.1        
+  IL_0c3e: blt.s          3148
+  IL_0c40: ldloc.1        
+  IL_0c41: ldloc.1        
+  IL_0c42: ldarg.0        
+  IL_0c43: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomfactor
+  IL_0c48: div            
+  IL_0c49: sub            
+  IL_0c4a: stloc.s        local(0x0005)
+  IL_0c4c: ldloca.s       local(0x0006)
+  IL_0c4e: ldloc.s        local(0x0004)
+  IL_0c50: ldc.i4.5       
+  IL_0c51: mul            
+  IL_0c52: conv.r4        
+  IL_0c53: ldloc.s        local(0x0005)
+  IL_0c55: ldc.i4.5       
+  IL_0c56: mul            
+  IL_0c57: conv.r4        
+  IL_0c58: ldloc.0        
+  IL_0c59: ldc.i4.5       
+  IL_0c5a: mul            
+  IL_0c5b: ldarg.0        
+  IL_0c5c: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomfactor
+  IL_0c61: div            
+  IL_0c62: conv.r4        
+  IL_0c63: ldloc.1        
+  IL_0c64: ldc.i4.5       
+  IL_0c65: mul            
+  IL_0c66: ldarg.0        
+  IL_0c67: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::zoomfactor
+  IL_0c6c: div            
+  IL_0c6d: conv.r4        
+  IL_0c6e: call           UnityEngine.Rect::.ctor
+  IL_0c73: ldarg.0        
+  IL_0c74: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionLocationDotsOverlayPanel
+  IL_0c79: ldloc.s        local(0x0006)
+  IL_0c7b: callvirt       DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent::set_BackgroundCroppedRect
+  IL_0c80: ldarg.0        
+  IL_0c81: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::UpdateBorder
+  IL_0c86: ret            
+
+---- CarriageMap::GetClickMPCoords rva=2a88
+  maxstack=3 locals_sig=token(0x11000007) size=123
+  IL_0c94: ldarg.0        
+  IL_0c95: ldarg.0        
+  IL_0c96: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::selectedRegion
+  IL_0c9b: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::GetRegionMapScale
+  IL_0ca0: stloc.0        
+  IL_0ca1: ldarg.0        
+  IL_0ca2: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::GetCoordinates
+  IL_0ca7: dup            
+  IL_0ca8: ldfld          UnityEngine.Vector2::x
+  IL_0cad: ldloc.0        
+  IL_0cae: div            
+  IL_0caf: conv.i4        
+  IL_0cb0: stloc.1        
+  IL_0cb1: ldfld          UnityEngine.Vector2::y
+  IL_0cb6: ldloc.0        
+  IL_0cb7: div            
+  IL_0cb8: conv.i4        
+  IL_0cb9: stloc.2        
+  IL_0cba: ldarg.0        
+  IL_0cbb: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::selectedRegion
+  IL_0cc0: ldc.i4.s       19
+  IL_0cc2: bne.un.s       3281
+  IL_0cc4: ldloc.1        
+  IL_0cc5: ldc.i4.s       60
+  IL_0cc7: add            
+  IL_0cc8: stloc.1        
+  IL_0cc9: ldloc.2        
+  IL_0cca: ldc.i4         212
+  IL_0ccf: add            
+  IL_0cd0: stloc.2        
+  IL_0cd1: ldarg.0        
+  IL_0cd2: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::selectedRegion
+  IL_0cd7: ldc.i4.s       61
+  IL_0cd9: bne.un.s       3335
+  IL_0cdb: ldloc.1        
+  IL_0cdc: ldc.i4         440
+  IL_0ce1: sub            
+  IL_0ce2: stloc.3        
+  IL_0ce3: ldloc.2        
+  IL_0ce4: ldc.i4         340
+  IL_0ce9: sub            
+  IL_0cea: stloc.s        local(0x0004)
+  IL_0cec: ldloc.3        
+  IL_0ced: ldc.i4.4       
+  IL_0cee: div            
+  IL_0cef: stloc.3        
+  IL_0cf0: ldloc.s        local(0x0004)
+  IL_0cf2: ldc.i4.4       
+  IL_0cf3: div            
+  IL_0cf4: stloc.s        local(0x0004)
+  IL_0cf6: ldc.i4         440
+  IL_0cfb: ldloc.3        
+  IL_0cfc: add            
+  IL_0cfd: stloc.1        
+  IL_0cfe: ldc.i4         340
+  IL_0d03: ldloc.s        local(0x0004)
+  IL_0d05: add            
+  IL_0d06: stloc.2        
+  IL_0d07: ldloc.1        
+  IL_0d08: ldloc.2        
+  IL_0d09: newobj         DaggerfallConnect.Utility.DFPosition::.ctor
+  IL_0d0e: ret            
+
+---- CarriageMap::DrawMapSection rva=2b10
+  maxstack=8 locals_sig=token(0x11000008) size=418
+  IL_0d1c: ldarg.s        argument(0x0005)
+  IL_0d1e: ldind.ref      
+  IL_0d1f: ldc.i4.0       
+  IL_0d20: ldarg.s        argument(0x0005)
+  IL_0d22: ldind.ref      
+  IL_0d23: ldlen          
+  IL_0d24: conv.i4        
+  IL_0d25: call           System.Array::Clear
+  IL_0d2a: ldarg.0        
+  IL_0d2b: call           CarriageMap::HMLDiscoveredLocations
+  IL_0d30: ldc.i4.0       
+  IL_0d31: stloc.0        
+  IL_0d32: br             3765
+  IL_0d37: ldarg.2        
+  IL_0d38: ldloc.0        
+  IL_0d39: add            
+  IL_0d3a: stloc.1        
+  IL_0d3b: ldloc.1        
+  IL_0d3c: ldc.i4.0       
+  IL_0d3d: blt            3761
+  IL_0d42: ldloc.1        
+  IL_0d43: ldc.i4         500
+  IL_0d48: bge            3761
+  IL_0d4d: ldc.i4.0       
+  IL_0d4e: stloc.2        
+  IL_0d4f: br             3754
+  IL_0d54: ldarg.1        
+  IL_0d55: ldloc.2        
+  IL_0d56: add            
+  IL_0d57: stloc.3        
+  IL_0d58: ldloc.3        
+  IL_0d59: ldc.i4.0       
+  IL_0d5a: blt            3750
+  IL_0d5f: ldloc.3        
+  IL_0d60: ldc.i4         1000
+  IL_0d65: bge            3750
+  IL_0d6a: ldarg.s        argument(0x0006)
+  IL_0d6c: brfalse.s      3533
+  IL_0d6e: ldarg.s        argument(0x0004)
+  IL_0d70: ldarg.3        
+  IL_0d71: bne.un.s       3533
+  IL_0d73: ldloc.2        
+  IL_0d74: ldarg.3        
+  IL_0d75: ldc.i4.2       
+  IL_0d76: div            
+  IL_0d77: sub            
+  IL_0d78: conv.r4        
+  IL_0d79: ldc.r4         0.5
+  IL_0d7e: add            
+  IL_0d7f: call           UnityEngine.Mathf::Abs
+  IL_0d84: ldc.r4         2.0
+  IL_0d89: call           UnityEngine.Mathf::Pow
+  IL_0d8e: ldloc.0        
+  IL_0d8f: ldarg.s        argument(0x0004)
+  IL_0d91: ldc.i4.2       
+  IL_0d92: div            
+  IL_0d93: sub            
+  IL_0d94: conv.r4        
+  IL_0d95: ldc.r4         0.5
+  IL_0d9a: add            
+  IL_0d9b: call           UnityEngine.Mathf::Abs
+  IL_0da0: ldc.r4         2.0
+  IL_0da5: call           UnityEngine.Mathf::Pow
+  IL_0daa: add            
+  IL_0dab: call           UnityEngine.Mathf::Sqrt
+  IL_0db0: conv.r8        
+  IL_0db1: ldarg.s        argument(0x0004)
+  IL_0db3: conv.r8        
+  IL_0db4: ldc.r8         1.5
+  IL_0dbd: add            
+  IL_0dbe: ldc.r8         2.0
+  IL_0dc7: div            
+  IL_0dc8: bge            3750
+  IL_0dcd: ldarg.s        argument(0x0004)
+  IL_0dcf: ldloc.0        
+  IL_0dd0: sub            
+  IL_0dd1: ldc.i4.1       
+  IL_0dd2: sub            
+  IL_0dd3: ldarg.3        
+  IL_0dd4: mul            
+  IL_0dd5: ldloc.2        
+  IL_0dd6: add            
+  IL_0dd7: ldarg.3        
+  IL_0dd8: ldarg.s        argument(0x0004)
+  IL_0dda: mul            
+  IL_0ddb: bge            3750
+  IL_0de0: ldarg.3        
+  IL_0de1: ldc.i4.5       
+  IL_0de2: mul            
+  IL_0de3: stloc.s        local(0x0004)
+  IL_0de5: ldarg.s        argument(0x0004)
+  IL_0de7: ldloc.0        
+  IL_0de8: sub            
+  IL_0de9: ldc.i4.1       
+  IL_0dea: sub            
+  IL_0deb: ldc.i4.5       
+  IL_0dec: mul            
+  IL_0ded: ldloc.s        local(0x0004)
+  IL_0def: mul            
+  IL_0df0: ldloc.2        
+  IL_0df1: ldc.i4.5       
+  IL_0df2: mul            
+  IL_0df3: add            
+  IL_0df4: stloc.s        local(0x0005)
+  IL_0df6: ldloc.3        
+  IL_0df7: ldloc.1        
+  IL_0df8: ldc.i4         1000
+  IL_0dfd: mul            
+  IL_0dfe: add            
+  IL_0dff: stloc.s        local(0x0006)
+  IL_0e01: ldsfld         CarriageMap::drawTracks
+  IL_0e06: brfalse.s      3618
+  IL_0e08: ldloc.s        local(0x0005)
+  IL_0e0a: ldloc.s        local(0x0004)
+  IL_0e0c: ldsfld         CarriageMap::pathsData
+  IL_0e11: ldc.i4.1       
+  IL_0e12: ldelem.ref     
+  IL_0e13: ldloc.s        local(0x0006)
+  IL_0e15: ldelem.u1      
+  IL_0e16: ldsfld         CarriageMap::trackColor
+  IL_0e1b: ldarg.s        argument(0x0005)
+  IL_0e1d: call           CarriageMap::DrawPath
+  IL_0e22: ldsfld         CarriageMap::drawRoads
+  IL_0e27: brfalse.s      3651
+  IL_0e29: ldloc.s        local(0x0005)
+  IL_0e2b: ldloc.s        local(0x0004)
+  IL_0e2d: ldsfld         CarriageMap::pathsData
+  IL_0e32: ldc.i4.0       
+  IL_0e33: ldelem.ref     
+  IL_0e34: ldloc.s        local(0x0006)
+  IL_0e36: ldelem.u1      
+  IL_0e37: ldsfld         CarriageMap::roadColor
+  IL_0e3c: ldarg.s        argument(0x0005)
+  IL_0e3e: call           CarriageMap::DrawPath
+  IL_0e43: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_0e48: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_0e4d: ldloc.3        
+  IL_0e4e: ldloc.1        
+  IL_0e4f: ldloca.s       local(0x0007)
+  IL_0e51: callvirt       DaggerfallWorkshop.Utility.ContentReader::HasLocation
+  IL_0e56: brfalse.s      3750
+  IL_0e58: ldarg.0        
+  IL_0e59: ldloc.s        local(0x0007)
+  IL_0e5b: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::checkLocationDiscovered
+  IL_0e60: brfalse.s      3750
+  IL_0e62: ldarg.0        
+  IL_0e63: ldloc.s        local(0x0007)
+  IL_0e65: ldfld          MapSummary::LocationType
+  IL_0e6a: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::GetPixelColorIndex
+  IL_0e6f: stloc.s        local(0x0008)
+  IL_0e71: ldloc.s        local(0x0008)
+  IL_0e73: ldc.i4.m1      
+  IL_0e74: beq.s          3750
+  IL_0e76: ldarg.0        
+  IL_0e77: ldloc.s        local(0x0005)
+  IL_0e79: ldloc.s        local(0x0004)
+  IL_0e7b: ldarg.0        
+  IL_0e7c: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationPixelColors
+  IL_0e81: ldloc.s        local(0x0008)
+  IL_0e83: ldelem         typeref:UnityEngine.Color32
+  IL_0e88: ldarg.0        
+  IL_0e89: ldloc.s        local(0x0007)
+  IL_0e8b: callvirt       CarriageMap::IsLocationLarge
+  IL_0e90: ldarg.s        argument(0x0005)
+  IL_0e92: ldloc.s        local(0x0007)
+  IL_0e94: ldfld          MapSummary::ID
+  IL_0e99: ldarg.0        
+  IL_0e9a: ldfld          CarriageMap::markedLocationId
+  IL_0e9f: ceq            
+  IL_0ea1: call           CarriageMap::DrawLocation
+  IL_0ea6: ldloc.2        
+  IL_0ea7: ldc.i4.1       
+  IL_0ea8: add            
+  IL_0ea9: stloc.2        
+  IL_0eaa: ldloc.2        
+  IL_0eab: ldarg.3        
+  IL_0eac: blt            3412
+  IL_0eb1: ldloc.0        
+  IL_0eb2: ldc.i4.1       
+  IL_0eb3: add            
+  IL_0eb4: stloc.0        
+  IL_0eb5: ldloc.0        
+  IL_0eb6: ldarg.s        argument(0x0004)
+  IL_0eb8: blt            3383
+  IL_0ebd: ret            
+
+---- CarriageMap::UpdateMapLocationDotsTextureWithPaths rva=2cc0
+  maxstack=8 locals_sig=token(0x11000009) size=641
+  IL_0ecc: ldarg.0        
+  IL_0ecd: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::selectedRegionMapNames
+  IL_0ed2: ldarg.0        
+  IL_0ed3: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::mapIndex
+  IL_0ed8: ldelem.ref     
+  IL_0ed9: stloc.0        
+  IL_0eda: ldarg.0        
+  IL_0edb: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::offsetLookup
+  IL_0ee0: ldloc.0        
+  IL_0ee1: callvirt       ::get_Item
+  IL_0ee6: dup            
+  IL_0ee7: ldfld          UnityEngine.Vector2::x
+  IL_0eec: conv.i4        
+  IL_0eed: stloc.1        
+  IL_0eee: ldfld          UnityEngine.Vector2::y
+  IL_0ef3: conv.i4        
+  IL_0ef4: stloc.2        
+  IL_0ef5: ldarg.0        
+  IL_0ef6: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionTextureOverlayPanelRect
+  IL_0efb: call           UnityEngine.Rect::get_width
+  IL_0f00: conv.i4        
+  IL_0f01: stloc.3        
+  IL_0f02: ldarg.0        
+  IL_0f03: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionTextureOverlayPanelRect
+  IL_0f08: call           UnityEngine.Rect::get_height
+  IL_0f0d: conv.i4        
+  IL_0f0e: stloc.s        local(0x0004)
+  IL_0f10: ldarg.0        
+  IL_0f11: ldarg.0        
+  IL_0f12: ldarg.0        
+  IL_0f13: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::selectedRegion
+  IL_0f18: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::GetRegionMapScale
+  IL_0f1d: stfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::scale
+  IL_0f22: ldarg.0        
+  IL_0f23: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsPixelBuffer
+  IL_0f28: ldc.i4.0       
+  IL_0f29: ldarg.0        
+  IL_0f2a: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsPixelBuffer
+  IL_0f2f: ldlen          
+  IL_0f30: conv.i4        
+  IL_0f31: call           System.Array::Clear
+  IL_0f36: ldarg.0        
+  IL_0f37: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsOutlinePixelBuffer
+  IL_0f3c: ldc.i4.0       
+  IL_0f3d: ldarg.0        
+  IL_0f3e: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsOutlinePixelBuffer
+  IL_0f43: ldlen          
+  IL_0f44: conv.i4        
+  IL_0f45: call           System.Array::Clear
+  IL_0f4a: ldc.i4.0       
+  IL_0f4b: stloc.s        local(0x0005)
+  IL_0f4d: br             4279
+  IL_0f52: ldc.i4.0       
+  IL_0f53: stloc.s        local(0x0006)
+  IL_0f55: br             4265
+  IL_0f5a: ldloc.s        local(0x0004)
+  IL_0f5c: ldloc.s        local(0x0005)
+  IL_0f5e: sub            
+  IL_0f5f: ldc.i4.1       
+  IL_0f60: sub            
+  IL_0f61: ldloc.3        
+  IL_0f62: mul            
+  IL_0f63: ldloc.s        local(0x0006)
+  IL_0f65: add            
+  IL_0f66: conv.r4        
+  IL_0f67: ldarg.0        
+  IL_0f68: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::scale
+  IL_0f6d: mul            
+  IL_0f6e: conv.i4        
+  IL_0f6f: stloc.s        local(0x0007)
+  IL_0f71: ldloc.s        local(0x0007)
+  IL_0f73: ldloc.3        
+  IL_0f74: ldloc.s        local(0x0004)
+  IL_0f76: mul            
+  IL_0f77: bge            4259
+  IL_0f7c: ldarg.0        
+  IL_0f7d: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallBaseWindow::get_DaggerfallUnity
+  IL_0f82: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_0f87: callvirt       DaggerfallWorkshop.Utility.ContentReader::get_MapFileReader
+  IL_0f8c: ldloc.1        
+  IL_0f8d: ldloc.s        local(0x0006)
+  IL_0f8f: add            
+  IL_0f90: ldloc.2        
+  IL_0f91: ldloc.s        local(0x0005)
+  IL_0f93: add            
+  IL_0f94: callvirt       DaggerfallConnect.Arena2.MapsFile::GetPoliticIndex
+  IL_0f99: pop            
+  IL_0f9a: ldloc.3        
+  IL_0f9b: ldc.i4.5       
+  IL_0f9c: mul            
+  IL_0f9d: stloc.s        local(0x0008)
+  IL_0f9f: ldloc.s        local(0x0004)
+  IL_0fa1: ldloc.s        local(0x0005)
+  IL_0fa3: sub            
+  IL_0fa4: ldc.i4.1       
+  IL_0fa5: sub            
+  IL_0fa6: ldc.i4.5       
+  IL_0fa7: mul            
+  IL_0fa8: ldloc.s        local(0x0008)
+  IL_0faa: mul            
+  IL_0fab: ldloc.s        local(0x0006)
+  IL_0fad: ldc.i4.5       
+  IL_0fae: mul            
+  IL_0faf: add            
+  IL_0fb0: conv.r4        
+  IL_0fb1: ldarg.0        
+  IL_0fb2: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::scale
+  IL_0fb7: mul            
+  IL_0fb8: conv.i4        
+  IL_0fb9: stloc.s        local(0x0009)
+  IL_0fbb: ldloc.1        
+  IL_0fbc: ldloc.s        local(0x0006)
+  IL_0fbe: add            
+  IL_0fbf: ldloc.2        
+  IL_0fc0: ldloc.s        local(0x0005)
+  IL_0fc2: add            
+  IL_0fc3: ldc.i4         1000
+  IL_0fc8: mul            
+  IL_0fc9: add            
+  IL_0fca: stloc.s        local(0x000A)
+  IL_0fcc: ldsfld         CarriageMap::drawTracks
+  IL_0fd1: brfalse.s      4081
+  IL_0fd3: ldloc.s        local(0x0009)
+  IL_0fd5: ldloc.s        local(0x0008)
+  IL_0fd7: ldsfld         CarriageMap::pathsData
+  IL_0fdc: ldc.i4.1       
+  IL_0fdd: ldelem.ref     
+  IL_0fde: ldloc.s        local(0x000A)
+  IL_0fe0: ldelem.u1      
+  IL_0fe1: ldsfld         CarriageMap::trackColor
+  IL_0fe6: ldarg.0        
+  IL_0fe7: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsPixelBuffer
+  IL_0fec: call           CarriageMap::DrawPath
+  IL_0ff1: ldsfld         CarriageMap::drawRoads
+  IL_0ff6: brfalse.s      4118
+  IL_0ff8: ldloc.s        local(0x0009)
+  IL_0ffa: ldloc.s        local(0x0008)
+  IL_0ffc: ldsfld         CarriageMap::pathsData
+  IL_1001: ldc.i4.0       
+  IL_1002: ldelem.ref     
+  IL_1003: ldloc.s        local(0x000A)
+  IL_1005: ldelem.u1      
+  IL_1006: ldsfld         CarriageMap::roadColor
+  IL_100b: ldarg.0        
+  IL_100c: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsPixelBuffer
+  IL_1011: call           CarriageMap::DrawPath
+  IL_1016: ldarg.0        
+  IL_1017: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallBaseWindow::get_DaggerfallUnity
+  IL_101c: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_1021: ldloc.1        
+  IL_1022: ldloc.s        local(0x0006)
+  IL_1024: add            
+  IL_1025: ldloc.2        
+  IL_1026: ldloc.s        local(0x0005)
+  IL_1028: add            
+  IL_1029: ldloca.s       local(0x000B)
+  IL_102b: callvirt       DaggerfallWorkshop.Utility.ContentReader::HasLocation
+  IL_1030: brfalse.s      4259
+  IL_1032: ldarg.0        
+  IL_1033: ldloc.s        local(0x000B)
+  IL_1035: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::checkLocationDiscovered
+  IL_103a: brfalse.s      4259
+  IL_103c: ldarg.0        
+  IL_103d: ldloc.s        local(0x000B)
+  IL_103f: ldfld          MapSummary::LocationType
+  IL_1044: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::GetPixelColorIndex
+  IL_1049: stloc.s        local(0x000C)
+  IL_104b: ldloc.s        local(0x000C)
+  IL_104d: ldc.i4.m1      
+  IL_104e: beq.s          4259
+  IL_1050: call           DaggerfallWorkshop.DaggerfallUnity::get_Settings
+  IL_1055: callvirt       DaggerfallWorkshop.SettingsManager::get_TravelMapLocationsOutline
+  IL_105a: brfalse.s      4207
+  IL_105c: ldarg.0        
+  IL_105d: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsOutlinePixelBuffer
+  IL_1062: ldloc.s        local(0x0007)
+  IL_1064: ldarg.0        
+  IL_1065: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::dotOutlineColor
+  IL_106a: stelem         typeref:UnityEngine.Color32
+  IL_106f: ldarg.0        
+  IL_1070: ldloc.s        local(0x0009)
+  IL_1072: ldloc.s        local(0x0008)
+  IL_1074: ldarg.0        
+  IL_1075: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationPixelColors
+  IL_107a: ldloc.s        local(0x000C)
+  IL_107c: ldelem         typeref:UnityEngine.Color32
+  IL_1081: ldarg.0        
+  IL_1082: ldloc.s        local(0x000B)
+  IL_1084: callvirt       CarriageMap::IsLocationLarge
+  IL_1089: ldarg.0        
+  IL_108a: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsPixelBuffer
+  IL_108f: ldloc.s        local(0x000B)
+  IL_1091: ldfld          MapSummary::ID
+  IL_1096: ldarg.0        
+  IL_1097: ldfld          CarriageMap::markedLocationId
+  IL_109c: ceq            
+  IL_109e: call           CarriageMap::DrawLocation
+  IL_10a3: ldloc.s        local(0x0006)
+  IL_10a5: ldc.i4.1       
+  IL_10a6: add            
+  IL_10a7: stloc.s        local(0x0006)
+  IL_10a9: ldloc.s        local(0x0006)
+  IL_10ab: ldloc.3        
+  IL_10ac: blt            3930
+  IL_10b1: ldloc.s        local(0x0005)
+  IL_10b3: ldc.i4.1       
+  IL_10b4: add            
+  IL_10b5: stloc.s        local(0x0005)
+  IL_10b7: ldloc.s        local(0x0005)
+  IL_10b9: ldloc.s        local(0x0004)
+  IL_10bb: blt            3922
+  IL_10c0: call           DaggerfallWorkshop.DaggerfallUnity::get_Settings
+  IL_10c5: callvirt       DaggerfallWorkshop.SettingsManager::get_TravelMapLocationsOutline
+  IL_10ca: brfalse.s      4328
+  IL_10cc: ldarg.0        
+  IL_10cd: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsOutlineTexture
+  IL_10d2: ldarg.0        
+  IL_10d3: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsOutlinePixelBuffer
+  IL_10d8: callvirt       UnityEngine.Texture2D::SetPixels32
+  IL_10dd: ldarg.0        
+  IL_10de: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsOutlineTexture
+  IL_10e3: callvirt       UnityEngine.Texture2D::Apply
+  IL_10e8: ldarg.0        
+  IL_10e9: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsTexture
+  IL_10ee: ldarg.0        
+  IL_10ef: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsPixelBuffer
+  IL_10f4: callvirt       UnityEngine.Texture2D::SetPixels32
+  IL_10f9: ldarg.0        
+  IL_10fa: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsTexture
+  IL_10ff: callvirt       UnityEngine.Texture2D::Apply
+  IL_1104: call           DaggerfallWorkshop.DaggerfallUnity::get_Settings
+  IL_1109: callvirt       DaggerfallWorkshop.SettingsManager::get_TravelMapLocationsOutline
+  IL_110e: brfalse.s      4411
+  IL_1110: ldc.i4.0       
+  IL_1111: stloc.s        local(0x000D)
+  IL_1113: br.s           4399
+  IL_1115: ldarg.0        
+  IL_1116: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionLocationDotsOutlinesOverlayPanel
+  IL_111b: ldloc.s        local(0x000D)
+  IL_111d: ldelem.ref     
+  IL_111e: ldarg.0        
+  IL_111f: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsOutlineTexture
+  IL_1124: callvirt       DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent::set_BackgroundTexture
+  IL_1129: ldloc.s        local(0x000D)
+  IL_112b: ldc.i4.1       
+  IL_112c: add            
+  IL_112d: stloc.s        local(0x000D)
+  IL_112f: ldloc.s        local(0x000D)
+  IL_1131: ldarg.0        
+  IL_1132: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::outlineDisplacements
+  IL_1137: ldlen          
+  IL_1138: conv.i4        
+  IL_1139: blt.s          4373
+  IL_113b: ldarg.0        
+  IL_113c: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::regionLocationDotsOverlayPanel
+  IL_1141: ldarg.0        
+  IL_1142: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationDotsTexture
+  IL_1147: callvirt       DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent::set_BackgroundTexture
+  IL_114c: ret            
+
+---- CarriageMap::checkLocationDiscovered rva=2f50
+  maxstack=2 locals_sig=token(0x1100000A) size=54
+  IL_115c: call           ImmersiveTravel::get_HiddenMapLocationsEnabled
+  IL_1161: brfalse.s      4488
+  IL_1163: ldarg.0        
+  IL_1164: ldfld          CarriageMap::discoveredMapSummaries
+  IL_1169: ldarg.1        
+  IL_116a: callvirt       ::Contains
+  IL_116f: brtrue.s       4484
+  IL_1171: ldarg.0        
+  IL_1172: ldfld          CarriageMap::revealedLocationTypes
+  IL_1177: ldarg.1        
+  IL_1178: ldfld          MapSummary::LocationType
+  IL_117d: callvirt       ::Contains
+  IL_1182: br.s           4485
+  IL_1184: ldc.i4.1       
+  IL_1185: stloc.0        
+  IL_1186: br.s           4496
+  IL_1188: ldarg.0        
+  IL_1189: ldarg.1        
+  IL_118a: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::checkLocationDiscovered
+  IL_118f: stloc.0        
+  IL_1190: ldloc.0        
+  IL_1191: ret            
+
+---- CarriageMap::DrawPath rva=2f94
+  maxstack=4 locals_sig=None size=300
+  IL_11a0: ldarg.2        
+  IL_11a1: brtrue.s       4516
+  IL_11a3: ret            
+  IL_11a4: ldarg.s        argument(0x0004)
+  IL_11a6: ldind.ref      
+  IL_11a7: ldarg.0        
+  IL_11a8: ldarg.1        
+  IL_11a9: ldc.i4.2       
+  IL_11aa: mul            
+  IL_11ab: add            
+  IL_11ac: ldc.i4.2       
+  IL_11ad: add            
+  IL_11ae: ldarg.3        
+  IL_11af: stelem         typeref:UnityEngine.Color32
+  IL_11b4: ldarg.2        
+  IL_11b5: ldc.i4.8       
+  IL_11b6: and            
+  IL_11b7: brfalse.s      4563
+  IL_11b9: ldarg.s        argument(0x0004)
+  IL_11bb: ldind.ref      
+  IL_11bc: ldarg.0        
+  IL_11bd: ldc.i4.2       
+  IL_11be: add            
+  IL_11bf: ldarg.3        
+  IL_11c0: stelem         typeref:UnityEngine.Color32
+  IL_11c5: ldarg.s        argument(0x0004)
+  IL_11c7: ldind.ref      
+  IL_11c8: ldarg.0        
+  IL_11c9: ldarg.1        
+  IL_11ca: add            
+  IL_11cb: ldc.i4.2       
+  IL_11cc: add            
+  IL_11cd: ldarg.3        
+  IL_11ce: stelem         typeref:UnityEngine.Color32
+  IL_11d3: ldarg.2        
+  IL_11d4: ldc.i4.s       16
+  IL_11d6: and            
+  IL_11d7: brfalse.s      4595
+  IL_11d9: ldarg.s        argument(0x0004)
+  IL_11db: ldind.ref      
+  IL_11dc: ldarg.0        
+  IL_11dd: ldc.i4.4       
+  IL_11de: add            
+  IL_11df: ldarg.3        
+  IL_11e0: stelem         typeref:UnityEngine.Color32
+  IL_11e5: ldarg.s        argument(0x0004)
+  IL_11e7: ldind.ref      
+  IL_11e8: ldarg.0        
+  IL_11e9: ldarg.1        
+  IL_11ea: add            
+  IL_11eb: ldc.i4.3       
+  IL_11ec: add            
+  IL_11ed: ldarg.3        
+  IL_11ee: stelem         typeref:UnityEngine.Color32
+  IL_11f3: ldarg.2        
+  IL_11f4: ldc.i4.s       32
+  IL_11f6: and            
+  IL_11f7: brfalse.s      4633
+  IL_11f9: ldarg.s        argument(0x0004)
+  IL_11fb: ldind.ref      
+  IL_11fc: ldarg.0        
+  IL_11fd: ldarg.1        
+  IL_11fe: ldc.i4.2       
+  IL_11ff: mul            
+  IL_1200: add            
+  IL_1201: ldc.i4.3       
+  IL_1202: add            
+  IL_1203: ldarg.3        
+  IL_1204: stelem         typeref:UnityEngine.Color32
+  IL_1209: ldarg.s        argument(0x0004)
+  IL_120b: ldind.ref      
+  IL_120c: ldarg.0        
+  IL_120d: ldarg.1        
+  IL_120e: ldc.i4.2       
+  IL_120f: mul            
+  IL_1210: add            
+  IL_1211: ldc.i4.4       
+  IL_1212: add            
+  IL_1213: ldarg.3        
+  IL_1214: stelem         typeref:UnityEngine.Color32
+  IL_1219: ldarg.2        
+  IL_121a: ldc.i4.s       64
+  IL_121c: and            
+  IL_121d: brfalse.s      4671
+  IL_121f: ldarg.s        argument(0x0004)
+  IL_1221: ldind.ref      
+  IL_1222: ldarg.0        
+  IL_1223: ldarg.1        
+  IL_1224: ldc.i4.3       
+  IL_1225: mul            
+  IL_1226: add            
+  IL_1227: ldc.i4.3       
+  IL_1228: add            
+  IL_1229: ldarg.3        
+  IL_122a: stelem         typeref:UnityEngine.Color32
+  IL_122f: ldarg.s        argument(0x0004)
+  IL_1231: ldind.ref      
+  IL_1232: ldarg.0        
+  IL_1233: ldarg.1        
+  IL_1234: ldc.i4.4       
+  IL_1235: mul            
+  IL_1236: add            
+  IL_1237: ldc.i4.4       
+  IL_1238: add            
+  IL_1239: ldarg.3        
+  IL_123a: stelem         typeref:UnityEngine.Color32
+  IL_123f: ldarg.2        
+  IL_1240: ldc.i4         128
+  IL_1245: and            
+  IL_1246: brfalse.s      4712
+  IL_1248: ldarg.s        argument(0x0004)
+  IL_124a: ldind.ref      
+  IL_124b: ldarg.0        
+  IL_124c: ldarg.1        
+  IL_124d: ldc.i4.3       
+  IL_124e: mul            
+  IL_124f: add            
+  IL_1250: ldc.i4.2       
+  IL_1251: add            
+  IL_1252: ldarg.3        
+  IL_1253: stelem         typeref:UnityEngine.Color32
+  IL_1258: ldarg.s        argument(0x0004)
+  IL_125a: ldind.ref      
+  IL_125b: ldarg.0        
+  IL_125c: ldarg.1        
+  IL_125d: ldc.i4.4       
+  IL_125e: mul            
+  IL_125f: add            
+  IL_1260: ldc.i4.2       
+  IL_1261: add            
+  IL_1262: ldarg.3        
+  IL_1263: stelem         typeref:UnityEngine.Color32
+  IL_1268: ldarg.2        
+  IL_1269: ldc.i4.1       
+  IL_126a: and            
+  IL_126b: brfalse.s      4747
+  IL_126d: ldarg.s        argument(0x0004)
+  IL_126f: ldind.ref      
+  IL_1270: ldarg.0        
+  IL_1271: ldarg.1        
+  IL_1272: ldc.i4.3       
+  IL_1273: mul            
+  IL_1274: add            
+  IL_1275: ldc.i4.1       
+  IL_1276: add            
+  IL_1277: ldarg.3        
+  IL_1278: stelem         typeref:UnityEngine.Color32
+  IL_127d: ldarg.s        argument(0x0004)
+  IL_127f: ldind.ref      
+  IL_1280: ldarg.0        
+  IL_1281: ldarg.1        
+  IL_1282: ldc.i4.4       
+  IL_1283: mul            
+  IL_1284: add            
+  IL_1285: ldarg.3        
+  IL_1286: stelem         typeref:UnityEngine.Color32
+  IL_128b: ldarg.2        
+  IL_128c: ldc.i4.2       
+  IL_128d: and            
+  IL_128e: brfalse.s      4782
+  IL_1290: ldarg.s        argument(0x0004)
+  IL_1292: ldind.ref      
+  IL_1293: ldarg.0        
+  IL_1294: ldarg.1        
+  IL_1295: ldc.i4.2       
+  IL_1296: mul            
+  IL_1297: add            
+  IL_1298: ldarg.3        
+  IL_1299: stelem         typeref:UnityEngine.Color32
+  IL_129e: ldarg.s        argument(0x0004)
+  IL_12a0: ldind.ref      
+  IL_12a1: ldarg.0        
+  IL_12a2: ldarg.1        
+  IL_12a3: ldc.i4.2       
+  IL_12a4: mul            
+  IL_12a5: add            
+  IL_12a6: ldc.i4.1       
+  IL_12a7: add            
+  IL_12a8: ldarg.3        
+  IL_12a9: stelem         typeref:UnityEngine.Color32
+  IL_12ae: ldarg.2        
+  IL_12af: ldc.i4.4       
+  IL_12b0: and            
+  IL_12b1: brfalse.s      4811
+  IL_12b3: ldarg.s        argument(0x0004)
+  IL_12b5: ldind.ref      
+  IL_12b6: ldarg.0        
+  IL_12b7: ldarg.3        
+  IL_12b8: stelem         typeref:UnityEngine.Color32
+  IL_12bd: ldarg.s        argument(0x0004)
+  IL_12bf: ldind.ref      
+  IL_12c0: ldarg.0        
+  IL_12c1: ldarg.1        
+  IL_12c2: add            
+  IL_12c3: ldc.i4.1       
+  IL_12c4: add            
+  IL_12c5: ldarg.3        
+  IL_12c6: stelem         typeref:UnityEngine.Color32
+  IL_12cb: ret            
+
+---- CarriageMap::DrawLocation rva=30cc
+  maxstack=4 locals_sig=token(0x1100000B) size=177
+  IL_12d8: ldarg.s        argument(0x0004)
+  IL_12da: brtrue.s       4831
+  IL_12dc: ldc.i4.1       
+  IL_12dd: br.s           4832
+  IL_12df: ldc.i4.0       
+  IL_12e0: stloc.0        
+  IL_12e1: ldarg.s        argument(0x0004)
+  IL_12e3: brtrue.s       4840
+  IL_12e5: ldc.i4.4       
+  IL_12e6: br.s           4841
+  IL_12e8: ldc.i4.5       
+  IL_12e9: stloc.1        
+  IL_12ea: ldloc.0        
+  IL_12eb: stloc.2        
+  IL_12ec: br.s           4878
+  IL_12ee: ldloc.0        
+  IL_12ef: stloc.3        
+  IL_12f0: br.s           4870
+  IL_12f2: ldarg.s        argument(0x0005)
+  IL_12f4: ldind.ref      
+  IL_12f5: ldarg.1        
+  IL_12f6: ldloc.2        
+  IL_12f7: ldarg.2        
+  IL_12f8: mul            
+  IL_12f9: add            
+  IL_12fa: ldloc.3        
+  IL_12fb: add            
+  IL_12fc: ldarg.3        
+  IL_12fd: stelem         typeref:UnityEngine.Color32
+  IL_1302: ldloc.3        
+  IL_1303: ldc.i4.1       
+  IL_1304: add            
+  IL_1305: stloc.3        
+  IL_1306: ldloc.3        
+  IL_1307: ldloc.1        
+  IL_1308: blt.s          4850
+  IL_130a: ldloc.2        
+  IL_130b: ldc.i4.1       
+  IL_130c: add            
+  IL_130d: stloc.2        
+  IL_130e: ldloc.2        
+  IL_130f: ldloc.1        
+  IL_1310: blt.s          4846
+  IL_1312: ldarg.s        argument(0x0006)
+  IL_1314: brfalse.s      5000
+  IL_1316: ldc.i4.s       -2
+  IL_1318: stloc.s        local(0x0004)
+  IL_131a: br.s           4938
+  IL_131c: ldc.i4.s       -2
+  IL_131e: stloc.s        local(0x0005)
+  IL_1320: br.s           4927
+  IL_1322: ldarg.s        argument(0x0005)
+  IL_1324: ldind.ref      
+  IL_1325: ldarg.1        
+  IL_1326: ldloc.s        local(0x0004)
+  IL_1328: ldarg.2        
+  IL_1329: mul            
+  IL_132a: add            
+  IL_132b: ldloc.s        local(0x0005)
+  IL_132d: add            
+  IL_132e: ldarg.0        
+  IL_132f: ldfld          CarriageMap::MarkLocationColor
+  IL_1334: stelem         typeref:UnityEngine.Color32
+  IL_1339: ldloc.s        local(0x0005)
+  IL_133b: ldc.i4.1       
+  IL_133c: add            
+  IL_133d: stloc.s        local(0x0005)
+  IL_133f: ldloc.s        local(0x0005)
+  IL_1341: ldc.i4.7       
+  IL_1342: blt.s          4898
+  IL_1344: ldloc.s        local(0x0004)
+  IL_1346: ldc.i4.8       
+  IL_1347: add            
+  IL_1348: stloc.s        local(0x0004)
+  IL_134a: ldloc.s        local(0x0004)
+  IL_134c: ldc.i4.8       
+  IL_134d: blt.s          4892
+  IL_134f: ldc.i4.s       -2
+  IL_1351: stloc.s        local(0x0006)
+  IL_1353: br.s           4995
+  IL_1355: ldc.i4.s       -2
+  IL_1357: stloc.s        local(0x0007)
+  IL_1359: br.s           4984
+  IL_135b: ldarg.s        argument(0x0005)
+  IL_135d: ldind.ref      
+  IL_135e: ldarg.1        
+  IL_135f: ldloc.s        local(0x0007)
+  IL_1361: ldarg.2        
+  IL_1362: mul            
+  IL_1363: add            
+  IL_1364: ldloc.s        local(0x0006)
+  IL_1366: add            
+  IL_1367: ldarg.0        
+  IL_1368: ldfld          CarriageMap::MarkLocationColor
+  IL_136d: stelem         typeref:UnityEngine.Color32
+  IL_1372: ldloc.s        local(0x0007)
+  IL_1374: ldc.i4.1       
+  IL_1375: add            
+  IL_1376: stloc.s        local(0x0007)
+  IL_1378: ldloc.s        local(0x0007)
+  IL_137a: ldc.i4.7       
+  IL_137b: blt.s          4955
+  IL_137d: ldloc.s        local(0x0006)
+  IL_137f: ldc.i4.8       
+  IL_1380: add            
+  IL_1381: stloc.s        local(0x0006)
+  IL_1383: ldloc.s        local(0x0006)
+  IL_1385: ldc.i4.8       
+  IL_1386: blt.s          4949
+  IL_1388: ret            
+
+---- CarriageMap::BorderingRegionIndex rva=318c
+  maxstack=4 locals_sig=token(0x1100000C) size=207
+  IL_1398: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_139d: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_13a2: callvirt       DaggerfallWorkshop.Utility.ContentReader::get_MapFileReader
+  IL_13a7: ldarg.0        
+  IL_13a8: ldarg.1        
+  IL_13a9: ldc.i4.1       
+  IL_13aa: add            
+  IL_13ab: callvirt       DaggerfallConnect.Arena2.MapsFile::GetPoliticIndex
+  IL_13b0: ldc.i4         128
+  IL_13b5: sub            
+  IL_13b6: stloc.0        
+  IL_13b7: ldloc.0        
+  IL_13b8: ldc.i4.s       31
+  IL_13ba: beq.s          5059
+  IL_13bc: ldloc.0        
+  IL_13bd: ldc.i4.0       
+  IL_13be: bgt            5221
+  IL_13c3: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_13c8: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_13cd: callvirt       DaggerfallWorkshop.Utility.ContentReader::get_MapFileReader
+  IL_13d2: ldarg.0        
+  IL_13d3: ldarg.1        
+  IL_13d4: ldc.i4.1       
+  IL_13d5: add            
+  IL_13d6: callvirt       DaggerfallConnect.Arena2.MapsFile::GetPoliticIndex
+  IL_13db: ldc.i4         128
+  IL_13e0: sub            
+  IL_13e1: stloc.0        
+  IL_13e2: ldloc.0        
+  IL_13e3: ldc.i4.s       31
+  IL_13e5: beq.s          5099
+  IL_13e7: ldloc.0        
+  IL_13e8: ldc.i4.0       
+  IL_13e9: bgt.s          5221
+  IL_13eb: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_13f0: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_13f5: callvirt       DaggerfallWorkshop.Utility.ContentReader::get_MapFileReader
+  IL_13fa: ldarg.0        
+  IL_13fb: ldc.i4.1       
+  IL_13fc: add            
+  IL_13fd: ldarg.1        
+  IL_13fe: callvirt       DaggerfallConnect.Arena2.MapsFile::GetPoliticIndex
+  IL_1403: ldc.i4         128
+  IL_1408: sub            
+  IL_1409: stloc.0        
+  IL_140a: ldloc.0        
+  IL_140b: ldc.i4.s       31
+  IL_140d: beq.s          5139
+  IL_140f: ldloc.0        
+  IL_1410: ldc.i4.0       
+  IL_1411: bgt.s          5221
+  IL_1413: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_1418: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_141d: callvirt       DaggerfallWorkshop.Utility.ContentReader::get_MapFileReader
+  IL_1422: ldarg.0        
+  IL_1423: ldarg.1        
+  IL_1424: ldc.i4.1       
+  IL_1425: sub            
+  IL_1426: callvirt       DaggerfallConnect.Arena2.MapsFile::GetPoliticIndex
+  IL_142b: ldc.i4         128
+  IL_1430: sub            
+  IL_1431: stloc.0        
+  IL_1432: ldloc.0        
+  IL_1433: ldc.i4.s       31
+  IL_1435: beq.s          5179
+  IL_1437: ldloc.0        
+  IL_1438: ldc.i4.0       
+  IL_1439: bgt.s          5221
+  IL_143b: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_1440: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_1445: callvirt       DaggerfallWorkshop.Utility.ContentReader::get_MapFileReader
+  IL_144a: ldarg.0        
+  IL_144b: ldc.i4.1       
+  IL_144c: sub            
+  IL_144d: ldarg.1        
+  IL_144e: callvirt       DaggerfallConnect.Arena2.MapsFile::GetPoliticIndex
+  IL_1453: ldc.i4         128
+  IL_1458: sub            
+  IL_1459: stloc.0        
+  IL_145a: ldloc.0        
+  IL_145b: ldc.i4.s       31
+  IL_145d: beq.s          5219
+  IL_145f: ldloc.0        
+  IL_1460: ldc.i4.0       
+  IL_1461: bgt.s          5221
+  IL_1463: ldc.i4.m1      
+  IL_1464: stloc.0        
+  IL_1465: ldloc.0        
+  IL_1466: ret            
+
+---- CarriageMap::IsLocationLarge rva=3267
+  maxstack=8 locals_sig=None size=28
+  IL_1468: ldarg.1        
+  IL_1469: ldfld          MapSummary::LocationType
+  IL_146e: brfalse.s      5250
+  IL_1470: ldarg.1        
+  IL_1471: ldfld          MapSummary::LocationType
+  IL_1476: ldc.i4.1       
+  IL_1477: beq.s          5250
+  IL_1479: ldsfld         CarriageMap::clearerMapDots
+  IL_147e: ldc.i4.0       
+  IL_147f: ceq            
+  IL_1481: ret            
+  IL_1482: ldc.i4.1       
+  IL_1483: ret            
+
+---- CarriageMap::HMLDiscoveredLocations rva=3284
+  maxstack=8 locals_sig=None size=41
+  IL_1485: call           ImmersiveTravel::get_HiddenMapLocationsEnabled
+  IL_148a: brfalse.s      5293
+  IL_148c: call           DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::get_Instance
+  IL_1491: ldstr          "Hidden Map Locations"
+  IL_1496: ldstr          "getDiscoveredMapSummaries"
+  IL_149b: ldnull         
+  IL_149c: ldarg.0        
+  IL_149d: ldftn          CarriageMap::<HMLDiscoveredLocations>b__29_0
+  IL_14a3: newobj         DaggerfallWorkshop.Game.Utility.ModSupport.DFModMessageCallback::.ctor
+  IL_14a8: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.ModManager::SendModMessage
+  IL_14ad: ret            
+
+---- CarriageMap::isCapital rva=32b0
+  maxstack=3 locals_sig=token(0x1100000D) size=54
+  IL_14bc: newobj         <>c__DisplayClass30_0::.ctor
+  IL_14c1: stloc.0        
+  IL_14c2: ldloc.0        
+  IL_14c3: ldarg.1        
+  IL_14c4: stfld          <>c__DisplayClass30_0::mapID
+  IL_14c9: ldloc.0        
+  IL_14ca: ldloc.0        
+  IL_14cb: ldfld          <>c__DisplayClass30_0::mapID
+  IL_14d0: ldc.i4         1048575
+  IL_14d5: and            
+  IL_14d6: stfld          <>c__DisplayClass30_0::mapID
+  IL_14db: ldsfld         CarriageMap::capitalMapIDs
+  IL_14e0: ldloc.0        
+  IL_14e1: ldftn          <>c__DisplayClass30_0::<isCapital>b__0
+  IL_14e7: newobj         ::.ctor
+  IL_14ec: call           methodspec:System.Array::Exists
+  IL_14f1: ret            
+
+---- CarriageMap::.cctor rva=32f4
+  maxstack=4 locals_sig=None size=200
+  IL_1500: ldc.i4.2       
+  IL_1501: newarr         typespec:1b000005
+  IL_1506: stsfld         CarriageMap::pathsData
+  IL_150b: ldc.i4.s       60
+  IL_150d: ldc.i4.s       60
+  IL_150f: ldc.i4.s       60
+  IL_1511: ldc.i4         255
+  IL_1516: newobj         UnityEngine.Color32::.ctor
+  IL_151b: stsfld         CarriageMap::roadColor
+  IL_1520: ldc.i4         160
+  IL_1525: ldc.i4.s       118
+  IL_1527: ldc.i4.s       74
+  IL_1529: ldc.i4         255
+  IL_152e: newobj         UnityEngine.Color32::.ctor
+  IL_1533: stsfld         CarriageMap::trackColor
+  IL_1538: call           ImmersiveTravel::get_BasicRoadsEnabled
+  IL_153d: brfalse.s      5461
+  IL_153f: ldsfld         ImmersiveTravel::Settings
+  IL_1544: ldstr          "General"
+  IL_1549: ldstr          "DrawRoads"
+  IL_154e: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1553: br.s           5462
+  IL_1555: ldc.i4.0       
+  IL_1556: stsfld         CarriageMap::drawRoads
+  IL_155b: call           ImmersiveTravel::get_BasicRoadsEnabled
+  IL_1560: brfalse.s      5496
+  IL_1562: ldsfld         ImmersiveTravel::Settings
+  IL_1567: ldstr          "General"
+  IL_156c: ldstr          "DrawTracks"
+  IL_1571: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1576: br.s           5497
+  IL_1578: ldc.i4.0       
+  IL_1579: stsfld         CarriageMap::drawTracks
+  IL_157e: ldsfld         ImmersiveTravel::Settings
+  IL_1583: ldstr          "General"
+  IL_1588: ldstr          "ClearerMapDots"
+  IL_158d: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1592: stsfld         CarriageMap::clearerMapDots
+  IL_1597: ldsfld         ImmersiveTravel::Settings
+  IL_159c: ldstr          "General"
+  IL_15a1: ldstr          "RegionLockedCarriages"
+  IL_15a6: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_15ab: stsfld         CarriageMap::regionLockedCarriages
+  IL_15b0: ldc.i4.s       40
+  IL_15b2: newarr         typeref:System.Int32
+  IL_15b7: dup            
+  IL_15b8: ldtoken        <PrivateImplementationDetails>::CB08BD93C1C6CEF0E4DA612649670AC5CDF9CB1D
+  IL_15bd: call           System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray
+  IL_15c2: stsfld         CarriageMap::capitalMapIDs
+  IL_15c7: ret            
+
+---- CarriageMap::<.ctor>b__14_2 rva=33c8
+  maxstack=8 locals_sig=None size=13
+  IL_15c9: ldarg.0        
+  IL_15ca: ldarg.2        
+  IL_15cb: castclass      typespec:1b000002
+  IL_15d0: stfld          CarriageMap::revealedLocationTypes
+  IL_15d5: ret            
+
+---- CarriageMap::<.ctor>b__15_2 rva=33c8
+  maxstack=8 locals_sig=None size=13
+  IL_15c9: ldarg.0        
+  IL_15ca: ldarg.2        
+  IL_15cb: castclass      typespec:1b000002
+  IL_15d0: stfld          CarriageMap::revealedLocationTypes
+  IL_15d5: ret            
+
+---- CarriageMap::<CreatePopUpWindow>b__17_0 rva=33d6
+  maxstack=8 locals_sig=None size=7
+  IL_15d7: ldarg.0        
+  IL_15d8: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_15dd: ret            
+
+---- CarriageMap::<CreatePopUpWindow>b__17_1 rva=33d6
+  maxstack=8 locals_sig=None size=7
+  IL_15d7: ldarg.0        
+  IL_15d8: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_15dd: ret            
+
+---- CarriageMap::<HMLDiscoveredLocations>b__29_0 rva=33de
+  maxstack=8 locals_sig=None size=13
+  IL_15df: ldarg.0        
+  IL_15e0: ldarg.2        
+  IL_15e1: castclass      typespec:1b000001
+  IL_15e6: stfld          CarriageMap::discoveredMapSummaries
+  IL_15eb: ret            
+==== TYPE ImmersiveTravel.SeafarersMap (fields: ['showLargerDocks', 'showOnlyDocks', 'reducedRangeInVillages', 'hardcodedLargeDocksIDs', 'dockMapIDs'])
+
+---- SeafarersMap::.ctor rva=33ec
+  maxstack=8 locals_sig=None size=8
+  IL_15ed: ldarg.0        
+  IL_15ee: ldarg.1        
+  IL_15ef: call           CarriageMap::.ctor
+  IL_15f4: ret            
+
+---- SeafarersMap::CreatePopUpWindow rva=33f8
+  maxstack=5 locals_sig=token(0x1100000E) size=399
+  IL_1604: ldarg.0        
+  IL_1605: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_160a: ldfld          MapSummary::ID
+  IL_160f: call           DaggerfallConnect.Arena2.MapsFile::GetPixelFromPixelID
+  IL_1614: stloc.0        
+  IL_1615: ldarg.0        
+  IL_1616: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::teleportationTravel
+  IL_161b: brfalse.s      5751
+  IL_161d: ldc.i4.s       29
+  IL_161f: ldc.i4.3       
+  IL_1620: newarr         typeref:System.Object
+  IL_1625: dup            
+  IL_1626: ldc.i4.0       
+  IL_1627: ldarg.0        
+  IL_1628: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_162d: stelem.ref     
+  IL_162e: dup            
+  IL_162f: ldc.i4.1       
+  IL_1630: ldarg.0        
+  IL_1631: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1636: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::get_TopWindow
+  IL_163b: stelem.ref     
+  IL_163c: dup            
+  IL_163d: ldc.i4.2       
+  IL_163e: ldarg.0        
+  IL_163f: stelem.ref     
+  IL_1640: call           DaggerfallWorkshop.Game.UserInterfaceWindows.UIWindowFactory::GetInstanceWithArgs
+  IL_1645: castclass      typeref:DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTeleportPopUp
+  IL_164a: stloc.1        
+  IL_164b: ldloc.1        
+  IL_164c: ldloc.0        
+  IL_164d: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTeleportPopUp::set_DestinationPos
+  IL_1652: ldloc.1        
+  IL_1653: ldarg.0        
+  IL_1654: ldarg.0        
+  IL_1655: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_165a: ldfld          MapSummary::MapIndex
+  IL_165f: ldc.i4.0       
+  IL_1660: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::GetLocationNameInCurrentRegion
+  IL_1665: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTeleportPopUp::set_DestinationName
+  IL_166a: ldarg.0        
+  IL_166b: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1670: ldloc.1        
+  IL_1671: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_1676: ret            
+  IL_1677: ldarg.0        
+  IL_1678: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_167d: ldfld          MapSummary::MapID
+  IL_1682: call           SeafarersMap::NearDock
+  IL_1687: brfalse        5963
+  IL_168c: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_1691: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerGPS
+  IL_1696: stloc.2        
+  IL_1697: ldloc.2        
+  IL_1698: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentMapPixel
+  IL_169d: ldfld          DaggerfallConnect.Utility.DFPosition::X
+  IL_16a2: ldloc.2        
+  IL_16a3: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentMapPixel
+  IL_16a8: ldfld          DaggerfallConnect.Utility.DFPosition::Y
+  IL_16ad: call           CarriageMap::BorderingRegionIndex
+  IL_16b2: stloc.3        
+  IL_16b3: ldsfld         SeafarersMap::reducedRangeInVillages
+  IL_16b8: brfalse.s      5844
+  IL_16ba: ldloc.2        
+  IL_16bb: call           SeafarersMap::IsPlayerInTown
+  IL_16c0: brtrue.s       5844
+  IL_16c2: ldloc.3        
+  IL_16c3: ldarg.0        
+  IL_16c4: ldflda         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelMapWindow::locationSummary
+  IL_16c9: ldfld          MapSummary::RegionIndex
+  IL_16ce: beq.s          5844
+  IL_16d0: ldloc.3        
+  IL_16d1: ldc.i4.m1      
+  IL_16d2: bne.un.s       5891
+  IL_16d4: ldarg.0        
+  IL_16d5: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_16da: ldarg.0        
+  IL_16db: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_16e0: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::get_TopWindow
+  IL_16e5: ldarg.0        
+  IL_16e6: newobj         SeafarersPopUp::.ctor
+  IL_16eb: stloc.s        local(0x0004)
+  IL_16ed: ldloc.s        local(0x0004)
+  IL_16ef: ldloc.0        
+  IL_16f0: callvirt       SeafarersPopUp::SetEndPosition
+  IL_16f5: ldarg.0        
+  IL_16f6: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_16fb: ldloc.s        local(0x0004)
+  IL_16fd: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_1702: ret            
+  IL_1703: ldarg.0        
+  IL_1704: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1709: ldarg.0        
+  IL_170a: ldc.i4.0       
+  IL_170b: ldc.i4.m1      
+  IL_170c: newobj         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::.ctor
+  IL_1711: stloc.s        local(0x0005)
+  IL_1713: ldloc.s        local(0x0005)
+  IL_1715: ldstr          "This small boat will only take you to locations in the same region. Travel to a major port to find a larger ship."
+  IL_171a: ldnull         
+  IL_171b: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_1720: ldloc.s        local(0x0005)
+  IL_1722: ldc.i4.5       
+  IL_1723: ldc.i4.1       
+  IL_1724: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_1729: pop            
+  IL_172a: ldloc.s        local(0x0005)
+  IL_172c: ldarg.0        
+  IL_172d: ldftn          SeafarersMap::<CreatePopUpWindow>b__4_0
+  IL_1733: newobj         OnButtonClickHandler::.ctor
+  IL_1738: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::add_OnButtonClick
+  IL_173d: ldarg.0        
+  IL_173e: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1743: ldloc.s        local(0x0005)
+  IL_1745: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_174a: ret            
+  IL_174b: ldarg.0        
+  IL_174c: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1751: ldarg.0        
+  IL_1752: ldc.i4.0       
+  IL_1753: ldc.i4.m1      
+  IL_1754: newobj         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::.ctor
+  IL_1759: stloc.s        local(0x0006)
+  IL_175b: ldloc.s        local(0x0006)
+  IL_175d: ldstr          "That location doesn't have a suitable dock."
+  IL_1762: ldnull         
+  IL_1763: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_1768: ldloc.s        local(0x0006)
+  IL_176a: ldc.i4.5       
+  IL_176b: ldc.i4.1       
+  IL_176c: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_1771: pop            
+  IL_1772: ldloc.s        local(0x0006)
+  IL_1774: ldarg.0        
+  IL_1775: ldftn          SeafarersMap::<CreatePopUpWindow>b__4_1
+  IL_177b: newobj         OnButtonClickHandler::.ctor
+  IL_1780: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::add_OnButtonClick
+  IL_1785: ldarg.0        
+  IL_1786: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_178b: ldloc.s        local(0x0006)
+  IL_178d: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_1792: ret            
+
+---- SeafarersMap::checkLocationDiscovered rva=3594
+  maxstack=2 locals_sig=token(0x1100000A) size=79
+  IL_17a0: call           ImmersiveTravel::get_HiddenMapLocationsEnabled
+  IL_17a5: brfalse.s      6092
+  IL_17a7: ldarg.0        
+  IL_17a8: ldfld          CarriageMap::discoveredMapSummaries
+  IL_17ad: ldarg.1        
+  IL_17ae: callvirt       ::Contains
+  IL_17b3: brtrue.s       6088
+  IL_17b5: ldarg.0        
+  IL_17b6: ldfld          CarriageMap::revealedLocationTypes
+  IL_17bb: ldarg.1        
+  IL_17bc: ldfld          MapSummary::LocationType
+  IL_17c1: callvirt       ::Contains
+  IL_17c6: br.s           6089
+  IL_17c8: ldc.i4.1       
+  IL_17c9: stloc.0        
+  IL_17ca: br.s           6100
+  IL_17cc: ldarg.0        
+  IL_17cd: ldarg.1        
+  IL_17ce: call           CarriageMap::checkLocationDiscovered
+  IL_17d3: stloc.0        
+  IL_17d4: ldsfld         SeafarersMap::showOnlyDocks
+  IL_17d9: brfalse.s      6125
+  IL_17db: ldloc.0        
+  IL_17dc: brfalse.s      6123
+  IL_17de: ldarg.1        
+  IL_17df: ldfld          MapSummary::ID
+  IL_17e4: call           SeafarersMap::NearDock
+  IL_17e9: br.s           6124
+  IL_17eb: ldc.i4.0       
+  IL_17ec: stloc.0        
+  IL_17ed: ldloc.0        
+  IL_17ee: ret            
+
+---- SeafarersMap::IsLocationLarge rva=35ef
+  maxstack=8 locals_sig=None size=27
+  IL_17f0: ldsfld         SeafarersMap::showLargerDocks
+  IL_17f5: brfalse.s      6147
+  IL_17f7: ldarg.1        
+  IL_17f8: ldfld          MapSummary::MapID
+  IL_17fd: call           SeafarersMap::NearDock
+  IL_1802: ret            
+  IL_1803: ldarg.0        
+  IL_1804: ldarg.1        
+  IL_1805: call           CarriageMap::IsLocationLarge
+  IL_180a: ret            
+
+---- SeafarersMap::HasDock rva=360c
+  maxstack=3 locals_sig=token(0x1100000F) size=54
+  IL_1818: newobj         <>c__DisplayClass7_0::.ctor
+  IL_181d: stloc.0        
+  IL_181e: ldloc.0        
+  IL_181f: ldarg.0        
+  IL_1820: stfld          <>c__DisplayClass7_0::mapID
+  IL_1825: ldloc.0        
+  IL_1826: ldloc.0        
+  IL_1827: ldfld          <>c__DisplayClass7_0::mapID
+  IL_182c: ldc.i4         1048575
+  IL_1831: and            
+  IL_1832: stfld          <>c__DisplayClass7_0::mapID
+  IL_1837: ldsfld         SeafarersMap::dockMapIDs
+  IL_183c: ldloc.0        
+  IL_183d: ldftn          <>c__DisplayClass7_0::<HasDock>b__0
+  IL_1843: newobj         ::.ctor
+  IL_1848: call           methodspec:System.Array::Exists
+  IL_184d: ret            
+
+---- SeafarersMap::NearDock rva=3650
+  maxstack=2 locals_sig=None size=66
+  IL_185c: ldarg.0        
+  IL_185d: ldc.i4         1048575
+  IL_1862: and            
+  IL_1863: starg.s        argument(0x0000)
+  IL_1865: ldarg.0        
+  IL_1866: call           SeafarersMap::HasDock
+  IL_186b: brtrue.s       6300
+  IL_186d: ldarg.0        
+  IL_186e: ldc.i4         1000
+  IL_1873: sub            
+  IL_1874: call           SeafarersMap::HasDock
+  IL_1879: brtrue.s       6300
+  IL_187b: ldarg.0        
+  IL_187c: ldc.i4.1       
+  IL_187d: add            
+  IL_187e: call           SeafarersMap::HasDock
+  IL_1883: brtrue.s       6300
+  IL_1885: ldarg.0        
+  IL_1886: ldc.i4         1000
+  IL_188b: add            
+  IL_188c: call           SeafarersMap::HasDock
+  IL_1891: brtrue.s       6300
+  IL_1893: ldarg.0        
+  IL_1894: ldc.i4.1       
+  IL_1895: sub            
+  IL_1896: call           SeafarersMap::HasDock
+  IL_189b: ret            
+  IL_189c: ldc.i4.1       
+  IL_189d: ret            
+
+---- SeafarersMap::IsPlayerInTown rva=36a0
+  maxstack=3 locals_sig=token(0x11000010) size=82
+  IL_18ac: newobj         <>c__DisplayClass9_0::.ctor
+  IL_18b1: stloc.0        
+  IL_18b2: ldloc.0        
+  IL_18b3: ldarg.0        
+  IL_18b4: stfld          <>c__DisplayClass9_0::gps
+  IL_18b9: ldloc.0        
+  IL_18ba: ldfld          <>c__DisplayClass9_0::gps
+  IL_18bf: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentLocationType
+  IL_18c4: brfalse.s      6396
+  IL_18c6: ldloc.0        
+  IL_18c7: ldfld          <>c__DisplayClass9_0::gps
+  IL_18cc: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentLocationType
+  IL_18d1: ldc.i4.1       
+  IL_18d2: beq.s          6396
+  IL_18d4: ldsfld         SeafarersMap::hardcodedLargeDocksIDs
+  IL_18d9: ldloc.0        
+  IL_18da: ldftn          <>c__DisplayClass9_0::<IsPlayerInTown>b__0
+  IL_18e0: newobj         ::.ctor
+  IL_18e5: call           methodspec:System.Array::Exists
+  IL_18ea: brtrue.s       6396
+  IL_18ec: ldloc.0        
+  IL_18ed: ldfld          <>c__DisplayClass9_0::gps
+  IL_18f2: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentRegionIndex
+  IL_18f7: ldc.i4.s       31
+  IL_18f9: ceq            
+  IL_18fb: ret            
+  IL_18fc: ldc.i4.1       
+  IL_18fd: ret            
+
+---- SeafarersMap::.cctor rva=3700
+  maxstack=3 locals_sig=None size=125
+  IL_190c: ldsfld         ImmersiveTravel::Settings
+  IL_1911: ldstr          "ShipTravel"
+  IL_1916: ldstr          "ShowLargerDocks"
+  IL_191b: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1920: stsfld         SeafarersMap::showLargerDocks
+  IL_1925: ldsfld         ImmersiveTravel::Settings
+  IL_192a: ldstr          "ShipTravel"
+  IL_192f: ldstr          "ShowOnlyDocks"
+  IL_1934: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1939: stsfld         SeafarersMap::showOnlyDocks
+  IL_193e: ldsfld         ImmersiveTravel::Settings
+  IL_1943: ldstr          "ShipTravel"
+  IL_1948: ldstr          "LimitedRangeInSmallDocks"
+  IL_194d: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1952: stsfld         SeafarersMap::reducedRangeInVillages
+  IL_1957: ldc.i4.s       15
+  IL_1959: newarr         typeref:System.Int32
+  IL_195e: dup            
+  IL_195f: ldtoken        <PrivateImplementationDetails>::159F20DBAE782B45F6A0BF635EB4894A9D640D0D
+  IL_1964: call           System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray
+  IL_1969: stsfld         SeafarersMap::hardcodedLargeDocksIDs
+  IL_196e: ldc.i4         382
+  IL_1973: newarr         typeref:System.Int32
+  IL_1978: dup            
+  IL_1979: ldtoken        <PrivateImplementationDetails>::92498FE009E431E5BBE12DA50BB8D2F0C619E479
+  IL_197e: call           System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray
+  IL_1983: stsfld         SeafarersMap::dockMapIDs
+  IL_1988: ret            
+
+---- SeafarersMap::<CreatePopUpWindow>b__4_0 rva=33d6
+  maxstack=8 locals_sig=None size=7
+  IL_15d7: ldarg.0        
+  IL_15d8: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_15dd: ret            
+
+---- SeafarersMap::<CreatePopUpWindow>b__4_1 rva=33d6
+  maxstack=8 locals_sig=None size=7
+  IL_15d7: ldarg.0        
+  IL_15d8: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_15dd: ret            
+==== TYPE ImmersiveTravel.ImmersiveTravelPopUp (fields: ['disableShipTravel', 'travelOnlyFromNPCs'])
+
+---- ImmersiveTravelPopUp::.ctor rva=3789
+  maxstack=8 locals_sig=None size=21
+  IL_198a: ldarg.0        
+  IL_198b: ldarg.1        
+  IL_198c: ldarg.2        
+  IL_198d: ldarg.3        
+  IL_198e: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::.ctor
+  IL_1993: ldarg.0        
+  IL_1994: newobj         ImmersiveTravelCalculator::.ctor
+  IL_1999: stfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::travelTimeCalculator
+  IL_199e: ret            
+
+---- ImmersiveTravelPopUp::SetEndPosition rva=379f
+  maxstack=8 locals_sig=None size=24
+  IL_19a0: ldarg.0        
+  IL_19a1: ldarg.1        
+  IL_19a2: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_EndPos
+  IL_19a7: ldstr          "ImmersiveTravelPopUp: Destination EndPos set to: "
+  IL_19ac: ldarg.1        
+  IL_19ad: call           System.String::Concat
+  IL_19b2: call           UnityEngine.Debug::Log
+  IL_19b7: ret            
+
+---- ImmersiveTravelPopUp::OnPush rva=37b8
+  maxstack=4 locals_sig=token(0x11000011) size=233
+  IL_19c4: ldarg.0        
+  IL_19c5: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::OnPush
+  IL_19ca: ldsfld         ImmersiveTravelPopUp::disableShipTravel
+  IL_19cf: brfalse.s      6616
+  IL_19d1: ldarg.0        
+  IL_19d2: ldc.i4.0       
+  IL_19d3: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_TravelShip
+  IL_19d8: ldarg.0        
+  IL_19d9: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_TravelWindow
+  IL_19de: isinst         typedef:ImmersiveTravel.CarriageMap
+  IL_19e3: stloc.0        
+  IL_19e4: ldloc.0        
+  IL_19e5: brfalse.s      6642
+  IL_19e7: ldloc.0        
+  IL_19e8: ldfld          CarriageMap::CreatedByNPC
+  IL_19ed: brtrue         6828
+  IL_19f2: ldsfld         ImmersiveTravelPopUp::travelOnlyFromNPCs
+  IL_19f7: brfalse        6828
+  IL_19fc: call           DaggerfallWorkshop.DaggerfallUnity::get_Instance
+  IL_1a01: callvirt       DaggerfallWorkshop.DaggerfallUnity::get_ContentReader
+  IL_1a06: ldarg.0        
+  IL_1a07: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_EndPos
+  IL_1a0c: ldfld          DaggerfallConnect.Utility.DFPosition::X
+  IL_1a11: ldarg.0        
+  IL_1a12: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_EndPos
+  IL_1a17: ldfld          DaggerfallConnect.Utility.DFPosition::Y
+  IL_1a1c: ldloca.s       local(0x0001)
+  IL_1a1e: callvirt       DaggerfallWorkshop.Utility.ContentReader::HasLocation
+  IL_1a23: brfalse.s      6807
+  IL_1a25: ldarg.0        
+  IL_1a26: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1a2b: ldarg.0        
+  IL_1a2c: ldc.i4.0       
+  IL_1a2d: ldc.i4.m1      
+  IL_1a2e: newobj         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::.ctor
+  IL_1a33: stloc.2        
+  IL_1a34: ldloc.2        
+  IL_1a35: ldarg.0        
+  IL_1a36: ldftn          ImmersiveTravelPopUp::<OnPush>b__4_0
+  IL_1a3c: newobj         OnButtonClickHandler::.ctor
+  IL_1a41: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::add_OnButtonClick
+  IL_1a46: ldloc.1        
+  IL_1a47: ldfld          MapSummary::LocationType
+  IL_1a4c: call           CarriageMap::IsDestinationValid
+  IL_1a51: brfalse.s      6773
+  IL_1a53: ldloc.2        
+  IL_1a54: ldstr          "You must take a carriage to initiate fast travel. Carriage drivers are stationed outside the gates of large cities."
+  IL_1a59: ldnull         
+  IL_1a5a: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_1a5f: ldloc.2        
+  IL_1a60: ldc.i4.5       
+  IL_1a61: ldc.i4.1       
+  IL_1a62: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_1a67: pop            
+  IL_1a68: ldarg.0        
+  IL_1a69: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1a6e: ldloc.2        
+  IL_1a6f: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_1a74: ret            
+  IL_1a75: ldloc.2        
+  IL_1a76: ldstr          "You cannot travel to this type of location."
+  IL_1a7b: ldnull         
+  IL_1a7c: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_1a81: ldloc.2        
+  IL_1a82: ldc.i4.5       
+  IL_1a83: ldc.i4.1       
+  IL_1a84: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_1a89: pop            
+  IL_1a8a: ldarg.0        
+  IL_1a8b: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1a90: ldloc.2        
+  IL_1a91: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_1a96: ret            
+  IL_1a97: ldstr          "No location summary found for EndPos "
+  IL_1a9c: ldarg.0        
+  IL_1a9d: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_EndPos
+  IL_1aa2: call           System.String::Concat
+  IL_1aa7: call           UnityEngine.Debug::Log
+  IL_1aac: ret            
+
+---- ImmersiveTravelPopUp::ForceNonShipTravel rva=38b0
+  maxstack=4 locals_sig=token(0x11000012) size=74
+  IL_1abc: ldarg.0        
+  IL_1abd: ldc.i4.0       
+  IL_1abe: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_TravelShip
+  IL_1ac3: ldarg.0        
+  IL_1ac4: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1ac9: ldarg.0        
+  IL_1aca: ldc.i4.0       
+  IL_1acb: ldc.i4.m1      
+  IL_1acc: newobj         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::.ctor
+  IL_1ad1: stloc.0        
+  IL_1ad2: ldloc.0        
+  IL_1ad3: ldstr          "You must find a ship to initiate ship travel. Ship captains can be found on docks along the coast."
+  IL_1ad8: ldnull         
+  IL_1ad9: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_1ade: ldloc.0        
+  IL_1adf: ldc.i4.5       
+  IL_1ae0: ldc.i4.1       
+  IL_1ae1: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_1ae6: pop            
+  IL_1ae7: ldloc.0        
+  IL_1ae8: ldarg.0        
+  IL_1ae9: ldftn          ImmersiveTravelPopUp::<ForceNonShipTravel>b__5_0
+  IL_1aef: newobj         OnButtonClickHandler::.ctor
+  IL_1af4: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::add_OnButtonClick
+  IL_1af9: ldarg.0        
+  IL_1afa: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1aff: ldloc.0        
+  IL_1b00: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_1b05: ret            
+
+---- ImmersiveTravelPopUp::TransportModeButtonOnClickHandler rva=3906
+  maxstack=8 locals_sig=None size=31
+  IL_1b07: ldarg.0        
+  IL_1b08: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_TravelShip
+  IL_1b0d: brtrue.s       6941
+  IL_1b0f: ldsfld         ImmersiveTravelPopUp::disableShipTravel
+  IL_1b14: brfalse.s      6941
+  IL_1b16: ldarg.0        
+  IL_1b17: call           ImmersiveTravelPopUp::ForceNonShipTravel
+  IL_1b1c: ret            
+  IL_1b1d: ldarg.0        
+  IL_1b1e: ldarg.1        
+  IL_1b1f: ldarg.2        
+  IL_1b20: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::TransportModeButtonOnClickHandler
+  IL_1b25: ret            
+
+---- ImmersiveTravelPopUp::ToggleTransportModeButtonOnScrollHandler rva=3926
+  maxstack=8 locals_sig=None size=30
+  IL_1b27: ldarg.0        
+  IL_1b28: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_TravelShip
+  IL_1b2d: brtrue.s       6973
+  IL_1b2f: ldsfld         ImmersiveTravelPopUp::disableShipTravel
+  IL_1b34: brfalse.s      6973
+  IL_1b36: ldarg.0        
+  IL_1b37: call           ImmersiveTravelPopUp::ForceNonShipTravel
+  IL_1b3c: ret            
+  IL_1b3d: ldarg.0        
+  IL_1b3e: ldarg.1        
+  IL_1b3f: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::ToggleTransportModeButtonOnScrollHandler
+  IL_1b44: ret            
+
+---- ImmersiveTravelPopUp::SleepModeButtonOnClickHandler rva=3945
+  maxstack=8 locals_sig=None size=32
+  IL_1b46: ldarg.1        
+  IL_1b47: ldarg.0        
+  IL_1b48: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::campOutToggleButton
+  IL_1b4d: bne.un.s       7005
+  IL_1b4f: ldsfld         ImmersiveTravelPopUp::disableShipTravel
+  IL_1b54: brfalse.s      7005
+  IL_1b56: ldarg.0        
+  IL_1b57: ldc.i4.0       
+  IL_1b58: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_TravelShip
+  IL_1b5d: ldarg.0        
+  IL_1b5e: ldarg.1        
+  IL_1b5f: ldarg.2        
+  IL_1b60: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::SleepModeButtonOnClickHandler
+  IL_1b65: ret            
+
+---- ImmersiveTravelPopUp::ToggleSleepModeButtonOnScrollHandler rva=3966
+  maxstack=8 locals_sig=None size=31
+  IL_1b67: ldarg.1        
+  IL_1b68: ldarg.0        
+  IL_1b69: ldfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::campOutToggleButton
+  IL_1b6e: bne.un.s       7038
+  IL_1b70: ldsfld         ImmersiveTravelPopUp::disableShipTravel
+  IL_1b75: brfalse.s      7038
+  IL_1b77: ldarg.0        
+  IL_1b78: ldc.i4.0       
+  IL_1b79: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_TravelShip
+  IL_1b7e: ldarg.0        
+  IL_1b7f: ldarg.1        
+  IL_1b80: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::ToggleSleepModeButtonOnScrollHandler
+  IL_1b85: ret            
+
+---- ImmersiveTravelPopUp::.cctor rva=3986
+  maxstack=8 locals_sig=None size=51
+  IL_1b87: ldsfld         ImmersiveTravel::Settings
+  IL_1b8c: ldstr          "ShipTravel"
+  IL_1b91: ldstr          "DisableShipTravelOutsideDocks"
+  IL_1b96: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1b9b: stsfld         ImmersiveTravelPopUp::disableShipTravel
+  IL_1ba0: ldsfld         ImmersiveTravel::Settings
+  IL_1ba5: ldstr          "General"
+  IL_1baa: ldstr          "DisableNormalTravel"
+  IL_1baf: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1bb4: stsfld         ImmersiveTravelPopUp::travelOnlyFromNPCs
+  IL_1bb9: ret            
+
+---- ImmersiveTravelPopUp::<OnPush>b__4_0 rva=39ba
+  maxstack=8 locals_sig=None size=35
+  IL_1bbb: call           DaggerfallWorkshop.Game.DaggerfallUI::get_Instance
+  IL_1bc0: ldc.i4         360
+  IL_1bc5: callvirt       DaggerfallWorkshop.Game.DaggerfallUI::PlayOneShot
+  IL_1bca: ldarg.0        
+  IL_1bcb: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::PopWindow
+  IL_1bd0: ldarg.0        
+  IL_1bd1: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::PopWindow
+  IL_1bd6: ldarg.0        
+  IL_1bd7: ldc.i4.0       
+  IL_1bd8: stfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::doFastTravel
+  IL_1bdd: ret            
+
+---- ImmersiveTravelPopUp::<ForceNonShipTravel>b__5_0 rva=33d6
+  maxstack=8 locals_sig=None size=7
+  IL_15d7: ldarg.0        
+  IL_15d8: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_15dd: ret            
+==== TYPE ImmersiveTravel.SeafarersCalculator (fields: [])
+
+---- SeafarersCalculator::CalculateTravelTime rva=39e0
+  maxstack=3 locals_sig=token(0x11000013) size=192
+  IL_1bec: call           DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::GetPlayerTravelPosition
+  IL_1bf1: dup            
+  IL_1bf2: ldfld          DaggerfallConnect.Utility.DFPosition::X
+  IL_1bf7: stloc.0        
+  IL_1bf8: ldfld          DaggerfallConnect.Utility.DFPosition::Y
+  IL_1bfd: stloc.1        
+  IL_1bfe: ldarg.1        
+  IL_1bff: ldfld          DaggerfallConnect.Utility.DFPosition::X
+  IL_1c04: ldloc.0        
+  IL_1c05: sub            
+  IL_1c06: stloc.2        
+  IL_1c07: ldarg.1        
+  IL_1c08: ldfld          DaggerfallConnect.Utility.DFPosition::Y
+  IL_1c0d: ldloc.1        
+  IL_1c0e: sub            
+  IL_1c0f: ldloc.2        
+  IL_1c10: call           UnityEngine.Mathf::Abs
+  IL_1c15: stloc.3        
+  IL_1c16: dup            
+  IL_1c17: call           UnityEngine.Mathf::Abs
+  IL_1c1c: stloc.s        local(0x0004)
+  IL_1c1e: ldc.i4.0       
+  IL_1c1f: stloc.s        local(0x0005)
+  IL_1c21: ldloc.3        
+  IL_1c22: ldloc.s        local(0x0004)
+  IL_1c24: bgt.s          7212
+  IL_1c26: ldloc.s        local(0x0004)
+  IL_1c28: stloc.s        local(0x0005)
+  IL_1c2a: br.s           7215
+  IL_1c2c: ldloc.3        
+  IL_1c2d: stloc.s        local(0x0005)
+  IL_1c2f: ldloc.2        
+  IL_1c30: ldc.i4.0       
+  IL_1c31: bge.s          7222
+  IL_1c33: ldc.i4.m1      
+  IL_1c34: br.s           7223
+  IL_1c36: ldc.i4.1       
+  IL_1c37: stloc.s        local(0x0006)
+  IL_1c39: ldc.i4.0       
+  IL_1c3a: bge.s          7231
+  IL_1c3c: ldc.i4.m1      
+  IL_1c3d: br.s           7232
+  IL_1c3f: ldc.i4.1       
+  IL_1c40: stloc.s        local(0x0007)
+  IL_1c42: ldc.i4.0       
+  IL_1c43: stloc.s        local(0x0008)
+  IL_1c45: ldc.i4.0       
+  IL_1c46: stloc.s        local(0x0009)
+  IL_1c48: ldc.i4.0       
+  IL_1c49: stloc.s        local(0x000A)
+  IL_1c4b: br.s           7322
+  IL_1c4d: ldloc.s        local(0x0005)
+  IL_1c4f: ldloc.3        
+  IL_1c50: bne.un.s       7280
+  IL_1c52: ldloc.0        
+  IL_1c53: ldloc.s        local(0x0006)
+  IL_1c55: add            
+  IL_1c56: stloc.0        
+  IL_1c57: ldloc.s        local(0x0009)
+  IL_1c59: ldloc.s        local(0x0004)
+  IL_1c5b: add            
+  IL_1c5c: stloc.s        local(0x0009)
+  IL_1c5e: ldloc.s        local(0x0009)
+  IL_1c60: ldloc.3        
+  IL_1c61: ble.s          7309
+  IL_1c63: ldloc.s        local(0x0009)
+  IL_1c65: ldloc.3        
+  IL_1c66: sub            
+  IL_1c67: stloc.s        local(0x0009)
+  IL_1c69: ldloc.1        
+  IL_1c6a: ldloc.s        local(0x0007)
+  IL_1c6c: add            
+  IL_1c6d: stloc.1        
+  IL_1c6e: br.s           7309
+  IL_1c70: ldloc.1        
+  IL_1c71: ldloc.s        local(0x0007)
+  IL_1c73: add            
+  IL_1c74: stloc.1        
+  IL_1c75: ldloc.s        local(0x0009)
+  IL_1c77: ldloc.3        
+  IL_1c78: add            
+  IL_1c79: stloc.s        local(0x0009)
+  IL_1c7b: ldloc.s        local(0x0009)
+  IL_1c7d: ldloc.s        local(0x0004)
+  IL_1c7f: ble.s          7309
+  IL_1c81: ldloc.s        local(0x0009)
+  IL_1c83: ldloc.s        local(0x0004)
+  IL_1c85: sub            
+  IL_1c86: stloc.s        local(0x0009)
+  IL_1c88: ldloc.0        
+  IL_1c89: ldloc.s        local(0x0006)
+  IL_1c8b: add            
+  IL_1c8c: stloc.0        
+  IL_1c8d: ldloc.s        local(0x000A)
+  IL_1c8f: ldc.i4.s       51
+  IL_1c91: add            
+  IL_1c92: stloc.s        local(0x000A)
+  IL_1c94: ldloc.s        local(0x0008)
+  IL_1c96: ldc.i4.1       
+  IL_1c97: add            
+  IL_1c98: stloc.s        local(0x0008)
+  IL_1c9a: ldloc.s        local(0x0008)
+  IL_1c9c: ldloc.s        local(0x0005)
+  IL_1c9e: blt.s          7245
+  IL_1ca0: ldarg.2        
+  IL_1ca1: brtrue.s       7337
+  IL_1ca3: ldloc.s        local(0x000A)
+  IL_1ca5: ldc.i4.1       
+  IL_1ca6: shr            
+  IL_1ca7: stloc.s        local(0x000A)
+  IL_1ca9: ldloc.s        local(0x000A)
+  IL_1cab: ret            
+
+---- SeafarersCalculator::CalculateTripCost rva=3aac
+  maxstack=5 locals_sig=token(0x11000014) size=119
+  IL_1cb8: ldarg.1        
+  IL_1cb9: ldc.i4.s       59
+  IL_1cbb: add            
+  IL_1cbc: ldc.i4.s       60
+  IL_1cbe: div            
+  IL_1cbf: stloc.0        
+  IL_1cc0: ldsfld         ImmersiveTravel::Settings
+  IL_1cc5: ldstr          "ShipTravel"
+  IL_1cca: ldstr          "DailyShipCost"
+  IL_1ccf: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1cd4: stloc.1        
+  IL_1cd5: ldsfld         ImmersiveTravel::Settings
+  IL_1cda: ldstr          "ShipTravel"
+  IL_1cdf: ldstr          "DailyCaptainFee"
+  IL_1ce4: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1ce9: stloc.2        
+  IL_1cea: ldarg.0        
+  IL_1ceb: ldc.i4.0       
+  IL_1cec: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1cf1: ldarg.3        
+  IL_1cf2: brtrue.s       7433
+  IL_1cf4: ldarg.0        
+  IL_1cf5: ldarg.0        
+  IL_1cf6: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1cfb: ldloc.1        
+  IL_1cfc: ldloc.0        
+  IL_1cfd: ldc.i4.s       24
+  IL_1cff: div            
+  IL_1d00: ldc.i4.1       
+  IL_1d01: add            
+  IL_1d02: mul            
+  IL_1d03: add            
+  IL_1d04: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1d09: ldarg.0        
+  IL_1d0a: ldarg.0        
+  IL_1d0b: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1d10: ldloc.2        
+  IL_1d11: ldloc.0        
+  IL_1d12: ldc.i4.s       24
+  IL_1d14: div            
+  IL_1d15: ldc.i4.1       
+  IL_1d16: add            
+  IL_1d17: mul            
+  IL_1d18: add            
+  IL_1d19: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1d1e: ldarg.0        
+  IL_1d1f: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1d24: ldc.i4.0       
+  IL_1d25: bge.s          7470
+  IL_1d27: ldarg.0        
+  IL_1d28: ldc.i4.0       
+  IL_1d29: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1d2e: ret            
+
+---- SeafarersCalculator::.ctor rva=3b2f
+  maxstack=8 locals_sig=None size=7
+  IL_1d30: ldarg.0        
+  IL_1d31: call           DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::.ctor
+  IL_1d36: ret            
+==== TYPE ImmersiveTravel.ImmersiveTravelCalculator (fields: [])
+
+---- ImmersiveTravelCalculator::CalculateTripCost rva=3b38
+  maxstack=5 locals_sig=token(0x11000015) size=259
+  IL_1d44: ldarg.1        
+  IL_1d45: ldc.i4.s       59
+  IL_1d47: add            
+  IL_1d48: ldc.i4.s       60
+  IL_1d4a: div            
+  IL_1d4b: stloc.0        
+  IL_1d4c: ldsfld         ImmersiveTravel::Settings
+  IL_1d51: ldstr          "General"
+  IL_1d56: ldstr          "DailyCarriageFee"
+  IL_1d5b: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1d60: stloc.1        
+  IL_1d61: ldsfld         ImmersiveTravel::Settings
+  IL_1d66: ldstr          "ShipTravel"
+  IL_1d6b: ldstr          "DailyShipCost"
+  IL_1d70: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1d75: stloc.2        
+  IL_1d76: ldsfld         ImmersiveTravel::Settings
+  IL_1d7b: ldstr          "ShipTravel"
+  IL_1d80: ldstr          "DailyCaptainFee"
+  IL_1d85: callvirt       methodspec:DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ModSettings::GetValue
+  IL_1d8a: stloc.3        
+  IL_1d8b: ldarg.0        
+  IL_1d8c: ldc.i4.0       
+  IL_1d8d: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::piecesCost
+  IL_1d92: ldarg.2        
+  IL_1d93: brfalse.s      7647
+  IL_1d95: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_1d9a: callvirt       DaggerfallWorkshop.Game.GameManager::get_GuildManager
+  IL_1d9f: ldc.i4.s       9
+  IL_1da1: ldc.i4.0       
+  IL_1da2: callvirt       DaggerfallWorkshop.Game.Guilds.GuildManager::GetGuild
+  IL_1da7: callvirt       DaggerfallWorkshop.Game.Guilds.IGuild::FreeTavernRooms
+  IL_1dac: brtrue.s       7647
+  IL_1dae: ldarg.0        
+  IL_1daf: ldc.i4.5       
+  IL_1db0: ldloc.0        
+  IL_1db1: ldarg.0        
+  IL_1db2: callvirt       DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::get_OceanPixels
+  IL_1db7: sub            
+  IL_1db8: ldc.i4.s       24
+  IL_1dba: div            
+  IL_1dbb: mul            
+  IL_1dbc: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::piecesCost
+  IL_1dc1: ldarg.0        
+  IL_1dc2: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::piecesCost
+  IL_1dc7: ldc.i4.0       
+  IL_1dc8: bge.s          7633
+  IL_1dca: ldarg.0        
+  IL_1dcb: ldc.i4.0       
+  IL_1dcc: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::piecesCost
+  IL_1dd1: ldarg.0        
+  IL_1dd2: ldarg.0        
+  IL_1dd3: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::piecesCost
+  IL_1dd8: ldc.i4.5       
+  IL_1dd9: add            
+  IL_1dda: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::piecesCost
+  IL_1ddf: ldarg.0        
+  IL_1de0: ldarg.0        
+  IL_1de1: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::piecesCost
+  IL_1de6: ldloc.1        
+  IL_1de7: ldloc.0        
+  IL_1de8: ldarg.0        
+  IL_1de9: callvirt       DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::get_OceanPixels
+  IL_1dee: sub            
+  IL_1def: ldc.i4.s       24
+  IL_1df1: div            
+  IL_1df2: mul            
+  IL_1df3: add            
+  IL_1df4: ldloc.1        
+  IL_1df5: add            
+  IL_1df6: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1dfb: ldarg.s        argument(0x0004)
+  IL_1dfd: brfalse.s      7734
+  IL_1dff: ldarg.3        
+  IL_1e00: brtrue.s       7708
+  IL_1e02: ldarg.0        
+  IL_1e03: ldarg.0        
+  IL_1e04: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1e09: ldloc.2        
+  IL_1e0a: ldarg.0        
+  IL_1e0b: callvirt       DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::get_OceanPixels
+  IL_1e10: ldc.i4.s       24
+  IL_1e12: div            
+  IL_1e13: ldc.i4.1       
+  IL_1e14: add            
+  IL_1e15: mul            
+  IL_1e16: add            
+  IL_1e17: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1e1c: ldarg.0        
+  IL_1e1d: ldarg.0        
+  IL_1e1e: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1e23: ldloc.3        
+  IL_1e24: ldarg.0        
+  IL_1e25: callvirt       DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::get_OceanPixels
+  IL_1e2a: ldc.i4.s       24
+  IL_1e2c: div            
+  IL_1e2d: ldc.i4.1       
+  IL_1e2e: add            
+  IL_1e2f: mul            
+  IL_1e30: add            
+  IL_1e31: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1e36: ldarg.0        
+  IL_1e37: ldfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1e3c: ldc.i4.0       
+  IL_1e3d: bge.s          7750
+  IL_1e3f: ldarg.0        
+  IL_1e40: ldc.i4.0       
+  IL_1e41: stfld          DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::totalCost
+  IL_1e46: ret            
+
+---- ImmersiveTravelCalculator::.ctor rva=3b2f
+  maxstack=8 locals_sig=None size=7
+  IL_1d30: ldarg.0        
+  IL_1d31: call           DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::.ctor
+  IL_1d36: ret            
+==== TYPE ImmersiveTravel.SeafarersPopUp (fields: [])
+
+---- SeafarersPopUp::.ctor rva=3c47
+  maxstack=8 locals_sig=None size=21
+  IL_1e48: ldarg.0        
+  IL_1e49: ldarg.1        
+  IL_1e4a: ldarg.2        
+  IL_1e4b: ldarg.3        
+  IL_1e4c: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::.ctor
+  IL_1e51: ldarg.0        
+  IL_1e52: newobj         SeafarersCalculator::.ctor
+  IL_1e57: stfld          DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::travelTimeCalculator
+  IL_1e5c: ret            
+
+---- SeafarersPopUp::SetEndPosition rva=379f
+  maxstack=8 locals_sig=None size=24
+  IL_19a0: ldarg.0        
+  IL_19a1: ldarg.1        
+  IL_19a2: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_EndPos
+  IL_19a7: ldstr          "ImmersiveTravelPopUp: Destination EndPos set to: "
+  IL_19ac: ldarg.1        
+  IL_19ad: call           System.String::Concat
+  IL_19b2: call           UnityEngine.Debug::Log
+  IL_19b7: ret            
+
+---- SeafarersPopUp::ForceShipTravel rva=3c60
+  maxstack=4 locals_sig=token(0x11000012) size=74
+  IL_1e6c: ldarg.0        
+  IL_1e6d: ldc.i4.1       
+  IL_1e6e: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_TravelShip
+  IL_1e73: ldarg.0        
+  IL_1e74: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1e79: ldarg.0        
+  IL_1e7a: ldc.i4.0       
+  IL_1e7b: ldc.i4.m1      
+  IL_1e7c: newobj         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::.ctor
+  IL_1e81: stloc.0        
+  IL_1e82: ldloc.0        
+  IL_1e83: ldstr          "Cannot disable ship travel when travelling with a ship captain."
+  IL_1e88: ldnull         
+  IL_1e89: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_1e8e: ldloc.0        
+  IL_1e8f: ldc.i4.5       
+  IL_1e90: ldc.i4.1       
+  IL_1e91: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_1e96: pop            
+  IL_1e97: ldloc.0        
+  IL_1e98: ldarg.0        
+  IL_1e99: ldftn          SeafarersPopUp::<ForceShipTravel>b__2_0
+  IL_1e9f: newobj         OnButtonClickHandler::.ctor
+  IL_1ea4: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::add_OnButtonClick
+  IL_1ea9: ldarg.0        
+  IL_1eaa: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1eaf: ldloc.0        
+  IL_1eb0: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_1eb5: ret            
+
+---- SeafarersPopUp::ForceCampOut rva=3cb8
+  maxstack=4 locals_sig=token(0x11000012) size=74
+  IL_1ec4: ldarg.0        
+  IL_1ec5: ldc.i4.0       
+  IL_1ec6: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_SleepModeInn
+  IL_1ecb: ldarg.0        
+  IL_1ecc: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1ed1: ldarg.0        
+  IL_1ed2: ldc.i4.0       
+  IL_1ed3: ldc.i4.m1      
+  IL_1ed4: newobj         DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::.ctor
+  IL_1ed9: stloc.0        
+  IL_1eda: ldloc.0        
+  IL_1edb: ldstr          "There are no inns in the middle of the sea."
+  IL_1ee0: ldnull         
+  IL_1ee1: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::SetText
+  IL_1ee6: ldloc.0        
+  IL_1ee7: ldc.i4.5       
+  IL_1ee8: ldc.i4.1       
+  IL_1ee9: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::AddButton
+  IL_1eee: pop            
+  IL_1eef: ldloc.0        
+  IL_1ef0: ldarg.0        
+  IL_1ef1: ldftn          SeafarersPopUp::<ForceCampOut>b__3_0
+  IL_1ef7: newobj         OnButtonClickHandler::.ctor
+  IL_1efc: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallMessageBox::add_OnButtonClick
+  IL_1f01: ldarg.0        
+  IL_1f02: ldfld          DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::uiManager
+  IL_1f07: ldloc.0        
+  IL_1f08: callvirt       DaggerfallWorkshop.Game.UserInterface.IUserInterfaceManager::PushWindow
+  IL_1f0d: ret            
+
+---- SeafarersPopUp::OnPush rva=3d0e
+  maxstack=8 locals_sig=None size=35
+  IL_1f0f: ldarg.0        
+  IL_1f10: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::OnPush
+  IL_1f15: ldarg.0        
+  IL_1f16: ldc.i4.1       
+  IL_1f17: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_TravelShip
+  IL_1f1c: ldarg.0        
+  IL_1f1d: ldc.i4.0       
+  IL_1f1e: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::set_SleepModeInn
+  IL_1f23: ldarg.0        
+  IL_1f24: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallBaseWindow::get_IsSetup
+  IL_1f29: brfalse.s      7985
+  IL_1f2b: ldarg.0        
+  IL_1f2c: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::Refresh
+  IL_1f31: ret            
+
+---- SeafarersPopUp::TransportModeButtonOnClickHandler rva=3d32
+  maxstack=8 locals_sig=None size=24
+  IL_1f33: ldarg.0        
+  IL_1f34: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_TravelShip
+  IL_1f39: brfalse.s      8002
+  IL_1f3b: ldarg.0        
+  IL_1f3c: call           SeafarersPopUp::ForceShipTravel
+  IL_1f41: ret            
+  IL_1f42: ldarg.0        
+  IL_1f43: ldarg.1        
+  IL_1f44: ldarg.2        
+  IL_1f45: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::TransportModeButtonOnClickHandler
+  IL_1f4a: ret            
+
+---- SeafarersPopUp::ToggleTransportModeButtonOnScrollHandler rva=3d4b
+  maxstack=8 locals_sig=None size=23
+  IL_1f4c: ldarg.0        
+  IL_1f4d: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_TravelShip
+  IL_1f52: brfalse.s      8027
+  IL_1f54: ldarg.0        
+  IL_1f55: call           SeafarersPopUp::ForceShipTravel
+  IL_1f5a: ret            
+  IL_1f5b: ldarg.0        
+  IL_1f5c: ldarg.1        
+  IL_1f5d: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::ToggleTransportModeButtonOnScrollHandler
+  IL_1f62: ret            
+
+---- SeafarersPopUp::SleepModeButtonOnClickHandler rva=3d63
+  maxstack=8 locals_sig=None size=24
+  IL_1f64: ldarg.0        
+  IL_1f65: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_SleepModeInn
+  IL_1f6a: brtrue.s       8051
+  IL_1f6c: ldarg.0        
+  IL_1f6d: call           SeafarersPopUp::ForceCampOut
+  IL_1f72: ret            
+  IL_1f73: ldarg.0        
+  IL_1f74: ldarg.1        
+  IL_1f75: ldarg.2        
+  IL_1f76: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::SleepModeButtonOnClickHandler
+  IL_1f7b: ret            
+
+---- SeafarersPopUp::ToggleSleepModeButtonOnScrollHandler rva=3d7c
+  maxstack=8 locals_sig=None size=23
+  IL_1f7d: ldarg.0        
+  IL_1f7e: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_SleepModeInn
+  IL_1f83: brtrue.s       8076
+  IL_1f85: ldarg.0        
+  IL_1f86: call           SeafarersPopUp::ForceCampOut
+  IL_1f8b: ret            
+  IL_1f8c: ldarg.0        
+  IL_1f8d: ldarg.1        
+  IL_1f8e: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::ToggleSleepModeButtonOnScrollHandler
+  IL_1f93: ret            
+
+---- SeafarersPopUp::<ForceShipTravel>b__2_0 rva=33d6
+  maxstack=8 locals_sig=None size=7
+  IL_15d7: ldarg.0        
+  IL_15d8: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_15dd: ret            
+
+---- SeafarersPopUp::<ForceCampOut>b__3_0 rva=33d6
+  maxstack=8 locals_sig=None size=7
+  IL_15d7: ldarg.0        
+  IL_15d8: call           DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_15dd: ret            
+==== TYPE .<PrivateImplementationDetails> (fields: ['159F20DBAE782B45F6A0BF635EB4894A9D640D0D', '92498FE009E431E5BBE12DA50BB8D2F0C619E479', 'CB08BD93C1C6CEF0E4DA612649670AC5CDF9CB1D'])
+==== TYPE .<>c (fields: ['<>9', '<>9__14_0', '<>9__14_1', '<>9__15_0', '<>9__15_1'])
+
+---- <>c::.cctor rva=3d94
+  maxstack=8 locals_sig=None size=11
+  IL_1f95: newobj         <>c::.ctor
+  IL_1f9a: stsfld         <>c::<>9
+  IL_1f9f: ret            
+
+---- <>c::.ctor rva=3da0
+  maxstack=8 locals_sig=None size=7
+  IL_1fa1: ldarg.0        
+  IL_1fa2: call           System.Object::.ctor
+  IL_1fa7: ret            
+
+---- <>c::<.ctor>b__14_0 rva=3da8
+  maxstack=8 locals_sig=None size=14
+  IL_1fa9: ldsfld         CarriageMap::pathsData
+  IL_1fae: ldc.i4.0       
+  IL_1faf: ldarg.2        
+  IL_1fb0: castclass      typespec:1b000005
+  IL_1fb5: stelem.ref     
+  IL_1fb6: ret            
+
+---- <>c::<.ctor>b__14_1 rva=3db7
+  maxstack=8 locals_sig=None size=14
+  IL_1fb8: ldsfld         CarriageMap::pathsData
+  IL_1fbd: ldc.i4.1       
+  IL_1fbe: ldarg.2        
+  IL_1fbf: castclass      typespec:1b000005
+  IL_1fc4: stelem.ref     
+  IL_1fc5: ret            
+
+---- <>c::<.ctor>b__15_0 rva=3da8
+  maxstack=8 locals_sig=None size=14
+  IL_1fa9: ldsfld         CarriageMap::pathsData
+  IL_1fae: ldc.i4.0       
+  IL_1faf: ldarg.2        
+  IL_1fb0: castclass      typespec:1b000005
+  IL_1fb5: stelem.ref     
+  IL_1fb6: ret            
+
+---- <>c::<.ctor>b__15_1 rva=3db7
+  maxstack=8 locals_sig=None size=14
+  IL_1fb8: ldsfld         CarriageMap::pathsData
+  IL_1fbd: ldc.i4.1       
+  IL_1fbe: ldarg.2        
+  IL_1fbf: castclass      typespec:1b000005
+  IL_1fc4: stelem.ref     
+  IL_1fc5: ret            
+==== TYPE .<>c__DisplayClass30_0 (fields: ['mapID'])
+
+---- <>c__DisplayClass30_0::.ctor rva=3da0
+  maxstack=8 locals_sig=None size=7
+  IL_1fa1: ldarg.0        
+  IL_1fa2: call           System.Object::.ctor
+  IL_1fa7: ret            
+
+---- <>c__DisplayClass30_0::<isCapital>b__0 rva=3dc6
+  maxstack=8 locals_sig=None size=16
+  IL_1fc7: ldarg.1        
+  IL_1fc8: ldc.i4         1048575
+  IL_1fcd: and            
+  IL_1fce: ldarg.0        
+  IL_1fcf: ldfld          <>c__DisplayClass30_0::mapID
+  IL_1fd4: ceq            
+  IL_1fd6: ret            
+==== TYPE .<>c__DisplayClass7_0 (fields: ['mapID'])
+
+---- <>c__DisplayClass7_0::.ctor rva=3da0
+  maxstack=8 locals_sig=None size=7
+  IL_1fa1: ldarg.0        
+  IL_1fa2: call           System.Object::.ctor
+  IL_1fa7: ret            
+
+---- <>c__DisplayClass7_0::<HasDock>b__0 rva=3dd7
+  maxstack=8 locals_sig=None size=10
+  IL_1fd8: ldarg.1        
+  IL_1fd9: ldarg.0        
+  IL_1fda: ldfld          <>c__DisplayClass7_0::mapID
+  IL_1fdf: ceq            
+  IL_1fe1: ret            
+==== TYPE .<>c__DisplayClass9_0 (fields: ['gps'])
+
+---- <>c__DisplayClass9_0::.ctor rva=3da0
+  maxstack=8 locals_sig=None size=7
+  IL_1fa1: ldarg.0        
+  IL_1fa2: call           System.Object::.ctor
+  IL_1fa7: ret            
+
+---- <>c__DisplayClass9_0::<IsPlayerInTown>b__0 rva=3de2
+  maxstack=8 locals_sig=None size=27
+  IL_1fe3: ldarg.1        
+  IL_1fe4: ldc.i4         1048575
+  IL_1fe9: and            
+  IL_1fea: ldarg.0        
+  IL_1feb: ldfld          <>c__DisplayClass9_0::gps
+  IL_1ff0: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentMapID
+  IL_1ff5: ldc.i4         1048575
+  IL_1ffa: and            
+  IL_1ffb: ceq            
+  IL_1ffd: ret            
+==== TYPE .__StaticArrayInitTypeSize=60 (fields: [])
+==== TYPE .__StaticArrayInitTypeSize=160 (fields: [])
+==== TYPE .__StaticArrayInitTypeSize=1528 (fields: [])

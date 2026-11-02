@@ -1,0 +1,250 @@
+[
+  {
+    "name": "PLAIN-TEXT-string-limit-raised",
+    "file": "tools/plainText.mjs",
+    "old": "export const STRING_WORDS_MAX = 40;",
+    "new": "export const STRING_WORDS_MAX = 41;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "the string's limit loosened by one word"
+  },
+  {
+    "name": "PLAIN-TEXT-sentence-unread",
+    "file": "tools/plainText.mjs",
+    "old": "  if (w <= STRING_WORDS_MAX && s <= SENTENCE_WORDS_MAX && !padding.length) return null;",
+    "new": "  if (w <= STRING_WORDS_MAX && !padding.length) return null;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "a sentence past 25 words passes"
+  },
+  {
+    "name": "PLAIN-TEXT-padding-unread",
+    "file": "tools/plainText.mjs",
+    "old": "  const padding = PADDING.filter((re) => re.test(text)).map(String);",
+    "new": "  const padding = [];",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "padding words pass"
+  },
+  {
+    "name": "PLAIN-TEXT-argument-counted-as-words",
+    "file": "tools/plainText.mjs",
+    "old": "    out = out.flatMap((o) => (alts.length ? alts : ['X']).map((a) => o + lead + a)).slice(0, RENDERINGS_MAX);",
+    "new": "    out = out.flatMap((o) => (alts.length ? alts : [body]).map((a) => o + lead + a)).slice(0, RENDERINGS_MAX);",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "an ICU argument counted as its words"
+  },
+  {
+    "name": "PLAIN-TEXT-PT3-branch-one-word",
+    "file": "tools/plainText.mjs",
+    "old": "      alts.push(...renderings(body.slice(b + 1, e)));",
+    "new": "      alts.push('X');",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT3: a plural or select branch read as one word - its words never counted"
+  },
+  {
+    "name": "PLAIN-TEXT-PT3-branches-unread",
+    "file": "tools/plainText.mjs",
+    "old": "    for (let j = head ? head[0].length : body.length; j < body.length;) {",
+    "new": "    for (let j = body.length; j < body.length;) {",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT3: the branches never read - a plural is one X again"
+  },
+  {
+    "name": "PLAIN-TEXT-PT3-sentence-of-whole-text",
+    "file": "tools/plainText.mjs",
+    "old": "  const s = Math.max(0, ...all.flatMap((r) => r.split(/(?<=[.!?])\\s+/).map(count)));",
+    "new": "  const s = Math.max(\n    0,\n    ...String(text)\n      .split(/(?<=[.!?])\\s+/)\n      .map(count),\n  );",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT3: the sentences read off the raw message, not its renderings"
+  },
+  {
+    "name": "PLAIN-TEXT-comment-block-off-by-one",
+    "file": "tools/plainText.mjs",
+    "old": "    n += Math.max(0, run - COMMENT_LINES_MAX);",
+    "new": "    n += Math.max(0, run - COMMENT_LINES_MAX + 1);",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "a block of exactly 8 lines counted"
+  },
+  {
+    "name": "PLAIN-TEXT-PT1-excess-a-count",
+    "file": "tools/plainText.mjs",
+    "old": "    n += Math.max(0, run - COMMENT_LINES_MAX);",
+    "new": "    n += run > COMMENT_LINES_MAX ? 1 : 0;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT1: a long block counted once however long it grows"
+  },
+  {
+    "name": "PLAIN-TEXT-PT1-paragraph-excess-a-count",
+    "file": "tools/plainText.mjs",
+    "old": "    .reduce((n, p) => n + Math.max(0, count(p) - PARAGRAPH_WORDS_MAX), 0);",
+    "new": "    .reduce((n, p) => n + (count(p) > PARAGRAPH_WORDS_MAX ? 1 : 0), 0);",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT1: a long paragraph counted once however long it grows"
+  },
+  {
+    "name": "PLAIN-TEXT-PT2-blank-ends-block",
+    "file": "tools/plainText.mjs",
+    "old": "    if (!t && !inBlock) continue;",
+    "new": "    if (!t && !inBlock && false) continue;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT2: a blank line ends a block - twenty-four lines in threes of eight read as none"
+  },
+  {
+    "name": "PLAIN-TEXT-block-comment-unread",
+    "file": "tools/plainText.mjs",
+    "old": "      if (!t.includes('*/')) inBlock = true;\n    }",
+    "new": "    }",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "a /* */ block's inner lines not counted"
+  },
+  {
+    "name": "PLAIN-TEXT-last-block-dropped",
+    "file": "tools/plainText.mjs",
+    "old": "  return n + Math.max(0, run - COMMENT_LINES_MAX);",
+    "new": "  return n;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "a long block at the end of a file not counted"
+  },
+  {
+    "name": "PLAIN-TEXT-table-counted",
+    "file": "tools/plainText.mjs",
+    "old": "    .filter((p) => !/^\\s*(\\||```)/.test(p))\n    .flatMap((p) => p.split(/\\n(?=(?:[-*+]|\\d+\\.) )/))",
+    "new": "    .flatMap((p) => p.split(/\\n(?=(?:[-*+]|\\d+\\.) )/))",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "a table counted as a paragraph"
+  },
+  {
+    "name": "PLAIN-TEXT-PT4-sentences-unrecorded",
+    "file": "tools/plainText.mjs",
+    "old": "      put('sentences', k, b.sentence - SENTENCE_WORDS_MAX);",
+    "new": "      put('sentences', k, 0);",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT4: a listed string's longest sentence not held - it grows at the same word count"
+  },
+  {
+    "name": "PLAIN-TEXT-PT4-padding-unrecorded",
+    "file": "tools/plainText.mjs",
+    "old": "      put('padding', k, b.padding.length);",
+    "new": "      put('padding', k, 0);",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT4: a listed string's padding not held - it adds a padding word at the same word count"
+  },
+  {
+    "name": "PLAIN-TEXT-over-unread",
+    "file": "tools/plainText.mjs",
+    "old": "      if (n > (b[k] ?? 0)) over.push(`${part} ${k}: ${n} (allowed ${b[k] ?? 0})`);",
+    "new": "      if (n > (b[k] ?? Infinity)) over.push(`${part} ${k}: ${n} (allowed ${b[k] ?? 0})`);",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "an entry the baseline does not list passes"
+  },
+  {
+    "name": "PLAIN-TEXT-seed-uncapped",
+    "file": "tools/plainText.mjs",
+    "old": "      const allow = Math.min(n, at[part]?.[k] ?? 0);",
+    "new": "      const allow = n;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "the seed admits past the base's own count"
+  },
+  {
+    "name": "PLAIN-TEXT-seed-absent-admitted",
+    "file": "tools/plainText.mjs",
+    "old": "      const allow = Math.min(n, at[part]?.[k] ?? 0);",
+    "new": "      const allow = Math.min(n, at[part]?.[k] ?? n);",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "the seed admits an entry the base does not have"
+  },
+  {
+    "name": "PLAIN-TEXT-PT4-ref-unread",
+    "file": "tools/plainText.mjs",
+    "old": "  try {\n    execFileSync('git', ['cat-file', '-e', `${ref}:${BASELINE}`], { cwd: root, stdio: 'ignore' });\n    return true;\n  } catch {\n    return false;\n  }",
+    "new": "  return false;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT4: no ref is read as holding the law - --seed HEAD admits the branch's own breaches"
+  },
+  {
+    "name": "PLAIN-TEXT-PT4-refusal-gone",
+    "file": "tools/plainText.mjs",
+    "old": "  return holdsLaw(ref, root) ? null : seeded(base, now, measure(root, gitTree(ref, root)));",
+    "new": "  return false ? null : seeded(base, now, measure(root, gitTree(ref, root)));",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT4: the seed asks nothing of its ref"
+  },
+  {
+    "name": "PLAIN-TEXT-PT5-list-one-paragraph",
+    "file": "tools/plainText.mjs",
+    "old": "    .flatMap((p) => p.split(/\\n(?=(?:[-*+]|\\d+\\.) )/))",
+    "new": "    .flatMap((p) => [p])",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT5: an index page's list measured as one paragraph - its next entry its last one grown"
+  },
+  {
+    "name": "PLAIN-TEXT-PT6-log-entry-counted",
+    "file": "tools/plainText.mjs",
+    "old": "    if (c && !inBlock && VERSION_LOG_LINE.test(t)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ],
+    "note": "AUDIT HORIZONTAL PT6: a version log measured as one comment block - every bump grows it"
+  },
+  {
+    "name": "PLAIN-TEXT-LEGIBLE3-the-anchor-counted",
+    "file": "tools/plainText.mjs",
+    "old": "    .replace(CITE_ANCHOR, 'cite')\n",
+    "new": "",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ]
+  },
+  {
+    "name": "PLAIN-TEXT-LEGIBLE3-the-cast-read-as-comment",
+    "file": "tools/plainText.mjs",
+    "old": "      c = false; // a JSDoc cast opening a code line is code (LEGIBLE 3)",
+    "new": "      c = true;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ]
+  }
+]

@@ -1,0 +1,240 @@
+[
+  {
+    "name": "ARENA1-CELL-X",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "export const ARENA_CELL = Object.freeze([4, 3]);",
+    "new": "export const ARENA_CELL = Object.freeze([3, 3]);",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-INCELL-Y",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  buildingKey > 0 && buildingKey >> 16 === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) === ARENA_CELL[1];",
+    "new": "  buildingKey > 0 && buildingKey >> 16 === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) >= ARENA_CELL[1];",
+    "tests": [
+      "test/world/arena/arena1_city.test.js",
+      "test/systems/arena1_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-STRIP-NONE",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  const strip = new Set(drawn.get(cell) ?? []);",
+    "new": "  const strip = new Set();",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-COUNT-STALE",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  dfLocation.exterior.buildingCount = dfLocation.exterior.buildings.length;",
+    "new": "",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-NO-BLOCKS-EDITS",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  if (!ed?.blockNames || !Array.isArray(dfLocation.exterior.buildings) || !blocksFile) return null;",
+    "new": "  if (!ed?.blockNames || !Array.isArray(dfLocation.exterior.buildings)) return null;",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-EDIT-TWICE",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  if (ed.blockNames[at] === ARENA_BLOCK) return { block: ARENA_BLOCK, stripped: 0, already: true };",
+    "new": "",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-DRAW-UNUSED",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "      if (drawn?.used) drawnBy.set(b, [...(drawnBy.get(b) ?? []), drawn.data]);",
+    "new": "      if (drawn) drawnBy.set(b, [...(drawnBy.get(b) ?? []), drawn.data]);",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-PORT-BLOCK-GATED",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName); // ARENA1: the port's own, behind no door; IC-GRAND: a family's too\n  if (!worldDataOn() || !blockName) return null;",
+    "new": "  if (!worldDataOn() || !blockName) return null;",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): the line asks the block families too (bible/03-World/Arena-Provinces.md IC-GRAND) - re-aimed by content."
+  },
+  {
+    "name": "ARENA1-PORT-INDEX",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  _portBlocks.get(blockName)?.index ??\n  (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ??\n  newBlockIndices.get(blockName) ??\n  -1; // ARENA1: a port block first; IC-GRAND: or a family's",
+    "new": "  (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1; // ARENA1: a port block first; IC-GRAND: or a family's",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): a family's index asked after the port's own - the port block's index dropped, the families' kept."
+  },
+  {
+    "name": "ARENA1-MAPS-NO-EDIT",
+    "file": "src/formats/mapsFile.js",
+    "old": "    worldDataDoor()?.editLocation?.(dfLocation, this);",
+    "new": "",
+    "tests": [
+      "test/world/arena/arena1_city.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-PIECE-TURN",
+    "file": "src/world/arena/arenaModel.js",
+    "old": "      return [-z, y, x];",
+    "new": "      return [z, y, -x];",
+    "tests": [
+      "test/world/arena/arena1_model.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-PIECE-MIRROR-WINDING",
+    "file": "src/world/arena/arenaModel.js",
+    "old": "      if (mirrored) corners.reverse();",
+    "new": "",
+    "tests": [
+      "test/world/arena/arena1_model.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-PIECE-RETEXTURE",
+    "file": "src/world/arena/arenaModel.js",
+    "old": "      const to = piece.retexture?.[t] ?? [sm.textureArchive, sm.textureRecord];",
+    "new": "      const to = [sm.textureArchive, sm.textureRecord];",
+    "tests": [
+      "test/world/arena/arena1_model.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-COMPOSE-OFFSET",
+    "file": "src/world/arena/arenaModel.js",
+    "old": "      for (let i = 0; i < r.count; i++) indices[at++] = src[r.start + i] + r.v0;",
+    "new": "      for (let i = 0; i < r.count; i++) indices[at++] = src[r.start + i];",
+    "tests": [
+      "test/world/arena/arena1_model.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-CLIMATE-SWAPPED",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);",
+    "new": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);",
+    "tests": [
+      "test/world/arena/arena1_model.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-UNDERCROFT-MAPID",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "      mapId: UNDERCROFT_MAP_ID,\n      locationType: LOCATION_TYPES.DungeonKeep,",
+    "new": "      locationType: LOCATION_TYPES.DungeonKeep,",
+    "tests": [
+      "test/world/arena/arena1_undercroft.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-UNDERCROFT-START",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "        isStartingBlock: !!b.IsStartingBlock,",
+    "new": "        isStartingBlock: false,",
+    "tests": [
+      "test/world/arena/arena1_undercroft.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-STAIR-ANY-BLOCK",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "export const isUndercroftDoor = (e, dungeonEntranceType) =>\n  e?.dfBlock?.name === ARENA_BLOCK && e?.door?.doorType === dungeonEntranceType;",
+    "new": "export const isUndercroftDoor = (e, dungeonEntranceType) => e?.door?.doorType === dungeonEntranceType;",
+    "tests": [
+      "test/world/arena/arena1_undercroft.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-RECORD-STANDS",
+    "file": "src/systems/layoutPins.js",
+    "old": "  if (_displaced(rec)) return false;\n  return layoutsMatch(rec.layout, layoutStampOfMapId(rec.mapId));",
+    "new": "  return layoutsMatch(rec.layout, layoutStampOfMapId(rec.mapId));",
+    "tests": [
+      "test/systems/arena1_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-MOVE-ANY-TYPE",
+    "file": "src/systems/arena/arenaMove.js",
+    "old": "  let list = free.filter((s) => s.buildingType === oldType);",
+    "new": "  let list = free;",
+    "tests": [
+      "test/systems/arena1_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-MOVE-HELD",
+    "file": "src/systems/arena/arenaMove.js",
+    "old": "    .filter(\n      (s) =>\n        s.buildingKey > 0 &&\n        !inArenaCell(s.buildingKey) &&\n        !held.has(s.buildingKey) &&\n        !(isActiveQuestBuilding?.(s) ?? false),\n    )",
+    "new": "    .filter((s) => s.buildingKey > 0 && !inArenaCell(s.buildingKey) && !(isActiveQuestBuilding?.(s) ?? false))",
+    "tests": [
+      "test/systems/arena1_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-MOVE-NO-SCENE",
+    "file": "src/systems/arena/arenaMove.js",
+    "old": "  const emptied = scenes",
+    "new": "  const emptied = null",
+    "tests": [
+      "test/systems/arena1_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-MOVE-NO-LAYOUTS",
+    "file": "src/systems/arena/arenaMove.js",
+    "old": "  const moved = (name) => name === from || name.startsWith(`${from}|`);",
+    "new": "  const moved = (name) => name === from;",
+    "tests": [
+      "test/systems/arena1_move.test.js",
+      "test/systems/arena/arena2_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-HERALD-ANYONE",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  return (\n    ARENA_GATE_PEOPLE.find(\n      (p) => p.position === pn.position && p.archive === pn.textureArchive && p.record === pn.textureRecord,\n    ) ?? null\n  );",
+    "new": "  return ARENA_GATE_PEOPLE.find((p) => p.position === pn.position) ?? null;",
+    "tests": [
+      "test/systems/arena1_move.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-GATE-NO-FACTION",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "          FactionID: p.faction,",
+    "new": "          FactionID: 0,",
+    "tests": [
+      "test/world/arena/arena1_vendor.test.js"
+    ]
+  },
+  {
+    "name": "ARENA1-DISPLACED-ANY-TOWN",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  !!rec && inArenaCell(rec.buildingKey) && keyOfMapId(rec.mapId ?? rec.mapID) === ARENA_LOCATION_KEY;",
+    "new": "  !!rec && inArenaCell(rec.buildingKey);",
+    "tests": [
+      "test/systems/arena1_move.test.js"
+    ]
+  }
+]

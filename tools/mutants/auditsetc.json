@@ -1,0 +1,236 @@
+[
+  {
+    "name": "AUDIT-SET-the-mark-never-set",
+    "file": "src/systems/testRoom.js",
+    "old": "  playerEntity.testRoom = true;   // AUDIT SET D4: after the chargen, which builds the character afresh - the mark rides every save of it\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-mark-dropped-by-the-save",
+    "file": "src/systems/save/save.js",
+    "old": "  'testRoom',\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-refusal-never-asked",
+    "file": "src/scenes/world.js",
+    "old": "  if (testRoomOffline) { params.delete('online'); publishBootParams(params); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-most-recent-save-unread",
+    "file": "src/systems/testRoom.js",
+    "old": ": (mostRecent()?.snap ?? null);",
+    "new": ": null;",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-test-rooms-button-live",
+    "file": "src/ui/enhanced/bringOnlineButton.js",
+    "old": "  if (save.testRoom) return { label: t('menu.online.testRoomOffline', 'Test Room: offline only'), offlineOnly: true };",
+    "new": "  if (save.testRoom) return { label: t('menu.online.testRoomOffline', 'Test Room: offline only'), offlineOnly: false };",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-set-sigil-on-a-ring",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (s.set !== undefined && !kind) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-blow-on-armour",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (s.power !== undefined && kind !== 'weapon') return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-regalia-sigil-on-any-daedric-piece",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (setById(s.set)?.aetheric && item.rarity !== AETHERIC) return null;   // RAID4b: every Aetheric set's, the Regalia's too\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-sigil-unprojected",
+    "file": "src/systems/aetheric.js",
+    "old": "    item.sigil = { ...(s.power !== undefined ? { power: s.power } : {}), ...(s.set !== undefined ? { set: s.set } : {}), party: s.party, xp: s.xp };\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-an-aetheric-off-its-record",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (!r || item.rarity !== AETHERIC || r.group !== item.group || r.templateIndex !== item.templateIndex) return null;",
+    "new": "    if (!r) return null;",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-an-aetheric-of-any-metal",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (item.material !== aethericMaterial(r)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-marks-never-asked",
+    "file": "src/systems/loot/loot.js",
+    "old": "  if (!validSetMarks(out)) return null; // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric\n  if (!validGildedMarks(out)) return null; // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery",
+    "new": "  if (!validGildedMarks(out)) return null; // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-curly-apostrophe-in-the-lore",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "giant\\'s own heart",
+    "new": "giant’s own heart",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-lines-left-to-the-cards-rule",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".pack-shell .card .sigilbox p.sigil-effect { font-size: 13px;",
+    "new": ".pack-shell .card .sigilbox-x p.sigil-effect { font-size: 13px;",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-dormant-colour-lost",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".pack-shell .card .sigilbox[data-stage=\"dormant\"] p.sigil-effect, .pack-shell .card .sigilbox[data-stage=\"dormant\"] p.sigil-progress { color: #9aa6a3; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-card-never-fitted",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  fitTip(tipEl);   // AUDIT SET U13\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-step-skipped",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "export const TIP_FITS = Object.freeze(['tip-compact', 'tip-tight']);",
+    "new": "export const TIP_FITS = Object.freeze(['tip-tight']);",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-shed-with-room-to-spare",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (!(node.scrollHeight > room)) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-tight-card-keeping-the-tiers-words",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".inv-tip.tip-tight .bigicon, .inv-tip.tip-tight .set-tier-text, .inv-tip.tip-tight .sigil-note { display: none; }",
+    "new": ".inv-tip.tip-tight .bigicon, .inv-tip.tip-tight .sigil-note { display: none; }",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-wrap-never-asked",
+    "file": "src/ui/toolTip.js",
+    "old": "  const rows =\n    wrapFrom == null\n      ? toolTipRows(text)\n      : wrapToolTipRows(toolTipRows(text), (r) => measureText(font.fnt, r), TOOLTIP_WRAP_W, wrapFrom); // AUDIT SET U2: the port's own rows may wrap",
+    "new": "  const rows = toolTipRows(text); // AUDIT SET U2: the port's own rows may wrap",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-continuation-unindented",
+    "file": "src/ui/toolTip.js",
+    "old": "      line = `${lead}${WRAP_INDENT}${word}`;",
+    "new": "      line = `${lead}${word}`;",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-a-short-row-wrapped",
+    "file": "src/ui/toolTip.js",
+    "old": "    if (i < from || !(measure(row) > maxW)) {\n      out.push(row);\n      continue;\n    }\n    const lead = /^ */.exec(row)[0];",
+    "new": "    const lead = /^ */.exec(row)[0];",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-wrapped-past-the-width",
+    "file": "src/ui/toolTip.js",
+    "old": "      if (!line || measure(next) <= maxW) {",
+    "new": "      if (!line || measure(next) <= maxW * 2) {",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-name-wrapped",
+    "file": "src/ui/toolTip.js",
+    "old": "    if (i < from || !(measure(row) > maxW)) {",
+    "new": "    if (!(measure(row) > maxW)) {",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-every-tooltip-wrapped",
+    "file": "src/ui/toolTip.js",
+    "old": "    this.wrapFrom = wrapFrom; // AUDIT SET U2: the first row of the port's own that may wrap (null: none - DFU's tooltip)",
+    "new": "    this.wrapFrom = wrapFrom ?? 0; // AUDIT SET U2: the first row of the port's own that may wrap (null: none - DFU's tooltip)",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SET-the-item-lists-tip-unwrapped",
+    "file": "src/ui/item/itemScroller.js",
+    "old": "const tip = new ToolTip(null, { wrapFrom: 1 });",
+    "new": "const tip = new ToolTip();",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  }
+]

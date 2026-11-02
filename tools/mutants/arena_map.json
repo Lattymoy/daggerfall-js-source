@@ -1,0 +1,128 @@
+[
+  {
+    "name": "ARENAMAP-BOWL-UNRECOLOURED",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  const fld = { ...rmb.FldHeader, AutoMapData: arenaAutoMap(rmb.FldHeader.AutoMapData, rmb) }; // ARENA-MAP: the town map's colosseum",
+    "new": "  const fld = rmb.FldHeader; // ARENA-MAP: the town map's colosseum",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-SAND-FILLED",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "    return inBox && x * x + z * z > SAND_R * SAND_R ? ARENA_MAP_BYTE : v;",
+    "new": "    return inBox ? ARENA_MAP_BYTE : v;",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-STRAY-DRAWN",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "      Math.abs(x - box.center[0]) <= box.extent[0] + MAP_PX / 2 &&\n      Math.abs(z - box.center[2]) <= box.extent[2] + MAP_PX / 2;",
+    "new": "      true ||\n      (Math.abs(x - box.center[0]) <= box.extent[0] + MAP_PX / 2 &&\n        Math.abs(z - box.center[2]) <= box.extent[2] + MAP_PX / 2);",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-ROWS-UNFLIPPED",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "      z = (63 - Math.floor(i / 64) + 0.5) * MAP_PX - cz;",
+    "new": "      z = (Math.floor(i / 64) + 0.5) * MAP_PX - cz;",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-A-SHOP-BYTE",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "export const ARENA_MAP_BYTE = BUILDING_TYPES.GuildHall + 1;",
+    "new": "export const ARENA_MAP_BYTE = BUILDING_TYPES.GuildHall;",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-LANDMARK-ON-ANY-BLOCK",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "  dfBlock?.name === ARENA_BLOCK\n    ? { name: ARENA_MAP_NAME, position: arenaColosseumAt(), buildingType: BUILDING_TYPES.GuildHall }\n    : null;",
+    "new": "  dfBlock ? { name: ARENA_MAP_NAME, position: arenaColosseumAt(), buildingType: BUILDING_TYPES.GuildHall } : null;",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-CLASSIC-UNNAMED",
+    "file": "src/ui/exteriorAutomapWindow.js",
+    "old": "    for (const bl of this.deps.blocks ?? []) {",
+    "new": "    for (const bl of []) {",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-CLASSIC-PLATE-ASTRAY",
+    "file": "src/ui/exteriorAutomapWindow.js",
+    "old": "        const anchor = nameplateAnchor(bl.x, bl.y, lm.position);",
+    "new": "        const anchor = nameplateAnchor(bl.y, bl.x, lm.position);",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-CLASSIC-RENAMED",
+    "file": "src/ui/exteriorAutomapWindow.js",
+    "old": "    if (!p || p.isResidence || p.landmark) return; // ARENA-MAP: a landmark is no building to rename",
+    "new": "    if (!p || p.isResidence) return; // ARENA-MAP: a landmark is no building to rename",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-SHEET-UNNAMED",
+    "file": "src/ui/town/townSheet.js",
+    "old": "    for (const bl of deps.blocks ?? []) {",
+    "new": "    for (const bl of []) {",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-SHEET-NAME-UNFLIPPED",
+    "file": "src/ui/town/townSheet.js",
+    "old": "y: sheetY(ensureField().h, ay), key: null,",
+    "new": "y: ay, key: null,",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-SHEET-INK-LOST",
+    "file": "src/ui/town/townSheet.js",
+    "old": "key: null, quarter: quarterOfType(lm.buildingType) });",
+    "new": "key: null, quarter: null });",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-WORLD-HOST-UNHANDED",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })),",
+    "new": "autoMapData, landmark: null })),",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  },
+  {
+    "name": "ARENAMAP-EXTERIOR-HOST-UNHANDED",
+    "file": "src/scenes/exterior.js",
+    "old": "autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })),",
+    "new": "autoMapData, landmark: null })),",
+    "tests": [
+      "test/ui/town/arena_townmap.test.js"
+    ]
+  }
+]

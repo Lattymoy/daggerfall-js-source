@@ -1,0 +1,230 @@
+[
+  {
+    "name": "GRASSLIT-root-tone",
+    "file": "src/render/labGrass.js",
+    "old": "  Object.freeze([0.92, 0.92, 0.97]),",
+    "new": "  Object.freeze([0.62, 0.62, 0.62]),",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-no-second-dim",
+    "file": "src/scenes/world.js",
+    "old": "dim: 1, lane: renderer.lightingLane,",
+    "new": "dim: wxNow.dim, lane: renderer.lightingLane,",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-lane-pipeline",
+    "file": "src/render/labGrass.js",
+    "old": "  c = uLane > 0.5 ? elEncode(elTonemapRGB(elDecode(c) * light * (uELExposure * elAdapt()))) : c * light;",
+    "new": "  c = c * light;",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-sun-at-the-root",
+    "file": "src/render/labGrass.js",
+    "old": "uSunCol * (uSunScale * vLam * vSun)",
+    "new": "uSunCol * (uSunScale * vLam)",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-rim-in-the-sun",
+    "file": "src/render/labGrass.js",
+    "old": "* vLam * vSun;   // GRASS-PX; GRASS-LIT",
+    "new": "* vLam;   // GRASS-PX; GRASS-LIT",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-far-blend",
+    "file": "src/render/labGrass.js",
+    "old": "    to: '  c = mix(c, vGround, vFar);   // GRASS-LIT: the far field is the ground\\'s colour\\n'\n",
+    "new": "    to: ''\n",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-sward",
+    "file": "src/render/labGrass.js",
+    "old": "export const GRASS_SWARD = 0.9;",
+    "new": "export const GRASS_SWARD = 0.42;",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-decoded-under-the-lane",
+    "file": "src/render/labGrass.js",
+    "old": "const c3 = (c, out) => (lane && c ? lane.decode3(c, out) : c);",
+    "new": "const c3 = (c) => c;",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-sun-map-bound",
+    "file": "src/render/labGrass.js",
+    "old": "if (light.shadows) light.shadows.upload(this.shadowLoc);",
+    "new": "if (false) light.shadows.upload(this.shadowLoc);",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-deck-bound",
+    "file": "src/render/labGrass.js",
+    "old": "gl.uniform4fv(u.uCloudShadowRect, cs ? cs.rect : NO_DECK);",
+    "new": "gl.uniform4fv(u.uCloudShadowRect, NO_DECK);",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-tones-uploaded",
+    "file": "src/render/labGrass.js",
+    "old": "    gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic);   // GRASS-LIT2: each lane its own\n",
+    "new": "",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-player-light",
+    "file": "src/render/labGrass.js",
+    "old": "+ vNear + vPoint;   // GRASS-LIT; GRASS-LIT2",
+    "new": "+ vPoint;   // GRASS-LIT; GRASS-LIT2",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-blade-normal",
+    "file": "src/render/labGrass.js",
+    "old": "to: '  vec3 nrm = normalize(vec3(-lean.y, 0.0, lean.x) + 1.2 * gN);",
+    "new": "to: '  vec3 nrm = normalize(vec3(-lean.y, 0.0, lean.x) + 0.6 * gN);",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-ao-reads-the-copy",
+    "file": "src/render/airPass.js",
+    "old": "    depthOn(this.programs.ao, aoDepth);",
+    "new": "    depthOn(this.programs.ao);",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-ao-depth-blit",
+    "file": "src/render/airPass.js",
+    "old": "    gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.DEPTH_BUFFER_BIT, gl.NEAREST);",
+    "new": "    gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.COLOR_BUFFER_BIT, gl.NEAREST);",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-ao-taken-before-grass",
+    "file": "src/scenes/world.js",
+    "old": "      renderer.snapshotAoDepth();   // GRASS-LIT: the AO reads the world without the field (render/airPass.js snapshotAoDepth)\n",
+    "new": "",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-ao-copy-dropped",
+    "file": "src/render/airPass.js",
+    "old": "    F.aoTaken = false;\n    quad(this.programs.ao, T.ao);",
+    "new": "    quad(this.programs.ao, T.ao);",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-sun-read-once-a-triangle",
+    "file": "src/render/labGrass.js",
+    "old": "(gl_VertexID % 3 == 2 && uSunScale > 0.0) ?",
+    "new": "(uSunScale > 0.0) ?",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT-sun-handed-flat",
+    "file": "src/render/labGrass.js",
+    "old": "+ 'flat out float vSun;",
+    "new": "+ 'out float vSun;",
+    "tests": [
+      "test/render/grasslit.test.js",
+      "test/render/grasspx.test.js",
+      "test/systems/disc20.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  }
+]

@@ -1,0 +1,538 @@
+[
+  {
+    "name": "AMBIENT-LIFE-town-roofs-the-climates-perch",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": "perchKind: town ? p.town : gulls ? 'gull' : p.perch,",
+    "new": "perchKind: gulls ? 'gull' : p.perch,",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-fireflies-in-the-rain",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": "fireflies: night && !winter && !shelter && !snow",
+    "new": "fireflies: night && !winter && !snow",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-bats-in-the-rain",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": "(shelter || snow ? 0 : 1)",
+    "new": "(snow ? 0 : 1)",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-winter-bats-doubled",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": "(winter ? 0.3 : 1) * d) : 0,",
+    "new": "(winter ? 0.6 : 1) * d) : 0,",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-flocks-past-one",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": "n(AL_BASE.flocks * Math.min(1, air))",
+    "new": "n(AL_BASE.flocks * air)",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-fog-thins-less",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": "fog ? 0.6 : 1",
+    "new": "fog ? 0.95 : 1",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-butterflies-in-snow",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": "!fog && !snow ? n(AL_BASE.butterflies",
+    "new": "!fog ? n(AL_BASE.butterflies",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-dry-falls-ground-nothing",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": " || weather === 'sandstorm' || weather === 'ashfall'",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js",
+      "test/scenes/ambientlifehost.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-the-seas-bats",
+    "file": "src/systems/ambientLife/ambientCast.js",
+    "old": "bats: 0.5, town: 'gull'",
+    "new": "bats: 3, town: 'gull'",
+    "tests": [
+      "test/systems/ambientLife/ambientcast.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-the-ear-word-alone",
+    "file": "src/scenes/ambientLifeHost.js",
+    "old": "(isDryFall(precipitationForWeather(weather)) ? weather : heard)",
+    "new": "heard",
+    "tests": [
+      "test/scenes/ambientlifehost.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-fliers-under-the-sea",
+    "file": "src/scenes/ambientLifeHost.js",
+    "old": "Math.max(g, seaY())",
+    "new": "g",
+    "tests": [
+      "test/scenes/ambientlifehost.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-lane-gate",
+    "file": "src/scenes/ambientLifeHost.js",
+    "old": "broken || !enhanced ? 0 : density()",
+    "new": "broken ? 0 : density()",
+    "tests": [
+      "test/scenes/ambientlifehost.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-survey-before-the-cast",
+    "file": "src/scenes/ambientLifeHost.js",
+    "old": "        life.survey(feet);   // the town and the coast read before the cast that needs them\n",
+    "new": "",
+    "tests": [
+      "test/scenes/ambientlifehost.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-the-ray-answer-minted",
+    "file": "src/scenes/ambientLifeHost.js",
+    "old": "collider.raycastHit(from, DOWN, reach, null, hit).dist",
+    "new": "collider.raycastHit(from, DOWN, reach, null, { dist: Infinity, key: null, normal: [0, 0, 0], back: false }).dist",
+    "tests": [
+      "test/scenes/ambientlifehost.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-jump",
+    "file": "src/systems/ambientLife/ambientLife.js",
+    "old": "if (moved > AL_JUMP_M) this.clear();",
+    "new": "if (false) this.clear();",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-jump-tenfold",
+    "file": "src/systems/ambientLife/ambientLife.js",
+    "old": "export const AL_JUMP_M = 150;",
+    "new": "export const AL_JUMP_M = 1500;",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-the-last-place-left-behind",
+    "file": "src/systems/ambientLife/ambientLife.js",
+    "old": "if (this.last) { this.last[0] += o[0]; this.last[1] += o[1]; this.last[2] += o[2]; }",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-a-walk-is-a-run",
+    "file": "src/systems/ambientLife/ambientLife.js",
+    "old": "export const AL_FAST = 6.6;",
+    "new": "export const AL_FAST = 4.5;",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-speed-on-the-clamped-frame",
+    "file": "src/systems/ambientLife/ambientLife.js",
+    "old": "moved / raw < AL_RUN_MAX) this.speed += (moved / raw - this.speed)",
+    "new": "moved / d < AL_RUN_MAX) this.speed += (moved / d - this.speed)",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-unbuilt-is-a-coast",
+    "file": "src/systems/ambientLife/ambientLife.js",
+    "old": "this.coast = Number.isFinite(w.ground(x, z)) && w.wet(x, z);",
+    "new": "this.coast = w.wet(x, z);",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-edge-fade",
+    "file": "src/systems/ambientLife/ambientLife.js",
+    "old": "if (share > 0) writeBody(b, out, n++, share);",
+    "new": "writeBody(b, out, n++, 1);",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-perch-prune",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "if (Math.hypot(s.x - feet[0], s.z - feet[2]) <= F.perchKeep) continue;",
+    "new": "continue;",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-soarers-never-leave",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "if (away > F.soarLeave) { this.leave(b, feet); return; }",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-soarers-height-fixed",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "b.ty += (this.groundAt(b.cx, b.cz, feet) + b.alt - b.ty) * Math.min(1, dt * 0.3);",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-bats-never-leave",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "if (Math.hypot(b.x - feet[0], b.z - feet[2]) > F.batLeave) { b.gone = true; return; }",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-a-fleeing-bird-arrives",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "if (Math.hypot(b.tx - b.x, b.tz - b.z) < 6) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-feeding-under-roofs",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "    return Number.isFinite(h) && h > g + 0.3 ? NaN : g;\n  }\n\n  /** Open ground to feed on",
+    "new": "    return g;\n  }\n\n  /** Open ground to feed on",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-ground-ahead",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "Number.isFinite(g) ? g + 1.5 : -Infinity",
+    "new": "-Infinity",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-ridges-one-way",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "(Math.abs(e - w) > Math.abs(n - s) ? Math.PI / 2 : 0)",
+    "new": "0",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-flock-up-at-random",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": " + (Math.hypot(b.x - feet[0], b.z - feet[2]) - near) * 0.03",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-flush-delay-long",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "flushDelay: [0.08, 0.6]",
+    "new": "flushDelay: [0.08, 5]",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-splice-unguarded",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "if (i >= 0) this.sites.splice(i, 1);",
+    "new": "this.sites.splice(i, 1);",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-rays-never-rest",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "if (this.misses >= F.perchMisses && (this.lookWait -= dt) > 0) return;",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-gone-birds-flown",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "      if (b.gone) continue;   // pruned with its perch this frame\n",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ],
+    "equivalent": true,
+    "why": "belt-and-braces: a bird pruned with its perch is gone at 100 m from the player, too far to flush a neighbour, and its perch's release is guarded (AMBIENT-LIFE-splice-unguarded) - running it once more changes nothing a pin can see"
+  },
+  {
+    "name": "AMBIENT-LIFE-the-perch-not-looked-at",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "if (!(Math.abs(this.world.roof(s.x, s.z, s.y + 1.5) - s.y) < 0.3)) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-flock-anchor-left-behind",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "this.ax += o[0]; this.ay += o[1]; this.az += o[2]; this.gx",
+    "new": "this.gx",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-town-dropped-with-a-clear",
+    "file": "src/systems/ambientLife/ambientFlight.js",
+    "old": "    this.town = false; this.misses = 0; this.lookWait = 0;\n",
+    "new": "    this.misses = 0; this.lookWait = 0;\n",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-insects-under-roofs",
+    "file": "src/systems/ambientLife/ambientGround.js",
+    "old": "    return Number.isFinite(h) && h > g + 0.3 ? NaN : g;\n  }\n\n  /** Ground a runner",
+    "new": "    return g;\n  }\n\n  /** Ground a runner",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-insects-fly-in",
+    "file": "src/systems/ambientLife/ambientGround.js",
+    "old": "if (Number.isFinite(this.open(b.x + b.vx * s, b.z + b.vz * s))) return;",
+    "new": "return;",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-slope",
+    "file": "src/systems/ambientLife/ambientGround.js",
+    "old": "return Math.abs(w.ground(x + 0.4, z) - g) > G.slope || Math.abs(w.ground(x, z + 0.4) - g) > G.slope ? NaN : g;",
+    "new": "return g;",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-insects-stay-behind",
+    "file": "src/systems/ambientLife/ambientGround.js",
+    "old": "for (const list of [this.runners, this.butterflies, this.fireflies]) for (const b of list) offsetBody(b, o);",
+    "new": "for (const b of this.runners) offsetBody(b, o);",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-places-left-behind",
+    "file": "src/systems/ambientLife/ambientBody.js",
+    "old": "  b.tx += o[0]; b.ty += o[1]; b.tz += o[2];\n",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-homes-left-behind",
+    "file": "src/systems/ambientLife/ambientBody.js",
+    "old": "  b.cx += o[0]; b.cz += o[2];\n",
+    "new": "",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_sim.test.js",
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-angles-unwrapped",
+    "file": "src/systems/ambientLife/ambientBody.js",
+    "old": "out[o + 4] = b.yaw % TAU;",
+    "new": "out[o + 4] = b.yaw;",
+    "tests": [
+      "test/systems/ambientLife/ambientlife_audit.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-underside",
+    "file": "src/render/ambientLifePass.js",
+    "old": "n.y < -0.25 ?",
+    "new": "n.y < -2.0 ?",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-unshaded",
+    "file": "src/render/ambientLifePass.js",
+    "old": "(0.72 + 0.28 * clamp(n.y * 0.5 + 0.5, 0.0, 1.0))",
+    "new": "1.0",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-glow-floor-one-pixel",
+    "file": "src/render/ambientLifePass.js",
+    "old": "uPixel * 3.0 / 0.4",
+    "new": "uPixel * 1.0 / 0.4",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-no-wing-lag",
+    "file": "src/render/ambientLifePass.js",
+    "old": "a1 + mix(-0.4, amp * 0.55 * sin(phase - 1.1), spread)",
+    "new": "a1 + mix(-0.4, 0.0, spread)",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-perched-sinks",
+    "file": "src/render/ambientLifePass.js",
+    "old": "  if (shape < 0.5) p.y += (max(0.17 * A.y, 0.16 * A.x) + 0.005) * (1.0 - aWing.x);\n",
+    "new": "",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-faces-left-unculled",
+    "file": "src/render/ambientLifePass.js",
+    "old": "    gl.bindBuffer(gl.ARRAY_BUFFER, null);\n    gl.enable(gl.CULL_FACE);\n  }",
+    "new": "    gl.bindBuffer(gl.ARRAY_BUFFER, null);\n  }",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-attributes-left-on-the-lights",
+    "file": "src/render/ambientLifePass.js",
+    "old": "    this.point(0);\n    this.end();",
+    "new": "    this.end();",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-right-off-the-columns",
+    "file": "src/render/ambientLifePass.js",
+    "old": "gl.uniform3f(L.uRight, view[0], view[4], view[8]);",
+    "new": "gl.uniform3f(L.uRight, view[0], view[1], view[2]);",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-pixel-off-the-x-scale",
+    "file": "src/render/ambientLifePass.js",
+    "old": "2 / (Math.abs(proj[5]) * Math.max(1, heightPx))",
+    "new": "2 / (Math.abs(proj[0]) * Math.max(1, heightPx))",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-lights-write-depth",
+    "file": "src/render/ambientLifePass.js",
+    "old": "    gl.depthMask(false);\n    gl.uniform1i(L.uGlowPass, 1);",
+    "new": "    gl.depthMask(true);\n    gl.uniform1i(L.uGlowPass, 1);",
+    "tests": [
+      "test/render/ambientlifepass.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-lights-under-the-travel-view",
+    "file": "src/scenes/world.js",
+    "old": "if (!tvf && ambientLife.drawLights(renderer, proj, view))",
+    "new": "if (ambientLife.drawLights(renderer, proj, view))",
+    "tests": [
+      "test/scenes/ambientlifehost.test.js"
+    ]
+  },
+  {
+    "name": "AMBIENT-LIFE-bodies-under-the-travel-view",
+    "file": "src/scenes/world.js",
+    "old": "if (!tvf && ambientLife.draw(renderer, proj, view,",
+    "new": "if (ambientLife.draw(renderer, proj, view,",
+    "tests": [
+      "test/scenes/ambientlifehost.test.js"
+    ]
+  }
+]

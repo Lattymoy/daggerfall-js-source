@@ -1,0 +1,79 @@
+[
+  {
+    "name": "OHR-mine-always-built",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const peerHullNear = (e, eye, fought) => !eye || dist2d(e.ship.pos, eye) <= PEER_HULL_NEAR_M",
+    "new": "  const peerHullNear = (e, eye, fought) => !e.owner || !eye || dist2d(e.ship.pos, eye) <= PEER_HULL_NEAR_M",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-mine-never-given-back",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.boat || e.deck?.length || boarding?.shipId === e.id) continue;\n      if (dist2d(e.ship.pos, eye) <= PEER_HULL_FAR_M) continue;",
+    "new": "      if (!e.owner || !e.boat || e.deck?.length || boarding?.shipId === e.id) continue;\n      if (dist2d(e.ship.pos, eye) <= PEER_HULL_FAR_M) continue;",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-kept-ignored-building",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    || (!e.owner && hullKept(e, { fought, boardingId: boarding?.shipId ?? null }));",
+    "new": "    || false;",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-kept-ignored-giving-back",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.owner && hullKept(e, { fought: (fought ??= foughtIds()), boardingId: boarding?.shipId ?? null })) continue;   // OWN-HULL-RANGE\n",
+    "new": "",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-peers-kept-too",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    || (!e.owner && hullKept(e, { fought, boardingId: boarding?.shipId ?? null }));",
+    "new": "    || hullKept(e, { fought, boardingId: boarding?.shipId ?? null });",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-deck-forgotten",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  return !!e.deck?.length || (boardingId != null",
+    "new": "  return false || (boardingId != null",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-boarding-forgotten",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(boardingId != null && boardingId === e.id) || (!!e.prize && !e.prize.fate)",
+    "new": "false || (!!e.prize && !e.prize.fate)",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-settled-prize-kept",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(!!e.prize && !e.prize.fate)\n",
+    "new": "(!!e.prize)\n",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-struck-still-fighting",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    || (s.damage.state === SHIP_STATES.afloat && (s.mode === 'engage' || s.mode === 'board')) || fought.has(e.id);",
+    "new": "    || ((s.mode === 'engage' || s.mode === 'board')) || fought.has(e.id);",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-boarding-mode-forgotten",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(s.mode === 'engage' || s.mode === 'board')) || fought.has(e.id);",
+    "new": "(s.mode === 'engage')) || fought.has(e.id);",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  },
+  {
+    "name": "OHR-target-forgotten",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(s.mode === 'engage' || s.mode === 'board')) || fought.has(e.id);",
+    "new": "(s.mode === 'engage' || s.mode === 'board'));",
+    "tests": ["test/systems/naval/ownhullrange.test.js"]
+  }
+]

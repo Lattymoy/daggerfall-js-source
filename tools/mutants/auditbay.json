@@ -1,0 +1,1127 @@
+[
+  {
+    "name": "BAY-A1-course-left",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (e.ship.course) e.ship.course = [e.ship.course[0] + o[0], e.ship.course[1] + o[2]];",
+    "new": "      if (e.ship.course) e.ship.course = [e.ship.course[0], e.ship.course[1]];",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A1-leg-left",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (e.liner?.leg) e.liner.leg = e.liner.leg.map((q) => [q[0] + o[0], q[1] + o[2]]);",
+    "new": "      if (e.liner?.leg) e.liner.leg = e.liner.leg.map((q) => [q[0], q[1]]);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A1-leg-moved-in-place",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (e.liner?.leg) e.liner.leg = e.liner.leg.map((q) => [q[0] + o[0], q[1] + o[2]]);",
+    "new": "      if (e.liner?.leg) for (const q of e.liner.leg) { q[0] += o[0]; q[1] += o[2]; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A2-struck-kept-tagged",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    e.liner = null;   // her lane's no more: never afloat again, she is no voyage's packet (liners)",
+    "new": "    // her lane's no more: never afloat again, she is no voyage's packet (liners)",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A2-struck-spent-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (e.liner && s.damage.state !== SHIP_STATES.afloat) { spendLiner(e); continue; }",
+    "new": "      if (false) { spendLiner(e); continue; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A2-struck-tagged-again",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (l && !spentLiners.has(l.seed >>> 0) && s.damage.state === SHIP_STATES.afloat) {",
+    "new": "      if (l && !spentLiners.has(l.seed >>> 0)) {",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A2-fighting-kept-mode",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const linerKept = (e) => e.ship.mode === 'engage' || e.ship.mode === 'board' || e.ship.mode === 'flee';",
+    "new": "  const linerKept = (e) => e.ship.mode === 'board' || e.ship.mode === 'flee';",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A3-heir-untagged",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (l && !spentLiners.has(l.seed >>> 0) && s.damage.state === SHIP_STATES.afloat) {",
+    "new": "      if (l && !spentLiners.has(l.seed >>> 0) && s.damage.state === SHIP_STATES.afloat && (e.owner || e.liner)) {",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A9-peer-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (l && !spentLiners.has(l.seed >>> 0) && s.damage.state === SHIP_STATES.afloat) {",
+    "new": "      if (l && !e.owner && !spentLiners.has(l.seed >>> 0) && s.damage.state === SHIP_STATES.afloat) {",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A9-berth-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const lying = e.owner ? berthOf(s) : null;",
+    "new": "    const lying = null;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A9-lying-off-never",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      return r?.kind === 'lurk' || (end && Math.hypot(s.pos[0] - end[0], s.pos[2] - end[1]) <= LINER_PORT_M) ? `lying off ${at.name}` : `bound for ${at.name}`;",
+    "new": "      return r?.kind === 'lurk' ? `lying off ${at.name}` : `bound for ${at.name}`;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/shipstance.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-tag-by-the-clock",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const at = e.liner.dest;",
+    "new": "      const at = e.liner.phase === 'dwell' ? e.liner.port : e.liner.to;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/shipstance.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-tag-off-the-clock-leg-end",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const leg = e.liner.way;",
+    "new": "      const leg = e.liner.leg;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A9-unnamed-port-said",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!at?.name) return '';\n      const leg = e.liner.way;",
+    "new": "      const leg = e.liner.way;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js",
+      "test/systems/naval/shipstance.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-claim-never",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      adopt(e);   // her tag hers still: her lane steers her (steerLiner) as mine from here\n      e.retiring = false;",
+    "new": "      continue;   // her tag hers still: her lane steers her (steerLiner) as mine from here\n      e.retiring = false;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-claim-of-one-held",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.retiring && !(feet && dist2d(feet, e.ship.pos) > LINER_DROP_M)) continue;",
+    "new": "      if (!e.retiring && !feet) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-claim-mid-fight",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.owner || !e.liner || !linerFree(e) || dist2d(e.ship.pos, me) > LINER_DROP_M) continue;",
+    "new": "      if (!e.owner || !e.liner || dist2d(e.ship.pos, me) > LINER_DROP_M) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-claim-from-afar",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.owner || !e.liner || !linerFree(e) || dist2d(e.ship.pos, me) > LINER_DROP_M) continue;",
+    "new": "      if (!e.owner || !e.liner || !linerFree(e)) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-hold-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (peerNear(e.ship.pos, LINER_DROP_M) && clock - (e.handOn ??= clock) < ORPHAN_S) continue;   // AUDIT BAY A4: held for their claim",
+    "new": "      // AUDIT BAY A4: held for their claim",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-hold-for-ever",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (peerNear(e.ship.pos, LINER_DROP_M) && clock - (e.handOn ??= clock) < ORPHAN_S) continue;   // AUDIT BAY A4: held for their claim",
+    "new": "      if (peerNear(e.ship.pos, LINER_DROP_M)) continue;   // AUDIT BAY A4: held for their claim",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/render/shipfade.test.js",
+      "test/systems/naval/nav_r_raiders.test.js",
+      "test/systems/naval/navaudit_online.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-raider-claim-never",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.retiring && !(feet && dist2d(feet, e.ship.pos) > RAIDER_DROP_M)) continue;\n      adopt(e);",
+    "new": "      if (!e.retiring && !(feet && dist2d(feet, e.ship.pos) > RAIDER_DROP_M)) continue;\n      continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-raider-claim-of-one-held",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.retiring && !(feet && dist2d(feet, e.ship.pos) > RAIDER_DROP_M)) continue;",
+    "new": "      if (!e.retiring && !feet) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-raider-claim-mid-fight",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "e.ship.damage.state !== SHIP_STATES.afloat || raiderBusy(e) || dist2d(e.ship.pos, me) > RAIDER_DROP_M) continue;",
+    "new": "e.ship.damage.state !== SHIP_STATES.afloat || dist2d(e.ship.pos, me) > RAIDER_DROP_M) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-raider-held-claimed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!r || spent.has(r.id) || held.has(r.id)) continue;",
+    "new": "      if (!r || spent.has(r.id)) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-raider-spent-claimed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!r || spent.has(r.id) || held.has(r.id)) continue;",
+    "new": "      if (!r || held.has(r.id)) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-raider-hold-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.retiring && peerNear(e.ship.pos, RAIDER_DROP_M) && clock - (e.handOn ??= clock) < ORPHAN_S) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A5-launcher-alone",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const density = trafficDensity(me);   // AUDIT BAY A5",
+    "new": "    const density = launchesTraffic() ? trafficDensity(me) : 0;   // AUDIT BAY A5",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-farthest",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "    if (d < best) {",
+    "new": "    if (d > best || best === Infinity) {",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-unclamped",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "    const k = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)) : 0;",
+    "new": "    const k = l2 > 0 ? ((x - ax) * dx + (z - az) * dz) / l2 : 0;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-remainder-uncarried",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "    need -= rest;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-left-from-start",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "  let left = len(seg) * (1 - t);",
+    "new": "  let left = len(seg) * t;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-left-one-leg",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "  for (let i = seg + 1; i < leg.length; i++) left += len(i);",
+    "new": "  for (let i = seg + 1; i < seg + 1; i++) left += len(i);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-lone-point",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "  if (leg.length === 1) return { x: leg[0][0], z: leg[0][1], left: 0 };\n  const len = (i) => Math.hypot(leg[i][0] - leg[i - 1][0], leg[i][1] - leg[i - 1][1]);",
+    "new": "  const len = (i) => Math.hypot(leg[i][0] - leg[i - 1][0], leg[i][1] - leg[i - 1][1]);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-empty-leg",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "  if (!leg?.length) return null;",
+    "new": "  if (!leg) return null;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-zero-length",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "    if (L > 0 && need <= rest) {",
+    "new": "    if (need <= rest) {",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-pursue-past-the-end",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "  const e = leg[leg.length - 1];",
+    "new": "  const e = leg[0];",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-dwell-far-leg-home",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "      leg: way.pts,",
+    "new": "      leg: rev,",
+    "tests": [
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-dwell-home-leg-out",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "    leg: rev,",
+    "new": "    leg: way.pts,",
+    "tests": [
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-arrival-never",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (p.left > LINER_PORT_M) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }",
+    "new": "if (p.left >= 0) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-arrival-at-once",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (p.left > LINER_PORT_M) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }",
+    "new": "if (p.left > LINER_PORT_M * 100) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-her-port-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const clockDest = (l) => (l.phase === 'dwell' ? l.port : l.to) ?? null;",
+    "new": "  const clockDest = (l) => l.to ?? null;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-own-leg-unkept",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    leg: l.leg ?? null, way: was?.way ?? l.leg ?? null, dest: was?.dest ?? clockDest(l) });",
+    "new": "    leg: l.leg ?? null, way: l.leg ?? null, dest: clockDest(l) });",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-next-leg-never",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (linerFree(e) && l.leg?.length && target && target.key !== l.dest?.key && madePort(e)) { l.way = l.leg; l.dest = target; }",
+    "new": "    if (false) { l.way = l.leg; l.dest = target; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-next-leg-at-once",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (linerFree(e) && l.leg?.length && target && target.key !== l.dest?.key && madePort(e)) { l.way = l.leg; l.dest = target; }",
+    "new": "    if (linerFree(e) && l.leg?.length && target && target.key !== l.dest?.key) { l.way = l.leg; l.dest = target; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-next-leg-mid-fight",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (linerFree(e) && l.leg?.length && target && target.key !== l.dest?.key && madePort(e)) { l.way = l.leg; l.dest = target; }",
+    "new": "    if (l.leg?.length && target && target.key !== l.dest?.key && madePort(e)) { l.way = l.leg; l.dest = target; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-peer-never-moved-on",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        moveOn(e);\n      } else if (e.liner) releaseLiner(e);",
+    "new": "        if (!e.owner) moveOn(e);\n      } else if (e.liner) releaseLiner(e);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-made-port-by-errand-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (k && (e.owner ? berthOf(s)?.key === k : (r?.kind === 'arrive' || r?.kind === 'moored') && r.harbour === k)) return true;",
+    "new": "    if (k && (e.owner ? berthOf(s)?.key === k : false)) return true;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-made-port-by-berth-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (k && (e.owner ? berthOf(s)?.key === k : (r?.kind === 'arrive' || r?.kind === 'moored') && r.harbour === k)) return true;",
+    "new": "    if (k && (e.owner ? false : (r?.kind === 'arrive' || r?.kind === 'moored') && r.harbour === k)) return true;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-made-port-lying-off-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    return r?.kind === 'lurk' || (pursue(l.way, s.pos[0], s.pos[2], 0)?.left ?? 0) <= LINER_PORT_M;",
+    "new": "    return (pursue(l.way, s.pos[0], s.pos[2], 0)?.left ?? 0) <= LINER_PORT_M;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-made-port-by-way-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    return r?.kind === 'lurk' || (pursue(l.way, s.pos[0], s.pos[2], 0)?.left ?? 0) <= LINER_PORT_M;",
+    "new": "    return r?.kind === 'lurk';",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-first-way-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        e.liner = linerTag(l, e.liner ?? firstWay(l, s));",
+    "new": "        e.liner = linerTag(l, e.liner);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-first-heading-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (p.left <= LINER_PORT_M || (q.x - p.x) * Math.sin(s.yaw) + (q.z - p.z) * Math.cos(s.yaw) >= 0) return clock;",
+    "new": "    return clock;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-first-heading-flipped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (p.left <= LINER_PORT_M || (q.x - p.x) * Math.sin(s.yaw) + (q.z - p.z) * Math.cos(s.yaw) >= 0) return clock;",
+    "new": "    if (p.left <= LINER_PORT_M || (q.x - p.x) * Math.sin(s.yaw) + (q.z - p.z) * Math.cos(s.yaw) < 0) return clock;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-first-off-her-port-by-heading",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (p.left <= LINER_PORT_M || (q.x - p.x) * Math.sin(s.yaw) + (q.z - p.z) * Math.cos(s.yaw) >= 0) return clock;",
+    "new": "    if ((q.x - p.x) * Math.sin(s.yaw) + (q.z - p.z) * Math.cos(s.yaw) >= 0) return clock;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-first-berth-by-heading",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!leg?.length || s.mode !== 'cruise' || berthOf(s)) return clock;",
+    "new": "    if (!leg?.length || s.mode !== 'cruise') return clock;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-first-fight-by-heading",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!leg?.length || s.mode !== 'cruise' || berthOf(s)) return clock;",
+    "new": "    if (!leg?.length || berthOf(s)) return clock;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-first-reversed-for-the-clock-port",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    return { way: [...leg].reverse(), dest: l.from ?? null };",
+    "new": "    return { way: [...leg].reverse(), dest: clockDest(l) };",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-first-reversed-unreversed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    return { way: [...leg].reverse(), dest: l.from ?? null };",
+    "new": "    return { way: leg, dest: l.from ?? null };",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-adopted-life-errand",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    e.ship.errand = e.liner ? laneErrand(errandHere(e.ship)) : errandHere(e.ship);",
+    "new": "    e.ship.errand = errandHere(e.ship);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-met-again-life-errand",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        if (!e.liner && !e.owner) s.errand = laneErrand(s.errand);\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-lane-errand-moored-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const laneErrand = (r) => (r?.kind === 'moored' || r?.kind === 'depart' ? r : null);",
+    "new": "  const laneErrand = (r) => (r?.kind === 'depart' ? r : null);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A4-lane-errand-depart-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const laneErrand = (r) => (r?.kind === 'moored' || r?.kind === 'depart' ? r : null);",
+    "new": "  const laneErrand = (r) => (r?.kind === 'moored' ? r : null);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-way-left",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (e.liner?.way) e.liner.way = e.liner.way.map((q) => [q[0] + o[0], q[1] + o[2]]);",
+    "new": "      if (e.liner?.way) e.liner.way = e.liner.way.map((q) => [q[0], q[1]]);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-own-leg-not-steered",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const p = pursue(l.way, s.pos[0], s.pos[2], LINER_LOOKAHEAD_M);",
+    "new": "    const p = pursue(l.leg, s.pos[0], s.pos[2], LINER_LOOKAHEAD_M);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A22-lurk-at-the-clock-end",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const end = l.way[l.way.length - 1];",
+    "new": "    const end = l.leg[l.leg.length - 1];",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ],
+    "equivalent": true,
+    "why": "Equivalent: she reaches her lying-off with her own leg's remainder within LINER_PORT_M of its end, so moveOn (the same liners() call, the same place) has made her port; had her clock been bound elsewhere she would have taken up its leg (her way the clock's), and with it bound here the clock's leg ends at her port too (a lane's one leg to each port) - her way's end and her clock's leg's are the one point whenever she lies off it."
+  },
+  {
+    "name": "BAY-A6-depart-from-her-port",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (h && r.harbour === h.key) { if (r.kind === 'moored') r.until = Infinity; return; }",
+    "new": "      if (h) { if (r.kind === 'moored') r.until = Infinity; return; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-depart-no-berth-asked",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      s.errand = { kind: 'depart', harbour: r.harbour, berth: r.kind === 'moored' ? r.berth : -1, path: null, i: 0 };",
+    "new": "      s.errand = { kind: 'depart', harbour: r.harbour, berth: r.berth, path: null, i: 0 };",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A6-steered-without-a-leg",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!linerFree(e) || !l.leg?.length) return;",
+    "new": "    if (!linerFree(e)) return;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A7-first-open-berth",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    for (let i = h.harbour.berths.length - 1; i >= 0; i--) if (berthFree(h.key, i)) return i;",
+    "new": "    for (let i = 0; i < h.harbour.berths.length; i++) if (berthFree(h.key, i)) return i;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A7-lying-ship-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (b) for (const e of sea.values()) if (e.ship !== except && e.ship.damage.state !== SHIP_STATES.sunk && (e.ship.speed ?? 0) < BERTH_WAY && Math.hypot(b.pos[0] - e.ship.pos[0], b.pos[1] - e.ship.pos[2]) <= BERTH_SNAP_M) return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ],
+    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
+  },
+  {
+    "name": "BAY-A8-region-unsaid",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "    region: lane.a.region ?? -1,",
+    "new": "    region: -1,",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A8-region-unread-under-way",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      e = launch({ seed, classId: cls.id, region: l.region, area: l.area, pos: [l.pos[0], deps.seaY(), l.pos[2]], yaw: l.yaw });",
+    "new": "      e = launch({ seed, classId: cls.id, area: l.area, pos: [l.pos[0], deps.seaY(), l.pos[2]], yaw: l.yaw });",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
+  },
+  {
+    "name": "BAY-A8-region-unread-at-berth",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        e = launch({ seed, classId: cls.id, region: l.region, area: l.area, pos: [at[0], deps.seaY(), at[1]],",
+    "new": "        e = launch({ seed, classId: cls.id, area: l.area, pos: [at[0], deps.seaY(), at[1]],",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
+  },
+  {
+    "name": "BAY-A8-feed-region-unsaid",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      region: summary.regionIndex,\n    }); // AUDIT BAY A8: her names her home port's region's",
+    "new": "    }); // AUDIT BAY A8: her names her home port's region's",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the Bay's lane ports moved to scenes/naval/worldLanes.js bayLanePorts."
+  },
+  {
+    "name": "BAY-A11-answer-bound",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (s.mode === 'answer') return e.relief ? 'coming to your aid' : '';",
+    "new": "    if (s.mode === 'answer') return e.relief ? 'coming to your aid' : 'bound out to sea';",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A11-answer-no-aid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (s.mode === 'answer') return e.relief ? 'coming to your aid' : '';",
+    "new": "    if (s.mode === 'answer') return '';",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A16-unnamed-depart-said",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (r?.kind === 'depart' && port(r.harbour)) return `leaving ${port(r.harbour)}`;",
+    "new": "    if (r?.kind === 'depart') return port(r.harbour) ? `leaving ${port(r.harbour)}` : '';",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A17-lineage-own-alone",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "  for (let j = 0; j < LANE_LINEAGE; j++) seeds.push(hash32(p.seed, (voyage - j) >>> 0, LANE_SALT));",
+    "new": "  for (let j = 0; j < 1; j++) seeds.push(hash32(p.seed, (voyage - j) >>> 0, LANE_SALT));",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A17-lineage-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    for (const l of list) for (const sd of l.seeds ?? [l.seed]) bySeed.set(sd >>> 0, l);",
+    "new": "    for (const l of list) bySeed.set(l.seed >>> 0, l);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A17-twin-of-an-earlier",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(x.ship.seed === seed || (seeds.has(x.ship.seed) && x.ship.damage.state === SHIP_STATES.afloat)))) continue;",
+    "new": "(x.ship.seed === seed))) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A17-a-wreck-blocks-the-next",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(x.ship.seed === seed || (seeds.has(x.ship.seed) && x.ship.damage.state === SHIP_STATES.afloat)))) continue;",
+    "new": "(x.ship.seed === seed || seeds.has(x.ship.seed)))) continue;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-heard-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    for (const sd of rec.spent ?? []) noteSpent(sd);",
+    "new": "    for (const sd of []) noteSpent(sd);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "casks, spent: spentSaid, gone: goneSaid(), laid }, toWire);",
+    "new": "casks, gone: goneSaid(), laid }, toWire);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-peer-unspent",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    for (const e of sea.values()) if (e.liner && e.ship.damage.state !== SHIP_STATES.afloat) spendLiner(e);",
+    "new": "    for (const e of sea.values()) if (!e.owner && e.liner && e.ship.damage.state !== SHIP_STATES.afloat) spendLiner(e);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-host-cap",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "spentSaid = [...spentSaid, sd].slice(-NAVAL_WIRE_SPENT); } };",
+    "new": "spentSaid = [...spentSaid, sd]; } };",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ],
+    "equivalent": true,
+    "why": "Equivalent in what is said: the word's record (navalWire.js navalWireRecord) keeps the last NAVAL_WIRE_SPENT of the view's spent itself, its door's bound; the host's own slice bounds only its list's growth over a long life (memory, never a word)."
+  },
+  {
+    "name": "BAY-A18-wire-unsaid",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (l.length) out.l = l;",
+    "new": "  if (false) out.l = l;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-wire-word-of-spent-alone",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "    out.l ||\n    out.g ||",
+    "new": "    out.g ||",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-wire-cap",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  const l = (view?.spent ?? []).filter((x) => int(x, 0, U32)).slice(-NAVAL_WIRE_SPENT); // AUDIT BAY A18",
+    "new": "  const l = (view?.spent ?? []).filter((x) => int(x, 0, U32)); // AUDIT BAY A18",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-wire-unchecked",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  const l = (view?.spent ?? []).filter((x) => int(x, 0, U32)).slice(-NAVAL_WIRE_SPENT); // AUDIT BAY A18",
+    "new": "  const l = (view?.spent ?? []).slice(-NAVAL_WIRE_SPENT); // AUDIT BAY A18",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-door-unbounded",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (!Array.isArray(spent) || spent.length > NAVAL_WIRE_SPENT || !spent.every((x) => int(x, 0, U32))) return null;",
+    "new": "  if (!Array.isArray(spent) || !spent.every((x) => int(x, 0, U32))) return null;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A18-door-unchecked",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (!Array.isArray(spent) || spent.length > NAVAL_WIRE_SPENT || !spent.every((x) => int(x, 0, U32))) return null;",
+    "new": "  if (!Array.isArray(spent) || spent.length > NAVAL_WIRE_SPENT) return null;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A19-seeds-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "        list.push({ id: p.id, seed: p.seed, seeds: p.seeds, classId: p.cls.id,",
+    "new": "        list.push({ id: p.id, seed: p.seed, classId: p.cls.id,",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A19-leg-never-home",
+    "file": "src/scenes/world.js",
+    "old": "leg: p.leg === way.pts ? out : home,",
+    "new": "leg: out,",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A19-lane-margin-dropped",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;",
+    "new": "      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A19-released-moored-for-ever",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (s.errand?.kind === 'moored') s.errand.until = s.clock + dwellOf(errandRng(s.seed));",
+    "new": "    if (s.errand?.kind === 'moored') s.errand.until = s.errand.until;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A19-released-lurk-kept",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    else if (!s.errand || s.errand.kind === 'lurk') s.errand = errandHere(s);",
+    "new": "    else if (!s.errand) s.errand = errandHere(s);",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A19-released-course-kept",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const s = e.ship;\n    s.course = null;\n    if (s.errand?.kind === 'moored')",
+    "new": "    const s = e.ship;\n    if (s.errand?.kind === 'moored')",
+    "tests": [
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A19-released-kept-tagged",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  function releaseLiner(e) {\n    e.liner = null;",
+    "new": "  function releaseLiner(e) {\n    e.liner = e.liner;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js",
+      "test/systems/naval/sealanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A20-port-own-unclaimed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "own.has(e.ship.seed) && !goneSeed(e.ship.seed) && e.ship.damage.state === SHIP_STATES.afloat) { adopt(e); e.retiring = false; }",
+    "new": "own.has(e.ship.seed) && !goneSeed(e.ship.seed) && e.ship.damage.state === SHIP_STATES.afloat) { e.retiring = e.retiring; }",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A21-guard-dropped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (!Number.isFinite(dist) || !Number.isFinite(from) || !(step > 0)) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/systems/naval/auditbay_lanes.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A10-wrap-let-back",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    "new": "  overflow: hidden; text-overflow: ellipsis; }",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-cut-unrecorded",
+    "file": "src/render/shadowPass.js",
+    "old": "    r.cut = cut;",
+    "new": "    r.cut = 0;",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-cut-cached",
+    "file": "src/render/shadowPass.js",
+    "old": "    r.dynamic = moved || reshaped || r.cut > 0;   // SC1",
+    "new": "    r.dynamic = moved || reshaped;   // SC1",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-plain-program",
+    "file": "src/render/shadowPass.js",
+    "old": "            const prog = r.cut > 0 ? P.meshCut : P.mesh;",
+    "new": "            const prog = P.mesh;",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-cut-for-all",
+    "file": "src/render/shadowPass.js",
+    "old": "            const prog = r.cut > 0 ? P.meshCut : P.mesh;",
+    "new": "            const prog = P.meshCut;",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-cut-unsent",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (r.cut > 0) gl.uniform1f(prog.cut, r.cut);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-cut-sent-whole",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (r.cut > 0) gl.uniform1f(prog.cut, r.cut);",
+    "new": "            gl.uniform1f(prog.cut, r.cut);",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-fs-no-cut",
+    "file": "src/render/shadowPass.js",
+    "old": "void main() { dissolveCut(); }`;",
+    "new": "void main() {}`;",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-draw-whole",
+    "file": "src/render/renderer.js",
+    "old": "this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));   // EL2;",
+    "new": "this._shadows.recordMesh(mesh, modelMatrix, texRemap, 0);   // EL2;",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A12-off-screen-whole",
+    "file": "src/render/renderer.js",
+    "old": "if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1)); }",
+    "new": "if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 0); }",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A13-pool-light-unfaded",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      if ((boat.fade ?? 1) < FADE_FLATS) continue;   // AUDIT BAY A13",
+    "new": "      if (false) continue;   // AUDIT BAY A13",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A13-far-lamp-unfaded",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (e.boat?.LightOn && (e.fade ?? 1) >= FADE_FLATS) boats.push(e.boat);",
+    "new": "if (e.boat?.LightOn) boats.push(e.boat);",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js",
+      "test/systems/naval/shipwatch.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-seen-always",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const seen = (e.fade ?? 1) >= FADE_FLATS;",
+    "new": "    const seen = true;",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-flames-shown",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        fire.handle?.show?.(seen);",
+    "new": "        fire.handle?.show?.(true);",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-embers-raised",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        if (seen) effects.burn(p, dt);",
+    "new": "        effects.burn(p, dt);",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-founder-raised",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (state === SHIP_STATES.sinking && seen) effects.founder(",
+    "new": "    if (state === SHIP_STATES.sinking) effects.founder(",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-smoke-raised",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (smokeK > 0 && seen) {",
+    "new": "    if (smokeK > 0) {",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-glow-kept",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "filter((e) => e.fires?.length && e.boat && (e.fade ?? 1) >= FADE_FLATS).sort(",
+    "new": "filter((e) => e.fires?.length && e.boat).sort(",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-particles-drawn",
+    "file": "src/scenes/world.js",
+    "old": "      if ((boat.fade ?? 1) < CSA_FADE_FLATS) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-flame-hidden-drawn",
+    "file": "src/scenes/naval/navalFlames.js",
+    "old": "      for (const f of live) if (f.batch && !f.hidden) out.push(f.batch);",
+    "new": "      for (const f of live) if (f.batch) out.push(f.batch);",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  },
+  {
+    "name": "BAY-A14-flame-show-unread",
+    "file": "src/scenes/naval/navalFlames.js",
+    "old": "          f.hidden = !on;",
+    "new": "          f.hidden = false;",
+    "tests": [
+      "test/scenes/naval/auditbay_render.test.js"
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "family": "Merchants",
+  "patches": {
+    "K0C01Y00": [{"old":"_S.08_ task:\n\tclicked npc _victim_ \n\thide npc _victim_ \n\tsay 1011 \n","new":"_S.08_ task:\n\tclicked npc _victim_ \n\thide npc _victim_ \n\tsay 1011 \n\tstart task _victory_\n","count":1}],
+    "K0C01Y10": [{"old":"_S.04_ task:\n\ttoting _bothdorjii_ and _qgiver_ clicked \n","new":"_S.04_ task:\n\twhen _qlkeep_\n","count":1},{"old":"\nQBN:","new":"\nMessage:  1900\n<ce> _qgiver_ holds out a hand for the Bothdorjii\n<ce> Scroll. The truth about the storm that\n<ce> wrecked your ship is its price - but the\n<ce> scroll wakes the servants of the Princes. Do\n<ce> you hand it over?\n\nMessage:  1901\nHand over the scroll.\n\nMessage:  1902\nBurn the scroll here.\n\nMessage:  1903\n<ce> You burned it? You witless %ra! Have you any\n<ce> notion what that scroll was worth? Get out\n<ce> of my sight. Whoever sent that storm after\n<ce> you, you will not hear it from me.\n\nQBN:","count":1},{"old":"_S.05_ task:\n\tinjured _F.01_ \n\tsay 1014 ","new":"_S.05_ task:\n\tinjured _F.01_ \n\tsay 1014 \n\n_qlask_ task:\n\ttoting _bothdorjii_ and _qgiver_ clicked\n\task 1900 choices 1901 _qlkeep_ 1902 _qlalt_\n\nvariable _qlkeep_\nvariable _qlalt_\n\n_qlaltpath_ task:\n\twhen _qlalt_\n\tsay 1903\n\tend quest","count":1}]
+  }
+}

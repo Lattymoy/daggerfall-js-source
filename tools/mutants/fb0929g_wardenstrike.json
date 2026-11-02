@@ -1,0 +1,42 @@
+[
+  {
+    "name": "WARDEN-STRIKE-world-host-no-bossSpell",
+    "file": "src/scenes/world.js",
+    "old": "      bossSpell: (record, target) => { modes?.dungeonCtx?.spellOnBoss?.(record, target); },   // WARDEN-STRIKE",
+    "new": "      bossSpell: null,   // WARDEN-STRIKE",
+    "tests": [
+      "test/scenes/fb0929g_wardenstrike.test.js"
+    ],
+    "note": "The world host's mount passes no door: a strike spell on the Warden goes nowhere in the real game."
+  },
+  {
+    "name": "WARDEN-STRIKE-fixed-city-no-bossSpell",
+    "file": "src/scenes/exterior.js",
+    "old": "      bossSpell: (record, target) => { modes?.dungeonCtx?.spellOnBoss?.(record, target); },   // WARDEN-STRIKE",
+    "new": "      bossSpell: (record, target) => {},   // WARDEN-STRIKE",
+    "tests": [
+      "test/scenes/fb0929g_wardenstrike.test.js"
+    ],
+    "note": "The ?town route's mount swallows it."
+  },
+  {
+    "name": "WARDEN-STRIKE-door-not-on-the-api",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    spellOnBoss: (record, target = null) => (opts.gateBoss ? spellOnStandIn(record, target) : false),",
+    "new": "",
+    "tests": [
+      "test/scenes/fb0929g_wardenstrike.test.js"
+    ],
+    "note": "The outer host asks a door the court never opened."
+  },
+  {
+    "name": "WARDEN-STRIKE-door-open-outside-a-court",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    spellOnBoss: (record, target = null) => (opts.gateBoss ? spellOnStandIn(record, target) : false),",
+    "new": "    spellOnBoss: (record, target = null) => spellOnStandIn(record, target),",
+    "tests": [
+      "test/scenes/fb0929g_wardenstrike.test.js"
+    ],
+    "note": "An ordinary dungeon offers a boss's door."
+  }
+]

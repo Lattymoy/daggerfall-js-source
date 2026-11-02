@@ -1,0 +1,863 @@
+[
+  {
+    "name": "AUDIT-SEA-E1-board-retry-at-once",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "        nextAt = now() + boardRetryMs(++fails);",
+    "new": "        nextAt = -Infinity;\n        ++fails;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E1-backoff-flat",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "export const boardRetryMs = (/** @type {number} */ fails) =>\n  Math.min(SEA_BOARD_FRESH_MS, SEA_BOARD_READ_RETRY_MS * 2 ** Math.max(0, fails - 1));",
+    "new": "export const boardRetryMs = (/** @type {number} */ fails) => SEA_BOARD_READ_RETRY_MS;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E1-season-retry-at-once",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "        nextAt = now() + Math.min(SEA_SEASON_FRESH_MS, SEA_SEASON_RETRY_MS * 2 ** fails++);",
+    "new": "        nextAt = -Infinity;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E7-the-read-over-the-act",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "      line: actLine ?? readLine,",
+    "new": "      line: readLine ?? actLine,",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E7-refusal-kept",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "        readLine = null;\n        nextAt = now() + SEA_BOARD_FRESH_MS;",
+    "new": "        nextAt = now() + SEA_BOARD_FRESH_MS;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E7-post-past-purse",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "    if (!(purseOf() >= n)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E7-press-past-purse",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "      can: !w.busy && !(w.purse < n),",
+    "new": "      can: !w.busy,",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E5-quest-piece-a-prize",
+    "file": "src/net/sea/seaPrizeLaw.js",
+    "old": "  tradeableRecord({ ...it, equipSlot: undefined });",
+    "new": "  tradeableRecord({ ...it, equipSlot: undefined, questItem: undefined });",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B2-no-copies",
+    "file": "server-account/src/seaWreck.js",
+    "old": "    ...knownCopySteps(ctx.db, c.c, [...escrow], ctx.nowS),\n    ctx.db",
+    "new": "    ctx.db",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E3-grace-on-a-standing-wreck",
+    "file": "server-account/src/seaWreck.js",
+    "old": "  if (!had && seize && ctx.nowS < c.i + SEA_WRECK_GRACE_S) return { error: 'grace' };",
+    "new": "  if (seize && ctx.nowS < c.i + SEA_WRECK_GRACE_S) return { error: 'grace' };",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B7-race-a-500",
+    "file": "server-account/src/seaWreck.js",
+    "old": "    } else if (moved && taken.length) return { error: 'seq' }; // AUDIT SEA VENTURES B7: her record moved under the seize (her own checkpoint first) - asked again, it lands",
+    "new": "    }\n    // AUDIT SEA VENTURES B7: her record moved under the seize (her own checkpoint first) - asked again, it lands",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E3-grace-thirty",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "export const SEA_WRECK_GRACE_S = 300;",
+    "new": "export const SEA_WRECK_GRACE_S = 30;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E4-checkpoint-unasked",
+    "file": "src/scenes/seaWreckHost.js",
+    "old": "        stood = deps.checkpoint?.() !== false;",
+    "new": "        deps.checkpoint?.();\n        stood = true;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E3-never-again",
+    "file": "src/scenes/seaWreckHost.js",
+    "old": "          if (res?.ok || res?.unknown || !SEA_WRECK_TRANSIENT.includes(res?.error)) {",
+    "new": "          {",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E2-storage-unkept",
+    "file": "src/scenes/seaWreckHost.js",
+    "old": "  const keep = () => {\n    try {",
+    "new": "  const keep = () => {\n    return;\n    try {",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E2-restore-unread",
+    "file": "src/scenes/seaWreckHost.js",
+    "old": "    for (const rc of Array.isArray(list) ? list : []) {",
+    "new": "    for (const rc of []) {",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E2-expired-owed",
+    "file": "src/scenes/seaWreckHost.js",
+    "old": "    if (!role || seen.has(c.r) || now() / 1000 >= c.e) return false;",
+    "new": "    if (!role || seen.has(c.r)) return false;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B3-wreck-shuts-nothing",
+    "file": "src/scenes/naval/navalPvp.js",
+    "old": "    if (boat) shutSeaHold(boat.uid);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B3-door-open",
+    "file": "src/scenes/holdDoor.js",
+    "old": "    if (seaHoldShut(boat.uid)) return said(false, seaHoldShutText());\n    return !!deps.openHold?.({ ...cargoLootTarget(boat.Cargo), title: titleOf(boat.uid) });",
+    "new": "    return !!deps.openHold?.({ ...cargoLootTarget(boat.Cargo), title: titleOf(boat.uid) });",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B3-packed",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (!lost && seaHoldShut(boat?.uid)) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B3-box-open",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "function OpenCargo(boat) { if (seaHoldShut(boat?.uid)) {",
+    "new": "function OpenCargo(boat) { if (false) {",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B3-laid-up",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (seaHoldShut(boat.uid)) { deps.messageBox?.(seaHoldShutText()); return false; }   // AUDIT SEA VENTURES B3: nor laid up",
+    "new": "    // nor laid up",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B3-shut-for-good",
+    "file": "src/systems/naval/seaHoldGuard.js",
+    "old": "  if (now < until) return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B3-carry-leaves-it-shut",
+    "file": "src/scenes/seaWreckHost.js",
+    "old": "    if (w.role === 'captain') openSeaHold(w.c.u);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B4-refund-unpaid",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  await db.batch(seaRefundSteps(db, player.id, character, nowS));",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B4-refund-at-once",
+    "file": "server-account/src/seaBounty.js",
+    "old": "export const SEA_REFUND_AFTER_S = 2 * 3600;",
+    "new": "export const SEA_REFUND_AFTER_S = 0;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B4-deleted-with-gold-owed",
+    "file": "server-account/src/realm.js",
+    "old": "    await db\n      .prepare(\n        `SELECT 1 FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL\n    UNION ALL SELECT 1 FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3\n    UNION ALL SELECT 1 FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3 LIMIT 1`,\n      )\n      .bind(playerId, id, nowS)\n      .first()",
+    "new": "    (await db\n      .prepare(\n        `SELECT 1 FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL\n    UNION ALL SELECT 1 FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3\n    UNION ALL SELECT 1 FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3 LIMIT 1`,\n      )\n      .bind(playerId, id, nowS)\n      .first()) &&\n    false",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B5-never-swept",
+    "file": "server-account/src/cron.js",
+    "old": "      for (const [sql, cutoff] of seaSweeps(ctx.nowS))\n        n += await rounds(() => deleted(ctx.db, sql, cutoff), SWEEP_ROWS, ctx.budget);",
+    "new": "      void seaSweeps;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js",
+      "test/net/auditscale.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B5-standing-swept",
+    "file": "server-account/src/seaBounty.js",
+    "old": "WHERE claimed_r IS NOT NULL AND at < ?1 LIMIT ?2",
+    "new": "WHERE at < ?1 LIMIT ?2",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B6-no-day-after",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  const before = n === cur - 1 && nowS - turnS < SEA_WORLD_DAY_S;",
+    "new": "  const before = false;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-B6-legends-of-the-new",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS))\n    return null;",
+    "new": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends > seaLegendsPossible(nowS)) return null;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6A-target-must-speak",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  if (now - me.at > SEA_REF.helmMs) return no('helm'); // E6A: the shooter's word alone - her target's page may be paused",
+    "new": "  if (now - me.at > SEA_REF.helmMs || now - her.at > SEA_REF.helmMs) return no('helm'); // E6A: the shooter's word alone - her target's page may be paused",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6A-quiet-forgotten",
+    "file": "src/net/sea/seaRef.js",
+    "old": "    if (s.off || !st.fighters?.get(k)?.zone) offShip(ships, k, s, now);",
+    "new": "    if (s.off || !st.fighters?.get(k)?.zone || now - s.at > 4 * SEA_REF.helmMs) offShip(ships, k, s, now);",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6A-cabin-past-captains",
+    "file": "src/scenes/world.js",
+    "old": "hostile: () => navalHostileNear() || !!naval?.pvp?.captainNear?.(),",
+    "new": "hostile: () => navalHostileNear(),",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6A-cabin-kin-a-captain",
+    "file": "src/scenes/naval/navalPvp.js",
+    "old": "          (p) =>\n            Array.isArray(p.pos) &&\n            !!guns.open(p.id, null, true) &&\n            Math.hypot(p.pos[0] - h.pos[0], p.pos[2] - h.pos[2]) <= SEA_CAPTAIN_NEAR_M,",
+    "new": "          (p) => Array.isArray(p.pos) && Math.hypot(p.pos[0] - h.pos[0], p.pos[2] - h.pos[2]) <= SEA_CAPTAIN_NEAR_M,",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6A-captain-near-shorter",
+    "file": "src/scenes/naval/navalPvp.js",
+    "old": "export const SEA_CAPTAIN_NEAR_M = 700;",
+    "new": "export const SEA_CAPTAIN_NEAR_M = 300;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F1-off-forgotten",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  else s.off = true;",
+    "new": "  else ships.delete(sub);",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F1-off-shootable",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6))\n    return no('ship');",
+    "new": "  if (!me || !her || me.wrecked || her.wrecked || !(me.hp > 1e-6) || !(her.hp > 1e-6)) return no('ship');",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F1-carry-untaken",
+    "file": "src/net/sea/seaRef.js",
+    "old": "    if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) {\n      s.hp = s.max * c.h;\n      s.struckAt = c.at;\n    }\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F1-carry-unput",
+    "file": "server/src/index.js",
+    "old": "    if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // F1/A1",
+    "new": "    // F1/A1",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT PVP-EASE L3-1: every fighter's socket that goes from a room now puts its carry at the hub (server/src/index.js _wildLeaveCarry, _zoneCarry - its ship's bar with it), so a ship battered and sailed into the next cell carries her bar by her leave as well as by the shot's put; the pin sees the bar arrive either way. The shot's put stays for a room that never hears her socket close (a crashed object), and is recorded rather than dropped so the next reader knows the leave holds it too."
+  },
+  {
+    "name": "AUDIT-SEA-F1-carry-unread",
+    "file": "server/src/index.js",
+    "old": "    if (x && carry?.sea) x.seaCarry = carry.sea;",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F1-hub-drops-the-ship",
+    "file": "src/net/wild/wildRef.js",
+    "old": "    ...(sea ? { sea } : {}),\n    ...(Number.isFinite(v.mp) && Number.isFinite(v.fp) ? { mp: v.mp, fp: v.fp } : {}),",
+    "new": "    ...(Number.isFinite(v.mp) && Number.isFinite(v.fp) ? { mp: v.mp, fp: v.fp } : {}),",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6B-wreck-said-left",
+    "file": "src/scenes/naval/seaBroadsides.js",
+    "old": "    const word = h\n      ? {\n          k: 'helm',\n          hl: h.hl,\n          t: Math.max(100, Math.min(240, Math.round(h.t * 100))),\n          u: h.u,\n          h: h.wrecked ? 0 : Math.max(0, Math.min(1000, Math.round(h.h * 1000))),\n        }\n      : null;",
+    "new": "    const word =\n      h && !h.wrecked\n        ? {\n            k: 'helm',\n            hl: h.hl,\n            t: Math.max(100, Math.min(240, Math.round(h.t * 100))),\n            u: h.u,\n            h: h.wrecked ? 0 : Math.max(0, Math.min(1000, Math.round(h.h * 1000))),\n          }\n        : null;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6B-canvas-claims",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  if (got > 0) {\n    her.hp -= got;\n    her.by = by;\n    her.byAt = now;\n  } // E6B: her killer is a captain whose shot took her bar",
+    "new": "  her.hp -= got;\n  her.by = by;\n  her.byAt = now; // E6B: her killer is a captain whose shot took her bar",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6B-sea-sunk-fights-on",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6))\n    return no('ship');",
+    "new": "  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off) return no('ship');",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6C-no-budget",
+    "file": "src/scenes/naval/seaBroadsides.js",
+    "old": "        if (words < 1) break; // E6C: the rest kept for the next word\n        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue; // the socket shut: kept",
+    "new": "        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue; // the socket shut: kept",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6C-refused-dropped",
+    "file": "src/scenes/naval/seaBroadsides.js",
+    "old": "        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue; // the socket shut: kept",
+    "new": "        deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 });",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-E6C-past-the-referee",
+    "file": "src/scenes/naval/seaBroadsides.js",
+    "old": "export const SEA_SHOT_HZ = SEA_REF.hz - 2;",
+    "new": "export const SEA_SHOT_HZ = SEA_REF.hz + 2;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A3-share-rounded-up",
+    "file": "server/src/index.js",
+    "old": "d: Math.min(1000, Math.floor(res.frac * 1000))",
+    "new": "d: Math.min(1000, Math.ceil(res.frac * 1000))",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A3-left-rounded",
+    "file": "server/src/index.js",
+    "old": "h: Math.min(1000, Math.ceil(res.left * 1000))",
+    "new": "h: Math.round(res.left * 1000)",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A4-uid-zero",
+    "file": "src/net/wire.js",
+    "old": "!intIn(d.u, d.hl >= 0 ? 1 : 0, 0x7fffffff)",
+    "new": "!intIn(d.u, 0, 0x7fffffff)",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A6-jumper-boards",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  if (!a?.pose || now - a.jumpAt < WILD_REF.jumpMs) return null; // AUDIT SEA VENTURES A6: a jumper boards nothing, as it fires at nothing",
+    "new": "  if (!a?.pose) return null; // AUDIT SEA VENTURES A6: a jumper boards nothing, as it fires at nothing",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A5-plain-room-alone",
+    "file": "server/src/index.js",
+    "old": "const sized = [key, ...Object.values(DUNGEON_ROOM_TAGS).map((tag) => `${key}${tag}`)];",
+    "new": "const sized = [key];",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D7-vault-the-ruins-room",
+    "file": "src/net/wire.js",
+    "old": "return sea && Number(mapId) === seaVaultMapId(sea[0], sea[1]) ? seaVaultRoomMapId(sea[0], sea[1]) : mapId;",
+    "new": "return mapId;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D7-world-key-the-ruins",
+    "file": "src/scenes/world.js",
+    "old": "seaVaultRoomId(ident.mapId ?? null, _wdunInside?.h ?? seaVentures.vaultHere()?.key)",
+    "new": "(ident.mapId ?? null)",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D8-lane-the-places",
+    "file": "src/net/wire.js",
+    "old": "export const SEA_VAULT_LANE = 0xe8;",
+    "new": "export const SEA_VAULT_LANE = 0xe7;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A7-a-guests-word",
+    "file": "server/src/index.js",
+    "old": "      if (a?.gu) return;   // AUDIT SEA VENTURES A7: never a guest's word - a guest sails no realm ship\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A7-the-socket-unpassed",
+    "file": "server/src/index.js",
+    "old": "await this._wdunWord(ws, a.acct || a.sub, m, now, a);",
+    "new": "await this._wdunWord(ws, a.acct || a.sub, m, now);",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A10-fk-to-an-old-hub",
+    "file": "src/net/online.js",
+    "old": "if ((seaVaultCell(w.h) || w.k === 'fk') && !this.wdunSeaOk) return false;",
+    "new": "if (seaVaultCell(w.h) && !this.wdunSeaOk) return false;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A8-owed-unkept",
+    "file": "server/src/index.js",
+    "old": "      this._wildOwedKeep(sub);   // AUDIT SEA VENTURES A8: and in storage - a woken object kept nothing\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A8-owed-unread",
+    "file": "server/src/index.js",
+    "old": "    const owed = await this._wildOwedOf(a.sub, now), sk = this._siegeSocketOf(a.sub);",
+    "new": "    const owed = this._wildOwed?.get(a.sub), sk = this._siegeSocketOf(a.sub);",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A8-alarm-unarmed",
+    "file": "server/src/index.js",
+    "old": "    await this._seaArm(wreck.at + SEA_REF.boardMs + 1000);\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-A8-alarm-unbeaten",
+    "file": "server/src/index.js",
+    "old": "    await this._seaAlarm(Date.now());   // AUDIT SEA VENTURES A8: a wreck nobody came back to, signed on the room's alarm\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D1-piece-unpaid",
+    "file": "src/scenes/naval/navalSeaSet.js",
+    "old": "  if (!(Number(paid) > 0)) return null;\n  const piece = rollElthericPiece(",
+    "new": "  const piece = rollElthericPiece(",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D2-every-end-paid",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (!first) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D2-piece-without-purse",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "    if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null; // AUDIT SEA VENTURES D2: no purse, no piece",
+    "new": "    deps.fleetEnded(entry.fleet.n, act); // AUDIT SEA VENTURES D2: no purse, no piece",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D4-unsaved",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      ether.fleets = [...ether.fleets, n].slice(-ETHER_FLEETS_KEEP);\n      return true;",
+    "new": "      return true;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D4-unrestored",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      ether.fleets = [\n        ...new Set((Array.isArray(e.fleets) ? e.fleets : []).filter((n) => Number.isSafeInteger(n) && n >= 0)),\n      ].slice(-ETHER_FLEETS_KEEP); // AUDIT SEA VENTURES D2, D4",
+    "new": "      ether.fleets = []; // AUDIT SEA VENTURES D2, D4",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D4-ledger-unasked",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "const down = (n) => sunk.has(n) || mine.has(n) || !!deps.ether?.fleetDone?.(n);",
+    "new": "const down = (n) => sunk.has(n) || mine.has(n);",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D5-untold",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "&& now - fkAt >= FLEET_TELL_MS && tellHub(cur.n)) fkAt = now;",
+    "new": "&& false) fkAt = now;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D6-haul-unsaved",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    deps.ether?.haulWrack?.(id);   // D6: kept in the save - a reload floats it never again\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D6-save-unread",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "const hauled = (id) => wracked.has(id) || !!deps.ether?.wrackHauled?.(id);",
+    "new": "const hauled = (id) => wracked.has(id);",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D9-the-copys-band",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "    const band = fleetOf(entry.fleet.n)?.band ?? entry.ether ?? 'deep'; // D9: the sailing's own band",
+    "new": "    const band = entry.ether ?? 'deep'; // D9: the sailing's own band",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D10-a-rowboats-water",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "        if (!deps.isWater(s.pos[0], s.pos[2], classById(s.classId)?.hull ?? 0)) continue; // AUDIT SEA VENTURES D10: deep enough for her own hull",
+    "new": "        if (!deps.isWater(s.pos[0], s.pos[2], 0)) continue; // AUDIT SEA VENTURES D10: deep enough for her own hull",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-D11-storm-to-the-reaches",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  const x0 = lerp(cx0, cx1 - STORM_DRIFT_PX - STORM_R_PX, r()),",
+    "new": "  const x0 = lerp(cx0, cx1, r()),",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C1-cabin-free",
+    "file": "src/scenes/world.js",
+    "old": "    if (!loading && (wildTeleportRefused(boatPixelOf(boat), boat.GameObject ? campToWire(boat.GameObject.position) : null) || veilRefused(boatPixelOf(boat)))) return true;",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C2-no-way-home",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "  return inEther(x, y) && x >= h.px && Math.abs(y - h.py) <= ETHER_PEACE_PX;",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C2-chart-a-circle",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  if (Number.isFinite(p.vx) && p.vx > p.x) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/sea/auditsea.test.js",
+      "test/ui/etherchart_peace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C3-sea-walk-unwarned",
+    "file": "src/scenes/world.js",
+    "old": "etherSea && etherWildRingAt(x, y) > 0 ? zoneWord('walkInto', ETHER_KIND) : ",
+    "new": "",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C5-first-reach-alone",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "    if (r > far) return h;",
+    "new": "    return h;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C6-unstuck-the-hills",
+    "file": "src/scenes/world.js",
+    "old": "say(zoneWord('unstuckOut')); return true; }",
+    "new": "say(WILD_TEXT.unstuckOut); return true; }",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C7-peace-said-everywhere",
+    "file": "src/scenes/world.js",
+    "old": "left === ETHER_KIND && !etherInPeace(playerTravelPixel()?.x, playerTravelPixel()?.y) ? 'quiet' : 'leave'",
+    "new": "'leave'",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C7-truce-the-hills",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "  get truce() {\n    return ETHER_WILD_TEXT.truce();\n  },\n  get dropLate() {",
+    "new": "  get dropLate() {",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C7-revenant-the-hills",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  if (wildHere() && revenantsWithYou().length >= WILD_REVENANTS_MAX) return zoneWord('revenantOne'); // PVPDUNGEONS - AUDIT SEA VENTURES C7: the ground's own words",
+    "new": "  if (wildHere() && revenantsWithYou().length >= WILD_REVENANTS_MAX) return WILD_TEXT.revenantOne; // PVPDUNGEONS - AUDIT SEA VENTURES C7: the ground's own words",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C7-drop-the-hills",
+    "file": "src/scenes/wildDropHost.js",
+    "old": "zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));",
+    "new": "zoneWord('dropLate', null));",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F4-way-english",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "etherWayWord(compassPoint(q.x - centre(p).x, q.y - centre(p).y))",
+    "new": "compassPoint(q.x - centre(p).x, q.y - centre(p).y) ?? ''",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F4-bonus-english",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "export const etherRingBonus = (/** @type {number} */ ring) =>\n  t('sea.wild.bonus', '+{pct}% loot', { pct: Math.round((wildRingLoot(ring) - 1) * 100) });",
+    "new": "export const etherRingBonus = (/** @type {number} */ ring) => `+${Math.round((wildRingLoot(ring) - 1) * 100)}% loot`;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F4-chart-way-english",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "point: etherWayWord(compassPoint(dx, dy)) });",
+    "new": "point: compassPoint(dx, dy) });",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-C6-unstuck-hills-english",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "    return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in Cyrodiil.');",
+    "new": "    return '/unstuck does not work outdoors in Cyrodiil.';",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's words Cyrodiil's."
+  },
+  {
+    "name": "AUDIT-SEA-C7-revenant-hills-english",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  get revenantOne() {\n    return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in Cyrodiil.');\n  },",
+    "new": "  revenantOne: 'Only one revenant may walk at your side in Cyrodiil.',",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's words Cyrodiil's."
+  },
+  {
+    "name": "AUDIT-SEA-F5-board-window-longer",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  boardMs: 180_000,",
+    "new": "  boardMs: 240_000,",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F5-reach-longer",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  reachM: 300,",
+    "new": "  reachM: 400,",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F5-credit-longer",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  creditMs: 30_000,",
+    "new": "  creditMs: 60_000,",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F5-rise-farther",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "export const ETHER_RISE_PX = 60;",
+    "new": "export const ETHER_RISE_PX = 90;",
+    "tests": [
+      "test/systems/sea/auditsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-F6-peace-over-the-haunts",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  if (m.peace) paintPeace(g, m.peace);   // ETHER-WILD: under the haunts and the isles - water, as the depths are\n  if (m.storm) paintStorm(g, m.storm);   // SEA-EVENTS: the storm's water too\n  for (const t of m.haunts) paintHaunt(g, t);\n",
+    "new": "  if (m.storm) paintStorm(g, m.storm);   // SEA-EVENTS: the storm's water too\n  for (const t of m.haunts) paintHaunt(g, t);\n  if (m.peace) paintPeace(g, m.peace);\n",
+    "tests": [
+      "test/ui/etherchart_peace.test.js"
+    ]
+  }
+]

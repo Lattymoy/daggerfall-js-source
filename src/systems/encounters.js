@@ -1,0 +1,447 @@
+// RANDOM ENCOUNTERS (E-slice; AUDIT 23 entity-14's spawner half).
+// RandomEncounters.cs + PlayerEntity.IntermittentEnemySpawn +
+// FormulaHelper.RollRandomSpawn_* verbatim (MIT, Daggerfall
+// Workshop). The tables are BAKED from the C# source - 45 lists of
+// 20 mobile ids: 0-18 by dungeon type, 19 underwater, 20-37 by
+// climate x location-rect x day/night, 38 unused, 39-44 by building
+// type. Class enemies ride their 128+ ids.
+//
+// The spawner half that consumes chooseRandomEnemy above ground
+// needs the exterior mobile-foe mount (the ledger row); the dungeon
+// REST arm is live through the alert state.
+
+import { mobileTeamOf } from '../characters/enemy/enemyTargets.js'; // MT-ii: :709's MobileEnemy.Team read
+import { wouldBeSpawnedInClassic } from '../characters/enemy/enemyMotor.js'; // AUDIT FB1025i D3: the classic spawn band, for fightNear
+import { CLIMATES } from '../formats/mapsFile.js';
+import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
+import { encounterTable } from '../characters/encounterTableDoor.js'; // DEX3: the table a mod's write left, DFU's otherwise
+import { readPlayerGps } from '../world/playerGps.js'; // DEX3: the player's reading raises PlayerGPS's events
+import { dice100 } from '../combat/formulas.js'; // Dice100.SuccessRoll, one home
+
+// AUDIT 24 (wave 23): this module used to carry its OWN copy of the
+// 45x20 table, character for character identical to the generated one
+// in characters/encounterTables.js and maintained by hand beside it.
+// Two copies of 900 cells is one typo away from two different games,
+// and only one of them could ever be gated. There is one table now;
+// this is the re-export the rest of the system already imports.
+export { ENCOUNTER_TABLES };
+
+// The climate-band table indexes (ChooseRandomEnemy:1370-1467):
+// [inRect-night, wild-day, wild-night] per climate family.
+export const CLIMATE_TABLE = new Map([
+  [CLIMATES.Desert, [20, 21, 22]],
+  [CLIMATES.Desert2, [20, 21, 22]],
+  [CLIMATES.Mountain, [23, 24, 25]],
+  [CLIMATES.Rainforest, [26, 27, 28]],
+  [CLIMATES.Subtropical, [29, 30, 31]],
+  [CLIMATES.Swamp, [32, 33, 34]],
+  [CLIMATES.MountainWoods, [32, 33, 34]],
+  [CLIMATES.Woodlands, [32, 33, 34]],
+  [CLIMATES.HauntedWoodlands, [35, 36, 37]],
+]);
+// The building-type table indexes (:1351-1363). AUDIT 26 F081: the
+// old map was keyed by GUESSED enum values (GuildHall "10", Temple
+// "11", Palace "15") - DFLocation.cs:106-133 and the port's own
+// buildingNames.js say GuildHall 11, Temple 14, Palace 16 - so the
+// Library took the guild-hall list, the GuildHall the temple list,
+// the Tavern the palace list, and Temple and Palace fell to the
+// default 39. Latent until interior spawning wires ctx.buildingType.
+const BUILDING_TABLE = new Map([
+  [11, 40],
+  [14, 41],
+  [16, 42],
+  [17, 42],
+  [18, 43],
+  [19, 44],
+]);
+
+// PlayerEntity.IntermittentEnemySpawn:549-552 - minimum spawn
+// distances from the player by place.
+export const MIN_DUNGEON_SPAWN_DISTANCE = 8;
+export const MIN_LOCATION_SPAWN_DISTANCE = 10;
+export const MIN_WILDERNESS_SPAWN_DISTANCE = 10;
+
+// RE1 - THE SPAWNER'S OWN ARGUMENTS.
+//
+// Every random-spawn arm in PlayerEntity goes out through
+// GameObjectHelper.CreateFoeSpawner, and the three encounter arms do
+// not pass the same things. The distance above is only the first of
+// them: the maximum is CreateFoeSpawner's own default (:1314), and the
+// LINE-OF-SIGHT flag is the first positional argument, which the
+// dungeon arm alone passes FALSE.
+//
+// That flag is the visible one. With it set, FoeSpawner.PlaceFoeFreely
+// puts the foe on a bearing just OUTSIDE the field of view - you hear
+// it before you see it. Cleared, it takes any bearing in the circle,
+// and DFU's own comment says why: "Don't care about player's field of
+// view (e.g. at rest)". A monster that finds you asleep in a dungeon
+// is allowed to be standing in front of you when you wake.
+//
+// The port had none of this. Both hosts walked EIGHT COMPASS POINTS at
+// minDistance and took the first with ground under it, so a wilderness
+// encounter arrived due north of the player unless north was blocked,
+// could stand inside a wall the ray never tested, and could share a
+// spot with something already there.
+export const SPAWNER_ARMS = Object.freeze({
+  // :574 - in a location rect at night
+  locationNight: Object.freeze({ minDistance: MIN_LOCATION_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: true }),
+  // :594 - the wilderness roll, day or night
+  wilderness: Object.freeze({ minDistance: MIN_WILDERNESS_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: true }),
+  // :610 - resting in a dungeon under an alert. THE ONE THAT PASSES FALSE.
+  dungeonRest: Object.freeze({ minDistance: MIN_DUNGEON_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: false }),
+  // :687 - SpawnCityGuards, a WIDE band and 2..5 of them. D9 WIRED IT.
+  // The row used to be carried unread, on the grounds that the watch
+  // arrives through the street-person pool; that is true of the pool
+  // arm (spawnGuardAt takes a person's own position and facing, which
+  // is a conversion, not a spawn), but PlayerEntity.cs:687 is the
+  // FALLBACK - "nobody in the pool converted" - and it is a plain
+  // CreateFoeSpawner like every other row here. cityGuards.js now
+  // stands those guards through placeFoeFreely with this band, so the
+  // table is read end to end.
+  cityGuards: Object.freeze({ minDistance: 12.8, maxDistance: 51.2, lineOfSightCheck: true }),
+});
+
+/** The 144-minute cadence (:559): a spawn WINDOW opens on the game
+ *  minutes where (minutes/12) % 12 == 0 - twelve minutes in every
+ *  144, exactly classic's integer arithmetic. */
+export const timeForSpawn = (gameMinutes) => Math.trunc(gameMinutes / 12) % 12 === 0;
+
+// FormulaHelper.RollRandomSpawn_* (:1765-1813): 0 spawns, >0 does
+// not. The dungeon roll runs ONLY under an active enemy alert.
+export const rollLocationNight = (roll01 = Math.random()) => Math.floor(roll01 * 24);
+export const rollWildernessDay = (roll01 = Math.random()) => Math.floor(roll01 * 36);
+export const rollWildernessNight = (roll01 = Math.random()) => Math.floor(roll01 * 24);
+export const rollDungeon = (enemyAlertActive, roll01 = Math.random()) =>
+  enemyAlertActive ? Math.floor(roll01 * 36) : 1;
+
+/** The table-selection half of ChooseRandomEnemy (:1370-1467), split
+ *  out so callers that need to know WHICH table a ctx resolves to -
+ *  campEncounters.js filtering a group theme through the same table
+ *  chooseRandomEnemy would draw from - don't have to re-derive the
+ *  climate/day-night/location-rect logic a second time. Returns a
+ *  table index, or null where chooseRandomEnemy would return -1
+ *  (a town by day, an unknown climate). */
+export function resolveEncounterTableIndex(ctx) {
+  if (ctx.underwater) return 19;
+  if (ctx.dungeonType != null) return ctx.dungeonType;
+  if (ctx.buildingType != null) return BUILDING_TABLE.get(ctx.buildingType) ?? 39;
+  // TESA-BIOME: past the Bay a pixel's own biome's band (systems/tamrielFauna.js faunaBandAt, the ctx's `fauna`) before its
+  // climate's - DFU's three, in DFU's order
+  const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);
+  if (!band) return null;
+  if (ctx.inLocationRect) {
+    if (ctx.isDay) return null; // a town by day spawns nothing
+    return band[0];
+  }
+  return ctx.isDay ? band[1] : band[2];
+}
+
+/** RandomEncounters.ChooseRandomEnemy (:1334-1516), verbatim. ctx:
+ *  { underwater, dungeonType, buildingType, climateIndex, inLocationRect,
+ *    isDay, playerLevel } and DEX3's { local, table }. rolls() feeds Dice100 + the final pick.
+ *  Returns a mobile id, or -1 (MobileTypes.None) when the place has
+ *  no encounters (a location rect by day, an unknown climate). */
+export function chooseRandomEnemy(ctx, rolls = Math.random) {
+  const idx = resolveEncounterTableIndex(ctx);
+  if (idx == null) return -1;
+  // DEX3: THE TABLE, as the door reads it for this roll (characters/encounterTableDoor.js): the player's own (`ctx.local`)
+  // as a mod's events wrote it, any other - a roll every machine must agree on - one of the mod's by this roll's die, read
+  // first (no draw where there is one table: DFU's stream unchanged). A caller may hand it in (`ctx.table` - the camps'
+  // one table for a group's seed and its mates)
+  const table = ctx.table ?? encounterTable(idx, ctx, rolls);
+
+  // the level band (:1471-1507) - "assume enemy lists of length 20"
+  const roll = Math.floor(rolls() * 100) + 1; // Dice100.Roll 1..100
+  const level = ctx.playerLevel ?? 1;
+  let min, max;
+  if (roll > 80) {
+    if (roll > 95) {
+      if (level <= 5) {
+        min = 0;
+        max = level + 2;
+      } else {
+        min = 0;
+        max = 19;
+      }
+    } else {
+      min = 0;
+      max = level + 1;
+    }
+  } else {
+    min = level - 3;
+    max = level + 3;
+  }
+  if (min < 0) {
+    min = 0;
+    max = 5;
+  }
+  if (max > 19) {
+    min = 14;
+    max = 19;
+  }
+
+  if (!table) return -1;
+  // DFU's short-list guard (not classic) survives for table edits
+  if (max + 1 > table.length) {
+    max = table.length - 1;
+    min = max >= 5 ? max - 5 : Math.floor(rolls() * max);
+  }
+  return table[min + Math.floor(rolls() * (max + 1 - min))]; // Range(min, max+1)
+}
+
+// ---- PreventEnemySpawns (PlayerEntity.cs:47/:145) -------------------
+//
+// A ONE-UPDATE shield, set by the three arms that RAISE THE CLOCK
+// without the player living through the minutes: fast travel
+// (DaggerfallTravelPopUp.cs:347), the vampirism transformation
+// (VampirismInfection.cs:157), and the jail skip - which sets it
+// TWICE, once as the sentence's days elapse
+// (DaggerfallCourtWindow.cs:473) and again on every release
+// (:484). DFU's own note at :479-481 says why: "Enemy spawns are
+// prevented after time is raised for fast travel, jail time, and
+// vampire transformation." Without it, walking out of a thirty-day
+// sentence runs thirty days' worth of catch-up spawn rolls in one
+// frame, on the courthouse steps.
+//
+// PlayerEntity.Update guards the WHOLE catch-up loop with it (:482) -
+// the passive guard rolls at :498-511 are inside that loop and are
+// suppressed with the spawns - and clears it at the tail of the same
+// update (:524-525). The host that owns the loop owns both halves;
+// the read below is DFU's own belt-and-braces copy at :560, whose
+// comment admits it "should not need" to be there.
+
+/** REST5 (bible/06-Systems/Rest-Arc.md 2.6): ONLY THE RESTER ROLLS. A party member's night carried for me runs my own
+ *  RestSession through my own host's bag - its hourly checks, its catch-up loop - and every host's ambush is this one
+ *  decision (the outdoor encounter tick and the dungeon's _restAdvance both ask it), so inside `quietNights(fn)` it
+ *  answers nothing. Re-entrant; the count always comes back down. */
+let _quiet = 0;
+export function quietNights(fn) {
+  _quiet++;
+  try {
+    return fn();
+  } finally {
+    _quiet--;
+  }
+}
+
+/** DEX3: A ROLL OF THE PLAYER'S OWN, where the player stands (this decision's, and the camps' - systems/campEncounters.js):
+ *  out of doors its place is PlayerGPS's reading, so it raises the GPS's events a mod listens to (world/playerGps.js -
+ *  every minute the roll runs, whether or not it spawns), and its table is read as the mod's events wrote it (`local`).
+ *  AUDIT DEX C7: the GPS is handed PlayerGPS's own reading - `gps`, where a roll's place gates it by another rect (the
+ *  chunk-load camps' any-town ring, campEncounters.js) - so one tracker never edges between two readings of the rect. */
+export function playerReading(ctx, gps = ctx) {
+  if (!ctx.inside) readPlayerGps(gps);
+  return { ...ctx, local: true };
+}
+
+/** IntermittentEnemySpawn (:547-618) as a decision, pure but for the GPS reading its place is (DEX3 playerReading): null, or
+ *  { mobileType, minDistance }. ctx adds { inside, inDungeon,
+ *  isResting, enemyAlertActive, gameMinutes, preventEnemySpawns } to
+ *  chooseRandomEnemy's. The caller runs it per elapsed game minute
+ *  (the catch-up loop) and stops on the first spawn, exactly as
+ *  PlayerEntity.Update. */
+export function intermittentEnemySpawn(ctx, rolls = Math.random) {
+  ctx = playerReading(ctx);
+  if (_quiet > 0) return null; // REST5: a night carried for a party member wakes to no ambush (quietNights)
+  // SURV4: a ROUGH rest (survival/rest.js - the window opened on bare ground, no bed and no fire) doubles the
+  // minute's chance: the same decision asked twice, the first spawn taken. SURV-TIERS: how many asks a rest
+  // costs is its kind priced by the player's tier at the open (scenes/shared.js createRestDeps stamps `restAsks` -
+  // Hard's rough night two, every Casual night one), so the host hands the COUNT. Without one - or with no finite
+  // number: AUDIT SURV-TIERS, NaN asked nothing at all and Infinity never stopped asking - one ask, as DFU has it.
+  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;
+  let r = null;
+  for (let i = 0; i < asks && !r; i++) r = intermittentEnemySpawnOnce(ctx, rolls);
+  return r;
+}
+function intermittentEnemySpawnOnce(ctx, rolls) {
+  // :560 - `if (!timeForSpawn || preventEnemySpawns) return false;`
+  if (!timeForSpawn(ctx.gameMinutes) || ctx.preventEnemySpawns) return null;
+  // LIVED1: the cadence above is the minute the player lives (their own clock online); night and day are the SKY's -
+  // `skyMinutes`, the world's clock, when the host hands it (offline the one clock, so the minute itself).
+  const timeOfDay = (((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440) + 1440) % 1440;
+  if (!ctx.inside) {
+    if (ctx.inLocationRect) {
+      if ((timeOfDay < 360 || timeOfDay > 1080) && rollLocationNight(rolls()) === 0) {
+        const mobileType = chooseRandomEnemy({ ...ctx, isDay: false }, rolls);
+        if (mobileType !== -1) return { mobileType, ...SPAWNER_ARMS.locationNight };
+      }
+      return null;
+    }
+    const day = timeOfDay >= 360 && timeOfDay <= 1080;
+    if (day ? rollWildernessDay(rolls()) !== 0 : rollWildernessNight(rolls()) !== 0) return null;
+    const mobileType = chooseRandomEnemy({ ...ctx, isDay: day }, rolls);
+    return mobileType === -1 ? null : { mobileType, ...SPAWNER_ARMS.wilderness };
+  }
+  if (ctx.inDungeon && ctx.isResting) {
+    if (rollDungeon(ctx.enemyAlertActive, rolls()) === 0) {
+      const mobileType = chooseRandomEnemy(ctx, rolls);
+      if (mobileType !== -1) return { mobileType, ...SPAWNER_ARMS.dungeonRest };
+    }
+  }
+  return null;
+}
+
+// ---- THE PASSIVE WATCH ROLLS (PlayerEntity.Update:498-511) ----------
+// The SECOND arm of the very loop intermittentEnemySpawn rides: on
+// every caught-up minute the spawn roll did not break out of, a region
+// the player is hated in or banished from can put the watch on him
+// with no crime just committed. Both successes levy
+// Criminal_Conspiracy and call SpawnCityGuards(FALSE) - the WITNESS
+// arm, whose whole point is that nobody saw anything, so it converts a
+// guard NPC that can see the player and otherwise starts the 5-10s
+// arrival countdown.
+
+/** :500 - `LegalRep < -10`, and :507's `SeverePunishmentFlags & 1` (the
+ *  banishment bit; bit 2 is the execution order). */
+export const PASSIVE_GUARD_LEGAL_REP = -10;
+export const PASSIVE_GUARD_LOW_REP_CHANCE = 5;
+export const PASSIVE_GUARD_BANISHED_CHANCE = 10;
+export const SEVERE_PUNISHMENT_BANISHED = 1;
+/** The court's own second write (DaggerfallCourtWindow.cs:288, state
+ *  5). Nothing READS bit 2 in DFU - it is a record, not a trigger -
+ *  but the two bits are one field and belong in one home. */
+export const SEVERE_PUNISHMENT_EXECUTED = 2;
+
+/** How many SpawnCityGuards(false) calls this ONE catch-up minute
+ *  owes: 0, 1 or - both rolls landing, which DFU permits because the
+ *  two `if`s are independent - 2.
+ *  AUDIT REP F6: KEPT, WITH NO PRODUCTION CALLER SINCE REP1 - both street hosts retired DFU's per-minute levy for the
+ *  watch's stop (scenes/standingHost.js); this is DFU's law as ported, for its pins and a mod that wants the old watch. */
+export function passiveGuardSpawns({ legalRep = 0, severePunishmentFlags = 0 } = {}, rolls = Math.random) {
+  let spawns = 0;
+  if (legalRep < PASSIVE_GUARD_LEGAL_REP && dice100(PASSIVE_GUARD_LOW_REP_CHANCE, rolls())) spawns++;
+  if ((severePunishmentFlags & SEVERE_PUNISHMENT_BANISHED) !== 0 && dice100(PASSIVE_GUARD_BANISHED_CHANCE, rolls()))
+    spawns++;
+  return spawns;
+}
+
+// ---- THE ENEMY ALERT (PlayerEntity.SetEnemyAlert :297-302 + the
+// 8-hour decay :380-384). Raised by a foe SEEING the player and by
+// opening rest with enemies nearby; lowered by killing the foe that
+// targets the player, or by the decay. Lives on the entity so every
+// consumer (the dungeon rest roll, fast travel one day) reads one
+// flag. ----
+export const ALERT_DECAY_MINUTES = 8 * 60;
+export function setEnemyAlert(entity, alert, gameMinutes = 0) {
+  entity.enemyAlertActive = !!alert;
+  if (alert) entity.lastEnemyAlertTime = gameMinutes;
+}
+export function decayEnemyAlert(entity, gameMinutes) {
+  if (entity.enemyAlertActive && gameMinutes - (entity.lastEnemyAlertTime ?? 0) > ALERT_DECAY_MINUTES) {
+    setEnemyAlert(entity, false);
+  }
+}
+
+// ---- GameManager.AreEnemiesNearby (:684-732), one home ---------------
+
+/** The RESTING test's shorter distance (:687). The spawn-band one is
+ *  the foe's own `wouldBeSpawned`, which the AI already answers. */
+export const RESTING_DISTANCE = 12;
+
+/**
+ * AreEnemiesNearby, verbatim over a list of foes carrying the port's
+ * AI shape ({ dead, ai: { detected, inSight, wouldBeSpawned, _dist } }).
+ *
+ * The C# walks every active enemy behaviour and asks two questions in
+ * this order:
+ *   enemyCanSeePlayer = Target is the player AND TargetInSight (:698)
+ *   if RESTING and it cannot see you and it is further than 12, SKIP
+ *     it entirely (:701-702) - this is the whole point of the resting
+ *     variant, and using the strict one instead refuses rest for any
+ *     unaware foe anywhere in the 1024-unit spawn band
+ *   otherwise it counts if it can see you OR would have spawned in
+ *     classic (:705)
+ *
+ * S40 gave this a home because three hosts needed it at once and the
+ * two above ground had been answering a much coarser question - "is
+ * ANY guard alive" - which for rest is not an approximation but a
+ * different rule: a guard spawned across town blocks sleep forever,
+ * since guards persist until the crime clears.
+ *
+ * MT-ii: the pacified/team test is PORTED - GameManager.cs:709 is
+ * `includingPacified || (enemyMotor.IsHostile && enemyEntity
+ * .MobileEnemy.Team != MobileTeams.PlayerAlly)`, and both halves are
+ * now real: pacification has driven IsHostile since the C-slice, and
+ * MobileTeams shipped with the infighting slice. Note WHICH team it
+ * reads - the per-instance MobileEnemy copy (an allied summon's IS
+ * PlayerAlly), not the static row - so your own summons never keep
+ * you from resting, and a pacified bandit does not either.
+ *
+ * `includingPacified` is C#'s own second parameter (`AreEnemiesNearby
+ * (bool resting = false, bool includingPacified = false)`), which the
+ * port had dropped entirely; it is what a caller passes to ask the
+ * coarser "is anything alive nearby" question.
+ *
+ * THE FoeSpawner SWEEP (:720-728) IS NOT A GAP, recorded. DFU walks
+ * ActiveGameObjectDatabase's FoeSpawner MonoBehaviours because those
+ * objects PERSIST - GameObjectHelper.CreateFoeSpawner (:1314-1318)
+ * mounts one and it retries placement across frames, so a spawner
+ * inside spawnDistance is an enemy that is coming. The port has no
+ * such object: world.js places within a SINGLE call and gives up
+ * (LOOSE_FOE_PLACE_ATTEMPTS = 12, :1913, at :1930 and :1959), and a
+ * foe that placed is already in the pool this walks, so there is
+ * nothing pending to count. Nor were quest spawns ever in that sweep
+ * on either side - DFU's CreateFoe is a QuestAction that calls
+ * CreateFoeGameObjects + TryPlacement itself (no CreateFoeSpawner in
+ * CreateFoe.cs), which is systems/quest/actions.js:"this.pendingFoes = world.createFoeGameObjects" here.
+ */
+export function areEnemiesNearby(foes, { resting = false, includingPacified = false } = {}) {
+  for (const f of foes ?? []) {
+    if (!f || f.dead || !f.ai) continue;
+    // WATER-FOES (systems/foeReach.js): a foe in the water while the player is aboard a boat cannot reach them - the
+    // host latches it each frame, and it is no enemy nearby (a departure: the mod's helm asks the C# as it is)
+    if (f.ai.unreachable) continue;
+    // AUDIT WORLD3 C3: "nearby" means near ME. Since WORLD3 a foe's detected/inSight pair can be its sense of ANOTHER
+    // player (a peer candidate on the host's target machine) and `_dist` the distance to that player - so a foe across
+    // the dungeon fighting the joiner refused the host's rest and, through onExhausted, killed it. The motor latches
+    // both answers: targetIsLocalPlayer (absent on a bare ai stub, which is the unarmed player-only shape) and
+    // _distLocal, the spawn band's own measure to my feet.
+    const canSee = !!(f.ai.detected && f.ai.inSight && f.ai.targetIsLocalPlayer !== false);
+    if (resting && !canSee && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;
+    if (!(canSee || f.ai.wouldBeSpawned)) continue;
+    // :709 - the hostility/team gate, INSIDE the proximity arm
+    if (includingPacified) return true;
+    if (foeHostile(f)) return true;
+  }
+  return false;
+}
+
+/** AUDIT FB1025i D3: A FIGHT NEAR ME - PROTECT-FIGHT's own question (scenes/cityGuards.js playerSparesPerson: under
+ *  Protect Bystanders a fight passes the townspeople and, since ROAD-SPARE, the road's travellers by), not the rest's. It
+ *  was AreEnemiesNearby above, whose band (`wouldBeSpawned`) a foe's own senses raise - and a PEER's foe is a puppet in my
+ *  pool that runs none (exteriorFoes.js latches `targetIsLocalPlayer` from its stream, `_pupMine`), so a party's fight with
+ *  every attacker on my partner beside me read as no fight of mine and a swing past the partner's foe fell on the
+ *  townsperson or the traveller behind it. Now: what AreEnemiesNearby answers, or a hostile foe (the gate below) within
+ *  the classic spawn band of my feet (EnemySenses.WouldBeSpawnedInClassic's open-world arm - the band a foe of my own
+ *  pool is measured by), whatever its target, a puppet's too. The rest gate keeps its own law.
+ *  @param {any[]} foes @param {number[] | null} feet my feet, in the pool's frame */
+export function fightNear(foes, feet) {
+  if (areEnemiesNearby(foes)) return true;
+  if (!feet) return false;
+  for (const f of foes ?? []) {
+    if (!foeHostile(f) || f.ai.unreachable || !f.ai.feet) continue;
+    const dx = f.ai.feet[0] - feet[0],
+      dy = f.ai.feet[1] - feet[1],
+      dz = f.ai.feet[2] - feet[2];
+    if (wouldBeSpawnedInClassic(Math.hypot(dx, dy, dz), dy, false, 0, false)) return true;
+  }
+  return false;
+}
+
+/** :709's hostility and team gate - one home, for the sweep above and OW6's slowing journey (systems/travel/travelThreat.js):
+ *  a live foe, unpacified, not of the player's team. `isHostile ?? true`: EnemyMotor.IsHostile is initialised TRUE
+ *  (:79) and only pacification clears it, so an ai without the field - a headless stub, a pool that predates the
+ *  C-slice - reads hostile, which is the charter's "absent member idles the arm" for a flag whose absence means "no
+ *  pacification here". */
+export function foeHostile(f) {
+  return !!f && !f.dead && !!f.ai && (f.ai.isHostile ?? true) && mobileTeamOf(f.entity) !== 'PlayerAlly';
+}
+
+/** WILD-ALERT (2026-10-04, Mac: "Enemies alerted are given an exclamation point and slow down as they do now, non alerted
+ *  enemies do not slowdown or bother the player"): A FOE ALERTED TO ME - hostile (the gate above), its target me (the
+ *  motor's own latch, `targetIsLocalPlayer`; a peer's puppet, its stream's), and seeing me or still hunting me blind
+ *  (EnemyMotor.GiveUpTimer, the pursuit that outlives a lost sight). What holds a fast traveller's clock (OW6) and wears
+ *  the "!" (systems/wild/wildAlert.js); a foe that has not noticed me is neither. */
+export function foeAlerted(f) {
+  return foeHostile(f) && f.ai.targetIsLocalPlayer === true && (!!f.ai.detected || (f.ai.giveUpTimer ?? 0) > 0);
+}

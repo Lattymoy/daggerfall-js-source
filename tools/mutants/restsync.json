@@ -1,0 +1,400 @@
+[
+  {
+    "name": "RESTSYNC-offline-shares-its-encounter",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const onlineRoom = () => opts.selfId?.() != null;",
+    "new": "  const onlineRoom = () => true;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-host-stands-its-own",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_authority) return _spawnEncounter(hit, { shared: true });",
+    "new": "    if (_authority) return _spawnEncounter(hit);",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-joiner-stands-its-own",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (opts.onActions?.({ k: _locationKey, rs: {",
+    "new": "    if (_spawnEncounter(hit) && opts.onActions?.({ k: _locationKey, rs: {",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-a-refused-ask-breaks-the-rest",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " s: [q2(spot.x), q2(spot.y), q2(spot.z)] } })) {",
+    "new": " s: [q2(spot.x), q2(spot.y), q2(spot.z)] } }) || true) {",
+    "tests": [
+      "test/net/restsync.test.js"
+    ],
+    "note": "AUDIT REST II (PIN MOVED): F1 made the sent ask's arm a block (a night running hears it at once - ambushNight - and only a paced window latches the hour); re-aimed by content at the ask's own test, the refused ask still let through. AUDIT REST III E1 (PIN MOVED): re-aimed by content - the ask names the spot its placement found, the host stands it there."
+  },
+  {
+    "name": "RESTSYNC-the-ask-breaks-every-hour",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_restAskAt == null || Date.now() - _restAskAt > REST_ASK_WAIT_MS) return false;\n    _restAskAt = null;\n",
+    "new": "    if (_restAskAt == null || Date.now() - _restAskAt > REST_ASK_WAIT_MS) return false;\n",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-ask-never-breaks-the-rest",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    enemiesNearby: () => roomEncounterComing() || areEnemiesNearby(foes, { resting: true }),",
+    "new": "    enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-rest-spawns-privately",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (hit) { restEncounter(hit); break; }",
+    "new": "    if (hit) { _spawnEncounter(hit); break; }",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-asks-unmetered",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (now - (_askAt.get(id) ?? -Infinity) < REST_ASK_GAP_MS) return false;",
+    "new": "    if (now - (_askAt.get(id) ?? -Infinity) < 0) return false;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-any-band-asked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " && hi >= lo && hi <= REST_ASK_BAND_MAX)) return false;",
+    "new": " && hi >= lo)) return false;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-stood-by-the-hosts-feet",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ feet: f, yaw: Number.isFinite(rs.y) ? rs.y : 0, shared: true, asked: s })",
+    "new": "{ yaw: Number.isFinite(rs.y) ? rs.y : 0, shared: true, asked: s })",
+    "tests": [
+      "test/net/restsync.test.js"
+    ],
+    "note": "AUDIT REST III E1 (PIN MOVED): re-aimed by content - the ask names the spot its placement found, the host stands it there."
+  },
+  {
+    "name": "RESTSYNC-the-ask-unheard",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const asked = data.rs != null && roomEncounterAsked(id, data.rs);",
+    "new": "    const asked = false;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-encounters-never-ride",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (n) frame.x = shared.slice(0, n);",
+    "new": "",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-no-frame-lists-them-whole",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;",
+    "new": "",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-a-shed-frame-lists-them-whole",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;",
+    "new": "    if (full) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-no-byte-budget",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      let room = FOES_FRAME_MAX - FOES_FRAME_SLACK - JSON.stringify(frame).length;",
+    "new": "      let room = Infinity;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-a-shed-record-counts-as-sent",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed\n",
+    "new": "",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-bodies-before-the-standing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0) || (a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0))) {",
+    "new": ") {",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-destroyed-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse && !f.corpseDestroyed) || !foes.includes(f)) _sharedById.delete(id);",
+    "new": "    for (const [id, f] of _sharedById) if (!foes.includes(f)) _sharedById.delete(id);",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-joiner-hears-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === XF_WHOLE || data.xf === XF_STANDING ? data.xf : 0);   // REST-SYNC; RPT1026-ITEMS BODY-CAP: 2, whole for the standing\n",
+    "new": "",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-every-frame-sweeps",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (full) for (const [id, f] of [..._sharedById]) if (!seen.has(id)",
+    "new": "    if (true) for (const [id, f] of [..._sharedById]) if (!seen.has(id)",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-a-body-raised-from-its-record",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (r.d === 1 || r.t == null || !r.f || !canStandFoe(r.t)) continue;",
+    "new": "      if (r.t == null || !r.f || !canStandFoe(r.t)) continue;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-count-forgets-the-room",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (r.i > _sharedSeq) _sharedSeq = r.i;\n",
+    "new": "",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-puppet-never-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    f._mwWire = 'seed'; applyWireLook(f, newest);   // AUDIT MW-NPC II K3: the host's man - its seed, not the feet it was first streamed at (its `marker` here)\n    _sharedById.set(r.i, f);\n",
+    "new": "    f._mwWire = 'seed'; applyWireLook(f, newest);   // AUDIT MW-NPC II K3: the host's man - its seed, not the feet it was first streamed at (its `marker` here)\n",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-puppet-left-standing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    f.dead = true;\n    dropCandidate(f);\n    const at = foes.indexOf(f);\n    if (at >= _layoutFoes) foes.splice(at, 1);\n",
+    "new": "    f.dead = true;\n    dropCandidate(f);\n    const at = foes.indexOf(f);\n",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-blow-by-pool-index",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: foe._surI ?? pi }), dmg: damage, kind,",
+    "new": "opts.onFoeHit?.({ i: pi, dmg: damage, kind,",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-blow-lands-locally",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (isRoomFoe(foe, pi)) {   // REST-SYNC: the layout's run, or a shared encounter's puppet",
+    "new": "      if (pi < _layoutFoes) {   // REST-SYNC: the layout's run, or a shared encounter's puppet",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-host-reads-the-pool-index",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const f = xs ? (_sharedById.get(i) ?? null) : foes[i];",
+    "new": "    const f = foes[i];",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-host-lands-a-layout-blow-anywhere",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!f || (!xs && i >= _layoutFoes) || f.dead",
+    "new": "    if (!f || f.dead",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-poison-stays-home",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if ((!_authority && isRoomFoe(f, pi)) || f._ownFrom != null) { f._divertPt = pt; return null; }",
+    "new": "    if ((!_authority && pi >= 0 && pi < _layoutFoes) || f._ownFrom != null) { f._divertPt = pt; return null; }",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-zero-blow-stays-home",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if ((!_authority && isRoomFoe(foe, pi)) || foe._ownFrom != null) { if (!(landed > 0))",
+    "new": "    if ((!_authority && pi >= 0 && pi < _layoutFoes) || foe._ownFrom != null) { if (!(landed > 0))",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-encounter-unweighed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
+    "new": "    const i = foes.indexOf(f);\n    return (i >= 0 && i < _layoutFoes) || f._ownFrom != null || ownRides(f);",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-encounter-never-handed-over",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    for (const f of [...foes.slice(0, _layoutFoes), ..._sharedById.values()]) {   // REST-SYNC: the room's encounters hand over too",
+    "new": "    for (const f of foes.slice(0, _layoutFoes)) {",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-joiners-copy-decides",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f != null && ((!_authority && isRoomFoe(f, i)) || f._ownFrom != null);",
+    "new": "f != null && ((!_authority && i < _layoutFoes) || f._ownFrom != null);",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-body-is-no-container",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (kind === 'enc') { const f = _sharedById.get(i); return lootableBody(f) && Array.isArray(f.entity?.items) ? f.entity.items : null; }\n",
+    "new": "",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-body-by-pool-index",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (f?._encId != null) canon = `enc:${f._encId}`; }",
+    "new": "}",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-the-room-name-unspelt",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const LOOT_KEY_RE = /^(loot|corpse|enc|srch):(0|[1-9][0-9]{0,4})$/;",
+    "new": "  const LOOT_KEY_RE = /^(loot|corpse|srch):(0|[1-9][0-9]{0,4})$/;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "RESTSYNC-world-sends-no-ask",
+    "file": "src/scenes/world.js",
+    "old": "    if (data?.rs && !(data?.a?.length) && !(data?.l?.length)) return actFrameFits(data) ? online.sendAct(data) : false;\n",
+    "new": "",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-full-frame-pays-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (full) fitMaxima(frame, [...out.map((r) => [r, foes[r.i]]), ...(frame.x ?? []).map((r) => [r, _sharedById.get(r.i)])]);\n",
+    "new": "",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-fit-past-the-room",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (max == null || 5 + String(max).length > room) continue;",
+    "new": "      if (max == null) continue;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-delta-budget-unbounded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const owesMax = max != null && f._maxSent !== max && _maxLeft > 0;",
+    "new": "    const owesMax = max != null && f._maxSent !== max;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-owed-once-for-ever",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (full) f._maxSent = undefined;\n    const max = foeMaxOf(f);",
+    "new": "    const max = foeMaxOf(f);",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-changed-max-not-owed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const owesMax = max != null && f._maxSent !== max && _maxLeft > 0;",
+    "new": "    const owesMax = max != null && f._maxSent === undefined && _maxLeft > 0;",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-body-owes",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const foeMaxOf = (f) => (!f.dead && Number.isFinite(f.entity.maxHealth)",
+    "new": "  const foeMaxOf = (f) => (Number.isFinite(f.entity.maxHealth)",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-shed-kept-as-paid",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }",
+    "new": "if (f) { f._sentKey = null; f._lsSent = undefined; } }",
+    "tests": [
+      "test/net/restsync.test.js"
+    ]
+  }
+]

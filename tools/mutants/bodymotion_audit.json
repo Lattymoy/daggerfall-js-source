@@ -1,0 +1,438 @@
+[
+  {
+    "name": "AUDIT-BODY-MOTION-reversal-eased",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    s.th =\n      !was || Math.abs(off) > GAIT_LIMITS.reverse * RAD\n        ? thT\n        : wrapAngle(s.th + off * (1 - Math.exp(-dt / GAIT_EASE.dir)));",
+    "new": "    s.th = !was ? thT : wrapAngle(s.th + off * (1 - Math.exp(-dt / GAIT_EASE.dir)));",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-sneak-stands-tall",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  const standH = lerp(STAND.height, STAND.sneak.height, s.sneak) * P.standHeight;",
+    "new": "  const standH = STAND.height * P.standHeight;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-feet-ride-the-body",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "        f.p = carry(f.p);\n        f.yaw += dYaw;",
+    "new": "        f.yaw += dYaw;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-swing-flipped",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  s.backShare = ease(s.backShare, s.walking && s.back ? 1 : 0, GAIT_EASE.back, dt);",
+    "new": "  s.backShare = s.walking && s.back ? 1 : 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-nan-frame-kept",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  if (!finite(dt) || dt < 0) dt = 0; // AUDIT BODY-MOTION GAIT-16: a NaN frame is no frame - it poisoned the state for good",
+    "new": "  if (dt < 0) dt = 0; // AUDIT BODY-MOTION GAIT-16: a NaN frame is no frame - it poisoned the state for good",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-slope-unshifted",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "export const SLOPE = Object.freeze({ shorten: 0.5, shift: 0.5, shiftMax: 0.75 });",
+    "new": "export const SLOPE = Object.freeze({ shorten: 0, shift: 0, shiftMax: 0.75 });",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-slope-ends-level",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  const ends = (half) =>\n    Math.min(top(half + shift, grade * (half + shift), strikeP), top(shift - half, grade * (shift - half), pushP));",
+    "new": "  const ends = (half) => Math.min(top(half + shift, 0, strikeP), top(shift - half, 0, pushP));",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-leaving-ground-under",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "      f.at[2] - (leaving ? 0 : f.lift) + Math.sqrt(Math.max(0, reach * reach - dxy * dxy)) - dz,",
+    "new": "      f.at[2] - f.lift + Math.sqrt(Math.max(0, reach * reach - dxy * dxy)) - dz,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ],
+    "equivalent": true,
+    "why": "A leaving foot's leg reaches the foot itself rather than the ground under it: the difference is the foot's lift while its hold fades, over the first quarter of its flight, before it has risen far - on every slope pin, the stride sweeps and the random sessions it moves the hips 0.06 units at the most. It is kept because it is the leg's own reach (a rising foot is reached where it is), which the line's arriving half takes the other way: a foot coming down is reached at the ground it lands on."
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-flight-chord",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  if (sw.bow) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-reach-taken-at-once",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "      f.stance || leaving\n        ? 1\n        : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.2 * L)));",
+    "new": "      f.stance || leaving ? 1 : Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) > dxy ? 1 : 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-strike-sets-the-clock",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "          continue;",
+    "new": "          resync(frac(OFFSET[side] + past));\n          continue;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-strike-at-its-start",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "          n.u = past;",
+    "new": "          n.u = 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-flight-off-the-clock",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "        sw.rate = byGround > byClock ? 1 + clamp(4 * gap, -0.25, 0.25) : 1;",
+    "new": "        sw.rate = 1;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-backpedal-flipped",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  const back = c < 0,\n    ac = Math.abs(c);",
+    "new": "  const back = false,\n    ac = c;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-leaving-drags",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    const dxy = Math.min(\n      Math.hypot(f.at[0] - jx, f.at[1] - jy),\n      leaving && f.held ? Math.hypot(f.held[0] - jx, f.held[1] - jy) : Infinity,\n    );",
+    "new": "    const dxy = Math.hypot(f.at[0] - jx, f.at[1] - jy);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-along-unsmoothed",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  s.along = ease(s.along, Math.cos(s.th + s.psi), GAIT_EASE.back, dt);",
+    "new": "  s.along = Math.cos(s.th + s.psi);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-strike-before-rebase",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "        const leapt = Math.hypot(t.p[0] - sw.to[0], t.p[1] - sw.to[1]) > leap && sw.s + inc > sw.s0;",
+    "new": "        const leapt = Math.hypot(t.p[0] - sw.to[0], t.p[1] - sw.to[1]) > leap && sw.s + inc > sw.s0 && sw.s + inc < 1;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-rebase-uncarried",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "          if (f.cur) sw.carry = { pitch: f.cur.pitch, lift: f.cur.lift, s: sw.s };\n        }",
+    "new": "        }",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-stance-on-the-stride-clock",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "      const u = f.u ?? frac(s.phase - OFFSET[side]);",
+    "new": "      const u = frac(s.phase - OFFSET[side]);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-lift-on-the-stride-clock",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    const u = f.swing ? clock : f.u;",
+    "new": "    const u = clock;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ],
+    "equivalent": true,
+    "why": "A standing foot lifted by its own stance's clock or by the stride's: every flight keeps to the stride's clock, so a foot strikes on it and the two agree to the frame's overshoot - the strikes' spacing, the hips through every reversal probe and the push's end move by 1.6 units at the most. The foot's own is kept so a stance's rocker and its end are read off one clock: the rocker's must be its own (GAIT-25), and a lift read off another could stand the foot on its toes past its push."
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-ankle-unclamped",
+    "file": "src/characters/bodyMotion/bodySolve.js",
+    "old": "    if (f.stance === false && sol) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-clip-chest-taken",
+    "file": "src/characters/bodyMotion/bodySolve.js",
+    "old": "    const Rt0 = armAny >= 1 ? own : toward(R0(body.chest), own, armAny); // the clip's chest where it stands, as far as the clip has the arms",
+    "new": "    const Rt0 = own; // the clip's chest where it stands, as far as the clip has the arms",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-clip-clavicle-taken",
+    "file": "src/characters/bodyMotion/bodySolve.js",
+    "old": "      const share = ref === bones.L.clavicle ? armL : ref === bones.R.clavicle ? armR : armAny;",
+    "new": "      const share = 1;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-peer-travel-dropped",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "  c.move.travel = travel; // AUDIT BODY-MOTION RIG-3: the ground the drawn feet crossed (world, cumulative) - the legs' own travel and its way",
+    "new": "  c.move.travel = null; // AUDIT BODY-MOTION RIG-3: the ground the drawn feet crossed (world, cumulative) - the legs' own travel and its way",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-peer-jump-walked",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    if (!on && b.paceKey === on && prev && Math.hypot(f[0] - prev[0], f[2] - prev[2]) <= JUMP_UNITS) {",
+    "new": "    if (!on && b.paceKey === on && prev) {",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-card-stale",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "        last = null;\n      } // AUDIT BODY-MOTION RIG-9: the card says off once the body is the clip's",
+    "new": "      } // AUDIT BODY-MOTION RIG-9: the card says off once the body is the clip's",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-lantern-in-the-facing",
+    "file": "src/systems/lanternSwing.js",
+    "old": "      const ch = Math.cos(Number(hipYaw) || 0),\n        sh = Math.sin(Number(hipYaw) || 0);",
+    "new": "      const ch = 1,\n        sh = 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-two-guard-old",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "      R: row(36, -3, 10, 52, 0, { blade: dir(-0.34, 0.89, -0.29), edge: dir(-0.41, -0.42, -0.81) }),",
+    "new": "      R: row(30, 6, 44, 30, 0, { blade: dir(-0.3, 0.82, -0.48), edge: dir(0, 0.35, -1) }),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-spear-short",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "      R: row(11, 12, 40, 55, 0, { blade: dir(-0.33, 0.74, 0.58), edge: dir(0.26, 0.66, -0.7) }),",
+    "new": "      R: row(10, 12, 40, 14, 0, { blade: dir(-0.12, 0.9, 0.4), edge: dir(0, 0, -1) }),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-two-sneak-low",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "      R: row(52, -2, 11, 52, 0.1, { blade: dir(-0.26, 0.95, 0.17), edge: dir(-0.21, 0.12, -0.97) }),",
+    "new": "      R: row(34, 8, 50, 30, 0.1, { blade: dir(-0.25, 0.88, -0.4), edge: dir(0, 0.35, -1) }),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-run-supinated",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "      R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }),",
+    "new": "      R: row(2, 25, 24, -12, 0.35, { blade: dir(0.32, -0.42, -0.85), edge: dir(0, 0.6, -1) }),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-blade-summed",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "      if (V) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-grip-at-half",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "      out.L = k >= 1 - 1e-9 || !out.L ? haf : blendHand(out.L, haf, k * k * (3 - 2 * k));",
+    "new": "      out.L = k >= 0.5 || !out.L ? haf : out.L;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-shares-first-order",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "        if (!shares.x || !(dt > 0)) shares.x = { ...target };",
+    "new": "        if (true) shares.x = { ...target };",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-stance-switched",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      t = clsFrom ? clsMix : 1;",
+    "new": "      t = 1;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-blend-restarted",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "        if (clsFrom && next === clsFrom) {\n          clsFrom = cls;\n          cls = next;\n          clsMix = 1 - clsMix;\n        } else {\n          clsFrom = cls;\n          cls = next;\n          clsMix = 0;\n        }",
+    "new": "        clsFrom = cls;\n        cls = next;\n        clsMix = 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-frames-summed",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "  const weapon = frameAt(keys, u, 'blade', 'edge'),\n    fist = frameAt(keys, u, 'fingers', 'palm');",
+    "new": "  const weapon = keys[0].blade ? [vecAt(keys, u, 'blade'), vecAt(keys, u, 'edge')] : null,\n    fist = keys[0].fingers ? [vecAt(keys, u, 'fingers'), vecAt(keys, u, 'palm')] : null;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-blow-from-guard",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "    const keyed = from || cut ? blowPose(bp.family, bp.name, bp.u, bp.side, { start: cut ?? from, end: from }) : null;",
+    "new": "    const keyed = cut ? blowPose(bp.family, bp.name, bp.u, bp.side, { start: cut }) : null;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-backhand-through",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.15, {\n        grip: [0.18, 0.5, -0.3],\n        blade: [-0.2, 0.35, 0.91],\n        edge: [-0.35, 0.75, -0.55],\n        chest: [16, 0, 0],\n        hip: 5,\n        shift: -0.01,\n        drop: 0.005,\n        step: 0,\n        off: [-4, 14, 21],\n      }),\n      k(0.3, {\n        grip: [-0.4, 0.4, 0.1],",
+    "new": "      k(0.3, {\n        grip: [-0.42, 0.18, 0.08],",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-hit-tangent-through",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "    if (keys[j].u === U.hit) return (get(keys[j]) - get(keys[j - 1])) / (keys[j].u - keys[j - 1].u);",
+    "new": "    void U;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-step-slow",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      stepTime = bpNow && bpNow.step > 0 && bpNow.w > 0.05 ? TURN.quick : null;",
+    "new": "      stepTime = null;\n      void TURN;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-drop-at-once",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      else if (lastBlow && lastBlow.w > 1e-3) lastBlow = { ...lastBlow, w: ease(lastBlow.w, 0, MOTION_EASE.out, dt) };",
+    "new": "      else if (lastBlow && lastBlow.w > 1e-3) lastBlow = null;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-cut-from-carry",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "        seen = blowNow({ start: cut });",
+    "new": "        cut = null;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-wind-stepped",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      if (seen) seen.wind = lastBlow && !cut ? ease(lastBlow.wind, seen.wind, MOTION_EASE.cls, dt) : seen.wind;",
+    "new": "      void 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-empty-hand-strikes",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "    const side = family !== 'fists' && input.hands !== 'dual' ? 'R' : b.hand === 'L' ? 'L' : 'R';",
+    "new": "    const side = b.hand === 'L' ? 'L' : 'R';",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-twist-unbound",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "export const BLOW_TRUNK = Object.freeze({ steer: 0.6, twist: 50 });",
+    "new": "export const BLOW_TRUNK = Object.freeze({ steer: 0, twist: 180 });",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-haft-fixed",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  if (slide && arm > 0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BODY-MOTION-guard-dropped",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "    if (input.guard && (cls === 'dual' || cls === 'fists')) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  }
+]

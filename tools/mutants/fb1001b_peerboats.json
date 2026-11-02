@@ -1,0 +1,85 @@
+[
+  {
+    "name": "PEER-HULL-the-peers-boats-never-stood",
+    "file": "src/scenes/world.js",
+    "old": "for (const boat of hullsStood(peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats(),",
+    "new": "for (const boat of hullsStood(csaColliderBoats(),",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ]
+  },
+  {
+    "name": "PEER-HULL-only-the-boat-I-am-aboard-stood-CSA-K-law-back",
+    "file": "src/scenes/world.js",
+    "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
+    "new": "const peers = csaAboard.aboard?.boat ? [csaAboard.aboard.boat] : [];",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ]
+  },
+  {
+    "name": "PEER-HULL-the-seas-list-stood-for-the-peers",
+    "file": "src/scenes/world.js",
+    "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
+    "new": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.seaBoats : [];",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ]
+  },
+  {
+    "name": "FOUR-HOSTS-every-mode-stands-her",
+    "file": "src/scenes/world.js",
+    "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
+    "new": "const peers = csa.peerBoats;",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ]
+  },
+  {
+    "name": "FOUR-HOSTS-the-street-test-inverted",
+    "file": "src/scenes/world.js",
+    "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
+    "new": "const peers = (modes?.mode ?? 'exterior') !== 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ]
+  },
+  {
+    "name": "FOUR-HOSTS-no-mode-named-read-as-indoors",
+    "file": "src/scenes/world.js",
+    "old": "const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
+    "new": "const peers = (modes?.mode ?? 'interior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ]
+  },
+  {
+    "name": "PEER-DECK-a-landing-alone-boards-the-old-door",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "          if (on(s.boat, me)) {",
+    "new": "          if (me.ground(s.boat) == null && deckUnder(s.boat, feet, me.height)) {",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ]
+  },
+  {
+    "name": "PEER-DECK-standing-alone-boards-the-landing-lost",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "          if (on(s.boat, me)) {",
+    "new": "          if (me.ground(s.boat) === 'boat') {",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js",
+      "test/systems/csa_together.test.js"
+    ]
+  },
+  {
+    "name": "PEER-DECK-a-boat-past-her-reach-asked",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "          if (!s?.boat?.GameObject?.activeSelf || !near(s.boat, feet)) continue;",
+    "new": "          if (!s?.boat?.GameObject?.activeSelf) continue;",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js",
+      "test/systems/csa_together.test.js"
+    ]
+  }
+]

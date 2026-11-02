@@ -1,0 +1,131 @@
+[
+  {
+    "name": "POTION-COMMON-another-recipe",
+    "file": "src/systems/healingSupply.js",
+    "old": "export const HEALING_RECIPE_KEY = CLASSIC_RECIPE_KEYS[2];",
+    "new": "export const HEALING_RECIPE_KEY = CLASSIC_RECIPE_KEYS[3];",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-foe-chance-zero",
+    "file": "src/systems/healingSupply.js",
+    "old": "export const HEALING_ENEMY_CHANCE = 4;",
+    "new": "export const HEALING_ENEMY_CHANCE = 0;",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-pile-chance-zero",
+    "file": "src/systems/healingSupply.js",
+    "old": "export const HEALING_PILE_CHANCE = 8;",
+    "new": "export const HEALING_PILE_CHANCE = 0;",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-alchemist-stocks-none",
+    "file": "src/systems/healingSupply.js",
+    "old": "  if (buildingType === BUILDING_TYPES.Alchemist) return 2 + Math.trunc(q / 5);",
+    "new": "  if (buildingType === BUILDING_TYPES.Alchemist) return 0;",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-general-store-stocks-none",
+    "file": "src/systems/healingSupply.js",
+    "old": "  if (buildingType === BUILDING_TYPES.GeneralStore) return 1 + Math.trunc(q / 10);",
+    "new": "  if (buildingType === BUILDING_TYPES.GeneralStore) return 0;",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-every-pile",
+    "file": "src/systems/healingSupply.js",
+    "old": "    if (i >= 10 && i <= 15) {",
+    "new": "    {",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
+  },
+  {
+    "name": "POTION-COMMON-shelf-loop-dropped",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (shelfIndex === 0) for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());\n  return items;",
+    "new": "  return items;",
+    "tests": [
+      "test/systems/potion_common.test.js",
+      "test/systems/shopstock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-install-dropped",
+    "file": "src/scenes/shared.js",
+    "old": "  installHealingSupply();   // POTION-COMMON: Potions of Healing in the loot - after the smithing install, its field kit's roll first\n",
+    "new": "",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ECON-P1-every-shelf-stocks-them",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (shelfIndex === 0) for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());",
+    "new": "  for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-ECON-P1-the-shelf-hands-no-index",
+    "file": "src/scenes/worldModes.js",
+    "old": "stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity, { shelfIndex: i })",
+    "new": "stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity)",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-a-fifth-rounded",
+    "file": "src/systems/healingSupply.js",
+    "old": "  if (buildingType === BUILDING_TYPES.Alchemist) return 2 + Math.trunc(q / 5);",
+    "new": "  if (buildingType === BUILDING_TYPES.Alchemist) return 2 + Math.round(q / 5);",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-a-tenth-rounded",
+    "file": "src/systems/healingSupply.js",
+    "old": "  if (buildingType === BUILDING_TYPES.GeneralStore) return 1 + Math.trunc(q / 10);",
+    "new": "  if (buildingType === BUILDING_TYPES.GeneralStore) return 1 + Math.round(q / 10);",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  },
+  {
+    "name": "POTION-COMMON-I-to-P",
+    "file": "src/systems/healingSupply.js",
+    "old": "    if (i >= 10 && i <= 15) {",
+    "new": "    if (i >= 9 && i <= 16) {",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
+  },
+  {
+    "name": "POTION-COMMON-under-the-kits-name",
+    "file": "src/systems/healingSupply.js",
+    "old": "  registerTabledLootHandler('healing-potion', ({ key, items, rolls, quarters }) => {",
+    "new": "  registerTabledLootHandler('field-repair-kit', ({ key, items, rolls, quarters }) => {",
+    "tests": [
+      "test/systems/potion_common.test.js"
+    ]
+  }
+]

@@ -1,0 +1,223 @@
+[
+  {
+    "name": "PENITENT-ends-swapped",
+    "file": "src/ui/playerBadge.js",
+    "old": "  penitent: Object.freeze([PENITENT_GOLD, PENITENT_LIGHT, PENITENT_SKY]),",
+    "new": "  penitent: Object.freeze([PENITENT_SKY, PENITENT_LIGHT, PENITENT_GOLD]),",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-light-dropped",
+    "file": "src/ui/playerBadge.js",
+    "old": "  penitent: Object.freeze([PENITENT_GOLD, PENITENT_LIGHT, PENITENT_SKY]),",
+    "new": "  penitent: Object.freeze([PENITENT_GOLD, PENITENT_SKY]),",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-the-light-a-pale-green",
+    "file": "src/ui/playerBadge.js",
+    "old": "const PENITENT_LIGHT = Object.freeze([1, 0.953, 0.839, 1]); // #fff3d6",
+    "new": "const PENITENT_LIGHT = Object.freeze([0.8, 0.953, 0.839, 1]); // #fff3d6",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "  penitent: 'Penitent', // PENITENT (2026-09-29, Mac): Diggleborf's own",
+    "new": "  penitent: 'Penance', // PENITENT (2026-09-29, Mac): Diggleborf's own",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-edge-its-own-gold",
+    "file": "src/ui/playerBadge.js",
+    "old": "  penitent: Object.freeze([0, 0, 0, 1]),\n  gatebreaker: Object.freeze([0, 0, 0, 1]), // WB9g: its ember end is bright - edged in black, as Penitent's",
+    "new": "  gatebreaker: Object.freeze([0, 0, 0, 1]), // WB9g: its ember end is bright - edged in black, as Penitent's",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-edge-for-shadow-fang-too",
+    "file": "src/ui/playerBadge.js",
+    "old": "  gatebreaker: Object.freeze([0, 0, 0, 1]), // WB9g: its ember end is bright - edged in black, as Penitent's",
+    "new": "  shadowfang: Object.freeze([0, 0, 0, 1]),\n  gatebreaker: Object.freeze([0, 0, 0, 1]), // WB9g: its ember end is bright - edged in black, as Penitent's",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-edge-ignored-by-the-paint",
+    "file": "src/ui/playerBadge.js",
+    "old": "    const edge = cssRgba(badge.edge ?? badge.rgba) ?? ''; // PENITENT: its own edge where TITLE_EDGE names one",
+    "new": "    const edge = cssRgba(badge.rgba) ?? ''; // PENITENT: its own edge where TITLE_EDGE names one",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-edge-off-the-badge",
+    "file": "src/ui/playerBadge.js",
+    "old": "    edge: TITLE_EDGE[key] ?? null,\n    flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key),",
+    "new": "    flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key),",
+    "tests": [
+      "test/net/penitent.test.js"
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
+  },
+  {
+    "name": "PENITENT-classic-edge-in-the-gold",
+    "file": "src/net/remotePlayers.js",
+    "old": "s, title.edge ?? title.rgba ?? [1, 1, 1, 1]);",
+    "new": "s, title.rgba ?? [1, 1, 1, 1]);",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-lozenge-another-colour",
+    "file": "src/ui/playerBadge.js",
+    "old": "  penitent: TITLE_RGBA.penitent, // PENITENT: the lozenge in the title's gold - the sword in it is its detail, below",
+    "new": "  penitent: TITLE_RGBA.disciple, // PENITENT: the lozenge in the title's gold - the sword in it is its detail, below",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-sword-in-the-gold",
+    "file": "src/ui/playerBadge.js",
+    "old": "    rgba: PENITENT_SKY,",
+    "new": "    rgba: PENITENT_GOLD,",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-sword-point-up",
+    "file": "src/ui/playerBadge.js",
+    "old": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z',",
+    "new": "    path: 'M8 12.8L8.65 12.15L8 11.5L7.35 12.15ZM7.45 11.5H8.55V9.7H7.45ZM5.9 9.7H10.1V8.7H5.9ZM7.25 8.7H8.75L8 2Z',",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-guard-through-the-sides",
+    "file": "src/ui/playerBadge.js",
+    "old": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z',",
+    "new": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM4.6 6.3H11.4V7.3H4.6ZM7.25 7.3H8.75L8 14Z',",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-a-cross-not-a-sword",
+    "file": "src/ui/playerBadge.js",
+    "old": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z',",
+    "new": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V8.3H7.45ZM5.9 8.3H10.1V9.3H5.9ZM7.25 9.3H8.75L8 14Z',",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-lozenge-squat",
+    "file": "src/ui/playerBadge.js",
+    "old": "  penitent: 'M8 .8L13 8.2L8 15.2L3 8.2Z',",
+    "new": "  penitent: 'M8 3L14 8.2L8 13L2 8.2Z',",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-lozenge-filled",
+    "file": "src/ui/playerBadge.js",
+    "old": "  penitent: true,",
+    "new": "  penitent: false,",
+    "tests": [
+      "test/net/penitent.test.js"
+    ],
+    "note": "SEAT1c (PIN MOVED) and HERALD (RE-AIMED), each by content; the merge of main re-aimed it over both - herald after the penitent, the seats' after herald."
+  },
+  {
+    "name": "PENITENT-mark-another-glyphs",
+    "file": "src/ui/playerBadge.js",
+    "old": "  penitent: '|', // PENITENT: the sword's blade, one upright stroke",
+    "new": "  penitent: '>', // PENITENT: the sword's blade, one upright stroke",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-card-label",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "  penitent: () => t('account.glyph.penitent', 'Penitent'),   // PENITENT",
+    "new": "  penitent: () => t('account.glyph.penitent', 'Penitence'),   // PENITENT",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-list-crossed",
+    "file": "server-account/src/titles.js",
+    "old": "  penitent: 'PENITENT_HANDLES',",
+    "new": "  penitent: 'SHADOW_FANG_HANDLES',",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-glyph-without-the-title",
+    "file": "server-account/src/titles.js",
+    "old": "  penitent: 'penitent',",
+    "new": "  penitent: 'shadowfang',",
+    "tests": [
+      "test/net/penitent.test.js"
+    ],
+    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
+  },
+  {
+    "name": "PENITENT-granted-to-another-account",
+    "file": "server-account/wrangler.toml",
+    "old": "PENITENT_HANDLES = \"Diggleborf\"",
+    "new": "PENITENT_HANDLES = \"SirMcMobdon\"",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  },
+  {
+    "name": "PENITENT-title-not-in-the-vocabulary",
+    "file": "src/net/identityToken.js",
+    "old": "  'penitent',\n  'gatebreaker',",
+    "new": "  'gatebreaker',",
+    "tests": [
+      "test/net/penitent.test.js"
+    ],
+    "note": "SEAT1c (PIN MOVED) and HERALD (RE-AIMED), each by content; the merge of main re-aimed it over both - herald after the penitent, the seats' after herald."
+  },
+  {
+    "name": "PENITENT-glyph-not-in-the-vocabulary",
+    "file": "src/net/identityToken.js",
+    "old": "  'penitent',\n  'herald',",
+    "new": "  'herald',",
+    "tests": [
+      "test/net/penitent.test.js"
+    ],
+    "note": "SEAT1c (PIN MOVED) and HERALD (RE-AIMED), each by content; the merge of main re-aimed it over both - herald after the penitent, the seats' after herald."
+  },
+  {
+    "name": "PENITENT-staff",
+    "file": "src/net/staffCommands.js",
+    "old": "export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang']);",
+    "new": "export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang', 'penitent']);",
+    "tests": [
+      "test/net/penitent.test.js"
+    ]
+  }
+]

@@ -1,0 +1,480 @@
+[
+  {
+    "name": "WK-W1-lookout-only-at-nightfall",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    named = Number.isInteger(ctx.lookout) ? /** @type {number} */ (ctx.lookout) : -1;\n    pickLookout();\n",
+    "new": "    named = Number.isInteger(ctx.lookout) ? /** @type {number} */ (ctx.lookout) : -1;\n",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W1-lookout-on-his-way-below",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "m.mobile !== MOBILE.Bard && m.state !== 'turnIn';",
+    "new": "m.mobile !== MOBILE.Bard;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W1-lookout-talked-off-his-way",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "|| o === chanty?.leader || o === lookout || offMain(o) || atPost(o)) continue;",
+    "new": "|| o === chanty?.leader || offMain(o) || atPost(o)) continue;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W1-first-man-first",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "      if (m.i === 0) { first = first ?? m; continue; }",
+    "new": "      if (m.i === 0 && false) { first = first ?? m; continue; }",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ],
+    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
+  },
+  {
+    "name": "WK-W3-repair-order-sleeps",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const sleep = !!ctx.asleep && !battle && !struck && ctx.order !== 'repair';",
+    "new": "const sleep = !!ctx.asleep && !battle && !struck;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W3-watch-idle-by-night",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const share = quiet ? 0 :",
+    "new": "const share = quiet || asleep ? 0 :",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W3-work-ends-by-night",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (quiet || asleep && !(work > 0)) {",
+    "new": "if (quiet || asleep) {",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W4-struck-takes-up-chores",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const share = quiet ? 0 :",
+    "new": "const share =",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W4-struck-works-on",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (quiet || asleep && !(work > 0)) {",
+    "new": "if (battle || asleep && !(work > 0)) {",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W4-struck-walks-on-to-work",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (quiet && m.state === 'toWork')",
+    "new": "if (battle && m.state === 'toWork')",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W5-lookout-through-guns",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (battle) { m.state = 'idle'; m.t = 0; break; }   // AUDIT WK-W5",
+    "new": "// AUDIT WK-W5",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W5-walk-to-work-under-the-guns",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (quiet && m.state === 'toWork') { m.path = null;",
+    "new": "if (false) { m.path = null;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W7-stood-at-night-walks",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (asleep) turnIn(fresh); else",
+    "new": "if (asleep) turnIn(false); else",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W7-every-nightfall-at-once",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (asleep) turnIn(fresh); else",
+    "new": "if (asleep) turnIn(true); else",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W7-paused-first-step-skipped",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (!(dt > 0)) { if (stood) return; dt = 0; }",
+    "new": "if (!(dt > 0)) return;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W7-every-step-her-first",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    const fresh = !stood;\n    stood = true;\n",
+    "new": "    const fresh = !stood;\n",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-all-on-her-hatch",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "let at = clearAt(from, avoid) ? from : null;",
+    "new": "let at = from;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-alarm-on-one-point",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (q && clearAt(q, avoid)) { at = q; break; }",
+    "new": "if (q) { at = q; break; }",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-alarm-one-at-a-time",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "bringUp(quiet, ctx.avoid ?? null);",
+    "new": "bringUp(false, ctx.avoid ?? null);",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-guns-wait-on-the-morning",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "} else if (rising && quiet && !asleep) allUp(true);",
+    "new": "}",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-up-into-the-player",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    if (avoid && Math.hypot(avoid[0] - p[0], avoid[2] - p[2]) < 0.6) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-watch-a-third-of-those-on-deck",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const want = watchCount(n);",
+    "new": "const want = watchCount(crew.length);",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-morning-never-up",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (m.below) { m.state = 'rise'; rising = true; continue; }",
+    "new": "if (m.below) { m.state = 'rise'; continue; }",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-the-next-forgotten",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (!at && !all) { rising = true; return; }",
+    "new": "if (!at && !all) return;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-risers-stand-on-her-hatch",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (s) walkTo(m, s, all ? CREW_HURRY : CREW_WALK);",
+    "new": "if (false) walkTo(m, s, all ? CREW_HURRY : CREW_WALK);",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W8-alarm-ambles",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "walkTo(m, s, all ? CREW_HURRY : CREW_WALK);",
+    "new": "walkTo(m, s, CREW_WALK);",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W9-gone-below",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "m.gone = true; m.below = false; m.line = null; alive--;",
+    "new": "m.gone = true; m.line = null; alive--;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W10-card-unread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "named = Number.isInteger(ctx.lookout) ? /** @type {number} */ (ctx.lookout) : -1;",
+    "new": "named = -1;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W10-stand-in-kept-at-the-bow",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "      if (lookout && (lookout.state === 'watch' || lookout.state === 'walk')) { lookout.path = null; lookout.state = 'idle'; lookout.t = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W10-stand-in-walks-on",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "(lookout.state === 'watch' || lookout.state === 'walk')",
+    "new": "lookout.state === 'watch'",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-W10-bard-named",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (want !== lookout && canLook(want)) {",
+    "new": "if (want && want !== lookout) {",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "WK-D5-runs-post-to-post",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "(m === lookout && !battle || offMain(m) || onAMan(m) ? 0 : 1)",
+    "new": "(m === lookout || offMain(m) || onAMan(m) ? 0 : 1)",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-work-unscaled",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "WORK_SHARE * Math.min(1, work) : 0",
+    "new": "WORK_SHARE : 0",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-watch-takes-jobs",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "+ (asleep ? 0 : CHORE_SHARE);",
+    "new": "+ CHORE_SHARE;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-work-through-night",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (quiet || asleep && !(work > 0)) {",
+    "new": "if (quiet) {",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-toWork-at-night",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "{ if (asleep && !(work > 0)) { m.state = 'idle'; m.t = 0; } else startWork(m); }",
+    "new": "{ startWork(m); }",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-lookout-dawdles",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "* (m === lookout && !battle || offMain(m) || onAMan(m) ? 0 : 1); }",
+    "new": "* (offMain(m) || onAMan(m) ? 0 : 1); }",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-call-over-talk",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (by) { if (by.mate) endTalk(by); say(by, ctx.call, 'shout');",
+    "new": "if (by) { say(by, ctx.call, 'shout');",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-call-blurb-unheld",
+    "file": "src/systems/naval/crewLife.js",
+    "old": " by.blurbT = Math.max(by.blurbT, CREW_LINE_S * 2); } }",
+    "new": " } }",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-allup-slow",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "* (alarm ? 0.1 : 0.5); m.face = null;",
+    "new": "* 0.5; m.face = null;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-allup-walkers-left",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (m.gone || (!m.below && m.state !== 'turnIn')) continue;",
+    "new": "if (m.gone || !m.below) continue;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-turnin-talk-kept",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "      if (m.mate) endTalk(m);\n      dropLeader(m);\n      m.line = null; m.swing = false;",
+    "new": "      dropLeader(m);\n      m.line = null; m.swing = false;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-hatch-at-stern",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "deck.nearest?.(0, mainExt ? (mainExt[0] + mainExt[1]) / 2 : 0)",
+    "new": "deck.nearest?.(0, mainExt ? mainExt[0] : 0)",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-bow-at-stem",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "deck.nearest(0, mainExt[1] - LOOKOUT_BACK, main)",
+    "new": "deck.nearest(0, mainExt[1], main)",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-their-lines-at-night",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (theirs && !asleep) say(m, theirs,",
+    "new": "if (theirs) say(m, theirs,",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-trade-words-at-night",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const own = !battle && !struck && !asleep && faction",
+    "new": "const own = !battle && !struck && faction",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-chores-say-work",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "(work > 0 ? CREW_BLURBS.work : CREW_BLURBS.chore)",
+    "new": "(CREW_BLURBS.work)",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-live-counts-sleepers",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "const live = () => members.filter((m) => !m.gone && !m.below);",
+    "new": "const live = () => members.filter((m) => !m.gone);",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-watch-third-dropped",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    for (const m of crew) { if (keep.size >= want) break; keep.add(m); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-turnin-never-arrives",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "walkTo(m, hatch)) m.state = 'turnIn';",
+    "new": "walkTo(m, hatch)) m.state = 'walk';",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-CL-free-spot-sleepers",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "if (!members.some((o) => !o.gone && !o.below && claims(o, s))) return s;",
+    "new": "if (!members.some((o) => !o.gone && claims(o, s))) return s;",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "LD-NC-sea-work-dropped",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "      ship.work = Number.isFinite(w.work) ? w.work : 0; // SHIP-WATCH: what her hurts leave her crew to mend (the sea's ships)",
+    "new": "      ship.work = 0; // SHIP-WATCH: what her hurts leave her crew to mend (the sea's ships)",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  },
+  {
+    "name": "GALLEON-hatch-whole-deck",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "deck.nearest?.(0, mainExt ? (mainExt[0] + mainExt[1]) / 2 : 0)",
+    "new": "deck.nearest?.(0, deck.y ? (deckExtentZ(deck)[0] + deckExtentZ(deck)[1]) / 2 : 0)",
+    "tests": [
+      "test/systems/naval/auditwatchkit_crew.test.js"
+    ]
+  }
+]

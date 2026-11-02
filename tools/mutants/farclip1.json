@@ -1,0 +1,245 @@
+[
+  {
+    "name": "FAR-CLIP1-the-discard-dropped",
+    "file": "src/render/renderer.js",
+    "old": "  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\\n${fs.slice(cut)}`;",
+    "new": "  return `${fs.slice(0, cut)}${fs.slice(cut)}`;",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-byte-compared-wrong",
+    "file": "src/render/renderer.js",
+    "old": ": data == ${CLIP_SENTINEL}u) discard;",
+    "new": ": data == ${CLIP_SENTINEL - 1}u) discard;",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-byte-compared-inverted",
+    "file": "src/render/renderer.js",
+    "old": ": data == ${CLIP_SENTINEL}u) discard;",
+    "new": ": data != ${CLIP_SENTINEL}u) discard;",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-byte-moved-into-the-conversions-range",
+    "file": "src/world/terrain/terrainSurface.js",
+    "old": "export const CLIP_SENTINEL = 255;",
+    "new": "export const CLIP_SENTINEL = 254;",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-discard-before-the-derivatives",
+    "file": "src/render/renderer.js",
+    "old": "const CLIP_AFTER = 'vec2 gy = ROT[t] * dFdy(unwrapped);\\n';",
+    "new": "const CLIP_AFTER = 'uint data = texelFetch(uTilemap, cell, 0).r;\\n';",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-a-second-gradient-line-let-through",
+    "file": "src/render/renderer.js",
+    "old": "  if (at < 0 || fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw",
+    "new": "  if (at < 0) throw",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-no-gradient-line-let-through",
+    "file": "src/render/renderer.js",
+    "old": "  if (at < 0 || fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw",
+    "new": "  if (fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-draw-ignores-the-ask",
+    "file": "src/render/renderer.js",
+    "old": "    if (!!clip !== this._terrainClip) this._terrainVariant(!!clip);   // FAR-CLIP1\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-variant-never-installed",
+    "file": "src/render/renderer.js",
+    "old": "    this.terrainProgram = this._terrainClip ? set.terrainClip : set.terrain;",
+    "new": "    this.terrainProgram = set.terrain;",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-plain-program-given-the-discard",
+    "file": "src/render/renderer.js",
+    "old": "    this.terrainProgram = this._terrainClip ? set.terrainClip : set.terrain;",
+    "new": "    this.terrainProgram = this._ensureTerrainClip(set);",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-an-install-keeps-a-clip-it-has-not-built",
+    "file": "src/render/renderer.js",
+    "old": "    this._terrainClip = !!(this._terrainClip && set.terrainClip);",
+    "new": "    this._terrainClip = !!this._terrainClip;",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-lane-table-the-plain-programs",
+    "file": "src/render/renderer.js",
+    "old": "terrain: elLocs(this.terrainProgram)",
+    "new": "terrain: elLocs(set.terrain)",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-swap-never-builds",
+    "file": "src/render/renderer.js",
+    "old": "    if (clip) this._ensureTerrainClip();\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-swap-keeps-the-old-flag",
+    "file": "src/render/renderer.js",
+    "old": "    this._terrainClip = clip;\n    this._installWorldSet(this._worldSet);",
+    "new": "    this._installWorldSet(this._worldSet);",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-swap-installs-nothing",
+    "file": "src/render/renderer.js",
+    "old": "    this._terrainClip = clip;\n    this._installWorldSet(this._worldSet);",
+    "new": "    this._terrainClip = clip;",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-clip-built-from-the-plain-source",
+    "file": "src/render/renderer.js",
+    "old": "terrainClipFs(set.terrainFs)",
+    "new": "set.terrainFs",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-built-eagerly",
+    "file": "src/render/renderer.js",
+    "old": "      terrainClip: null,\n",
+    "new": "      terrainClip: this._buildProgram(TERRAIN_VS, terrainClipFs(src.terrainFs)),\n",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-built-again-at-every-ask",
+    "file": "src/render/renderer.js",
+    "old": "    return (set.terrainClip ??= this._buildProgram(",
+    "new": "    return (set.terrainClip = this._buildProgram(",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-warm-a-no-op",
+    "file": "src/render/renderer.js",
+    "old": "  prepareTerrainClip() { this._ensureTerrainClip(); }",
+    "new": "  prepareTerrainClip() { }",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-world-every-pixel-plain",
+    "file": "src/scenes/world.js",
+    "old": "p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p), snowCover.drawOf(p));",
+    "new": "p.tilemapTex, 6.4, false, ecoDraw(p), snowCover.drawOf(p));",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-world-the-culls-pixels-only",
+    "file": "src/scenes/world.js",
+    "old": "p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p), snowCover.drawOf(p));",
+    "new": "p.tilemapTex, 6.4, !!p.dwTerrain, ecoDraw(p), snowCover.drawOf(p));",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-world-every-pixel-clipped",
+    "file": "src/scenes/world.js",
+    "old": "p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p), snowCover.drawOf(p));",
+    "new": "p.tilemapTex, 6.4, true, ecoDraw(p), snowCover.drawOf(p));",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-world-unsorted",
+    "file": "src/scenes/world.js",
+    "old": "    if (deepWaters) groundQueue.sort(dwClipLast);   // FAR-CLIP1: the cap's pixels last - one swap to the clip program a frame\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-world-clipped-first",
+    "file": "src/scenes/world.js",
+    "old": "function dwClipLast(a, b) { return (a._dwBytes ? 1 : 0) - (b._dwBytes ? 1 : 0); }",
+    "new": "function dwClipLast(a, b) { return (b._dwBytes ? 1 : 0) - (a._dwBytes ? 1 : 0); }",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-world-no-warm",
+    "file": "src/scenes/world.js",
+    "old": "  if (dwRender) renderer.prepareTerrainClip();   // FAR-CLIP1: the cap's clip program, built with the mod's own at mount - not inside the first frame that draws a coast\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-cap-writes-its-own-byte",
+    "file": "src/world/deepWater/deepWaterCap.js",
+    "old": "import { CLIP_SENTINEL } from '../terrain/terrainSurface.js'; // FAR-CLIP1: the byte's one home, the TileMap format's module - the renderer reads it there too",
+    "new": "const CLIP_SENTINEL = 255;",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-CLIP1-the-renderer-writes-its-own-byte",
+    "file": "src/render/renderer.js",
+    "old": "import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)\n",
+    "new": "const CLIP_SENTINEL = 255;\n",
+    "tests": [
+      "test/world/terrain/farclip1.test.js"
+    ]
+  }
+]

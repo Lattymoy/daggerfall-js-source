@@ -1,0 +1,112 @@
+[
+  {
+    "name": "ATTACK-MOVE-turn-paints-stance",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "if (isAnimating) updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);\n      else updateBillboardDelayed(frameCurrent, o, stateCurrent);",
+    "new": "updateBillboardDelayed(frameCurrent, o, stateCurrent);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a turn mid-swing paints the walk"
+  },
+  {
+    "name": "ATTACK-MOVE-queued-stance-fires",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "if (isAnimating && p.table !== isAnimating.table) continue;",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a walk repaint queued before the swing lands on it"
+  },
+  {
+    "name": "ATTACK-TURN-turn-paints-walk-frame",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);",
+    "new": "updateBillboard(frameCurrent, o, isAnimating.table);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a turn mid-swing shows the walk clock's frame of the swing"
+  },
+  {
+    "name": "ATTACK-WARM-not-wired",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      if (renderer && cfg.wornArmour) warmLayered();",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a weapon taken up composes its swing only as it plays"
+  },
+  {
+    "name": "ATTACK-WARM-weapon-not-in-sig",
+    "file": "src/player/eyeOfTheBeholder/layeredWarm.js",
+    "old": "lk.outfit, lk.weapon ?? '', lk.offhand ?? ''",
+    "new": "lk.outfit, lk.offhand ?? ''",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a weapon changed is not a new look"
+  },
+  {
+    "name": "ATTACK-WARM-one-hand-of-a-pair",
+    "file": "src/player/eyeOfTheBeholder/layeredWarm.js",
+    "old": "[['AttackMelee', { ...drawn, strike: 'R' }], ['AttackMelee', { ...drawn, strike: 'L' }]]",
+    "new": "[['AttackMelee', { ...drawn, strike: 'R' }]]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a pair's left blow not composed"
+  },
+  {
+    "name": "ATTACK-WARM-sheathed-frames",
+    "file": "src/player/eyeOfTheBeholder/layeredWarm.js",
+    "old": "const { sheathed: _sheathed, strike: _strike, ...drawn } = lk;",
+    "new": "const { strike: _strike, ...drawn } = lk;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a sheathed look's swing composed as sheathed, not as it plays"
+  },
+  {
+    "name": "ATTACK-WARM-cast-skipped",
+    "file": "src/player/eyeOfTheBeholder/layeredWarm.js",
+    "old": "if (Number.isInteger(lk.cast)) clips.push(['AttackSpell', drawn]);",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a readied cast not composed"
+  },
+  {
+    "name": "ATTACK-WARM-walker-not-wired",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "      if (worn) warmWalker(r, { onFoot: set ?? 0, ...worn });   // ATTACK-WARM",
+    "new": "",
+    "tests": [
+      "test/net/layered_peers.test.js"
+    ],
+    "why": "a walker's drawn weapon composes its swing only as it plays"
+  },
+  {
+    "name": "ATTACK-WARM-walker-sheathed-warms",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "const sig = look.sheathed ? null : warmSigOf(look);",
+    "new": "const sig = warmSigOf(look);",
+    "tests": [
+      "test/net/layered_peers.test.js"
+    ],
+    "why": "every sheathed passer-by's swing composed"
+  },
+  {
+    "name": "ATTACK-WARM-walker-queue-not-drained",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    for (const [t, o, f, look] of warmQueue.splice(0, LAYERED_WARM_A_FRAME)) store.ensure(spriteFor(t, o, f, look));   // ATTACK-WARM",
+    "new": "",
+    "tests": [
+      "test/net/layered_peers.test.js"
+    ],
+    "why": "queued, never composed"
+  }
+]

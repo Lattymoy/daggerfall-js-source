@@ -1,0 +1,119 @@
+[
+  {
+    "name": "SURV4-a-fire-outranks-a-berth",
+    "file": "src/systems/survival/rest.js",
+    "old": "  if (bed || houseOwned || ship) return REST_KIND.Bed;\n  if (byFire) return REST_KIND.Camp;",
+    "new": "  if (byFire) return REST_KIND.Camp;\n  if (bed || houseOwned || ship) return REST_KIND.Bed;",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-a-rough-hour-is-a-whole-hour",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughRest: { recovery: 0.5, encounters: 2, stiffHours: 4 },",
+    "new": "    roughRest: { recovery: 1, encounters: 2, stiffHours: 4 },",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-a-rough-hour-says-healed-after-taking-back",
+    "file": "src/systems/survival/rest.js",
+    "old": "  return healed && entity.health === h1 && entity.fatigue === f1 && entity.magicka === m1;",
+    "new": "  return healed;",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-a-bed-leaves-you-stiff",
+    "file": "src/systems/survival/rest.js",
+    "old": "  if (!(hours > 0)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-a-fire-does-not-answer-the-cold",
+    "file": "src/systems/survival/rest.js",
+    "old": "  if ((tempWord === 'freezing' || tempWord === 'deadly cold') && !byFire && !insideBuilding) return REST_TEXT_SURVIVAL.tooCold;",
+    "new": "  if ((tempWord === 'freezing' || tempWord === 'deadly cold') && !insideBuilding) return REST_TEXT_SURVIVAL.tooCold;",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-the-gate-ignores-the-switch",
+    "file": "src/systems/survival/rest.js",
+    "old": "    if (!e || !enabled()) return null;",
+    "new": "    if (!e) return null;",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-stiffness-never-lifts",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (Number.isFinite(s.stiffUntil) && now < s.stiffUntil) sub(['speed', 'agility'], STIFF_PENALTY);",
+    "new": "  if (Number.isFinite(s.stiffUntil) && s.stiffUntil > 0) sub(['speed', 'agility'], STIFF_PENALTY);",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-a-rough-rest-asks-once",
+    "file": "src/systems/encounters.js",
+    "old": "  for (let i = 0; i < asks && !r; i++) r = intermittentEnemySpawnOnce(ctx, rolls);",
+    "new": "  r = intermittentEnemySpawnOnce(ctx, rolls);",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-every-rest-asks-twice",
+    "file": "src/systems/encounters.js",
+    "old": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "new": "  const asks = 2;",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-the-kind-is-read-every-hour",
+    "file": "src/scenes/shared.js",
+    "old": "        _place = (_restKindOverride ?? (out.bedPressed ? pressedBedKind : restKind))();",
+    "new": "        _place = REST_KIND.Rough;",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-the-mod-off-still-costs",
+    "file": "src/scenes/shared.js",
+    "old": "_kind = _rules ? _place : REST_KIND.Bed;",
+    "new": "_kind = _place;",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-the-stiff-morning-is-said-every-time",
+    "file": "src/scenes/shared.js",
+    "old": "say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }",
+    "new": "say(REST_TEXT_SURVIVAL.stiff); }",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURV4-the-entity-never-says-how-it-sleeps",
+    "file": "src/scenes/shared.js",
+    "old": "      entity.restKind = b ? _place : null;",
+    "new": "      entity.restKind = null;",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  }
+]

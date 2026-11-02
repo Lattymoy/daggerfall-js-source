@@ -1,0 +1,101 @@
+[
+  {
+    "name": "KTC-kept-without-my-name",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "  w?.k === 'st' && mine && at && w.n === at.n && Array.isArray(w.cr) && w.cr.some((c) => c?.[0] === mine)",
+    "new": "  w?.k === 'st' && mine && at && w.n === at.n && Array.isArray(w.cr)",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-leader-over-the-ship-kept",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "  (kept.p ?? null) === (party ?? null)",
+    "new": "  (kept.p ?? null) === (party ?? null) &&\n  !leader",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-another-voyages-ship-ridden-to",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "  kept &&\n  kept.n === n &&\n  kept.a === mine &&\n  typeof kept.o === 'string' &&\n  kept.o &&\n  (kept.p ?? null) === (party ?? null)",
+    "new": "  kept && kept.a === mine && typeof kept.o === 'string' && kept.o && (kept.p ?? null) === (party ?? null)",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-share-kept-in-memory-alone",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "    try {\n      store?.set(KT_OWED_KEY, list);\n    } catch {\n      /* memory holds it */\n    }\n  };",
+    "new": "  };",
+    "tests": [
+      "test/scenes/ketch_shares.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-thrown-share-kept",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "        drop(e);\n        say(KT_SPOILS_TEXT.spilled);",
+    "new": "        say(KT_SPOILS_TEXT.spilled);",
+    "tests": [
+      "test/scenes/ketch_shares.test.js"
+    ]
+  },
+  {
+    "name": "KTC-one-share-held",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "      if (!owed().some((k) => same(k, e))) keep([...owed().filter((k) => !same(k, e)), e].slice(-KT_SHARES_OWED_MAX));",
+    "new": "      if (!owed().some((k) => same(k, e))) keep([e]);",
+    "tests": [
+      "test/scenes/ketch_shares.test.js"
+    ]
+  },
+  {
+    "name": "KTC-anothers-share-given",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "  const mine = () => {\n    const m = me();\n    return owed().filter((e) => !m || e.s === m);\n  };",
+    "new": "  const mine = () => owed();",
+    "tests": [
+      "test/scenes/ketch_shares.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-hours-pool-handed-again",
+    "file": "src/scenes/world.js",
+    "old": "  const floorPool = () => (modes?.ktShip?.() != null && ketch ? ketch.spoils :",
+    "new": "  const floorPool = () => (modes?.ktShip?.() != null && ketch ? sdSpoilsPool :",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-reach-the-boxs",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "export const KT_PRESS_REACH = KT_REACH + 0.4;",
+    "new": "export const KT_PRESS_REACH = KT_REACH + 0.4 + 0.55 * Math.SQRT2;",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-let-go-said-whether-it-went",
+    "file": "src/player/carryStep.js",
+    "old": "  if (st.forced && st.sheathed === false)\n    return sendDrop() ? { forced: false, letGoAt: t, say: 'letGo' } : { forced: true, sheathe: true };",
+    "new": "  if (st.forced && st.sheathed === false) return (sendDrop(), { forced: false, letGoAt: t, say: 'letGo' });",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-an-empty-deck-kept",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "export const ketchShipUnheard = (V, sinceMs) => !(V?.n >= 0) && sinceMs > KT_DOOR_MS;",
+    "new": "export const ketchShipUnheard = (V, sinceMs) => !(V?.n >= 0) && sinceMs > Infinity;",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  }
+]

@@ -1,0 +1,1118 @@
+[
+  {
+    "name": "PROF7-hides-per-day-exported-again",
+    "file": "src/net/professionLaw.js",
+    "old": "export const HIGH_HIDES_PER_DAY = 3;",
+    "new": "export const HIDES_PER_DAY = 30;\nexport const HIGH_HIDES_PER_DAY = 3;",
+    "tests": [
+      "test/net/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the law exports no day's thirty - the mutant exports it again. It was the mutant that made the day thirty-one."
+  },
+  {
+    "name": "PROF7-high-hides-four",
+    "file": "src/net/professionLaw.js",
+    "old": "export const HIGH_HIDES_PER_DAY = 3;",
+    "new": "export const HIGH_HIDES_PER_DAY = 4;",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-high-tier-six",
+    "file": "src/net/professionLaw.js",
+    "old": "export const HIGH_HIDE_TIER = 5;",
+    "new": "export const HIGH_HIDE_TIER = 6;",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-part-one-in-two",
+    "file": "src/net/professionLaw.js",
+    "old": "export const PART_CHANCE = 0.25;",
+    "new": "export const PART_CHANCE = 0.5;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-butcher-one",
+    "file": "src/net/professionLaw.js",
+    "old": "export const BUTCHERY = Object.freeze({ meat: 1, butcher: 2 });",
+    "new": "export const BUTCHERY = Object.freeze({ meat: 1, butcher: 1 });",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-bear-no-tooth",
+    "file": "src/net/professionLaw.js",
+    "old": "[MOB.GrizzlyBear], 'part:tooth',",
+    "new": "[MOB.GrizzlyBear], null,",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-slaughterfish-meat",
+    "file": "src/net/professionLaw.js",
+    "old": "    'food:fish',",
+    "new": "    'food:meat',",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-dragonling-alternate-unskinned",
+    "file": "src/net/professionLaw.js",
+    "old": "[MOB.Dragonling, MOB.DragonlingAlternate]",
+    "new": "[MOB.Dragonling]",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-spider-cured",
+    "file": "src/net/professionLaw.js",
+    "old": "    'food:meat',\n    null,",
+    "new": "    'food:meat',\n    'leather:cured',",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-any-foe-a-rat",
+    "file": "src/net/professionLaw.js",
+    "old": "export const hideOfFoe = (mobileType) =>\n  Number.isSafeInteger(mobileType) ? (HIDES.find((h) => h.foes.includes(mobileType)) ?? null) : null;",
+    "new": "export const hideOfFoe = (mobileType) => HIDES.find((h) => h.foes.includes(mobileType)) ?? HIDES[0];",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-tanner-at-100",
+    "file": "src/net/professionLaw.js",
+    "old": "export const workSpecRank = (r) => r.more?.rank ?? 100;",
+    "new": "export const workSpecRank = () => 100;",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-cure-one-hide",
+    "file": "src/net/professionLaw.js",
+    "old": "[[h.key, 2]],",
+    "new": "[[h.key, 1]],",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-weave-two-silk",
+    "file": "src/net/professionLaw.js",
+    "old": "[['hide:spider', 3]]",
+    "new": "[['hide:spider', 2]]",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-cure-raises-outfitting",
+    "file": "src/net/professionLaw.js",
+    "old": "        xp: null,",
+    "new": "        xp: 'outfitting',",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-a-hide-held-back",
+    "file": "src/net/professionLaw.js",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
+    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'hide:bear']);",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-trace-three-plus",
+    "file": "src/net/professionLaw.js",
+    "old": "Math.min(TRACE_ACT.maxPoints, 4 + (tier | 0))",
+    "new": "Math.min(TRACE_ACT.maxPoints, 3 + (tier | 0))",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-trace-master-narrower",
+    "file": "src/net/professionLaw.js",
+    "old": "  TRACE_ACT.tolDeg * band * (1 + (TRACE_ACT.masterWiden * Math.max(0, Math.min(100, rank))) / 100);",
+    "new": "  TRACE_ACT.tolDeg * band * (1 - (TRACE_ACT.masterWiden * Math.max(0, Math.min(100, rank))) / 100);",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-knife-band-intelligence",
+    "file": "src/net/professionLaw.js",
+    "old": "export const knifeBand = ({ intelligence, agility }) => actBand(Math.trunc((intelligence + agility) / 2));",
+    "new": "export const knifeBand = ({ intelligence }) => actBand(intelligence);",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-knife-indoors-refused",
+    "file": "src/net/professionLaw.js",
+    "old": "export const KNIFE_CHECKS = Object.freeze(['town', 'sea', 'enemies', 'encumbered']);",
+    "new": "export const KNIFE_CHECKS = Object.freeze(['inside', 'town', 'sea', 'enemies', 'encumbered']);",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-knife-by-day",
+    "file": "src/net/professionLaw.js",
+    "old": "export const KNIFE_CHECKS = Object.freeze(['town', 'sea', 'enemies', 'encumbered']);",
+    "new": "export const KNIFE_CHECKS = Object.freeze(['town', 'daylight', 'sea', 'enemies', 'encumbered']);",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-trophy-hunter-waits-again",
+    "file": "src/net/professionLaw.js",
+    "old": "        'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.',\n      ),",
+    "new": "        'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.',\n        'trophy',\n      ),",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-no-raw-fish",
+    "file": "src/net/professionLaw.js",
+    "old": "export const FOOD_KEYS = Object.freeze([\n  'food:apple',\n  'food:orange',\n  'food:mushroom',\n  'food:egg',\n  'food:meat',\n  'food:fish',\n]); // PROF7: a body's butchery - C&C's Raw Meat, and a Slaughterfish's Raw Fish (5.2's Fishing keeps the same)",
+    "new": "export const FOOD_KEYS = Object.freeze(['food:apple', 'food:orange', 'food:mushroom', 'food:egg', 'food:meat']); // PROF7: a body's butchery - C&C's Raw Meat, and a Slaughterfish's Raw Fish (5.2's Fishing keeps the same)",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-checks-never-refuse",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "  for (const check of order) if (checkFails(check, w)) return lines[check] ?? null;",
+    "new": "  for (const check of order) if (false && checkFails(check, w)) return lines[check] ?? null;",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-broke-as-a-tool",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "?.name ?? name ?? 'tool'} broke.`;",
+    "new": "?.name ?? 'tool'} broke.`;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-body-key-uppercase",
+    "file": "src/net/nodeLaw.js",
+    "old": "const BODY_KEY_RE = /^body:(\\d{1,6}):([0-9a-f]{12})$/;",
+    "new": "const BODY_KEY_RE = /^body:(\\d{1,6}):([0-9a-fA-F]{12})$/;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-body-any-spelling",
+    "file": "src/net/nodeLaw.js",
+    "old": "if (b) return bodyKey({ day: Number(b[1]), id: b[2] }) === s ? { kind: 'body', day: Number(b[1]), id: b[2] } : null;",
+    "new": "if (b) return { kind: 'body', day: Number(b[1]), id: b[2] };",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-clean-pelt-plain",
+    "file": "src/net/nodeLaw.js",
+    "old": "wholeYield(HIDE_YIELD * (clean ? ACT_YIELD_MAX : 1), chance)",
+    "new": "wholeYield(HIDE_YIELD, chance)",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-torn-keeps-part",
+    "file": "src/net/nodeLaw.js",
+    "old": "const part = hide.part && !torn && dice() < PART_CHANCE ? hide.part : null;",
+    "new": "const part = hide.part && dice() < PART_CHANCE ? hide.part : null;",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-part-roll-inverted",
+    "file": "src/net/nodeLaw.js",
+    "old": "&& !torn && dice() < PART_CHANCE",
+    "new": "&& !torn && dice() >= PART_CHANCE",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-hunt-cap-again",
+    "file": "server-account/src/professions.js",
+    "old": "        AND (?9 <> 'hunting' OR ?19 < ?20 OR ${huntedHigh} < ?21)\n",
+    "new": "        AND (?9 <> 'hunting' OR (COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6), 0) < 30 AND (?19 < ?20 OR ${huntedHigh} < ?21)))\n",
+    "tests": [
+      "test/net/prof7_service.test.js",
+      "test/net/audit32_service.test.js",
+      "test/net/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the day's thirty hides are gone and the pins turned (the thirty-first credited) - the mutant decides the thirty in the INSERT again. It was the mutant that let a thirty-first through. It was recorded equivalent (\"AUDIT 32 L2: the day's thirty is kept by the hide's own cut to the day's room - at the cap the decision's qty is 0, and node_harvests' CHECK (qty >= 1) refuses the row under the INSERT OR IGNORE, so the WHERE's bound is belt-and-braces (kept: it says the law in the statement that decides it)\"); the inverse is not - it dies."
+  },
+  {
+    "name": "PROF7-svc-high-undecided",
+    "file": "server-account/src/professions.js",
+    "old": "?9 <> 'hunting' OR ?19 < ?20 OR",
+    "new": "?9 <> 'hunting' OR 1 OR",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT 32 L2: the rare three the same - the qty cut to the rare hides' room is 0 at their cap, and the CHECK (qty >= 1) refuses the row under the OR IGNORE; the WHERE's bound is belt-and-braces",
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the rare hides' bound kept, ?19 to ?21 now."
+  },
+  {
+    "name": "PROF7-svc-tier-unwritten",
+    "file": "server-account/src/professions.js",
+    "old": "THEN ?18 END, ?19, CASE",
+    "new": "THEN ?18 END, 0, CASE",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the tier is ?19 now."
+  },
+  {
+    "name": "PROF7-svc-butchery-one",
+    "file": "server-account/src/professions.js",
+    "old": "    extraQty = finds.meatQty || 1;",
+    "new": "    extraQty = 1;",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-extra-one-stored",
+    "file": "server-account/src/professions.js",
+    "old": "SELECT player, char_id, extra, 'own', extra_qty FROM node_harvests WHERE ${mine} AND extra IS NOT NULL",
+    "new": "SELECT player, char_id, extra, 'own', 1 FROM node_harvests WHERE ${mine} AND extra IS NOT NULL",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-no-foe-asked",
+    "file": "server-account/src/professions.js",
+    "old": "  if (isBody && !hide) return { error: 'prof-foe' };\n",
+    "new": "",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-body-rank-unread",
+    "file": "server-account/src/professions.js",
+    "old": "    tier = h.tier;\n    if (!tierOpen(rank, tier)) return { error: 'prof-rank' };",
+    "new": "    tier = h.tier;",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-both-clean",
+    "file": "server-account/src/professions.js",
+    "old": "  return { clean: clean && !torn, torn: torn && !clean };",
+    "new": "  return { clean, torn: torn && !clean };",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-butcher-at-50",
+    "file": "server-account/src/professions.js",
+    "old": "butcher: specs[100] === 'butcher' }",
+    "new": "butcher: specs[50] === 'butcher' }",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-body-witnesses",
+    "file": "server-account/src/professions.js",
+    "old": "  const witness = !isBody && Number.isSafeInteger(player.registered_at)",
+    "new": "  const witness = Number.isSafeInteger(player.registered_at)",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "A body's witness `key` is null, and world_witness's NOT NULL key under INSERT OR IGNORE writes nothing whoever asks - the `!isBody` says what the constraint also enforces, and keeps the witness statement's intent readable."
+  },
+  {
+    "name": "PROF7-svc-region-unbound",
+    "file": "server-account/src/professions.js",
+    "old": "...(isBody ? [] : [db.prepare(`INSERT OR IGNORE INTO world_witness",
+    "new": "...(false ? [] : [db.prepare(`INSERT OR IGNORE INTO world_witness",
+    "tests": [
+      "test/net/prof7_service.test.js",
+      "test/net/audit32_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-high-post-check-gone",
+    "file": "server-account/src/professions.js",
+    "old": "    if (tier >= HIGH_HIDE_TIER && hunt.high >= HIGH_HIDES_PER_DAY) return { error: 'prof-hunt-high' };\n",
+    "new": "",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (re-aimed by content): the post-check that named the day's thirty is gone with it; the one that stands names the rare hides - without it a fourth rare hide's refusal says `stores-full`."
+  },
+  {
+    "name": "PROF7-svc-dye-unchecked",
+    "file": "server-account/src/professions.js",
+    "old": "  if (!dyeOk(r, dye)) return { error: 'prof-dye' };",
+    "new": "",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-dye-unsigned",
+    "file": "server-account/src/professions.js",
+    "old": "  const u = dye ?? null;",
+    "new": "  const u = null;",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-dye-unkept",
+    "file": "server-account/src/professions.js",
+    "old": "        f, ?11, ?12, ?15, ?16",
+    "new": "        f, ?11, ?12, ?15, NULL",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-dye-unanswered",
+    "file": "server-account/src/professions.js",
+    "old": "dye: row.dye == null ? null : Number(row.dye),",
+    "new": "dye: null,",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-svc-state-no-hunt",
+    "file": "server-account/src/professions.js",
+    "old": "    hunt: huntFrom(hunt[0]),   // PROF7: the account's hides today (PROF0 6)\n",
+    "new": "",
+    "tests": [
+      "test/net/prof7_service.test.js",
+      "test/net/prof1_service.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "PROF7-svc-answer-no-hunt",
+    "file": "server-account/src/professions.js",
+    "old": "    ...(row.profession === 'hunting' ? { hunt: huntFrom(r.get('hunt')?.[0]) } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "PROF7-svc-high-counts-all",
+    "file": "server-account/src/professions.js",
+    "old": "COALESCE(SUM(CASE WHEN tier >= ?3 THEN qty ELSE 0 END), 0) AS high",
+    "new": "COALESCE(SUM(qty), 0) AS high",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-market-dye-unread",
+    "file": "server-account/src/market.js",
+    "old": "  ...(p.dye == null ? {} : { dye: Number(p.dye) }),",
+    "new": "",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-market-mine-undyed",
+    "file": "server-account/src/market.js",
+    "old": "p.marked, p.dye, p.hand, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l LEFT JOIN products p",
+    "new": "p.marked, p.hand, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l LEFT JOIN products p",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ],
+    "note": "PROF9 (RE-AIMED by content): the fire's code beside it."
+  },
+  {
+    "name": "PROF7-market-crafted-undyed",
+    "file": "server-account/src/market.js",
+    "old": "p.marked, p.dye, p.hand, p.record, p.template, p.material AS dfu_material\n      ${from}",
+    "new": "p.marked, p.hand, p.record, p.template, p.material AS dfu_material\n      ${from}",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ],
+    "note": "PROF9 (RE-AIMED by content): the fire's code beside it."
+  },
+  {
+    "name": "PROF7-index-hunt-cap-400",
+    "file": "server-account/src/index.js",
+    "old": "'prof-hunt-high': 409, 'prof-foe': 400,",
+    "new": "'prof-hunt-high': 400, 'prof-foe': 400,",
+    "tests": [
+      "test/net/prof7_service.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): `prof-hunt-cap` has no status now - the rare hides' refusal alone."
+  },
+  {
+    "name": "PROF7-leatherworker-armour",
+    "file": "src/net/recipeLaw.js",
+    "old": "    (spec50 === 'leatherworker' && r.family === 'leather')",
+    "new": "    (spec50 === 'leatherworker' && r.family === 'armour')",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-tailor-furnishings",
+    "file": "src/net/recipeLaw.js",
+    "old": "    (spec50 === 'tailor' && r.family === 'clothing') ||",
+    "new": "    (spec50 === 'tailor' && r.family === 'furnishings') ||",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-hardened-no-step",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
+    "new": "  if (r.metal === WARFORGED || r.leather === CURED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-dye-on-undyed",
+    "file": "src/net/recipeLaw.js",
+    "old": "  dye == null\n    ? true\n    : !!r && r.kind === 'garment' && r.dyes === true && Number.isInteger(dye) && GARMENT_DYES.includes(dye);",
+    "new": "  dye == null ? true : !!r && r.kind === 'garment' && Number.isInteger(dye) && GARMENT_DYES.includes(dye);",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT 32 L3: every garment takes a dye (DFU's \"unchangeable\" shirts too), so `dyes` is true of every garment and the kind test decides alone - kept for a garment that may one day take none"
+  },
+  {
+    "name": "PROF7-dye-eleven",
+    "file": "src/net/recipeLaw.js",
+    "old": "  dye == null\n    ? true\n    : !!r && r.kind === 'garment' && r.dyes === true && Number.isInteger(dye) && GARMENT_DYES.includes(dye);",
+    "new": "  dye == null ? true : !!r && r.kind === 'garment' && r.dyes === true && Number.isInteger(dye) && dye >= 0 && dye <= 10;",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-boots-no-leather",
+    "file": "src/net/recipeLaw.js",
+    "old": "        inputs: [\n          [c.key, GARMENT_BOLTS[/** @type {string} */ (size)]],\n          ...(size === 'b' ? [[CURED_LEATHER.key, 1]] : []),\n        ],",
+    "new": "        inputs: [[c.key, GARMENT_BOLTS[/** @type {string} */ (size)]], ...[]],",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-large-two-bolts",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const GARMENT_BOLTS = Object.freeze({ s: 1, m: 2, l: 3, b: 1 });",
+    "new": "export const GARMENT_BOLTS = Object.freeze({ s: 1, m: 2, l: 2, b: 1 });",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-rugs-two-wool",
+    "file": "src/net/recipeLaw.js",
+    "old": "      inputs: [[WOOL.key, 3]],",
+    "new": "      inputs: [[WOOL.key, 2]],",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-large-skins-one",
+    "file": "src/net/recipeLaw.js",
+    "old": "      [244, 'Large Skins', 2],",
+    "new": "      [244, 'Large Skins', 1],",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-net-one-linen",
+    "file": "src/net/recipeLaw.js",
+    "old": "    inputs: [[LINEN.key, 2]],",
+    "new": "    inputs: [[LINEN.key, 1]],",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-knife-two-ingots",
+    "file": "src/net/recipeLaw.js",
+    "old": "  product('knife', 'Skinning Knife', 'tool', SKINNING_KNIFE.templateIndex, 1, [[PINE, 1]]),",
+    "new": "  product('knife', 'Skinning Knife', 'tool', SKINNING_KNIFE.templateIndex, 2, [[PINE, 1]]),",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-harpy-four",
+    "file": "src/net/recipeLaw.js",
+    "old": "      ['hide:harpy', 1],",
+    "new": "      ['hide:harpy', 4],",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-stitch-wide-band",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const STITCH_ACT = Object.freeze({ stitches: 8, beatS: 0.75, bandW: 0.2, gapS: 0.25 });",
+    "new": "export const STITCH_ACT = Object.freeze({ stitches: 8, beatS: 0.75, bandW: 0.3, gapS: 0.25 });",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-beat-one-side",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const onBeat = (u, w) => u <= w / 2 || u >= 1 - w / 2;",
+    "new": "export const onBeat = (u, w) => u <= w / 2;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-stitch-band-agility",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const stitchBand = ({ agility, speed }) => actBand(Math.trunc((agility + speed) / 2));",
+    "new": "export const stitchBand = ({ agility, speed }) => actBand(Math.trunc((agility + agility) / 2));",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-leather-plate",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const ARMOR_LEATHER = 0x0000;",
+    "new": "export const ARMOR_LEATHER = 0x0200;",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-record-u-anything",
+    "file": "src/net/productRecord.js",
+    "old": "  if (c.u !== undefined && (c.u === null || !dyeOk(r, c.u))) return false;",
+    "new": "",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-record-u-unwritten",
+    "file": "src/net/productRecord.js",
+    "old": "...(u == null ? {} : { u })",
+    "new": "...{}",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/net/prof7_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-trace-no-chord",
+    "file": "src/systems/traceAct.js",
+    "old": "        n = Math.ceil((hi - lo) / TRACE_ACT.stepDeg - 1e-9);",
+    "new": "        n = 1;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-trace-let-go-kept",
+    "file": "src/systems/traceAct.js",
+    "old": "      if (!held || !aim) {",
+    "new": "      if (!aim) {",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-trace-quick-clean",
+    "file": "src/systems/traceAct.js",
+    "old": "      const steady = st.seconds >= TRACE_ACT.minS && st.seconds <= TRACE_ACT.maxS;",
+    "new": "      const steady = true;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-trace-gentle-tears",
+    "file": "src/systems/traceAct.js",
+    "old": "      if (gentle) return { score: 0, clean: false, torn: false, seconds: 0, slips: 0 };",
+    "new": "      if (gentle) return { score: 0, clean: false, torn: true, seconds: 0, slips: 0 };",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-trace-start-anywhere",
+    "file": "src/systems/traceAct.js",
+    "old": "        if (held && aim && off(aim, points[0]) <= TRACE_ACT.startDeg) {",
+    "new": "        if (held && aim) {",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-stitch-no-gap",
+    "file": "src/systems/stitchAct.js",
+    "old": "      if (st.done || at - st.lastAt < STITCH_ACT.gapS) return null;",
+    "new": "      if (st.done) return null;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-stitch-short-clean",
+    "file": "src/systems/stitchAct.js",
+    "old": "clean: !gentle && st.stitches.length >= STITCH_ACT.stitches && hits === st.stitches.length",
+    "new": "clean: !gentle && hits === st.stitches.length",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-slowrot-every-day",
+    "file": "src/systems/survival/food.js",
+    "old": "        if (kept % 2 === 1) continue;\n        if (rotRoll(item, Math.floor(kept / 2), rolls)) n++;",
+    "new": "        if (rotRoll(item, Math.floor(kept / 2), rolls)) n++;",
+    "tests": [
+      "test/net/prof7_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-body-without-knife",
+    "file": "src/scenes/huntHost.js",
+    "old": "(foragingToolIn(entity, SKINNING_KNIFE.templateIndex) ? bodies() : [])",
+    "new": "bodies()",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-stamp-any-foe",
+    "file": "src/scenes/huntHost.js",
+    "old": "      if (!hide) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-bodies-alive",
+    "file": "src/scenes/huntHost.js",
+    "old": "    if (!f?.dead || !f.corpse) continue;",
+    "new": "    if (!f) continue;",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-loot-skins",
+    "file": "src/scenes/huntHost.js",
+    "old": "rest: '', ready: false, loot: true };",
+    "new": "rest: '', ready: true, loot: true };",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-high-unread",
+    "file": "src/scenes/huntHost.js",
+    "old": "  if (body.tier >= HIGH_HIDE_TIER && high >= HIGH_HIDES_PER_DAY)",
+    "new": "  if (false)",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-ask-no-foe",
+    "file": "src/scenes/huntHost.js",
+    "old": "        ask: (skinned.set(b.key, b.foe), { foe: b.foe }),",
+    "new": "        ask: (skinned.set(b.key, b.foe), {}),",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-tracker-dead",
+    "file": "src/scenes/huntHost.js",
+    "old": "if (!f || f.dead || !feet",
+    "new": "if (!f || !feet",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-hand-tanto",
+    "file": "src/scenes/huntHost.js",
+    "old": "export const KNIFE_HAND = Object.freeze({ group: 'Weapons', templateIndex: 113, material: 0 });",
+    "new": "export const KNIFE_HAND = Object.freeze({ group: 'Weapons', templateIndex: 114, material: 0 });",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-host-stamp-day-fixed",
+    "file": "src/scenes/huntHost.js",
+    "old": "bodyKey({ day: utcDayOfMs(nowMs()), id: bodyId(rand) })",
+    "new": "bodyKey({ day: 0, id: bodyId(rand) })",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-gather-loose-unstood",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (nodes.length) places.push({ nodes, entry: null, info: null, loose: true, at: looseAt });",
+    "new": "",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-gather-act-stays",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      return now ? looseAt(now) : null;",
+    "new": "      return looseAt(a.node);",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-gather-ground-sent",
+    "file": "src/scenes/gatherHost.js",
+    "old": "climate: a.info?.climate ?? null, region: a.info?.region ?? null, act: report,",
+    "new": "climate: a.info?.climate ?? 0, region: a.info?.region ?? 0, act: report,",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-gather-ask-dropped",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      at: Math.floor(deps.nowMs() / 1000), ...((typeof a.ask === 'function' ? a.ask() : a.ask) ?? {}),",
+    "new": "      at: Math.floor(deps.nowMs() / 1000),",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "note": "AUDIT SILVER-WAYS (PIN MOVED): re-aimed by content to the code the audit's fix left (the Watch both ways, the receipt asked at the act's end and this account's alone, the tax reckoned in the batch)."
+  },
+  {
+    "name": "PROF7-gather-chip-characters",
+    "file": "src/scenes/gatherHost.js",
+    "old": "const tally = (cp && kindOfProfession(cp)?.tally?.()) ||",
+    "new": "const tally = null ||",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-gather-extra-uncounted",
+    "file": "src/scenes/gatherHost.js",
+    "old": "${xn > 1 ? `${xn} ` : ''}${materialCountLabel(d.extra, xn)}",
+    "new": "${materialCountLabel(d.extra, xn)}",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "note": "GATHER-SAID (PIN MOVED): the butchery's count said in the goods' one line (gatherHost.js storesLine), re-aimed by content. BUTCHER-STORES (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "PROF7-book-foe-dropped",
+    "file": "src/net/profBook.js",
+    "old": "      ...(h.foe === undefined ? {} : { foe: h.foe }),   // PROF7: the foe a body is (PROF0 6: the client's claim)\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-book-extra-unapplied",
+    "file": "src/net/profBook.js",
+    "old": "      applyStore(r.data?.extraStore);",
+    "new": "",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-book-hunt-unapplied",
+    "file": "src/net/profBook.js",
+    "old": "      applyHunt(r.data?.hunt);",
+    "new": "",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-book-dye-dropped",
+    "file": "src/net/profBook.js",
+    "old": "w.rid, w.heartwood === true, Number.isInteger(w.dye) ? w.dye : null",
+    "new": "w.rid, w.heartwood === true, null",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-client-dye-unsent",
+    "file": "src/net/accountClient.js",
+    "old": "...(dye == null ? {} : { dye }), ...(seat == null",
+    "new": "...(seat == null",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-hud-trace-unlit",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "        setClass(\n          n,\n          st.tracing && i <= st.reached\n            ? `prof-glint${ctx.reduced ? ' still' : ''}`\n            : i === 0\n              ? 'prof-point first'\n              : 'prof-point',\n        );",
+    "new": "        setClass(n, false ? `prof-glint${ctx.reduced ? ' still' : ''}` : i === 0 ? 'prof-point first' : 'prof-point');",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-meat-cooked",
+    "file": "src/systems/professions/profItems.js",
+    "old": "  if (key === 'food:meat') return CC_TEMPLATE.RawMeat;",
+    "new": "  if (key === 'food:meat') return CC_TEMPLATE.Meat;",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-fish-always-cc",
+    "file": "src/systems/professions/profItems.js",
+    "old": "  if (key === 'food:fish') return fishTemplate(cc);",
+    "new": "  if (key === 'food:fish') return fishTemplate(true);",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-slowrot-unmarked",
+    "file": "src/systems/professions/profItems.js",
+    "old": "    if (slowRot === true) item.slowRot = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-knife-offline",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "export const knifeCustomItemsForGroup = (group) =>\n  group === PROF_ITEM_GROUP && isOnlinePage() ? [SKINNING_KNIFE.templateIndex] : [];",
+    "new": "export const knifeCustomItemsForGroup = (group) => (group === PROF_ITEM_GROUP ? [SKINNING_KNIFE.templateIndex] : []);",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-silk-heavy",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "m.key === 'hide:spider' || m.key === 'hide:harpy' ? 0.25",
+    "new": "m.key === 'hide:harpy' ? 0.25",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-garment-as-armour",
+    "file": "src/systems/smithItems.js",
+    "old": "        : r.kind === 'garment'\n          ? garmentItem(r, seed, dye) // PROF7: DFU's clothing, its variant and dye the record's\n          : r.kind === 'jewel'\n            ? jewelItem(r) // PROF10: DFU's jewellery\n            : armorOfMaterial(r.templateIndex, r.material); // PROF7: leather armour at Leather (0)",
+    "new": "        : r.kind === 'jewel'\n          ? jewelItem(r) // PROF10: DFU's jewellery\n          : armorOfMaterial(r.templateIndex, r.material); // PROF7: leather armour at Leather (0)",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-undyed-dyed",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (r.dyes === true && Number.isInteger(dye)) item.dye = dye;",
+    "new": "  if (Number.isInteger(dye)) item.dye = dye;",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT 32 L3: garmentItem mints garments alone, and every garment takes a dye - the flag's test is belt-and-braces"
+  },
+  {
+    "name": "PROF7-garment-variant-zero",
+    "file": "src/systems/smithItems.js",
+    "old": "variant: (seed >>> 0) % variants,",
+    "new": "variant: 0,",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-pages-hunting-unpractised",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
+    "new": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
+  },
+  {
+    "name": "PROF7-pages-smithing-unlocks-swallowed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    [localizedText('silver', 'Silver'), 3], [t('prof.page.unlocks.smithing4', 'Elven, Dwarven'), 4], [localizedText('mithril', 'Mithril'), 5], [t('prof.page.unlocks.smithing6'",
+    "new": "    [t('prof.page.unlocks.smithing6'",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-pages-loom-dye-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const res = await p.craft(id, { clean: clean && getPref('gentleActs') !== true, dye: d });",
+    "new": "const res = await p.craft(id, { clean: clean && getPref('gentleActs') !== true, dye: null });",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-pages-weavers-unnamed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (sale && have < inp.n && loom.kind === 'shop') counterBuy(line, { el, p, state: _loom, rerender, key: inp.key, need: inp.n - have, sale, who: 'weavers', counter: 'weavers' });",
+    "new": "      if (sale && have < inp.n && loom.kind === 'shop') counterBuy(line, { el, p, state: _loom, rerender, key: inp.key, need: inp.n - have, sale, who: 'weavers' });",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-pages-undyed-offered",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (r.kind === 'garment' && r.dyes === true) {",
+    "new": "    if (r.kind === 'garment') {",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT 32 L3: every garment takes a dye, so the dye row stands for every garment whether the flag is asked or not"
+  },
+  {
+    "name": "PROF7-pages-hunt-day-characters",
+    "file": "src/ui/professions/profPages.js",
+    "old": "{ hides: h.hides, high:",
+    "new": "{ hides: 0, high:",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the day's hides a count, no 'of 30'."
+  },
+  {
+    "name": "PROF7-no-loom-station",
+    "file": "src/net/decorLaw.js",
+    "old": "  'music',\n  'loom',\n  'mason',",
+    "new": "  'mason',",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-loom-licence-cheap",
+    "file": "src/net/decorLaw.js",
+    "old": "  loom: 50_000,",
+    "new": "  loom: 5_000,",
+    "tests": [
+      "test/net/prof7_law.test.js",
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-loom-at-furnishers",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (interiorBuilding.buildingType === BUILDING_TYPES.ClothingStore) return",
+    "new": "if (interiorBuilding.buildingType === BUILDING_TYPES.FurnitureStore) return",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF7-world-butcher-fresh",
+    "file": "src/scenes/world.js",
+    "old": "{ slowRot: key === 'food:meat' && profBook?.track('hunting')?.specs?.[100] === 'butcher', noRot:",
+    "new": "{ slowRot: false, noRot:",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "note": "PROF9 (RE-AIMED by content): the fire's code beside it."
+  },
+  {
+    "name": "PROF7-world-dungeon-bodies-street",
+    "file": "src/scenes/professionsHost.js",
+    "old": "{ street: exteriorFoes, dungeon: host.modes?.dungeonCtx, interior: host.modes?.interiorFoes }, bodyStamps);",
+    "new": "{ street: exteriorFoes, dungeon: exteriorFoes, interior: host.modes?.interiorFoes }, bodyStamps);",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ]
+  }
+]

@@ -1,0 +1,78 @@
+[
+  {
+    "name": "AUDIT0929-S1-a-clip-on-the-attacking-state",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "        const fresh = last.swingN == null || last.swingN !== clipSwing;",
+    "new": "        const fresh = true;",
+    "tests": [
+      "test/systems/audit0929_swing.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-S1-the-count-unsaid",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    swingN: swing.n,",
+    "new": "    /* no count */",
+    "tests": [
+      "test/systems/audit0929_swing.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-S1-a-new-rig-keeps-the-old-count",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      clipSwing = null;   // AUDIT PRE-MERGE 0929 S1",
+    "new": "      /* kept */   // AUDIT PRE-MERGE 0929 S1",
+    "tests": [
+      "test/systems/audit0929_swing.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-S3-rr-weightless",
+    "file": "src/systems/roleplayRealism/rrRealism.js",
+    "old": "  return swingFrameSeconds(blend, {\n    heft: swingHeft(weight, liveStrength),\n    handling: swingHandling(weaponType, hands === 'Both', shortBlade),\n  });",
+    "new": "  return swingFrameSeconds(blend, { handling: swingHandling(weaponType, hands === 'Both', shortBlade) });",
+    "tests": [
+      "test/systems/rr1_realism.test.js",
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-S3-rr-weight-unread",
+    "file": "src/systems/roleplayRealism/rrInstall.js",
+    "old": "    const weight = w?.weight ?? 0;",
+    "new": "    const weight = 0;",
+    "tests": [
+      "test/systems/rr1_realism.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-S5-the-reader-unregistered",
+    "file": "src/combat/swingLaw.js",
+    "old": "installSwingLaw();\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit0929_swing.test.js",
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-S5-the-rig-without-the-reader",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "import '../swingLaw.js';",
+    "new": "// no reader",
+    "tests": [
+      "test/systems/audit0929_swing.test.js",
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-S6-the-reader-grows-the-table",
+    "file": "src/combat/swingLaw.js",
+    "old": "  entity.equip?.slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
+    "new": "  (entity.equip ??= { slots: {} }).slots?.[\n    ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand\n  ] ?? null;",
+    "tests": [
+      "test/systems/audit0929_swing.test.js",
+      "test/combat/weapon/weaponrig.test.js"
+    ]
+  }
+]

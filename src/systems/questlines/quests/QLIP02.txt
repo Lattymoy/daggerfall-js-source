@@ -1,0 +1,102 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE COURT CRAFTER, step 2 of 3.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner an hour after
+-- step 1 ends: the crafter's word is in the journal at once. The giver is unnamed (a court crafter): a Smith of the
+-- player's own town, at its general store. The acts are the features' (qlActs.js): ore or stone mined (Mining and
+-- Quarrying, a vein's ore or a boulder's stone), wood chopped (Logging, or Foraging's axe). Nothing is taken.
+-- AUDIT QUESTLINES LINES-10: a Person is made fresh in each step's quest (a new name, in whatever town the player
+-- stands in), so this step's giver is introduced as NEW - sent on by the last step's - never spoken of as the same one.
+Quest: QLIP02
+DisplayName: Ore and Timber
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        _crafter_ has given the heavy work to someone else.
+
+QuestComplete:  [1004]
+<ce>         "Metal for the forge, timber for the bench."
+<ce>          _crafter_ counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Word from the court crafter: heavier work, and a
+ colleague to judge it - _crafter_, who keeps the
+ court's stock at _store_ in __store_. I am to
+ mine ore or stone three times and chop wood three
+ times, and then go to _store_ to say so.
+
+Message:  1011
+%qdt:
+ I have mined three times and chopped wood three
+ times. _crafter_ is waiting to hear of it at
+ _store_ in __store_.
+
+Message:  1012
+<ce>         "Three times at the rock, three at the tree.
+<ce>          Come back when your arms ache, not before."
+
+Message:  1013
+<ce>        _crafter_ looks at your hands - the blisters,
+<ce>          the splinters - and seems well pleased.
+<ce>
+<ce>       "The court's crafter said you would come back
+<ce>        with blisters. Fish and herbs feed the kitchen
+<ce>        and the still. Ore and timber are the bones of
+<ce>        everything else. You have fed both now. Next,
+<ce>        you make something of it yourself."
+
+Message:  1014
+_crafter_ at _store_ keeps the court's stock. Sends apprentices up the hills for ore, I hear.
+<--->
+_crafter_ is judging the court crafter's new apprentice, they say. Is that you?
+<--->
+Looking for _crafter_? Try _store_. Mind the timber stacked by the door.
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--         _crafter_ occurs 8 times.
+--            _gold_ occurs 1 time.
+--           _store_ occurs 5 times.
+--          __store_ occurs 2 times.
+
+QBN:
+Item _gold_ gold range 100 to 200
+
+Person _crafter_ group Smith local anyInfo 1014
+Place _store_ local generalstore
+
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _crafter_ at _store_
+	log 1010 step 0
+	start timer _wait_
+
+_ore_ task:
+	ql act ore-mined 3
+
+_timber_ task:
+	ql act wood-chopped 3
+
+_ready_ task:
+	when _ore_ and _timber_
+	log 1011 step 1
+
+_clicked_ task:
+	clicked npc _crafter_
+
+_early_ task:
+	when _clicked_ and not _ready_
+	say 1012
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _ready_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

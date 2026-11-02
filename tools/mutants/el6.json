@@ -1,0 +1,228 @@
+[
+  {
+    "name": "flames-cast-from-lantern",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder\n",
+    "new": "",
+    "tests": [
+      "test/render/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "flames-archive",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_LIGHT_FLATS = 210;",
+    "new": "export const SHADOW_LIGHT_FLATS = 201;",
+    "tests": [
+      "test/render/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "flames-cast-from-sun-too",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;",
+    "new": "          if (b.archive === SHADOW_LIGHT_FLATS) continue;",
+    "tests": [
+      "test/render/audit_el.test.js"
+    ]
+  },
+  {
+    "name": "emit-no-occlusion",
+    "file": "src/render/airPass.js",
+    "old": "  if (occluded()) discard;   // EL6\n  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it",
+    "new": "  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "emit-slack-huge",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_EMIT_SLACK = 0.15;",
+    "new": "export const AIR_EMIT_SLACK = 1000;",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "emit-no-depth-bind",
+    "file": "src/render/airPass.js",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D, this.frame.depth);\n    gl.uniform1i(prog.uDepth, 2);",
+    "new": "    gl.uniform1i(prog.uDepth, 2);",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "ao-hash-rotation",
+    "file": "src/render/airPass.js",
+    "old": "  float ang = bayer4(gl_FragCoord.xy) * 1.5707963;",
+    "new": "  float ang = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) * 1.5707963;",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-ao",
+    "file": "src/render/airPass.js",
+    "old": "    c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole\n    c += texture(uBloom, wuv).rgb * uGrade.x${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''};",
+    "new": "    c += texture(uBloom, wuv).rgb * uGrade.x${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''};",
+    "tests": [
+      "test/render/audit_el.test.js"
+    ]
+  },
+  {
+    "name": "resolve-ao-mix-zero",
+    "file": "src/render/airPass.js",
+    "old": "    gl.uniform1f(PR.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
+    "new": "    gl.uniform1f(PR.uAOMix, 0);",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "resolve-ao-unit",
+    "file": "src/render/airPass.js",
+    "old": "    gl.uniform1i(PR.uAO, 3); // EL6",
+    "new": "    gl.uniform1i(PR.uAO, 0); // EL6",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-dither",
+    "file": "src/render/airPass.js",
+    "old": "  e += (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: the dither, at the byte, zero-mean\n  outColor = vec4(clamp(e, 0.0, 1.0), 1.0);",
+    "new": "  outColor = vec4(clamp(e, 0.0, 1.0), 1.0);",
+    "tests": [
+      "test/render/el5_field.test.js"
+    ]
+  },
+  {
+    "name": "images-before-resolve",
+    "file": "src/render/airPass.js",
+    "old": "    if (prepared) this._images();\n    else {\n      this._blank(quad);\n      this.measured = false;\n    }",
+    "new": "    this._blank(quad);\n    this.measured = false;",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "prepare-draws-nothing-broken",
+    "file": "src/render/airPass.js",
+    "old": "    this.f = f;",
+    "new": "    this.f = null;",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "prepare-keeps-stats",
+    "file": "src/render/airPass.js",
+    "old": "    this.stats.emitDraws = 0;\n    this.stats.glares = 0;\n    this.stats.shafts = false;\n    this.stats.haze = false;\n    this.stats.vol = false; // this frame's, counted at the resolve\n  }",
+    "new": "  }",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "measured-at-prepare",
+    "file": "src/render/airPass.js",
+    "old": "    this.measured = false; // AUDIT-EL F10: set at the resolve, by whether the world drew",
+    "new": "    this.measured = true; // AUDIT-EL F10: set at the resolve, by whether the world drew",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "frame-depth-renderbuffer-kept",
+    "file": "src/render/airPass.js",
+    "old": "      depths.push(depth);",
+    "new": "      depths.push(null);",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "depth-at-canvas-uv",
+    "file": "src/render/airPass.js",
+    "old": "  return textureLod(uDepth, (uRect.xy + wuv * uRect.zw) / uCanvas, 0.0).r;",
+    "new": "  return textureLod(uDepth, wuv, 0.0).r;",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "depthon-no-rect",
+    "file": "src/render/airPass.js",
+    "old": "      gl.uniform4fv(prog.uRect, this.rect);\n      gl.uniform2fv(prog.uCanvas, this.canvas);",
+    "new": "      gl.uniform2fv(prog.uCanvas, this.canvas);",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "shaft-mask-old-depth",
+    "file": "src/render/airPass.js",
+    "old": "  float sky = depthAt(uv) >= 0.99999 ? 1.0 : 0.0;",
+    "new": "  float sky = depthAt(uv) >= 0.5 ? 1.0 : 0.0;",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "lane-ao-back",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)",
+    "new": "  vec3 lit = tex * (uAmbient * 0.5 + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "lane-no-dither",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image",
+    "new": "  return dwWaterFog(col, wp);   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "scatter-no-early-out",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    if (length(rel) > dist + uPointLights[i].w) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it\n    acc += elScatter(rel, uPointLights[i].w, dir, dist) * uPointColors[i];",
+    "new": "    acc += elScatter(rel, uPointLights[i].w, dir, dist) * uPointColors[i];",
+    "tests": [
+      "test/render/el6_field.test.js"
+    ]
+  },
+  {
+    "name": "casters-five",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_POINT_CASTERS = 12;   // FLICKER-FIX (2026-10-02): twelve, not eight - a lamp past the eight read the lo map (static casters only), so the player's and the townsfolk's shadows vanished for it and came back when it swapped in (+48 MB of depth layers). EL6: six; HQ1: eight - SC1's cache made a still caster nearly free.",
+    "new": "export const SHADOW_POINT_CASTERS = 5;   // EL6",
+    "tests": [
+      "test/render/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "renderer-uploads-ao-again",
+    "file": "src/render/renderer.js",
+    "old": "    this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)",
+    "new": "    this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)\n    this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'uAO'), 12);",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "renderer-prepare-skipped",
+    "file": "src/render/renderer.js",
+    "old": "      this._air.prepare({   // EL6: the inputs alone - the images are drawn at the resolve, off the frame's depth",
+    "new": "      if (false) this._air.prepare({   // EL6: the inputs alone - the images are drawn at the resolve, off the frame's depth",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  }
+]

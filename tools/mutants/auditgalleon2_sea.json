@@ -1,0 +1,246 @@
+[
+  {
+    "name": "AUDIT-GN2-GN1-berths-sounded-for-the-carrack-alone",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "  const isWater = (x, z, h) => !!own(x, z, h) && (h === deep || !!own(x, z, deep));",
+    "new": "  const isWater = (x, z, h) => !!own(x, z, h);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-GN1-the-shallowest-keel-sounds-them",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "export const deepestBerther = () => BERTH_HULLS.reduce((a, h) => (draftOf(h) > draftOf(a) ? h : a));",
+    "new": "export const deepestBerther = () => BERTH_HULLS.reduce((a, h) => (draftOf(h) < draftOf(a) ? h : a));",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-GN1-the-galleon-not-among-the-berthers",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "export const BERTH_HULLS = Object.freeze([0, 1, 2, 4]);",
+    "new": "export const BERTH_HULLS = Object.freeze([0, 1, 4]);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-GN1-sounded-in-the-berth-hulls-own-water",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "  deep = deepestBerther(),",
+    "new": "  deep = hull,",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ],
+    "note": "PORT-SHIPS: re-aimed by content - the signature takes the town's keep and the ground, its deepest keel the same."
+  },
+  {
+    "name": "AUDIT-GN2-PF6-her-draft-frozen-at-the-new-galleons",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "  return h === 2 ? DRAFT_SPARE - hullBuild(2).keel : /** @type {number} */ (HULL_DRAFT[h]);",
+    "new": "  return h === 2 ? 4.7 : /** @type {number} */ (HULL_DRAFT[h]);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-PF6-the-spare-under-her-keel",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "export const DRAFT_SPARE = 0.06;",
+    "new": "export const DRAFT_SPARE = 0.6;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-PF6-the-world-sounds-a-frozen-table",
+    "file": "src/scenes/world.js",
+    "old": "    return Number.isFinite(floor) && floor < tvSeaY() - (hull < 0 ? 0.05 : navalDraftOf(hull));",
+    "new": "    return Number.isFinite(floor) && floor < tvSeaY() - (hull < 0 ? 0.05 : [0.8, 1.4, 4.7, 2.8, 3.2][Math.min(4, hull | 0)]);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-PF2-the-caches-never-emptied",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "function buildsKept() {\n  if (keptFor !== buildsStamp()) {\n    keptFor = buildsStamp();\n    HIT_SHARE.clear();\n    LAY_MIN.clear();\n  }\n}",
+    "new": "function buildsKept() {}",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-PF2-the-dead-zones-kept",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    LAY_MIN.clear();\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-PF2-the-hit-shares-kept",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    HIT_SHARE.clear();\n    LAY_MIN.clear();",
+    "new": "    LAY_MIN.clear();",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-PF2-layMin-asks-not",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  buildsKept();\n  const key = `${hull}:${side}:${targetHull}`;",
+    "new": "  const key = `${hull}:${side}:${targetHull}`;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-PF2-hitShare-asks-not",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  buildsKept();\n  const key = `${bat.gun}:${bat.muzzles[0][1]}:${skill}:${targetHull}`;",
+    "new": "  const key = `${bat.gun}:${bat.muzzles[0][1]}:${skill}:${targetHull}`;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-PF2-the-switch-stamps-nothing",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "  if (standing[hull] !== !!on) stamp++;\n  standing[hull] = !!on;",
+    "new": "  standing[hull] = !!on;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG3-every-box-whatever-the-sails",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  return rig.filter((box) => plan(box) && (/** @type {any} */ (box).sail == null || hangs(/** @type {any} */ (box).sail))).map((box) => {",
+    "new": "  return rig.filter((box) => plan(box)).map((box) => {",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG3-a-furled-sail-keeps-its-box",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "return !s || (s.activeSelf && !animatorOf(s)?.GetBool('Stowed')); };",
+    "new": "return !s || s.activeSelf; };",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG3-a-hidden-sail-keeps-its-box",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "return !s || (s.activeSelf && !animatorOf(s)?.GetBool('Stowed')); };",
+    "new": "return !s || !animatorOf(s)?.GetBool('Stowed'); };",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG3-the-main-topsails-box-on-the-fore-topsail",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 2), // the main topsail and its yard",
+    "new": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 1), // the main topsail and its yard",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG3-the-jibs-luff-box-on-the-gaff",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 4), // the jib along its luff,",
+    "new": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 3), // the jib along its luff,",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG3-a-boom-box-names-no-sail",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "  { boom: k, pivot: Object.freeze(pivot), sail, ...(variant == null ? {} : { variant }) },",
+    "new": "  { boom: k, pivot: Object.freeze(pivot), ...(variant == null ? {} : { variant }) },",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG4-by-the-nodes-again",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  if (grid.length < 2) return sail.worldMatrix()[13];",
+    "new": "  return sail.worldMatrix()[13];",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG4-a-root-bone-read-as-canvas",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  if (grid.length < 2) return sail.worldMatrix()[13];",
+    "new": "  if (grid.length < 1) return sail.worldMatrix()[13];",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG4-the-lowest-first",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": ".map((n) => [n, canvasHeight(n)]).sort((p, q) => q[1] - p[1]).map(([n]) => n);",
+    "new": ".map((n) => [n, canvasHeight(n)]).sort((p, q) => p[1] - q[1]).map(([n]) => n);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG6-every-wind-to-starboard",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      a.SetFloat('Wind', set ? sailSide(b, sail, w) * Math.min(1, wl) : 0);",
+    "new": "      a.SetFloat('Wind', set ? Math.min(1, wl) : 0);",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG6-the-lateen-signed-as-a-gaff",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  if (boat.SailsLateen?.includes(sail)) return a > 0 ? -1 : 1;",
+    "new": "  if (boat.SailsLateen?.includes(sail)) return a > 0 ? 1 : -1;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG6-the-gaff-blown-to-windward",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  if (boat.SailsGaff?.includes(sail)) return a >= 0 ? 1 : -1;",
+    "new": "  if (boat.SailsGaff?.includes(sail)) return a >= 0 ? -1 : 1;",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG6-the-jib-blown-to-windward",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  if (boat.SailsGaff?.includes(sail)) return a >= 0 ? 1 : -1;\n  return a > 0 ? 1 : -1;\n}",
+    "new": "  if (boat.SailsGaff?.includes(sail)) return a >= 0 ? 1 : -1;\n  return a > 0 ? -1 : 1;\n}",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GN2-RG6-square-canvas-laid-aback",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "function sailSide(boat, sail, w) {\n  if (boat.SailsSquare?.includes(sail)) return 1;\n",
+    "new": "function sailSide(boat, sail, w) {\n",
+    "tests": [
+      "test/systems/naval/auditgalleon2_sea.test.js"
+    ]
+  }
+]

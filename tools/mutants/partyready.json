@@ -1,0 +1,128 @@
+[
+  {
+    "name": "PARTYREADY-map-not-resumed",
+    "file": "src/ui/socialPanel.js",
+    "old": "run: () => { resumeParty = true; j.openMap?.(); } }));",
+    "new": "run: () => { j.openMap?.(); } }));",
+    "tests": [
+      "test/net/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-any-cover-resumes",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (round && !round.set) resumeParty = true;",
+    "new": "resumeParty = true;",
+    "tests": [
+      "test/net/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-set-out-resumes",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (round && !round.set) resumeParty = true;",
+    "new": "if (round) resumeParty = true;",
+    "tests": [
+      "test/net/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-never-put-back",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (resumeParty) { resumeParty = false; if (!open && social.party) { tab = 'party'; openPanel(); } }",
+    "new": "if (resumeParty) { resumeParty = false; }",
+    "tests": [
+      "test/net/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-wait-host-default",
+    "file": "src/systems/party/partyTravel.js",
+    "old": "  const waitLabel = (t, now) =>\n    host.mid(\n      `Waiting for the party to ready up (${t.count}).`,\n      Math.max(1, (PARTY_READY_TIMEOUT_MS - (now - t.at)) / 1000),\n    );",
+    "new": "  const waitLabel = (t, now) => host.mid(`Waiting for the party to ready up (${t.count}).`);",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-wait-every-tick",
+    "file": "src/systems/party/partyTravel.js",
+    "old": "      if (count !== t.count) {",
+    "new": "      {",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-wait-never-moved",
+    "file": "src/systems/party/partyTravel.js",
+    "old": "        waitLabel(t, now);\n      } // PARTY-UI; PARTY-READY: the HUD's wait moves with it",
+    "new": "      } // PARTY-UI; PARTY-READY: the HUD's wait moves with it",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-set-out-not-on-hud",
+    "file": "src/systems/party/partyTravel.js",
+    "old": "      host.mid(line); // PARTY-READY: the wait ends on the HUD too\n      return;",
+    "new": "      return;",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-lapse-not-on-hud",
+    "file": "src/systems/party/partyTravel.js",
+    "old": "    if (open && text) host.mid(text); // PARTY-READY: over the wait, which would stand out the round's minute",
+    "new": "    // PARTY-READY: over the wait, which would stand out the round's minute",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-call-off-not-on-hud",
+    "file": "src/systems/party/partyTravel.js",
+    "old": "          host.mid('You call off the journey.');\n          return 'You call off the journey.';",
+    "new": "          return 'You call off the journey.';",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-box-over-tab",
+    "file": "src/systems/party/partyTravel.js",
+    "old": "      if (host.tabOpen?.()) return;\n      if (host.busy()) {",
+    "new": "      if (host.busy()) {",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-asked-under-tab",
+    "file": "src/systems/party/partyTravel.js",
+    "old": "      if (host.tabOpen?.()) return;",
+    "new": "      if (host.tabOpen?.()) {\n        asked = round.at;\n        return;\n      }",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-seam-seconds-dropped",
+    "file": "src/scenes/world.js",
+    "old": "mid: (text, seconds = PARTY_REST_FAR_SECONDS) => setMidScreenText(text, seconds),",
+    "new": "mid: (text) => setMidScreenText(text, PARTY_REST_FAR_SECONDS),",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  },
+  {
+    "name": "PARTYREADY-seam-tab-unread",
+    "file": "src/scenes/world.js",
+    "old": "tabOpen: () => !!socialPanel?.isOpen?.() && socialPanel.tab() === 'party',",
+    "new": "tabOpen: () => false,",
+    "tests": [
+      "test/systems/party/partytravel.test.js"
+    ]
+  }
+]

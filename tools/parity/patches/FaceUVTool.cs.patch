@@ -1,0 +1,89 @@
+--- dfu/Assets/Scripts/API/FaceUVTool.cs
++++ diff/cs/api/FaceUVTool.cs
+@@ -54,11 +54,11 @@
+         /// </summary>
+         private struct df3duvparams_lt
+         {
+-            public float[] X;
+-            public float[] Y;
+-            public float[] Z;
+-            public float[] U;
+-            public float[] V;
++            public double[] X;   // HARNESS-WIDENED (Ledger row 18): float[] -> double[]
++            public double[] Y;   // HARNESS-WIDENED (Ledger row 18): float[] -> double[]
++            public double[] Z;   // HARNESS-WIDENED (Ledger row 18): float[] -> double[]
++            public double[] U;   // HARNESS-WIDENED (Ledger row 18): float[] -> double[]
++            public double[] V;   // HARNESS-WIDENED (Ledger row 18): float[] -> double[]
+         }
+ 
+         /// <summary>
+@@ -66,14 +66,14 @@
+         /// </summary>
+         private struct df3duvmatrix_t
+         {
+-            public float UA;
+-            public float UB;
+-            public float UC;
+-            public float UD;
+-            public float VA;
+-            public float VB;
+-            public float VC;
+-            public float VD;
++            public double UA;   // HARNESS-WIDENED (Ledger row 18): float -> double
++            public double UB;   // HARNESS-WIDENED (Ledger row 18): float -> double
++            public double UC;   // HARNESS-WIDENED (Ledger row 18): float -> double
++            public double UD;   // HARNESS-WIDENED (Ledger row 18): float -> double
++            public double VA;   // HARNESS-WIDENED (Ledger row 18): float -> double
++            public double VB;   // HARNESS-WIDENED (Ledger row 18): float -> double
++            public double VC;   // HARNESS-WIDENED (Ledger row 18): float -> double
++            public double VD;   // HARNESS-WIDENED (Ledger row 18): float -> double
+         }
+ 
+         #endregion
+@@ -115,11 +115,11 @@
+ 
+             // Initialise the params struct
+             df3duvparams_lt Params = new df3duvparams_lt();
+-            Params.X = new float[4];
+-            Params.Y = new float[4];
+-            Params.Z = new float[4];
+-            Params.U = new float[4];
+-            Params.V = new float[4];
++            Params.X = new double[4];
++            Params.Y = new double[4];
++            Params.Z = new double[4];
++            Params.U = new double[4];
++            Params.V = new double[4];
+ 
+             // Initialise the conversion matrix
+             df3duvmatrix_t Matrix = new df3duvmatrix_t();
+@@ -223,10 +223,10 @@
+         *=========================================================================*/
+         private bool l_ComputeDFUVMatrixXY(ref df3duvmatrix_t matrix, ref df3duvparams_lt param)
+         {
+-            float determinant;
+-            float[] Xi = new float[3];
+-            float[] Yi = new float[3];
+-            float[] Zi = new float[3];
++            double determinant;   // HARNESS-WIDENED (Ledger row 18)
++            double[] Xi = new double[3];   // HARNESS-WIDENED (Ledger row 18)
++            double[] Yi = new double[3];   // HARNESS-WIDENED (Ledger row 18)
++            double[] Zi = new double[3];   // HARNESS-WIDENED (Ledger row 18)
+ 
+             /* Compute the determinant of the coefficient matrix */
+             determinant = param.X[0] * param.Y[1] + param.Y[0] * param.X[2] +
+@@ -255,12 +255,12 @@
+             /* Compute the UV conversion parameters */
+             matrix.UA = (param.U[0] * Xi[0] + param.U[1] * Yi[0] + param.U[2] * Zi[0]);
+             matrix.UB = (param.U[0] * Xi[1] + param.U[1] * Yi[1] + param.U[2] * Zi[1]);
+-            matrix.UC = (float)0.0;
++            matrix.UC = (double)0.0;   // HARNESS-WIDENED (Ledger row 18)
+             matrix.UD = (param.U[0] * Xi[2] + param.U[1] * Yi[2] + param.U[2] * Zi[2]); ;
+ 
+             matrix.VA = (param.V[0] * Xi[0] + param.V[1] * Yi[0] + param.V[2] * Zi[0]);
+             matrix.VB = (param.V[0] * Xi[1] + param.V[1] * Yi[1] + param.V[2] * Zi[1]);
+-            matrix.VC = (float)0.0;
++            matrix.VC = (double)0.0;   // HARNESS-WIDENED (Ledger row 18)
+             matrix.VD = (param.V[0] * Xi[2] + param.V[1] * Yi[2] + param.V[2] * Zi[2]);
+ 
+             return true;

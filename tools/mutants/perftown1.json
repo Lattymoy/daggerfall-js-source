@@ -1,0 +1,153 @@
+[
+  {
+    "name": "PERF-TOWN1-1-the-size-cache-goes-and-every-person-remeasures",
+    "file": "src/world/rmbFlats.js",
+    "old": "  let size = byRecord[record];\n  if (!size) {\n    size = scaledBillboardSize(t.getSize(record), t.getScale(record));\n    byRecord[record] = size;\n  }",
+    "new": "  const size = scaledBillboardSize(t.getSize(record), t.getScale(record));",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-2-the-cache-is-keyed-on-the-archive-so-a-replacement-goes-stale",
+    "file": "src/world/rmbFlats.js",
+    "old": "  let byRecord = _mobileSize.get(t);\n  if (!byRecord) {\n    byRecord = [];\n    _mobileSize.set(t, byRecord);",
+    "new": "  let byRecord = _mobileSize.get(t?.archive);\n  if (!byRecord) {\n    byRecord = [];\n    _mobileSize.set(t?.archive, byRecord);",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-3-the-record-is-ignored-so-every-record-shares-one-size",
+    "file": "src/world/rmbFlats.js",
+    "old": "  let size = byRecord[record];",
+    "new": "  let size = byRecord[0];",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-4-the-xml-scale-is-cached-too-so-a-toggled-mod-is-not-seen",
+    "file": "src/world/rmbFlats.js",
+    "old": "  if (!(textureReplacementEnabled() || t?.vendor === true)) return size;",
+    "new": "  return size;",
+    "tests": [
+      "test/world/perftown1.test.js",
+      "test/characters/enemy/meanerMonsters.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-5-a-person-shares-one-frame-row-with-every-other-person",
+    "file": "src/characters/mobile/mobilePerson.js",
+    "old": "    const o = (this._out ??= { record: 0, frame: 0, flip: false });",
+    "new": "    const o = (MobilePerson._shared ??= { record: 0, frame: 0, flip: false });",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-6-the-frame-row-goes-back-to-a-fresh-object",
+    "file": "src/characters/mobile/mobilePerson.js",
+    "old": "    o.record = record;\n    o.frame = frame;\n    o.flip = flip;\n    return o;",
+    "new": "    return { record, frame, flip };",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-7-the-pools-list-is-rebuilt-every-frame-again",
+    "file": "src/systems/town/townPopulation.js",
+    "old": "    const out = (this._live ??= []);\n    out.length = 0;",
+    "new": "    const out = [];",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-8-the-pools-list-is-never-emptied-so-it-grows-for-ever",
+    "file": "src/systems/town/townPopulation.js",
+    "old": "    out.length = 0;\n    const seats = (this._rows ??= []);",
+    "new": "    const seats = (this._rows ??= []);",
+    "tests": [
+      "test/systems/townpopulation.test.js",
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-9-world-mints-the-stop-options-per-person-again",
+    "file": "src/scenes/townScratch.js",
+    "old": "      return personWantsToStop(opts);",
+    "new": "      return personWantsToStop({ ...opts });",
+    "tests": [
+      "test/world/perftown1.test.js",
+      "test/systems/townpopulation.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-10-the-exterior-host-forgets-the-beast-form-term",
+    "file": "src/scenes/townScratch.js",
+    "old": "      opts.inBeastForm = inBeastForm; // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193)",
+    "new": "      opts.inBeastForm = false; // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193)",
+    "tests": [
+      "test/world/perftown1.test.js",
+      "test/systems/audit63_quests_talk.test.js",
+      "test/systems/townpopulation.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-11-the-sheathe-is-read-once-at-the-hoist-instead-of-per-frame",
+    "file": "src/scenes/townScratch.js",
+    "old": "      opts.sheathed = sheathed;",
+    "new": "      opts.sheathed ||= sheathed;",
+    "tests": [
+      "test/systems/townpopulation.test.js",
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-12-the-memoised-texture-key-loses-its-separator-so-every-frame-misses",
+    "file": "src/scenes/townScratch.js",
+    "old": "      v = `${archive}_${record}#${frame}`;",
+    "new": "      v = `${archive}_${record}_${frame}`;",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-13-the-key-index-drops-the-frame-so-an-animation-never-reuploads",
+    "file": "src/scenes/townScratch.js",
+    "old": "    const k = (archive * 4096 + record) * 1024 + frame;",
+    "new": "    const k = archive * 4096 + record;",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-14-the-activation-rows-are-shared-so-every-person-is-the-last-one",
+    "file": "src/scenes/townScratch.js",
+    "old": "    seat(i) {\n      return (seats[i] ??= { person: null, pos: null });",
+    "new": "    seat() {\n      return (seats[0] ??= { person: null, pos: null });",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-15-the-exterior-scratch-is-never-emptied",
+    "file": "src/scenes/exterior.js",
+    "old": "      _livePersons.length = 0;   // T3b: the activation ray's targets   // PERF-TOWN1: the same rows, refilled",
+    "new": "      // PERF-TOWN1: the same rows, refilled",
+    "tests": [
+      "test/world/perftown1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-TOWN1-16-the-pool-is-read-at-construction-and-throws-in-its-dead-zone",
+    "file": "src/scenes/world.js",
+    "old": "  const town = createTownScratch({ areEnemiesNearby, foes: () => enchantFoes() });   // the pool is read at the CALL, not here: `enchantFoes` is declared below this line",
+    "new": "  const town = createTownScratch({ areEnemiesNearby, foes: enchantFoes });",
+    "tests": [
+      "test/tree/tdz.test.js",
+      "test/systems/townpopulation.test.js"
+    ]
+  }
+]

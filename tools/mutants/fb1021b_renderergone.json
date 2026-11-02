@@ -1,0 +1,23 @@
+[
+  { "name": "RENDERER-GONE-met-by-nothing", "file": "app/main.cjs",
+    "old": "    const { response } = await dialog.showMessageBox(win, goneAsk(details?.reason, stops.stop(Date.now())));", "new": "    return;",
+    "tests": ["test/tooling/fb1021b_renderergone.test.js"], "why": "the reported law: a page stopped after its trial left the window black" },
+  { "name": "RENDERER-GONE-quit-answered-restart", "file": "app/main.cjs",
+    "old": "    if (restarts(response)) win.webContents.reload(); else app.quit();", "new": "    win.webContents.reload();",
+    "tests": ["test/tooling/fb1021b_renderergone.test.js"], "why": "Quit restarts" },
+  { "name": "RENDERER-GONE-hang-unasked", "file": "app/main.cjs",
+    "old": "    win.webContents.forcefullyCrashRenderer();", "new": "    win.webContents.reload();",
+    "tests": ["test/tooling/fb1021b_renderergone.test.js"], "why": "a hung page reloaded where it cannot answer a reload" },
+  { "name": "RENDERER-GONE-enter-quits", "file": "app/lib/rendererGone.cjs",
+    "old": "  buttons: ['Restart', 'Quit'],\n  defaultId: 0,", "new": "  buttons: ['Restart', 'Quit'],\n  defaultId: 1,",
+    "tests": ["test/tooling/fb1021b_renderergone.test.js"], "why": "Enter on the stopped game's box quits it" },
+  { "name": "RENDERER-GONE-escape-restarts-hung", "file": "app/lib/rendererGone.cjs",
+    "old": "  buttons: ['Wait', 'Restart'],\n  defaultId: 0,\n  cancelId: 0,", "new": "  buttons: ['Wait', 'Restart'],\n  defaultId: 0,\n  cancelId: 1,",
+    "tests": ["test/tooling/fb1021b_renderergone.test.js"], "why": "closing the hung box throws the load away" },
+  { "name": "RENDERER-GONE-stops-never-age", "file": "app/lib/rendererGone.cjs",
+    "old": "      while (at.length && now - at[0] > RESTART_SPAN_MS) at.shift();\n", "new": "",
+    "tests": ["test/tooling/fb1021b_renderergone.test.js"], "why": "a stop an hour ago counted in the loop" },
+  { "name": "RENDERER-GONE-log-uncapped", "file": "app/lib/rendererGone.cjs",
+    "old": "  if (out.length > CRASH_LOG_MAX) {", "new": "  if (false) {",
+    "tests": ["test/tooling/fb1021b_renderergone.test.js"], "why": "crash.log grows without end" }
+]

@@ -1,0 +1,284 @@
+[
+  {
+    "name": "GUILD1b-the-fee-unchecked",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    if (this.wallet().gold() < GUILD_FOUND_GOLD) return { ok: false, error: 'gold' };\n    if (this.realm) {",
+    "new": "    if (this.realm) {",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-paid-before-the-answer",
+    "file": "src/net/guild/guildBook.js",
+    "old": "      const r = await this.door.found({ character, name, tag });",
+    "new": "      this.wallet().pay(GUILD_FOUND_GOLD);\n      const r = await this.door.found({ character, name, tag });",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-short-founder-keeping-the-guild",
+    "file": "src/net/guild/guildBook.js",
+    "old": "        const gone = await this.door.disband(character);\n        if (gone?.ok && typeof gone.data?.outOrder === 'string') this._hand({ outOrder: gone.data.outOrder }); // GUILD1c: a room that heard the founding hears it gone\n        return { ok: false, error: 'gold' };",
+    "new": "        return { ok: false, error: 'gold' };",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-refund-on-a-lost-answer",
+    "file": "src/net/guild/guildBook.js",
+    "old": "      if (guildRefused(r?.error)) {\n        paid.back();\n        return r;\n      }\n      return { ok: false, error: 'guild-unsure' };",
+    "new": "      paid.back();\n      return r;",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-no-refund-on-a-refusal",
+    "file": "src/net/guild/guildBook.js",
+    "old": "        paid.back();\n        return r;",
+    "new": "        return r;",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-deposit-past-the-purse",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    if (w.gold() < gold) return { ok: false, error: 'gold' };\n    if (this.realm) {",
+    "new": "    if (this.realm) {",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-withdrawal-credited-first",
+    "file": "src/net/guild/guildBook.js",
+    "old": "        const r = await this.door.withdraw(character, gold);\n        if (r?.ok) this.wallet().credit(gold, { letter });",
+    "new": "        this.wallet().credit(gold, { letter });\n        const r = await this.door.withdraw(character, gold);",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ],
+    "note": "GUILD-LETTER (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed BY CONTENT - the old lane's credit carries the letter the wallet weighed; same law, same killer."
+  },
+  {
+    "name": "GUILD1b-a-withdrawal-credited-unanswered",
+    "file": "src/net/guild/guildBook.js",
+    "old": "        if (r?.ok) this.wallet().credit(gold, { letter });",
+    "new": "        this.wallet().credit(gold, { letter });",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ],
+    "note": "GUILD-LETTER (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed BY CONTENT - the old lane's credit carries the letter the wallet weighed; same law, same killer."
+  },
+  {
+    "name": "GUILD1b-offline-read-as-a-refusal",
+    "file": "src/net/guild/guildBook.js",
+    "old": "  'rate',",
+    "new": "  'offline',\n  'rate',",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-no-look-after-an-act",
+    "file": "src/net/guild/guildBook.js",
+    "old": "      await this.refresh();\n      this._changed();",
+    "new": "      this._changed();",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-guest-read-as-an-error",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    if (error === 'guilds-need-account') {",
+    "new": "    if (error === 'guilds-need-account-x') {",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-look-always-moving-the-version",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    if (pictureOf(this.state, this.guild, [this.invites, this.requests]) !== was) this._changed();",
+    "new": "    this._changed();",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ],
+    "note": "GUILD-SEEN (PIN MOVED): re-aimed by content - a look compares pictureOf, the picture less each member's seenAt."
+  },
+  {
+    "name": "GUILD1b-any-truthy-answer-accepting",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    return this._act((c) => this.door.answer({ character: c, guild, accept: accept === true }));",
+    "new": "    return this._act((c) => this.door.answer({ character: c, guild, accept: !!accept }));",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-look-never-stale",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    return !this._looking && (this.at === 0 || nowMs - this.at >= GUILD_FRESH_MS);",
+    "new": "    return !this._looking && (this.at === 0 || nowMs - this.at >= GUILD_FRESH_MS * 10);",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-asked-as-another-character",
+    "file": "src/net/guild/guildBook.js",
+    "old": "      this.door.mine(character),",
+    "new": "      this.door.mine('char-x'),",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-busy-never-raised",
+    "file": "src/net/guild/guildBook.js",
+    "old": "    this.busy = true;\n    this._changed();",
+    "new": "    this._changed();",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-tab-without-a-book",
+    "file": "src/ui/socialPanel.js",
+    "old": "...(guild ? [['guild', 'Guild']] : [])",
+    "new": "...[['guild', 'Guild']]",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-found-on-a-bad-shape",
+    "file": "src/ui/socialPanel.js",
+    "old": "enabled: !g.busy && !!guildNameOf(d.name) && !!guildTagOf(d.tag),",
+    "new": "enabled: !g.busy,",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-join-answering-no",
+    "file": "src/ui/socialPanel.js",
+    "old": "run: () => guildDo(g.answer(inv.guild, true), ",
+    "new": "run: () => guildDo(g.answer(inv.guild, false), ",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-badge-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": ": id === 'guild' ? (guild && !guild.guild ? (guild.invites?.length ?? 0) : 0)",
+    "new": ": id === 'guild' ? 0",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-promote-offered-to-any",
+    "file": "src/ui/socialPanel.js",
+    "old": "const mayMove = [guildMayMove(me, m.rank, m.rank - 1, v.powers, rankCount(v)),",
+    "new": "const mayMove = [m.rank > 0,",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-remove-in-one-press",
+    "file": "src/ui/socialPanel.js",
+    "old": "racts.append(armed(k) ? btn('Sure?', { warn: true, ...wait, run: () => guildDo(g.remove(m.member)",
+    "new": "racts.append(true ? btn('Sure?', { warn: true, ...wait, run: () => guildDo(g.remove(m.member)",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-remove-upward",
+    "file": "src/ui/socialPanel.js",
+    "old": "const mayRemove = guildMay(me, 'remove', v.powers) && guildOutranks(me, m.rank);",
+    "new": "const mayRemove = guildMay(me, 'remove', v.powers);",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-withdraw-offered-to-an-officer",
+    "file": "src/ui/socialPanel.js",
+    "old": "enabled: !g.busy && goldTyped() > 0 && !overCap() && guildMay(me, 'withdraw', v.powers)",
+    "new": "enabled: !g.busy && goldTyped() > 0 && !overCap()",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-disband-with-gold-in-it",
+    "file": "src/ui/socialPanel.js",
+    "old": "    ['guild-treasury', Number(v?.treasury ?? 0) > 0],\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-guildmaster-walking-out",
+    "file": "src/ui/socialPanel.js",
+    "old": "    const canLeave = !busy && (!master || (alone && !listed));",
+    "new": "    const canLeave = !busy;",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-rename-offered-to-nobody",
+    "file": "src/ui/guild/guildRanksPage.js",
+    "old": "  const master = guildMay(me, 'renameRanks', v.powers);",
+    "new": "  const master = false;",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-tab-never-repainted",
+    "file": "src/ui/socialPanel.js",
+    "old": "const moved = tab === 'guild' ? (guild?.version ?? 0) !== paintedGuild",
+    "new": "const moved = tab === 'guild' ? false",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-draft-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": "guildField(form, 'Guild name', d.name, GUILD_NAME_MAX, (v) => { d.name = v; });",
+    "new": "guildField(form, 'Guild name', '', GUILD_NAME_MAX, (v) => { d.name = v; });",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-book-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "      mail,\n      guild: guildBook,",
+    "new": "      mail,",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-bank-before-the-purse",
+    "file": "src/scenes/world.js",
+    "old": "pay: (n) => payUndoable(playerEntity, n, account),   // MARKET-AUDIT: answering the undo of exactly what it took\n          // GUILD-LETTER",
+    "new": "pay: (n) => { if (account) account.accountGold -= n; },\n          // GUILD-LETTER",
+    "tests": [
+      "test/net/guild/guild1b.test.js"
+    ]
+  }
+]

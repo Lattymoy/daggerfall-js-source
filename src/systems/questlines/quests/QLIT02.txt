@@ -1,0 +1,96 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): A SEAT AT THE TABLE, step 2 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner an hour after
+-- step 1 ends: the regular's word is in the journal at once. The giver is unnamed (a tavern regular): a Resident of the
+-- player's own town, at its tavern. The act is the King's Gambit's (qlActs.js gambit-won - scenes/gambitTableGame.js,
+-- a game won against a tavern's regular or another player; Kings-Gambit.md).
+-- AUDIT QUESTLINES LINES-10: a Person is made fresh in each step's quest (a new name, in whatever town the player
+-- stands in), so this step's giver is introduced as NEW - sent on by the last step's - never spoken of as the same one.
+Quest: QLIT02
+DisplayName: The King’s Gambit
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       _regular_ has stopped saving you a seat at the board.
+
+QuestComplete:  [1004]
+<ce>       "The first of every table's money in the Bay."
+<ce>         _regular_ pushes _gold_ gold across to you.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The regular who staked me sent me on to a friend:
+ _regular_, who sits at the board at _inn_ in
+ __inn_ and says cards are only luck. The King's
+ Gambit is war across a card table: armies, kings
+ and potions. I am to win a game of it - fell the
+ other king and keep my own - then go to _inn_.
+
+Message:  1011
+%qdt:
+ I have won a game of the King's Gambit. _regular_
+ is waiting to hear of it at _inn_ in __inn_.
+
+Message:  1012
+<ce>        "Choose a regular, put down your stake, build
+<ce>         your army. Fell the other king and guard your
+<ce>         own. Then come back and tell me about it."
+
+Message:  1013
+<ce>        "Their king fell, and yours still stood?"
+<ce>        _regular_ raises a cup to you.
+<ce>
+<ce>       "Then you have a general's head on you. Every
+<ce>        tavern in the Bay has someone like me sitting
+<ce>        at the board. Go and take their money. Here is
+<ce>        the first of it."
+
+Message:  1014
+_regular_? Sits at the corner table at _inn_. Plays the Gambit with anyone.
+<--->
+That one at _inn_ says the King's Gambit is a game for generals. Plays like a drunk.
+<--->
+Looking for _regular_? Try _inn_. Bring money and a strong stomach.
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--         _regular_ occurs 7 times.
+--            _gold_ occurs 1 time.
+--             _inn_ occurs 6 times.
+--            __inn_ occurs 2 times.
+
+QBN:
+Item _gold_ gold range 100 to 200
+
+Person _regular_ group Resident1 local anyInfo 1014
+Place _inn_ local tavern
+
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _regular_ at _inn_
+	log 1010 step 0
+	start timer _wait_
+
+_won_ task:
+	ql act gambit-won 1
+	log 1011 step 1
+
+_clicked_ task:
+	clicked npc _regular_
+
+_early_ task:
+	when _clicked_ and not _won_
+	say 1012
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _won_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

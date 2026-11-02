@@ -1,0 +1,106 @@
+[
+  {
+    "name": "TAB-WALK-swallow-without-the-walk",
+    "file": "src/ui/input.js",
+    "old": "  if (!BROWSER_STEALS.includes(e.code) && !isPageFocusWalk(e)) return false;",
+    "new": "  if (!BROWSER_STEALS.includes(e.code)) return false;",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "the hosts' swallow back to the F-keys alone: an unanswered Tab walks the page's focus onto the Social button again"
+  },
+  {
+    "name": "TAB-WALK-the-body-not-the-page",
+    "file": "src/ui/input.js",
+    "old": "  return !t || !t.tagName || t.tagName === 'BODY' || t.tagName === 'HTML';",
+    "new": "  return !t || !t.tagName;",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "a key at the body read as a control's: the Tab with nothing focused, the very one that walked, is let through"
+  },
+  {
+    "name": "TAB-WALK-every-target-the-page",
+    "file": "src/ui/input.js",
+    "old": "  return !t || !t.tagName || t.tagName === 'BODY' || t.tagName === 'HTML';",
+    "new": "  return true;",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "every Tab swallowed: a field's walk and the pause door's own walk taken from them"
+  },
+  {
+    "name": "TAB-WALK-ctrl-tab-swallowed",
+    "file": "src/ui/input.js",
+    "old": "&& !e.ctrlKey && !e.altKey && !e.metaKey && isPageTarget(e.target);",
+    "new": "&& !e.altKey && !e.metaKey && isPageTarget(e.target);",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "Ctrl+Tab read as the page's walk: the browser's own tab switch prevented"
+  },
+  {
+    "name": "TAB-WALK-alt-tab-swallowed",
+    "file": "src/ui/input.js",
+    "old": "&& !e.ctrlKey && !e.altKey && !e.metaKey && isPageTarget(e.target);",
+    "new": "&& !e.ctrlKey && !e.metaKey && isPageTarget(e.target);",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "Alt+Tab read as the page's walk"
+  },
+  {
+    "name": "TAB-WALK-meta-tab-swallowed",
+    "file": "src/ui/input.js",
+    "old": "&& !e.ctrlKey && !e.altKey && !e.metaKey && isPageTarget(e.target);",
+    "new": "&& !e.ctrlKey && !e.altKey && isPageTarget(e.target);",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "Cmd+Tab read as the page's walk"
+  },
+  {
+    "name": "HUD-FOCUS-helper-keeps-the-walk",
+    "file": "src/ui/input.js",
+    "old": "  n.tabIndex = -1;",
+    "new": "  n.tabIndex = 0;",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "the helper leaves its control in the Tab walk"
+  },
+  {
+    "name": "HUD-FOCUS-press-takes-the-focus",
+    "file": "src/ui/input.js",
+    "old": "  n.addEventListener?.('mousedown', (/** @type {any} */ e) => e?.preventDefault?.());",
+    "new": "",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "a mouse press gives the Social button the focus again, and the next Space presses it"
+  },
+  {
+    "name": "HUD-FOCUS-focus-kept",
+    "file": "src/ui/input.js",
+    "old": "  n.addEventListener?.('focus', () => n.blur?.());",
+    "new": "",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "a focus given by a script or the pad cursor's press stays on the button"
+  },
+  {
+    "name": "HUD-FOCUS-social-out-of-the-helper",
+    "file": "src/ui/chatPanel.js",
+    "old": "    neverTheFocus(b);   // FB1020h HUD-FOCUS: a Tab walked onto it and the next Space (the game's Jump) pressed it",
+    "new": "",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "both Social buttons back in the walk and keeping a press's focus - the report's own button"
+  },
+  {
+    "name": "HUD-FOCUS-here-out-of-the-helper",
+    "file": "src/ui/chatPanel.js",
+    "old": "  for (const b of [here, openBtn, show]) neverTheFocus(b);",
+    "new": "  for (const b of [openBtn, show]) neverTheFocus(b);",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "Play online here back in the walk"
+  },
+  {
+    "name": "HUD-FOCUS-chat-out-of-the-helper",
+    "file": "src/ui/chatPanel.js",
+    "old": "  for (const b of [here, openBtn, show]) neverTheFocus(b);",
+    "new": "  for (const b of [here, show]) neverTheFocus(b);",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "the touch skin's Chat button back in the walk"
+  },
+  {
+    "name": "HUD-FOCUS-show-out-of-the-helper",
+    "file": "src/ui/chatPanel.js",
+    "old": "  for (const b of [here, openBtn, show]) neverTheFocus(b);",
+    "new": "  for (const b of [here, openBtn]) neverTheFocus(b);",
+    "tests": ["test/ui/fb1020h_tabwalk.test.js"],
+    "why": "Show, the one button a put-away chat leaves, back in the walk"
+  }
+]

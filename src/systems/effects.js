@@ -1,0 +1,2043 @@
+// The effect spine (Systems S7 - effect library I; S15 grows the
+// attribute/fatigue families). Verbatim from DFU EntityEffect/
+// EntityEffectBroker + the effect classes (MIT, Daggerfall Workshop):
+//   one MAGIC ROUND = one CLASSIC MINUTE (the broker catches up per
+//   game minute - our S3b clock already counts them)
+//   duration (rounds) = DurationBase + DurationPlus x
+//     floor(casterLevel / DurationPerLevel)  (no roll; per-0 guarded)
+//   HealHealth      = classic (10, 8): instant IncreaseHealth(mag)
+//   DamageHealth    = classic (4, 0):  instant damage (S4b behavior)
+//   ContinuousDamageHealth = classic (1, 0): DecreaseHealth EVERY
+//     round for the duration, magnitude ROLLED PER ROUND
+//     (GetMagnitude computes fresh each MagicRound - verbatim)
+// The saving throw is rolled FRESH every magic round of a continuous
+// effect (audit F10 - DFU GetMagnitude -> ModifyEffectAmount rolls
+// SavingThrow on every call), and ONLY when the spell is not
+// CasterOnly (S15 parity fix: GetMagnitude gates ModifyEffectAmount
+// on ParentBundle.targetType != TargetTypes.CasterOnly - a self-cast
+// spell never rolls a save; the pre-S15 shape saved damage always and
+// heals never). Every effect fires its INITIAL magic round at
+// assignment (audit F17 - EntityEffectManager.AssignBundle: "gets
+// initial magic round"), consuming round 1; re-casts of an incumbent
+// RENEW its rounds - topped up to a fresh cast's, never stacked
+// (STACK-CAP, renewRounds; DFU's AddState "Stack my rounds onto
+// incumbent", audit F12, is a recorded departure) - and fire no
+// initial round (the joining instance is never added to liveEffects). The three keys above are EXAMPLES of
+// those round laws, not the library's extent: EF1 measured it and all
+// 91 of DFU's classic keys land (see applySpell's skip counter and
+// test/systems/effectcoverage.test.js, which regenerates the key set from the
+// effect classes). This header claimed otherwise for as long as the
+// counter did - a stale sentence propagates, because the next reader
+// finds it twice and believes it.
+
+import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance, isDamageHealthEffect } from './spellcast.js';   // BAL9: the damage-health pair a pierce reads
+import { mentorDamageTakenMult } from './mentorMode.js';   // SOFTCAP2: a leaf
+import { spellPowerMult, spellPierce, schoolMult } from './spell/spellPower.js';   // BAL9: my damage spell's power and pierce (a leaf); SCHOOLS2: every school past 100
+import { castSchool } from './spellcost.js';   // SCHOOLS3: the school an effect is cast in (a signature spell's path's)
+import { noteFeudHarm, elementFeudClass } from './feudLedger.js';   // RVN1: my spell's round, in its fight's ledger (a leaf)
+import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
+import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude, liveStat } from './statMods.js';
+import { dice100 } from '../combat/formulas.js';
+import { tryAbsorption, absorbRefund } from './absorption.js';
+import { identifyRefund } from './spell/identifyRefund.js';   // the refund priced as the cast was (a discount included)
+import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify matches on DFU's EnemyGroups, the same table X4 ported
+// AUDIT 24 (wave 31): the concealment BREAK lives in its own leaf so that
+// combat/formulas.js can reach it without the effects -> spellcast ->
+// formulas cycle. Re-exported here because this is the module its readers
+// already speak to.
+import { breakNormalPowerConcealment, handleAttackFromSource } from './concealment.js';
+import { entityAbsorbsSpells, setEnchantmentEffectDoors } from './enchantments.js';   // E1: the AbsorbsSpells fold feeds the absorption gate
+import { markPlayerHarm } from './harmMark.js';   // REVENANT-HARM: a lingering effect's round on the player keeps its caster's mark
+import { regenShare } from './courtRules.js';   // WBX6 / EVENT-RULES: a made level holds regeneration
+import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { HEAL_SPELL_POINTS_KEY } from './potionRecipes.js';   // PROF12: Heal-SpellPoints' key, beside the one recipe that names it
+import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+
+export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
+
+/** "Spell was absorbed." - the HUD line DFU prints on every absorbed
+ *  effect: GetLocalizedText("spellAbsorbed") at
+ *  EntityEffectManager.cs:515. NOT A GAP (closeout) - the earlier note
+ *  guessed the table was out of reach, and it is not: the row is
+ *  StreamingAssets/Text/Master Localization CSV Files/
+ *  Internal_Strings.csv:648 `spellAbsorbed,Spell was absorbed.`, which
+ *  is this literal character for character. Nothing is invented. */
+export const SPELL_ABSORBED_TEXT = 'Spell was absorbed.';
+
+/** AUDIT 26 F078 - the two HUD lines the port computed and never
+ *  said. Regenerate.Start prints its line for a PLAYER host
+ *  (Regenerate.cs:45-53, 1.5s) and DrainEffect prints its own from
+ *  ShowPlayerDrained (:102-106), reached from BecomeIncumbent (:71)
+ *  and AddState (:84) - both gated on
+ *  `lastMagnitudeIncreaseAmount > 0`, so it is every magnitude
+ *  INCREASE, not every round and not a heal.
+ *
+ *  Checked the same way as the line above, and the same answer: the
+ *  keys resolve to Internal_Strings.csv:642
+ *  `youAreRegenerating,You are regenerating.` (Regenerate.cs:51) and
+ *  :638 `youFeelDrained,You feel drained.` (DrainEffect.cs:106), both
+ *  matching these literals verbatim. */
+export const REGENERATING_TEXT = 'You are regenerating.';
+export const FEEL_DRAINED_TEXT = 'You feel drained.';
+
+export { FATIGUE_MULTIPLIER, maxFatigue };
+
+const ELEMENT_EFFECT_FLAG = Object.freeze([EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost, EFFECT_FLAGS.Poison, EFFECT_FLAGS.Shock, EFFECT_FLAGS.Magic]);
+
+// S8/P11: the duration buffs, classic keys verbatim - incumbent
+// self-effects tracked by kind (IsLikeKind is settings-blind for all
+// four); a re-cast RENEWS the incumbent's rounds (STACK-CAP
+// renewRounds - DFU's AddState stacks them, F12).
+// Consumers: slowfall scales the player's fall; chameleonNormal
+// halves foe sight range (concealment); waterWalking restores normal
+// speed while swimming (P11); levitate (14,255) drives the
+// LevitateMotor path (P11).
+export const BUFF_KINDS = Object.freeze({
+  '25,255': 'slowfall',
+  '31,255': 'waterWalking',
+  '23,0': 'chameleonNormal',
+  '14,255': 'levitate',
+  '30,255': 'waterBreathing',   // P12: gates the drowning tick (IsWaterBreathing)
+  // S21 concealment (ConcealmentEffect subclasses, verbatim classic
+  // keys): the P13 illusion gate's inert invisible/shade branches go
+  // live. Normal and true variants FOLD for detection (DFU's
+  // IsInvisible/IsBlending/IsAShade OR both powers); the split
+  // matters to future consumers (IsMagicallyConcealed*Power).
+  '13,0': 'invisNormal',
+  '13,1': 'invisTrue',
+  '24,0': 'shadeNormal',
+  '24,1': 'shadeTrue',
+  '23,1': 'chameleonTrue',
+  // S22 FreeAction (26,255): Restoration duration buff - the entity
+  // is IMMUNE TO PARALYSIS while it lives (IsImmuneToParalysis).
+  '26,255': 'freeAction',
+  // X1: the two motor buffs. DFU keeps each as a bool on the entity
+  // (IsEnhancedJumping / IsEnhancedClimbing, DaggerfallEntity.cs:84-85)
+  // set by the effect's Start and cleared by its End; the port's
+  // active-effect list IS that flag, read where the motor asks.
+  '27,255': 'jumping',
+  '28,255': 'climbing',
+  // X4: the DETECT family (Thaumaturgy 39/0..2). All three classes are
+  // identical but for the flag they scan with and Treasure's cheaper
+  // duration cost - SupportDuration ALONE, CasterOnly, Magic element,
+  // and an AddState that stacks rounds onto the incumbent and nothing
+  // else (DetectMagic.cs:36-40 and its two twins; renewed here, never
+  // stacked - STACK-CAP). That is precisely this table's arm, so the
+  // effects half of Detect is three rows: the entry's PRESENCE is DFU's registeredDetectors membership, exactly
+  // as jumping/climbing above are IsEnhancedJumping/IsEnhancedClimbing.
+  // The scan and the compass markers live in systems/nearbyObjects.js
+  // and ui/hud/hud.js - neither belongs to the effect, which in DFU does
+  // nothing but hold a list refreshed once a magic round.
+  '39,0': 'detectMagic',
+  '39,1': 'detectEnemy',
+  '39,2': 'detectTreasure',
+  // AUDIT 21 F5 SILENCE (19,255). The GATE was ported and the PRODUCER was
+  // not, so `entity.isSilenced` had no writer anywhere in src/ and
+  // silenceBlocksCast was a constant false for every entity in the game -
+  // while mysticism.js's own header said "SILENCE IS WIRED". A Wraith casts
+  // classic spell 0x1C at you and DFU silences you; here applySpell fell
+  // through to `out.skipped++` and you cast freely.
+  //
+  // Silence.cs:27-39 is duration-and-chance with NO magnitude
+  // (SupportDuration + SupportChance, no SupportMagnitude), which is exactly
+  // this buff arm - so it needs no new machinery, only its row.
+  '19,255': 'silenced',
+  // X11: LIGHT (Illusion 15,255). LightNormal.cs is duration-only,
+  // CasterOnly, an IncumbentEffect whose AddState stacks rounds and
+  // nothing else (:57-62; renewed here - STACK-CAP) - this table's arm
+  // exactly. Everything the
+  // effect DOES is the magic candle it hangs in front of the player
+  // (StartLight/EndLight, :64-101), and a candle is a scene object,
+  // not effect state: the entry's PRESENCE is the light, the same way
+  // jumping/climbing above are IsEnhancedJumping/IsEnhancedClimbing.
+  // The hosts read it through magicCandle() below.
+  //
+  // DFU's StartLight has a `if (entityBehaviour == PlayerEntityBehaviour)`
+  // gate on the candle (:76-77): a Light cast on a FOE lands its
+  // rounds and lights nothing. The port keeps that where DFU keeps
+  // it - in the candle producer, not in this table - so a foe really
+  // does carry the effect and really does stay dark.
+  '15,255': 'light',
+  // PARTY-MAP (2026-09-30, Discord: "share map data between party members, possibly with a spell effect so that
+  // maintaining some kind of buff for it becomes part of the dungeoneering loop"): SHARED CARTOGRAPHY (46,255 - the
+  // port's own, no classic key uses 46; RESURRECT1's 45 is the precedent). Duration-only and CasterOnly, renewing
+  // its rounds on a re-cast as every row here does (STACK-CAP); the entry's PRESENCE is the share -
+  // systems/party/partyMap.js reads it, and a caster in no party (offline, solo) holds a buff that does nothing at all.
+  '46,255': 'sharedCartography',
+});
+
+/** DaggerfallEntity.IsInvisible / IsBlending / IsAShade, verbatim:
+ *  normal OR true power. The senses' illusion gate consumes these
+ *  (S21) - for the PLAYER through the senses context and, since the
+ *  A5 residue pass, for a FOE target through concealmentFlags below. */
+export const isInvisible = (en) => hasActiveEffect(en, 'invisNormal') || hasActiveEffect(en, 'invisTrue');
+export const isBlending = (en) => hasActiveEffect(en, 'chameleonNormal') || hasActiveEffect(en, 'chameleonTrue');
+export const isAShade = (en) => hasActiveEffect(en, 'shadeNormal') || hasActiveEffect(en, 'shadeTrue');
+/** DaggerfallEntity.IsMagicallyConcealed (:204-207) -
+ *  `MagicalConcealmentFlags != None`, i.e. ANY of the six bits. The
+ *  port's active-effect entries ARE those bits (BUFF_KINDS above), so
+ *  the OR of the three predicates is the same set. Consumed by
+ *  EntityConcealmentBehaviour's foe-side visual (:41-42). */
+export const isMagicallyConcealed = (en) => isInvisible(en) || isBlending(en) || isAShade(en);
+
+/**
+ * EnemySenses.BlockedByIllusionEffect reads `target.Entity.IsInvisible
+ * / IsBlending / IsAShade` (EnemySenses.cs:668-683) whatever the target
+ * is - the player or another enemy. ConcealmentEffect.StartConcealment
+ * (:56-74) is likewise entity-blind: it ORs the flag onto
+ * `entityBehaviour.Entity` and only the HUD line is gated on the host
+ * being the player, so a Chameleon or Shadow that lands on a foe
+ * conceals that foe from every other foe.
+ *
+ * The port's senses gate has read a foe target's `concealment()`
+ * closure since MT-i and NOTHING built one, so the whole foe-vs-foe
+ * arm answered "unconcealed" - the effects were live on the entity and
+ * unread. This is that closure's body, in one place, so the three foe
+ * pools spell it the same way the senses context spells the player's
+ * (scenes/shared.js sensesContext).
+ */
+export const concealmentFlags = (en) => ({
+  invisible: isInvisible(en), blending: isBlending(en), shade: isAShade(en),
+});
+
+/** INVIS-NET (2026-09-27): THE SAME THREE, ON THE WIRE - the pose's `cv` (net/wire.js validPose): 1 invisible, 2
+ *  blending, 4 a shade; 0 (omitted) for none. The sender packs its own entity's; a reader unpacks a peer's for the
+ *  foes' senses (a peer candidate's concealment() closure) and for the draw. */
+export const concealBits = (en) => (en?.staffPilot ? 7 : 0) | (isInvisible(en) ? 1 : 0) | (isBlending(en) ? 2 : 0) | (isAShade(en) ? 4 : 0);   // STAFF-PILOT (systems/staffBossPilot.js): a staff member steering its event's boss says all three - its body no one's (a departure from DFU)
+export const concealFlagsOfBits = (bits) => ({ invisible: !!(bits & 1), blending: !!(bits & 2), shade: !!(bits & 4) });
+
+/**
+ * Levitate.SetEnemyMotor (Levitate.cs:140-154) - the ENEMY half of
+ * StartLevitating/StopLevitating (:92-126). Levitate's own Start,
+ * Resume, ConstantEffect and End all funnel into those two, and for an
+ * EntityTypes.EnemyMonster / EnemyClass host they write
+ * `enemyMotor.IsLevitating` exactly as the player arm writes
+ * LevitateMotor.IsLevitating.
+ *
+ * The port keeps the flag where DFU keeps it - on the motor - and
+ * folds Start/End into a read of the effect's PRESENCE, which is the
+ * same idiom the player's own arm already uses (scenes/shared.js
+ * applyMotorEffectFlags, scenes/dungeon.js). Before this the AI's
+ * `levitating` was a hard-wired false with no writer anywhere in src/,
+ * so every arm that consults it (the fall check, the detour dodge, the
+ * face aim, the destination drop, and the no-gravity movement branch)
+ * was dead code.
+ *
+ * @returns {boolean} the flag as written
+ */
+export function applyEnemyMotorEffectFlags(ai, entity) {
+  if (!ai) return false;
+  ai.levitating = hasActiveEffect(entity, 'levitate');
+  return ai.levitating;
+}
+
+/** ConcealmentEffect start messages (Internal_Strings verbatim),
+ *  shown ONCE when the effect becomes incumbent on the player host
+ *  (awakeAlert) - a renewing re-cast stays silent. */
+/** Every effect class whose `properties.AllowedElements` is
+ *  ElementFlags_MagicOnly, by classic (type, subType) key - the set
+ *  FormulaHelper.GetElementType (:1630-1634) answers Magic for,
+ *  whatever element the parent bundle rode in on. Read off the effect
+ *  classes under Game/MagicAndEffects/Effects, not inferred: cures,
+ *  dispels, elemental resistances, fortifies, heals, transfers, the
+ *  concealments, light, lock/open, regenerate, absorption/reflection/
+ *  resistance, morph, shield, pacify, the detects, identify, teleport,
+ *  comprehend languages, create item - and the alteration/thaumaturgy
+ *  buffs the port's old family list missed: levitate (14), slowfall
+ *  (25), free action (26), jumping (27), climbing (28), water
+ *  breathing (30), water walking (31). */
+export const MAGIC_ONLY_KEYS = new Set([
+  '2,255', '3,0', '3,1', '3,2', '6,0', '6,1', '6,2',
+  '8,0', '8,1', '8,2', '8,3', '8,4', '9,0', '9,1',
+  '9,2', '9,3', '9,4', '9,5', '9,6', '9,7', '10,0',
+  '10,1', '10,2', '10,3', '10,4', '10,5', '10,6', '10,7',
+  '10,8', '10,9', '11,0', '11,1', '11,2', '11,3', '11,4',
+  '11,5', '11,6', '11,7', '11,8', '11,9', '13,0', '13,1',
+  '14,255', '15,255', '16,255', '17,255', '18,255', '20,255', '21,255',
+  '22,255', '23,0', '23,1', '24,0', '24,1', '25,255', '26,255',
+  '27,255', '28,255', '29,255', '30,255', '31,255', '33,0', '33,1',
+  '33,2', '33,3', '35,255', '39,0', '39,1', '39,2', '40,255',
+  '43,255', '44,255',
+  '46,255',   // PARTY-MAP: Shared Cartography, the port's own - a self-buff, Magic as every buff here
+]);
+
+/** THE BUFF LANDING ALERTS - every line DFU speaks on the frame a
+ *  lasting self-buff becomes incumbent, once per incumbency, and only
+ *  when the manager is the player's (`manager.EntityBehaviour ==
+ *  GameManager.Instance.PlayerEntityBehaviour`).
+ *
+ *  AUDIT 63 F16 widened this from the six concealment rows. Silence has
+ *  TWO printers in DFU and the port had only one: SilenceCheck at cast
+ *  time (EntityEffectManager.cs:1932-1946, the port's hostMagic gate)
+ *  and StartSilence's own landing alert (Silence.cs:80-96,
+ *  "youAreSilenced"), which is the same awakeAlert shape
+ *  ConcealmentEffect.cs:66-72 uses. A wraith's Silence landed in total
+ *  silence and the player only learned of it on the next cast attempt. */
+export const BUFF_START_TEXT = localizedTable({
+  // startConcealmentMessageKey (InvisibilityNormal.cs:36 and its five
+  // siblings), read by ConcealmentEffect.cs:70
+  invisNormal: ['youAreInvisible', 'You are invisible.'], invisTrue: ['youAreInvisible', 'You are invisible.'],
+  chameleonNormal: ['youAreBlending', 'You are blending.'], chameleonTrue: ['youAreBlending', 'You are blending.'],
+  shadeNormal: ['youAreAShade', 'You are a shade.'], shadeTrue: ['youAreAShade', 'You are a shade.'],
+  silenced: ['youAreSilenced', 'You are silenced.'],   // Silence.cs:91-95
+  sharedCartography: () => 'Your map is shared with your party.',   // PARTY-MAP: the port's own line
+});
+/** The name this table shipped under, kept live for its importers. */
+export const CONCEALMENT_START_TEXT = BUFF_START_TEXT;
+/** Classic subType as DFU keys it: the record's sbyte cast to BYTE
+ *  (ClassicSpellRecordDataToEffectBundleSettings does
+ *  MakeClassicKey((byte)type, (byte)subType)). SPELLS.STD 0xFF reads
+ *  -1 through the verbatim sbyte decode, so every 255-keyed check
+ *  must normalize (parity fix 2026-08-16d: the 255-keyed families -
+ *  Levitate/Slowfall/WaterWalking/Regenerate - never fired from REAL
+ *  records; unit fixtures hand-wrote 255 and stayed green - "a pin
+ *  certifies what it pins", again). */
+export const classicSub = (e) => e.subType & 0xff;
+export const buffKind = (e) => BUFF_KINDS[`${e.type},${classicSub(e)}`] ?? null;
+/** SCHOOLS2: the concealment kinds - Illusion's Invisibility, Chameleon and Shadow, Normal and True - whose rounds the
+ *  school past 100 lengthens on myself. */
+const CONCEALMENT_KINDS = new Set(['invisNormal', 'invisTrue', 'chameleonNormal', 'chameleonTrue', 'shadeNormal', 'shadeTrue']);
+/** X5: Soul Trap (12,255). Its own arm rather than a BUFF_KINDS row -
+ *  the cast-time chance is forced true and the landing gates on the
+ *  target's kind. */
+export const isSoulTrapEffect = (e) => e.type === 12 && classicSub(e) === 255;
+/** X9: the two CREATURE dispels. (6,0) Dispel Magic is not here -
+ *  it dispels BUNDLES rather than creatures and needs the picker. */
+export const DISPEL_GROUP = Object.freeze({
+  1: NEARBY.Undead,
+  2: NEARBY.Daedra,
+});
+export const isDispelCreature = (e) => e.type === 6 && DISPEL_GROUP[classicSub(e)] != null;
+/** X10: Dispel MAGIC (6,0) - the bundle picker, not a creature sweep. */
+export const isDispelMagic = (e) => e.type === 6 && classicSub(e) === 0;
+/** X10: bundle ids are per-session and monotonic - they identify a
+ *  cast's entries to each other, nothing more, so a restored save
+ *  keeping its old ids is harmless as long as new ones never
+ *  collide. seedBundleSeq lifts the counter past a restored high
+ *  water mark for exactly that. */
+let _bundleSeq = 0;
+export const seedBundleSeq = (n) => { _bundleSeq = Math.max(_bundleSeq, n | 0); };
+/** X8: Pacify's four variants (33,0..3) and Charm (34,255). The
+ *  subType IS PacifyEffect's variantIndex, and the order is the
+ *  SetVariantProperties call order (:70-73), not alphabetical. */
+export const PACIFY_GROUP = Object.freeze({
+  0: NEARBY.Animal,
+  1: NEARBY.Undead,
+  2: NEARBY.Humanoid,
+  3: NEARBY.Daedra,
+});
+export const isPacifyEffect = (e) => e.type === 33 && PACIFY_GROUP[classicSub(e)] != null;
+export const isCharmEffect = (e) => e.type === 34 && classicSub(e) === 255;
+/** WB8a: a spell that would sway its target - any Pacify or Charm in it (the one home the boss's doors ask). */
+export const spellSways = (sp) => (sp?.effects ?? []).some((e) => e && (isPacifyEffect(e) || isCharmEffect(e)));
+/** X7: Identify (40,255) - a window opener, not a lasting effect. */
+export const isIdentifyEffect = (e) => e.type === 40 && classicSub(e) === 255;
+/** presence = active; expired entries End on the NEXT tick pass (DFU shape). HELD-CONCEAL: an ENDED entry is not -
+ *  DoConstantEffects runs no ConstantEffect once HasEnded (EntityEffectManager.cs:1693-1694), so it sets no flag. A worn
+ *  item's concealment a blow broke stands ended on its item until the reroll (concealment.js). */
+export const hasActiveEffect = (entity, kind) =>
+  !!entity?.activeEffects?.some((a) => a.kind === kind && !a.ended);
+/** CSA-I: Come Sail Away's WaterWalkingSilent (WaterWalkingSilent.cs) - an incumbent of its own kind, as its
+ *  IsLikeKind keeps it from stacking onto the spell's Water Walking; no spell icon (ShowSpellIcon false). */
+export const WATER_WALKING_SILENT_KIND = 'waterWalkingSilent';
+/** DaggerfallEntity.IsWaterWalking: the flag WaterWalking.ConstantEffect raises - and WaterWalkingSilent's
+ *  StartWaterWalking, the one other effect that sets it. */
+export const isEntityWaterWalking = (entity) => hasActiveEffect(entity, 'waterWalking') || hasActiveEffect(entity, WATER_WALKING_SILENT_KIND);
+/** AUDIT PRE-MERGE 0928 S3: a mod's own effect kinds, each with whether its mod is loaded for the game. DFU's broker
+ *  instantiates an effect only from a loaded mod's registration, and RestoreInstancedBundleSaveData skips one it cannot;
+ *  the port's flat list would keep any kind, so a restore asks this (systems/save/save.js restorePlayer). */
+const _modEffectKinds = new Map();
+export function registerModEffectKind(kind, loaded) { _modEffectKinds.set(kind, loaded); }
+export const effectKindLoaded = (kind) => !_modEffectKinds.has(kind) || !!_modEffectKinds.get(kind)();
+
+// S22 FreeAction: the two DFU laws.
+// DaggerfallEntity.IsImmuneToParalysis (THE ENTITY FLAG) is written
+// by FreeAction.cs:99/109 and (when vampirism ships)
+// VampirismEffect.cs:124 and by NOTHING else - this member is that
+// flag alone. AUDIT 18's note stopped there and missed the OTHER
+// member: the ASSIGN gate calls the MANAGER's
+// IsEntityImmuneToParalysis, which adds the career/racial arms -
+// see isEntityImmuneToParalysis below (L2-slice, magic-10).
+export const isImmuneToParalysis = (entity) => hasActiveEffect(entity, 'freeAction') || !!entity?.staffBoss;   // BOSS-UNSHAKEN: a staff event's mini boss is never held - a departure from DFU, which has no such foe
+
+/** EntityEffectManager.IsEntityImmuneToParalysis (:644-660, L2-slice
+ *  AUDIT 23 magic-10) - the HARD-immunity gate AssignBundle tests
+ *  before an incoming Paralyze even starts:
+ *  1. career Paralysis tolerance Immune, or the FreeAction flag;
+ *  2. the PLAYER's racial immunity bit - unless the career overrides
+ *     with LowTolerance or CriticalWeakness;
+ *  3. otherwise not hard-immune (the saving throw still applies).
+ *  The career precedence quirk carries over: DFCareer.GetTolerance
+ *  reads Resistant BEFORE Immune, so a career flagged both is merely
+ *  Resistant here and falls through to the save. */
+export function isEntityImmuneToParalysis(entity) {
+  if (careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Paralysis) === 'Immune' || isImmuneToParalysis(entity)) return true;
+  // V2b: the vampire's compound race carries Paralysis immunity
+  // (VampirismEffect.CreateCompoundRace + ConstantEffect's
+  // IsImmuneToParalysis) - the curse entry is the race now
+  if (entity.racialOverride?.immuneParalysis && !entity.racialOverride.ended) return true;
+  if (entity.isPlayer) {
+    const rt = entity.raceTemplate ?? raceById(entity.raceId) ?? raceByKey(entity.race) ?? null;
+    if (((rt?.immunityFlags ?? 0) & EFFECT_FLAGS.Paralysis) !== 0) {
+      const t = careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Paralysis);
+      return t !== 'LowTolerance' && t !== 'CriticalWeakness';
+    }
+  }
+  return false;
+}
+/** EntityEffectManager.IsEntityImmuneToDisease (:623-641) - the twin of
+ *  the paralysis gate above, and the OTHER half of AssignBundle's one
+ *  hard-immunity clause (:495-499:
+ *  `if (effect is DiseaseEffect && IsEntityImmuneToDisease() &&
+ *   !specialInfection || effect is Paralyze && ...) continue;`).
+ *  Same three steps:
+ *  1. career Disease tolerance Immune, or Entity.IsImmuneToDisease -
+ *     which VampirismEffect.cs:123 and LycanthropyEffect.cs:194 both
+ *     set on every ConstantEffect pass, i.e. for as long as the curse
+ *     stands. The port's stand-in is the racialOverride entry itself
+ *     (there are exactly two, and both set the flag in DFU), and the
+ *     PENDING marker counts with it because the turn is already
+ *     irreversible - the pair inflictDisease used to read inline.
+ *  2. the PLAYER's live race template Disease bit - the compound race
+ *     both curses OR it into (VampirismEffect.cs:335,
+ *     LycanthropyEffect.cs:554) - unless the career overrides with
+ *     LowTolerance or CriticalWeakness.
+ *  3. otherwise not hard-immune, and the saving throw still applies.
+ *
+ *  AUDIT 63 F15: the port had this gate NOWHERE. Its only stand-in was
+ *  one racialOverride line inside inflictDisease, so the quest action
+ *  `make pc ill with` (world.js's makePcDiseased -> startDisease) gave
+ *  a vampire, a werewolf or a Disease-immune custom class the plague
+ *  where DFU drops the effect outright. */
+export function isEntityImmuneToDisease(entity) {
+  if (!entity) return false;
+  if (careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Disease) === 'Immune') return true;
+  if ((entity.racialOverride && !entity.racialOverride.ended) || entity.racialOverridePending) return true;
+  if (entity.isPlayer) {
+    const rt = entity.raceTemplate ?? raceById(entity.raceId) ?? raceByKey(entity.race) ?? null;
+    if (((rt?.immunityFlags ?? 0) & EFFECT_FLAGS.Disease) !== 0) {
+      const t = careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Disease);
+      return t !== 'LowTolerance' && t !== 'CriticalWeakness';
+    }
+  }
+  return false;
+}
+
+/** DaggerfallEntity.IsSilenced, minted by Silence.StartSilence (Silence.cs:87)
+ *  and cleared at :105. A read-time fold over the active effects, the same
+ *  shape as the concealment and paralysis predicates above, so nothing has to
+ *  remember to clear a flag when the bundle expires. */
+export const isSilencedEffect = (entity) => hasActiveEffect(entity, 'silenced');
+/** DaggerfallEntity.IsParalyzed, verbatim: the immunity folds at READ
+ *  time - `!IsImmuneToParalysis && isParalyzed`. A paralysis bundle
+ *  that landed BEFORE FreeAction keeps ticking underneath; casting
+ *  FreeAction frees the entity NOW, and if FreeAction expires while
+ *  the paralysis still has rounds, the paralysis RESUMES. */
+export const entityIsParalyzed = (entity) =>
+  hasActiveEffect(entity, 'paralyze') && !isImmuneToParalysis(entity);
+
+export const isHealHealth = (e) => e.type === 10 && e.subType === 8;
+export const isDamageHealth = (e) => e.type === 4 && e.subType === 0;
+export const isContinuousDamage = (e) => e.type === 1 && e.subType === 0;
+// SpellPoints (magicka): DamageSpellPoints (4, 2) and
+// ContinuousDamageSpellPoints (1, 2), verbatim. S15 PARITY FIX: the
+// S13 slice had mapped (10, 9) to HealSpellPoints - in DFU that
+// classic key belongs to HEAL FATIGUE (HealFatigue.ClassicKey);
+// DFU's Heal-SpellPoints effect is potion-only and carries NO classic
+// key, so no classic spell restores magicka and the restoreMagicka
+// door left with the wrong key.
+// Fortify{Attribute} (classic type 9, subType = the stat index 0..7).
+// The stat-mod layer (STAT_KEYS_ORDER, liveStat) lives standalone in
+// statMods.js to avoid a formulas<-spellcast<-effects import cycle.
+/** AUDIT DUEL1 B3: what an instant duel effect hands a sink in the place a lingering one hands its entry. */
+const DUEL_SOURCE = Object.freeze({ bundleDuel: true });
+export const isFortifyAttribute = (e) => e.type === 9 && e.subType >= 0 && e.subType <= 7;
+
+export const isDamageSpellPoints = (e) => e.type === 4 && e.subType === 2;
+export const isContinuousDamageSpellPoints = (e) => e.type === 1 && e.subType === 2;
+
+// S15: the attribute families, classic keys verbatim.
+//   Drain{Attribute}     (7, 0..7)  - permanent-until-healed negative stat mod
+//   Heal{Attribute}      (10, 0..7) - instant heal of DRAIN damage only
+//   Transfer{Attribute}  (11, 0..7) - drain on target + caster heals the same stat
+//   TransferHealth       (11, 8)    - instant damage target / heal caster
+//   TransferFatigue      (11, 9)    - instant fatigue drain target / restore caster
+//   HealFatigue          (10, 9)    - instant fatigue restore (x64)
+//   DamageFatigue        (4, 1)     - instant fatigue damage (x64)
+//   ContinuousDamageFatigue (1, 1)  - per-round fatigue damage (x64)
+//   Regenerate           (18, 255)  - per-round IncreaseHealth for the duration
+export const isDrainAttribute = (e) => e.type === 7 && e.subType >= 0 && e.subType <= 7;
+export const isHealAttribute = (e) => e.type === 10 && e.subType >= 0 && e.subType <= 7;
+export const isTransferAttribute = (e) => e.type === 11 && e.subType >= 0 && e.subType <= 7;
+export const isTransferHealth = (e) => e.type === 11 && e.subType === 8;
+export const isTransferFatigue = (e) => e.type === 11 && e.subType === 9;
+export const isHealFatigue = (e) => e.type === 10 && e.subType === 9;
+/** U44: HealSpellPoints, the ONE effect in DFU with no ClassicKey -
+ *  registered PotionMaker-only, no MagicSkill, no spell-book
+ *  description (HealSpellPoints.cs:21-30). No SPELLS.STD row can name
+ *  it, which is what the note above records. A POTION bundle can:
+ *  DFU builds one from EffectEntry(effect.Key, settings) - a STRING
+ *  key - so this effect travels under its own, and `type` stays -1
+ *  because there is no pair to carry. */
+// PROF12: the key's one home is the recipe table's leaf (systems/potionRecipes.js), the one record that names it - imported
+// and re-exported here, every reader's import standing
+export { HEAL_SPELL_POINTS_KEY };
+export const isHealSpellPoints = (e) => e.key === HEAL_SPELL_POINTS_KEY;
+export const isDamageFatigue = (e) => e.type === 4 && e.subType === 1;
+export const isContinuousDamageFatigue = (e) => e.type === 1 && e.subType === 1;
+export const isRegenerate = (e) => e.type === 18 && classicSub(e) === 255;
+// X1: the two door spells (Lock.cs / Open.cs classic keys)
+export const isLockSpell = (e) => e.type === 16 && classicSub(e) === 255;
+export const isOpenSpell = (e) => e.type === 17 && classicSub(e) === 255;
+// X1: Elemental Resistance (8, element 0..4) - Fire/Frost/Poison/Shock/Magic
+export const isElementalResistance = (e) => e.type === 8 && e.subType >= 0 && e.subType <= 4;
+// X1: the two chance-buff defences read by the incoming chain
+export const isSpellAbsorptionEffect = (e) => e.type === 20 && classicSub(e) === 255;
+export const isSpellResistanceEffect = (e) => e.type === 22 && classicSub(e) === 255;
+export const isShieldEffect = (e) => e.type === 35 && classicSub(e) === 255;
+/** X2: the live Spell Resistance chance - ONE live instance's, not a
+ *  sum. DFU reads FindIncumbentEffect<SpellResistance>(), which
+ *  returns the first match and nothing else (EEM:666-678); summing
+ *  made a 50% item and a 50% spell read as a certainty. (Elemental
+ *  Resistance really IS additive - RaiseResistanceChance sums onto a
+ *  per-frame-cleared slate - so that one keeps its sum.)
+ *  RPT1026-PROGRESS (a private report: a party mate's lesser ward hid the player's greater one): THE BEST live instance, as
+ *  Spell Absorption's reader has taken since AUDIT SPELL-GIFT B4. DFU's incumbent is one bundle because a recast merges
+ *  into it; a party mate's gift never merges with my own (AUDIT ALLY-CAST C2) and a worn item's bundle never merges
+ *  with a spell's (E2), so two stand - and the first in the list, a level-one mate's 6%, made my own 100% read 6 for
+ *  the gift's whole duration, the HUD showing both. The Hierophant's Sanctify and a ward cast past 100 in Thaumaturgy
+ *  (SCHOOLS2) are entries of that kind too, hidden alike. Port-Ledger A, FindIncumbentEffect's first match. */
+export function bestLiveChance(target, kind) {
+  let best = 0;
+  for (const a of target?.activeEffects ?? []) if (a.kind === kind && !a.ended && (a.chance ?? 0) > best) best = a.chance;
+  return best;
+}
+export function spellResistanceChance(target) { return bestLiveChance(target, 'spellResistance'); }
+// X11: the third member of the absorb/reflect/resist chain, and the
+// one the X2 note above said still pended. SpellReflection.cs is the
+// same SHAPE as SpellResistance - IncumbentEffect, duration+chance,
+// ChanceFunction.Custom (:33), AddState stacks rounds (:49-52; the
+// port renews them - STACK-CAP) - so
+// its landing rides the same arm and its chance is frozen at cast
+// from the CASTER's level, exactly as resistance's is.
+export const isSpellReflectionEffect = (e) => e.type === 21 && classicSub(e) === 255;
+/** The live Spell Reflection chance - one instance's, never a sum (the
+ *  X2 rule, which cost the port a bug when resistance summed instead);
+ *  RPT1026-PROGRESS: the best live one's, as resistance's above. */
+export function spellReflectionChance(target) { return bestLiveChance(target, 'spellReflection'); }
+/** "Spell was reflected." - the HUD line TryReflection prints, and
+ *  only when the PLAYER is the one reflecting (EEM:1231-1233). */
+export const SPELL_REFLECTED_TEXT = 'Spell was reflected.';
+/** The line as the player reads it, for the cast engine that says it. */
+export const spellReflectedText = () => localizedText('spellReflected', SPELL_REFLECTED_TEXT);
+
+// X11: COMPREHEND LANGUAGES (Mysticism 44,255). Another Custom-chance
+// incumbent (ComprehendLanguages.cs:31-33), and the only one whose
+// consumer is a FORMULA rather than the incoming-spell chain:
+// CalculateEnemyPacification adds the live effect's ChanceValue to
+// the language roll (FormulaHelper.cs:377-380). combat/formulas.js
+// has carried a comment naming this seam since the C-slice.
+export const isComprehendLanguages = (e) => e.type === 44 && classicSub(e) === 255;
+/** The live Comprehend Languages bonus, or 0. Same law: RPT1026-PROGRESS's best live instance. */
+export function comprehendLanguagesChance(target) { return bestLiveChance(target, 'comprehendLanguages'); }
+
+// X11: DISINTEGRATE (Destruction 5,255). The shortest effect class in
+// DFU - chance-only, TargetFlags_Other, and a MagicRound that does one
+// thing: `entityBehaviour.Entity.SetHealth(0)` (Disintegrate.cs:44-53).
+export const isDisintegrate = (e) => e.type === 5 && classicSub(e) === 255;
+
+// X11b: CREATE ITEM (Mysticism 2,255). Duration-only, CasterOnly, and
+// a payload that is entirely a WINDOW: Start pushes a list picker and
+// the picked row mints an item with a lifetime (CreateItem.cs:96-128).
+// Nothing lands on the entity at all - the effect Ends the moment the
+// player chooses, because "conjured item reports own lifetime". So this
+// arm hands the host the two numbers the picker needs and no entry is
+// pushed, the same shape as Identify and Dispel Magic.
+export const isCreateItem = (e) => e.type === 2 && classicSub(e) === 255;
+// S19: Paralyze (0, 255) - duration + CHANCE, no magnitude. The
+// entity is paralyzed while a 'paralyze' entry is live
+// (ConstantEffect sets IsParalyzed every frame; presence = paralyzed
+// here). Scene consumers: player motor input/jump zeroed, weapons
+// hidden, foe motor+attack frozen (FrictionMotor/AcrobatMotor/
+// WeaponManager/EnemyMotor/EnemyAttack gates). Casting is NOT gated
+// (DFU has no IsParalyzed check in the casting path).
+export const isParalyze = (e) => e.type === 0 && classicSub(e) === 255;
+
+/** BaseEntityEffect.ChanceValue, verbatim: base + plus x
+ *  floor(casterLevel / perLevel) - NO min-1 clamp (unlike duration);
+ *  the per-0 guard is ours. */
+export const chanceValue = (e, casterLevel) =>
+  e.chanceBase + e.chanceMod * Math.floor(casterLevel / Math.max(1, e.chancePerLevel));
+
+// S19c: the Cure family (type 3) - chance-only INSTANT effects.
+//   Cure-Disease      (3, 0) -> manager.CureAllDiseases
+//   Cure-Poison       (3, 1) -> manager.CureAllPoisons
+//   Cure-Paralyzation (3, 2) -> EndIncumbentEffect<Paralyze>
+// CureAll* is RemoveBundle IMMEDIATELY - the entries and their
+// statMods lift at once (no next-tick lag); ending the paralyze
+// incumbent lifts the paralysis NOW (End() clears IsParalyzed).
+export const isCureDisease = (e) => e.type === 3 && e.subType === 0;
+export const isCurePoison = (e) => e.type === 3 && e.subType === 1;
+export const isCureParalyzation = (e) => e.type === 3 && e.subType === 2;
+export const CURE_KINDS = Object.freeze(['disease', 'poison', 'paralyze']);   // subType-indexed
+
+/** EntityEffectManager.CureAll* (:1523-1546) as ONE primitive: the
+ *  kind's entries leave the list at once, lifting their statMods with
+ *  them. The three named wrappers below are the members DFU actually
+ *  exposes, and the temple's cure-disease service (U24) calls the
+ *  first one directly - not through a spell. */
+export function cureAllOfKind(target, kind, keepInfections = false) {
+  if (target?.activeEffects) target.activeEffects = target.activeEffects.filter((a) => a.kind !== kind || (keepInfections && !!a.infection));
+}
+export const cureAllDiseases = (t) => cureAllOfKind(t, 'disease');
+/** FIELD BUGS 29h (INFECTION-KEPT; Julian: "during this time i had gotten another disease from a dungeon and had to cure
+ *  it which likely wiped my lycanthropy progress"; Mac: "Dont worry abour DFU"): A CURE OF DISEASE TAKES THE PLAIN
+ *  DISEASES FIRST. DFU stores a lycanthropy or vampirism infection as a disease bundle, and CureAllDiseases ended it
+ *  with the plague caught beside it. While a plain disease runs, a cure (the temple's, a spell's, a potion's) ends the
+ *  plain ones and leaves the infection to its turn; a cure with nothing else to end ends the infection, so curing it
+ *  before the turn still saves a player who does not want it. The turn's CureAll of the old life
+ *  (lycanthropy.js endOldLifeEffects) still ends every disease there is. */
+export const plainDiseaseLive = (t) => (t?.activeEffects ?? []).some((a) => a.kind === 'disease' && !a.ended && !a.infection);
+export const cureDiseasesInfectionsLast = (t) => cureAllOfKind(t, 'disease', plainDiseaseLive(t));
+export const cureAllPoisons = (t) => cureAllOfKind(t, 'poison');
+export const cureParalyzation = (t) => cureAllOfKind(t, 'paralyze');
+const CURE_MARKER_KINDS = Object.freeze(['cureDisease', 'curePoison', 'cureParalyzation']);   // the three cure CLASSES themselves
+
+/** Duration in rounds, verbatim (straight arithmetic, no roll).
+ *  The per-level multiplier CLAMPS AT 1 (audit F11 - DFU SetDuration:
+ *  "or player can lose a round depending on spell settings and
+ *  level"). The max(1, per) guard on the divisor is ours (classic
+ *  data never carries 0; C# would throw). */
+export function rollDuration(effect, casterLevel) {
+  const per = Math.max(1, effect.durationPerLevel);
+  let mult = Math.floor(casterLevel / per);
+  if (mult < 1) mult = 1;
+  return effect.durationBase + effect.durationMod * mult;
+}
+
+/** STACK-CAP (2026-10-11, the owner: "the ability to keep accumulating spell times to max out spells and never have to
+ *  refresh" - answered "Refresh, never stack"): A LIKE-KIND RE-CAST RENEWS ITS INCUMBENT, IT NEVER STACKS. DFU's
+ *  AddState adds the arrival's rounds to the incumbent's (`incumbent.RoundsRemaining += RoundsRemaining`), so a caster
+ *  with magicka to spare banked weeks of a buff - a Shield Group stood at 11,397 rounds (BUFF-END, mysticism.js) - and
+ *  never cast it again. Recorded departure (Port-Ledger A). The incumbent is topped up to what the cast would stand at
+ *  as a NEW instance - `fresh`, its rolled duration less the initial round pushActive takes (pass `rounds - 1` for a
+ *  spell's duration) - and never shortened: a short re-cast over a long one leaves the long one be. Everything else
+ *  AddState keeps stands (the incumbent's magnitude, chance and caster; no initial round; no new save), and every
+ *  like-kind merge in the tree comes through here - applySpell's arms, the torch's light (scenes/droppedTorches.js), a
+ *  soul trap on the gate's Warden (scenes/gate/gateCourt.js) - so no second door adds rounds up. */
+export function renewRounds(inc, fresh) {
+  if (fresh > inc.roundsRemaining) inc.roundsRemaining = fresh;
+}
+
+/** CompareSettings identity for settings-keyed like-kind (F12): the
+ *  classic record's duration + chance + magnitude component fields. */
+export const settingsKeyOf = (e) => [
+  e.durationBase, e.durationMod, e.durationPerLevel,
+  e.chanceBase, e.chanceMod, e.chancePerLevel,
+  e.magnitudeBaseLow, e.magnitudeBaseHigh, e.magnitudeLevelBase,
+  e.magnitudeLevelHigh, e.magnitudePerLevel,
+].join(',');
+
+/** EntityEffect.GetMagnitude, verbatim: the magnitude roll, then
+ *  ModifyEffectAmount (the saving throw) ONLY when the parent bundle
+ *  is not CasterOnly (rangeType 0). C# int division truncates. BAL9: a
+ *  damage-health effect's throw takes its caster's pierce (systems/
+ *  spellPower.js spellPierce - my spell alone, at no player; 0 else). */
+function effectMagnitude(e, casterLevel, saveScaled, element, flag, target, rolls, caster = null) {
+  let n = rollMagnitude(e, casterLevel, rolls);
+  if (saveScaled) n = Math.trunc(n * savingThrow(element, flag, target, 0, rolls, isDamageHealthEffect(e) ? spellPierce(caster, target) : 0) / 100);
+  return n;
+}
+
+/** manager.HealAttribute, verbatim: walk the live effects carrying a
+ *  negative mod on this stat (drain/transfer entries AND disease
+ *  statMods - S18), healing each in turn until the amount is spent.
+ *  A drain healed to magnitude 0 ENDS (DrainEffect.HealAttributeDamage:
+ *  forcedRoundsRemaining = 0) and the next tick pass removes it; a
+ *  disease's healed stat does NOT end the disease (base
+ *  HealAttributeDamage - it keeps draining daily). Heal never
+ *  overshoots into a bonus (the mod clamps at 0). */
+export function healAttributeDamage(entity, stat, amount) {
+  if (amount < 0) return;
+  let remaining = amount;
+  for (const a of entity.activeEffects ?? []) {
+    if (a.kind === 'disease' || a.kind === 'poison') {
+      // signed statMods map (S18/S19b): heal the negative side only -
+      // neither a disease nor a poison ENDS on heal (a healed-out
+      // completed poison expires on its own CompletePoison round)
+      const mod = a.statMods?.[stat] ?? 0;
+      if (mod >= 0) continue;   // not damaged by this effect
+      const healed = Math.min(remaining, -mod);
+      a.statMods[stat] = mod + healed;
+      remaining -= healed;
+      if (remaining === 0) return;
+      continue;
+    }
+    if (a.kind !== 'drainAttribute' && a.kind !== 'transferAttribute') continue;
+    if (a.stat !== stat || a.magnitude <= 0) continue;   // mod >= 0 -> not damaged
+    const damage = a.magnitude;
+    if (remaining > damage) {
+      a.magnitude = 0;
+      remaining -= damage;
+    } else {
+      a.magnitude -= remaining;
+      remaining = 0;
+    }
+    if (a.magnitude === 0) a.ended = true;   // forcedRoundsRemaining = 0
+    if (remaining === 0) return;
+  }
+}
+
+/** DROPS-AUDIT ELITE-SPELLS: an elite foe's spells land at its `damageScale`, as its blows do (combat/formulas.js
+ *  calculateAttackDamage's tail, the same rounding and floor) - so a caster in an elite dungeon is as strong with
+ *  a Fireball as with its sword. The player's own casts, and every caster without a scale, are untouched here (BAL9's
+ *  power is the player's own, below). */
+const casterScaledOnly = (n, ent) => (n > 0 && ent && !ent.isPlayer && Number.isFinite(ent.damageScale) && ent.damageScale !== 1
+  ? Math.max(1, Math.round(n * ent.damageScale)) : n);
+/** SOFTCAP2: and a MENTORED player takes a foe's spell as it takes a foe's blow - at the mentored health pool
+ *  (mentorMode.js damageTakenMult, formulas.js's own tail for blows). `target` optional: without it, as before. */
+export const casterDamageScaled = (n, ent, target = null, school = null) => {
+  let v = casterScaledOnly(n, ent);
+  if (v > 0 && target?.isPlayer && !target.peer && !ent?.isPlayer) {
+    const m = mentorDamageTakenMult(target);
+    if (m > 1) v = Math.max(1, Math.round(v * m));
+  }
+  // BAL9 (bible/05-Combat/Balance-Arc.md section 15): MY spell's power - the school past 100 and the loot's potency
+  // (systems/spell/spellPower.js spellPowerMult); 1 for a foe's, a peer's stand-in's and at any player. The same rounding and
+  // floor of one; a spell the throw turned whole stays nothing. SCHOOLS3: `school` the school the effect is cast in
+  // (spellcost.js castSchool - a signature spell's path's), Destruction's when none is said.
+  if (v > 0) {
+    const p = spellPowerMult(ent, target, school == null ? {} : { school });
+    if (p !== 1) v = Math.max(1, Math.round(v * p));
+  }
+  return v;
+};
+
+/** One magic round for one ACTIVE entry - the saving throw rolls
+ *  FRESH here every round (F10), gated on the spell's range (S15).
+ *  Fortify/buff/drain rounds carry no per-round action (their state
+ *  applies via liveStat / hasActiveEffect). */
+function runEffectRound(a, target, sinks, rolls) {
+  if (a.kind === 'continuousDamage') {
+    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls, a.caster), a.caster, target, a.school);   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode; BAL9: its caster's pierce; SCHOOLS3: the school it was cast in
+    // AUDIT 68 S19-round-ticks-player-provenance: the tick is DamageHealthFromSource(caster) - the player's blow only
+    // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
+    // DUEL1: and the entry's duel tag rides along - a duel's damage over time (bundleDuel) stops at the duel's floor
+    if (n > 0 && target?.isPlayer && a.caster && !a.caster.isPlayer) markPlayerHarm(a.caster);   // REVENANT-HARM: the round that may be the death is its caster's
+    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel, round: true, element: a.element ?? null });   // TELL1: a round, not a landing - it weighs nothing on a wind-up's poise; BOSS-TRAITS: its element (a resistance reads it)
+    // RVN1 (Feud-Arc.md section 12): MY round on a foe goes in its fight's ledger by its element (the provenance law
+    // above - no caster is mine; a peer's stand-in, a foe's, never)
+    if (n > 0 && target && !target.isPlayer && (!a.caster || (a.caster.isPlayer && !a.caster.peer))) noteFeudHarm(target, elementFeudClass(a.element), n);
+    handleAttackFromSource(a.caster);   // DamageHealthFromSource's tail, wave 31
+  } else if (a.kind === 'continuousDamageSpellPoints') {
+    const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
+    if (n > 0 && sinks.drainMagicka) sinks.drainMagicka(n);
+    handleAttackFromSource(a.caster);
+  } else if (a.kind === 'continuousDamageFatigue') {
+    // DamageFatigueFromSource(..., assignMultiplier: true) - x64
+    const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
+    if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER, a);   // AUDIT DUEL1 B3: the entry rides along - a duel's fatigue damage never empties the bar (the exhaustion collapse can kill)
+    handleAttackFromSource(a.caster);
+  } else if (a.kind === 'regenerate') {
+    // Regenerate.MagicRound: IncreaseHealth(GetMagnitude) every round
+    let n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? false, a.element, a.flag, target, rolls);
+    // SCHOOLS2: Restoration past 100, read EVERY ROUND as a damage over time's school is (AUDIT SCHOOLS L2 F3: frozen at
+    // the cast, a Regenerate cast before a duel or a mentoring kept it through both) - my own cast on myself alone, never
+    // a worn item's (the tail's heldItem) nor a stored entry restored without its caster
+    if (n > 0 && a.school != null && !a.heldItem) {
+      const k = schoolMult(a.caster, target, a.school, { self: true });
+      if (k !== 1) n = Math.max(1, Math.round(n * k));
+    }
+    if (n > 0 && sinks.heal) { const held = regenShare(n, 'spell', target); if (held > 0) sinks.heal(held); }   // WBX6 / EVENT-RULES: a made level holds regeneration - half, and none just after a hurt (systems/courtRules.js)
+  }
+}
+
+/** Push a new active entry and fire its INITIAL magic round (F17):
+ *  acts now and consumes round 1, exactly as AssignBundle does. */
+/** STACK-CAP (AUDIT): THE RENEWAL OF AN ACTING INCUMBENT - Regenerate and Continuous Damage's three, whose rounds DO
+ *  something. renewRounds tops one up to a fresh cast's rounds, but a fresh cast also runs its first round at once
+ *  (pushActive) and a renewal never does: one renewed in its last listed round (0 left, swept on the next pass) gave a
+ *  tick fewer than letting it lapse and casting again (a Regenerate of five rounds healed four times). That round runs
+ *  here, on the incumbent's own settings, exactly when the cast would otherwise have bought one fewer. */
+function renewActing(inc, rounds, target, sinks, rolls) {
+  if (inc.roundsRemaining <= 0) runEffectRound(inc, target, sinks, rolls);
+  renewRounds(inc, rounds - 1);
+}
+
+function pushActive(target, entry, sinks, rolls) {
+  target.activeEffects = target.activeEffects || [];
+  target.activeEffects.push(entry);
+  runEffectRound(entry, target, sinks, rolls);
+  entry.roundsRemaining--;
+}
+
+/**
+ * CSA-I: EntityEffectManager.AssignBundle for a MOD'S bundle of one effect the port models by its kind alone (Come
+ * Sail Away's "I'm On A Boat": one WaterWalkingSilent) - the entry pushed with its rounds and its initial round run,
+ * as pushActive does for a cast, and stamped as a bundle the way applySpell stamps one (X10): its name, the type, no
+ * icon, the caster the target.
+ */
+export function assignModBundle(target, { name, kind, rounds, bundleType = 'Spell', sinks = {}, rolls = Math.random }) {
+  const entry = { kind, roundsRemaining: rounds, bundleId: ++_bundleSeq, bundleName: name, bundleType, bundleIcon: 0, bundleSelfCast: true };
+  pushActive(target, entry, sinks, rolls);
+  return entry;
+}
+/** CSA-I: EntityEffectManager.RemoveBundle of the first live bundle with the name - every entry it holds. */
+export function removeBundleNamed(target, name) {
+  const list = target?.activeEffects ?? [];
+  const first = list.find((a) => a.bundleId != null && !a.ended && a.bundleName === name);
+  if (!first) return false;
+  target.activeEffects = list.filter((a) => a.bundleId !== first.bundleId);
+  return true;
+}
+
+/** Push a PERMANENT entry (drain/transfer attribute): no rounds, no
+ *  initial-round action - the constant stat mod IS the effect. */
+function pushPermanent(target, entry) {
+  target.activeEffects = target.activeEffects || [];
+  target.activeEffects.push(entry);
+}
+
+/** AssignBundle adds an INSTANT effect to liveEffects exactly like a
+ *  lasting one (EntityEffectManager.cs:584-593) and keeps its bundle
+ *  in instancedBundles (:610-612); only the NEXT DoMagicRound finds
+ *  it at 0 rounds and drops it (:1728-1760). So for up to one magic
+ *  round the target really does carry that effect - which is what
+ *  EnemyMotor.EffectsAlreadyOnTarget walks. A 0-round marker entry
+ *  reproduces that lifetime exactly: tickActiveEffects removes a
+ *  0-round entry WITHOUT acting, and no round branch matches these
+ *  kinds. (AUDIT 18: instants used to count as always-absent, so an
+ *  instant-only caster - Fire Daedra, whose whole list is (4,0) -
+ *  could re-cast every 2.5s where DFU vetoes the pick.) */
+function pushInstantMarker(target, kind, effect = null, stat = null) {
+  target.activeEffects = target.activeEffects || [];
+  const entry = { kind, instant: true, roundsRemaining: 0 };
+  if (stat) entry.stat = stat;
+  // D9: the SOURCE EFFECT rides the marker, because a held bundle's
+  // instant effects are re-run every magic round (see the pin block
+  // at the foot of applySpell) and the marker is the only record of
+  // which effect made it. A plain spell's marker carries it unused.
+  // NON-ENUMERABLE, the dungeonContext idiom: this is a back-pointer
+  // into the spell record, not a column of the entry, and every walk
+  // that iterates an entry - copyEffectEntry's spread, the save, a
+  // test's deepEqual - must see the entry it always saw.
+  if (effect) Object.defineProperty(entry, 'effect', { value: effect, enumerable: false, writable: true, configurable: true });
+  target.activeEffects.push(entry);
+}
+
+/**
+ * Apply a spell to a target entity through the sinks:
+ *   hurt(n)           - damage (the caller owns floors/death)
+ *   heal(n)           - IncreaseHealth (the caller owns the max clamp)
+ *   drainMagicka(n) / restoreMagicka(n) - U44: the restore half
+ *                     arrived with the POTIONS, exactly as this line
+ *                     predicted. No classic SPELL key reaches it;
+ *                     DFU's Heal-SpellPoints is potion-only and
+ *                     carries no ClassicKey at all.
+ *   drainFatigue(n) / restoreFatigue(n)  - RAW fatigue points (the x64
+ *                       is applied here; the caller owns the 0/max
+ *                       clamps and the exhaustion consumer)
+ * caster (optional) = { entity, sinks } - the casting entity and ITS
+ * sinks, needed by the Transfer family (DFU heals the caster through
+ * its own manager/entity; without a caster, TransferHealth/Fatigue
+ * no-op entirely and Transfer{Attribute} drains without the heal-back,
+ * verbatim).
+ * Instant families act now; continuous joins target.activeEffects
+ * for the round ticker. Returns what happened (tested).
+ */
+export function applySpell(spell, casterLevel, target, sinks, rolls = Math.random, caster = null, ctx = {}) {
+  const flag = ELEMENT_EFFECT_FLAG[spell.element] ?? EFFECT_FLAGS.Magic;
+  // B1: ctx.bypassSavingThrows is AssignBundleFlags.BypassSavingThrows
+  // (EntityEffectManager.AssignBundle) - the quest machine's casts
+  // (CastSpellOnFoe's queue drain, CastSpellDo) land with no save
+  // rolled, which is exactly the CasterOnly no-save arm below.
+  // Immunities are NOT saves and still apply, as in DFU.
+  // AUDIT 26 F071: TWO predicates, because DFU has two laws. The
+  // bypass flag gates the ASSIGN-TIME gates alone - reflection and
+  // resistance (:521, :525) and the no-magnitude saving throw
+  // (:565-568). GetMagnitude's per-application ModifyEffectAmount has
+  // NO bypass term (EntityEffect.cs:804-806): it runs for every
+  // non-CasterOnly bundle, so a quest-queued Damage Health is still
+  // save-scaled on every application. The port folded the flag into
+  // one predicate and a bypassed magnitude cast landed whole.
+  const saveScaled = spell.rangeType !== 0;                              // GetMagnitude's CasterOnly gate (S15)
+  const assignSave = saveScaled && ctx.bypassSavingThrows !== true;      // AssignBundle's :565-580 gate
+  // L2-slice (AUDIT 23 magic-11) - FormulaHelper.GetElementType
+  // (:1630-1634): an effect whose AllowedElements is MAGIC-ONLY
+  // always saves as MAGIC, whatever element the parent spell rode in
+  // on. AUDIT 24 systems: the port's predicate was a hand-picked list
+  // of families and it missed the alteration/thaumaturgy buffs -
+  // Levitate, Slowfall, WaterWalking, WaterBreathing, FreeAction,
+  // Jumping, Climbing and the detects all set
+  // ElementFlags_MagicOnly too, and three of them are
+  // TargetFlags_All, so touch and ranged casts of them really exist.
+  // MAGIC_ONLY_KEYS below is the whole set, read off the effect
+  // classes rather than guessed at.
+  const savesAsMagic = (e) => MAGIC_ONLY_KEYS.has(`${e.type},${classicSub(e)}`);
+  const saveElement = (e) => (savesAsMagic(e) ? 4 : spell.element);          // DFCareer.Elements.Magic
+  // AUDIT 24 systems: the FLAG is NOT overridden. SavingThrow computes
+  // its two arguments from different sources (FormulaHelper.cs:
+  // 1568-1569): GetEffectFlags (:1592-1623) looks only at
+  // Paralyze/DiseaseEffect and then switches on the PARENT BUNDLE's
+  // element - it never consults AllowedElements. Only GetElementType
+  // applies the magic-only override. The port had driven both off the
+  // same predicate, folding in Career.Magic tolerance and
+  // BiographyResistMagicMod where DFU folds in Career.Fire.
+  const saveFlag = () => flag;
+  const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, saveElement(e), saveFlag(e), target, rolls, caster?.entity ?? null);   // BAL9: the caster, for a damage spell's pierce
+  // SCHOOLS2 (bible/06-Systems/Arcane-Specialisations.md section 4): A SCHOOL PAST 100 PAYS IN ITS OWN DIMENSION - the
+  // effect's school (the one it is cast in: spellcost.js castSchool, a signature spell's path's) multiplies where the
+  // target is mine to strengthen (systems/spell/spellPower.js schoolMult): on MYSELF (`self`) a heal, a Shield, a concealment's
+  // rounds, a ward's chance; at a FOE a chance. 1 for every cast but my own, offline, while mentoring, in a refereed fight.
+  const schoolOf = (e) => castSchool(caster?.entity ?? null, spell, e);
+  // AUDIT SCHOOLS L2 F2, F9: never a WORN item's bundle (a Cast When Held effect keeps what it landed with until the
+  // item's reroll - past a duel's start and a mentoring alike); never my own spell a foe turned back at me
+  const noSchool = ctx.heldItem != null || (ctx.reflectedCount ?? 0) > 0 || spell?.pvpKit != null;   // PVP-KIT: the PvP bar's numbers are its own
+  const potencyOf = (e, self) => (noSchool ? 1 : schoolMult(caster?.entity ?? null, target, schoolOf(e), { self }));
+  /** The caster a regenerate entry keeps for its rounds' school: mine, when the school may read at all. */
+  const selfSchoolCaster = () => (noSchool ? null : caster?.entity ?? null);
+  const chanceOf = (e, self) => {
+    const ch = chanceValue(e, casterLevel);
+    const k = potencyOf(e, self);
+    return k !== 1 ? Math.min(100, Math.round(ch * k)) : ch;
+  };
+  const out = { damage: 0, healed: 0, continuous: 0, skipped: 0 };
+  // E2: ctx.heldItem is CastWhenHeld's InstantiateSpellBundle - the
+  // whole apply is a HeldMagicItem bundle pinned to the worn item
+  // (bundle.FromEquippedItem, CastWhenHeld.cs:~165). A pinned apply
+  // NEVER merges into an incumbent and no later cast merges into a
+  // pinned entry - DFU keeps the held bundle its own LiveEffectBundle
+  // beside any spell bundle, where the port's F12 incumbent merge
+  // would otherwise weld them (and an unequip could then strip a
+  // spell's rounds, or a spell could immortalize itself). The entries
+  // are tagged at the tail; tickActiveEffects re-ticks them every
+  // round while the item stays worn (DoMagicRound :1733 "item effects
+  // are always ticked").
+  const heldItem = ctx.heldItem ?? null;
+  // AUDIT FB1022d A1: THIS CAST'S ENTRIES BY WHO THEY ARE, NOT WHERE THEY STAND. A Cure in the same bundle rebuilds the
+  // list (cureAllOfKind's filter), and an older entry it took slid this cast's first entries below the list's old length:
+  // a gift of Shield, Cure Paralyzation, Shield over a spider's paralysis stood two pools again, and an entry so slid
+  // went untagged - no bundle, and my own next Shield merged into a mate's gift (C2's own bug).
+  const prior = new Set(target.activeEffects ?? []);
+  /** The entries this cast pushed, in the list's order. */
+  const ownEntries = () => (target.activeEffects ?? []).filter((a) => !prior.has(a));
+  // AUDIT ALLY-CAST C2: a party mate's cast (ctx.allyCast, tagged bundleAlly below) and the target's own never
+  // merge into one another. F12's incumbent law - a like-kind recast merges its rounds (renewed since STACK-CAP) and
+  // keeps the incumbent's magnitude/chance - was harmless while no outside source ever buffed a player; a level-1 mate's 1-point
+  // Shield capped the target's own 60-point Shield at one for forty rounds, and a mate's Regenerate kept its
+  // caster level over the target's own stronger cast. An ally's bundle stands beside mine, never over it.
+  const allyCast = ctx.allyCast === true;
+  // DUEL1: a duel opponent's spell (ctx.duelCast, tagged bundleDuel below) - never merged with the target's own either,
+  // its damage over time stops at the duel's floor, and the duel's end strips it
+  const duelCast = ctx.duelCast === true;
+  // GIFT-ONE (FIELD BUGS 2026-10-22d, PauloHF: "a shield with 6002 strength ... both shields work"): an entry THIS cast
+  // pushed is this cast's, tagged at the tail - so it is never read by its missing tag. Read by it, a mate's spell
+  // carrying one effect twice found its own first entry untagged and stood a second beside it: two Shield pools a gift,
+  // three for three, where the caster's own cast of the same spell merges into one.
+  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && (!prior.has(a) || (!!a.bundleAlly === allyCast && !!a.bundleDuel === duelCast)) && pred(a)));
+  // AUDIT SCHOOLS (L1 M1, L2 F1): A POWER'S BUNDLE ON ME (ctx.powerCast - a path's rider, through the door's castOnPlayer
+  // with `power`) merges as DFU's incumbents merge, one entry a kind (the ward readers take the best live entry - RPT1026-PROGRESS) -
+  // but where EITHER side of a merge is a power's, the Shield's pool and a ward's chance take the LARGER: by DFU's recast
+  // law alone a 40-point rider Shield capped my own 140-point Shield cast after it at 40, and my own 6-point Shield
+  // swallowed every rider after it. The entry a power made says so (`bundlePower`).
+  const powerCast = ctx.powerCast === true;
+  const powerMerge = (inc) => powerCast || inc?.bundlePower === true;
+  // S24: absorption is tested PER EFFECT, before any of them lands
+  // (EntityEffectManager :507-518), and an absorbed effect is skipped
+  // entirely - `continue`, not a reduced magnitude.
+  let totalAbsorbed = 0;
+  // X11: sourceBundle.ReflectedCount, and it is a BUNDLE field, not an
+  // effect one - TryReflection refuses a bundle already reflected once
+  // (:1210-1212) and IncrementReflectionCount mutates the source. Two
+  // consequences the port keeps verbatim, both counter-intuitive:
+  //   - a reflected bundle cannot bounce back again, so two reflecting
+  //     entities do not volley (DFU's own comment says so, and says it
+  //     could be raised later);
+  //   - the increment happens INSIDE the per-effect loop, so on a
+  //     multi-effect spell only the FIRST effect reflects. The whole
+  //     bundle goes back at the caster, and effects 2..n still land on
+  //     the original target as well. That is a real DFU quirk, not a
+  //     port shortcut: a Damage Health + Paralyze spell reflected by
+  //     its target hits the caster with BOTH and the target with the
+  //     paralyze. Recorded in Ledger B.
+  let reflectedCount = ctx.reflectedCount ?? 0;
+  for (const e of spell.effects) {
+    // U44: an entry with a string KEY is DFU's EffectEntry shape and
+    // has no classic pair to carry, so it rides with type -1. Every
+    // other -1 is the classic reader's empty-slot sentinel.
+    if (e.type <= -1 && !e.key) continue;
+    // AUDIT 26 F074: the hard-immunity drop for an incoming Paralyze
+    // sits BEFORE the absorption/reflection/resistance chain - the
+    // `continue` at EEM:495-498 precedes the caster block at
+    // :504-527. Tested inside the paralyze arm (downstream of
+    // reflection), a player under Free Action with Spell Reflection
+    // up BOUNCED a spider's paralyze back at its caster, and the
+    // resistance gate could print "Spell was resisted." - DFU
+    // discards it silently before either gate can run.
+    if (isParalyze(e) && isEntityImmuneToParalysis(target)) continue;
+    // DFU requires a CASTER ENTITY on the bundle (:505) and
+    // BundleType == Spell - repeated on ALL THREE gates (:509, :521,
+    // :525). D9: the enchantment arc arrived (enchantments.js:"entity.level ?? 1"
+    // routes CastWhenHeld through this same applySpell with caster
+    // `{ entity }` and ctx.heldItem set), so the caster check alone
+    // stopped being the whole gate: a HeldMagicItem bundle is
+    // BundleTypes.HeldMagicItem (EEM:1052), never Spell, and the
+    // wearer's own IsAbsorbingSpells would otherwise SWALLOW their
+    // own cast-when-held bundle and refund them magicka for it.
+    // bypassSavingThrows already covers reflection and resistance,
+    // but DFU spells the bundle-type test on each of the three and
+    // absorption is not gated on it - so the whole block takes the
+    // test, which is DFU's shape line for line.
+    if (caster && !heldItem) {
+      // E1: IsAbsorbingSpells (:1196) is LIVE - the AbsorbsSpells
+      // enchantment's constant fold on the target. The caller's own
+      // ctx.absorbing (probe surface) still wins when set.
+      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, { ...ctx, absorbing: ctx?.absorbing ?? entityAbsorbsSpells(target), rolls, paid: caster.entity === target ? (caster.cast?.cost ?? 0) : 0 });   // AUDIT RPT1026 F3: my own spell's spend
+      if (sp > 0) {
+        totalAbsorbed += sp;
+        out.absorbed = (out.absorbed ?? 0) + sp;
+        continue;
+      }
+      // X11: SPELL REFLECTION, SECOND in DFU's chain (TryReflection
+      // :1207-1244) - between absorption and resistance, and unlike
+      // both of those it does not drop the effect: it re-targets the
+      // WHOLE BUNDLE back at its caster, who then runs their own
+      // absorb/reflect/resist gauntlet on arrival.
+      //
+      // The re-target is the CALLER's, not this module's. DFU reaches
+      // the caster's EntityEffectManager and calls AssignBundle on it;
+      // the port's equivalent of "the caster's manager" is the host
+      // seam that holds both parties and their sinks - the same seam
+      // that already owns the pacify, dispel, teleport and identify
+      // answers. Doing it here instead would either lose the arrival
+      // messages (they hang off the caller's arms) or hand this module
+      // a foe pool it has no business knowing about.
+      //
+      // No CasterOnly test: DFU has none either, because "do not
+      // reflect spells from same caster onto self" (:1220-1222)
+      // already covers it - a CasterOnly spell has caster === target.
+      if (ctx.bypassSavingThrows !== true && reflectedCount === 0 && caster.entity !== target) {
+        const fc = spellReflectionChance(target);
+        if (fc > 0 && dice100(fc, rolls())) {
+          reflectedCount++;                        // sourceBundle.IncrementReflectionCount()
+          out.reflected = (out.reflected ?? 0) + 1;
+          continue;
+        }
+      }
+      // X1: SPELL RESISTANCE, third in DFU's chain (TryResistance
+      // :1247-1270). On success the effect simply FAILS - no magicka,
+      // no re-target, no reduced magnitude, just dropped. A CasterOnly
+      // spell is never resisted (:1256), so a self-buff cannot be
+      // refused by the caster's own resistance.
+      if ((spell.rangeType ?? 0) !== 0 && ctx.bypassSavingThrows !== true) {
+        const rc = spellResistanceChance(target);
+        if (rc > 0 && Math.floor(rolls() * 100) < rc) {
+          out.resisted = (out.resisted ?? 0) + 1;
+          continue;
+        }
+      }
+    }
+    if (e.type === 43 && classicSub(e) === 255) {
+      // TP-slice: Teleport-Effect (43,255) - Start PROMPTS rather
+      // than assigning anything (Teleport.cs:63-68); the HOST owns
+      // the anchor/teleport box. TargetFlags_Self is the property
+      // gate (:52), so only a CasterOnly arrival raises the marker.
+      //
+      // EF1: the subgroup test was MISSING here, and only here. DFU
+      // keys this class `MakeClassicKey(43, 255)` (Teleport.cs:51)
+      // like every other 255-subgroup family, but the port's arm read
+      // the GROUP alone - so all 256 subgroups of group 43 raised the
+      // teleport marker and `continue`d past the skip counter. The
+      // arm's own comment said "(43,255)" the whole time; the code
+      // did not. Classic data only ever carries 43,-1 (which masks to
+      // 255), so no real spell reached it - but the effect library's
+      // one job is to answer a key, and answering 255 keys DFU has no
+      // class for is the same defect as answering none.
+      if ((spell.rangeType ?? 0) === 0) out.teleport = true;
+      continue;
+    }
+    // V2a: MorphSelf (29,255) goes LIVE - the last inert catalog row.
+    // MorphSelf.cs:34-41's whole payload is one call into the racial
+    // override (GetRacialOverrideEffect().MorphSelf()) and a
+    // RoundsRemaining = 0; the override lives in systems/lycanthropy.js
+    // and the HOST hands the arm through ctx so this module stays
+    // upstream of it. A caster with no override sees nothing happen -
+    // DFU's own null check.
+    if (e.type === 29 && classicSub(e) === 255) {
+      ctx.morphSelf?.();
+      pushInstantMarker(target, 'morphSelf', e);
+      continue;
+    }
+    if (isHealHealth(e)) {
+      let n = magnitude(e);
+      const k = n > 0 ? potencyOf(e, true) : 1;   // SCHOOLS2: Restoration past 100, on myself
+      if (k !== 1) n = Math.max(1, Math.round(n * k));
+      out.healed += n;
+      if (n > 0 && sinks.heal) sinks.heal(n);
+      pushInstantMarker(target, 'healHealth', e);
+      continue;
+    }
+    if (isDamageHealth(e)) {
+      const n = casterDamageScaled(magnitude(e), caster?.entity, target, schoolOf(e));   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode; SCHOOLS3: the school it is cast in
+      out.damage += n;
+      if (n > 0 && sinks.hurt) sinks.hurt(n, { element: spell.element ?? null });   // BOSS-TRAITS: the spell's element (a resistance reads it - systems/bossTraits.js)
+      // DamageHealthFromSource runs HandleAttackFromSource whatever the
+      // amount - the `n > 0` guard above is the port's sink contract, not
+      // DFU's, and the concealment break is NOT behind it (:162-169).
+      handleAttackFromSource(caster?.entity ?? null);
+      pushInstantMarker(target, 'damageHealth', e);
+      continue;
+    }
+    if (isContinuousDamage(e)) {
+      // IsLikeKind is settings-blind: ANY ContinuousDamageHealth is
+      // incumbent (F12) - a re-cast renews its rounds (STACK-CAP),
+      // keeps the incumbent's own settings, fires no initial round.
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const inc = findInc((a) => a.kind === 'continuousDamage');
+        if (inc) renewActing(inc, rounds, target, sinks, rolls);
+        else pushActive(target, { kind: 'continuousDamage', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, school: schoolOf(e), roundsRemaining: rounds }, sinks, rolls);   // SCHOOLS3: the school its rounds are cast in
+        out.continuous++;
+      }
+      continue;
+    }
+    // X11: DISINTEGRATE (Destruction 5,255). Chance-only, no duration,
+    // no magnitude, TargetFlags_Other - and a MagicRound whose entire
+    // body is `entityBehaviour.Entity.SetHealth(0)` (Disintegrate.cs
+    // :44-53). It fires ONCE because it has no duration: the initial
+    // magic round every effect gets at assignment (EEM:594) is the
+    // only one it will ever get, the same mechanism the Pacify arm
+    // below documents at length.
+    //
+    // ORDER MATTERS AND IS DFU'S. AssignBundle runs the OnCast chance
+    // gate FIRST (:531-551), then the no-magnitude saving throw
+    // (:561-579), then MagicRound. So a made save spares a target that
+    // the chance roll already caught - two independent gates, not one.
+    //
+    // MECHANISM NOTE (recorded departure, Ledger A). DFU calls
+    // SetHealth(0), which clamps and raises the death event directly.
+    // The port has no SetHealth sink: `sinks.hurt` IS the port's
+    // vitals-and-death door, so the kill goes through it for the
+    // target's whole remaining health. That routes the blow through
+    // EnemyEntity.SetHealth's own soul-trap intercept - which is where
+    // DFU puts it too (dungeonContext damageFoe, X5) - and additionally
+    // through MakeEnemyHostileToAttacker, which DFU's SetHealth path
+    // does not run. The difference is unobservable: the only entity it
+    // could re-hostile is one that is dying in the same call.
+    if (isDisintegrate(e)) {
+      if (!dice100(chanceValue(e, casterLevel), rolls())) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      // The no-magnitude save (SupportMagnitude is never set on this
+      // class), skipped for a CasterOnly cast exactly as X2's arms are.
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
+      const left = target?.health ?? 0;
+      out.disintegrated = (out.disintegrated ?? 0) + 1;
+      if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }   // AUDIT PSCALE1 DOORS-1: a Disintegrate is a kill - no fighters' toughness divides it
+      continue;
+    }
+    if (isFortifyAttribute(e)) {
+      // Fortify{Attribute} (type 9, subType = stat index): a temporary
+      // additive stat mod. IsLikeKind = same stat AND CompareSettings
+      // (F12); a like-kind re-cast RENEWS the incumbent's rounds
+      // (STACK-CAP) and keeps its magnitude; a different-settings fortify of the
+      // same stat coexists (liveStat sums the mods, as DFU's parallel
+      // instances do).
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const stat = STAT_KEYS_ORDER[e.subType];
+        const sKey = settingsKeyOf(e);
+        const inc = findInc((a) => a.kind === 'fortifyAttribute' && a.stat === stat && a.settingsKey === sKey);
+        if (inc) renewRounds(inc, rounds - 1);
+        else pushActive(target, { kind: 'fortifyAttribute', stat, settingsKey: sKey, magnitude: magnitude(e), roundsRemaining: rounds }, sinks, rolls);
+        out.fortified = (out.fortified ?? 0) + 1;
+      }
+      continue;
+    }
+    if (isDrainAttribute(e) || isTransferAttribute(e)) {
+      // Drain{Attribute} (7, s) / Transfer{Attribute} (11, s):
+      // permanent-until-healed; Become/AddState both roll a fresh
+      // magnitude onto the incumbent's total. Transfer additionally
+      // heals the CASTER's drained stat by the PRE-CLAMP roll
+      // (lastMagnitudeIncreaseAmount), verbatim.
+      // L2-slice (AUDIT 23 magic-12): the incumbent search runs the
+      // EXISTING incumbent's like-kind test against the arrival
+      // (IncumbentEffect.FindIncumbent - other.IsLikeKind(this)),
+      // and TransferEffect IS-A DrainEffect - so a DRAIN incumbent
+      // CLAIMS an incoming Transfer of its stat (the roll stacks
+      // onto the drain entry, the caster heal still fires), while a
+      // TRANSFER incumbent never claims a plain Drain (its test
+      // needs a TransferEffect). The claimed entry keeps its own
+      // kind; the old same-kind-only search split the pools.
+      // AUDIT 26 F075: DrainEffect (Transfer IS-A Drain) calls
+      // PlayerAggro (EntityEffect.cs:815-828) - an invisible player
+      // draining a foe breaks cover.
+      handleAttackFromSource(caster?.entity ?? null);
+      const kind = isDrainAttribute(e) ? 'drainAttribute' : 'transferAttribute';
+      const stat = STAT_KEYS_ORDER[e.subType];
+      let amt = magnitude(e);
+      // AUDIT DUEL1 A4: a duel's drain is its own entry (never merged with the target's own), so DrainEffect's
+      // permanent-less-one cap counted it alone - over an old drain, a disease or a poison on the same stat it took the
+      // LIVE stat to 0, and a stat at 0 kills (statMods.js) through no duel's floor. A duel's drain leaves the live stat 1.
+      if (duelCast && amt > 0) amt = Math.min(amt, Math.max(0, liveStat(target, stat) - 1));
+      if (amt > 0) {
+        let entry = findInc((a) => !a.ended && a.stat === stat &&
+          (kind === 'transferAttribute'
+            ? (a.kind === 'drainAttribute' || a.kind === 'transferAttribute')
+            : a.kind === 'drainAttribute'));
+        if (!entry) {
+          entry = { kind, stat, magnitude: 0, permanent: true };
+          pushPermanent(target, entry);
+        }
+        increaseDrainMagnitude(target, entry, amt);
+        // F078: ShowPlayerDrained, on the magnitude increase itself -
+        // the `amt > 0` arm this sits in IS DFU's
+        // `lastMagnitudeIncreaseAmount > 0` gate. TransferEffect IS-A
+        // DrainEffect, so it says the line too.
+        sinks?.say?.(localizedText('youFeelDrained', FEEL_DRAINED_TEXT));
+        if (kind === 'transferAttribute' && caster?.entity) healAttributeDamage(caster.entity, stat, amt);
+        out.drained = (out.drained ?? 0) + 1;
+      }
+      continue;
+    }
+    if (isHealAttribute(e)) {
+      // Heal{Attribute} (10, s): instant manager.HealAttribute walk -
+      // heals DRAIN damage only, never fortifies past the base.
+      const n = magnitude(e);
+      if (n > 0) healAttributeDamage(target, STAT_KEYS_ORDER[e.subType], n);
+      pushInstantMarker(target, 'healAttribute', e, STAT_KEYS_ORDER[e.subType]);
+      out.attrHealed = (out.attrHealed ?? 0) + 1;
+      continue;
+    }
+    if (isTransferHealth(e)) {
+      // AUDIT 26 F075: TransferHealth damages through
+      // DamageHealthFromSource (DaggerfallEntityBehaviour.cs:143-169),
+      // whose tail breaks the caster's normal-power concealment -
+      // amount and caster gates notwithstanding, as the damageHealth
+      // arm already records.
+      handleAttackFromSource(caster?.entity ?? null);
+      // TransferHealth (11, 8): requires a caster (DFU MagicRound
+      // returns before acting without one) - damage target, heal
+      // caster by the same magnitude.
+      if (caster?.entity) {
+        const n = magnitude(e);
+        out.damage += n;
+        if (n > 0) {
+          if (sinks.hurt) sinks.hurt(n);
+          if (caster.sinks?.heal) caster.sinks.heal(n);
+        }
+      }
+      pushInstantMarker(target, 'transferHealth', e);   // added to liveEffects at assignment, caster or not
+      continue;
+    }
+    if (isTransferFatigue(e)) {
+      handleAttackFromSource(caster?.entity ?? null);   // AUDIT 26 F075: DamageFatigueFromSource's tail
+      // TransferFatigue (11, 9): requires a caster - fatigue x64 both
+      // directions (DamageFatigueFromSource / IncreaseFatigue, both
+      // assignMultiplier: true).
+      if (caster?.entity) {
+        const n = magnitude(e);
+        if (n > 0) {
+          if (sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER);
+          if (caster.sinks?.restoreFatigue) caster.sinks.restoreFatigue(n * FATIGUE_MULTIPLIER);
+          out.fatigueDrained = (out.fatigueDrained ?? 0) + 1;
+        }
+      }
+      pushInstantMarker(target, 'transferFatigue', e);
+      continue;
+    }
+    if (isHealFatigue(e)) {
+      // HealFatigue (10, 9): instant IncreaseFatigue(mag, x64).
+      const n = magnitude(e);
+      if (n > 0 && sinks.restoreFatigue) sinks.restoreFatigue(n * FATIGUE_MULTIPLIER);
+      pushInstantMarker(target, 'healFatigue', e);
+      out.fatigueHealed = (out.fatigueHealed ?? 0) + 1;
+      continue;
+    }
+    if (isHealSpellPoints(e)) {
+      // U44: HealSpellPoints.MagicRound - IncreaseMagicka(magnitude),
+      // and NO multiplier, where its fatigue sibling above carries the
+      // x64 (HealSpellPoints.cs:62-64). This is the `restoreMagicka
+      // returns with potions` the sink list has promised since S15.
+      const n = magnitude(e);
+      if (n > 0 && sinks.restoreMagicka) sinks.restoreMagicka(n);
+      pushInstantMarker(target, 'healSpellPoints', e);
+      out.magickaHealed = (out.magickaHealed ?? 0) + n;
+      continue;
+    }
+    if (isDamageFatigue(e)) {
+      // DamageFatigue (4, 1): instant DamageFatigueFromSource(mag, x64).
+      const n = magnitude(e);
+      if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER, duelCast ? DUEL_SOURCE : undefined);   // AUDIT DUEL1 B3: a duel's, marked as its rounds are
+      handleAttackFromSource(caster?.entity ?? null);
+      pushInstantMarker(target, 'damageFatigue', e);
+      out.fatigueDrained = (out.fatigueDrained ?? 0) + 1;
+      continue;
+    }
+    if (isContinuousDamageFatigue(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const inc = findInc((a) => a.kind === 'continuousDamageFatigue');
+        if (inc) renewActing(inc, rounds, target, sinks, rolls);   // settings-blind incumbent (F12)
+        else pushActive(target, { kind: 'continuousDamageFatigue', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
+        out.continuous++;
+      }
+      continue;
+    }
+    if (isDamageSpellPoints(e)) {
+      // DamageSpellPoints (4, 2): DamageMagickaFromSource(magnitude),
+      // instant, saving-throw scaled like damage.
+      const n = magnitude(e);
+      out.magickaDrained = (out.magickaDrained ?? 0) + n;
+      if (n > 0 && sinks.drainMagicka) sinks.drainMagicka(n);
+      handleAttackFromSource(caster?.entity ?? null);
+      pushInstantMarker(target, 'damageSpellPoints', e);
+      continue;
+    }
+    if (isContinuousDamageSpellPoints(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const inc = findInc((a) => a.kind === 'continuousDamageSpellPoints');
+        if (inc) renewActing(inc, rounds, target, sinks, rolls);   // settings-blind incumbent (F12)
+        else pushActive(target, { kind: 'continuousDamageSpellPoints', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
+        out.continuous++;
+      }
+      continue;
+    }
+    if (isRegenerate(e)) {
+      // Regenerate (18, 255): IncreaseHealth(GetMagnitude) every round
+      // for the duration. IsLikeKind = Regenerate AND CompareSettings.
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const sKey = settingsKeyOf(e);
+        const inc = findInc((a) => a.kind === 'regenerate' && a.settingsKey === sKey);
+        if (inc) renewActing(inc, rounds, target, sinks, rolls);
+        else pushActive(target, { kind: 'regenerate', effect: e, casterLevel, element: saveElement(e), flag: saveFlag(e), saveScaled, settingsKey: sKey, caster: selfSchoolCaster(), school: schoolOf(e), roundsRemaining: rounds }, sinks, rolls);   // magic-11; SCHOOLS2: Restoration past 100, read each round (runEffectRound)
+        // F078: Start's HUD line. base.Start precedes the incumbency
+        // resolution, so it prints on EVERY cast that takes - the
+        // merge into an incumbent does not silence it.
+        sinks?.say?.(localizedText('youAreRegenerating', REGENERATING_TEXT));
+        out.continuous++;
+      }
+      continue;
+    }
+    if (isParalyze(e)) {
+      // S22/magic-10's immunity drop moved to the TOP of the loop
+      // (AUDIT 26 F074): EEM:495-498 runs it before the caster block,
+      // so it cannot sit here behind reflection and resistance.
+      // AUDIT 26 F075: Paralyze.Start opens with PlayerAggro()
+      // (Paralyze.cs:48) - BEFORE the chance and save gates, since
+      // AssignBundle calls Start at :531 - so the attack-from-source
+      // break fires on every non-immune assign, chance notwithstanding.
+      handleAttackFromSource(caster?.entity ?? null);
+      // Paralyze (0, 255): AssignBundle's exact gate order. The
+      // chance rolls ALWAYS (SetChanceSuccess runs in Start); an
+      // incumbent re-cast merges its rounds INSIDE Start (AddState -
+      // renewed, never stacked: STACK-CAP) BEFORE the chance and
+      // saving-throw gates - so a re-cast always renews, chance/save
+      // notwithstanding (verbatim quirk;
+      // the chance-fail MESSAGE still fires, gate order). A NEW
+      // instance needs the chance, then (no-magnitude effects,
+      // non-CasterOnly) the entity saves against the ENTIRE effect
+      // on a FULL save. Flags = Paralysis | the spell's element.
+      const rounds = rollDuration(e, casterLevel);
+      const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());   // E2: AssignBundleFlags.BypassChance (CastWhenUsed's CasterOnly arm)
+      if (!chanceOk) out.chanceFailed = (out.chanceFailed ?? 0) + 1;   // "Spell effect failed."/"Save versus spell made."
+      if (rounds > 0) {
+        const inc = findInc((a) => a.kind === 'paralyze');
+        if (inc) renewRounds(inc, rounds - 1);
+        else if (chanceOk) {
+          if (!assignSave || savingThrow(spell.element, EFFECT_FLAGS.Paralysis | flag, target, 0, rolls) !== 0) {
+            pushActive(target, { kind: 'paralyze', roundsRemaining: rounds }, sinks, rolls);
+            out.paralyzed = (out.paralyzed ?? 0) + 1;   // "You are paralyzed." rides this (player hosts, once per instance)
+          } else {
+            out.saved = (out.saved ?? 0) + 1;           // "Save versus spell made."
+          }
+        }
+      }
+      continue;
+    }
+    if (isCureDisease(e) || isCurePoison(e) || isCureParalyzation(e)) {
+      // The Cure family (3, 0..2): chance-only instants through the
+      // same AssignBundle gates - the chance rolls always, a fail
+      // skips with the failure message; non-CasterOnly no-magnitude
+      // effects save against the ENTIRE effect on a FULL save; then
+      // the initial MagicRound cures (immediate bundle removal).
+      const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());   // E2: BypassChance
+      if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: cures save as MAGIC
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
+      // AUDIT SPELL-GIFT B6: a STRANGER's Cure Disease leaves an incubating infection be (systems/infection.js stores
+      // one as a disease) - a player choosing the curse lost it for good to anyone passing with a Cure. FIELD BUGS 29h
+      // (INFECTION-KEPT): and any cure leaves it while a plain disease is there to take (cureDiseasesInfectionsLast)
+      cureAllOfKind(target, CURE_KINDS[e.subType], ctx?.strangerCast === true || plainDiseaseLive(target));
+      pushInstantMarker(target, CURE_MARKER_KINDS[e.subType], e);   // after the removal pass, as AssignBundle adds before MagicRound cures
+      out.cured = (out.cured ?? 0) + 1;
+      continue;
+    }
+    // X1: SHIELD (Alteration 35) - the magnitude IS the pool, one
+    // point per hit point, rolled once through the same magnitude
+    // path every other effect uses (so a ranged cast still runs the
+    // saving throw). A like-kind recast renews its rounds (STACK-CAP;
+    // DFU stacks them) and TOPS UP the pool, capped at the incumbent's ORIGINAL startingShield -
+    // never above it, and startingShield itself never rises
+    // (Shield.cs:53-63).
+    if (isShieldEffect(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      // REVIEW FIX: the pool rides the SAME magnitude path every other
+      // magnitude family uses, which is what GetMagnitude does - so a
+      // By-Touch or ranged Shield really does run the target's saving
+      // throw (EntityEffect.cs:804-806 ModifyEffectAmount). The raw
+      // roll this used to take made a ranged Shield unsaveable, which
+      // the comment above already claimed it was not.
+      let pool = magnitude(e);
+      const k = pool > 0 ? potencyOf(e, true) : 1;   // SCHOOLS2: Alteration past 100, on myself
+      if (k !== 1) pool = Math.max(1, Math.round(pool * k));
+      if (rounds > 0 && pool > 0) {
+        // REVIEW FIX: a BUSTED pool is no longer an incumbent - that
+        // is exactly what DamageShield's ResignAsIncumbent does on
+        // bust (Shield.cs:85). Without the `!a.ended` test a recast
+        // merged into the corpse, refilled a pool nothing reads
+        // (damageShieldPool skips ended entries) and pushed its rounds
+        // back above zero so the ticker never swept it - Shield
+        // stopped absorbing for good after its first bust.
+        const inc = findInc((a) => a.kind === 'shield' && !a.ended);
+        if (inc) {
+          // AUDIT SCHOOLS L1 M1: a power's merge takes the larger pool (above) - DFU's cap at the first cast's pool is the law
+          // of a spell recast; a rider's pool is what its landing earned, and the first bolt of a chain no longer caps the rest
+          if (powerMerge(inc) && pool > inc.startingShield) inc.startingShield = pool;
+          renewRounds(inc, rounds - 1);
+          inc.shieldRemaining = Math.min(inc.startingShield, inc.shieldRemaining + pool);
+        } else {
+          pushActive(target, { kind: 'shield', startingShield: pool, shieldRemaining: pool, roundsRemaining: rounds }, sinks, rolls);
+        }
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
+      continue;
+    }
+    // X1: SPELL ABSORPTION (20) and SPELL RESISTANCE (22) - both are
+    // chance-carrying duration buffs the INCOMING-spell chain reads,
+    // not effects that act when cast. Absorption's chance is consulted
+    // by absorption.js at the top of every incoming effect;
+    // Resistance's by the resistance gate below. Both declare
+    // ChanceFunction.Custom (SpellAbsorption.cs:30 / SpellResistance
+    // .cs:30) so they never roll at cast time - the chance IS the
+    // defence.
+    //
+    // X11 ADDS THE OTHER TWO OF THIS SHAPE, and answers the note that
+    // used to stand here - "Reflection (21) still pends: it re-targets
+    // the whole bundle at its caster, which needs the caster's own
+    // effect manager, and the port has no such re-entry yet." The
+    // re-entry is the host seam, and it existed all along.
+    //   REFLECTION (21,255) is the second rung of the incoming chain,
+    //     consulted by the gate above rather than by a formula.
+    //   COMPREHEND LANGUAGES (44,255) is not a defence at all - it is
+    //     the same class shape wearing a different consumer, the
+    //     pacification roll in combat/formulas.js.
+    // All four are IncumbentEffects with duration, a Custom chance and
+    // no magnitude, and all four stack rounds onto an incumbent and
+    // leave its chance alone (ComprehendLanguages.cs:50-53 and
+    // SpellReflection.cs:49-52 - the same two lines each); the port
+    // renews the rounds instead (STACK-CAP).
+    if (isSpellAbsorptionEffect(e) || isSpellResistanceEffect(e)
+      || isSpellReflectionEffect(e) || isComprehendLanguages(e)) {
+      // X2: the same no-magnitude saving throw as above.
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const k = isSpellAbsorptionEffect(e) ? 'spellAbsorption'
+          : isSpellReflectionEffect(e) ? 'spellReflection'
+            : isComprehendLanguages(e) ? 'comprehendLanguages' : 'spellResistance';
+        const inc = findInc((a) => a.kind === k);
+        if (inc) {
+          renewRounds(inc, rounds - 1);   // rounds renewed (STACK-CAP); the incumbent's chance stands -
+          // AUDIT SCHOOLS L1 M1: but a power's merge takes the larger chance (above); Absorption carries its settings, never a chance
+          if (k !== 'spellAbsorption' && powerMerge(inc)) {
+            const chance = k === 'comprehendLanguages' ? chanceValue(e, casterLevel) : chanceOf(e, true);
+            if (chance > (inc.chance ?? 0)) inc.chance = chance;
+          }
+        }
+        else {
+          // X2: ABSORPTION carries its chance SETTINGS, not a frozen
+          // number - TryEffectBasedAbsorption recomputes
+          // base + plus * floor(level / perLevel) from the TARGET's
+          // level at absorb time (EEM:1287-1292), the one place DFU
+          // reads the target rather than the caster. RESISTANCE is
+          // the opposite: RollChance -> ChanceValue uses the CASTER's
+          // level (EntityEffect.cs:740-745), so its chance is
+          // rightly fixed at cast.
+          const entry = k === 'spellAbsorption'
+            ? { kind: k, chanceBase: e.chanceBase, chanceMod: e.chanceMod, chancePerLevel: e.chancePerLevel, roundsRemaining: rounds }
+            : { kind: k, chance: k === 'comprehendLanguages' ? chanceValue(e, casterLevel) : chanceOf(e, true), roundsRemaining: rounds };   // SCHOOLS2: Thaumaturgy past 100, a ward on myself
+          pushActive(target, entry, sinks, rolls);
+        }
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
+      continue;
+    }
+    // X1: ELEMENTAL RESISTANCE (Alteration 8, subType = the element).
+    // Not part of the absorb/reflect chain at all: it raises a
+    // per-element resistance the SAVING THROW consults first, and a
+    // successful resistance roll drops the incoming effect whole
+    // (FormulaHelper.SavingThrow :1442-1452). ChanceSuccess is
+    // overridden true (ElementalResistance.cs:50-54), so its own
+    // startup roll can never fail - the chance IS the resistance.
+    if (isElementalResistance(e)) {
+      // X2: the NO-MAGNITUDE saving throw (EEM:563-579). These three
+      // declare SupportMagnitude = false, so AssignBundle rolls the
+      // target's save on any non-CasterOnly cast and drops the effect
+      // WHOLE when it makes it - a By-Touch buff can be refused.
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const chance = chanceValue(e, casterLevel);
+        const inc = findInc((a) => a.kind === 'elementalResistance' && a.element === e.subType);
+        // AddState stacks ROUNDS onto the incumbent and nothing else
+        // (ElementalResistance.cs:153-157; renewed here - STACK-CAP) -
+        // the like-kind instance is discarded, so the incumbent KEEPS
+        // its own chance.
+        if (inc) renewRounds(inc, rounds - 1);
+        else pushActive(target, { kind: 'elementalResistance', element: e.subType, chance, roundsRemaining: rounds }, sinks, rolls);
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
+      continue;
+    }
+    // X1: OPEN and LOCK (Mysticism 17/16) - the ARMING half. DFU's
+    // Open and Lock do not act at cast: each sets forcedRoundsRemaining
+    // = 1 and waits, and RemoveRound returns it UNDECREMENTED, so the
+    // effect never expires on its own - only the door activation that
+    // triggers it (or a new cast) ends it. That is a PERMANENT entry
+    // here, consumed by the host's door path (world/actionSystem.js).
+    // Open rolls its own chance (ChanceFunction.Custom, Open.cs:36) and
+    // a failed roll wastes the cast; Lock takes the OnCast default,
+    // which the shared gate below would apply - so it rolls here too.
+    if (isOpenSpell(e) || isLockSpell(e)) {
+      const opening = isOpenSpell(e);
+      const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());
+      if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      const armedKind = opening ? 'openArmed' : 'lockArmed';
+      const inc = findInc((a) => a.kind === armedKind);
+      // X3: AddState is EMPTY on both classes (Open.cs:77-79,
+      // Lock.cs:72-74) - a like-kind recast changes NOTHING about the
+      // incumbent, and there is nothing to change: the trigger reads
+      // the HOLDER's level live (Open.cs:118, Lock.cs:116), so no
+      // level is latched at cast at all. The port used to store the
+      // cast-time casterLevel and refresh it on a recast; both halves
+      // of that are gone. The entry is now pure presence.
+      // D9: the bundle's CastByItem rides the armed entry.
+      // AssignBundle copies it from the source bundle onto the live one
+      // (EntityEffectManager.cs:469) and Open reads it back at the door
+      // through CheckCastByItem (Open.cs:172-181) - the port's armed
+      // entry IS that live bundle, so this is where it lives. An
+      // INCUMBENT keeps its own: AddState is empty on both classes and
+      // the like-kind instance never becomes live, so a plain recast
+      // over a key-cast Open does not disarm the key (and vice versa).
+      if (!inc) pushPermanent(target, { kind: armedKind, permanent: true, castByItem: ctx.castByItem ?? null });
+      // The HOST speaks the alert (mysticism.js owns the texts; this
+      // module cannot import it - mysticism imports effects).
+      out.armed = armedKind;
+      continue;
+    }
+    // X9: DISPEL UNDEAD (6,1) and DISPEL DAEDRA (6,2). Both are the
+    // same six lines in DFU (DispelUndead.cs:45-58, DispelDaedra.cs
+    // the twin): scan the nearby list for one group flag, roll PER
+    // OBJECT, and Destroy whatever the roll takes.
+    //
+    // Three things decide the shape here:
+    //  - ChanceFunction.Custom (:32), so the cast-time gate does NOT
+    //    run and the chance travels to the per-object rolls, exactly
+    //    as Open's and Identify's do;
+    //  - AllowedTargets is TargetFlags_SELF, so this lands on the
+    //    CASTER and sweeps the area around them - it is not aimed;
+    //  - the scan is the host's, because the library has no world. So
+    //    the arm answers the flag and the chance and the host does the
+    //    sweep through mysticism.dispelNearby, which has carried the
+    //    destroy law (destroyed, NOT killed - no loot, no death, and
+    //    it can break quests) since before anything could call it.
+    //
+    // DISPEL MAGIC (6,0) is deliberately NOT here: it needs the live
+    // bundle picker, which is its own arc. It stays inert.
+    // X10: DISPEL MAGIC (6,0) - the picker, not a creature sweep. Like
+    // its two siblings it is ChanceFunction.Custom and self-targeted,
+    // and like Identify it hands the host a window rather than landing
+    // anything. Unlike Identify it does NOT refund: DFU's comment is
+    // explicit - "confirmed in classic that Dispel Magic spell point
+    // cost is applied when casting even if player cancels popup. So
+    // not refunding spell points at cast time here like Identify."
+    // Cancelling the picker wastes the whole cast, deliberately.
+    if (isDispelMagic(e)) {
+      if (target?.mobileType != null) continue;   // "target must be player"
+      out.dispelMagic = { chance: chanceValue(e, casterLevel) };
+      continue;
+    }
+    if (isDispelCreature(e)) {
+      out.dispel = {
+        group: DISPEL_GROUP[classicSub(e)],
+        chance: chanceOf(e, true),   // SCHOOLS2: Mysticism past 100 - the sweep lands on me, and is mine
+      };
+      continue;
+    }
+    // X8: PACIFY (33,0..3) and CHARM (34,255). One arm, because they
+    // are one effect split by target class - DFU's own note on Charm
+    // says it "operates just like Pacify Humanoid, but only on enemy
+    // classes", and Pacify Humanoid's note says it "only operates on
+    // humanoid monsters (not enemy classes)". Between them they cover
+    // every humanoid and neither overlaps the other.
+    //
+    // WHY IT LANDS ONCE, AT CAST, AND IS PERMANENT.
+    // Both classes do their work in MagicRound(), and neither sets
+    // SupportDuration - Charm's is commented out DELIBERATELY, with
+    // the reason written above it: "As Duration has no effect in
+    // classic, it is intentionally disabled here." That means
+    // EntityEffect.SetDuration (:920-933) leaves roundsRemaining = 0,
+    // so DoMagicRound's per-round gate (:1733-1734, `if
+    // (RoundsRemaining > 0 || fromEquippedItem)`) never calls
+    // MagicRound() again.
+    //
+    // It does not need to. AssignBundle gives EVERY effect one
+    // unconditional MagicRound at assign time (:594, "At this point
+    // effect is ready and gets initial magic round"), after the
+    // chance and saving-throw gates and outside any duration test. So
+    // a duration-less effect fires exactly ONCE, at cast - which for
+    // these two is the whole design, and matches the source's own
+    // statement of it: "Enemy class will remain pacified permanently
+    // until player attacks them (confirmed in classic)".
+    //
+    // CORRECTION (X10 found this): the comment here previously called
+    // that a DFU bug and this arm a departure implementing intent over
+    // broken code. It is not - the behaviour below is what DFU does,
+    // by the assign-time round. The mechanism above is real and worth
+    // knowing, the conclusion drawn from it was wrong, and a false
+    // "upstream is broken" note is worse than none: it would have had
+    // the next reader distrust DFU, or "fix" the port toward a bug
+    // that does not exist.
+    //
+    // The "until attacked" half already exists here - every foe damage
+    // door re-hostiles a pacified target (MakeEnemyHostileToAttacker),
+    // which enemyMotor.js:"this.checkingClockwise = false" has anticipated by name since the
+    // C-slice.
+    //
+    // Chance-only, no magnitude, TargetFlags_Other - so it takes the
+    // ordinary OnCast chance gate and nothing else.
+    if (isPacifyEffect(e) || isCharmEffect(e)) {
+      const mt = target?.mobileType;
+      if (mt == null) continue;                 // not an enemy: IsGroupMatch/IsEnemyClass both refuse
+      // WB8a (2026-09-28, Mac: "Make the oblivion gate boss not be able to be pacified"): a target that cannot be swayed
+      // (world/gate/gateBoss.js bossStandIn - the gate's Warden) refuses it before any roll: no chance, no save, no flag
+      if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }
+      const matches = isCharmEffect(e)
+        ? isClassEnemyId(mt)                    // IsClassEnemyId - Charm is enemy CLASSES only
+        : enemyGroupOf(mt) === PACIFY_GROUP[classicSub(e)];
+      if (!matches) continue;                   // a mismatch is silent, exactly as DFU's `if` is
+      if (!dice100(chanceValue(e, casterLevel), rolls())) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      // AUDIT 26 F072/F073: the no-magnitude saving throw (EEM:565-580).
+      // PacifyEffect (:60-63) and CharmEffect (:33-44) declare
+      // SupportMagnitude false and no bypass, so on a non-CasterOnly
+      // cast the target saves against the ENTIRE effect - a
+      // high-willpower or magic-tolerant monster can shrug either off,
+      // which the chance roll alone never allowed.
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
+      out.pacify = true;
+      continue;
+    }
+    // X7: IDENTIFY (Thaumaturgy 40,255). DFU's whole effect is a
+    // WINDOW OPENER (Identify.cs:46-77) - its own comment says
+    // "currently just opens a free identify window". Three laws:
+    //
+    //  1. It REFUNDS its own spell point cost before opening, floored
+    //     at 5 (:50-56), because the real magicka is spent when the
+    //     player clicks Identify in the window. DFU is explicit that
+    //     only THIS effect's cost comes back: "any other effects
+    //     bundled with identify on spell will not have their spell
+    //     point cost refunded", so a spell that bundles Identify with
+    //     something else still pays for the something else.
+    //  2. The target must be the PLAYER (:66-69) - no effect on any
+    //     other entity, and nothing lands on them either.
+    //  3. ChanceFunction.Custom (:32), so the chance is NOT rolled at
+    //     cast; it travels to the window as the per-item roll.
+    //
+    // The window itself is the host's - this arm hands over the two
+    // numbers it needs and the refund it owes.
+    // X11b: CREATE ITEM. `rounds` is the conjured item's lifetime in
+    // classic minutes, and it is the rolled duration MINUS ONE.
+    //
+    // AUDIT 63 F17 corrected the note that stood here, which claimed
+    // the opposite ("the initial magic round has not happened yet").
+    // It has. Start runs SetDuration and then only PUSHES the picker
+    // window (CreateItem.cs:96-100 -> :113-116); AssignBundle carries
+    // straight on in the same loop iteration to "At this point effect
+    // is ready and gets initial magic round" / `effect.MagicRound();`
+    // (EntityEffectManager.cs:593-594), and CreateItem overrides
+    // neither MagicRound nor RemoveRound - so BaseEntityEffect's
+    // (EntityEffect.cs:572-575 -> :583-588, `return --roundsRemaining`)
+    // fires and RoundsRemaining is duration-1. The picker's callback
+    // runs frames later, and CreateTempItem reads THAT value:
+    // `item.TimeForItemToDisappear = (uint)(gameMinutes + RoundsRemaining)`
+    // (CreateItem.cs:237). This file's own header at :1405-1409 already
+    // states the law the old note contradicted. The floor is
+    // RemoveRound's own (:584-585, a duration of 0 stays 0), and it is
+    // dead-safe rather than behavioural: a SupportDuration effect with
+    // both durationBase and durationMod at 0 is not a record the spell
+    // maker mints.
+    if (isCreateItem(e)) {
+      if (target?.mobileType != null) continue;   // "Target must be player - no effect on other entities" (:104-106)
+      out.createItem = { rounds: Math.max(0, rollDuration(e, casterLevel) - 1) };
+      continue;
+    }
+    if (isIdentifyEffect(e)) {
+      if (target?.mobileType != null) continue;   // "target must be player"
+      out.identify = {
+        chance: chanceValue(e, casterLevel),
+        refund: identifyRefund(spell, e, caster?.entity ?? target),
+      };
+      continue;
+    }
+    // X5: SOUL TRAP (Mysticism 12,255). It does not belong in
+    // BUFF_KINDS: two of its three laws are its own.
+    //
+    // 1. ChanceSuccess is hardcoded TRUE (SoulTrap.cs:47-52) so the
+    //    effect ALWAYS attaches - the chance is deliberately saved for
+    //    the kill, where RollTrapChance() spends it. The cast cannot
+    //    fail. The chance is still computed HERE, from the caster's
+    //    level, and frozen on the entry (the X2 asymmetry: RollChance
+    //    -> ChanceValue -> the CASTER's level, not the target's).
+    // 2. BecomeIncumbent (:64-87) gates on the TARGET's entity type
+    //    and kills its own effect for two of the three cases:
+    //      EnemyMonster    -> "Trap active." and it stays
+    //      EnemyClass /
+    //      CivilianNPC     -> "Trap will not work on humanoids." and
+    //                         it Resigns + Ends AT ONCE. Note DFU's
+    //                         humanoid arm `break`s rather than
+    //                         `return`s, so the message DOES print;
+    //                         the default arm returns first and is
+    //                         therefore SILENT.
+    //      anything else   -> Resign + End, no message at all.
+    //    The port reads mobileType for that split: monsters are
+    //    0..127, class enemies 128+, and a target with no mobileType
+    //    at all (the player) takes the silent default.
+    if (isSoulTrapEffect(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      const mt = target?.mobileType;
+      if (mt == null) continue;                          // the silent default arm
+      if (isClassEnemyId(mt)) { out.trapAlert = 'trapHumanoid'; continue; }   // humanoid: speaks, then ends
+      if (rounds > 0) {
+        const inc = findInc((a) => a.kind === 'soulTrap' && !a.ended);
+        // AddState stacks ROUNDS onto the incumbent and nothing else
+        // (SoulTrap.cs:94-97; renewed here - STACK-CAP) - the incumbent
+        // keeps its own chance,
+        // so a recast cannot sharpen a trap already running.
+        if (inc) renewRounds(inc, rounds - 1);
+        else {
+          // AUDIT 26 F072: the no-magnitude saving throw (EEM:565-580).
+          // SoulTrap's CAST chance is hardcoded true (SoulTrap.cs:47-52,
+          // saved for the kill roll), but SupportMagnitude is false and
+          // there is no bypass - so AssignBundle still rolls the
+          // target's save on a non-CasterOnly cast and drops a NEW trap
+          // whole. The incumbent RENEWAL above survives it, because
+          // AddState runs inside Start, before the save (the buff
+          // family's own quirk, same gate order).
+          if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+            out.saved = (out.saved ?? 0) + 1;
+            continue;
+          }
+          pushActive(target, { kind: 'soulTrap', chance: chanceOf(e, false), roundsRemaining: rounds }, sinks, rolls);   // SCHOOLS2: Mysticism past 100, at a foe
+          out.trapAlert = 'trapActive';   // BecomeIncumbent speaks only for a NEW incumbent
+        }
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
+      continue;
+    }
+    const kind = buffKind(e);
+    if (kind) {
+      // L2-slice (AUDIT 23 magic-3): the landing gates the paralyze
+      // and cure arms already carried apply to the whole buff family,
+      // in AssignBundle's exact order - the incumbent renewal happens
+      // INSIDE Start (AddState; STACK-CAP), so it lands BEFORE the chance and
+      // save gates and survives both; a NEW instance passes the
+      // OnCast chance, then (no buff has a magnitude) the entity
+      // saves against the ENTIRE effect when the cast is not
+      // CasterOnly (:560-579). Among these kinds only SILENCE
+      // supports chance (Silence.cs:32 - every other buff class sets
+      // duration alone), on the OnCast default.
+      // SCHOOLS2: Illusion past 100 - a concealment on myself lasts longer
+      const rounds = CONCEALMENT_KINDS.has(kind) ? Math.round(rollDuration(e, casterLevel) * potencyOf(e, true)) : rollDuration(e, casterLevel);
+      // AUDIT 26 F075: Silence.Start opens with PlayerAggro()
+      // (Silence.cs:48) - Start runs at AssignBundle:531, BEFORE the
+      // chance and save gates, so an invisible player silencing a foe
+      // breaks cover even when the cast then fails its chance. The
+      // other buff kinds' classes carry no aggro call.
+      if (kind === 'silenced') handleAttackFromSource(caster?.entity ?? null);
+      if (rounds > 0) {
+        const inc = findInc((a) => a.kind === kind);
+        if (inc) renewRounds(inc, rounds - 1);             // incumbent RENEWED (STACK-CAP; ConcealmentEffect.AddState stacks, F12)
+        const chanceOk = kind !== 'silenced' || ctx.bypassChance === true || dice100(chanceOf(e, false), rolls());   // E2: BypassChance; SCHOOLS2: Mysticism past 100, at a foe
+        if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+        if (!inc) {
+          if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: concealments save as MAGIC
+            out.saved = (out.saved ?? 0) + 1;
+            continue;
+          }
+          pushActive(target, { kind, roundsRemaining: rounds }, sinks, rolls);
+          // S21: the start message fires once on NEW incumbency
+          // (ConcealmentEffect awakeAlert; Silence.cs:91-95 for the
+          // silence row) and a renewal is silent - which is not a
+          // guard inside StartSilence but AssignBundle's own
+          // "do not add unflagged incumbent effects"
+          // (EntityEffectManager.cs:553-558), so a merged instance
+          // never reaches liveEffects and DoConstantEffects never
+          // ticks it. Only hosts wiring sinks.say (the player) hear
+          // it, which is this port's `manager.EntityBehaviour ==
+          // PlayerEntityBehaviour`.
+          const msg = BUFF_START_TEXT[kind];
+          if (msg) sinks?.say?.(msg);
+        }
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
+      continue;
+    }
+    // EF1: THE LIBRARY IS COMPLETE, and this line is now the honest
+    // answer to a key Daggerfall Unity has no effect class for -
+    // never a placeholder for a family still to come. The sentence
+    // that used to stand here ("the library grows one family at a
+    // time") outlived the growing: every one of DFU's 91 classic
+    // keys - the 82 written as literals plus ElementalResistance's
+    // five (8,0-8,4) and Pacify's four (33,0-33,3), which build
+    // theirs from a loop variable - drives through this loop without
+    // reaching it. test/systems/effectcoverage.test.js regenerates that key
+    // set from the effect classes and proves it, rather than
+    // asserting a number somebody counted once.
+    out.skipped++;
+  }
+  // E2: pin the pushed entries to the held item (FromEquippedItem).
+  //
+  // D9: THE INSTANT MARKERS ARE PINNED TOO, and they re-fire. DFU's
+  // DoMagicRound runs `effect.MagicRound()` for every effect of a
+  // bundle whose `fromEquippedItem != null` REGARDLESS of
+  // RoundsRemaining (EntityEffectManager.cs:1733, "item effects are
+  // always ticked"), and the instant families do their whole work IN
+  // MagicRound (DamageHealth.cs:42-54) - so a cast-when-held Damage
+  // Health burns its wearer EVERY ROUND for as long as the item is
+  // worn. The port's instant families act inline at apply instead, so
+  // a held instant used to fire once per equip and never again; that
+  // stood as a recorded divergence until this slice.
+  //
+  // The re-fire is the same apply, one effect wide: the marker keeps
+  // its source effect and the tick re-runs applySpell over a
+  // single-effect copy of the bundle. ctx.refire keeps that pass from
+  // pinning anything of its own - the pinned marker already stands,
+  // and the fresh 0-round marker the re-fire pushes expires on the
+  // next tick exactly as a spell's does.
+  if (heldItem && ctx.refire !== true) {
+    for (const a of ownEntries()) {   // AUDIT FB1022d A1: this cast's own, wherever a Cure left them
+      a.heldItem = heldItem;
+      if (a.instant && a.effect) {
+        a.refire = { spell: { ...spell, effects: [a.effect] }, casterLevel, caster, heldItem };
+      }
+    }
+  }
+  // X10: THE BUNDLE TAG. DFU groups live effects into LiveEffectBundles
+  // - one per cast, carrying the spell's NAME and its BundleType - and
+  // Dispel Magic picks a whole BUNDLE to remove, not an effect. The
+  // port's activeEffects is flat, so a bundle here is the RANGE of
+  // entries one applySpell pushed, stamped over exactly the span the
+  // heldItem pin above already uses.
+  //
+  // That is the same thing DFU means: a bundle IS the effects one cast
+  // produced. Stamping rather than restructuring keeps every existing
+  // consumer reading entries as before, and the tags ride save/restore
+  // for free because copyEffectEntry spreads whole entries.
+  //
+  // ONE MODELLING DIFFERENCE, stated rather than hidden: DFU's
+  // AssignBundle adds the new bundle to instancedBundles even when the
+  // effect inside it merges into an incumbent via AddState, so two
+  // casts of Levitate leave DFU's picker showing TWO entries. Here a
+  // bundle IS the entries a cast pushed, and an incumbent recast
+  // pushes none - so it stays one. Arguably the more coherent answer
+  // (there is one levitation to dispel), but it is a difference.
+  //
+  // bundleType is DFU's: an equipped item's effects are HeldMagicItem,
+  // everything else a Spell. Dispel Magic accepts both, and DFU is
+  // explicit that this matches classic - "confirmed classic allows
+  // player to dispel effects from items. Item effects will be
+  // reapplied on next recast or when item is unequipped and equipped
+  // again", which is why removing them here is not permanent.
+  {
+    const list = ownEntries();   // AUDIT FB1022d A1: this cast's own, wherever a Cure left them
+    if (list.length) {
+      const id = ++_bundleSeq;
+      const name = spell?.name ?? '';
+      const type = heldItem ? 'HeldMagicItem' : 'Spell';
+      // U46: two more fields the HUD's icon rows need, and neither is
+      // derivable after the fact. The ICON is the spell record's own
+      // (LiveEffectBundle.icon); and SELF-CAST is
+      // `bundle.caster == GameManager.PlayerEntityBehaviour`, which
+      // sorts an icon into the buff row or the debuff row - a NULL
+      // caster counts as OTHER, exactly as DFU's `caster == null ||`
+      // arm does. Once the entries are on the list there is nothing
+      // left to read either from.
+      const icon = spell?.icon ?? 0;
+      const selfCast = !!caster?.entity && caster.entity === target;
+      // L10N3e: the record's index rides beside its name - the name stays the canonical one (a key: the deep-water
+      // boat test reads it), and a window shows it through loot.js shownSpellName (EntityEffectBroker.cs:877)
+      const spellIndex = Number.isInteger(spell?.index) ? spell.index : null;
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].instant) continue;   // instants are probe residue, not a live bundle
+        list[i].bundleId = id;
+        list[i].bundleName = name;
+        list[i].bundleSpellIndex = spellIndex;
+        list[i].bundleType = type;
+        list[i].bundleIcon = icon;
+        list[i].bundleSelfCast = selfCast;
+        list[i].bundleAlly = allyCast;   // AUDIT ALLY-CAST C2/C4: a party mate's gift - never merged with my own, and mine to dispel without a roll
+        if (duelCast) list[i].bundleDuel = true;   // DUEL1: the duel opponent's - floored, and stripped when the duel ends
+        if (spell?.pvpKit != null) list[i].bundleKit = true;   // PVP-KIT: the PvP bar's - the flag's limits keep it (systems/wild/pvpRules.js)
+        if (powerCast) list[i].bundlePower = true;   // AUDIT SCHOOLS: a power's - a merge with it takes the larger pool or chance
+      }
+    }
+  }
+  // S24: refund the absorbed points (:596-608). A SELF-cast cannot
+  // give back more than it cost - absorption is tallied per effect and
+  // can otherwise exceed the spell's own price - and the cap does NOT
+  // apply to another entity's spell.
+  if (totalAbsorbed > 0) {
+    const selfCastCost = ctx.selfCastCost ?? 0;
+    // AUDIT 23 (magic-5): the caster arrives as the {entity, sinks}
+    // WRAPPER every live producer mints - comparing the wrapper itself
+    // to the raw target entity never matched, so the cap was dead.
+    if (caster?.entity === target && selfCastCost > 0 && totalAbsorbed > selfCastCost) totalAbsorbed = selfCastCost;
+    out.absorbed = totalAbsorbed;
+    // ABSORB-NERF (2026-09-30, Discord: "Nerf spell absorption, it breaks the game"): the refund is HALF the points
+    // absorbed, floored - every source, the Sorcerer's Always included (absorption.js absorbRefund)
+    if (target.maxMagicka != null) {
+      target.magicka = Math.min(target.maxMagicka, (target.magicka ?? 0) + absorbRefund(totalAbsorbed));
+    }
+    sinks?.say?.(localizedText('spellAbsorbed', SPELL_ABSORBED_TEXT));
+  }
+  return out;
+}
+
+/** The ACTIVE-entry identity an effect would instantiate
+ *  ({ kind, stat? }), or null for a family the library has not
+ *  reached (S16). DFU's EnemyMotor.EffectsAlreadyOnTarget compares
+ *  live-effect TEMPLATE types; per-stat classes (FortifyStrength vs
+ *  FortifyAgility, HealStrength vs HealAgility...) are distinct
+ *  templates, so stat families carry the stat in the key. The INSTANT
+ *  families are here too (AUDIT 18): DFU keeps an instant effect live
+ *  in its bundle until the next DoMagicRound, so it is "already on
+ *  the target" for one round - see pushInstantMarker. */
+export function effectActiveIdentity(e) {
+  if (isContinuousDamage(e)) return { kind: 'continuousDamage' };
+  if (isContinuousDamageFatigue(e)) return { kind: 'continuousDamageFatigue' };
+  if (isContinuousDamageSpellPoints(e)) return { kind: 'continuousDamageSpellPoints' };
+  if (isFortifyAttribute(e)) return { kind: 'fortifyAttribute', stat: STAT_KEYS_ORDER[e.subType] };
+  if (isDrainAttribute(e)) return { kind: 'drainAttribute', stat: STAT_KEYS_ORDER[e.subType] };
+  if (isTransferAttribute(e)) return { kind: 'transferAttribute', stat: STAT_KEYS_ORDER[e.subType] };
+  if (isRegenerate(e)) return { kind: 'regenerate' };
+  if (isParalyze(e)) return { kind: 'paralyze' };
+  if (isDamageHealth(e)) return { kind: 'damageHealth' };
+  if (isDamageFatigue(e)) return { kind: 'damageFatigue' };
+  if (isDamageSpellPoints(e)) return { kind: 'damageSpellPoints' };
+  if (isHealHealth(e)) return { kind: 'healHealth' };
+  if (isHealFatigue(e)) return { kind: 'healFatigue' };
+  if (isHealSpellPoints(e)) return { kind: 'healSpellPoints' };
+  if (isHealAttribute(e)) return { kind: 'healAttribute', stat: STAT_KEYS_ORDER[e.subType] };
+  if (isTransferHealth(e)) return { kind: 'transferHealth' };
+  if (isTransferFatigue(e)) return { kind: 'transferFatigue' };
+  if (isCureDisease(e) || isCurePoison(e) || isCureParalyzation(e)) return { kind: CURE_MARKER_KINDS[e.subType] };
+  const b = buffKind(e);
+  return b ? { kind: b } : null;
+}
+
+/** EnemyMotor.EffectsAlreadyOnTarget, verbatim shape: true only when
+ *  EVERY effect of the spell is already live on the target - one
+ *  absent effect makes the spell castable. A family the port has not
+ *  implemented has no identity and so always counts as absent. */
+export function effectsAlreadyOnTarget(spell, target) {
+  const list = target.activeEffects ?? [];
+  for (const e of spell.effects) {
+    if (e.type <= -1) continue;   // classic record padding (bundles drop these)
+    const id = effectActiveIdentity(e);
+    const found = !!id && list.some((a) => a.kind === id.kind && (id.stat == null || a.stat === id.stat));
+    if (!found) return false;
+  }
+  return true;
+}
+
+/** One magic round for one entity, DoMagicRound's exact shape:
+ *  entries found at 0 rounds END this pass (removed WITHOUT acting);
+ *  live entries act (saves rolled fresh per round - F10), decrement,
+ *  and stay through this pass even on reaching 0 - so a fortify's
+ *  mod, like DFU's, survives until the pass that finds it expired.
+ *  PERMANENT entries (drain/transfer attribute) never count down and
+ *  never act; they leave only via the healed-to-zero flag
+ *  (DrainEffect presents forcedRoundsRemaining = 1 until healed). */
+export function tickActiveEffects(entity, sinks, rolls = Math.random) {
+  const list = entity.activeEffects;
+  if (!list || !list.length) return;
+  const refires = [];
+  entity.activeEffects = list.filter((a) => {
+    // E2: an ITEM-PINNED entry (a held bundle's) is "always ticked" -
+    // DoMagicRound :1733 `RoundsRemaining > 0 || fromEquippedItem !=
+    // null` runs it whatever its rounds say, and :1739 keeps the
+    // bundle alive while the item IS EQUIPPED. The unequip/break doors
+    // strip pins through removeItemPinnedEffects; an entry whose item
+    // slipped out some other way (a restored save mid-surgery) dies
+    // here, DFU's own expiry once IsEquipped answers false. Rounds
+    // still count down (BaseEntityEffect.RemoveRound floors at 0) -
+    // they just never end the entry.
+    if (a.heldItem) {
+      if (a.heldItem.equipSlot == null || (a.heldItem.currentCondition ?? 1) <= 0) return false;
+      // D9: an INSTANT effect of a held bundle has its whole body in
+      // MagicRound, so its round IS a re-apply. Collected rather than
+      // run here: applySpell pushes onto entity.activeEffects, and
+      // this callback is inside the filter that is still building it.
+      if (a.refire) refires.push(a.refire);
+      runEffectRound(a, entity, sinks, rolls);
+      if (a.roundsRemaining > 0) a.roundsRemaining--;
+      return true;
+    }
+    if (a.permanent) return !a.ended;
+    if (a.roundsRemaining <= 0) return false;   // End(): expired last pass
+    runEffectRound(a, entity, sinks, rolls);
+    a.roundsRemaining--;
+    return true;
+  });
+  // D9: the held bundles' instant re-fires, after the list has
+  // settled. bypassSavingThrows and the item pin ride the ctx so the
+  // pass takes the same gates the original apply took (a HeldMagicItem
+  // bundle is never absorbed, reflected or resisted), and ctx.refire
+  // stops it pinning a second marker.
+  for (const r of refires) {
+    applySpell(r.spell, r.casterLevel, entity, sinks, rolls, r.caster,
+      { bypassSavingThrows: true, heldItem: r.heldItem, refire: true });
+  }
+}
+
+/** E2: UnequipHeldItem's bundle sweep (EntityEffectManager.cs:
+ *  1074-1084) - every live entry pinned to THIS item goes, whatever
+ *  effect made it. Identity is the pin: the port's items are the one
+ *  live record each (DFU matches by UID). Removal IS the port's
+ *  End() for these kinds - their mods are read from list presence. */
+export function removeItemPinnedEffects(entity, item) {
+  const list = entity?.activeEffects;
+  if (!list?.length) return;
+  entity.activeEffects = list.filter((a) => a.heldItem !== item);
+}
+
+// E2: the cast doors, registered UPWARD - enchantments.js sits below
+// this module in the import graph (the absorption fold above), so it
+// cannot import applySpell; the registration runs once at load, the
+// setEnchantmentHooks shape. assignHeldSpell rides these.
+setEnchantmentEffectDoors({ applySpell, removeItemPinnedEffects });

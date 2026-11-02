@@ -1,0 +1,137 @@
+[
+  {
+    "name": "INTERIOR-DIM-the-lamps-at-full",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_INTERIOR_LIGHT_SCALE = 0.5;",
+    "new": "export const EL_INTERIOR_LIGHT_SCALE = 1;",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-lamps-at-0.6",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_INTERIOR_LIGHT_SCALE = 0.5;",
+    "new": "export const EL_INTERIOR_LIGHT_SCALE = 0.6;",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-every-lamp-white",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  const c = color[0] === 1 && color[1] === 1 && color[2] === 1 ? EL_FLAME_COLOR : color;",
+    "new": "  const c = EL_FLAME_COLOR;",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-a-1-in-one-channel-is-white",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  const c = color[0] === 1 && color[1] === 1 && color[2] === 1 ? EL_FLAME_COLOR : color;",
+    "new": "  const c = color[0] === 1 || color[1] === 1 || color[2] === 1 ? EL_FLAME_COLOR : color;",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-flame-never-taken",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  const c = color[0] === 1 && color[1] === 1 && color[2] === 1 ? EL_FLAME_COLOR : color;",
+    "new": "  const c = color;",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-intensity-dropped-off-the-lane",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (!on) return [color[0] * intensity, color[1] * intensity, color[2] * intensity];",
+    "new": "  if (!on) return [color[0], color[1], color[2]];",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-ceiling-at-1.8",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_INTERIOR_GRADE = Object.freeze({ adaptKey: 0.12, adaptMax: 1.2 });",
+    "new": "export const EL_INTERIOR_GRADE = Object.freeze({ adaptKey: 0.12, adaptMax: 1.8 });",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-key-at-0.18",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_INTERIOR_GRADE = Object.freeze({ adaptKey: 0.12, adaptMax: 1.2 });",
+    "new": "export const EL_INTERIOR_GRADE = Object.freeze({ adaptKey: 0.18, adaptMax: 1.2 });",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-a-field-misnamed",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_INTERIOR_GRADE = Object.freeze({ adaptKey: 0.12, adaptMax: 1.2 });",
+    "new": "export const EL_INTERIOR_GRADE = Object.freeze({ adaptKey: 0.12, adaptmax: 1.2 });",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-grade-on-the-classic-set",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  return on ? EL_INTERIOR_GRADE : null;",
+    "new": "  return EL_INTERIOR_GRADE;",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-world-arm-keeps-the-old-colour",
+    "file": "src/scenes/worldModes.js",
+    "old": "(l) => interiorLightColor(!!renderer.lightingLane, l.color, l.intensity)",
+    "new": "(l) => [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity]",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-dev-route-keeps-the-old-colour",
+    "file": "src/scenes/interior.js",
+    "old": "(l) => interiorLightColor(!!renderer.lightingLane, l.color, l.intensity)",
+    "new": "(l) => [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity]",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-lane-forced-on-in-the-world-arm",
+    "file": "src/scenes/worldModes.js",
+    "old": "(l) => interiorLightColor(!!renderer.lightingLane, l.color, l.intensity)",
+    "new": "(l) => interiorLightColor(true, l.color, l.intensity)",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-world-arm-asks-no-grade",
+    "file": "src/scenes/worldModes.js",
+    "old": "    renderer.setSceneGrade?.(interiorGrade(!!renderer.lightingLane));   // INTERIOR-DIM: the room's grade - the eye aimed darker and held at 1.2; set after the view out, which shows any world image still owed (a resolve takes the grade); above the clear and the rect, which E5 keeps on its beginFrame\n",
+    "new": "",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-DIM-the-dev-route-asks-no-grade",
+    "file": "src/scenes/interior.js",
+    "old": "    renderer.setSceneGrade?.(interiorGrade(!!renderer.lightingLane));   // INTERIOR-DIM: the room's grade (worldModes.js's interior arm)\n",
+    "new": "",
+    "tests": [
+      "test/render/interiordim.test.js"
+    ]
+  }
+]

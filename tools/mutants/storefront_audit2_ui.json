@@ -1,0 +1,157 @@
+[
+  {
+    "name": "AUDIT-STOREFRONT-II-E1-panel-ground-painted",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": ".px-shopwin .sh-panel { padding: 12px; border-width: 2px; border-style: solid; }",
+    "new": ".px-shopwin .sh-panel { padding: 12px; border: 1px solid rgba(143,91,255,0.45); background: linear-gradient(160deg, rgba(23,11,74,0.55), rgba(10,9,16,0.9)); }",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E1-tab-a-press",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "      const tb = /** @type {HTMLButtonElement} */ (el('button', 'sh-tab')); // AUDIT-STOREFRONT II (lane E 1): a tab, never the kit's press too",
+    "new": "      const tb = /** @type {HTMLButtonElement} */ (el('button', 'act sh-tab')); // AUDIT-STOREFRONT II (lane E 1): a tab, never the kit's press too",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E1-shop-role-dropped",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "    '.px-shopwin .sh-pspent',\n  ], // AUDIT-STOREFRONT II: the shop's readouts   // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout",
+    "new": "  ], // AUDIT-STOREFRONT II: the shop's readouts   // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E6-window-scrolled-whole",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  body.append(head, proceeds, tabs, scroll);",
+    "new": "  body.append(head, proceeds, carousel, tabs, panels, say, foot);",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js",
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E6-tab-panels-below-fold",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    if (typeof panels.offsetTop === 'number') scroll.scrollTop = panels.offsetTop; // AUDIT-STOREFRONT II (lane E 6): the section's own panels in sight, the featured above them",
+    "new": "    // AUDIT-STOREFRONT II (lane E 6): the section's own panels in sight, the featured above them",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E16-stages-at-once",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    if (!sight) {",
+    "new": "    {",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E16-turning-out-of-sight",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": ") =>\n  c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && !c.hidden && nowMs - c.since >= CAROUSEL_TURN_MS; // AUDIT-STOREFRONT II (lane E 16): never scrolled out of sight",
+    "new": ") => c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && nowMs - c.since >= CAROUSEL_TURN_MS; // AUDIT-STOREFRONT II (lane E 16): never scrolled out of sight",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E14-slide-in-on-opening",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    if (moved && !reduced) panel.classList?.toggle('sh-slidein', true);",
+    "new": "    if (!reduced) panel.classList?.toggle('sh-slidein', true);",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E13-pause-shown-still",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    pauseB.hidden = reduced; // AUDIT-STOREFRONT II (lane E 13): for less motion it never turns, so nothing to pause",
+    "new": "    pauseB.hidden = false; // AUDIT-STOREFRONT II (lane E 13): for less motion it never turns, so nothing to pause",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E5-challenge-paid-class",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "const li = el('li', `sh-challenge${got?.paid ? ' sh-cdone' : ''}`)",
+    "new": "const li = el('li', `sh-challenge${got?.paid ? ' sh-paid' : ''}`)",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js",
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E12-held-price-full",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state; // AUDIT-STOREFRONT II (lane E 12): held, its price dimmed under its state",
+    "new": "",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E8-effect-how-missing",
+    "file": "src/ui/collections/wardrobeCatalogue.js",
+    "old": "  const of = /** @type {Record<string, WardrobeEntry> | undefined} */ (WARDROBE[kind] ?? EFFECT_WARDROBE[kind]);",
+    "new": "  const of = /** @type {Record<string, WardrobeEntry> | undefined} */ (WARDROBE[kind]);",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E7-picker-after-slots",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .card .slots-picker { order: -1; margin: 8px 0 12px; }",
+    "new": "  .card .slots-picker { margin: 8px 0 12px; }",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-E7-the-row-runs-from-the-pointer",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".px-win.px-acctwin .px-body { padding: 22px 26px 24px;\n  overflow-anchor: none; }",
+    "new": ".px-win.px-acctwin .px-body { padding: 22px 26px 24px; }",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-emblem-horse-past-the-rim",
+    "file": "src/ui/icons/effectEmblemArt.js",
+    "old": "const FRAME = 'translate(5.4 7) scale(0.86)';",
+    "new": "const FRAME = 'translate(0 0) scale(1)';",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-medallion-mark-left-out",
+    "file": "src/ui/profileIcons.js",
+    "old": "  if (inner) pic.append(inner);\n  svg.append(",
+    "new": "  svg.append(",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-emblem-still-for-nobody",
+    "file": "src/ui/effectEmblems.js",
+    "old": "label: effectName(slot, key), cls, size, ...o }",
+    "new": "label: effectName(slot, key), cls, size, ...o, still: false }",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  }
+]

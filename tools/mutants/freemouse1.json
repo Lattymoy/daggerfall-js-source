@@ -1,0 +1,115 @@
+[
+  {
+    "name": "the-action-is-spliced-mid-list-instead-of-appended",
+    "file": "src/systems/inputActions.js",
+    "old": "  'ActivateCenterObject', 'ActivateCursor',",
+    "new": "  'ActivateCenterObject', 'ActivateCursor', 'FreeMouse',",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/systems/inputactions.test.js",
+      "test/systems/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "the-action-ships-with-no-default-key",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['KeyY', 'FreeMouse'],",
+    "new": "",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/systems/inputactions.test.js"
+    ]
+  },
+  {
+    "name": "the-default-lands-on-a-key-a-mod-already-offers",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['KeyY', 'FreeMouse'],",
+    "new": "  ['KeyK', 'FreeMouse'],",
+    "tests": [
+      "test/systems/freemouse.test.js"
+    ]
+  },
+  {
+    "name": "the-default-collides-with-another-port-row",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['KeyY', 'FreeMouse'],",
+    "new": "  ['KeyJ', 'FreeMouse'],",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/systems/inputactions.test.js"
+    ]
+  },
+  {
+    "name": "the-row-stops-yielding-in-the-classic-windows",
+    "file": "src/systems/inputActions.js",
+    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',",
+    "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen',",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/systems/qs2_inputs.test.js",
+      "test/ui/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "the-pane-draws-no-row-so-the-key-is-unrebindable",
+    "file": "src/systems/inputActions.js",
+    "old": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],",
+    "new": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'],",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/ui/enhanced/enhancedControls.test.js",
+      "test/ui/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "the-row-is-hidden-under-the-online-heading",
+    "file": "src/systems/inputActions.js",
+    "old": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n",
+    "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'], ['FreeMouse', 'Free the mouse (press again to look)'],\n",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/systems/qs2_inputs.test.js",
+      "test/ui/enhanced/enhancedControls.test.js"
+    ]
+  },
+  {
+    "name": "the-reader-forgets-the-new-action",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return; // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press",
+    "new": "    if (!(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return; // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/ui/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "the-reader-forgets-DFUs-own-action",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return; // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press",
+    "new": "    if (!acts.includes(FREE_MOUSE_ACTION)) return; // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/ui/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "taking-the-mouse-back-asks-for-no-lock",
+    "file": "src/player/pointerLock.js",
+    "old": "  else if (canvas) requestLook(canvas);\n  return _cursorActive;",
+    "new": "  return _cursorActive;",
+    "tests": [
+      "test/systems/freemouse.test.js"
+    ]
+  },
+  {
+    "name": "a-freed-cursor-is-taken-back-by-a-passing-gesture",
+    "file": "src/player/pointerLock.js",
+    "old": "  if (_cursorActive || _cursorHolds.size) return;",
+    "new": "  if (_cursorHolds.size) return;",
+    "tests": [
+      "test/systems/freemouse.test.js",
+      "test/scenes/menu_pointer_relock.test.js"
+    ],
+    "note": "PIN MOVED (RPT1026-MISC): re-aimed by content - TOUCH-NO-LOCK put its touch gate between the cursor test and the request."
+  }
+]

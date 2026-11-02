@@ -1,0 +1,130 @@
+[
+  {
+    "name": "AUDIT0929-T-CI-gate-half-guest-unticked",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "              -H 'content-type: application/json' -d \"{\\\"label\\\":\\\"deploy-smoke\\\",\\\"terms\\\":\\\"$LEGAL_TERMS\\\",\\\"privacy\\\":\\\"$LEGAL_PRIVACY\\\"}\") || ans=000\n            if [ \"$ans\" = \"200\" ]; then guest=$(cat /tmp/guest.json); break; fi\n            echo \"  /v1/auth/guest -> $ans (attempt $i)\" >&2\n            if [ \"${ans#5}\" = \"$ans\" ] && [ \"$ans\" != \"000\" ]; then cat /tmp/guest.json >&2 || true; break; fi\n            sleep 5\n          done\n          secret=$(echo \"$guest\" | sed -n 's/.*\"secret\":\"\\([^\"]*\\)\".*/\\1/p')\n          test -n \"$secret\" || { echo \"::error::no guest session - /v1/auth/guest did not answer a secret\"; echo \"$guest\"; exit 1; }\n          # AUDIT (the pre-merge audit, S3)",
+    "new": "              -H 'content-type: application/json' -d \"{\\\"label\\\":\\\"deploy-smoke\\\"}\") || ans=000\n            if [ \"$ans\" = \"200\" ]; then guest=$(cat /tmp/guest.json); break; fi\n            echo \"  /v1/auth/guest -> $ans (attempt $i)\" >&2\n            if [ \"${ans#5}\" = \"$ans\" ] && [ \"$ans\" != \"000\" ]; then cat /tmp/guest.json >&2 || true; break; fi\n            sleep 5\n          done\n          secret=$(echo \"$guest\" | sed -n 's/.*\"secret\":\"\\([^\"]*\\)\".*/\\1/p')\n          test -n \"$secret\" || { echo \"::error::no guest session - /v1/auth/guest did not answer a secret\"; echo \"$guest\"; exit 1; }\n          # AUDIT (the pre-merge audit, S3)",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T-CI-register-unticked",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "\\\"password\\\":\\\"a-long-enough-password\\\",\\\"terms\\\":\\\"$LEGAL_TERMS\\\",\\\"privacy\\\":\\\"$LEGAL_PRIVACY\\\"}\")",
+    "new": "\\\"password\\\":\\\"a-long-enough-password\\\"}\")",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T-CI-versions-typed",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          terms=$(grep -oP \"^export const TERMS_VERSION = '\\K[^']+\" src/net/legalLaw.js)",
+    "new": "          terms=2026-09-28",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T2-site-never-waits",
+    "file": ".github/workflows/deploy.yml",
+    "old": "            if [ \"$got\" = \"$WANT\" ] || { [ -n \"$got\" ] && [ \"$(n \"$got\")\" -ge \"$(n \"$WANT\")\" ]; }; then\n              echo \"the account service serves ${got} - this build's forms may ask it\"",
+    "new": "            if true; then\n              echo \"the account service serves ${got} - this build's forms may ask it\"",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T2-an-older-service-taken",
+    "file": ".github/workflows/deploy.yml",
+    "old": "[ \"$(n \"$got\")\" -ge \"$(n \"$WANT\")\" ]; }; then\n              echo \"the account service serves",
+    "new": "[ \"$(n \"$got\")\" -ge \"$(( $(n \"$WANT\") - 1 ))\" ]; }; then\n              echo \"the account service serves",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T2-publish-before-the-wait",
+    "file": ".github/workflows/deploy.yml",
+    "old": "      - name: Wait for the account service to serve this build's version\n        env:",
+    "new": "      - name: Wait for the account service to serve this build's version (after)\n        env:",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T1-bare-request-unaccepted",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (terms === undefined && privacy === undefined) return { error: 'not-found' };",
+    "new": "  if (terms === undefined && privacy === undefined) return { error: 'terms-unaccepted' };",
+    "tests": [
+      "test/server/audit0929_terms.test.js",
+      "test/ui/enhanced/terms1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T1-half-ticked-not-found",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (terms === undefined && privacy === undefined) return { error: 'not-found' };",
+    "new": "  if (terms === undefined || privacy === undefined) return { error: 'not-found' };",
+    "tests": [
+      "test/server/audit0929_terms.test.js",
+      "test/ui/enhanced/terms1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T1-stale-says-reload-only",
+    "file": "src/net/accountClient.js",
+    "old": "Reload the game (or update the app) to read the current version",
+    "new": "Reload to read the current version",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T3-no-focus-back",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    painted = stage;\n    focusBack(stage);",
+    "new": "    painted = stage;",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T3-caret-dropped",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "      try { n.setSelectionRange(wanted.caret[0], wanted.caret[1]); } catch { /* a box or a button has no caret */ }",
+    "new": "      /* the caret dropped */",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T3-focus-across-stages",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    if (wanted.stage !== stage) { wanted = null; return; }",
+    "new": "    if (false) { wanted = null; return; }",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T3-a-disabled-control-focused",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    if (!n || n.disabled || typeof n.focus !== 'function') return;",
+    "new": "    if (!n || typeof n.focus !== 'function') return;",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-T3-the-box-unkeyed",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    const box = keyedAs(el('input'), `agree:${key}`);",
+    "new": "    const box = el('input');",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ]
+  }
+]

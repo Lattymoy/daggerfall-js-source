@@ -1,0 +1,157 @@
+[
+  {
+    "name": "HARBOUR-BOOK-pier-forty-metres",
+    "file": "src/systems/naval/quays.js",
+    "old": "export const JETTY_BEACH = 20;",
+    "new": "export const JETTY_BEACH = -140;",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js",
+      "test/systems/naval/quays.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-host-sounds-the-worlds",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (ownBook) harbours.step(clock);",
+    "new": "    harbours.step(clock);",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-host-moves-the-worlds",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (ownBook) harbours.offsetAll(o);",
+    "new": "    harbours.offsetAll(o);",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-host-empties-the-worlds",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (ownBook) harbours.clear();",
+    "new": "    harbours.clear();",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-roll-kept-past-the-clear",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    rolled = new WeakSet(); grids = new Map();",
+    "new": "    grids = new Map();",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-own-book-never-stepped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const ownBook = !deps.harbourBook;",
+    "new": "const ownBook = false;",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-retry-late",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "    } else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "new": "    } else if (!h.harbour && clock - h.at > HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-sounded-off-a-streaming-shore",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "      if (near.ready?.() !== false)\n        book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
+    "new": "      if (true) book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-found-sounded-again",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "    } else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "new": "    } else if (clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-left-behind",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  function offsetAll(o) {\n    for (const h of book.values()) offsetHarbour(h.harbour, o);\n  }",
+    "new": "  function offsetAll(o) {}",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-never-forgotten",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  function clear() {\n    book.clear();\n  }",
+    "new": "  function clear() {}",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-null-listed",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "    for (const h of book.values())\n      if (h.harbour?.berths?.length) out.push({ key: h.key, name: h.name ?? null, harbour: h.harbour });",
+    "new": "    for (const h of book.values()) out.push({ key: h.key, name: h.name ?? null, harbour: h.harbour });",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-quays-ask-the-sea",
+    "file": "src/scenes/world.js",
+    "old": "    harbours: () => harbourBook.list(),",
+    "new": "    harbours: () => (navalOn() ? naval?.harbourList?.() ?? [] : []),",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js",
+      "test/systems/naval/quays.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-host-not-handed",
+    "file": "src/scenes/world.js",
+    "old": "    harbourBook,   // SHIP-LIFE, HARBOUR-BOOK",
+    "new": "    harbourNear: navalHarbourNear,   // SHIP-LIFE, HARBOUR-BOOK",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-kept-past-a-transition",
+    "file": "src/scenes/world.js",
+    "old": "const navalTransition = () => { harbourBook.clear(); navalClear(); withdrawCrossing(); };",
+    "new": "const navalTransition = () => { navalClear(); withdrawCrossing(); };",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-not-moved-with-the-world",
+    "file": "src/scenes/world.js",
+    "old": "      harbourBook.offsetAll(r.offset);   // HARBOUR-BOOK",
+    "new": "      // HARBOUR-BOOK",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-BOOK-never-sounded",
+    "file": "src/scenes/world.js",
+    "old": "    try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); }",
+    "new": "    try { if (false) harbourBook.step(now / 1000); }",
+    "tests": [
+      "test/systems/naval/harbourbook.test.js"
+    ]
+  }
+]

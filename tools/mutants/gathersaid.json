@@ -1,0 +1,128 @@
+[
+  {
+    "name": "GATHERSAID-queue-keep-ignored",
+    "file": "src/ui/professions/profHud.js",
+    "old": "        const i = rows.findIndex((r) => !r.keep);",
+    "new": "        const i = 0;",
+    "tests": [
+      "test/net/gathersaid.test.js"
+    ]
+  },
+  {
+    "name": "GATHERSAID-queue-overflow-unbounded",
+    "file": "src/ui/professions/profHud.js",
+    "old": "      while (rows.length > max) {",
+    "new": "      while (rows.length > max + 1) {",
+    "tests": [
+      "test/net/gathersaid.test.js",
+      "test/systems/prof1_client.test.js"
+    ]
+  },
+  {
+    "name": "GATHERSAID-goods-unkept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });",
+    "new": "      if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d));",
+    "tests": [
+      "test/net/gathersaid.test.js"
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
+  },
+  {
+    "name": "GATHERSAID-gem-own-line-again",
+    "file": "src/scenes/gatherHost.js",
+    "old": "  if (d.gem) { const g = materialCountLabel(d.gem, 1); goods.push(`${/^[aeiou]/i.test(g) ? 'an' : 'a'} ${g}`); }",
+    "new": "",
+    "tests": [
+      "test/net/gathersaid.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "GATHERSAID-gem-article-always-a",
+    "file": "src/scenes/gatherHost.js",
+    "old": "${/^[aeiou]/i.test(g) ? 'an' : 'a'} ${g}",
+    "new": "a ${g}",
+    "tests": [
+      "test/net/gathersaid.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "GATHERSAID-goods-list-no-and",
+    "file": "src/scenes/gatherHost.js",
+    "old": "`${goods.slice(0, -1).join(', ')} and ${goods[goods.length - 1]}`",
+    "new": "goods.join(', ')",
+    "tests": [
+      "test/net/gathersaid.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "GATHERSAID-stores-where-unsaid",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!storesSaid) { storesSaid = true; hud.toast(storesWhereLine(deps.keyLabel?.('Professions') ?? '', d.carry === true)); }\n",
+    "new": "",
+    "tests": [
+      "test/net/gathersaid.test.js",
+      "test/systems/prof7_client.test.js"
+    ],
+    "note": "CLASSIC-PAGES (PIN MOVED): the line names the Professions key now, re-aimed by content."
+  },
+  {
+    "name": "GATHERSAID-stores-where-every-time",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!storesSaid) { storesSaid = true; hud.toast(storesWhereLine(deps.keyLabel?.('Professions') ?? '', d.carry === true)); }",
+    "new": "      hud.toast(storesWhereLine(deps.keyLabel?.('Professions') ?? '', d.carry === true));",
+    "tests": [
+      "test/net/gathersaid.test.js"
+    ],
+    "note": "CLASSIC-PAGES (PIN MOVED): the line names the Professions key now, re-aimed by content."
+  },
+  {
+    "name": "GATHERSAID-kept-signed-out-unsaid",
+    "file": "src/scenes/gatherHost.js",
+    "old": "r.error === 'auth' || r.error === 'no-session' ? KEPT_SIGNED_OUT_LINE : KEPT_LINE",
+    "new": "KEPT_LINE",
+    "tests": [
+      "test/net/gathersaid.test.js"
+    ]
+  },
+  {
+    "name": "GATHERSAID-kept-said-once",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (r?.kept) { hud.toast(",
+    "new": "    if (r?.kept) { if (!answered.once) answered.once = true; else return; hud.toast(",
+    "tests": [
+      "test/net/gathersaid.test.js"
+    ]
+  },
+  {
+    "name": "GATHERSAID-lapse-unsaid",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (r?.error === 'lapsed') {\n      hud.toast(LAPSED_LINE);\n",
+    "new": "    if (r?.error === 'lapsed') {\n",
+    "tests": [
+      "test/net/gathersaid.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched. AUDIT GATHER-SPEED (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "GATHERSAID-stopped-unsaid",
+    "file": "src/scenes/gatherHost.js",
+    "old": "          act = null; hud.setMeter(null); hud.toast(ACT_STOPPED_LINE);\n        }",
+    "new": "          act = null; hud.setMeter(null);\n        }",
+    "tests": [
+      "test/net/gathersaid.test.js"
+    ]
+  },
+  {
+    "name": "GATHERSAID-maintenance-let-go",
+    "file": "src/net/profBook.js",
+    "old": "const RETRY = Object.freeze(['offline', 'server', 'rate', 'maintenance']);",
+    "new": "const RETRY = Object.freeze(['offline', 'server', 'rate']);",
+    "tests": [
+      "test/net/gathersaid.test.js"
+    ]
+  }
+]

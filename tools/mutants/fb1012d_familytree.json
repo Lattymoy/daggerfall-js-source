@@ -1,0 +1,84 @@
+[
+  {
+    "name": "FB1012d-HEIR-CLONE-the-born-page-offers-the-succession",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (family.pending) return deps.entity?.chargenDone && !born ? { fall: fallOutcome() } : null;",
+    "new": "    if (family.pending) return deps.entity?.chargenDone ? { fall: fallOutcome() } : null;",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
+  },
+  {
+    "name": "FB1012d-HEIR-CLONE-a-save-into-one-never-played",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!playedHere(p)) return;",
+    "new": "    if (p.characterId && deps.entity.characterId && p.characterId !== String(deps.entity.characterId)) return;",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
+  },
+  {
+    "name": "FB1012d-BIRTH-START-the-classic-start-kept",
+    "file": "src/main.js",
+    "old": "    if (legacyBirth) params.delete('classic');",
+    "new": "    // the classic start kept",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
+  },
+  {
+    "name": "FB1012d-SEAT-HOME-the-home-arm-gone",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return (family?.houses ?? []).some((x) => (x.mapId >>> 0) === id) ? { region: String(h.region), loc: String(h.loc), mapId: id } : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
+  },
+  {
+    "name": "FB1012d-SEAT-HOME-any-farm",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return (family?.houses ?? []).some((x) => (x.mapId >>> 0) === id) ? { region: String(h.region), loc: String(h.loc), mapId: id } : null;",
+    "new": "    return (family?.houses ?? []).length ? { region: String(h.region), loc: String(h.loc), mapId: id } : null;",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
+  },
+  {
+    "name": "FB1012d-SEAT-HOME-a-dungeon-under-the-farm",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!h || h.mode === 'dungeon' || !h.region || !h.loc || h.mapId == null) return null;",
+    "new": "    if (!h || !h.region || !h.loc || h.mapId == null) return null;",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
+  },
+  {
+    "name": "FB1012d-SEAT-HOME-the-move-reads-a-town-alone",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const t = placeHere();",
+    "new": "    const t = deps.town(deps.here());",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js",
+      "test/systems/legacy/fb1007b_familyseat.test.js"
+    ]
+  },
+  {
+    "name": "FB1012d-SEAT-HOME-met-in-a-town-alone",
+    "file": "src/scenes/legacyHost.js",
+    "old": "here ? placeHere() : null",
+    "new": "here ? deps.town(deps.here()) : null",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
+  },
+  {
+    "name": "FB1012d-SEAT-HOME-the-first-day-names-the-seat",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const loc = placeHere()?.loc ?? family.seat?.loc ?? '';",
+    "new": "    const loc = deps.town(here)?.loc ?? family.seat?.loc ?? '';",
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
+  }
+]

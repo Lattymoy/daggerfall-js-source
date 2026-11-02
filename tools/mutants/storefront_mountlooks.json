@@ -1,0 +1,192 @@
+[
+  {
+    "name": "AUDIT-STOREFRONT-strands-past-edge-max-the-hides",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "    if (d >= 255) continue;",
+    "new": "    if (d >= EDGE_MAX) continue;",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-tips-by-length-alone",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "  const tip = Math.min(clamp01((p.far - 1) / 8), p.far / (p.far + p.edge)),",
+    "new": "  const tip = clamp01((p.far - 1) / 8),",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-shine-left-grey",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "      if (k >= POINT_SHINE) shine.push(i);",
+    "new": "      if (false) shine.push(i);",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-shine-too-eager",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "export const POINT_SHINE = 5;",
+    "new": "export const POINT_SHINE = 3;",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-face-read-from-the-mane",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "      p.face = legs ? face : 0; // without hooves, the view along the neck from the saddle",
+    "new": "      p.face = face; // without hooves, the view along the neck from the saddle",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-heart-from-behind",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "  const chest = face !== 0 && (view === undefined || view < 3);",
+    "new": "  const chest = face !== 0;",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-view-ignored-for-its-face",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "  if (view !== VIEW_FRONT && view !== VIEW_BACK && !(view === undefined && hideW < 0.75 * hideH)) {",
+    "new": "  if (!(view === undefined && hideW < 0.75 * hideH)) {",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-3d-heart-guessed",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "  p.heart = Math.hypot((p.ur - chestOf(map) + 0.03) / 0.035, (up - HEART_UP) / 0.05); // just in from the chest's front",
+    "new": "  p.heart = Math.hypot((p.ur - 0.86) / 0.035, (up - HEART_UP) / 0.05); // just in from the chest's front",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-3d-legs-dithered",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "        if (!p.flat && bayer(p.px, p.py) < fade * 1.05 + ragged - 0.12) return 0; // the 3D horse's, in a texture, pale out",
+    "new": "        if (bayer(p.px, p.py) < fade * 1.05 + ragged - 0.12) return 0; // the 3D horse's, in a texture, pale out",
+    "tests": [
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-holes-over-the-ghosts-body",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "      if (p.legs && p.leg && p.up < GHOST_LEGS) {\n        const fade = 1 - p.up / GHOST_LEGS,",
+    "new": "      if (p.legs && p.leg && p.up < 0.8) {\n        const fade = 1 - p.up / 0.8,",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-ghosts-rim-unlit",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "      mixInto(out, o, [214, 244, 255], 0.6 * rim);",
+    "new": "",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-warhorse-lit-from-above",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "      const under = smooth(0.62, 0, p.up);",
+    "new": "      const under = smooth(0.38, 1, p.up);",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-automatons-seams-gone",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "        if (seam < 0.009) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-automatons-heart-gone",
+    "file": "src/systems/horse/mountPaint.js",
+    "old": "        const core = p.heart; // the aetherium heart at the chest, its radius 1",
+    "new": "        const core = Infinity; // the aetherium heart at the chest, its radius 1",
+    "tests": [
+      "test/systems/horse/mountlook.test.js",
+      "test/systems/horse/mountpaint.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-hide-takes-the-rider",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "    if (src[o + 3] && !spare?.[i] && isCoatPixel(src[o], src[o + 1], src[o + 2], tack)) coatMask[i] = 1;",
+    "new": "    if (src[o + 3] && isCoatPixel(src[o], src[o + 1], src[o + 2], tack)) coatMask[i] = 1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotbriders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-points-take-the-rider",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "      !spare?.[i] &&\n      (isPointPixel(src[o], src[o + 1], src[o + 2]) ||",
+    "new": "      (isPointPixel(src[o], src[o + 1], src[o + 2]) ||",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotbriders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-rider-unkept-in-the-slot",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": ") => (tack ? 1 : 0) + (bottomFirst ? 2 : 0) + (spare ? 4 : 0);",
+    "new": ") => (tack ? 1 : 0) + (bottomFirst ? 2 : 0);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotbriders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-riders-rows-unturned",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "out[(h - 1 - (k - x) / w) * w + x] = 1; }",
+    "new": "out[k] = 1; }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotbriders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-riders-size-unchecked",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "  if (w !== width || h !== height) return null;\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotbriders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-view-unsaid",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "spare: riderSpareOf(riders, s.key, image.width, image.height), view: s.view }",
+    "new": "spare: riderSpareOf(riders, s.key, image.width, image.height) }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotbriders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-threshold-of-the-bake-moved",
+    "file": "tools/bakeEotbRiders.mjs",
+    "old": "      if (n >= 2) out[y * a.width + x] = 1;",
+    "new": "      if (n >= 1) out[y * a.width + x] = 1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotbriders.test.js"
+    ]
+  }
+]

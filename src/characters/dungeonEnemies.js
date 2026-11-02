@@ -1,0 +1,304 @@
+// Dungeon enemies - data layer (Characters C3).
+// 1:1 translation of DFU RDBLayout.AddFixedEnemies / AddRandomEnemies /
+// AddRandomRDBEnemyClassic / ChooseRandomEnemyType / AddEnemy (MIT,
+// Daggerfall Workshop), classic selection path. Verbatim:
+//   - Fixed enemies: editor flats record 16; type = factionOrMobileId
+//     & 0xff ("garbage data in the 8 MSBs"), typeValue 99 skipped.
+//   - Random enemies: editor flats record 15. DFRandom.srand(the
+//     dungeon's LocationId), then 256 non-water picks from
+//     EncounterTables[dungeonType] and 256 water picks from table 19
+//     via ChooseRandomEnemyType (playerLevel banding on
+//     random_range_inclusive). Per flat: usingWater when the block
+//     waterLevel < raw classic YPos (greater y = lower); slot = flags,
+//     slot 0 rerolls on Range(1,7) - DFU seeds that Unity stream with
+//     DateTime.Now.Ticks (a TODO upstream); we seed a xorshift with
+//     the LocationId for determinism (Ledger A departure).
+//   - Water-species veto: Slaughterfish/Dreugh/Lamia skipped when
+//     waterLevel == 10000 or waterLevel - 20 > raw YPos.
+//   - Reaction: Hostile unless the raw action byte == 99 (Passive).
+//   - Gender: types > 43 read flags bits (Female 1, Male 2).
+//   - Placement: (X, -Y, Z) * GlobalScale.
+// playerLevel comes from the live player entity at the call site
+// (wired audit 2026-08-16; the classic path ignores monsterPower).
+
+import { srand, randomRangeInclusive } from '../formats/dfRandom.js';
+import { ENCOUNTER_TABLES } from './encounterTables.js';
+import { encounterTable } from './encounterTableDoor.js'; // DEX3: the dungeon's tables as a mod's pick left them
+import { MOBILE_TYPES } from './mobile/mobileTypes.js';
+import { getBool } from '../systems/settings/settings.js'; // AUDIT 28 W3: AlternateRandomEnemySelection
+
+const EDITOR_FLATS_ARCHIVE = 199; // TextureReader.EditorFlatsTextureArchive
+const FIXED_RECORD = 16;
+export const RANDOM_RECORD = 15; // AUDIT LW-II-2 D11: exported, the one home - the living world's dive stops read it (deepRoute.js STOP_FOE)
+const UNDERWATER_TABLE = 19;
+const PASSIVE_ACTION = 99;
+const GENDER_FEMALE_FLAG = 1;
+const GENDER_MALE_FLAG = 2;
+/** RDBLayout.AddEnemy's water species - the one home (SLAUGHTER-BOX: a search's foe and the wild halls read it too). */
+export const WATER_SPECIES = new Set([MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia]);
+
+// Deterministic stand-in for DFU's UnityEngine.Random slot reroll
+// (upstream seeds DateTime ticks - a TODO); xorshift32 over the
+// LocationId. Range semantics mirror Unity: max EXCLUSIVE.
+export function makeSlotRng(seed) {
+  let s = seed >>> 0 || 1;
+  return (min, maxExclusive) => {
+    s ^= s << 13;
+    s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+    return min + (s % (maxExclusive - min));
+  };
+}
+
+/** Verbatim ChooseRandomEnemyType (classic level banding). */
+export function chooseRandomEnemyType(table, playerLevel) {
+  let minTableIndex = 0;
+  let maxTableIndex = table.length;
+  const random = randomRangeInclusive(1, 100);
+  if (random > 95 && playerLevel <= 5) {
+    maxTableIndex = playerLevel + 2;
+  } else if (random > 80) {
+    maxTableIndex = playerLevel + 1;
+  } else {
+    minTableIndex = playerLevel - 3;
+    maxTableIndex = playerLevel + 3;
+  }
+  if (minTableIndex < 0) {
+    minTableIndex = 0;
+    maxTableIndex = 5;
+  } else if (maxTableIndex > 19) {
+    minTableIndex = 14;
+    maxTableIndex = 19;
+  }
+  return table[randomRangeInclusive(minTableIndex, maxTableIndex)];
+}
+
+/**
+ * Collect every enemy of one dungeon, classic path.
+ * @param blockLayouts - [{markers, waterLevel, originX, originZ}] in
+ *   dungeon block order (layoutDungeon output rows).
+ * @param opts {{locationId:number, dungeonType:number,
+ *   playerLevel?:number}}
+ * @returns {Array<{x,y,z,mobileType,fixed:boolean,reaction:'hostile'|'passive',
+ *   gender:'unspecified'|'female'|'male',spawnDistanceType:number}>}
+ */
+/** DaggerfallDungeon.cs:41 - RandomMonsterVariance, the alternate
+ *  arm's +/- band around the power index. */
+export const RANDOM_MONSTER_VARIANCE = 4;
+
+/**
+ * AUDIT 28 W3: THE ALTERNATE ARM - AddRandomRDBEnemy (RDBLayout.cs
+ * :1290-1346), behind Settings.AlternateRandomEnemySelection ("more
+ * randomized"). No 256-entry classic lists: each random flat picks
+ * straight from its table by the PLAYER's power. monsterPower is
+ * Clamp01(level / 20) (DaggerfallDungeon.cs:302); the base index is
+ * (int)(table.length * power), the band is base +/- RandomMonsterVariance
+ * clamped to the table, and the pick is Random.Range(min, max + 1) -
+ * Unity's stream, which the port answers with the same xorshift the
+ * slot reroll uses (Ledger A: DFU seeds it with DateTime.Now.Ticks).
+ * Water: :1323 `waterLevel >= YPos` takes the dungeon table, else the
+ * underwater one - the classic arm's `waterLevel < rawY` inverted.
+ */
+export function alternateRandomEnemyType(table, playerLevel, rng, variance = RANDOM_MONSTER_VARIANCE) {
+  const monsterPower = Math.min(Math.max(playerLevel / 20, 0), 1);
+  const base = Math.trunc(table.length * monsterPower);
+  let min = base - variance;
+  if (min < 0) min = 0;
+  let max = base + variance;
+  if (max >= table.length) max = table.length - 1;
+  return table[rng(min, max + 1)];
+}
+
+/** DEX3: the dungeon as a mod's transition event sees it - its LocationId (the fill's seed) and the place a table is
+ *  picked for (`dungeon`: DFLocation.Dungeon.RecordElement.Header.Unknown2 and the region, the seed Daggerfall Enemy
+ *  Expansion's SelectDungeonTable draws its pick from, BestiaryMod.cs:1740-1743). A host spreads it into the options. */
+export const dungeonPlace = (dfLocation) => ({
+  locationId: dfLocation.dungeon.recordElement.header.locationId,
+  dungeon: { unknown2: dfLocation.dungeon.recordElement.header.unknown2, region: dfLocation.regionIndex },
+});
+
+export function collectDungeonEnemies(
+  blockLayouts,
+  {
+    locationId,
+    dungeonType,
+    dungeon = null,
+    playerLevel = 1,
+    alternate = getBool('Enhancements', 'AlternateRandomEnemySelection'),
+  } = {},
+) {
+  const slotRng = makeSlotRng(locationId);
+  // DEX3: the two tables as the transition left them - a mod picks on PlayerEnterExit.OnPreTransition, before the
+  // dungeon is laid out (characters/encounterTableDoor.js); DFU's own where no mod writes. The player's own dungeon, so
+  // read as written where no `dungeon` is handed. Read before the fill seeds its stream, as the pick came before the
+  // layout there.
+  const place = { dungeon, local: true };
+  const dungeonTable = encounterTable(dungeonType, place),
+    underwaterTable = encounterTable(UNDERWATER_TABLE, place);
+  const nonWater = new Array(256);
+  const water = new Array(256);
+  if (!alternate) {
+    // Verbatim table fill: one classic stream per dungeon.
+    srand(locationId);
+    // Verbatim fill: DFU indexes EncounterTables[dungeonType] with no
+    // guard here (out of range throws before any flat, same as C#); the
+    // per-flat range check below mirrors AddRandomRDBEnemyClassic.
+    for (let i = 0; i < 256; i++) nonWater[i] = chooseRandomEnemyType(dungeonTable, playerLevel);
+    for (let i = 0; i < 256; i++) water[i] = chooseRandomEnemyType(underwaterTable, playerLevel);
+  }
+
+  const out = [];
+  const emit = (marker, block, mobileType, fixed) => {
+    // Verbatim water-species veto against the BLOCK water level.
+    if (WATER_SPECIES.has(mobileType) && (block.waterLevel === 10000 || block.waterLevel - 20 > marker.rawY)) {
+      return;
+    }
+    // AddEnemy's useGenderFlag is TRUE only for FIXED enemies (audit
+    // 2026-08-16): on random markers the flags byte IS the slot, so
+    // reading gender bits out of it was wrong data reuse.
+    let gender = 'unspecified';
+    if (fixed && mobileType > 43) {
+      if ((marker.flags & GENDER_FEMALE_FLAG) === GENDER_FEMALE_FLAG) gender = 'female';
+      if ((marker.flags & GENDER_MALE_FLAG) === GENDER_MALE_FLAG) gender = 'male';
+    }
+    out.push({
+      x: marker.x + block.originX,
+      y: marker.y,
+      z: marker.z + block.originZ,
+      mobileType,
+      fixed,
+      reaction: marker.actionByte === PASSIVE_ACTION ? 'passive' : 'hostile',
+      gender,
+      spawnDistanceType: marker.soundIndex,
+      loadID: marker.loadID ?? 0, // OH-E: DaggerfallEnemy.LoadID (RDBLayout.cs:1351/1400 - blockData.Position + obj.Position)
+      blockIndex, // AUDIT OH-F C6: the block it stands under (its Fixed Enemies / Random Enemies node's parent)
+    });
+  };
+
+  let blockIndex = -1;
+  for (const block of blockLayouts) {
+    blockIndex++;
+    for (const marker of block.markers) {
+      // AUDIT 39 (#19): editorObjects is archive-199 ONLY
+      // (RDBLayout.cs:352), and AddFixedEnemies/AddRandomEnemies
+      // iterate nothing else - the record-alone test below is safe only
+      // over that filtered list. The port's markers array also carries
+      // the archive-216 fixed-treasure flats, which share the record
+      // namespace (216/16 would spawn a Rat from `undefined & 0xff`,
+      // 216/15 an undefined mobile type) and none of the enemy fields.
+      // A marker with no archive is an editor flat, per rdbLayout.
+      if ((marker.archive ?? EDITOR_FLATS_ARCHIVE) !== EDITOR_FLATS_ARCHIVE) continue;
+      if (marker.record === FIXED_RECORD) {
+        // AddFixedRDBEnemy (RDBLayout.cs:1459-1498): a custom marker (a world-data
+        // JSON flat with IsCustomData) takes all 16 bits as its MobileType and skips
+        // the 99 test; a classic one masks the garbage MSBs (WD1)
+        const typeValue = marker.isCustomData ? marker.factionOrMobileId : marker.factionOrMobileId & 0xff;
+        if (!marker.isCustomData && typeValue === 99) continue;
+        emit(marker, block, typeValue, true);
+      } else if (marker.record === RANDOM_RECORD) {
+        if (dungeonType >= ENCOUNTER_TABLES.length) continue; // verbatim per-flat guard
+        const usingWater = block.waterLevel < marker.rawY;
+        if (alternate) {
+          // AddRandomRDBEnemy: no slot, no lists - the table by water
+          // and the pick by the player's power.
+          const table = usingWater ? underwaterTable : dungeonTable;
+          emit(marker, block, alternateRandomEnemyType(table, playerLevel, slotRng), false);
+          continue;
+        }
+        let slot = marker.flags;
+        if (slot === 0) slot = slotRng(1, 7);
+        emit(marker, block, (usingWater ? water : nonWater)[slot], false);
+      }
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- ELITE DUNGEONS
+//
+// An elite spawned dungeon (world/spawnedDungeons.js isEliteSpawn) stands `copies` foes at every
+// enemy marker instead of one. The copies are the same record - same type, gender, reaction and
+// spawn band - offset a little around the marker so they do not stand inside one another. The
+// offsets are fixed (no RNG) and the wall check reads the dungeon's own geometry, so every peer
+// builds the SAME list in the SAME order: the online foe frame indexes the layout run by position.
+
+/** How far (metres) an extra copy stands from its marker, before the wall check shortens it. */
+export const ELITE_COPY_OFFSET = 0.9;
+/** Keep this much air between a copy and the wall it was pulled back from. */
+const ELITE_WALL_MARGIN = 0.45;
+
+/** DROPS-AUDIT ELITE-LEDGE: a copy must stand on the marker's own floor - a floor found under it within this many
+ *  metres of the marker's. Off a walkway's edge the floor below is metres down (or none), and the copy fell. */
+export const ELITE_FLOOR_STEP = 0.6;
+
+/**
+ * Expand a collectDungeonEnemies list for an elite dungeon. Original records keep their order
+ * and fields; each is followed by its extra copies, marked `eliteCopy: true`. Every record in the
+ * output (originals included) carries `elite: true`, which buildFoeAt reads to scale the foe.
+ * @param {Array<object>} enemies collectDungeonEnemies output
+ * @param {{copies?:number, offset?:number,
+ *   clearance?:(from:number[], dir:number[], dist:number) => number,
+ *   floor?:(at:number[]) => ?number}} o
+ *   clearance: metres of free space from `from` along the unit horizontal `dir`, up to `dist`
+ *   (the host answers it with a collider ray; omitted = open floor everywhere).
+ *   floor: the height of the floor under `at` (null: none near) - DROPS-AUDIT ELITE-LEDGE; omitted = level floor.
+ */
+export function expandEliteEnemies(
+  enemies,
+  { copies = 3, offset = ELITE_COPY_OFFSET, clearance = null, floor = null } = {},
+) {
+  const n = Math.max(1, copies | 0);
+  const out = [];
+  for (const e of enemies) {
+    out.push({ ...e, elite: true });
+    const base = floor ? floor([e.x, e.y, e.z]) : null;
+    for (let k = 1; k < n; k++) {
+      // spread the extras evenly round the marker, starting east, then west, ...
+      const a0 = ((k - 1) / (n - 1)) * 2 * Math.PI;
+      // DROPS-AUDIT ELITE-LEDGE: the copy's own bearing first, then a quarter turn either way, then the far side -
+      // the first that keeps it on the marker's floor; none does, and it stands on the marker itself
+      let x = e.x,
+        z = e.z;
+      for (const turn of [0, 0.5, -0.5, 1]) {
+        const a = a0 + turn * Math.PI;
+        const dir = [Math.cos(a), 0, Math.sin(a)];
+        let d = offset;
+        if (clearance) {
+          const free = clearance([e.x, e.y, e.z], dir, offset + ELITE_WALL_MARGIN);
+          if (Number.isFinite(free)) d = Math.max(0, Math.min(offset, free - ELITE_WALL_MARGIN));
+        }
+        const cx = e.x + dir[0] * d,
+          cz = e.z + dir[2] * d;
+        if (floor && base != null && d > 0) {
+          const f = floor([cx, e.y, cz]);
+          if (f == null || Math.abs(f - base) > ELITE_FLOOR_STEP) continue;
+        }
+        x = cx;
+        z = cz;
+        break;
+      }
+      out.push({ ...e, x, z, elite: true, eliteCopy: true });
+    }
+  }
+  return out;
+}
+
+/** AUDIT OH-F C6: a dungeon's enemy pool in DaggerfallDungeon's HIERARCHY order - what GetComponentsInChildren walks:
+ *  each block's "Fixed Enemies" node before its "Random Enemies" node (RDBLayout.AddFixedEnemies, then
+ *  AddRandomEnemies: GameObjectHelper.cs:632-633), marker order within each, and the spawns - the dungeon's later
+ *  children - after them all, in the order they came. The first `layoutCount` records are the layout's (each `src`
+ *  carries its `blockIndex` and `fixed`); a copy, the pool itself untouched. */
+export function enemyHierarchyOrder(pool, layoutCount) {
+  return pool
+    .map((f, i) => ({
+      f,
+      k:
+        i < layoutCount && Number.isInteger(f?.src?.blockIndex)
+          ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i]
+          : [Infinity, 2, i],
+    }))
+    .sort((a, b) => (a.k[0] === b.k[0] ? 0 : a.k[0] - b.k[0]) || a.k[1] - b.k[1] || a.k[2] - b.k[2])
+    .map((x) => x.f);
+}

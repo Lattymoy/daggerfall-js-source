@@ -1,0 +1,83 @@
+[
+  {
+    "name": "GUILD-SHELF-every-open-mints",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (shelfStands(kept, today)) return kept;\n  if (store)",
+    "new": "  if (store)",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SHELF-never-restocks",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (shelfStands(kept, today)) return kept;",
+    "new": "  if (kept && Array.isArray(kept.items)) return kept;",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SHELF-new-day-not-kept",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (store) store[service] = shelf;\n  return shelf;",
+    "new": "  return shelf;",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SHELF-one-shelf-for-every-service",
+    "file": "src/systems/shopStock.js",
+    "old": "  const kept = store?.[service];",
+    "new": "  const kept = store && Object.values(store)[0];",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SHELF-scene-cache-drops-it",
+    "file": "src/systems/sceneCache.js",
+    "old": "      .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }]),",
+    "new": "      .map(([service, s]) => [service, { day: s.day, items: [] }]),",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SHELF-scene-cache-shares-the-live-array",
+    "file": "src/systems/sceneCache.js",
+    "old": "      .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }]),",
+    "new": "      .map(([service, s]) => [service, { day: s.day, items: s.items }]),",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SHELF-potions-mint-a-throwaway",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const shelf = guildShelf('BuyPotions', () => stockGuildPotions({ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) }));",
+    "new": "      const shelf = { items: stockGuildPotions({ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) }) };",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SHELF-scene-state-leaves-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "terrainScale: STREAMING_TERRAIN_SCALE, guildShelves };",
+    "new": "terrainScale: STREAMING_TERRAIN_SCALE };",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SHELF-restore-forgets-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorCtx.guildShelves = data.guildShelves ?? {};",
+    "new": "    interiorCtx.guildShelves = {};",
+    "tests": [
+      "test/systems/guildshelf.test.js"
+    ]
+  }
+]

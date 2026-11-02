@@ -1,0 +1,56 @@
+[
+  {
+    "name": "AUDIT-WERE-FRIGHT-F1-the-exterior-host-sends-its-street-alone",
+    "file": "src/scenes/exterior.js",
+    "old": "watchFlees: () => cityGuards.frighten(walkMode ? player.pos : cam.pos) + (modes?.frightenWatch?.() ?? 0),",
+    "new": "watchFlees: () => cityGuards.frighten(walkMode ? player.pos : cam.pos),",
+    "tests": [
+      "test/scenes/auditwerefright.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WERE-FRIGHT-F1-the-world-host-sends-its-street-alone",
+    "file": "src/scenes/world.js",
+    "old": "watchFlees: () => cityGuards.frighten(walkMode && playerSpawned ? player.pos : cam.pos) + (modes?.frightenWatch?.() ?? 0),",
+    "new": "watchFlees: () => cityGuards.frighten(walkMode && playerSpawned ? player.pos : cam.pos),",
+    "tests": [
+      "test/scenes/auditwerefright.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WERE-FRIGHT-F2-a-man-roars",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (!isTransformedLycanthrope(playerEntity)) { applyDamage(); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwerefright.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WERE-FRIGHT-F2-a-man-answering-f-is-spared-the-blow",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (!isTransformedLycanthrope(playerEntity)) { applyDamage(); return false; }",
+    "new": "    if (!isTransformedLycanthrope(playerEntity)) { return false; }",
+    "tests": [
+      "test/scenes/auditwerefright.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WERE-FRIGHT-F3-the-run-pacifies",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    // takes its target, which is all that stops it striking.\n    this.target = null;",
+    "new": "    // takes its target, which is all that stops it striking.\n    this.isHostile = false;\n    this.target = null;",
+    "tests": [
+      "test/scenes/auditwerefright.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WERE-FRIGHT-F4-a-beast-comes-quietly",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (inCourt() || isTransformedLycanthrope(playerEntity)) return false;",
+    "new": "    if (inCourt()) return false;",
+    "tests": [
+      "test/scenes/auditwerefright.test.js"
+    ]
+  }
+]

@@ -1,0 +1,174 @@
+[
+  {
+    "name": "FB1031II-G1-the-weather-s-gate-back",
+    "file": "src/render/farRing.js",
+    "old": "    if (fire || fence) {\n",
+    "new": "    if ((fire || fence) && !rf.weather) {\n",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js",
+      "test/world/redmountain_seen.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-law-unhanded",
+    "file": "src/render/farRing.js",
+    "old": "fog: { color: fogColor, start: fogStart, end: fogEnd, law: rf.law, density: rf.density },",
+    "new": "fog: { color: fogColor, start: fogStart, end: fogEnd },",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-summits-through-the-weather",
+    "file": "src/render/farRing.js",
+    "old": "summitFrom: rf.weather ? NO_SUMMIT : summitFromOf(this._floraRadius),",
+    "new": "summitFrom: summitFromOf(this._floraRadius),",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-haze-from-the-eye-in-the-weather",
+    "file": "src/render/farRing.js",
+    "old": "hazeFrom: rf.weather && focus && focus[3] > 0.5 ? focus : eye,",
+    "new": "hazeFrom: eye,",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-from-the-traveller-in-clear-air",
+    "file": "src/render/farRing.js",
+    "old": "hazeFrom: rf.weather && focus && focus[3] > 0.5 ? focus : eye,",
+    "new": "hazeFrom: focus && focus[3] > 0.5 ? focus : eye,",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-view-s-flag-unread",
+    "file": "src/render/farRing.js",
+    "old": "hazeFrom: rf.weather && focus && focus[3] > 0.5 ? focus : eye,",
+    "new": "hazeFrom: rf.weather && focus ? focus : eye,",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-law-unset",
+    "file": "src/render/redMountainFire.js",
+    "old": "  gl.uniform2f(U.uFogLaw, pass.fog.law ?? 0, pass.fog.density ?? 0); // AUDIT FB1031 II G1: a weather row's law, the ring's",
+    "new": "  // AUDIT FB1031 II G1: a weather row's law, the ring's",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-uFogLaw-unlisted",
+    "file": "src/render/redMountainFire.js",
+    "old": "  'uFogLaw',\n  'uHazeFrom',",
+    "new": "  'uHazeFrom',",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-point-unset",
+    "file": "src/render/redMountainFire.js",
+    "old": "  gl.uniform3f(U.uHazeFrom, from[0], from[1], from[2]);",
+    "new": "",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-point-ignored",
+    "file": "src/render/redMountainFire.js",
+    "old": "  const from = pass.hazeFrom ?? pass.eye;",
+    "new": "  const from = pass.eye;",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-linear-haze-in-the-weather",
+    "file": "src/render/redMountainFire.js",
+    "old": "float hazeAt(float d, float y) { return horizonHazeOf(uFogLaw, d, uHaze.x, uHaze.y, uHaze.z, uHaze.w, summitHoldAt(uHold.x, y - uHold.y, d, uHold.z)); }",
+    "new": "float hazeAt(float d, float y) { return horizonHaze(d, uHaze.x, uHaze.y, uHaze.z, uHaze.w, summitHoldAt(uHold.x, y - uHold.y, d, uHold.z)); }",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-eye-s-distance-for-the-point-s",
+    "file": "src/render/redMountainFire.js",
+    "old": "float hazeOf(vec3 p) { return hazeAt(distance(p, uHazeFrom), p.y); }",
+    "new": "float hazeOf(vec3 p) { return hazeAt(distance(p, uEye), p.y); }",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-lava-s-cap-in-the-weather",
+    "file": "src/render/redMountainFire.js",
+    "old": "  col = mix(col, uFogColor, clearOr(hz * ${f1(FIRE.hazeHold)} * (1.0 - 0.6 * melt), hz));   // AUDIT FB1031 II G1: a weather's whole, as the land's",
+    "new": "  col = mix(col, uFogColor, hz * ${f1(FIRE.hazeHold)} * (1.0 - 0.6 * melt));   // AUDIT FB1031 II G1: a weather's whole, as the land's",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-plume-s-floor",
+    "file": "src/render/redMountainFire.js",
+    "old": "  a *= max(1.0 - hz, clearOr(${f1(FIRE.hazeFloor)}, 0.0)) * (1.0 - smoothstep(uHaze.z, uHaze.w, dist));   // closed by the rim as the land is (F7)",
+    "new": "  a *= max(1.0 - hz, ${f1(FIRE.hazeFloor)}) * (1.0 - smoothstep(uHaze.z, uHaze.w, dist));   // closed by the rim as the land is (F7)",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-its-colour-s-0.7",
+    "file": "src/render/redMountainFire.js",
+    "old": "  vec3 ash = mix(${v3(FIRE.ash)} * litOf(uLight, dot(N, uLightDir)), uFogColor, hz * clearOr(0.7, 1.0));",
+    "new": "  vec3 ash = mix(${v3(FIRE.ash)} * litOf(uLight, dot(N, uLightDir)), uFogColor, hz * 0.7);",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-its-fire-s-0.5",
+    "file": "src/render/redMountainFire.js",
+    "old": "  o = vec4(ash * a + emberOf(h, puff, body, uLight) * (1.0 - hz * clearOr(0.5, 1.0)), a);",
+    "new": "  o = vec4(ash * a + emberOf(h, puff, body, uLight) * (1.0 - hz * 0.5), a);",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-weather-s-whole-in-clear-air",
+    "file": "src/render/redMountainFire.js",
+    "old": "float clearOr(float clear, float weather) { return uFogLaw.x < 0.5 ? clear : weather; }",
+    "new": "float clearOr(float clear, float weather) { return weather; }",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-curtain-from-the-eye",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "  o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.curtain)} * nightOf(uLight) * fade * (1.0 - hazeOf(vWorld))), 0.0);",
+    "new": "  o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.curtain)} * nightOf(uLight) * fade * (1.0 - hazeAt(d, vWorld.y))), 0.0);",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  },
+  {
+    "name": "FB1031II-G1-the-halos-from-the-eye",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "  o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.halo)} * nightOf(uLight) * fade * (1.0 - hazeOf(vWorld))), 0.0);",
+    "new": "  o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.halo)} * nightOf(uLight) * fade * (1.0 - hazeAt(d, vWorld.y))), 0.0);",
+    "tests": [
+      "test/world/fb1031ii_fire.test.js"
+    ]
+  }
+]

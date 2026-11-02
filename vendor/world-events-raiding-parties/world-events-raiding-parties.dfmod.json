@@ -1,0 +1,12 @@
+{
+    "ModTitle": "World Events - Raiding Parties",
+    "ModVersion": "1.1",
+    "ModAuthor": "Kamer",
+    "ContactInfo": "DFU Discord",
+    "DFUnity_Version": "1.1.0",
+    "ModDescription": "Selects Random Cities/Hamlets/Towns for Raids from enemies.",
+    "GUID": "0c4a7cde-e3bd-4060-a371-6910a8625eac",
+    "Files": [
+        "Assets/Game/Mods/DynamicTownRaids/TownRaids.cs"
+    ]
+}

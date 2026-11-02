@@ -1,0 +1,479 @@
+/**
+ * THE WINDOW STACK - UserInterfaceManager (Game/UserInterface/
+ * UserInterfaceManager.cs), ported whole.
+ *
+ * DFU keeps every open UI window on ONE stack. `TopWindow` is the only
+ * window that receives input and the only one a window-aware system
+ * (DaggerfallRestWindow's `uiManager.TopWindow != this`, :364/:399)
+ * tests itself against; `PushWindow` lays a new window OVER whatever is
+ * open; `PopWindow` returns to the one beneath and calls its `OnReturn`.
+ * The game pauses for any window whose `PauseWhileOpen` is set - the
+ * default (UserInterfaceWindow.cs:141) - and stays paused until the
+ * stack drains back to the HUD.
+ *
+ * The port has held ONE overlay slot per host since U3, which is why
+ * worldModes' `mountInterior` carries a FLAG saying pause-and-resume of
+ * a rest "is the DFU behaviour and a single-slot host cannot have it".
+ * This module is that missing depth, in the shape the existing slots
+ * can adopt: a host keeps its slot variable as the MIRROR OF THE TOP
+ * (`onTop` writes it) and the stack carries what is underneath. A door
+ * that used to replace the occupant pushes instead, the ~40 close paths
+ * that null the slot by hand keep working - `reconcile` reads the live
+ * slot back and turns "the slot went empty" into a pop.
+ *
+ * NOT ported here, deliberately:
+ *   - PushWindow's `InputManager.ClearAllActions` (:82) and the fade
+ *     clear (:85-86). The first is offered as the optional
+ *     `clearActions` hook because the port has no InputManager layer;
+ *     the second belongs to DaggerfallUI's fade behaviour, which the
+ *     port's hosts own.
+ *   - RemoveWindow's `PlayerActivate.SetClickDelay` (:206/:214). That
+ *     half is ALREADY ported, in systems/activateGate.js - the gate
+ *     arms the delay itself off `paused` rather than asking four hosts
+ *     to remember, and arming it here as well would double it.
+ */
+
+/** UserInterfaceManager.cs:38. */
+const MAX_MESSAGE_COUNT = 10;
+
+/** UserInterfaceWindow.cs:141 - `pauseWhileOpened` defaults TRUE, so a
+ *  plain port window (no field at all) pauses, which is exactly what
+ *  every host's `overlayHeld` already assumes. Only an explicit
+ *  `pauseWhileOpen: false` - DaggerfallHUD's override - opts out. */
+export const pauseWhileOpen = (win) => !!win && win.pauseWhileOpen !== false;
+
+/** DaggerfallPopupWindow.previousWindow (DaggerfallPopupWindow.cs:24,
+ *  :56-59) - "can optionally render previous window hierarchy before
+ *  its own" (:19). `Draw` (:76-84) runs `previousWindow.Draw()` first
+ *  when the field is set and paints nothing beneath it when it is
+ *  null, so this ONE field decides whether the window a box was
+ *  pushed over reaches the screen at all.
+ *
+ *  Which port windows carry it, read off the reference:
+ *   - SET. Every box `DaggerfallUI.MessageBox` opens takes
+ *     `Instance.uiManager.TopWindow` as its previous
+ *     (DaggerfallUI.cs:1330/:1339/:1348/:1357), and during play that
+ *     top IS `dfHUD` (:407-408). That is the port's ActionTextBox.
+ *   - NULL. Every window DaggerfallUI pushes from play is one of the
+ *     persistent instances built at :512-530 with a null previous
+ *     (pause options, character sheet, inventory, controls, travel
+ *     map, automap, book reader, quest journal, ...), and
+ *     DaggerfallAction's own two boxes pass null as well
+ *     (Internal/DaggerfallAction.cs:536/:565).
+ *  A window with no field at all takes the null arm, which is what
+ *  every port window that is not a message box wants. */
+export const paintsPreviousWindow = (win) => !!win && win.previousWindow === true;
+
+/** MAP-FIELD2 (Mac, 2026-09-18): "the status and magicka/health/fatigue
+ *  UI element's should go away when it is taken out".
+ *
+ *  A window that HIDES the HUD outright, on both skins. This is not
+ *  `hudCovered`, and the difference is the whole reason it exists:
+ *  hudCovered is DFU's own question, and DFU keeps the LARGE hud
+ *  painted under its windows (DaggerfallUI.cs:485-486 repaints it), so
+ *  hud.js answers the covering question `&& !largeHud?.art`. That law
+ *  is right for DFU's windows and wrong for a thing DFU does not have:
+ *  the held map is a sprite in the player's HANDS, and a vitals bar
+ *  drawn over the knuckles is not a HUD under a window, it is a HUD on
+ *  top of an arm. A window opts in by declaring the field; nothing
+ *  else in the port does, so no DFU window's behaviour moves. */
+export const hidesHud = (win) => !!win && win.hidesHud === true;
+
+/** RISE-STUCK (Discord, 2026-09-27, Ninilac: "I clicked 'rise now' but
+ *  the death screen didn't go away, so I waited for the timer and it
+ *  still didn't go away when it reached 0"). A window that KEEPS THE
+ *  TOP until it closes itself - the death screen, the port's own window
+ *  (DFU's PlayerDeath is no window, so no DFU window's behaviour moves).
+ *
+ *  A box pushed over it buried it: the box took the input and the tick,
+ *  the enhanced veil (DOM, over the canvas) hid the box, and the
+ *  online rise - which REPLACES the top (world.js respawnOnlinePlayer's
+ *  ActionTextBox) - replaced the box instead, so the death screen came
+ *  back when that closed with its one reset already spent: Enter, the
+ *  plate and the countdown all dead for good. pushWindow suspends such a
+ *  push BENEATH the window that holds the top; it comes up when the
+ *  death screen goes. */
+export const holdsTop = (win) => !!win && win.holdsTop === true;
+
+/** PLEA-LOOP (FIELD BUGS 2026-10-13b): the stack that holds each window - a window in no stack has no entry. Weak, so an
+ *  entry dies with its window: nothing here outlives what it names. */
+const HELD_BY = new WeakMap();
+
+/** PLEA-LOOP: TopWindow is the only window that receives input (the header above) - a window a stack holds UNDER
+ *  another is COVERED, and answers nothing until it is the top again. The keys and the canvas reach the top alone
+ *  through their host; a door that reaches a window directly - the enhanced keyed menu's buttons
+ *  (ui/enhanced/enhancedDialog.js drawEnhancedChoice) - asks this first. A window no stack holds (the boot menu's, chargen's) is
+ *  nobody's to cover. */
+export function windowCovered(win) {
+  const stack = win ? HELD_BY.get(win) : null;
+  return !!stack && stack.topWindow() !== win;
+}
+
+/** COVERED-KEYS: THE ONE DOOR FOR A DOM WINDOW'S KEYS. An enhanced window draws in the DOM and hears its keys on the page,
+ *  in capture - before any host can route a key to the top window. So a window under a box (a tutorial page, a refusal)
+ *  heard the box's Enter and Escape and acted on them: Escape closed the window under the box. Every such listener is
+ *  laid here, for the stack window `win` it belongs to, and hears nothing while that window is covered. `onCovered` is
+ *  told instead (the pause face drops a press it armed). A `win` no stack holds is never covered. test/ui/coveredkeys.test.js
+ *  holds every enhanced view to this door. Answers the unlisten. */
+export function listenWindowKeys(win, onKey, { types = ['keydown'], onCovered = null } = {}) {
+  const gate = (/** @type {KeyboardEvent} */ e) => {
+    if (windowCovered(win)) {
+      onCovered?.(e);
+      return;
+    }
+    onKey(e);
+  };
+  for (const type of types) globalThis.addEventListener?.(type, gate, true);
+  return () => {
+    for (const type of types) globalThis.removeEventListener?.(type, gate, true);
+  };
+}
+
+/**
+ * Build a stack.
+ *
+ * @param hud            the base window that is never popped
+ *                       (DaggerfallHUD). RemoveWindow branches on
+ *                       DaggerfallUI.enableHUD (:201-215) and the
+ *                       port's hosts draw their HUD outside the stack,
+ *                       so they pass none and take the `enableHUD ==
+ *                       false` arm - drain at `windows.Count < 1`.
+ * @param onTop          called with the new top (or null) whenever it
+ *                       changes - the host's slot mirror.
+ * @param onWindowChange OnWindowChange (:41), raised by Push/Pop/Change.
+ * @param clearActions   InputManager.ClearAllActions (:82).
+ */
+export function makeWindowStack({ hud = null, onTop = null, onWindowChange = null, clearActions = null } = {}) {
+  /** windows.Peek() is the LAST element here. */
+  const windows = hud ? [hud] : [];
+  const messages = [];
+  // GameManager.isGamePaused, as AddWindow raises it (:183-184) and
+  // RemoveWindow lowers it (:203-214). It is a LATCH, not a fold: DFU
+  // pauses for the window being pushed and does not unpause until the
+  // stack is back to the HUD, which is why a non-pausing window laid
+  // over a pausing one leaves the game paused.
+  let gamePaused = false;
+
+  const isHud = (w) => !!hud && w === hud;
+  const top = () => (windows.length > 0 ? windows[windows.length - 1] : null);
+  /** PLEA-LOOP: every door in and out of `windows` says so here, so windowCovered answers for this stack. */
+  const hold = (w) => {
+    if (w && typeof w === 'object') HELD_BY.set(w, api);
+  };
+  const unhold = (w) => {
+    if (w && typeof w === 'object' && HELD_BY.get(w) === api) HELD_BY.delete(w);
+  };
+
+  let lastTop = top();
+  const publishTop = () => {
+    const t = top();
+    if (t === lastTop) return;
+    lastTop = t;
+    onTop?.(t);
+  };
+
+  /** AddWindow (:179-186). RISE-STUCK: `at` is where it goes - the top
+   *  but for a window slipped beneath one that holds it. */
+  function addWindow(win, at = windows.length) {
+    windows.splice(at, 0, win);
+    hold(win);
+    win.onPush?.();
+    if (pauseWhileOpen(win)) gamePaused = true;
+  }
+
+  /** RemoveWindow (:190-216). The HUD is never popped; the window that
+   *  is uncovered gets OnReturn. */
+  function removeWindow() {
+    const oldWindow = top();
+    if (oldWindow && !isHud(oldWindow)) {
+      windows.pop();
+      unhold(oldWindow);
+      oldWindow.onPop?.();
+      const t = top();
+      if (t) t.onReturn?.();
+    }
+    // :201-215 - the two arms of DaggerfallUI.enableHUD. With a HUD in
+    // the stack the game resumes once only the HUD is left; without
+    // one, once the stack is empty.
+    if (hud ? windows.length <= 1 : windows.length < 1) gamePaused = false;
+  }
+
+  /** ChangeWindow's `while (windows.Count > 0) RemoveWindow()`
+   *  (:125-126). RemoveWindow refuses to pop the HUD, so DFU's own
+   *  loop would spin for ever on a stack that has one - it is only
+   *  ever reached with the HUD absent. The port takes the same law and
+   *  stops when the pop stops moving, rather than hanging the frame. */
+  function drain() {
+    while (windows.length > 0) {
+      const before = windows.length;
+      removeWindow();
+      if (windows.length === before) break;
+    }
+  }
+
+  const api = {
+    /** TopWindow (:54-57). */
+    topWindow: top,
+    /** WindowCount (:70-73) - `windows.Count-1`, the HUD not counted.
+     *  A HUD-less stack has nothing to subtract. */
+    windowCount: () => windows.length - (hud ? 1 : 0),
+    /** MessageCount (:62-65). */
+    messageCount: () => messages.length,
+    /** How many windows are on top of the HUD, i.e. whether a pop has
+     *  somewhere to return to. ROAD-tail: this is a WINDOW COUNT and
+     *  no longer the hosts' pause question - counting it to decide
+     *  whether the world is stopped was the per-host arithmetic
+     *  `paused()` replaced, and no host does it now
+     *  (test/scenes/roadb_host_pause.test.js sweeps for it). */
+    depth: () => windows.length - (hud ? 1 : 0),
+
+    /** PushWindow (:79-91). RISE-STUCK: over a window that holds the
+     *  top (`holdsTop`) the push is suspended beneath it instead - the
+     *  top, and so the host's slot, does not move. */
+    pushWindow(win) {
+      if (!win) return false;
+      const t = top();
+      if (holdsTop(t) && !isHud(t)) {
+        addWindow(win, windows.length - 1);
+        onWindowChange?.();
+        return true;
+      }
+      addWindow(win);
+      clearActions?.();
+      publishTop();
+      onWindowChange?.();
+      return true;
+    },
+
+    /** PopWindow (:99-104). */
+    popWindow() {
+      removeWindow();
+      publishTop();
+      onWindowChange?.();
+    },
+
+    /** ContainsWindow (:114-117). */
+    containsWindow(win) {
+      return windows.indexOf(win) >= 0;
+    },
+
+    /** THE DRAW CHAIN. DaggerfallUI paints ONE window a frame -
+     *  `uiManager.TopWindow.Draw()` (DaggerfallUI.cs:491) - and depth
+     *  reaches the screen through DaggerfallPopupWindow.Draw
+     *  (:77-86), which runs `previousWindow.Draw()` BEFORE its own
+     *  `base.Draw()`. Every box DaggerfallUI.MessageBox opens is
+     *  built on `uiManager.TopWindow` as its previousWindow (:1330,
+     *  :1339), so the chain is exactly this stack and the window a
+     *  box was pushed over is painted UNDER it.
+     *
+     *  The port's hosts hold the TOP in their own slot (that is what
+     *  `onTop` mirrors) and paint it themselves, so this walks what
+     *  the top COVERS, deepest first, and the host draws its slot
+     *  after. The HUD is skipped - the hosts draw it outside the
+     *  stack. A stack of depth 1 enumerates nothing, which is why
+     *  every single-window host renders exactly as before.
+     *
+     *  No dim rides with it: `parentPanel.BackgroundColor =
+     *  ScreenDimColor` is Color.clear (nativePanel.js's SCREEN_DIM),
+     *  and the court boxes set it to (0,0,0,0) themselves
+     *  (DaggerfallCourtWindow.cs:224). */
+    eachCoveredWindow(fn) {
+      for (let i = 0; i < windows.length - 1; i++) if (!isHud(windows[i])) fn(windows[i], i);
+    },
+
+    /** AUDIT RISE-REST F3: the covered windows the TOP lets paint - all
+     *  of them, as above, but none beneath a window that holds the top.
+     *  A box waiting under the death screen was drawn every frame: through
+     *  the classic wash, and on the enhanced skin as the notice stack's
+     *  DOM (z-index 31) floating over the veil (18) - read, and not
+     *  answerable. The death screen is the whole screen until it goes. */
+    eachPaintedBeneath(fn) {
+      if (holdsTop(top())) return;
+      api.eachCoveredWindow(fn);
+    },
+
+    /** AUDIT 64 F35 (review round) - IS THE HUD PAINTED THIS FRAME?
+     *
+     *  The HUD is the window at the BOTTOM of this stack
+     *  (DaggerfallUI.cs:407-408) and DaggerfallUI's repaint draws
+     *  `uiManager.TopWindow.Draw()` alone (:489-491), so the HUD
+     *  reaches the screen ONLY down the previousWindow chain above it.
+     *  `DaggerfallPopupWindow.Draw` (DaggerfallPopupWindow.cs:76-84)
+     *  recurses while the field is set and stops dead where it is
+     *  null, so the chain reaches the HUD only when EVERY window over
+     *  it paints its own previous: one null-previous window anywhere
+     *  in the stack (an inventory laid over a box, or a box laid over
+     *  an inventory) cuts it, and nothing above can splice it back.
+     *
+     *  `slot` is the host's live mirror of the top, for the same
+     *  reason `reconcile` takes it: a host that filled its slot by
+     *  hand this frame has not pushed it yet. An empty stack and an
+     *  empty slot answer false - no window, nothing covering. */
+    hudCovered(slot = null) {
+      const open = windows.filter((w) => !isHud(w));
+      if (slot && !open.includes(slot)) open.push(slot);
+      return open.some((w) => !paintsPreviousWindow(w));
+    },
+
+    /** ChangeWindow (:123-131) - pop EVERYTHING, then add the one.
+     *  This is what the port's dispatch sites have always done in a
+     *  single assignment: a window handing control to its successor is
+     *  DFU's `CloseWindow(); PushWindow(next);`, which nets to a
+     *  replacement, not to depth. */
+    changeWindow(win) {
+      drain();
+      if (win) addWindow(win);
+      publishTop();
+      onWindowChange?.();
+    },
+
+    /** ChangeWindow's first half alone (:125-126) - the teardown door.
+     *  A host that drops its whole scene drops the stack with it.
+     *
+     *  `onDrop` is the port's own half of OnPop: the hosts' windows own
+     *  uploaded textures and billboard batches, and uploadTexture
+     *  memoizes for ever, so a scene teardown that just forgets the
+     *  stack both leaks and leaves live cache keys behind. It runs on
+     *  EVERY window the drain removes, not only the top. */
+    clear(onDrop = null) {
+      if (onDrop) for (let i = windows.length - 1; i >= 0; i--) if (!isHud(windows[i])) onDrop(windows[i]);
+      drain();
+      publishTop();
+    },
+
+    /** DUPE-LOAD (AUDIT, the exploit audit): every window but `keep` (and the HUD) out of the stack, top first - `onDrop`
+     *  on each, then its OnPop, as `clear` takes them - `keep` left where it stands. A LOAD's drain beneath the death
+     *  screen: a window pushed while it holds the top waits under it (holdsTop), and one a box covered when the death
+     *  replaced the top stays there; uncovered after the restore, it stood over the loaded game still holding what it took
+     *  off the old one (a counter's staged goods, handed to the loaded pack on its close). */
+    keepOnly(keep, onDrop = null) {
+      for (let i = windows.length - 1; i >= 0; i--) {
+        const w = windows[i];
+        if (isHud(w) || w === keep) continue;
+        windows.splice(i, 1);
+        unhold(w);
+        onDrop?.(w);
+        w.onPop?.();
+      }
+      if (windows.length <= (hud ? 1 : 0)) gamePaused = false; // RemoveWindow's latch: down once the HUD alone, or nothing, is left
+      publishTop();
+      onWindowChange?.();
+    },
+
+    /** GameManager.IsPlayingGame's window half, inverted
+     *  (GameManager.cs:926-942).
+     *
+     *  DFU asks TWO questions there: `isGamePaused` (:928-930), and
+     *  whether the top window is a non-HUD window that pauses
+     *  (:937-939). It needs both because `isGamePaused` is GLOBAL -
+     *  StartGameBehaviour (:439, :697) and SaveLoadManager (:418) call
+     *  `PauseGame(false)` from outside the stack, so the flag can be
+     *  down while a pausing window is still up, and only :937-939
+     *  catches that.
+     *
+     *  This latch is not that flag: it is UIManager-local, raised by
+     *  AddWindow (:183-184) and by reconcile's replace, and lowered
+     *  ONLY by RemoveWindow on drain (:201-215). Nothing outside can
+     *  put it down, so `gamePaused` is already true in every state
+     *  :937-939 would catch and the second question cannot decide one.
+     *  Asking it anyway would be worse than redundant - it would read
+     *  the top window instead of the latch and so MASK a latch that
+     *  failed to rise. If the port ever grows an external PauseGame
+     *  door, DFU's second term comes back with it.
+     *
+     *  ROAD-tail: THIS IS WHAT THE HOSTS GATE ON, and each of the four
+     *  that own a stack reads it through exactly one reader of its own
+     *  (`interiorPaused`, `dungeonPaused`, `talkPaused`, `gamePaused`).
+     *  Those readers DO OR in `pauseWhileOpen(slot)`, which reads like
+     *  the second term the paragraph above declines - it is not. DFU's
+     *  :937-939 exists because an EXTERNAL PauseGame(false) can put the
+     *  flag down under a live window; the port has no such door, and
+     *  asking the top window there would still mask a latch that failed
+     *  to rise. The hosts' term answers a state DFU cannot be in at
+     *  all: a slot holding a window the stack has not been told about
+     *  yet, because the host wrote it by hand instead of pushing (the
+     *  seam `reconcile` exists for). It is the SLOT that is asked, and
+     *  only until the next reconcile hands the question back here. */
+    paused() {
+      return gamePaused;
+    },
+
+    /** PostMessage (:139-150) - the overflow arm CLEARS the queue,
+     *  DFU's own TODO and not a bug to fix on this side. */
+    postMessage(message) {
+      if (messages.length >= MAX_MESSAGE_COUNT) messages.length = 0;
+      messages.push(message);
+    },
+    /** GetMessage (:157-163) - empty string, never null. */
+    getMessage() {
+      return messages.length > 0 ? messages.shift() : '';
+    },
+    /** PeekMessage (:168-174). */
+    peekMessage() {
+      return messages.length > 0 ? messages[0] : '';
+    },
+
+    /**
+     * THE PORT SEAM. Not a DFU member: DFU windows close themselves
+     * through `CloseWindow()` -> `uiManager.PopWindow()`, so the stack
+     * always hears about it. The port's hosts hold the top in a plain
+     * closure variable that ~40 `onClose` callbacks and probe hooks
+     * null directly (`if (interiorOverlay === win) interiorOverlay =
+     * null`), and rewriting every one of them is exactly the blast
+     * radius this module exists to avoid.
+     *
+     * So the host calls this once a frame with its live slot and the
+     * stack catches up:
+     *   - slot unchanged      -> nothing.
+     *   - slot went empty     -> PopWindow, which uncovers the window
+     *                            beneath and hands it back through
+     *                            `onTop` (a rest resumes).
+     *   - slot holds someone
+     *     else                -> the host replaced its top by hand;
+     *                            swap the top entry and leave the depth
+     *                            alone (ChangeWindow's shape, applied
+     *                            to one level).
+     *
+     * Returns true when the stack moved.
+     */
+    reconcile(live) {
+      const t = top();
+      if (live === t) return false;
+      if (!live) {
+        if (windows.length === 0) return false;
+        api.popWindow();
+        return true;
+      }
+      if (windows.length === 0 || isHud(t)) {
+        addWindow(live);
+        publishTop();
+        onWindowChange?.();
+        return true;
+      }
+      // Replace the top in place: the window beneath is still suspended
+      // and still returns when this one closes.
+      windows[windows.length - 1] = live;
+      unhold(t);
+      hold(live);
+      if (pauseWhileOpen(live)) gamePaused = true;
+      lastTop = live;
+      onWindowChange?.();
+      return true;
+    },
+  };
+  return api;
+}
+
+/** BuildParamDict (:222-240) - `?a=1?b=2` into a Map-like object.
+ *  Empty segments are dropped (StringSplitOptions.RemoveEmptyEntries)
+ *  and a segment that is not exactly one `=` pair is skipped. */
+export function buildParamDict(message) {
+  const dict = {};
+  for (const part of String(message ?? '').split('?')) {
+    if (part === '') continue;
+    const parts = part.split('=');
+    if (parts.length !== 2) continue;
+    dict[parts[0].trim()] = parts[1].trim();
+  }
+  return dict;
+}

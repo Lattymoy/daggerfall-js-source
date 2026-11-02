@@ -1,0 +1,202 @@
+// UXB1-E (2026-09-25, the UX backlog: "Add a 'sync from server' option so players can ensure their offline play
+// matches the host they prefer to play on if they want.").
+//
+// Online, the switches the room owns read the room's values and the player's store is never written (onlineLane.js);
+// offline the player's own stand again. There is no host to ask - a relay publishes no rules; they are the lane's,
+// this build's, the same in every room - so the sync copies the LANE into the offline stores, keeps what it replaced,
+// and Undo writes that back. Pinned against the lane's own tables, so a rule added there is a rule the sync copies.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const store = new Map();
+globalThis.localStorage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) };
+
+const { onlineSyncPlan, applyOnlineSync, undoOnlineSync, lastOnlineSync, ONLINE_SYNC_STORE_KEY, ONLINE_LAYOUT_SETTINGS } = await import('../../../src/systems/online/onlineSync.js');
+const { ONLINE_FORCED_PREFS, ONLINE_FORCED_SETTINGS, ONLINE_ROOM_MOD_KEYS, ONLINE_WHOLE_MODS } = await import('../../../src/systems/online/onlineLane.js');
+const { getPref, setPref, _resetForTests: resetPrefs } = await import('../../../src/systems/uiPrefs.js');
+const { getString, getBool, setValue, saveSettings, _resetForTests: resetSettings } = await import('../../../src/systems/settings/settings.js');
+const { modSetting, setModSetting, _resetModSettings, MOD_SETTINGS } = await import('../../../src/systems/modSettings.js');
+const { onlineSyncCard, ONLINE_SYNC_TITLE, ONLINE_SYNC_SAME } = await import('../../../src/ui/enhanced/enhancedMenu.js');
+
+const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+function fresh() {
+  store.clear();
+  resetPrefs(); resetSettings(); _resetModSettings();
+}
+
+test('UXB1-E: the plan is the lane\'s tables, whole - every forced pref, every forced setting, the room\'s dungeon size, every key the room owns - and nothing on an online page', () => {
+  fresh();
+  const plan = onlineSyncPlan({ search: '' });
+  const ids = plan.map((r) => r.id);
+  assert.equal(new Set(ids).size, ids.length, 'one row a rule');
+  const want = [
+    ...Object.keys(ONLINE_FORCED_PREFS).map((k) => `prefs:${k}`),
+    ...[ONLINE_FORCED_SETTINGS, ONLINE_LAYOUT_SETTINGS].flatMap((t) => Object.entries(t).flatMap(([s, keys]) => Object.keys(keys).map((k) => `settings:${s}/${k}`))),
+    ...Object.entries(ONLINE_ROOM_MOD_KEYS).flatMap(([v, keys]) => Object.keys(keys).map((k) => `mods:${v}/${k}`)),
+    // REALM P0.2: and every other key of a balance mod the room owns whole (its shipped default), the cosmetic keys aside
+    ...Object.entries(ONLINE_WHOLE_MODS).flatMap(([v, own]) => Object.keys(MOD_SETTINGS[v].keys)
+      .filter((k) => !Object.hasOwn(ONLINE_ROOM_MOD_KEYS[v] ?? {}, k) && !own.includes(k)).map((k) => `mods:${v}/${k}`)),
+  ];
+  assert.deepEqual(ids, want);
+  assert.ok(ids.includes('prefs:enhancedAI'), 'the registry\'s `online: true` rows are in the lane\'s table by the time the plan reads it');
+  assert.ok(!ids.includes('prefs:mwArms'), 'MWA4: the arms\' switch is retired - the attached files are it, so there is nothing to copy');
+  assert.ok(ids.includes('settings:Experimental/SmallerDungeons'), 'online no dungeon is DFU\'s small one (useSmallerDungeon)');
+  assert.equal(ONLINE_LAYOUT_SETTINGS.Experimental.SmallerDungeons, 'False');
+  // SD-ONLINE (PIN MOVED): online the size law answers the WORLD's size for each dungeon (it was the whole dungeon), and
+  // the world-dungeon-sizes row is forced on there - a registry row, so the forced prefs carry it and the sync copies it
+  // home with Smaller Dungeons off (and the medium row off: the world's sizes win over it anyway)
+  assert.match(read('src/world/smallerDungeons.js'), /if \(online\) return whole \? 'full' : onlineDungeonSize\(dfLocation\);/, '...which is the law the rows copy (DSIZE1: the size law answers a size; SD-ONLINE: online it is the world\'s - the public room\'s; PIN MOVED, INSTANCES: an instance and a quest\'s world ask for the dungeon whole)');
+  assert.ok(ids.includes('prefs:worldDungeonSizes'), 'SD-ONLINE: the world\'s sizes, forced on online');
+  assert.equal(ONLINE_FORCED_PREFS.worldDungeonSizes, true);
+  assert.equal(ONLINE_FORCED_PREFS.mediumDungeons, false);
+  for (const r of plan) assert.ok(r.label && !/^[a-z]+[A-Z]/.test(r.label), `${r.id} reads as words: ${r.label}`);
+  assert.equal(onlineSyncPlan({ search: '?online' }), null, 'online, every read is the room\'s - the player\'s own cannot be seen');
+});
+
+test('UXB1-E: a sync writes only what differs, each into its own store, keeps what it replaced, and Undo puts it back', () => {
+  fresh();
+  setPref('enhancedAI', false);
+  setPref('enhancedClimbing', false);   // PIN MOVED (WATER-OFF, 2026-10-08): the water is the player's online now, so another forced switch stands in
+  setValue('Controls', 'AllowMagicRepairs', 'False');
+  setValue('Experimental', 'SmallerDungeons', 'True');
+  setModSetting('pcaao', 'Enabled', false);
+  setModSetting('roleplay-realism', 'RefinedTraining.intensiveTraining', true);
+  saveSettings();
+  const before = onlineSyncPlan({ search: '' });
+  // SD-ONLINE (PIN MOVED): the world's sizes are forced on online and off by default, so a fresh profile differs there too
+  assert.deepEqual(before.filter((r) => !r.same).map((r) => r.id).sort(), [
+    'mods:pcaao/Enabled', 'mods:roads-hazelnut/RiversAndStreams', 'mods:roleplay-realism/RefinedTraining.intensiveTraining',
+    'prefs:enhancedAI', 'prefs:enhancedClimbing', 'prefs:worldDungeonSizes',
+    'settings:Controls/AllowMagicRepairs', 'settings:Experimental/SmallerDungeons',
+  ]);   // LANDFORM3: the room's rivers are on, past the mod's shipped off - so a fresh store differs there too
+  const rec = applyOnlineSync(before, { now: 1234 });
+  assert.equal(rec.at, 1234);
+  assert.equal(rec.rows.length, 8);   // (the merge of main's LANDFORMS: its rivers and SD-ONLINE's sizes, both)
+  assert.equal(getPref('enhancedAI'), true);
+  assert.equal(getPref('enhancedClimbing'), true);
+  assert.equal(getPref('worldDungeonSizes'), true, 'SD-ONLINE: offline play at the world\'s sizes');
+  assert.equal(getBool('Controls', 'AllowMagicRepairs'), true);
+  assert.equal(getBool('Experimental', 'SmallerDungeons'), false);
+  assert.equal(modSetting('pcaao', 'Enabled'), true);
+  assert.equal(modSetting('roleplay-realism', 'RefinedTraining.intensiveTraining'), false);
+  assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), true, 'LANDFORM3: the rivers come home on');
+  assert.ok(onlineSyncPlan({ search: '' }).every((r) => r.same), 'synced: nothing differs');
+  // the settings were SAVED - a reload reads them back
+  resetSettings();
+  assert.equal(getBool('Experimental', 'SmallerDungeons'), false);
+  // the record survives a reload too
+  assert.deepEqual(lastOnlineSync(), JSON.parse(store.get(ONLINE_SYNC_STORE_KEY)));
+  assert.equal(applyOnlineSync(onlineSyncPlan({ search: '' })), null, 'a second sync with nothing to do writes nothing');
+  assert.ok(lastOnlineSync(), '...and leaves the undo standing');
+
+  assert.equal(undoOnlineSync(), 8);   // (the merge of main's LANDFORMS: its rivers and SD-ONLINE's sizes, both)
+  assert.equal(getPref('enhancedAI'), false);
+  assert.equal(getPref('enhancedClimbing'), false);
+  assert.equal(getPref('worldDungeonSizes'), false);
+  assert.equal(getString('Controls', 'AllowMagicRepairs'), 'False');
+  resetSettings();
+  assert.equal(getBool('Experimental', 'SmallerDungeons'), true, 'saved back');
+  assert.equal(modSetting('pcaao', 'Enabled'), false);
+  assert.equal(modSetting('roleplay-realism', 'RefinedTraining.intensiveTraining'), true);
+  assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), false, '...and go back to the mod\'s shipped off');
+  assert.equal(lastOnlineSync(), null, 'the undo is spent');
+  assert.equal(undoOnlineSync(), 0);
+});
+
+test('AUDIT UXB1 F2: a second sync ADDS to the undo - the first sync\'s rows stay within Undo\'s reach, and a rule both wrote is one row with the later value', () => {
+  fresh();
+  setPref('enhancedAI', false);
+  const first = applyOnlineSync(onlineSyncPlan({ search: '' }), { now: 1 });
+  const id = (r) => `${r.store}:${r.section ?? r.vendor ?? ''}/${r.key}`;
+  assert.ok(first.rows.some((r) => id(r) === 'prefs:/enhancedAI'));
+  setPref('enhancedClimbing', false);
+  const second = applyOnlineSync(onlineSyncPlan({ search: '' }), { now: 2 });
+  const want = [...new Set([...first.rows.map(id), 'prefs:/enhancedClimbing'])].sort();
+  assert.deepEqual(second.rows.map(id).sort(), want, 'the first sync\'s rows kept beside the second\'s, one a rule');
+  assert.equal(second.at, 2);
+  assert.deepEqual(lastOnlineSync(), JSON.parse(JSON.stringify(second)), 'and that is the record stored');
+  assert.equal(undoOnlineSync(), want.length);
+  assert.equal(getPref('enhancedAI'), false, 'the FIRST sync is undone too - it was replaced, and beyond reach');
+  assert.equal(getPref('enhancedClimbing'), false);
+
+  fresh();
+  const row = (offline) => ({ id: 'prefs:enhancedAI', store: 'prefs', key: 'enhancedAI', label: 'Enhanced AI', online: true, offline, same: false });
+  applyOnlineSync([row('first')], { now: 1 });
+  const rec = applyOnlineSync([row('second')], { now: 2 });
+  assert.deepEqual(rec.rows.map((r) => [r.key, r.was]), [['enhancedAI', 'second']], 'one row, the value just before the later sync');
+});
+
+test('UXB1-E: an undo record from another build is read carefully - a key this build no longer declares is passed over, a broken record is none', () => {
+  fresh();
+  store.set(ONLINE_SYNC_STORE_KEY, JSON.stringify({ at: 1, rows: [
+    { store: 'mods', vendor: 'retired-mod', key: 'Enabled', was: false },
+    { store: 'prefs', key: 'enhancedAI', was: false },
+    { store: 'nowhere', key: 'x', was: 1 },
+  ] }));
+  setPref('enhancedAI', true);
+  assert.equal(undoOnlineSync(), 1);
+  assert.equal(getPref('enhancedAI'), false);
+  store.set(ONLINE_SYNC_STORE_KEY, '{ torn');
+  assert.equal(lastOnlineSync(), null);
+  assert.equal(undoOnlineSync(), 0);
+});
+
+function fakeEl(tag) {
+  const n = {
+    tag, tagName: tag.toUpperCase(), children: [], className: '', title: '', type: '', attrs: {}, onclick: null,
+    _text: '',
+    get textContent() { return n._text + n.children.map((c) => c.textContent).join(''); },
+    set textContent(v) { n._text = String(v); n.children.length = 0; },
+    append(...cs) { for (const c of cs) n.children.push(c); },
+    setAttribute(k, v) { n.attrs[k] = v; },
+  };
+  return n;
+}
+const find = (n, cls, out = []) => {
+  if (n.className.split(/\s+/).includes(cls)) out.push(n);
+  for (const c of n.children) find(c, cls, out);
+  return out;
+};
+
+test('UXB1-E: the Online pane\'s card - what differs, now and then, one press to sync, and Undo after it; nothing to press when nothing differs', () => {
+  fresh();
+  // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the Enhanced AI ships On offline as in every room, so a
+  // default shelf no longer differs there - the player who turned it Off does
+  setPref('enhancedAI', false);
+  globalThis.document = { createElement: fakeEl };
+  try {
+    let card = onlineSyncCard();
+    assert.equal(find(card, 'svsync').length, 1);
+    assert.equal(card.children[0].textContent, ONLINE_SYNC_TITLE);
+    const rows = find(card, 'svsync-row');
+    const differ = onlineSyncPlan({ search: '' }).filter((r) => !r.same);
+    assert.equal(rows.length, differ.length);
+    assert.deepEqual(rows.map((r) => find(r, 'svsync-name')[0].textContent), differ.map((r) => r.label));
+    const ai = rows.find((r) => find(r, 'svsync-name')[0].textContent === 'Enhanced AI');
+    assert.ok(ai, 'a shelf with the Enhanced AI turned off differs from the room - on in every room');
+    assert.deepEqual([find(ai, 'svsync-was')[0].textContent, find(ai, 'svsync-to')[0].textContent], ['Off', 'On']);
+    const [go] = find(card, 'svsync-go');
+    assert.equal(go.textContent, `Sync ${differ.length} setting${differ.length === 1 ? '' : 's'}`);
+    assert.equal(find(card, 'svsync-undo').length, 0, 'nothing to undo yet');
+    go.onclick();
+    assert.equal(getPref('enhancedAI'), true);
+
+    card = onlineSyncCard();
+    assert.equal(find(card, 'svsync-row').length, 0);
+    assert.equal(find(card, 'svsync-same')[0].textContent, ONLINE_SYNC_SAME);
+    assert.equal(find(card, 'svsync-go').length, 0);
+    const [undo] = find(card, 'svsync-undo');
+    assert.ok(undo, 'the way back');
+    undo.onclick();
+    assert.equal(getPref('enhancedAI'), false);
+    assert.equal(find(onlineSyncCard(), 'svsync-undo').length, 0);
+  } finally {
+    delete globalThis.document;
+  }
+  // on the pane, with saves and without: under the rules it copies
+  const menu = read('src/ui/enhanced/enhancedMenu.js');
+  const pane = menu.slice(menu.indexOf('function paneOnline(body)'), menu.indexOf('export const ONLINE_SYNC_TITLE'));
+  assert.equal((pane.match(/body\.append\(onlineSyncCard\(\)\);/g) ?? []).length, 2);
+  assert.ok(pane.indexOf("body.append(foot);\n  body.append(onlineSyncCard());") > 0, 'after the footer that names the room\'s switches');
+});

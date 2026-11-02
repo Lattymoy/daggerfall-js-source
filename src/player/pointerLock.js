@@ -1,0 +1,449 @@
+// Pointer-lock lifecycle (DFU parity: mouselook is the resting state,
+// the cursor exists only for windows).
+//
+// canvas.requestPointerLock() returns a Promise in modern Chrome and
+// REJECTS if the document isn't focused, a request is already pending,
+// or it fires inside the post-exit "user exited pointer lock" cooldown.
+// Every scene called it bare - an unhandled rejection surfaced as a
+// crash overlay AND left look disengaged (mouse events arrive, yaw
+// frozen). requestLook swallows the rejection: a refused lock is a
+// no-op, never fatal - the next gesture retries. Attaches a one-time
+// pointerlockerror log per document.
+//
+// makeLookGate is the per-host reconciler between the overlay state
+// and the lock: a window up RELEASES the lock so the cursor can click
+// it (DFU frees the mouse for every window - Escape must never be the
+// only way in), and the window closing re-locks (a closing click, or a
+// key other than Escape, is the transient user activation
+// requestPointerLock needs; a refusal is covered by the hosts'
+// relock-on-gesture arms).
+//
+// ESC-LOCK (2026-09-27, Mac: "when you hit esc to leave a menu, your
+// cursor remains on the screen instead of returning to the game"; a
+// tester: "U have to hit escape 2 times to get pause menu up now").
+// TWO BROWSER RULES this file used to assume away. (1) While the
+// pointer is locked, the Escape press is the BROWSER's: it ends the
+// lock and the page never sees the key (Chrome consumes the keydown;
+// Firefox unlocks on the keyup) - so the first Escape only freed the
+// cursor and the second opened the pause. `bindCursorToggle` now reads
+// a lock loss the page did not ask for as that swallowed press and
+// delivers it (below). (2) Escape is NOT a user activation (HTML's
+// activation-triggering input events exclude it, and a keyup is never
+// one), and once the user has ended a lock the browser grants the next
+// only with one - so every relock inside an Escape close was refused,
+// and the cursor stayed until a click or another key. No page can
+// change (2) in a browser tab: the next click or key takes the look
+// back, as before. The desktop app can: its shell grants the gesture
+// (`shellRelock` below, app/main.cjs).
+
+import { isTextEntryTarget } from '../ui/input.js'; // PL2: a typed field's Enter is the field's (CG2)
+import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js'; // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
+import { isTouchDevice } from '../ui/touch/touchDevice.js'; // RPT1026-MISC TOUCH-NO-LOCK: a finger never takes the lock
+
+let _errBound = false;
+const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+// ESC-LOCK: the page's own releases, stamped, so a lock loss the page
+// asked for is never read as the player's Escape.
+let _pageReleaseAt = -Infinity;
+/** A lock loss within this long of a page release is the page's. */
+export const PAGE_RELEASE_MS = 500;
+/** How long the delivery waits for a browser that DOES hand the page
+ *  its Escape, and for a window the loss belonged to, to show. */
+export const ESCAPE_DELIVERY_MS = 60;
+/** A real Escape keydown this close to the loss was delivered - the
+ *  page has it, and a second would close what the first opened. */
+export const REAL_ESCAPE_MS = 300;
+/** TOUCH-UNLOCK (FIELD BUGS 2026-10-09c, "Touching anywhere onscreen in mobile opens the system menu", Firefox and its
+ *  forks on Android): a lock loss this close to a touch event is the finger's, never an Escape. Gecko GRANTS a tap's
+ *  lock (a tap is a user activation) and ends ANY lock on the next touch event (PresShell.cpp, Unlock("TouchEvent")),
+ *  posting the change after that touch's own dispatch - so every tap read as the swallowed Escape and opened the
+ *  pause, and the pause's close relocked for the next tap to end. Blink never ends a lock on a touch. */
+export const TOUCH_UNLOCK_MS = 500;
+const TOUCH_TYPES = ['touchstart', 'touchmove', 'touchend', 'touchcancel'];
+
+// U45 - PlayerMouseLook.cursorActive (:32, :185-213), THE TOGGLE THAT
+// HAD NO CONSUMER. `ActivateCursor` has been bound to Enter in the
+// input registry since I1 and nothing has ever read it, so the port
+// had no way to free the mouse during play at all - and the large
+// HUD's eleven panels are unreachable without one, because
+// IsLargeHUDInteractable is exactly this flag.
+//
+// DFU'S OWN COMMENT DRAWS THE DISTINCTION THIS FLAG EXISTS FOR: "This
+// is distinct from cursor being left active when UI open... When
+// cursor simply active from closing a popup, etc. a click will
+// recapture cursor" - a deliberately activated cursor TAKES
+// PRECEDENCE and survives the click that would otherwise re-lock. In
+// this port that precedence is one line inside requestLook, which
+// every relock-on-gesture arm in every host already goes through, so
+// there is no ninth call site to remember.
+//
+// PL1: DFU refuses the toggle for 0.3 seconds after an input message
+// box closes (PlayerMouseLook.cs:192-196 over the stamp
+// DaggerfallInputMessageBox.CloseWindow writes at :301), because
+// Return both submits the box and is the toggle's default binding -
+// "players often think this is a bug". The port's input boxes stamp
+// through noteInputBoxClosed below.
+let _timeClosedInputBox = -Infinity;
+export const INPUT_BOX_TOGGLE_REFUSAL_MS = 300;
+/** DaggerfallInputMessageBox.CloseWindow's stamp (:301). */
+export function noteInputBoxClosed(now = typeof performance !== 'undefined' ? performance.now() : Date.now()) {
+  _timeClosedInputBox = now;
+}
+/** PlayerMouseLook.cs:196's gate - C# ALLOWS when the elapsed time is
+ *  strictly greater than 0.3s, so <= refuses. */
+export const cursorToggleRefused = (now = typeof performance !== 'undefined' ? performance.now() : Date.now()) =>
+  now - _timeClosedInputBox <= INPUT_BOX_TOGGLE_REFUSAL_MS;
+let _cursorActive = false;
+export const cursorActive = () => _cursorActive;
+export const setCursorActive = (b) => {
+  _cursorActive = !!b;
+};
+export function toggleCursorActive(canvas) {
+  _cursorActive = !_cursorActive;
+  if (_cursorActive) releaseLook();
+  else if (canvas) requestLook(canvas);
+  return _cursorActive;
+}
+
+// HERB-CURSOR (FIELD BUGS 2026-10-02 part four, "Herbalism minigame
+// bugged": "Doesn't make mouse appear when the minigame starts, so cant
+// click on the targets"): A CURSOR AN ACT HOLDS FREE. The Basket's
+// glints stand about the crosshair, where no look reaches them - the
+// mouse turned the view and the glints turned with it. Its act frees
+// the mouse while it plays. Not the player's toggle above (its freed
+// mouse is the large HUD's, the hotbar's, the pad's pointer mode): a
+// hold of its own, which requestLook honours as it honours the toggle.
+// The release answers whether it was the last, for the host to take
+// the look back.
+const _cursorHolds = new Set();
+export const cursorHeld = () => _cursorHolds.size > 0;
+/** The cursor held free, the lock let go; answers the release - once-only, true when it let go of the last hold. */
+export function holdCursor() {
+  const hold = {};
+  _cursorHolds.add(hold);
+  releaseLook();
+  return () => _cursorHolds.delete(hold) && _cursorHolds.size === 0;
+}
+
+/** FREEMOUSE: the action the port added beside DFU's, for the players
+ *  who want a key that is ONLY the mouse. Named here because this is
+ *  the one module that reads it. */
+export const FREE_MOUSE_ACTION = 'FreeMouse';
+
+/** KB1 (Mac: "Enter = chat" online; "Y frees the cursor"): WHO OWNS ActivateCursor's KEY. Offline it is DFU's - Enter
+ *  frees the mouse (PlayerMouseLook.cs:190). Online the chat panel opens on that same action (ui/chatPanel.js
+ *  CHAT_OPEN_ACTION), and both listeners sit on the window's capture phase, so ONE Enter opened the chat AND flipped
+ *  cursorActive - and the flag, left up, then refused the relock when the chat closed. A mounted chat CLAIMS the key;
+ *  the toggle then leaves ActivateCursor to it (FreeMouse, Y by default, always frees the mouse). Each release is
+ *  once-only, so a panel torn down twice cannot hand back a claim another panel still holds.
+ *  AUDIT KB1: A CLAIM IS PER PRESS. `takes(e)` is the claimant's own word on whether it will act on THIS event; a
+ *  claim that stood for the panel's life made Enter dead whenever the chat declined it (hidden, unable to open),
+ *  where DFU's Enter frees the mouse. */
+const _cursorKeyClaims = new Set();
+export function claimCursorKey(takes = () => true) {
+  const claim = { takes };
+  _cursorKeyClaims.add(claim);
+  return () => {
+    _cursorKeyClaims.delete(claim);
+  };
+}
+export function cursorKeyClaimed(e = null) {
+  for (const c of _cursorKeyClaims) if (c.takes(e)) return true;
+  return false;
+}
+
+/** One call per host at boot: Enter (Actions.ActivateCursor) or the
+ *  player's own FreeMouse key frees the mouse during play and takes it
+ *  back. `isWindowUp` is the
+ *  host's own overlay predicate - DFU gates on !IsGamePaused, and a
+ *  window up is this port's paused. `actionsOf` answers a key event's
+ *  actions - every one a shared key carries (UXB1-S; the hosts pass
+ *  ui/input.js's actionsOf) - or a single action, which reads the same. */
+export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = null) {
+  if (typeof addEventListener !== 'function' || !actionsOf) return () => {};
+  // PL3 (2026-09-12, Mac: "The mouse pointer can still get stuck outside
+  // of the game, not allowing you to interact with the game unless
+  // refreshing"). The flag is a module global that NOTHING reset: a
+  // host that booted after it had latched true (a new game from the
+  // menu, a scene the last one left it in) had every relock arm refused
+  // at requestLook's precedence line from its first frame. A host boot
+  // is a fresh PlayerMouseLook (cursorActive is an instance field,
+  // :32) - so the bind is the reset.
+  setCursorActive(false);
+  _cursorHolds.clear(); // HERB-CURSOR: and an act's hold the last host never let go
+  let lastRealEscape = -Infinity; // ESC-LOCK (1), below
+  const onKey = (e) => {
+    // ESC-LOCK (1): a real Escape the browser DID hand the page is noted first, whatever is up - the loss that follows
+    // it is then not delivered a second time. The browser's own unlock key, read raw on purpose (KB1's reservation).
+    if (e.code === 'Escape' && e.isTrusted !== false && !e.dagSynthetic) lastRealEscape = nowMs();
+    if (isWindowUp()) return;
+    // PL3: the enhanced overlays the host's predicate never saw - the
+    // pixel dial (Tab) and whatever it opened - own Enter while they
+    // are up (the dial's Enter is its commit). The toggle fired FIRST
+    // (a window capture listener registered at boot), flipped the flag
+    // and released the lock, and the dial's own close never relocked:
+    // every later click was refused by the precedence line, for good.
+    if (overlayOpen()) return;
+    if (isTextEntryTarget(e.target)) return; // PL2: a name being typed into a DOM field is not the toggle
+    // FREEMOUSE: TWO ACTIONS, ONE TOGGLE. `ActivateCursor` is DFU's
+    // (PlayerMouseLook.cs:190) and keeps its meaning; `FreeMouse` is
+    // the port's own row, minted because ActivateCursor's default key
+    // is Enter and online Enter is also the chat's open, so the press
+    // a player reaches for to free the mouse is the press that opens a
+    // text box. They are ORed HERE rather than given a listener each:
+    // one toggle, one flag, one place that can refuse it - a second
+    // binding over `_cursorActive` is the bug PL3 spent a whole slice
+    // on, in a new hat.
+    const got = actionsOf(e);
+    const acts = Array.isArray(got) ? got : got ? [got] : []; // UXB1-S (AUDIT UXB1 F9: named for what the hosts hand in)
+    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return; // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
+    e.preventDefault();
+    // AUDIT HERB-CURSOR A2: never while an act holds the cursor free - the press changed nothing a player could see,
+    // latched the flag, and the look never came back after the act (requestLook's precedence line refused every click).
+    if (_cursorHolds.size) return;
+    // PL1: "Don't allow activate cursor for 0.3 seconds after closing
+    // an input message box" (PlayerMouseLook.cs:192-196).
+    if (cursorToggleRefused()) return;
+    toggleCursorActive(canvas);
+  };
+  // PL2 (2026-09-12, Mac: "Pointer can detach from the game and you're
+  // unable to click back in"). The hosts' keydown ladders are bubble
+  // listeners registered BEFORE this one, and a window that closes on
+  // Enter - a message box's Enter button, a conversation's, the rest
+  // and level-up prompts - closes INSIDE that ladder. By the time the
+  // event reached this listener `isWindowUp()` was already false, so
+  // the same press that dismissed the window flipped cursorActive,
+  // released the lock, and every later click was refused by
+  // requestLook's precedence line (a deliberately freed cursor is
+  // taken back only by the toggle). DFU never sees that press at all:
+  // InputManager.Update withholds every action for inputWaitTotal
+  // (0.0833 s) after a pause ends (InputManager.cs:49, :511-515 - "GUI
+  // actions do not 'fall-through' to main world as closing GUI and
+  // picking up next input all happen same-frame"), and ActionStarted
+  // is what PlayerMouseLook.cs:190 reads. The port's one-line copy of
+  // that skip is the CAPTURE phase: the guard is read before any
+  // bubble listener can pop the window, so a press under a window is
+  // the window's and only a press with nothing up is the toggle.
+  addEventListener('keydown', onKey, true);
+  // ESC-LOCK (1): THE PRESS THE BROWSER ATE. The lock was held on this
+  // canvas, it is gone, the page did not release it (releaseLook's
+  // stamp), nothing is up to have taken it (a window, an enhanced
+  // overlay - they release it themselves on mount), the player did not
+  // free the cursor, and the page still has the focus (a lock lost to
+  // another window or tab is no key at all): that is the player's
+  // Escape, and it is delivered as the pad delivers its buttons
+  // (ui/gamepadInput.js synth - on the document, a keydown and its
+  // keyup), so the hosts' ladders open the pause on the ONE press. It
+  // waits ESCAPE_DELIVERY_MS for the browser that hands the page its
+  // own Escape - that one is not delivered twice.
+  let held = typeof document !== 'undefined' && document.pointerLockElement === canvas;
+  let pending = null;
+  let lastTouch = -Infinity; // TOUCH-UNLOCK: the last touch event, on the capture phase - before Gecko's unlock posts
+  const onTouch = () => {
+    lastTouch = nowMs();
+  };
+  const fingered = () => nowMs() - lastTouch < TOUCH_UNLOCK_MS;
+  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || !pageHasFocus();
+  const onLockChange = () => {
+    const now = typeof document !== 'undefined' && document.pointerLockElement === canvas;
+    const lost = held && !now;
+    held = now;
+    if (!lost) return;
+    const at = nowMs();
+    if (at - _pageReleaseAt < PAGE_RELEASE_MS || quiet()) return;
+    if (pending) clearTimeout(pending);
+    pending = setTimeout(() => {
+      pending = null;
+      if (held || quiet() || fingered() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;
+      deliverEscape();
+    }, ESCAPE_DELIVERY_MS);
+  };
+  if (typeof document !== 'undefined') {
+    document.addEventListener?.('pointerlockchange', onLockChange);
+    for (const t of TOUCH_TYPES) document.addEventListener?.(t, onTouch, { capture: true, passive: true });
+  }
+  // PL3: THE NET. A click that lands on the page itself - the canvas,
+  // or the body beside it - with nothing up, no cursor activated and no
+  // lock held is the player asking for the game back; take the lock
+  // inside that gesture whatever swallowed the canvas arm (a DOM
+  // element the hosts never knew, a host without the arm). A click on
+  // any element of the page's UI is that element's and is left alone,
+  // and a finger never holds a lock (ui/touch/touch.js; on Gecko it holds one
+  // only until its next touch event - TOUCH-UNLOCK above).
+  const onDown = (e) => {
+    if (e.pointerType === 'touch') return;
+    if (typeof document === 'undefined' || document.pointerLockElement) return;
+    const t = e.target;
+    if (t !== canvas && t !== document.body && t !== document.documentElement) return;
+    if (isWindowUp() || overlayOpen() || _cursorActive) return;
+    requestLook(canvas);
+  };
+  if (typeof document !== 'undefined') document.addEventListener?.('pointerdown', onDown, true);
+  return () => {
+    removeEventListener('keydown', onKey, true);
+    if (pending) {
+      clearTimeout(pending);
+      pending = null;
+    }
+    if (typeof document !== 'undefined') {
+      document.removeEventListener?.('pointerdown', onDown, true);
+      document.removeEventListener?.('pointerlockchange', onLockChange);
+      for (const t of TOUCH_TYPES) document.removeEventListener?.(t, onTouch, true);
+    }
+  };
+}
+
+/** Does the page have the focus - a lock lost to another window is no key. */
+function pageHasFocus() {
+  if (typeof document === 'undefined') return false;
+  if (document.visibilityState && document.visibilityState !== 'visible') return false;
+  return typeof document.hasFocus === 'function' ? document.hasFocus() : true;
+}
+
+/** ESC-LOCK (1): the swallowed Escape, delivered - a keydown and its
+ *  keyup on the document, the pad's own route (ui/gamepadInput.js
+ *  synth, PAD1: the document's listeners and then the window's). */
+function deliverEscape() {
+  if (typeof KeyboardEvent !== 'function') return;
+  const target = globalThis.document ?? globalThis;
+  for (const type of ['keydown', 'keyup']) {
+    const e = new KeyboardEvent(type, { code: 'Escape', key: 'Escape', bubbles: true, cancelable: true });
+    e.dagSynthetic = true;
+    target.dispatchEvent(e);
+  }
+}
+
+// ESC-LOCK (2): THE DESKTOP APP'S GESTURE. A request the browser refused
+// (an Escape close after the player ended the lock - rule (2) above) is
+// asked of the shell once: app/preload.cjs `relockPointer` has the main
+// process run `__daggerRelock` as a user gesture
+// (webContents.executeJavaScript's userGesture), which is exactly the
+// activation the Escape could not give. Once per SHELL_RELOCK_MS, so a
+// request the shell cannot win either is not asked again in a loop. A
+// browser tab has no shell and waits for the next click or key.
+export const SHELL_RELOCK_MS = 1000;
+let _shellRelockAt = -Infinity;
+function shellRelock(canvas) {
+  const shell = globalThis.daggerShell;
+  if (typeof shell?.relockPointer !== 'function' || _cursorActive) return;
+  const at = nowMs();
+  if (at - _shellRelockAt < SHELL_RELOCK_MS) return;
+  _shellRelockAt = at;
+  globalThis.__daggerRelock = () => {
+    globalThis.__daggerRelock = null;
+    requestLook(canvas);
+  };
+  try {
+    shell.relockPointer();
+  } catch {
+    /* a shell without the bridge is a tab */
+  }
+}
+
+// PL3: the moment of the last honoured request - the look gate's grace
+// (below) reads it.
+let _lastRequestAt = -Infinity;
+export const RELOCK_GRACE_MS = 150;
+
+export function requestLook(canvas) {
+  // The precedence above: a cursor the player activated is not taken
+  // back by the next gesture, only by the toggle (or, HERB-CURSOR, an
+  // act aimed by the look, which clears the flag). Nor a cursor an act
+  // holds free, until it lets go.
+  if (_cursorActive || _cursorHolds.size) return;
+  // RPT1026-MISC TOUCH-NO-LOCK (a private report from a phone: Chrome's pointer-lock banner, how to get a cursor back,
+  // came up with every menu): A TOUCH SCREEN NEVER ASKS FOR THE LOCK. The look there is
+  // the touch layer's drag (ui/touch/touch.js), and the lock is a mouse's - but every relock door (a window's close, the
+  // look gate's close edge, a dial's goodbye) asked for it on a phone too, Chrome on Android granted it to the tap that
+  // closed the window, and its banner said how to give back a cursor the phone does not have. The click net (PL3,
+  // bindCursorToggle) already let a finger's press go by; this is the one door all the others go through.
+  if (isTouchDevice()) return;
+  _lastRequestAt = nowMs();
+  if (!_errBound && typeof document !== 'undefined') {
+    document.addEventListener(
+      'pointerlockerror',
+      () => {
+        console.warn('[input] pointer lock refused (focus/cooldown); the next gesture retries');
+      },
+      false,
+    );
+    // AUDIT OW5 V1: A LOCK GRANTED AFTER THE CURSOR WAS FREED IS LET GO. The browser answers a request frames later, and
+    // a free cursor asked for between (the travel view risen on the frame after a window closed, over the look gate's
+    // relock: its release found no lock yet to let go) had the lock land under it - no cursor over the Overworld, a drag
+    // turned the traveller's head, a click picked where the Begin button had been. Only this module asks for the lock.
+    document.addEventListener(
+      'pointerlockchange',
+      () => {
+        if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();
+      },
+      false,
+    );
+    _errBound = true;
+  }
+  // CLICK-STUTTER (2026-10-13): every world click lands here (the hosts' canvas pointerdown), and asking for a lock the
+  // canvas already holds is not free - the browser answers each one with a pointerlockchange (every listener on it runs)
+  // and, with unadjustedMovement, may re-take the lock, dropping that frame's mouse deltas. Held already: nothing to ask.
+  if (typeof document !== 'undefined' && document.pointerLockElement === canvas) return;
+  try {
+    // MAC1 (Mac, 2026-09-10: "camera turning being very jumpy"). The
+    // bare request hands the look the OS pointer's ACCELERATED deltas
+    // (Windows' "enhance pointer precision", the Mac's curve), so a slow
+    // turn and a flick over the same mouse travel land different
+    // angles and a fast pass overshoots. unadjustedMovement asks for
+    // the raw device counts - what a game's look wants and what Unity's
+    // mouse axis reads. A browser or platform without it rejects with
+    // NotSupportedError, and the plain request follows on THAT
+    // rejection alone; every other refusal (focus, cooldown, pending)
+    // stays the no-op it was. Older browsers ignore the argument.
+    const p = canvas.requestPointerLock({ unadjustedMovement: true });
+    if (p && typeof p.catch === 'function') {
+      p.catch((err) => {
+        if (err?.name !== 'NotSupportedError') {
+          shellRelock(canvas);
+          return;
+        } // ESC-LOCK (2)
+        try {
+          const q = canvas.requestPointerLock();
+          if (q && typeof q.catch === 'function') q.catch(() => shellRelock(canvas));
+        } catch {
+          /* non-fatal */
+        }
+      });
+    }
+  } catch {
+    /* older browsers throw synchronously; non-fatal */
+  }
+}
+
+/** Exit pointer lock (no-op when not held). */
+export function releaseLook() {
+  if (typeof document !== 'undefined' && document.pointerLockElement) {
+    _pageReleaseAt = nowMs(); // ESC-LOCK: the page's own release is never the player's Escape
+    try {
+      document.exitPointerLock();
+    } catch {
+      /* non-fatal */
+    }
+  }
+}
+
+/** One per host, called every frame with "is a window up". Releases
+ *  the lock while a window is up; re-locks on the close edge. */
+export function makeLookGate(canvas) {
+  let wasHeld = false;
+  return (held) => {
+    // PL3: a door that relocks INSIDE its closing gesture (ui/pauseDoor.js,
+    // the talk panel, the chat) is a frame ahead of the host's "window
+    // up" - the overlay slot drains after this gate runs - so the very
+    // next frame saw `held` still true and released the lock the
+    // gesture had just won, and the frame after asked for it back with
+    // no gesture at all, which the browser refuses after an Escape exit.
+    // A request honoured within the grace holds; a window that is
+    // really still up releases on the frame after it.
+    if (held) {
+      if (nowMs() - _lastRequestAt > RELOCK_GRACE_MS) releaseLook();
+    } else if (wasHeld) requestLook(canvas);
+    wasHeld = held;
+  };
+}

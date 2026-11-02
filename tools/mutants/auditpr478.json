@@ -1,0 +1,194 @@
+[
+  {
+    "name": "ASLH-B1-theirs-berthed-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "theirs: true, afloat, berthed: atBerth(e.ship) });",
+    "new": "theirs: true, afloat });",
+    "tests": [
+      "test/scenes/naval/auditshiplife_host.test.js"
+    ]
+  },
+  {
+    "name": "ASLH-B2-moored-unengaged",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": " || (!!e.fromHarbour && e.ship.errand?.kind === 'moored'), afloat,",
+    "new": ", afloat,",
+    "tests": [
+      "test/scenes/naval/auditshiplife_host.test.js"
+    ]
+  },
+  {
+    "name": "ASLH-B3-players-level",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        let cls = classFor(faction, HARBOUR_LEVEL, r());",
+    "new": "        let cls = classFor(faction, deps.level?.() ?? 1, r());",
+    "tests": [
+      "test/scenes/naval/auditshiplife_host.test.js"
+    ]
+  },
+  {
+    "name": "ASLH-B3-seed-by-class",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "[...sea.values()].some((x) => x.ship.seed === seed && x.ship.damage.state !== SHIP_STATES.sunk)",
+    "new": "bySeed(seed, cls.id, null)",
+    "tests": [
+      "test/scenes/naval/auditshiplife_host.test.js"
+    ],
+    "equivalent": true,
+    "why": "With the port's own level (HARBOUR_LEVEL) every client draws the same class for a seed, so a copy of her with another class cannot arise and deduping by seed and class is deduping by seed. Kept as the defensive half: a seed is one ship whatever a client drew for her (the audit's two hulls in one berth came from the class check)."
+  },
+  {
+    "name": "ASLH-B4-election-near-me",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const near = (on.peers?.() ?? []).filter((p) => Array.isArray(p.feet) && Math.hypot(p.feet[0] - mouth[0], p.feet[2] - mouth[1]) <= HARBOUR_STAND);\n    standing = amGroupRollOwner(id, deps.feet(), near, HARBOUR_STAND * 2);",
+    "new": "    const near = on.peers?.() ?? [];\n    standing = amGroupRollOwner(id, deps.feet(), near, NAVAL_SHARE_RADIUS);",
+    "tests": [
+      "test/scenes/naval/auditshiplife_host.test.js"
+    ]
+  },
+  {
+    "name": "ASLH-B5-heir-unmarked",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (e.ship.errand?.kind === 'moored') e.fromHarbour = e.ship.errand.harbour;",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/auditshiplife_host.test.js"
+    ]
+  },
+  {
+    "name": "ASLH-B6-sailings-lost",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    rolled = new WeakSet(); grids = new Map();",
+    "new": "    rolled = new WeakSet(); departedByPort.clear(); grids = new Map();",
+    "tests": [
+      "test/scenes/naval/auditshiplife_host.test.js"
+    ]
+  },
+  {
+    "name": "ASLH-B7-null-kept",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "    } else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/scenes/naval/auditshiplife_host.test.js"
+    ],
+    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
+  },
+  {
+    "name": "ASLH-F1-b-launches-too",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const afloat = (on.peers?.() ?? []).filter((p) => Array.isArray(p.feet) && deps.isWater(p.feet[0], p.feet[2], 0));",
+    "new": "    const afloat = [];",
+    "tests": [
+      "test/systems/naval/seatraffic_online.test.js"
+    ]
+  },
+  {
+    "name": "AKP-D1-pack-before-my-boat",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const into = myBoat() ?? nearMe();",
+    "new": "    const into = myBoat();",
+    "tests": [
+      "test/systems/naval/keepplunder.test.js"
+    ]
+  },
+  {
+    "name": "AKP-D1-leftovers-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (lost) deps.say?.(",
+    "new": "    if (false) deps.say?.(",
+    "tests": [
+      "test/systems/naval/keepplunder.test.js"
+    ]
+  },
+  {
+    "name": "AKP-D3-switch-unstowed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    setEnabled(v) { if (enabled && !v) stowPlunder(); enabled",
+    "new": "    setEnabled(v) { enabled",
+    "tests": [
+      "test/systems/naval/keepplunder.test.js"
+    ]
+  },
+  {
+    "name": "AKB-D2-dungeon-unasked",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  const inDungeon = () => deps.isPlayerInsideDungeon?.() ?? true;",
+    "new": "  const inDungeon = () => true;",
+    "tests": [
+      "test/systems/naval/keepplunder.test.js"
+    ]
+  },
+  {
+    "name": "ABM-C1-list-at-helm",
+    "file": "src/scenes/world.js",
+    "old": "    if (mine.part === 'bed' || csaRuntime?.isSailing()) return { title };",
+    "new": "    if (mine.part === 'bed') return { title };",
+    "tests": [
+      "test/systems/comeSailAway/boatmenu.test.js"
+    ]
+  },
+  {
+    "name": "ABM-C2-mode-unkeyed",
+    "file": "src/scenes/world.js",
+    "old": "${modelId === CSA_TRIGGER_MODEL.drive && getInteractionMode() === 'steal' ? ':steal' : ''}`, distance: best.hit.distance,",
+    "new": "`, distance: best.hit.distance,",
+    "tests": [
+      "test/systems/comeSailAway/boatmenu.test.js"
+    ]
+  },
+  {
+    "name": "ABM-C4-hull-lit",
+    "file": "src/scenes/world.js",
+    "old": "    if (box == null) return { title, actions: rows, actionsUnlit: true };",
+    "new": "    if (box == null) return { title, actions: rows, actionsStart: 0 };",
+    "tests": [
+      "test/systems/comeSailAway/boatmenu.test.js"
+    ]
+  },
+  {
+    "name": "ABM-C5-indoors-no-list",
+    "file": "src/scenes/world.js",
+    "old": "(!worldPlaqueOn() || (modes?.mode ?? 'exterior') !== 'exterior') && !csaRuntime?.isSailing()",
+    "new": "!worldPlaqueOn() && !csaRuntime?.isSailing()",
+    "tests": [
+      "test/systems/comeSailAway/boatmenu.test.js"
+    ]
+  },
+  {
+    "name": "ABM-C6-aimed-unread",
+    "file": "src/systems/comeSailAway/csaBoatMenu.js",
+    "old": "  if (aimed && list.includes(aimed)) return aimed; // AUDIT BOAT-MENU C6: the box aimed at, where it is the verb's",
+    "new": "  // AUDIT BOAT-MENU C6: the box aimed at, where it is the verb's",
+    "tests": [
+      "test/systems/comeSailAway/boatmenu.test.js"
+    ]
+  },
+  {
+    "name": "AHZ-E1-in-from-wanted",
+    "file": "src/player/mwCamera.js",
+    "old": "        const from = delta > 0 ? Math.max(MIN_DISTANCE, baseDistance - Math.max(0, obstacleDelta)) : baseDistance;",
+    "new": "        const from = baseDistance;",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  },
+  {
+    "name": "AHZ-E2-burst-summed",
+    "file": "src/player/mwCamera.js",
+    "old": "        const notch = Math.max(-1, Math.min(1, delta / WHEEL_STEP));",
+    "new": "        const notch = delta / WHEEL_STEP;",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  },
+  {
+    "name": "AHZ-E3-ratio-below-base",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "      if (far < MAX_Z && clicks && (-z > baseDist + 1e-6 || (clicks < 0 && -z >= baseDist - 1e-6))) {",
+    "new": "      if (far < MAX_Z && clicks && (-z > baseDist + 1e-6 || clicks < 0)) {",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  }
+]

@@ -1,0 +1,307 @@
+// Base image handling for all Daggerfall image files.
+// 1:1 translation of Daggerfall Unity's BaseImageFile.cs (MIT, Daggerfall
+// Workshop / Gavin Clayton). Inherited by TextureFile, ImgFile, CifRciFile.
+//
+// Departures (documented, structure-only):
+//   - Unity Color32[] becomes a flat RGBA Uint8ClampedArray ready for
+//     GL/canvas upload. The vertical flip in getColor32 is kept verbatim
+//     (DFU flips because Unity textures are bottom-up); renderer decides
+//     how to consume it.
+//   - GetSpectralEmissionColors32 + SetSpectral ported (Rendering's
+//     spectral row, classic-visuals direction): the gray remap, the
+//     eye patch, and the V^1.9 emission lerp are verbatim below.
+//     GetFireWallColors32 ported by EG-ZH (2026-10-12, the Elite Gates
+//     arc's fire falls its first consumer - Elite-Gates.md section 11.6):
+//     Unity's Color32.Lerp and its Color -> Color32 conversion, verbatim,
+//     in single precision (unityColor32, unityColor32Lerp).
+//   - File-path plumbing dropped; loaders take byte buffers.
+
+import { DFPalette } from './dfPalette.js';
+
+export const COMPRESSION_FORMATS = Object.freeze({
+  Uncompressed: 0x0000,
+  RleCompressed: 0x0002,
+  ImageRle: 0x0108,
+  RecordRle: 0x1108,
+});
+
+/**
+ * EG-ZH: UNITY'S Color -> Color32 (UnityCsReference 2019.4, Runtime/Export/Math/Color32.cs - the implicit operator DFU's
+ * Unity 2019.4.41 compiles): each channel `(byte)Mathf.Round(Mathf.Clamp01(c) * 255f)`. Mathf.Round is .NET's
+ * Math.Round, half to even; the product is a float (single precision). `c` is `[r, g, b]` or `[r, g, b, a]` (a Color
+ * built of three takes a = 1). Pure.
+ * @param {ArrayLike<number>} c
+ * @returns {number[]} `[r, g, b, a]`, bytes
+ */
+export function unityColor32(c) {
+  const ch = (v) => {
+    const x = Math.fround(Math.fround(Math.min(1, Math.max(0, Math.fround(v)))) * Math.fround(255));
+    const f = Math.floor(x),
+      d = x - f;
+    return (d > 0.5 || (d === 0.5 && f % 2 === 1) ? f + 1 : f) & 0xff; // half to even
+  };
+  return [ch(c[0]), ch(c[1]), ch(c[2]), ch(c.length > 3 ? c[3] : 1)];
+}
+/**
+ * EG-ZH: UNITY'S Color32.Lerp (the same file): `t` clamped to [0, 1], then each channel
+ * `(byte)(a + (b - a) * t)` - an int times a float is a float, an int plus a float a float, and the byte cast truncates.
+ * In single precision, as the CLR computes it (0.3f is 0.30000001192...). Pure.
+ * @param {number} a a byte @param {number} b a byte @param {number} t
+ */
+export function unityColor32Lerp(a, b, t) {
+  const tt = Math.fround(Math.min(1, Math.max(0, Math.fround(t))));
+  return Math.trunc(Math.fround(a + Math.fround((b - a) * tt))) & 0xff;
+}
+
+/** Empty bitmap, matching DFU's `new DFBitmap()` returned on invalid access. */
+/**
+ * HM1: ImageProcessing.ChangeMask, verbatim. Index 0xFF is Daggerfall's
+ * MASK - the halo around a helm, a cloak's hood - and ItemHelper's
+ * GetItemImage strips it (`removeMask`) for every inventory image and
+ * every paperdoll layer before the dye and the upload. Drawn as a
+ * palette colour it is a black box around the helm (ART_PAL's 255).
+ * A CLONE, never the cached record's own data.
+ * @param {{width:number,height:number,data:Uint8Array,palette?:any}} srcBitmap
+ * @param {number} [replaceWith] the index the mask becomes (0: the cutout).
+ */
+export function changeMask(srcBitmap, replaceWith = 0) {
+  if (!srcBitmap?.data) return emptyBitmap();
+  const data = new Uint8Array(srcBitmap.data.length);
+  for (let i = 0; i < data.length; i++) {
+    const index = srcBitmap.data[i];
+    data[i] = index === 0xff ? replaceWith : index;
+  }
+  return { ...srcBitmap, data };
+}
+
+export function emptyBitmap() {
+  return { width: 0, height: 0, data: null, palette: null };
+}
+
+export class BaseImageFile {
+  constructor() {
+    /** Palette for building image data. */
+    this.palette = new DFPalette();
+    /** @type {Uint8Array|null} raw file bytes. */
+    this._bytes = null;
+    /** @type {DataView|null} */
+    this._view = null;
+    this._fileName = '';
+  }
+
+  get fileName() {
+    return this._fileName;
+  }
+
+  _setBytes(bytes, fileName) {
+    this._bytes = bytes;
+    this._view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    this._fileName = fileName;
+  }
+
+  /**
+   * Reads a standard IMG file header at `position`. This header is found in
+   * multiple image files, which is why it lives here in the base.
+   * @returns {{position:number,xOffset:number,yOffset:number,width:number,height:number,compression:number,pixelDataLength:number,frameCount:number,dataPosition:number}}
+   */
+  readImgFileHeader(position) {
+    const v = this._view;
+    return {
+      position,
+      xOffset: v.getInt16(position, true),
+      yOffset: v.getInt16(position + 2, true),
+      width: v.getInt16(position + 4, true),
+      height: v.getInt16(position + 6, true),
+      compression: v.getUint16(position + 8, true),
+      pixelDataLength: v.getUint16(position + 10, true),
+      frameCount: 1,
+      dataPosition: position + 12,
+    };
+  }
+
+  /**
+   * Decodes classic RLE data (code > 127 = run of next byte, else literal
+   * copy of code+1 bytes) from `srcPos` into `dst` until `length` bytes
+   * written. Ports ReadRleData. Returns the source position after the last
+   * byte consumed.
+   */
+  readRleData(srcPos, length, dst, dstPos = 0) {
+    const src = this._bytes;
+    let pos = 0;
+    do {
+      const code = src[srcPos++];
+      if (code > 127) {
+        const pixel = src[srcPos++];
+        for (let i = 0; i < code - 127; i++) {
+          dst[dstPos++] = pixel;
+          pos++;
+        }
+      } else {
+        for (let i = 0; i < code + 1; i++) {
+          dst[dstPos++] = src[srcPos++];
+        }
+        pos += code + 1;
+      }
+    } while (pos < length);
+    return srcPos;
+  }
+
+  /**
+   * Converts an indexed bitmap to flat RGBA using this file's palette.
+   * Verbatim port of the full GetColor32 overload, including the vertical
+   * flip and the double alpha assignment (cutout alpha then emissive
+   * override).
+   * @param {{width:number,height:number,data:Uint8Array}} srcBitmap
+   * @param {number} [alphaIndex] palette index rendered transparent (-1 none).
+   * @param {number} [border] pixels of empty border added around the image.
+   * @param {number} [emissionIndex] index forced fully opaque (-1 none).
+   * @param {number} [customAlphaValue] alpha for non-cutout pixels.
+   * @returns {{colors:Uint8ClampedArray,width:number,height:number}}
+   */
+  getColor32(srcBitmap, alphaIndex = -1, border = 0, emissionIndex = -1, customAlphaValue = 255) {
+    const srcWidth = srcBitmap.width;
+    const srcHeight = srcBitmap.height;
+    const dstWidth = srcWidth + border * 2;
+    const dstHeight = srcHeight + border * 2;
+
+    const colors = new Uint8ClampedArray(dstWidth * dstHeight * 4);
+    const paletteData = this.palette.paletteBuffer;
+    const headerLength = this.palette.headerLength;
+
+    for (let y = 0; y < srcHeight; y++) {
+      const srcRow = y * srcWidth;
+      const dstRow = (dstHeight - 1 - border - y) * dstWidth;
+      for (let x = 0; x < srcWidth; x++) {
+        const index = srcBitmap.data[srcRow + x];
+        const offset = headerLength + index * 3;
+        let a = alphaIndex === index ? 0 : customAlphaValue; // General cutout alpha with custom alpha output
+        a = emissionIndex === index ? 255 : a; // Make emissive parts fully non-transparent alpha
+        const dst = (dstRow + border + x) * 4;
+        colors[dst] = paletteData[offset];
+        colors[dst + 1] = paletteData[offset + 1];
+        colors[dst + 2] = paletteData[offset + 2];
+        colors[dst + 3] = a;
+      }
+    }
+
+    return { colors, width: dstWidth, height: dstHeight };
+  }
+
+  /**
+   * Spectral constants + remap (TextureReader.cs verbatim): index 14
+   * is reserved for emissive eyes -> patched to 247; other colours
+   * reindex to the grey gradient (96 - index) so bones read brighter
+   * than shroud. 180 = the spectral transparency (~70% visible).
+   */
+  static get SPECTRAL_EYES_RESERVED() {
+    return 14;
+  }
+  static get SPECTRAL_EYES_PATCHED() {
+    return 247;
+  }
+  static get SPECTRAL_GRAY_START() {
+    return 96;
+  }
+  static get SPECTRAL_ALPHA() {
+    return 180;
+  }
+
+  setSpectral(srcBitmap) {
+    const d = srcBitmap.data;
+    for (let i = 0; i < d.length; i++) {
+      const index = d[i];
+      if (index === BaseImageFile.SPECTRAL_EYES_RESERVED) d[i] = BaseImageFile.SPECTRAL_EYES_PATCHED;
+      else if (index > 0) d[i] = (BaseImageFile.SPECTRAL_GRAY_START - index) & 0xff;
+    }
+  }
+
+  /**
+   * Verbatim GetSpectralEmissionColors32: eye texels emit eyeEmission
+   * (red at the call site); everything else lerps otherEmission ->
+   * the albedo by V^1.9 (Unity RGBToHSV's V = max component) so
+   * lighter features pop. Same flip/border walk as getColor32.
+   */
+  getSpectralEmissionColors32(srcBitmap, albedo, border, eyesEmissionIndex, eyeEmission, otherEmission) {
+    const srcWidth = srcBitmap.width,
+      srcHeight = srcBitmap.height;
+    const dstWidth = srcWidth + border * 2,
+      dstHeight = srcHeight + border * 2;
+    const out = new Uint8ClampedArray(dstWidth * dstHeight * 4);
+    const A = albedo.colors;
+    // Color.Lerp interpolates ALPHA with the other three channels; otherEmission
+    // is a Color (black, i.e. opaque, at the call sites) and the albedo alpha is
+    // 0 on cutout texels, SPECTRAL_ALPHA elsewhere.
+    const oa = otherEmission.length > 3 ? otherEmission[3] : 255;
+    for (let y = 0; y < srcHeight; y++) {
+      const srcRow = y * srcWidth;
+      const dstRow = (dstHeight - 1 - border - y) * dstWidth;
+      for (let x = 0; x < srcWidth; x++) {
+        const index = srcBitmap.data[srcRow + x];
+        const dst = (dstRow + border + x) * 4;
+        if (index === eyesEmissionIndex) {
+          out[dst] = eyeEmission[0];
+          out[dst + 1] = eyeEmission[1];
+          out[dst + 2] = eyeEmission[2];
+          out[dst + 3] = 255;
+        } else {
+          const r = A[dst],
+            g = A[dst + 1],
+            b = A[dst + 2];
+          const V = Math.max(r, g, b) / 255; // Color.RGBToHSV's V
+          const t = Math.min(1, Math.max(0, Math.pow(V, 1.9))); // Mathf.Pow + Clamp01
+          out[dst] = Math.round(otherEmission[0] + (r - otherEmission[0]) * t);
+          out[dst + 1] = Math.round(otherEmission[1] + (g - otherEmission[1]) * t);
+          out[dst + 2] = Math.round(otherEmission[2] + (b - otherEmission[2]) * t);
+          out[dst + 3] = Math.round(oa + (A[dst + 3] - oa) * t);
+        }
+      }
+    }
+    return { colors: out, width: dstWidth, height: dstHeight };
+  }
+
+  /**
+   * EG-ZH: verbatim GetFireWallColors32 (BaseImageFile.cs) - the emission map of TextureReader's Mantellan Crux fire
+   * walls (TEXTURE.356, TextureReader.cs:309-320: "lessen stroboscopic effect"): every texel of the albedo
+   * `Color32.Lerp(neutralColor, srcTexture[i], scale)` over `width * height` texels - the fire drawn a share of the way
+   * from one steady colour toward its own, so its frames flicker less in the light they give. `srcColors` the albedo's
+   * flat RGBA (getColor32's `colors`, rows as it lays them); `neutralColor` a Unity Color ([r, g, b] floats - alpha 1),
+   * converted to Color32 at the call as C# converts it.
+   * @param {ArrayLike<number>} srcColors @param {number} width @param {number} height
+   * @param {ArrayLike<number>} neutralColor @param {number} scale
+   * @returns {{colors:Uint8ClampedArray,width:number,height:number}}
+   */
+  getFireWallColors32(srcColors, width, height, neutralColor, scale) {
+    const n = unityColor32(neutralColor);
+    const out = new Uint8ClampedArray(width * height * 4);
+    for (let i = 0; i < width * height; i++) {
+      const o = i * 4;
+      for (let c = 0; c < 4; c++) out[o + c] = unityColor32Lerp(n[c], srcColors[o + c] ?? 0, scale);
+    }
+    return { colors: out, width, height };
+  }
+
+  /**
+   * Emission map for window textures: white where the bitmap holds
+   * `emissionIndex`, transparent black elsewhere. Ports GetWindowColors32
+   * (same vertical flip).
+   * @returns {{colors:Uint8ClampedArray,width:number,height:number}}
+   */
+  getWindowColors32(srcBitmap, emissionIndex = 0xff) {
+    const { width, height } = srcBitmap;
+    const colors = new Uint8ClampedArray(width * height * 4);
+    for (let y = 0; y < height; y++) {
+      const srcRow = y * width;
+      const dstRow = (height - 1 - y) * width;
+      for (let x = 0; x < width; x++) {
+        if (srcBitmap.data[srcRow + x] === emissionIndex) {
+          const dst = (dstRow + x) * 4;
+          colors[dst] = 255;
+          colors[dst + 1] = 255;
+          colors[dst + 2] = 255;
+          colors[dst + 3] = 255;
+        }
+      }
+    }
+    return { colors, width, height };
+  }
+}

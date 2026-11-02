@@ -1,0 +1,133 @@
+{
+  "Version": "2",
+  "Sections": [
+    {
+      "Name": "General",
+      "Description": "Shared wind controls and natural event frequency.",
+      "IsAdvanced": false,
+      "Keys": [
+        { "Value": true, "Name": "Enabled", "Description": "Enable wind deformation on eligible stock nature batches.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey" },
+        { "Min": 0.0, "Max": 360.0, "Value": 35.0, "Name": "WindDirectionDegrees", "Description": "Optional heading offset added to the deterministic daily wind direction.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "OverallWindyPeriodFrequency", "Description": "Overall natural windy-period probability. 100% uses the authored seasonal and regional distribution.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "NaturalWindstormFrequency", "Description": "Chance that a qualifying natural windy period escalates to a 1-3 hour windstorm. 100% uses the authored 8% escalation chance.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "GustFrequency", "Description": "Frequency of automatically scheduled breezes and gusts. 0% disables automatic events; 200% halves their delays.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "GustStrength", "Description": "Strength of gust motion, gust particles, and strength-scaled gust audio. Baseline wind remains at 0%.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Normal",
+      "Description": "Vegetation motion on an ordinary non-windy day.",
+      "IsAdvanced": false,
+      "Keys": [
+        { "Min": 0.0, "Max": 1.5, "Value": 0.2, "Name": "Strength", "Description": "Overall normal-day vegetation response.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 8.0, "Value": 1.4, "Name": "SwayAmountPercent", "Description": "Slow crown displacement as a percentage of billboard height.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.05, "Max": 1.5, "Value": 0.2, "Name": "SwaySpeed", "Description": "Slow sway cycles per second.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 3.0, "Value": 0.6, "Name": "ShiverAmountPercent", "Description": "Small high-frequency crown displacement as a percentage of billboard height.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.5, "Max": 8.0, "Value": 0.6, "Name": "ShiverSpeed", "Description": "High-frequency shiver cycles per second.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Season Frequency",
+      "Description": "Player multipliers applied to authored seasonal natural windy-period chances.",
+      "IsAdvanced": false,
+      "Keys": [
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "SpringFrequency", "Description": "Spring natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "SummerFrequency", "Description": "Summer natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "FallFrequency", "Description": "Fall natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "WinterFrequency", "Description": "Winter natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Regional Frequency",
+      "Description": "Player multipliers applied after the authored geography model.",
+      "IsAdvanced": true,
+      "Keys": [
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "OceanFrequency", "Description": "Ocean-region natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "DesertFrequency", "Description": "Desert and Desert2 natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "MountainFrequency", "Description": "Mountain natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "RainforestFrequency", "Description": "Rainforest natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "SwampFrequency", "Description": "Swamp natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "SubtropicalFrequency", "Description": "Subtropical natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "MountainWoodsFrequency", "Description": "Mountain Woods natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "WoodlandsFrequency", "Description": "Woodlands natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "HauntedWoodlandsFrequency", "Description": "Haunted Woodlands natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "UnknownFrequency", "Description": "Fallback natural windy-period frequency for unknown climates.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Weather Frequency",
+      "Description": "Natural windy-period probability multipliers for current DFU weather. Thunder always forces Storm.",
+      "IsAdvanced": true,
+      "Keys": [
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "SunnyFrequency", "Description": "Sunny-weather natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "CloudyFrequency", "Description": "Cloudy-weather natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "OvercastFrequency", "Description": "Overcast-weather natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "FogFrequency", "Description": "Fog-weather natural windy-period frequency.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "RainFrequency", "Description": "Rain-weather natural windy-period frequency. This is separate from rain's 1.15 strength multiplier.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "SnowFrequency", "Description": "Snow-weather natural windy-period frequency. This is separate from snow's 1.10 strength multiplier.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Windy Day",
+      "Description": "Sustained vegetation motion during a bounded natural windy period or forced test state.",
+      "IsAdvanced": false,
+      "Keys": [
+        { "Min": 0.0, "Max": 1.5, "Value": 0.2, "Name": "Strength", "Description": "Overall windy-day vegetation response.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 8.0, "Value": 2.6, "Name": "SwayAmountPercent", "Description": "Slow crown displacement as a percentage of billboard height.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.05, "Max": 1.5, "Value": 0.6, "Name": "SwaySpeed", "Description": "Slow sway cycles per second.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 3.0, "Value": 1.2, "Name": "ShiverAmountPercent", "Description": "Small high-frequency crown displacement as a percentage of billboard height.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.5, "Max": 8.0, "Value": 1.1, "Name": "ShiverSpeed", "Description": "High-frequency shiver cycles per second.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Gust",
+      "Description": "Motion target reached at the peak of a scheduled gust.",
+      "IsAdvanced": false,
+      "Keys": [
+        { "Min": 0.0, "Max": 1.5, "Value": 0.6, "Name": "Strength", "Description": "Overall vegetation response at gust peak.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 8.0, "Value": 2.6, "Name": "SwayAmountPercent", "Description": "Slow crown displacement as a percentage of billboard height.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.05, "Max": 1.5, "Value": 0.8, "Name": "SwaySpeed", "Description": "Slow sway cycles per second.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 3.0, "Value": 1.2, "Name": "ShiverAmountPercent", "Description": "Small high-frequency crown displacement as a percentage of billboard height.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.5, "Max": 8.0, "Value": 1.7, "Name": "ShiverSpeed", "Description": "High-frequency shiver cycles per second.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Storm",
+      "Description": "Sustained vegetation motion during a natural windstorm, thunder weather, or forced test state.",
+      "IsAdvanced": false,
+      "Keys": [
+        { "Min": 0.0, "Max": 1.5, "Value": 0.6, "Name": "Strength", "Description": "Overall storm vegetation response.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 8.0, "Value": 2.6, "Name": "SwayAmountPercent", "Description": "Slow crown displacement as a percentage of billboard height.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.05, "Max": 1.5, "Value": 0.8, "Name": "SwaySpeed", "Description": "Slow sway cycles per second.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 3.0, "Value": 1.2, "Name": "ShiverAmountPercent", "Description": "Small high-frequency crown displacement as a percentage of billboard height.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.5, "Max": 8.0, "Value": 1.7, "Name": "ShiverSpeed", "Description": "High-frequency shiver cycles per second.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Presentation",
+      "Description": "Gust audio, blowing leaves, and winter gust snow.",
+      "IsAdvanced": false,
+      "Keys": [
+        { "Value": true, "Name": "AudioEnabled", "Description": "Enable intermittent wind passages, gusts, and tree-ruffle sounds. No source loops.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey" },
+        { "Min": 0.0, "Max": 1.0, "Value": 0.5, "Name": "AudioVolume", "Description": "Master mod wind and foliage volume before category and DFU sound-volume multipliers.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "RegularWindVolume", "Description": "Normal breeze and sustained windy/storm passage volume.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "GustVolume", "Description": "Short gust one-shot volume.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 200.0, "Value": 100.0, "Name": "FoliageRuffleVolume", "Description": "Ambient and gust-triggered foliage-ruffle volume.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Value": true, "Name": "LeavesEnabled", "Description": "Enable ambient and gust-driven leaves in eligible climates and seasons.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey" },
+        { "Min": 0.0, "Max": 3.0, "Value": 2.4, "Name": "LeafAmount", "Description": "Gust-driven leaf emission multiplier.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Min": 0.0, "Max": 3.0, "Value": 1.0, "Name": "AmbientLeafAmount", "Description": "Ambient falling-leaf presence near trees. Windy days and storms use progressively higher base rates.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" },
+        { "Value": true, "Name": "SnowFlurriesEnabled", "Description": "Enable light drifting and gust-blown snow around snow-covered winter trees.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey" },
+        { "Min": 0.0, "Max": 3.0, "Value": 1.0, "Name": "SnowFlurryAmount", "Description": "Winter canopy-snow particle multiplier.", "$version": "v1", "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey" }
+      ],
+      "$version": "v1"
+    }
+  ]
+}

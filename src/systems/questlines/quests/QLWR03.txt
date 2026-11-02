@@ -1,0 +1,140 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE WEIR ROAD, step 3 of 4.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Corvane's
+-- letter, and he waits at his tavern. WITNESSED (net/questlineClaims.js, `valkynaz`): the step waits on a Valkynaz's
+-- Redoubt taken - every fifth Court (`ql act valkynaz-felled 1`, said by scenes/eliteGates/egClient.js). A visit before
+-- is answered and cleared (M0B30Y04's `_clearclick_`). Lore: canon - the Kyn's ranks, a Valkynaz a warrior duke of
+-- his Prince's council, Ruhn one of them; the Spire's council died in 3E 398. The port's own - Valkynaz Ilthys at the
+-- Broken Galleries' fifth Court, the raised masters (bible/11-Multiplayer/Elite-Gates.md sections 3 and 7).
+Quest: QLWR03
+DisplayName: A Warrior Duke
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       Corvane Tull has left _tavern_. No one saw which
+<ce>                      way he went.
+
+QuestComplete:  [1004]
+<ce>       "For a duke of Dagon's council," Corvane says, and
+<ce>            pays you _gold_ gold without counting it.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Corvane Tull writes that every fifth Court of the
+ torn halls is held by a Valkynaz - a warrior duke
+ of Dagon's council. He asks me to take one of
+ their Redoubts, and to bring him word at _tavern_
+ in __tavern_.
+
+Message:  1011
+%pcn,
+
+     Every fifth Court, the Kyn set a Valkynaz - a
+ warrior duke of Dagon's own council, the rank Ruhn
+ holds at the breaches. Ilthys holds the fifth Court
+ of the Broken Galleries, where our upper halls
+ fell. Deeper, there are others.
+
+     When I was a student the Galleries were where
+ we ate. Take a Valkynaz's Redoubt from them. I will
+ be at _tavern_ in __tavern_.
+
+<ce>                       Corvane Tull, Battlemage
+
+Message:  1012
+<ce>       The same boy in the same oversized robe. "From the
+<ce>       Battlemage," he says, and adds, unasked: "He has
+<ce>                not slept since you left."
+
+Message:  1013
+<ce>       Corvane hears all of it without a word. Then he
+<ce>                      puts down his pen.
+<ce>
+<ce>       "A warrior duke of Dagon's council, felled in our
+<ce>        own halls." He almost smiles. "In 3E 398 the
+<ce>        Spire's council died to the last master, and the
+<ce>        Kyn raised two of them to guard their Courts. Now
+<ce>        one of Dagon's dukes has died in the same halls.
+<ce>        It is not justice. It is a beginning."
+
+Message:  1014
+The Battlemage? He has stopped writing. Now he just watches the door.
+<--->
+Corvane Tull bought every map of the Bay the bookseller had, then burned them.
+<--->
+They say the Battlemage was asking what a warrior duke of Oblivion looks like dead.
+
+Message:  1015
+<ce>       "A Valkynaz, %pcf. Every fifth Court. I will know
+<ce>                when you have done it."
+
+Message:  1016
+%qdt:
+ I have taken a Valkynaz's Redoubt in the torn
+ halls. Corvane Tull is waiting to hear of it at
+ _tavern_ in __tavern_.
+
+Message:  1020
+<ce>       The Valkynaz falls, and the Court shakes with it,
+<ce>       as if the torn hall itself had been holding its
+<ce>                breath since 3E 398.
+
+-- Symbols used in the QRC file:
+--
+--               %pcf occurs 1 time.
+--               %pcn occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--           _tavern_ occurs 4 times.
+--          __tavern_ occurs 3 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 500 to 900
+
+Person _corvane_ faction The_Mages_Guild male anyInfo 1014
+
+Place _tavern_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _corvane_ Corvane_Tull
+	place npc _corvane_ at _tavern_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_felled_ task:
+	ql act valkynaz-felled 1
+	say 1020
+	log 1016 step 1
+	stop timer _wait_
+	start timer _meet_
+
+_clicked_ task:
+	clicked npc _corvane_
+
+_notyet_ task:
+	when _clicked_ and not _felled_
+	say 1015
+	clear _clicked_ _notyet_
+
+_paid_ task:
+	when _clicked_ and _felled_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

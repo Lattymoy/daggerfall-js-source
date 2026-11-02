@@ -1,0 +1,116 @@
+[
+  {
+    "name": "LW-FIX3-census-search",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (w.pending) { if (walkGap(w.e, playerPos) < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, near: walkNear(w.e, t, playerPos) }); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-census-range",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        if (d < LIVING_RANGE) wanted.push({ res, d });",
+    "new": "        wanted.push({ res, d });",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-gap",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "  return Math.hypot(gx, gz);\n}",
+    "new": "  return gx;\n}",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-stray",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const WALK_STRAY_M = 48;",
+    "new": "export const WALK_STRAY_M = 47;",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-census-budget",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const CENSUS_PATHS = 4;",
+    "new": "export const CENSUS_PATHS = 5;",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-beat-stay",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    const dur = rollInt(rng, PATROL_STOP_MIN, PATROL_STOP_MAX);",
+    "new": "    const dur = rollInt(rng, 3, 8);",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js",
+      "test/systems/livingWorld/watchday_watch.test.js"
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW-FIX3-beat-bound",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  for (let t = from, i = first; beat.length && t < until; i++) {",
+    "new": "  for (let t = from, i = first, n = 0; beat.length && t < until && n < 2; i++, n++) {",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js",
+      "test/systems/livingWorld/watchday_watch.test.js"
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home - patrolStops counts no stops of its own, the shift's end ends the beat, so a bound that cuts it short dies (the old 64, past any shift's stops, was recorded equivalent)."
+  },
+  {
+    "name": "LW-FIX3-trim-eased",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "      .sort((a, b) => Math.abs(eased(a[1], day)) - Math.abs(eased(b[1], day)) || a[1].seen - b[1].seen);",
+    "new": "      .sort((a, b) => Math.abs(a[1].r) - Math.abs(b[1].r) || a[1].seen - b[1].seen);",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-trim-keep",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "      .filter(([id]) => id !== keep)",
+    "new": "      .filter(() => true)",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-sections",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "    const list = chronicleSections(deps); // AUDIT-G4: the sections the window shows - LW7c's People among them (the four alone never reached it)",
+    "new": "    const list = CHRONICLE_SECTIONS; // AUDIT-G4: the sections the window shows - LW7c's People among them (the four alone never reached it)",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX3-walk-held",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;\n    if (t1 > cursor) push('away', exit ?? home, cursor, t1, { armed: !!w.armed });",
+    "new": "    if (t1 > cursor) push('away', exit ?? home, cursor, t1, { armed: !!w.armed });",
+    "tests": [
+      "test/systems/livingWorld/lwfix3_town.test.js",
+      "test/systems/livingWorld/lw2_livingTown.test.js"
+    ]
+  }
+]

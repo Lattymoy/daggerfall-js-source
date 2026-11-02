@@ -1,0 +1,185 @@
+[
+  {
+    "name": "AUDIT-NAV2-F14-read-live",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  const responsive = () => helmHanded ?? handed();",
+    "new": "  const responsive = () => handed();",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F14-never-taken-at-the-helm",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    helmHanded = handed();   // AUDIT NAV2 F14: this helm's Ship handling, kept until she stops sailing\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F14-kept-past-the-helm",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    helmHanded = null;   // AUDIT NAV2 F14: the next helm takes the Ship handling as it stands then\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F14-the-row-says-at-once",
+    "file": "src/systems/features.js",
+    "old": "    get effect() { return t('features.navalCombat.effect', 'Takes effect at once; Ship handling, the next time you take the helm. Online it is always on.'); },",
+    "new": "    get effect() { return t('features.navalCombat.effect', 'Takes effect at once. Online it is always on.'); },",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F15-the-current-counted",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "state.MoveVectorCurrent[2] < IRONS_TELL_WAY",
+    "new": "vMagnitude(state.velocityCurrent) < IRONS_TELL_WAY",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js",
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F16-the-carrack-refused",
+    "file": "src/scenes/world.js",
+    "old": "&& (rig.cargo > 0 || !!csaRuntime?.helmResponsive());",
+    "new": "&& rig.cargo > 0;",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F16-any-handling",
+    "file": "src/scenes/world.js",
+    "old": "&& (rig.cargo > 0 || !!csaRuntime?.helmResponsive());",
+    "new": "&& (rig.cargo > 0 || !!csaRuntime);",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F17-the-panel-under-the-view",
+    "file": "src/scenes/world.js",
+    "old": " || !hudRenderEnabled() || !!travelView?.active || !!_travelUIHolder.ui?.isShowing,   // A first-person journey also owns the helm.",
+    "new": " || !hudRenderEnabled() || !!_travelUIHolder.ui?.isShowing,   // A first-person journey also owns the helm.",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F17-the-sail-keys-under-the-view",
+    "file": "src/scenes/world.js",
+    "old": "started: (action) => !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action)) && (pressed(latch.edge, keys, action) || csaHelmInput.edges.has(action)),",
+    "new": "started: (action) => (pressed(latch.edge, keys, action) || csaHelmInput.edges.has(action)),",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F17-the-panel-and-pad-pass-the-view",
+    "file": "src/scenes/world.js",
+    "old": "started: (action) => !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action)) && (pressed(latch.edge, keys, action) || csaHelmInput.edges.has(action)),",
+    "new": "started: (action) => (pressed(latch.edge, keys, action) && !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action))) || csaHelmInput.edges.has(action),",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ],
+    "why": "FIELD BUGS 2026-10-21d PASSAGE-HANDS: the journey's taps are its own hand's now, so the panel's and the pad's sail taps under the view set sail against the journey"
+  },
+  {
+    "name": "AUDIT-NAV2-F17-the-sail-key-left-live",
+    "file": "src/scenes/world.js",
+    "old": "CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action)",
+    "new": "CSA_BOAT_ACTIONS.sailDown, 'MoveForwards', 'MoveBackwards'].includes(action)",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F20-the-mods-old-way",
+    "file": "src/systems/helmWay.js",
+    "old": "// the Small Ship took 29.2 s to her full way of 8.75 m/s and 43.7 s (191 m) to lose it with her sails struck; she turned",
+    "new": "// the Small Ship took 25.4 s to her full way of 8.75 m/s and 43.7 s (191 m) to lose it with her sails struck; she turned",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F20-the-mods-old-loss",
+    "file": "src/systems/helmWay.js",
+    "old": "// the Small Ship took 29.2 s to her full way of 8.75 m/s and 43.7 s (191 m) to lose it with her sails struck; she turned",
+    "new": "// the Small Ship took 29.2 s to her full way of 8.75 m/s and 45 s (200 m) to lose it with her sails struck; she turned",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F20-the-laws-old-way",
+    "file": "src/systems/helmWay.js",
+    "old": "//     of it, each times SAIL_FREE.gain - a Small Ship 8.35 s to her full way, 14.6 s (105 m) to lose it. Every Handling",
+    "new": "//     of it, each times SAIL_FREE.gain - a Small Ship 8.5 s to her full way, 15 s (105 m) to lose it. Every Handling",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F20-full-way-at-nine",
+    "file": "src/systems/helmWay.js",
+    "old": "//     deg/s at rest, 10.50 at 7.4 m/s (a 81 m circle), 8.49 at her full way of 14.38 m/s (a 194 m circle), 9.44 at 12",
+    "new": "//     deg/s at rest, 10.50 at 7.4 m/s (a 81 m circle), 8.49 at her full way of 14.6 m/s (a 194 m circle), 9.44 at 12",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F20-the-quarter-second-swing",
+    "file": "src/systems/helmWay.js",
+    "old": "//     8.8 deg/s (the mod's 0.45); a Large Galley under sail 2.92 deg/s at 3.4 m/s (a 133 m circle; the mod's 458 m).",
+    "new": "//     8.3 deg/s (the mod's 0.4); a Large Galley under sail 2.92 deg/s at 3.4 m/s (a 133 m circle; the mod's 458 m).",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ],
+    "note": "SAIL-FREE (re-aimed by content): the figures alone - the header's sentence wraps them onto their own line since SAIL-FREE's re-measure, and the pin reads the header whitespace-folded."
+  },
+  {
+    "name": "AUDIT-NAV2-F31-E-not-the-hold",
+    "file": "src/scenes/world.js",
+    "old": "const _holdFire = (_act.activate || _act.cast || useEdge) && !!naval?.aiming",
+    "new": "const _holdFire = (_act.activate || _act.cast) && !!naval?.aiming",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F31-the-patch-takes-the-hold",
+    "file": "src/scenes/world.js",
+    "old": "const nodeTook = useEdge && !_holdFire && !modes.transitioning",
+    "new": "const nodeTook = useEdge && !modes.transitioning",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F31-the-host-boards-while-laid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!enabled || boarding || aiming) return false;",
+    "new": "    if (!enabled || boarding) return false;",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  },
+  {
+    "name": "GALLEON-irons-astern-unread",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "state.MoveVectorCurrent[2] < IRONS_TELL_WAY",
+    "new": "vMagnitude(state.MoveVectorCurrent) < IRONS_TELL_WAY",
+    "tests": [
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ]
+  }
+]

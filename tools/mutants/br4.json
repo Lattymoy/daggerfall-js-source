@@ -1,0 +1,80 @@
+[
+  {
+    "name": "BR4-landing-title-old-name",
+    "file": "index.html",
+    "old": "<title>DFO Online</title>",
+    "new": "<title>Daggerfall Enhanced</title>",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
+  },
+  {
+    "name": "BR4-intro-title-screen-blend",
+    "file": "src/ui/intro/introScreen.js",
+    "old": "opacity:0;pointer-events:none;transform-origin:50% 50%",
+    "new": "opacity:0;pointer-events:none;mix-blend-mode:screen;transform-origin:50% 50%",
+    "tests": [
+      "test/ui/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-door-logo-screen-blend",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  image-rendering: auto; transform: translateX(-10%); }",
+    "new": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  mix-blend-mode: screen; image-rendering: auto; transform: translateX(-10%); }",
+    "tests": [
+      "test/ui/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-prototype-split-wordmark",
+    "file": "menu-pixel.html",
+    "old": "DFO<small>Online</small>",
+    "new": "Daggerfall<small>Enhanced</small>",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
+  },
+  {
+    "name": "BR4-class-format-renamed",
+    "file": "src/systems/customClass.js",
+    "old": "export const CLASS_FILE_FORMAT = 'daggerfall-enhanced/custom-class';",
+    "new": "export const CLASS_FILE_FORMAT = 'daggerfall-online/custom-class';",
+    "tests": [
+      "test/ui/brand.test.js"
+    ]
+  },
+  {
+    "name": "BR4-intro-aria-old-name",
+    "file": "src/ui/intro/introScreen.js",
+    "old": "host.setAttribute('aria-label', t('menu.intro.aria', 'DFO Online introduction'));",
+    "new": "host.setAttribute('aria-label', t('menu.intro.aria', 'Daggerfall Enhanced introduction'));",
+    "tests": [
+      "test/ui/brand.test.js"
+    ],
+    "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
+  },
+  {
+    "name": "BR4-logo-dimensions-stale",
+    "file": "src/ui/brandMark.js",
+    "old": "  image.height = 1034;",
+    "new": "  image.height = 322;",
+    "tests": [
+      "test/ui/intro.test.js"
+    ],
+    "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved. BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
+  },
+  {
+    "name": "BR4-zip-old-name",
+    "file": "src/systems/save/saveTransfer.js",
+    "old": "export const TRANSFER_ZIP_NAME = 'DFO-Online-Saves.zip';",
+    "new": "export const TRANSFER_ZIP_NAME = 'DaggerfallEnhanced-Saves.zip';",
+    "tests": [
+      "test/ui/brand.test.js",
+      "test/systems/save/savetransfer.test.js"
+    ],
+    "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
+  }
+]

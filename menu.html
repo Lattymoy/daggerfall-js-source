@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>DFO Online — main menu prototype</title>
+    <!-- The tokens, the layout and the fonts all live in
+         src/ui/enhanced/enhancedStyle.js and are injected by the mount, because
+         the GAME mounts this same screen over its canvas and cannot
+         reach a <style> block in this file. One design language, one
+         home. What is left here is the page: a dark ground so there is
+         no white flash before the sheet lands, and a full-height root
+         for the shell to fill. -->
+    <style>
+      html, body { height: 100%; margin: 0; background: #0e1013; }
+      #app { height: 100dvh; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/tools/enhanced/enhancedMenu.js"></script>
+  </body>
+</html>

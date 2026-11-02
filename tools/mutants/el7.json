@@ -1,0 +1,218 @@
+[
+  {
+    "name": "glare-slack-half",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_GLARE_SLACK = 0.25; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "new": "export const AIR_GLARE_SLACK = 0.5; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "glare-size-ball",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_GLARE_SIZE = 0.25; // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
+    "new": "export const AIR_GLARE_SIZE = 0.35; // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "glare-presence-one-sided",
+    "file": "src/render/airPass.js",
+    "old": "    : 1.0 - smoothstep(${glslFloat(AIR_GLARE_SLACK / 2)}, ${glslFloat(AIR_GLARE_SLACK)}, abs(d - lantern));",
+    "new": "    : 1.0 - smoothstep(${glslFloat(AIR_GLARE_SLACK / 2)}, ${glslFloat(AIR_GLARE_SLACK)}, lantern - d);",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "glare-int-literal",
+    "file": "src/render/airPass.js",
+    "old": "export const glslFloat = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));",
+    "new": "export const glslFloat = (v) => String(v);",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "glare-taps-one",
+    "file": "src/render/airPass.js",
+    "old": "      for (int k = 0; k < ${AIR_GLARE_TAPS.length}; k++) sum += flame(vc + vec4(GLARE_TAP[k] * s, 0.0, 0.0), lantern);",
+    "new": "      for (int k = 0; k < 1; k++) sum += flame(vc + vec4(GLARE_TAP[k] * s, 0.0, 0.0), lantern);",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "blur-plain-box",
+    "file": "src/render/airPass.js",
+    "old": "      float w = abs(viewDist(depthAt(uv)) - (here + rise)) <= win ? 1.0 : 0.0;",
+    "new": "      float w = 1.0;",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "blur-no-normalise",
+    "file": "src/render/airPass.js",
+    "old": "  float ao = clamp(wsum > 0.0 ? acc / wsum / ${AIR_AO_STORE} : 1.0, 0.0, 1.0);   // AUDIT HQ1: the tile's average, unscaled, is where the clamp belongs",
+    "new": "  float ao = clamp(acc / 16.0 / ${AIR_AO_STORE}, 0.0, 1.0);   // AUDIT HQ1: the tile's average, unscaled, is where the clamp belongs",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "blur-range-zero",
+    "file": "src/render/airPass.js",
+    "old": "    gl.uniform1f(this.programs.box.uBlurRange, AIR_AO_RADIUS);",
+    "new": "    gl.uniform1f(this.programs.box.uBlurRange, 0);",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "cascades-two",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_CASCADES = Object.freeze([12, 48, 240]);",
+    "new": "export const SHADOW_CASCADES = Object.freeze([48, 240, 240]);",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "glsl-cascade-two-way",
+    "file": "src/render/shadowPass.js",
+    "old": "  int c = d < uSunShadowParams.x * 0.9 ? 0 : d < uSunShadowParams.y * 0.9 ? 1 : 2;",
+    "new": "  int c = d < uSunShadowParams.x * 0.9 ? 0 : 2;",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "glsl-texel-one",
+    "file": "src/render/shadowPass.js",
+    "old": "  float texel = c == 0 ? uSunTexel.x : c == 1 ? uSunTexel.y : uSunTexel.z;",
+    "new": "  float texel = uSunTexel.x;",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "upload-no-texel",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.uniform4fv(loc.sunTexel, this.sunTexel);   // EL7\n",
+    "new": "",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "render-texel-not-set",
+    "file": "src/render/shadowPass.js",
+    "old": "this.sunTexel[c] = sunTexelWorld(c, k);",
+    "new": "this.sunTexel[c] = 0;",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "char-not-recorded",
+    "file": "src/render/shadowPass.js",
+    "old": "    r.kind = REC_CHAR; r.mesh = mesh; r.matrix.set(matrix);",
+    "new": "    return;",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "char-hidden-range-drawn",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (rg.hidden || !(rg.count > 0)) continue;",
+    "new": "            if (!(rg.count > 0)) continue;",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "char-no-depth-program",
+    "file": "src/render/shadowPass.js",
+    "old": "    const char = opts.vs.char ? opts.build(opts.vs.char, DEPTH_FS) : null;",
+    "new": "    const char = null;",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "renderer-char-from-sprite",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);",
+    "new": "    if (this._casting) this._shadows.recordCharacter(mesh, modelMatrix);",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "renderer-char-no-bounds",
+    "file": "src/render/renderer.js",
+    "old": "bounds: opts.bounds === false ? null : boundsOf(packed, null, 0, -1, floats) };",
+    "new": "bounds: null };",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "bounds-stride-ignored",
+    "file": "src/render/bounds.js",
+    "old": "  const at = (k) => (indices ? indices[start + k] : k) * stride; // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)",
+    "new": "  const at = (k) => (indices ? indices[start + k] : k) * 3; // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "water-classic-on-lane",
+    "file": "src/render/renderer.js",
+    "old": "    const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map",
+    "new": "    const laneWater = false;   // EL7: the lane's water receives the sun map",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "water-no-map-upload",
+    "file": "src/render/renderer.js",
+    "old": "    if (L === this._wsLane && this._shadows) this._shadows.upload(L.shadow);   // EL7: the maps and the receiver's uniforms - the lane's program\n",
+    "new": "",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "water-fs-no-shadow",
+    "file": "src/render/waterSurface.js",
+    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane",
+    "new": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos) : 0.0;   // EL7: a quay's shadow lies on the water under the lane",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "water-block-before-campos",
+    "file": "src/render/waterSurface.js",
+    "old": "uniform vec3 uCamPos;\n${shadowGlsl}",
+    "new": "${shadowGlsl}\nuniform vec3 uCamPos;",
+    "tests": [
+      "test/render/el7_polish.test.js"
+    ]
+  },
+  {
+    "name": "sun-fbos-two",
+    "file": "src/render/shadowPass.js",
+    "old": "    this._sunVPFlat = new Float32Array(16 * SHADOW_CASCADES.length);",
+    "new": "    this._sunVPFlat = new Float32Array(32);",
+    "tests": [
+      "test/render/el2_shadows.test.js"
+    ]
+  }
+]

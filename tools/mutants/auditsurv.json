@@ -1,0 +1,287 @@
+[
+  {
+    "name": "AUDITSURV-a-rough-nap-lifts-a-rested-sleeper-to-tired",
+    "file": "src/systems/survival/needs.js",
+    "old": "  s.sleepDebt = s.sleepDebt >= floor ? Math.max(floor, next) : Math.max(0, next);",
+    "new": "  s.sleepDebt = Math.max(floor, next);",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-rust-writes-the-phantom-field",
+    "file": "src/systems/survival/needs.js",
+    "old": "      piece.currentCondition = Math.max(0, (piece.currentCondition ?? piece.maxCondition ?? 0) - loss);",
+    "new": "      piece.condition = Math.max(0, (piece.condition ?? piece.maxCondition ?? 0) - loss);",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-food-ages-from-the-world-s-first-day",
+    "file": "src/systems/survival/food.js",
+    "old": "      const kept = Math.max(0, rotDay - item.rotDay);",
+    "new": "      const kept = rotDay;",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-drink-pays-twenty-personality",
+    "file": "src/systems/survival/needs.js",
+    "old": "    mods.personality = (mods.personality ?? 0) + Math.min(5, d + 1);",
+    "new": "    mods.personality = (mods.personality ?? 0) + Math.max(0, 20 - d);",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js",
+      "test/systems/survival/surv1_model.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-fed-tally-banks-minutes-by-the-hundred",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (hungerNow === 'fed' && !vampire) { s.fed += 1; if (s.fed >= WELL_FED_MINUTES) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); refunded = DRAIN.wellFed; } }",
+    "new": "  if (hungerNow === 'fed') { s.fed += NEED.PECKISH_AT - hunger; if (s.fed >= 500) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); refunded = DRAIN.wellFed; } }",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-spent-gear-pitches-for-ever",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (uses <= 0)\n    return {\n      ok: false,\n      text: kind === CAMP_KIND.Fire ? CAMP_TEXT.noFuel : CAMP_TEXT.wornOut,\n      camp: null,\n      spent: false,\n    };\n  const camp = newCamp({",
+    "new": "  const camp = newCamp({",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-a-hood-shades-below-nothing",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  const pure = Math.max(0, warmth); // AUDIT SURV D: never below nothing, as the law says",
+    "new": "  const pure = warmth; // AUDIT SURV D: never below nothing, as the law says",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js",
+      "test/systems/auditcc.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-temperature-note-has-its-own-bands",
+    "file": "src/systems/survival/needs.js",
+    "old": "export const tempStage = (felt) => TEMP_STAGE[temperatureWord(felt)] ?? null;",
+    "new": "export const tempStage = (felt) => (felt > 50 ? 'burning' : felt > 30 ? 'scorching' : felt > 20 ? 'hot' : felt > 10 ? 'warm' : felt < -50 ? 'deadly' : felt < -30 ? 'freezing' : felt < -20 ? 'cold' : null);",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-frame-pays-the-rested-night-again",
+    "file": "src/systems/survival/needs.js",
+    "old": "  const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);",
+    "new": "  const start = Math.max(Math.floor(from), end - MAX_CATCHUP_MINUTES);",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-a-rewound-clock-waits-on-the-marker-for-ever",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (last > end + MAX_CATCHUP_MINUTES) last = Math.floor(from);\n",
+    "new": "",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-mod-off-keeps-the-drains",
+    "file": "src/systems/worldTick.js",
+    "old": "    clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind\n",
+    "new": "",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-a-silent-reader-still-blocks",
+    "file": "src/systems/survival/rest.js",
+    "old": "    if (!e || !enabled()) return null;\n    return restBlock(e);",
+    "new": "    if (!enabled()) return null;\n    return restBlock(e ?? {});",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-a-torn-down-host-stays-on-the-seam",
+    "file": "src/systems/survival/env.js",
+    "old": "  for (const h of pair ?? []) unregister?.(h);",
+    "new": "",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-a-dropped-wait-window-never-closes",
+    "file": "src/ui/waitWindow.js",
+    "old": "  dispose() {\n    this._end(false);\n  }",
+    "new": "  dispose() {}",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-last-dot-is-never-drawn",
+    "file": "src/ui/waitWindow.js",
+    "old": "    return '.'.repeat(Math.min(BUSY_DOTS, Math.floor(this.progress * BUSY_DOTS) + 1));",
+    "new": "    return '.'.repeat(Math.max(1, Math.round(this.progress * BUSY_DOTS)));",
+    "tests": [
+      "test/systems/quest/forage4_wait.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-divider-closes-the-tavern",
+    "file": "src/ui/tavernWindow.js",
+    "old": "        if (!row || row.kind === 'header') return [box];",
+    "new": "        if (!row || row.kind === 'header') return null;",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js",
+      "test/systems/survival/surv5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-closed-kitchen-pours-nothing",
+    "file": "src/ui/tavernWindow.js",
+    "old": "    this._chain(menu.closed ? [{ rows: line(menu.closedText) }, box] : [box], { closesTavern: true });",
+    "new": "    this._chain(menu.closed ? [{ rows: line(menu.closedText) }] : [box], { closesTavern: true });",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-night-kitchen-is-open",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "export const kitchenClosed = (hour) => hour < BREAKFAST_FROM;",
+    "new": "export const kitchenClosed = (hour) => hour === KITCHEN_CLOSED_HOUR;",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-breakfast-ends-at-nine",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "export const breakfastHours = (hour) => hour >= BREAKFAST_FROM && hour <= BREAKFAST_UNTIL;",
+    "new": "export const breakfastHours = (hour) => hour >= BREAKFAST_FROM && hour < BREAKFAST_UNTIL;",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js",
+      "test/systems/survival/surv5_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-vampire-is-told-of-hunger-on-the-strip",
+    "file": "src/systems/survival/status.js",
+    "old": "  if (!vampire) push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now))); // AUDIT SURV C: no need for food or sleep",
+    "new": "  push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now)));",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-hud-drunk-band-ignores-the-endurance",
+    "file": "src/systems/survival/status.js",
+    "old": "    s.drunk > endurance / 2\n      ? {\n          key: 'drunk',\n          text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk',\n          level: s.drunk > endurance - 10 ? 'danger' : 'warn',\n          tier: s.drunk > endurance - 10 ? 2 : 1,",
+    "new": "    s.drunk > 0\n      ? {\n          key: 'drunk',\n          text: s.drunk > 40 ? 'Very drunk' : 'Drunk',\n          level: s.drunk > 40 ? 'danger' : 'warn',\n          tier: s.drunk > 40 ? 2 : 1,",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-enhanced-card-carries-no-survival-tokens",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    survival: isSurvivalItem(item) || isRestItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,",
+    "new": "    survival: null,",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ],
+    "note": "REST6 (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "AUDITSURV-a-restore-stands-twins",
+    "file": "src/scenes/camps.js",
+    "old": "      if (r.id != null && camps.some((c) => c.owner == null && c.rec.id === String(r.id))) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-off-refuses-the-saves-camps-again",
+    "file": "src/scenes/camps.js",
+    "old": "  function restore(list, fromWorld = (p) => p) {\n    // AUDIT SURV B: a MERGE by id",
+    "new": "  function restore(list, fromWorld = (p) => p) {\n    if (!survivalOn()) return null;\n    // AUDIT SURV B: a MERGE by id",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-save-forgets-the-record",
+    "file": "src/systems/save/save.js",
+    "old": "  snap.survival = entity.survival ? { ...entity.survival, notes: undefined } : null;",
+    "new": "  snap.survival = null;",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-a-restored-save-drops-the-record",
+    "file": "src/systems/save/save.js",
+    "old": "  entity.survival = snap.survival && typeof snap.survival === 'object' ? { ...snap.survival, notes: savedNotes(snap.survival) } : null;",
+    "new": "  entity.survival = null;",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-the-chargen-kit-carries-no-provisions",
+    "file": "src/systems/startingGear.js",
+    "old": "  if (survivalOn())\n    for (const it of startingProvisions(entity)) {\n      addItem(entity.items, it);\n      added.push(it);\n    } // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak",
+    "new": "  if (survivalOn()) {\n  } // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ],
+    "note": "PIN MOVED (AUDIT REST-PARTY): REST2's online-Campfire `else` follows this line, so dropping the whole line no longer parsed; the loop alone is emptied. AUDIT C&C I7: re-aimed by content - the kit's producer is handed the character (its wardrobe for the start's shoes and cloak)."
+  },
+  {
+    "name": "AUDITSURV-bare-feet-cost-blood-every-minute",
+    "file": "src/systems/survival/needs.js",
+    "old": "      if (rules.stamina.bareFeet) tire(DRAIN.bareFeet, 'feet');\n",
+    "new": "      sinks.hurt?.(1);\n",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-exposure-hurts-every-minute-and-in-your-sleep",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (rules.health && abs > NEED.DAMAGE_AT && !sleeping && harmTick) {",
+    "new": "    if (rules.health && abs > NEED.DAMAGE_AT) {",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-wear-on-a-waterskin",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (getEquipSlot(entity ?? {}, item) === EQUIP_SLOTS.None) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSURV-use-on-a-dagger",
+    "file": "src/systems/useItem.js",
+    "old": "  return VARIANT_CHANGEABLE.has(item.templateIndex) && (templateByIndex(item.templateIndex)?.variants ?? 0) > 1;\n}",
+    "new": "  return true;\n}",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  }
+]

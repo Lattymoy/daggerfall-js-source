@@ -1,0 +1,471 @@
+[
+  {
+    "name": "AUDIT-REALM-F1-the-row-unread",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "export const boundRecord = (/** @type {any} */ rec) =>\n  rec?.bound === true || BOUND_TEMPLATES.includes(rec?.templateIndex);",
+    "new": "export const boundRecord = (/** @type {any} */ rec) => rec?.bound === true;",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F1-the-stone-unlisted",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ],
+    "note": "WALLET1 (PIN MOVED): re-aimed by content - the list names the Wallet's 580 too (systems/walletItem.js)."
+  },
+  {
+    "name": "AUDIT-REALM-F1-the-mark-alone",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "  if (boundRecord(rec)) return false; // bound (itemBound.js isBound): its mark or its row's - AUDIT REALM F1",
+    "new": "  if (rec.bound === true) return false; // bound (itemBound.js isBound): its mark or its row's - AUDIT REALM F1",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-no-stash-counted",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  ...stashedItemLists(snap),\n  ...lists(snap?.wagonItems),",
+    "new": "  ...lists(snap?.wagonItems),",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-the-wagon-uncounted",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  ...lists(snap?.wagonItems),\n  ...lists(snap?.bagItems),",
+    "new": "  ...lists(snap?.bagItems),",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-a-house-chest-uncounted",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "    for (const c of scene?.lootContainers ?? []) out.push(...lists(c?.items));",
+    "new": "    for (const c of scene?.lootContainers ?? []) if (c?.containerType !== 5) out.push(...lists(c?.items));",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-a-room-pile-uncounted",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "    for (const pile of scene?.droppedPiles ?? []) out.push(...lists(pile?.items));\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-a-storage-piece-uncounted",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-a-dungeon-s-drop-uncounted",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  for (const pile of [...(world?.piles ?? []), ...(world?.droppedLoot ?? [])]) out.push(...lists(pile?.items));",
+    "new": "  for (const pile of world?.piles ?? []) out.push(...lists(pile?.items));",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-the-stashes-never-taken",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  for (const list of stashedItemLists(snap)) takeFrom(list);\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-the-stashes-after-the-purse",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list);",
+    "new": "  for (const list of [...stashedItemLists(snap).reverse(), ...lists(snap.wagonItems, snap.bagItems, snap.items)].reverse()) takeFrom(list);",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-F2-an-emptied-record-kept",
+    "file": "src/systems/realmCustoms.js",
+    "old": "    for (let i = list.length - 1; i >= 0; i--) if (emptied.has(list[i])) list.splice(i, 1);",
+    "new": "    for (let i = list.length - 1; i >= 0; i--) if (emptied.has(list[i]) && false) list.splice(i, 1);",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F1-a-letter-any-value",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec?.templateIndex) && canon(offered.value) !== canon(rec?.value))\n    return false;\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F1-the-first-like-record-taken",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "      at = pick[k],\n      n = recordCount(offered);",
+    "new": "      n = recordCount(offered),\n      at = items.findIndex((rec, i) => left[i] >= n && recordIsOffered(rec, offered));",
+    "tests": [
+      "test/systems/auditrealm.test.js",
+      "test/net/realm4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F1-a-pick-twice",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "  return new Set(pick).size === n ? pick : null;",
+    "new": "  return pick;",
+    "tests": [
+      "test/systems/auditrealm.test.js",
+      "test/net/realm4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F1-the-pack-order-unread",
+    "file": "src/systems/tradePack.js",
+    "old": "      const items = list();\n      return entries.map(({ item }) => items.indexOf(item));",
+    "new": "      return entries.map((_, i) => i);",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F4-the-trade-read-first",
+    "file": "server-account/src/realmTrade.js",
+    "old": "  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n  // AN OUTCOME IS ANSWERED to the half that made it, whatever the record's sequence now - a settled trade moved it\n  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n",
+    "new": "  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F6-any-first-half-told",
+    "file": "server-account/src/realmTrade.js",
+    "old": "t.a_char === id && t.a_seq === seq && t.a_half === said ? 'a'",
+    "new": "t.a_char === id ? 'a'",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F6-any-second-half-told",
+    "file": "server-account/src/realmTrade.js",
+    "old": "t.b_char === id && t.b_seq === seq && t.b_half === said ? 'b'",
+    "new": "t.b_char === id ? 'b'",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F6-the-waiting-half-any-half",
+    "file": "server-account/src/realmTrade.js",
+    "old": "  if (first ? t.a_seq !== seq || t.a_half !== canon(half) : t.a_player === playerId) return { error: 'trade-spent' };",
+    "new": "  if (first ? false : t.a_player === playerId) return { error: 'trade-spent' };",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F6-the-settled-second-half-unsaid",
+    "file": "server-account/src/realmTrade.js",
+    "old": "b_player = ?, b_char = ?, b_seq = ?, b_half = ? WHERE sid = ? AND state = 'waiting'\").bind(result, playerId, id, seq, canon(half), sid),",
+    "new": "b_player = ?, b_char = ?, b_seq = ?, b_half = ? WHERE sid = ? AND state = 'waiting'\").bind(result, playerId, id, null, null, sid),",
+    "tests": [
+      "test/systems/auditrealm.test.js",
+      "test/net/realm4.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F2-the-record-asked-last",
+    "file": "server-account/src/realm.js",
+    "old": "  return (await recordMovedOf(db, playerId, side.at)) ?? side;",
+    "new": "  return side;",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F2-a-first-asking-landed",
+    "file": "src/systems/realmSaves.js",
+    "old": "return i > 0 && r.seq === at.seq + 1",
+    "new": "return r.seq === at.seq + 1",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F2-the-drain-adopts-any-move",
+    "file": "src/systems/realmSaves.js",
+    "old": "r.seq === current + 1 && unsure) {",
+    "new": "r.seq === current + 1) {",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F2-the-drain-never-in-doubt",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (r.error === 'offline' || r.error === 'server') unsure = true;\n",
+    "new": "",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-price-refunded",
+    "file": "server-account/src/homes.js",
+    "old": "  const refund = homeSaleRefund(Math.max(0, Number(home.paid) || 0));",
+    "new": "  const refund = homeSaleRefund(home.price);",
+    "tests": [
+      "test/systems/auditrealm.test.js",
+      "test/systems/homeprice.test.js"
+    ],
+    "note": "AUDIT HOME-PRICE D2: it survived its own pins (every fixture paid its price); test/systems/homeprice.test.js sells a home whose price and payment differ."
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-realm-claim-paid-nothing",
+    "file": "server-account/src/homes.js",
+    "old": "claimStatement(db, player, claim, nowS, claim.price)",
+    "new": "claimStatement(db, player, claim, nowS)",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-pieces-client-cost",
+    "file": "server-account/src/homes.js",
+    "old": "THEN paid / 2 ELSE 0 END), 0) AS back",
+    "new": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
+    "tests": [
+      "test/systems/auditrealm.test.js",
+      "test/server/account_homes.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (2026-10-06): HOME-CROSSED moved the pin that killed this (a house from before the realm, a piece no record paid for, sold) to a refusal before the pieces are summed - test/server/account_homes.test.js's sale by the character that did not buy the house holds such a piece, and pays nothing back for it"
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-old-treasury-withdrawn",
+    "file": "server-account/src/guilds.js",
+    "old": " WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1\n",
+    "new": " WHERE id = ?2 AND treasury >= ?1\n",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-a-realm-deposit-uncounted",
+    "file": "server-account/src/guilds.js",
+    "old": "UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by",
+    "new": "UPDATE guilds SET treasury = treasury + ?1, moved_by",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-old-lane-leaves-the-realm-part",
+    "file": "server-account/src/guilds.js",
+    "old": "SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by",
+    "new": "SET treasury = treasury - ?1, moved_by",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-piece-ledger-unread",
+    "file": "src/net/decorLaw.js",
+    "old": "  const own = Math.min(paidWas, Math.max(0, Number(ledger) || 0));",
+    "new": "  const own = paidWas;",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-sale-client-share",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "          refund: Math.max(0, Number(res.refund) || 0),",
+    "new": "          refund: homeRefund(res.price),",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-sale-refund-dropped",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "        ...(r.data?.refund != null ? { refund: n(r.data.refund) } : {}),\n        ...(r.data?.rent != null ? { rent: n(r.data.rent) } : {}),",
+    "new": "        ...(r.data?.rent != null ? { rent: n(r.data.rent) } : {}),",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-a-repeated-claim-paid-twice",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "        apply: (/** @type {any} */ res) => {\n          if (res?.repeat) paid.back();\n        },\n        call: (/** @type {any} */ at) => homes.claim({ mapId, buildingKey, region, price, realm: at, layout, ground }),",
+    "new": "        call: (/** @type {any} */ at) => homes.claim({ mapId, buildingKey, region, price, realm: at, layout, ground }),",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-a-repeated-placement-paid-twice",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "          apply: (/** @type {any} */ a) => { if (a.data?.repeat) paid.back(); },\n",
+    "new": "",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-shrink-client-half",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      apply: refund > 0 ? (/** @type {any} */ a) => { const g = Number(a.data?.gold) || 0; if (g > 0) deps.wallet().credit?.(g); } : null,",
+    "new": "      apply: refund > 0 ? () => deps.wallet().credit?.(refund) : null,",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-shrink-guesses",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      needsAnswer: refund > 0,\n",
+    "new": "",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-removal-client-half",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "          back = Math.max(0, Number(a.data?.gold) || 0);",
+    "new": "          back = decorRefund(decorPieceOf(a.data?.piece)?.paid ?? paid);",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F3-the-removal-guesses",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "        needsAnswer: true,\n        apply: (/** @type {any} */ a) => {\n          back",
+    "new": "        apply: (/** @type {any} */ a) => {\n          back",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L3F2-customs-spends-its-own-account-only",
+    "file": "server-account/src/realm.js",
+    "old": "      db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ?').bind(origin),",
+    "new": "      db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ? AND player = ?').bind(origin, playerId),",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L3F2-customs-without-the-bound",
+    "file": "server-account/src/realm.js",
+    "old": "            ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?' +",
+    "new": "            ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ? + 100' +",
+    "tests": [
+      "test/server/realm1.test.js"
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living (a tombstone holds no slot)."
+  },
+  {
+    "name": "AUDIT-REALM-L3F2-a-spent-census-says-never",
+    "file": "server-account/src/realm.js",
+    "old": "  if (counted?.spent) return 'customs-already';\n  if (!counted) {",
+    "new": "  if (!counted) {",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L3F3-customs-never-resumed",
+    "file": "server-account/src/realm.js",
+    "old": "  if (mine && !(mine.bytes > 0)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/server/realm1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F7-the-house-left",
+    "file": "server-account/src/realm.js",
+    "old": "    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),",
+    "new": "    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F7-the-guild-place-left",
+    "file": "server-account/src/realm.js",
+    "old": "    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT GUILD-RANKS B3: its requests to join",
+    "new": "    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT GUILD-RANKS B3: its requests to join",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F7-the-renown-left",
+    "file": "server-account/src/realm.js",
+    "old": "    db.prepare('DELETE FROM renown_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
+    "new": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L1F7-a-guildmaster-deleted-under-members",
+    "file": "server-account/src/realm.js",
+    "old": "  if ((master?.n ?? 0) > 1) return { error: 'guild-master-leaves' };\n  if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };",
+    "new": "  if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L3F8-a-due-loan-kept",
+    "file": "src/systems/worldTick.js",
+    "old": "    const outcome = settleSaid(entity, r, say);\n    if (outcome.kind",
+    "new": "    const outcome = { kind: null };\n    if (outcome.kind",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ],
+    "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the line EMPIRE-ACCOUNT rewrote; the mutant is the same law."
+  },
+  {
+    "name": "AUDIT-REALM-L2F6-the-session-kept",
+    "file": "src/net/tradeSession.js",
+    "old": "        this._ticket?.abandon?.();\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-REALM-L2F6-the-escrow-abandons-nothing",
+    "file": "src/systems/realmSaves.js",
+    "old": "        abandon: () => { session.abandon('unknown'); },",
+    "new": "        abandon: () => {},",
+    "tests": [
+      "test/systems/auditrealm.test.js"
+    ]
+  }
+]

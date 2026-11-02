@@ -1,0 +1,104 @@
+[
+  {
+    "name": "HALO-WAIT-1-no-wait",
+    "file": "src/net/online.js",
+    "old": "    if (this._haloWait(room)) { if (pose) this.sendPose(pose); return; }",
+    "new": "    if (false) { if (pose) this.sendPose(pose); return; }",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "The bug itself: a crossing into a halo still minting falls through to the ordinary join, which closes my cell and every halo and wipes the roster."
+  },
+  {
+    "name": "HALO-WAIT-2-no-pose-while-waiting",
+    "file": "src/net/online.js",
+    "old": "    if (this._haloWait(room)) { if (pose) this.sendPose(pose); return; }",
+    "new": "    if (this._haloWait(room)) { return; }",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "The host sends no pose while it calls join, so a wait that sends none stands me still for the others until the halo opens."
+  },
+  {
+    "name": "HALO-WAIT-3-waits-on-an-open-halo-too",
+    "file": "src/net/online.js",
+    "old": "    return !!h?.ws && h.status === 'connecting' && !!this._ws && this.status === 'open' && isCellRoom(room) && isCellRoom(this.room)",
+    "new": "    return !!h?.ws && h.status !== 'closed' && !!this._ws && this.status === 'open' && isCellRoom(room) && isCellRoom(this.room)",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "An open halo is promoted at once; waiting on it instead holds the crossing until HALO_WAIT_MS runs out, and then the ordinary join tears every socket down - the bug back, later."
+  },
+  {
+    "name": "HALO-WAIT-4-waits-with-my-own-cell-down",
+    "file": "src/net/online.js",
+    "old": "    return !!h?.ws && h.status === 'connecting' && !!this._ws && this.status === 'open' && isCellRoom(room) && isCellRoom(this.room)",
+    "new": "    return !!h?.ws && h.status === 'connecting' && !!this._ws && isCellRoom(room) && isCellRoom(this.room)",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "A cell whose socket is down is no place to wait in: the crossing would hold me in a room that hears nothing from me."
+  },
+  {
+    "name": "HALO-WAIT-5-the-wait-never-ends",
+    "file": "src/net/online.js",
+    "old": "      && this._now() - (h.since ?? -Infinity) < HALO_WAIT_MS;",
+    "new": "      && this._now() - (h.since ?? -Infinity) < Infinity;",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "Unbounded, the wait's own bound is gone and only tick's A7 drop (past BACKOFF_MAX_MS, in the same frame's tick) ends it - the bound would then live in another slice's constant and comparison, a frame later."
+  },
+  {
+    "name": "HALO-WAIT-6-the-wait-a-millisecond-short",
+    "file": "src/net/online.js",
+    "old": "      && this._now() - (h.since ?? -Infinity) < HALO_WAIT_MS;",
+    "new": "      && this._now() - (h.since ?? -Infinity) <= HALO_WAIT_MS - 2;",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "The bound is the halo's own connecting life, to the millisecond; the pin waits to its last."
+  },
+  {
+    "name": "HALO-WAIT-7-the-lists-cleared-before-the-wait",
+    "file": "src/net/online.js",
+    "old": "    if (this._haloWait(room)) { if (pose) this.sendPose(pose); return; }",
+    "new": "    this._who.clear(); if (this._haloWait(room)) { if (pose) this.sendPose(pose); return; }",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "The host calls join every frame of the wait: an asked list cleared there is cleared every frame, and a stranger is asked every frame."
+  },
+  {
+    "name": "HALO-WAIT-8-the-hold-before-the-wait",
+    "file": "src/net/online.js",
+    "old": "  crossesNow(key) { return this.inRoom(key) || this._haloWait(key); }",
+    "new": "  crossesNow(key) { return this.inRoom(key); }",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "A crossing into a halo still connecting waits out the host's 500 ms hold first, and the host sends no pose during it: every such crossing stands me still for half a second."
+  },
+  {
+    "name": "HALO-WAIT-9-no-hold-at-all",
+    "file": "src/net/online.js",
+    "old": "  crossesNow(key) { return this.inRoom(key) || this._haloWait(key); }",
+    "new": "  crossesNow(key) { return true; }",
+    "tests": [
+      "test/net/halowait.test.js"
+    ],
+    "note": "A crossing with nothing to wait for (a dropped halo) is joined the ordinary way in its first frame: an edge paced at a dropped halo tears every socket down at every step, which the hold exists to prevent (AUDIT ONLINE D11)."
+  },
+  {
+    "name": "HALO-WAIT-10-the-host-asks-inRoom",
+    "file": "src/scenes/world.js",
+    "old": "(isCellRoom(key) && online.crossesNow(key))",
+    "new": "(isCellRoom(key) && online.inRoom(key))",
+    "tests": [
+      "test/net/halowait.test.js",
+      "test/net/auditworld6biiib.test.js",
+      "test/net/world2.test.js"
+    ],
+    "note": "The host's own line: asking inRoom alone, a crossing into a halo still connecting waits out the hold with no pose."
+  }
+]

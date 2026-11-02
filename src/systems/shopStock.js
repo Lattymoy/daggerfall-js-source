@@ -1,0 +1,1440 @@
+// E1 economy: shop shelf stock + cost math (DFU DaggerfallLoot.
+// StockShopShelf / DaggerfallLootDataTables / FormulaHelper.
+// CalculateCost, MIT Daggerfall Workshop). Node-pure; the interior
+// host mounts the shelves (E2).
+//
+// - THE STOCK LAW (verbatim): each shop type carries (group, chance)
+//   pairs; per template in a group, stock requires rarity <= shop
+//   quality and a Dice100 roll under chance*5*(21-rarity)/100.
+//   Books ride the quality ladder ((q+3)/5, the >=4 step-down, +1);
+//   general stores always shelve a Horse and a Small Cart; clothing
+//   swaps to the player's gender; Furniture/UselessItems1 skip.
+//   MERCHANT-YARDS (2026-10-10): the horse and the cart no longer -
+//   the town's Stable and Wagon Yard sell them (systems/merchantYards.js).
+// - THE COST LAW (verbatim): clamp value to >=1, apply the regional
+//   price adjustment (value*adj/1000, floor 1), then
+//   2*(cost*(quality-10)/100 + cost) in C# integer math.
+// - Regional prices initialize Random.Range(0,501)+750 per region
+//   (RandomizeInitialRegionalPrices - engine PRNG in DFU too, the
+//   approved uniform-roll slot) and then DRIFT once per elapsed day
+//   through UpdateRegionalPrices (S41), which the day-change block in
+//   worldTick.js drives - condition flags and all (S42 built the
+//   RegionDataFlags store that half was waiting on; the member's own
+//   docblock below carries the three arms).
+//
+// A2 (ROAD TO 1:1) closed the two stand-in clauses this header once
+// carried. Book items now carry the BOOK FILE's price through
+// books.createRandomBook, and shelf/container restocking rides
+// CreateStockedDate below - the calendar the pend was waiting on has
+// been shipped since S41. The regional-price line above lost its
+// stale "pends the region-conditions arc" tail in the same pass: S42
+// shipped it and the summary had not been told, which is precisely
+// the F106 disease named below.
+//
+// AUDIT 39 F106: two clauses were struck from this list because they
+// had SHIPPED and the header still swore they had not - the MagicItems
+// stock (F130) and the Alchemist's 25% recipe roll (F129), both live
+// below. A pend list that names closed work is worse than no list:
+// bible/Home.md pins these lines mechanically, so the false clause was
+// certified, and it is what kept the ungated MagicItems arm (F104)
+// from being read as the bug it was.
+
+import { dice100 } from '../combat/formulas.js';
+import { rand } from '../formats/dfRandom.js'; // F209: StockHouseContainer's one classic-stream draw
+import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
+import {
+  groupTemplates,
+  GROUP_TEMPLATE_INDICES,
+  itemBaseValue,
+  ITEM_TEMPLATES,
+  mintCondition,
+  rollPaintingMessage,
+  setItemFields,
+  templateByIndex,
+  TRANSPORT_HORSE,
+  TRANSPORT_SMALL_CART,
+} from './item/itemTemplates.js'; // MAC-N1: SetItem's name + value, the one export
+import { customItemsForGroup } from './item/itemTemplates.js'; // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287); FORAGE1: every mod's, from its one home
+import { createRandomBook, createShelfBook } from './books.js'; // B1; A2: CreateRandomBook whole, priced off the book FILE
+import { isLeather, isPlate } from './armorMaterials.js';
+import { CLOTHING_DYES } from '../characters/dyes.js';
+import { BUILDING_TYPES } from '../world/buildingNames.js';
+import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js'; // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
+import { SOUL_TRAP_TEMPLATE } from './mysticism.js'; // X6: one home for the template id (X5 put it there with fillEmptyTrap)
+import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE } from './iliac/iliacItems.js'; // AUDIT CARDS-5 C2: the collectible card, which no shop buys; CARDS9: nor its pack
+import { goodOfTemplate } from './naval/tradeGoods.js'; // AUDIT CAPTAIN'S SEA B2: the exchange's goods, which no shop buys
+import { landSold } from './stolenGoods.js'; // AUDIT UPDATE II B2: the sale's own door, for the counter's arrows
+import { OIL_TEMPLATE, ARROW_TEMPLATE, addItem } from './inventory.js'; // SHOP-ARROWS: the counter's quiver   // AUDIT-RR2 G10: the shelf's AddItem   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
+import { getBool } from './settings/settings.js'; // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
+import { FACTION_TYPES } from '../formats/factionFile.js'; // S41: UpdateRegionalPrices' type-7 region walk
+import { findFactionByTypeAndRegion } from './talk/talk.js'; // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
+import { MERCHANTS_FACTION_ID } from './guild/guilds.js'; // S41: FactionIDs.The_Merchants, one home
+import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './region/regionConditions.js'; // S42: the store S41's flag was waiting on
+import { isOnlinePage } from './online/onlineLane.js'; // REALM P0.4: online, a shop pays at most half what it asks
+import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js'; // BAG1: the Materials Bag, at every General Store online
+import { BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAway/comeSailAwayItems.js'; // SHIPYARDS: a ship's parts and deed, which no shop buys - a port's shipyard does
+
+// ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
+const GROUP_NAMES = Object.freeze({
+  0: 'Drugs',
+  1: 'UselessItems1',
+  2: 'Armor',
+  3: 'Weapons',
+  4: 'MagicItems',
+  6: 'MensClothing',
+  7: 'Books',
+  8: 'Furniture',
+  9: 'UselessItems2',
+  10: 'ReligiousItems',
+  11: 'Maps',
+  12: 'WomensClothing',
+  13: 'Paintings',
+  14: 'Gems',
+  15: 'PlantIngredients1',
+  16: 'PlantIngredients2',
+  17: 'CreatureIngredients1',
+  18: 'CreatureIngredients2',
+  19: 'CreatureIngredients3',
+  20: 'MiscellaneousIngredients1',
+  21: 'MetalIngredients',
+  22: 'MiscellaneousIngredients2',
+  23: 'Transportation',
+  25: 'Jewellery',
+});
+
+/**
+ * DECOR2b: THE FURNISHER'S CHANCE. Daggerfall's stock law takes a (group, chance) pair for each kind of shop, and DFU's
+ * furniture store has no pair it ever reads (the Furniture group is skipped for every shop), so this one is the port's:
+ * fifty, the clothier's - a well-stocked store whose better pieces still wait on a better shop (systems/decor/decorFurnish.js).
+ */
+export const FURNISHER_CHANCE = 0x32;
+
+/** RARE-REAGENTS: what every Alchemist's counter always holds - Basilisk Eye (CreatureIngredients1 51), Unicorn Horn
+ *  (CreatureIngredients3 37), Pearl (MiscellaneousIngredients2 77). */
+export const ALCHEMIST_ALWAYS = Object.freeze([
+  Object.freeze({ group: 'CreatureIngredients1', templateIndex: 51 }),
+  Object.freeze({ group: 'CreatureIngredients3', templateIndex: 37 }),
+  Object.freeze({ group: 'MiscellaneousIngredients2', templateIndex: 77 }),
+]);
+// DaggerfallLootDataTables.itemGroups* - (groupId, chance) byte pairs.
+export const SHOP_ITEM_GROUPS = Object.freeze({
+  [BUILDING_TYPES.Alchemist]: [
+    0x0e, 0x1e, 0x0f, 0x32, 0x10, 0x32, 0x11, 0x1e, 0x12, 0x14, 0x13, 0x14, 0x14, 0x3c, 0x15, 0x28, 0x16, 0x1e,
+  ],
+  [BUILDING_TYPES.Armorer]: [0x02, 0x50, 0x03, 0x14],
+  [BUILDING_TYPES.Bookseller]: [0x07, 0x28, 0x0b, 0x05],
+  [BUILDING_TYPES.ClothingStore]: [0x06, 0x32, 0x0c, 0x32],
+  [BUILDING_TYPES.GemStore]: [0x0e, 0x28, 0x19, 0x32],
+  [BUILDING_TYPES.GeneralStore]: [0x03, 0x14, 0x06, 0x0a, 0x07, 0x0a, 0x09, 0x32, 0x17, 0x00, 0x0c, 0x0a, 0x04, 0x00],
+  [BUILDING_TYPES.PawnShop]: [
+    0x02, 0x0a, 0x03, 0x0a, 0x04, 0x0a, 0x07, 0x0a, 0x09, 0x14, 0x0d, 0x05, 0x0e, 0x0a, 0x19, 0x0a, 0x0a, 0x0a,
+  ],
+  [BUILDING_TYPES.WeaponSmith]: [0x02, 0x1e, 0x03, 0x46],
+  // DECOR2b: THE FURNISHER. Daggerfall's Furniture Stores stand with empty shelves - DFU's stock loop skips the
+  // Furniture group for every shop - and here they sell it, by the same law, at the port's own chance (a departure:
+  // systems/decor/decorFurnish.js, delivered and never carried).
+  [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],
+});
+
+/**
+ * PELLETS-SCARCE (2026-10-24, the owner: "Remove their ammo from shops and only have ammo has a rare resource drop (not
+ * super duper rare but still rare)"; bible/05-Combat/Dwarven-Thunderlock.md "PELLETS-SCARCE"): NO SHELF SELLS THE
+ * DWEMER PELLET. SHOP-PELLETS (2026-10-07) put the Thunderlock's shot on every weapon counter; that line is gone, and
+ * every other draw and stack on the shelf is what it was (it drew no roll). A Pellet is found - the loot door's last
+ * draw (systems/thunderlock.js, the Dwemer find) and the airship's hold (systems/ketch/ketchSpoils.js; bible/11-Multiplayer/
+ * Sky-Ketch.md section 9) - and passes between players by trade. A shop still BUYS one back, as it buys any weapon.
+ */
+const WEAPONS_GROUP_ID = 0x03;
+/** THE COUNTER'S ROUNDS (SHOP-PELLETS' law, SHOP-ARROWS' since PELLETS-SCARCE took the Pellet off the counter): `max` at
+ *  a quality-20 Weapon Smith, the shop's own Weapons chance over the Weapon Smith's of it, and a poor shop half of that;
+ *  nothing where no weapon is sold. */
+export function shopAmmoStack(buildingType, quality, max) {
+  const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [];
+  let chance = 0;
+  for (let i = 0; i + 1 < pairs.length; i += 2) if (pairs[i] === WEAPONS_GROUP_ID) chance = pairs[i + 1];
+  if (!(chance > 0)) return 0;
+  const most = SHOP_ITEM_GROUPS[BUILDING_TYPES.WeaponSmith][3]; // the Weapon Smith's own Weapons chance, 0x46
+  const q = Math.max(1, Math.min(20, Math.trunc(Number(quality)) || 1));
+  return Math.max(1, Math.round(max * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));
+}
+
+/**
+ * SHOP-ARROWS (2026-10-11, Mac: "Buff the shop's stock of arrows"; bible/05-Combat/Arrow-Supply.md): A QUIVER ON THE
+ * COUNTER. DFU's stock law shelves arrows as any weapon - a Weapons-chance draw a shelf, rarity 1, one stack of
+ * Range(1, 21) (enemyEquipment.js createWeapon's arrow arm) - so a Weapon Smith's counter held twenty arrows at most, 70%
+ * of the time, and a General Store's one day in five. Now every shop that sells weapons also carries a quiver on its
+ * counter's shelf, from NO roll and after every draw of DFU's, sized by the counter's law at SHOP_ARROWS_MAX: a Weapon
+ * Smith 50 to 100, an Armorer or a General Store 14 to 29, a Pawn Shop 7 to 14 - merged into the shelf's own arrows
+ * when DFU's draw put some there. It sells out and comes back with the day's restock, as the rest of the shelf does.
+ */
+export const SHOP_ARROWS_MAX = 100;
+export const shopArrowStack = (buildingType, quality) => shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX);
+/**
+ * ENDLESS-ARROWS (2026-10-23, the owner: "give general stores always arrows for each player to buy they cant exhaust"): A
+ * GENERAL STORE'S QUIVER NEVER EMPTIES. Its counter shelf carries a full quiver (GENERAL_STORE_ARROWS, whatever the
+ * shop's quality - SHOP-ARROWS' 14 to 29 was a General Store's) from no roll, and every purchase that takes arrows off it
+ * puts back what it took, up to the whole (restockEndless), offline and online alike - unlike ENDLESS-STOCK's bag,
+ * campfire and rations, which online alone. AUDIT UPDATE E1: only what a PURCHASE took - an arrow stolen stays gone,
+ * so a theft and one arrow bought never fill the quiver again; E2: the counter's shelf alone (the hosts hand its shop
+ * for that shelf and no other). Online a shelf is the room's (WORLD6a), and the refill rides its published list, so no
+ * patron buys another's arrows out (AUDIT UPDATE E-N8). The other storefronts' quivers sell out as SHOP-ARROWS says. A
+ * declared departure (Port-Ledger A).
+ */
+export const GENERAL_STORE_ARROWS = SHOP_ARROWS_MAX;
+export const endlessArrowsAt = (buildingType) => buildingType === BUILDING_TYPES.GeneralStore;
+const isShelfArrow = (it) => it?.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE;
+/** ENDLESS-ARROWS: the counter's quiver, minted as the shelf mints its own (CreateWeapon's arrow arm, its roll a constant). */
+const mintQuiver = (n) => mintCondition(setItemFields({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }));
+/** AUDIT UPDATE II B2: A SOLD PIECE ONTO A SHELF - STOLEN-GOODS' law (stolenGoods.js landSold), but an arrow sold at a
+ *  General Store's COUNTER is paid for and never shelved there (a departure from DFU's remoteItems, for these arrows
+ *  alone): its quiver is endless, and a sold row bought back would read as arrows the purchase took from it - a theft,
+ *  a sale and the buy-back stood the quiver again. `buildingType` the counter's shop, null for any other shelf.
+ *  Answers landSold's word: whether the piece is on the shelf. */
+export function landSoldAt(shelfItems, item, buildingType = null) {
+  if (endlessArrowsAt(buildingType) && isShelfArrow(item)) return false;
+  return landSold(shelfItems, item);
+}
+/** ENDLESS-ARROWS: a General Store's quiver given back what a purchase took of it, up to its whole; answers 1 when it
+ *  filled or stood one, else 0. AUDIT UPDATE E1: the arrows the purchase took, never the whole - what a theft took
+ *  stays gone. */
+function restockArrows(shelfItems, bought, buildingType) {
+  const took = (bought ?? [])
+    .filter(isShelfArrow)
+    .reduce((n, it) => n + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0);
+  if (!endlessArrowsAt(buildingType) || !(took > 0)) return 0;
+  const stack = shelfItems.find(isShelfArrow);
+  if (stack) {
+    const was = stack.stackCount ?? 1;
+    if (was >= GENERAL_STORE_ARROWS) return 0;
+    stack.stackCount = Math.min(GENERAL_STORE_ARROWS, was + took);
+    return 1;
+  }
+  addItem(shelfItems, mintQuiver(Math.min(GENERAL_STORE_ARROWS, took)));
+  return 1;
+}
+
+// E3: DaggerfallTradeWindow.storeBuysItemType, verbatim - the item
+// groups each storefront BUYS from the player.
+export const SHOP_BUYS_GROUPS = Object.freeze({
+  [BUILDING_TYPES.Alchemist]: [
+    'Gems',
+    'CreatureIngredients1',
+    'CreatureIngredients2',
+    'CreatureIngredients3',
+    'PlantIngredients1',
+    'PlantIngredients2',
+    'MiscellaneousIngredients1',
+    'MiscellaneousIngredients2',
+    'MetalIngredients',
+  ],
+  [BUILDING_TYPES.Armorer]: ['Armor', 'Weapons'],
+  [BUILDING_TYPES.Bookseller]: ['Books'],
+  [BUILDING_TYPES.ClothingStore]: ['MensClothing', 'WomensClothing'],
+  [BUILDING_TYPES.FurnitureStore]: ['Furniture'],
+  [BUILDING_TYPES.GemStore]: ['Gems', 'Jewellery'],
+  // MERCHANT-YARDS: and it no longer buys them - DFU's Transportation is out of its list; the yards buy them back
+  [BUILDING_TYPES.GeneralStore]: ['Books', 'MensClothing', 'WomensClothing', 'Jewellery', 'Weapons', 'UselessItems2'],
+  [BUILDING_TYPES.PawnShop]: [
+    'Armor',
+    'Books',
+    'MensClothing',
+    'WomensClothing',
+    'Gems',
+    'Jewellery',
+    'ReligiousItems',
+    'Weapons',
+    'UselessItems2',
+    'Paintings',
+  ],
+  [BUILDING_TYPES.WeaponSmith]: ['Armor', 'Weapons'],
+});
+export const shopBuysItem = (buildingType, item) =>
+  (SHOP_BUYS_GROUPS[buildingType] ?? []).includes(item.group) &&
+  // AUDIT CARDS-5 C2: no shop buys a collectible card - every character is given thirty, and a shelf is no card's market
+  item.templateIndex !== ILIAC_CARD_TEMPLATE &&
+  // CARDS9: nor a sealed pack - the tavern sells it at its counter's price, and no shelf buys it back (a pack bought
+  // well and sold dear was the gold-for-nothing ENDLESS-STOCK shut)
+  item.templateIndex !== CARD_PACK_TEMPLATE &&
+  // AUDIT CAPTAIN'S SEA B2: nor the exchange's goods - the exchange alone deals in them (a General Store paid more for a
+  // tusk of ivory than the quay where it is made asked: a money loop without a voyage)
+  !goodOfTemplate(item.templateIndex) &&
+  // SHIPYARDS (2026-10-11, Mac: "Shipyard only"): nor a boat's parts or deed - a port town's shipyard buys a ship back
+  // (systems/shipyards.js), as the Stable and the Wagon Yard took the horse and the cart (Come Sail Away's rows are on no
+  // shelf now - comeSailAwayItems.js)
+  item.templateIndex !== BOAT_PARTS_TEMPLATE &&
+  item.templateIndex !== BOAT_DEED_TEMPLATE &&
+  // AUDIT ENDLESS-STOCK F1/F2: online no shop buys back what never sells out - bought at a cheap shop and sold at a dear one
+  // (the online asking price is halved, the buy-back cap is not) it was gold for nothing, and a sold one made any shelf endless
+  !(isOnlinePage() && isEndlessStock(item));
+
+/** RMBLayout.IsShop, verbatim (the nine stocked storefronts). */
+export function isShop(buildingType) {
+  return (
+    buildingType === BUILDING_TYPES.Alchemist ||
+    buildingType === BUILDING_TYPES.Armorer ||
+    buildingType === BUILDING_TYPES.Bookseller ||
+    buildingType === BUILDING_TYPES.ClothingStore ||
+    buildingType === BUILDING_TYPES.FurnitureStore ||
+    buildingType === BUILDING_TYPES.GemStore ||
+    buildingType === BUILDING_TYPES.GeneralStore ||
+    buildingType === BUILDING_TYPES.PawnShop ||
+    buildingType === BUILDING_TYPES.WeaponSmith
+  );
+}
+
+/** RMBLayout.IsRepairShop (:787-797). The three shops that will mend
+ *  your gear; PlayerActivate routes their merchant to the repair
+ *  popup instead of the sell one. */
+export function isRepairShop(buildingType) {
+  return (
+    buildingType === BUILDING_TYPES.Armorer ||
+    buildingType === BUILDING_TYPES.GeneralStore ||
+    buildingType === BUILDING_TYPES.WeaponSmith
+  );
+}
+
+// DaggerfallInterior: interior models 41000+i with i in this set are
+// shop shelves (loot containers when the building IsShop).
+export const CONTAINER_MODEL_OFFSET = 41000;
+export const SHOP_SHELF_MODEL_INDICES = Object.freeze(
+  new Set([5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19, 26, 28, 29, 31, 35, 36, 37, 40, 41, 42, 44, 46, 47, 48, 49, 808]),
+);
+export const isShopShelfModel = (modelId) => SHOP_SHELF_MODEL_INDICES.has(modelId - CONTAINER_MODEL_OFFSET);
+
+// DISC24-B: the two transport templates' one home is itemTemplates.js now (its item picture reads them, and it
+// cannot import this module, which imports it); re-exported here for the readers that have always asked here.
+export { TRANSPORT_HORSE, TRANSPORT_SMALL_CART };
+// F104: GetItemTemplate(MagicItems, 0). MagicItemSubTypes has ONE
+// name (ItemEnums.cs:233-236) and its value is 0, so the shelf's
+// rarity/chance gates read template 0 - the Ruby's row - for a magic
+// item. The generated group table has no MagicItems entry to hold it.
+export const MAGIC_ITEMS_ENUM_TEMPLATE = 0;
+// AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
+// constant, declared here and in loot.js.
+import {
+  BOOK_TEMPLATE,
+  createRegularMagicItem,
+  createRandomPotion,
+  randomlyAddPotionRecipe,
+  getMagicItemTemplates,
+  createRandomWeapon,
+  createRandomArmor,
+  createRandomClothing,
+} from './loot/loot.js'; // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
+import { SPELLBOOK_TEMPLATE_INDEX } from './spell/spellMaker.js'; // G4: one home for MiscItems 132
+import { restItemsStock } from './rest/restItems.js'; // REST6: the Bedroll, the Ember Jar, Firewood and the draughts
+import { isLockpick, ensureEndlessLockpicks, restockLockpicks } from './lockpick/lockpickItem.js'; // LOCKPICK: the counter's endless picks
+import {
+  provisionsStock,
+  campfireStock,
+  createSurvivalItem,
+  isSurvivalItem,
+  isCampfireKit,
+  TEMPLATE as SURVIVAL_TEMPLATE,
+  ensureEndlessProvisions,
+  ENDLESS_RATIONS_STACK,
+} from './survival/items.js'; // SURV2: the general store's provisions shelf   // REST2: and online the Campfire alone, the arc Off
+import { sharedClockOn } from './worldTick.js';
+import { healingShelfCount, mintHealingPotion } from './healingSupply.js'; // POTION-COMMON: the shelf's Potions of Healing
+import { survivalOn } from './survival/switch.js'; // SURV2: the one switch
+import { conditionBasedPricesOn, conditionCostBase } from './roleplayRealismItems/rriRealism.js'; // RRI2: the CalculateCost override's condition arm
+
+export { BOOK_TEMPLATE };
+
+/** ItemBuilder.RandomizeArmorVariant (:813-844) - the branch
+ *  ApplyArmorSettings takes when CreateArmor is called with its
+ *  DEFAULT variant of -1, which is exactly how DaggerfallLoot.cs:228
+ *  stocks a shop shelf. (CreateRandomArmor, the LOOT path, passes
+ *  ApplyArmorSettings' default 0 and takes SetVariant instead - so
+ *  loot armor is variant 0 and must NOT take this roll.)
+ *
+ *  The picked value then goes through SetVariant, whose material
+ *  clamps live in armorMaterials.clampArmorVariant and which the port
+ *  applies at DRAW time; every range below is already inside the
+ *  template's variant count, so SetVariant's out-of-range early-out
+ *  can never fire here. */
+export function randomizeArmorVariant(templateIndex, material, rolls = Math.random) {
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi - lo)); // UnityEngine.Random.Range(int, int)
+  if (templateIndex === 102 && isPlate(material)) return range(1, 4); // Cuirass
+  if (templateIndex === 104) {
+    // Greaves
+    if (isLeather(material)) return range(0, 2);
+    if (isPlate(material)) return range(2, 6);
+    return 0;
+  }
+  if ((templateIndex === 105 || templateIndex === 106) && isPlate(material)) return range(1, 4); // Pauldrons
+  if (templateIndex === 108 && isPlate(material)) return range(1, 3); // Boots
+  if (templateIndex === 107) return range(0, ITEM_TEMPLATES[107]?.variants ?? 0); // Helm
+  return 0;
+}
+
+/**
+ * A2 - DaggerfallLoot.CreateStockedDate (:68-71), verbatim:
+ *
+ *     (date.Year * 1000) + date.DayOfYear
+ *
+ * ONE integer that names a game day, and the whole of the restock law.
+ * StockShopShelf (:152) and StockHouseContainer (:293) stamp it on the
+ * container as they mint; PlayerActivate's ActivateLootContainer
+ * compares it on EVERY activation (:882 for shelves, :911 for house
+ * containers) and re-stocks - `items.Clear()` first - when the stored
+ * day is behind today. So a bookseller picked bare on the 3rd of
+ * Sun's Dawn is full again on the 4th, and a shelf opened twice in one
+ * afternoon does not reroll.
+ *
+ * DayOfYear is 1-based (gameDate.dayOfYear, GetDayOfYear :629-633), so
+ * the year term at 1000 can never collide across years: 360 days fit
+ * inside the thousand with room to spare. It is also why an OWNED
+ * house's container is stamped a literal 1 (:907) - a value below any
+ * real date is still ABOVE the zero that means "never stocked", which
+ * is what SerializableLootContainer.ShouldSave tests (:225-226).
+ */
+export const createStockedDate = (date) => (date?.year ?? 0) * 1000 + dayOfYear(date ?? { month: 0, day: 0 });
+
+/** PlayerActivate's own comparison (:882, :911), spelled once so the
+ *  three activation arms in the host cannot drift apart. */
+export const needsRestock = (container, today) => (container?.stockedDate ?? 0) < today;
+/** UXB1-O (2026-09-25, the UX backlog: "flag objects with generated loot ... 'your character' would know which ones
+ *  have open lids"): this character has looked at THIS stock - opened (`openedOn`, stamped with the stock's own day
+ *  when the window opens) and neither rolled again since nor due to be. The day's restock closes the lid again, as it
+ *  refills the drawer: a searched container is only ever the stock the player saw. */
+export const stockSearched = (container, today) =>
+  Number.isFinite(container?.openedOn) &&
+  container.openedOn > 0 &&
+  container.openedOn === container.stockedDate &&
+  !needsRestock(container, today);
+
+/** ENDLESS-STOCK (2026-10-04, Mac: "I want the gathering bag to be unlimited purchases in stores. It shouldnt run out,
+ *  same with campfires"): the rows a shop never sells out of - the Materials Bag and the Campfire. ENDLESS PROVISIONS
+ *  (2026-10-04, Mac: "rations should be available in stores where it makes sense and unlimited as well"): and Rations. */
+const isRations = (item) => isSurvivalItem(item) && item.templateIndex === SURVIVAL_TEMPLATE.Rations;
+export const isEndlessStock = (item) =>
+  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks
+/** ENDLESS-STOCK: a purchase's endless rows put back on the shelf they were bought from - a fresh one for each (neither
+ *  stacks), minted as the shelf mints it (worldModes.js commitTrade's Buy). Only a purchase restocks: a row taken from a
+ *  closed shop's shelf is stolen, and stays gone. Online alone; and online no shop buys one back (shopBuysItem), so the only
+ *  endless rows on a shelf are the ones it stocked itself. Answers how many went back. */
+export function restockEndless(shelfItems, bought, buildingType = null) {
+  if (!Array.isArray(shelfItems)) return 0;
+  // ENDLESS-ARROWS: a General Store's quiver, offline and online (`buildingType` the counter's shop)
+  let n = restockArrows(shelfItems, bought, buildingType);
+  // AUDIT ENDLESS-STOCK F4: online alone, as the bag is - offline a shelf sells out as Daggerfall's does
+  if (!isOnlinePage()) return n;
+  n += restockLockpicks(
+    shelfItems,
+    (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0),
+  ); // AUDIT LOCKPICK B4: what the purchase took
+  for (const it of bought ?? []) {
+    if (!isEndlessStock(it)) continue;
+    if (isRations(it)) {
+      // ENDLESS PROVISIONS: Rations stack - the shelf's stack is filled back to its whole, or stood again if the lot took it
+      const stack = shelfItems.find(isRations);
+      if (stack) {
+        if ((stack.stackCount ?? 1) < ENDLESS_RATIONS_STACK) {
+          stack.stackCount = ENDLESS_RATIONS_STACK;
+          n++;
+        }
+      } else {
+        const r = createSurvivalItem(SURVIVAL_TEMPLATE.Rations, { stackCount: ENDLESS_RATIONS_STACK });
+        if (r) {
+          addItem(shelfItems, r);
+          n++;
+        }
+      }
+      continue;
+    }
+    if (isLockpick(it)) continue; // LOCKPICK: stood back above, by what the purchase took
+    const fresh = isBagItem(it)
+      ? mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE }))
+      : createSurvivalItem(SURVIVAL_TEMPLATE.Campfire);
+    if (fresh) {
+      addItem(shelfItems, fresh);
+      n++;
+    }
+  }
+  return n;
+}
+
+/** StockShopShelf, verbatim. Returns the item list; every item
+ *  carries value = its DaggerfallUnityItem base value.
+ *
+ *  AUDIT 58: `torchesFromItems` ports DaggerfallUnity.Settings.
+ *  PlayerTorchFromItems for the oil-bottle stack clause below. Like
+ *  startingGear.assignStartingGear and playerTorch.tickPlayerTorch,
+ *  the DEFAULT is a point-of-use store read - a parameter with a
+ *  `false` default would have been a switch every caller can forget -
+ *  and an explicit argument still overrides it (the tests do). */
+export function stockShopShelf(
+  { buildingType, quality },
+  playerEntity = {},
+  { rolls = Math.random, torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems'), shelfIndex = 0 } = {},
+) {
+  const items = [];
+  // DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
+  // plain item; AUDIT 18: the shelf minted rows with none, so the
+  // dungeon-style item list labelled a bought Oil "UselessItems2".
+  const add = (item) => {
+    const it = mintCondition(setItemFields(item)); // AUDIT 23 (items-5); MAC-N1: SetItem's name + value through the one export
+    // SetItem's other draw (DaggerfallUnityItem.cs:571) - a Paintings
+    // item is born with its message, and a pawn shop is where the
+    // player meets one (group 13 rides the PawnShop pair table). The
+    // shelf minted them with none, so every painting seeded
+    // InitPaintingInfo from 0 and they were all the same picture.
+    if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
+    addItem(items, it); // AUDIT-RR2 G10: `items.AddItem(item)` (DaggerfallLoot.cs:250) MERGES a stackable into its stack (ItemCollection.cs:224-228) - one bandage row for RRI's OnLootSpawned to size, arrows and ingredients as one pile
+  };
+  const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
+  if (buildingType === BUILDING_TYPES.Alchemist) {
+    // AUDIT 26 F129: RandomlyAddPotionRecipe(25, items)
+    // (DaggerfallLoot.cs:163-166). The function shipped verbatim with
+    // two loot-table callers while this arm stayed a comment - so
+    // alchemists never stocked a recipe, the main legitimate way to
+    // buy one.
+    randomlyAddPotionRecipe(25, items, rolls);
+    // RARE-REAGENTS (2026-10-08, the owner: "please add Unicorn horn, Basilisk eye and a Pearl. I couldn't find any of
+    // those on any Alchemist shop"): the stock law's rarity gate and its roll (chance x 5 x (21 - rarity) / 100) left these
+    // three on next to no shelf in the Bay. The counter's shelf (shelfIndex 0 - each shelf model is stocked whole, so one
+    // shelf, never one a shelf) always carries one of each, minted as every row is and priced by the shop's own cost law.
+    if (shelfIndex === 0) for (const r of ALCHEMIST_ALWAYS) add({ ...r });
+  }
+  if (buildingType === BUILDING_TYPES.GeneralStore) {
+    // MERCHANT-YARDS (2026-10-10, asked: "Transport merchants hold all carts and wagons. The stable holds horses. No
+    // longer in general shop"): DFU's `items.AddItem(Horse)` and `items.AddItem(Small_cart)` are gone from here, and the
+    // two wagons WAGONS1 shelved beside the cart with them - the Stable sells the horse and the Wagon Yard the cart and
+    // the wagons (systems/merchantYards.js yardStock), every city and town standing both. A departure from DFU.
+    // BAG1 (bible/06-Systems/Materials-Bag.md): THE MATERIALS BAG at every General Store (beside the cart, until
+    // MERCHANT-YARDS took the cart to the Wagon Yard) - online alone, where the professions are (nothing offline gathers
+    // into it), and by name.
+    // BAG-SHELF (FIELD BUGS 2026-10-04, "nobody can find material bags in store"): on EVERY shelf, whoever stocks it, as
+    // the horse and the cart were. AUDIT2 H8 had put it on the first shelf alone, and BAG1 left it off a shelf stocked by a
+    // character who carried one - but online a shelf's stock is the room's for the day, so one bag-owner's open hid it
+    // from everyone, and the first shelf is just the first model the building lists
+    if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });
+    // SURV2: the provisions shelf - rations, bread, fruit, skins, fire
+    // kits, and camping gear and a skillet in a better shop. Minted by
+    // their own module (their templates are the port's), after the
+    // bag, so the shelf reads travel first, then food.
+    // AUDIT REST II H8: the Campfires on the counter's shelf alone (as the rest supplies and the healing supply below) - every
+    // shelf model is its own container stocked whole, so a store of four shelves sold sixteen, not "two to four"
+    if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })) items.push(it);
+    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls)) items.push(it); // REST2: online the Campfire is the rest's, the arc on or off
+  }
+  const level = playerEntity.level ?? 1;
+  const female = playerEntity.gender === 'female';
+  for (let i = 0; i + 1 < pairs.length; i += 2) {
+    let group = GROUP_NAMES[pairs[i]];
+    const chanceMod = pairs[i + 1];
+    if (!group) continue; // Maps/etc. groups outside the stocked set resolve to nothing
+    if (group === 'MensClothing' && female) group = 'WomensClothing';
+    if (group === 'WomensClothing' && !female) group = 'MensClothing';
+    if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1')
+      continue; // DECOR2b: the furnisher's own
+    if (group === 'MagicItems') {
+      // AUDIT 26 F130: StockShopShelf creates ONE random magic item
+      // for the MagicItems group (DaggerfallLoot.cs:240-243 -
+      // ItemBuilder.CreateRandomMagicItem, which IS
+      // CreateRegularMagicItem at a random index, :517-520) - pawn
+      // shops carry the group at chanceMod 10
+      // (DaggerfallLootDataTables.cs:61). The skip that stood here
+      // predated the MAGIC.DEF registry this file already mints
+      // guild-shelf magic items from; a context that never registered
+      // the file still skips, the loot mint's own loud pend.
+      //
+      // AUDIT 39 F104: and the mint sits INSIDE the per-template loop
+      // in DFU, so it owes that loop's two gates - `rarity <=
+      // shopQuality` and the Dice100 stock roll. Ungated, every pawn
+      // shop shelved a guaranteed magic item and the general store
+      // (chanceMod 0, which never rolls true) shelved one too.
+      // GetEnumArray(MagicItems) is the one-entry MagicItemSubTypes
+      // (ItemEnums.cs:233-236), so GetItemTemplate(MagicItems, 0)
+      // resolves to template 0 - Ruby, rarity 10 - and THAT is the
+      // rarity both gates read. The generated group table carries no
+      // MagicItems row because the enum names no template of its own,
+      // which is why the index is spelled here.
+      const t = ITEM_TEMPLATES[MAGIC_ITEMS_ENUM_TEMPLATE];
+      if (t.rarity > quality) continue;
+      if (!dice100(Math.trunc((chanceMod * 5 * (21 - t.rarity)) / 100), rolls())) continue;
+      const templates = getMagicItemTemplates();
+      if (templates) add(createRegularMagicItem(templates, level, playerEntity.gender ?? 0, rolls));
+      continue;
+    }
+    if (group === 'Books') {
+      let qualityMod = Math.trunc((quality + 3) / 5);
+      if (qualityMod >= 4) --qualityMod;
+      qualityMod++;
+      for (let j = 0; j <= qualityMod; ++j) {
+        // CreateRandomBook whole (books.js): the id, then Range(0,
+        // book.TotalVariants) - the template's variant count (2), NOT
+        // the 4 Books enum names - then `value = bookFile.Price`. A2:
+        // that last term is what made the bookseller sell every title
+        // at the template's flat 2500 instead of its own 300..800.
+        // WB12c: the shelf's draw - the port's own books among the classic ones
+        add(createShelfBook(rolls));
+      }
+      continue;
+    }
+    const metas = groupTemplates(group);
+    for (let j = 0; j < metas.length; ++j) {
+      const t = metas[j];
+      if (t.rarity > quality) continue;
+      const stockChance = Math.trunc((chanceMod * 5 * (21 - t.rarity)) / 100);
+      if (!dice100(stockChance, rolls())) continue;
+      if (group === 'Weapons') {
+        // A2: `CreateWeapon(j + Weapons.Dagger, RandomMaterial(level))`
+        // (DaggerfallLoot.cs:227), ONE call for every weapon on the
+        // shelf - so the arrow arm is CreateWeapon's own (:359-364)
+        // and not a copy of it here. The copy that stood here dropped
+        // `currentCondition = 0` ("not sure if this is necessary, but
+        // classic does it"), so shelf arrows arrived at FULL condition
+        // where loot arrows and conjured arrows arrive at zero, and
+        // the two stacks could not merge in the pack.
+        //
+        // PIN MOVED DELIBERATELY (AUDIT 17e F14): that note read
+        // "CreateWeapon's arrow branch takes NO material roll", which
+        // is true of the BRANCH and false of this SITE. C# evaluates
+        // RandomMaterial before it enters CreateWeapon, so the shelf
+        // draws the material roll for an arrow too and throws it away
+        // - one extra draw per shelved arrow, in DFU's stream.
+        const templateIndex = GROUP_TEMPLATE_INDICES.Weapons[j];
+        const material = randomMaterial(level, rolls); // the ARGUMENT, drawn before the call - arrows included
+        add(createWeapon(templateIndex, material, rolls));
+      } else if (group === 'Armor') {
+        // CreateArmor(gender, race, piece, RandomArmorMaterial(level))
+        // - the material roll, THEN RandomizeArmorVariant's roll.
+        const templateIndex = GROUP_TEMPLATE_INDICES.Armor[j];
+        const material = randomArmorMaterial(level, rolls);
+        add({
+          group: 'Armor',
+          templateIndex,
+          material,
+          variant: randomizeArmorVariant(templateIndex, material, rolls),
+        });
+      } else if (group === 'MensClothing' || group === 'WomensClothing') {
+        // CreateMensClothing/CreateWomensClothing roll the VARIANT
+        // over the template's own count (Range(0, variants)); the
+        // shelf then assigns RandomClothingDye - variant roll first,
+        // dye roll second (the reverse of loot's CreateRandomClothing).
+        const templateIndex = GROUP_TEMPLATE_INDICES[group][j];
+        const variant = Math.floor(rolls() * (ITEM_TEMPLATES[templateIndex]?.variants ?? 0));
+        add({ group, templateIndex, variant, dye: CLOTHING_DYES[Math.floor(rolls() * CLOTHING_DYES.length)] });
+      } else {
+        const templateIndex = GROUP_TEMPLATE_INDICES[group][j];
+        const it = { group, templateIndex };
+        // AUDIT 58: DaggerfallLoot.cs:246-248 - the generic mint's
+        // SECOND statement, which the port had dropped:
+        //   if (DaggerfallUnity.Settings.PlayerTorchFromItems &&
+        //       item.IsOfTemplate(ItemGroups.UselessItems2, (int)UselessItems2.Oil))
+        //       item.stackCount = Random.Range(5, 20 + 1);  // Shops stock 5-20 bottles
+        // UselessItems2 rides the General Store (chance 0x32) and Pawn
+        // Shop (0x14) pair tables, so a lit-from-items player was
+        // buying single bottles where classic sells a case - and the
+        // shelf PRICE is value x stackCount, so both the cost and the
+        // lantern fuel were off by that factor. The roll is drawn ONLY
+        // when the setting is on AND the item is oil, which is C#'s
+        // own short-circuit: with the setting off the day-seeded
+        // stream is untouched.
+        if (torchesFromItems && group === 'UselessItems2' && templateIndex === OIL_TEMPLATE)
+          it.stackCount = 5 + Math.floor(rolls() * 16); // UnityEngine.Random.Range(5, 20 + 1) - 5..20 inclusive
+        add(it);
+      }
+    }
+    // AUDIT-RR F3: DaggerfallLoot.cs:255-287 - the CUSTOM items registered for the group, the same rarity gate
+    // and stock chance, a weapon at RandomMaterial, an armor at RandomArmorMaterial (ApplyArmorSettings is the
+    // class's own variant setter, which the mint runs). `chanceMod == 0 && Transportation -> 20` is the C#'s
+    // own arm for a custom transport item (none registered here; kept for the law's sake).
+    {
+      const customs = customItemsForGroup(group);
+      let customChanceMod = chanceMod;
+      if (customChanceMod === 0 && group === 'Transportation') customChanceMod = 20;
+      for (const templateIndex of customs) {
+        const t = templateByIndex(templateIndex);
+        if (!t || t.rarity > quality) continue;
+        const stockChance = Math.trunc((customChanceMod * 5 * (21 - t.rarity)) / 100);
+        if (!dice100(stockChance, rolls())) continue;
+        if (group === 'Weapons') add({ group, templateIndex, material: randomMaterial(level, rolls), flags: 0 });
+        else if (group === 'Armor') add({ group, templateIndex, material: randomArmorMaterial(level, rolls) });
+        else add({ group, templateIndex });
+      }
+    }
+  }
+  // REST6 (Rest-Arc.md section 6): a General Store's and an Alchemist's rest supplies, on the first shelf, after every
+  // draw of DFU's (unmoved) and before the healing supply, which stays the shelf's last act; offline with Climates & Calories, online once REST_ITEMS_ONLINE is on
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.Alchemist)) {
+    for (const it of restItemsStock(
+      buildingType === BUILDING_TYPES.GeneralStore ? 'GeneralStore' : 'Alchemist',
+      quality,
+      rolls,
+    ))
+      addItem(items, it);
+  }
+  if (shelfIndex === 0 && buildingType === BUILDING_TYPES.PawnShop && sharedClockOn())
+    for (const it of campfireStock(rolls, 0, 2)) addItem(items, it); // AUDIT REST: REST2's Pawn Shop, 0-2 online
+  // ENDLESS PROVISIONS: a General Store's and a Pawn Shop's counter shelf has a Campfire Kit and a full stack of Rations in
+  // every tier, Climates & Calories Off and offline too - after DFU's draws, from no roll. Online a purchase stands them
+  // again (restockEndless); offline they sell out until the day's restock, as the rest of the shelf does (ENDLESS-STOCK F4)
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop))
+    ensureEndlessProvisions(items);
+  // LOCKPICK (bible/06-Systems/Lockpicking.md section 2): and a stack of lockpicks - a lock needs one - from no roll, so DFU's
+  // draws above stand as they were; online a purchase stands it whole again (restockEndless), offline it sells out until the
+  // day's restock
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop))
+    ensureEndlessLockpicks(items);
+  // SHOP-ARROWS (above): a quiver on the counter of every shop that sells weapons - after DFU's draws, from no roll; minted
+  // as the shelf mints its own (CreateWeapon's arrow arm, its stack roll answered by a constant), so the two are one stack
+  // ENDLESS-ARROWS: a General Store's a full quiver at any quality (merged into DFU's drawn arrows as SHOP-ARROWS' is)
+  if (shelfIndex === 0) {
+    const n = endlessArrowsAt(buildingType) ? GENERAL_STORE_ARROWS : shopArrowStack(buildingType, quality);
+    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });
+  }
+  // POTION-COMMON (2026-10-01, the field: "make health potions more common"): an alchemist's and a general store's day of
+  // Potions of Healing (healingSupply.js) - at the shelf's end and from no roll, so DFU's own draws above are the same.
+  // AUDIT ECON P1: on the shop's FIRST shelf alone, the one its counter sells from (worldModes.js openMerchantSell) -
+  // every shelf model is its own container, stocked whole, so a shop of five shelves stocked five days' worth
+  if (shelfIndex === 0) for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());
+  return items;
+}
+
+// ── F209: THE PRIVATE-PROPERTY TABLES (StockHouseContainer's data) ──
+//
+// DaggerfallLootDataTables.cs:63-201, verbatim: five 24-row tables,
+// row = buildingType 0..Town23, entries = ItemGroups byte ids. The
+// tier is the container MODEL's texture record (ModelIdNum % 100),
+// picked by StockHouseContainer's nested ladder (:305-333). Unlike
+// the shop pair-tables above, these are FLAT lists - one group is
+// drawn per container, not walked pairwise.
+export const PRIVATE_PROPERTY_MODELS_0_TO_1 = Object.freeze([
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+]);
+export const PRIVATE_PROPERTY_MODELS_2_TO_3 = Object.freeze([
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x03, 0x06, 0x09, 0x0c],
+  [0x07, 0x09, 0x0b],
+  [0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x19],
+  [0x07, 0x09, 0x0b],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x09, 0x0b, 0x0e, 0x19],
+  [0x09, 0x0a],
+  [0x09, 0x0b],
+  [0x03, 0x09, 0x0a, 0x0b],
+  [0x03, 0x09, 0x0b],
+  [0x03, 0x09],
+  [0x07, 0x09, 0x0a, 0x0b, 0x0e],
+  [0x03, 0x09, 0x0a],
+  [0x03, 0x09, 0x0a, 0x0b, 0x19],
+  [0x03, 0x09, 0x0a, 0x0b],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+]);
+export const PRIVATE_PROPERTY_MODELS_4_TO_10 = Object.freeze([
+  [0x07, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x15],
+  [0x09, 0x15],
+  [0x09, 0x15],
+  [0x07, 0x19],
+  [0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14],
+  [0x07, 0x09, 0x0a, 0x0b],
+  [0x06, 0x09, 0x0a, 0x0c, 0x0f, 0x10],
+  [0x09],
+  [0x07, 0x09, 0x0a, 0x15],
+  [0x09],
+  [0x09, 0x0d],
+  [0x09, 0x0a, 0x0d],
+  [0x09, 0x0a],
+  [0x09, 0x0a, 0x15],
+  [0x04, 0x09, 0x0a, 0x14],
+  [0x09, 0x0f, 0x10],
+  [0x07, 0x09, 0x0d, 0x14],
+  [0x07, 0x09, 0x0d, 0x14],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+]);
+export const PRIVATE_PROPERTY_MODELS_11_TO_14 = Object.freeze([
+  [0x07, 0x09, 0x14],
+  [0x07, 0x09, 0x14],
+  [0x03, 0x06, 0x09, 0x0c],
+  [0x09, 0x0d, 0x0e],
+  [0x02, 0x03, 0x09],
+  [0x07, 0x09],
+  [0x06, 0x09, 0x0c],
+  [0x09],
+  [0x03, 0x09, 0x15, 0x0e],
+  [0x09, 0x0a],
+  [0x09],
+  [0x09, 0x03, 0x0e],
+  [0x09, 0x0d, 0x19],
+  [0x03, 0x09, 0x0a, 0x15],
+  [0x07, 0x09, 0x0a],
+  [0x06, 0x09, 0x0c],
+  [0x04, 0x07, 0x09, 0x0d, 0x19],
+  [0x07, 0x09, 0x0d, 0x19],
+  [0x03, 0x09],
+  [0x03, 0x09],
+  [0x03, 0x09],
+  [0x03, 0x09],
+  [0x03, 0x09],
+  [0x03, 0x09],
+]);
+export const PRIVATE_PROPERTY_MODELS_15_AND_UP = Object.freeze([
+  [0x0f, 0x10, 0x11, 0x12, 0x13, 0x15],
+  [0x02, 0x15],
+  [0x02, 0x15],
+  [0x0d, 0x19],
+  [0x02, 0x03, 0x04, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x15],
+  [0x07, 0x0d],
+  [0x06, 0x09, 0x0c, 0x0f, 0x10],
+  [0x09, 0x0d],
+  [0x09, 0x15],
+  [0x09],
+  [0x09, 0x0d],
+  [0x02, 0x09, 0x0d],
+  [0x02, 0x03, 0x09],
+  [0x03, 0x09, 0x15],
+  [0x09, 0x0a, 0x0d],
+  [0x09, 0x0f, 0x10],
+  [0x09, 0x0d, 0x19],
+  [0x09, 0x0d, 0x19],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+]);
+
+/** DaggerfallLoot.StockHouseContainer (:291-375) - AUDIT 26 F209: the
+ *  port identified house containers and then declared them empty, so
+ *  burgling any house yielded nothing, ever. One group is drawn for
+ *  the whole container off the model-tier table, then a halving-
+ *  chance loop mints from it: continueChance 100 -> 50 -> 25 -> 12 ->
+ *  6 -> 3 -> 1 -> 0, the item pushed AFTER the continue test so the
+ *  container always holds at least one. Group and index picks are
+ *  UnityEngine.Random (Math.random by port convention); ONLY the
+ *  continue roll is the classic stream - `DFRandom.rand() % 100 >
+ *  continueChance` (:369-370), unseeded at this site, DaggerfallLoot's
+ *  one DFRandom draw.
+ *
+ *  `record` is the container model's texture record (ModelIdNum % 100,
+ *  DaggerfallInterior.MakeHouseContainer :829-842 - the port computes
+ *  it in systems/containers.js). buildingType past Town23 stocks
+ *  nothing (:303). The daily stockedDate restock (:293, :16-20 in
+ *  PlayerActivate) rides the same declared pend as shelf restocking
+ *  (the header above); the caller's `items ??=` null-latch is the
+ *  port's stock-once mapping. */
+/** HC1 - PlayerActivate's PrivatePropertyId (:94): the TEXT.RSC 37
+ *  Yes/No question a stocked house container asks before opening. */
+export const PRIVATE_PROPERTY_TEXT_ID = 37;
+/** UXB1-M: the question as DFU's box sets it - SetTextTokens(37) keeps each row's own centring
+ *  (DaggerfallMessageBox.cs:432-441), which the keyed panel's flattening threw away - with record 37's own two
+ *  lines, centred, when there is no TEXT.RSC to read. Blank rows are the record's layout and stay. */
+export const PRIVATE_PROPERTY_FALLBACK_ROWS = Object.freeze([
+  Object.freeze({ text: 'This looks like private property. Do you', center: true }),
+  Object.freeze({ text: 'still want to look through it?', center: true }),
+]);
+export function privatePropertyRows(rows) {
+  const out = (rows ?? []).map((r) =>
+    typeof r === 'string' ? { text: r, center: true } : { text: String(r?.text ?? ''), center: r?.center !== false },
+  );
+  return out.some((r) => r.text.trim() !== '') ? out : PRIVATE_PROPERTY_FALLBACK_ROWS.map((r) => ({ ...r }));
+}
+
+export function stockHouseContainer(
+  { buildingType, record },
+  playerEntity = {},
+  { rolls = Math.random, contRand = rand } = {},
+) {
+  const items = [];
+  if (buildingType == null || buildingType > BUILDING_TYPES.Town23) return items;
+  const modelIndex = record ?? 0;
+  const table =
+    modelIndex >= 15
+      ? PRIVATE_PROPERTY_MODELS_15_AND_UP
+      : modelIndex >= 11
+        ? PRIVATE_PROPERTY_MODELS_11_TO_14
+        : modelIndex >= 4
+          ? PRIVATE_PROPERTY_MODELS_4_TO_10
+          : modelIndex >= 2
+            ? PRIVATE_PROPERTY_MODELS_2_TO_3
+            : PRIVATE_PROPERTY_MODELS_0_TO_1;
+  const list = table[buildingType];
+  if (!list) return items;
+  // the shelf's add() shape: name/value/condition off the template,
+  // a Paintings mint born with its message (SetItem's other draw).
+  const add = (item) => {
+    const it = mintCondition(setItemFields(item)); // MAC-N1: SetItem's name + value through the one export
+    if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
+    items.push(it);
+  };
+  const level = playerEntity.level ?? 1;
+  const group = GROUP_NAMES[list[Math.floor(rolls() * list.length)]];
+  let continueChance = 100;
+  let keepGoing = true;
+  while (keepGoing) {
+    let item = null;
+    if (group !== 'MensClothing' && group !== 'WomensClothing') {
+      if (group === 'MagicItems') {
+        // F130's arm: a context that never registered MAGIC.DEF skips,
+        // the loot mint's own LOUD pend.
+        const templates = getMagicItemTemplates();
+        if (templates) item = createRegularMagicItem(templates, level, playerEntity.gender ?? 0, rolls);
+      } else if (group === 'Books') {
+        item = createRandomBook(rolls); // A2: the book FILE's price, same member as the shelf
+      } else if (group === 'Weapons') {
+        item = createRandomWeapon(level, rolls);
+      } else if (group === 'Armor') {
+        item = createRandomArmor(level, rolls);
+      } else if (group) {
+        // new DaggerfallUnityItem(itemGroup, Range(0, enumArray.Length))
+        const idx = GROUP_TEMPLATE_INDICES[group];
+        if (idx?.length) item = { group, templateIndex: idx[Math.floor(rolls() * idx.length)] };
+      }
+    } else {
+      item = createRandomClothing(playerEntity.gender, rolls);
+    }
+    continueChance >>= 1;
+    if (contRand() % 100 > continueChance) keepGoing = false;
+    if (item) add(item);
+  }
+  return items;
+}
+
+/** RandomizeInitialRegionalPrices (:2040-2047): one region's opening index, 750..1250, off one roll. ECON1: one home
+ *  for the player's lazy draw and the world's epoch draw. */
+export const initialRegionPrice = (roll01) => 750 + Math.floor(roll01 * 501);
+// ECON1 (2026-09-17): THE WORLD'S PRICE SOURCE. Under the shared clock the region's index is the world's - a pure
+// function of the world's day (worldTick.worldRegionPrice) - and every consumer of this seam reads it instead of the
+// player's own walk. Installed and removed by setSharedClock; null offline, and then the player's own state answers
+// as DFU's does. The player's `regionPrices` are never written while the source stands: the save keeps its own
+// economy for its own world.
+let _worldPrice = null;
+/** ECON1: install (a function of a region index answering the world's index) or remove (null) the world's price source. */
+export function setWorldPriceSource(fn) {
+  _worldPrice = typeof fn === 'function' ? fn : null;
+}
+export const worldPriceSourceOn = () => _worldPrice !== null;
+/** RandomizeInitialRegionalPrices: 750..1250 per region, lazily. ECON1: the world's, when the shared clock stands -
+ *  no lazy draw then (a neighbour's day must not move this player's dice, AUDIT WORLD6b B14's law) and no write. */
+export function regionPriceAdjustment(playerEntity, regionIndex, rolls = Math.random) {
+  if (_worldPrice) {
+    const p = _worldPrice(regionIndex);
+    if (Number.isFinite(p)) return p;
+  }
+  playerEntity.regionPrices ??= {};
+  playerEntity.regionPrices[regionIndex] ??= initialRegionPrice(rolls());
+  return playerEntity.regionPrices[regionIndex];
+}
+/** ECON1 (AUDIT ALL E1): THE WORLD'S TILT. DFU's walk is tilted by The Merchants' power against the region's own
+ *  (trunc((merchants - province) / 5)), and the first cut dropped the term whole because the LIVE powers are each
+ *  player's (quests move them) - but with the tilt at zero the index never left ~500..1600 in twenty simulated years,
+ *  so PricesHigh / PricesLow could never light online and The Merchants' power never took its price bump
+ *  (regionPower.js). The BASE powers are the game's own data (FACTION.TXT, identical on every unmodded client), so the
+ *  tilt is computable from the day plus static data with no owner and no wire: only the quest-moved part had to go.
+ *  Over a dict of the FILE's records (the talk host's, never the player's store): a function of the region index
+ *  answering the tilt, or null where DFU walks nothing (no Province faction for the region; no Merchants at all, and
+ *  then DFU walks no region - the whole walk stands still). A modded FACTION.TXT desyncs the shared economy; recorded. */
+export function worldPriceTiltOf(baseDict) {
+  if (!baseDict || typeof baseDict.get !== 'function') return () => null;
+  const merchants = baseDict.get(MERCHANTS_FACTION_ID);
+  if (!merchants) return () => null;
+  return (regionIndex) => {
+    const province = findFactionByTypeAndRegion(baseDict, FACTION_TYPES.Province, regionIndex | 0);
+    return province ? Math.trunc(((merchants.power | 0) - (province.power | 0)) / 5) : null;
+  };
+}
+/** UpdateRegionalPrices' one step (:2064-2074): the merchants' tilt (`powerBias` = trunc((merchants - region) / 5),
+ *  the world's from the base powers, worldPriceTiltOf - ECON1 / AUDIT ALL E1) plus 50 less the index's own
+ *  distance from the pivot, one roll, 51/50 up or 49/50 down, clamped. ECON1: one home for the player's walk and the
+ *  world's. */
+export function priceWalkStep(adj, powerBias, roll01) {
+  const chanceOfPriceRise = (powerBias | 0) + 50 - Math.trunc((adj - 1000) / 25);
+  // Dice100.FailedRoll(chance) is !SuccessRoll(chance), and dice100() here IS SuccessRoll - one roll drawn either
+  // way, which is why the negation is on the RESULT and not a second draw.
+  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc((51 * adj) / 50) : Math.trunc((49 * adj) / 50);
+  return Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));
+}
+/** UpdateRegionalPrices' condition half (:2075-2087), verbatim including the nesting: at or under 2000 and at or over
+ *  500 turns BOTH flags off, under 500 turns PricesLow on, over 2000 turns PricesHigh on. ECON1: one home for the
+ *  player's walk and the world's day at the player's own condition store. */
+export function applyPriceConditionFlags(conditions, regionIndex, adjusted, rolls = Math.random) {
+  if (!conditions) return;
+  if (adjusted <= 2000) {
+    if (adjusted >= 500) {
+      turnOffConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesHigh);
+      turnOffConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesLow);
+    } else {
+      turnOnConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesLow, rolls);
+    }
+  } else {
+    turnOnConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesHigh, rolls);
+  }
+}
+
+// ONE DFU MEMBER, ONE EXPORT: REGION_COUNT is PlayerEntity.regionData's
+// length (:99), so S42 took it into regionConditions.js beside the rest
+// of that record. S41 declared it here first and the two collided; the
+// re-export keeps this file's readers working off the one home.
+export { REGION_COUNT } from './region/regionConditions.js';
+
+/** Mathf.Clamp(PriceAdjustment, 250, 4000) (FormulaHelper.cs:2074). */
+export const PRICE_ADJUSTMENT_MIN = 250;
+export const PRICE_ADJUSTMENT_MAX = 4000;
+
+/**
+ * S41 - FormulaHelper.UpdateRegionalPrices (:2053-2089), THE DAILY
+ * DRIFT, which the port did not have at all.
+ *
+ * Every price in the game runs through calculateCost's
+ * ApplyRegionalPriceAdjustment term, and the port set that term ONCE
+ * per region - RandomizeInitialRegionalPrices' 750..1250 - and then
+ * never moved it again. A region that rolled 780 at boot sold at 78%
+ * for the rest of the character's life, and one that rolled 1240 at
+ * 124%; no amount of play could change either, and the merchants'
+ * faction power - the whole point of the formula - had no consumer.
+ * This file's own header carried an open flag against the drift,
+ * pending the calendar; the calendar exists now, so it ships and
+ * the flag is retired.
+ *
+ * The walk, verbatim: bail entirely if The Merchants is missing from
+ * the dictionary; else for each region that HAS a Province (type 7)
+ * faction, run `times` independent steps of
+ *
+ *     chance = (merchantsPower - regionPower) / 5
+ *              + 50 - (adjustment - 1000) / 25
+ *
+ * and move the adjustment to 49/50ths of itself on a FAILED roll or
+ * 51/50ths on a passed one, then clamp to [250, 4000]. Both divisions
+ * can go negative (powers are 1..100 either way round; the adjustment
+ * runs 250..4000 against a 1000 pivot) so both are Math.trunc, C#'s
+ * truncate-toward-zero, not Math.floor.
+ *
+ * Note the sign: a HIGH adjustment lowers `chance`, so a passed roll
+ * - the 51/50 RISE - gets rarer as prices climb. It is a mean-
+ * reverting walk around 1000 that the merchants' power tilts.
+ *
+ * THE CONDITION-FLAG HALF SHIPS (:2075-2087). S41 had to flag this
+ * because the port had no RegionDataFlags store to write into; S42
+ * built one (systems/region/regionConditions.js), so the three arms land
+ * here now, in DFU's own shape: at or under 2000 and at or over 500
+ * turns BOTH flags off, under 500 turns PricesLow on, and over 2000
+ * turns PricesHigh on. Note the asymmetry DFU has and this keeps -
+ * the "normal" band clears both flags every single step, while the
+ * two extremes only ever turn their own on.
+ *
+ * The flags are written through turnOnConditionFlag, which DRAWS a
+ * roll of its own for the condition's duration, so a region sitting
+ * at an extreme consumes one extra draw per day. That is DFU's
+ * stream, not an addition: the same call does the same thing there.
+ *
+ * DEVIATION (recorded): DFU fills all 62 adjustments at game start,
+ * so this walk draws no init rolls. The port's regionPriceAdjustment
+ * is lazy, so the first drift of a session materialises whatever the
+ * shops have not touched yet, and each of those draws one roll here
+ * where DFU drew it at StartGameBehaviour. Same distribution, a
+ * different position in the stream.
+ *
+ * @param {object} playerEntity  carries regionPrices
+ * @param {Map}    factionDict   the live faction store's dict
+ * @param {number} times         daysPast - DFU's own loop bound
+ * @param {object[]} conditions   the region-condition store (S42). Null
+ *        skips the flag half - the price walk itself is unchanged.
+ */
+export function updateRegionalPrices(playerEntity, factionDict, times, rolls = Math.random, conditions = null) {
+  if (!factionDict || !(times > 0)) return;
+  playerEntity.regionPrices ??= {}; // AUDIT ALL E2: the table is this walk's own to stand - it leaned on regionPriceAdjustment's lazy init, which the world's source (ECON1) skips
+  // GetFactionData(The_Merchants) - `if (!...) return`, so a missing
+  // merchants faction stops the WHOLE walk, not just one region.
+  const merchants = factionDict.get(MERCHANTS_FACTION_ID);
+  if (!merchants) return;
+  for (let i = 0; i < REGION_COUNT; i++) {
+    const regionFaction = findFactionByTypeAndRegion(factionDict, FACTION_TYPES.Province, i);
+    if (!regionFaction) continue;
+    for (let j = 0; j < times; j++) {
+      const adj = regionPriceAdjustment(playerEntity, i, rolls);
+      const adjusted = priceWalkStep(adj, Math.trunc((merchants.power - regionFaction.power) / 5), rolls()); // ECON1: one home for the step
+      playerEntity.regionPrices[i] = adjusted;
+      applyPriceConditionFlags(conditions, i, adjusted, rolls); // :2075-2087, one home for the flag half
+    }
+  }
+}
+
+/** FormulaHelper.CalculateCost, verbatim C# integer math. RRI2: the
+ *  third C# parameter, `conditionPercentage = -1` (:1884), which DFU's
+ *  own arm never reads and Roleplay & Realism: Items' CalculateConditionCost
+ *  override does - the base scaled by the item's condition, floored at a
+ *  fifth - under conditionBasedPrices; the two lines after it are the
+ *  same in both. */
+export function calculateCost(baseValue, shopQuality, priceAdjustment = 1000, conditionPercentage = -1) {
+  let cost = conditionBasedPricesOn() ? conditionCostBase(baseValue, conditionPercentage) : baseValue;
+  if (cost < 1) cost = 1;
+  cost = Math.trunc((cost * priceAdjustment) / 1000); // ApplyRegionalPriceAdjustment
+  if (cost < 1) cost = 1;
+  cost = 2 * (Math.trunc((cost * (shopQuality - 10)) / 100) + cost);
+  return cost;
+}
+
+/** REALM P0.4 (2026-09-28, bible/06-Systems/Realm-Arc.md "Vendor spread"): ONLINE A SHOP PAYS AT MOST HALF WHAT IT
+ *  ASKS for the same piece. DFU's haggle can turn a counter's spread upside down - a quality-1 shop pays 125/256 of the
+ *  cost to a seller with Mercantile 2 and asks 124/256 of a buyer - so buying a piece and selling it back made gold,
+ *  and the regions' price walk paid a carrier. Offline, DFU's haggle stands. */
+export const ONLINE_SALE_SHARE = 0.5;
+
+/** ESSENTIALS-HALF (2026-09-30, Discord: "things are way too expensive rn for money to be nerfed so heavily... cut the cost of most essential items by half"):
+ *  ONLINE, AN ESSENTIAL COSTS HALF. REALM P0.4, MERC-RISE and MERC-CAP cut what a player EARNS online (the sale's half,
+ *  the pile's gold divided by level) and left what they PAY where DFU put it, so a bed, a meal, a cure, a fare and a
+ *  potion ate a far bigger share of a far smaller purse. The essentials - a tavern room and its food and drink
+ *  (tavern.js, survival/tavernMenu.js), a temple's disease cure (guildServiceActions.js cureDiseaseOffer), a travel
+ *  fare (ui/travel/travelPopUp.js scaleTripCost, both map skins) and a POTION bought at any counter (tradeModes.js
+ *  buyItemPrice, which every shelf's Buy walks - the guild shelves' too) - cost ONLINE_ESSENTIALS_PRICE_SCALE of
+ *  their price online. Nothing else moves: repairs, training, spells, enchanting, houses and ships keep theirs.
+ *  The half ROUNDS UP and a priced essential asks at least a gold - a free one (a holiday's, a knight's room) stays
+ *  free. Rounding up is load-bearing for the potion: its sale online is capped at ONLINE_SALE_SHARE of the full ask,
+ *  and ceil(cost/2) haggled is never under half the full cost haggled, so buying a potion to sell it back never pays.
+ *  Offline, DFU's prices stand. */
+export const ONLINE_ESSENTIALS_PRICE_SCALE = 0.5;
+/** ESSENTIALS-HALF: an essential's price where the player stands - `price` offline, its rounded-up half (at least 1,
+ *  a 0 kept 0) online. */
+export function essentialPrice(price, { online = isOnlinePage() } = {}) {
+  if (!online || !(price > 0)) return price;
+  return Math.max(1, Math.ceil(price * ONLINE_ESSENTIALS_PRICE_SCALE));
+}
+
+/** MERC-RISE (FIELD BUGS 2026-09-29d, ValenValarys on Discord: "As the skill level increases, the sell price for items
+ *  actually decreases" - 3499 gold at Mercantile 60, 2888 at 90, Personality 100): THE HALF IS OF THE LEAST THE
+ *  COUNTER ASKS. P0.4 took half of the SELLER's own ask, and a seller's ask falls as their Mercantile and Personality
+ *  rise - so the cap, which binds for nearly every seller online, fell with them (2888/3499 is 0.825, the two asks'
+ *  own ratio). Half of what the counter asks the best haggler there is - ONLINE_HAGGLE_MAX in each - is still at most
+ *  half of what it asks anyone, so buying back never pays (P0.4's law, whole), and it is a number of the counter and
+ *  the piece: no skill lowers a sale. Under it DFU's haggle stands, and raises the sale with the seller's skills up to it.
+ *
+ *  MERC-CAP (FIELD BUGS 2026-09-29f, ValenValarys again, at 346 Mercantile: "Having to pay gold just to sell items feels
+ *  a bit too punishing!"): ONLINE THE HAGGLE READS A SKILL IN ITS OWN RANGE, 0 TO 100. CalculateTradePrice turns a
+ *  Mercantile or a Personality of 0..100 into a factor of 128..256 in 256 (FormulaHelper.cs:1992-2000), and DFU never
+ *  bounds the Mercantile it reads (DaggerfallSkills.cs:140: "TODO: Any other clamping or processing"), so the Enhances
+ *  Skill pieces and affixes that stack it past 100 ran the buying factor under 128, through 0 at 200 and below it: the
+ *  ask is nothing by 233 (Personality 100) and less after. MERC-RISE's half followed the seller's own ask past 100
+ *  to keep P0.4 whole, so there a sale fell with the skill and then went under nothing - at the field's counter a
+ *  seller at 346 paid 2311 gold to hand the lot over - and every purchase fell with it: the counter's gold a piece
+ *  (FB0929), a room free by 200 and paying its renter from 234, a cure, a spell. Online the haggle reads 100 past 100
+ *  and 0 under 0, so the least the counter asks anyone is the best haggler's ask, a sale never falls with a skill or
+ *  goes under nothing, and no price is under the best haggler's. Inside the range nothing moves; offline, DFU's reads
+ *  stand. */
+export const ONLINE_HAGGLE_MAX = 100;
+
+/** MERC-SLOPE (FIELD BUGS 2026-10-08, EvoAva: "I leveled up 20 merc today, and i am being offered the same exact prices
+ *  at the same shop, even tho i fortify personality to 100"; Mac, of keeping the flat half or giving the skills back
+ *  their slope: "Whatever is most balanced"): THE SKILLS SELL AGAIN ONLINE, UNDER THE HALF. MERC-RISE's half of the
+ *  counter's least ask stood under nearly every seller's own offer, so online a sale was one figure per counter and
+ *  piece - no skill moved it. The half stays the CEILING: P0.4's loop (buy, sell back) and ESSENTIALS-HALF's (an
+ *  essential bought at half and sold back) are shut by it, and a sale over it re-opens both (measured). Under it the
+ *  seller now stands where their own Daggerfall offer stands against the best haggler's, felt at
+ *  ONLINE_SALE_SKILL_WEIGHT of its strength: the best haggler is paid the half, as now; the weakest three quarters of it;
+ *  a Mercantile 20, Personality 50 seller about four fifths; the skills worth a third more from the bottom to the top.
+ *  Never more than Daggerfall's own offer: its weakest seller is offered half what its best is, and the half is under
+ *  three fifths of the best's offer at every counter (pinned), so the weight's floor stands under every seller's own.
+ *  Daggerfall's whole slope under the half (weight 1) would have cut a typical seller's sale by two fifths, where online
+ *  money is short already. */
+export const ONLINE_SALE_SKILL_WEIGHT = 0.5;
+
+/** FormulaHelper.CalculateTradePrice, verbatim offline - the classic
+ *  fixed-point haggle over the merchant's quality-derived levels vs
+ *  the player's Mercantile + Personality. selling=false is the BUY
+ *  price of a shelf item (applied over CalculateCost's cost).
+ *  TRADE-WRAP (FIELD BUGS 2026-10-18b; Port-Ledger A): the last step,
+ *  the haggle's factor times the lot's whole cost, then `>> 8`, was
+ *  C#'s int and JS's int32 - a lot past about 9.6 to 18 million of
+ *  cost wrapped, and a sale of a few dozen Daedric pieces paid about
+ *  -8,400,000 gold into the purse (a purchase as large paid the buyer).
+ *  It divides now: the same number for every lot that never wrapped. */
+export function calculateTradePrice(
+  cost,
+  shopQuality,
+  { mercantile = 0, personality = 50 } = {},
+  selling = false,
+  { online = isOnlinePage() } = {},
+) {
+  if (online) {
+    // MERC-CAP: the haggle's own range
+    mercantile = Math.min(Math.max(mercantile, 0), ONLINE_HAGGLE_MAX);
+    personality = Math.min(Math.max(personality, 0), ONLINE_HAGGLE_MAX);
+  }
+  const merchantLevel = 5 * (shopQuality - 10) + 50; // mercantile and personality alike
+  let dm, dp;
+  if (selling) {
+    dm = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((mercantile << 8) / 200) + 128)) >> 8;
+    dp = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((personality << 8) / 200) + 128)) >> 8;
+    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256); // TRADE-WRAP: never int32's wrap
+    if (!online) return sale;
+    const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX }; // MERC-RISE: the best haggler this counter can meet
+    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE); // REALM P0.4; MERC-RISE: half the least it asks
+    // MERC-SLOPE: under the half, where this seller's own offer stands against the best haggler's - at its weight
+    const top = calculateTradePrice(cost, shopQuality, best, true, { online: false });
+    if (!(top > 0)) return Math.min(sale, half);
+    const slope = Math.floor(
+      half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top),
+    );
+    // MERC-SLOPE's audit: the floor took a half of 1 to nothing for every seller but the best - a lot Daggerfall pays for,
+    // and MERC-RISE paid a gold for, handed over for none. A gold at least, where the half and the offer both reach one.
+    return Math.max(slope, Math.min(sale, half, 1));
+  }
+  dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
+  dp =
+    (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;
+  return Math.floor(((((192 * dm) >> 8) + (dp >> 8)) * cost) / 256); // TRADE-WRAP: never int32's wrap
+}
+
+// ── X6: THE SOUL GEM STOCK (the Mages Guild's Buy Soulgems service) ──
+//
+// X5 made Soul Trap fire, and then could not be reached in play: no
+// code path in the port MINTED a soul trap item, so there was never
+// an empty gem for a caught soul to enter. DFU has exactly three
+// minting sites for MiscItems.Soul_trap, and only one of them is a
+// way for the player to ACQUIRE one - the guild service stock
+// (DaggerfallGuildServicePopupWindow.cs:247-266). The other two are
+// SoulBound's own reads. So this is that stock.
+//
+// GetMerchantMagicItems(onlySoulGems: true) (:221-268), verbatim:
+//   - numOfItems = trunc(quality / 2) + 1;
+//   - the loop is `for (i = 0; i <= numOfItems; i++)` - INCLUSIVE, so
+//     it mints numOfItems + 1 gems, not numOfItems. stockShopShelf
+//     above already honours the same off-by-one in its own quality
+//     ladder, so the port has the precedent;
+//   - each gem: Dice100.FailedRoll(25) -> an EMPTY trap worth a flat
+//     5000; otherwise a randomly filled one. FailedRoll(25) is
+//     `Random.Range(0,100) >= 25`, i.e. TRUE three times in four - so
+//     the stock is 75% EMPTY gems and only 25% filled, which reads
+//     backwards until you notice an empty gem is the useful one for a
+//     Soul Trap caster.
+//
+// THE DAILY SEED. DFU calls Random.InitState with
+// ToClassicDaggerfallTime() / MinutesPerDay - the day number - so the
+// stock is deterministic and rotates every 24 game hours, and the
+// window can be reopened without re-rolling. DFU's own comment admits
+// this is a stand-in: "Doesn't match classic exactly as classic
+// stocking method unknown, but should be good enough for now". The
+// port injects `rolls` rather than seeding a global stream, so
+// dailyStockRolls below is the equivalent - xorshift32 over the day,
+// the same substitution dungeonEnemies.makeSlotRng already makes for
+// Unity's seeded stream (a recorded Ledger A departure).
+
+/** A deterministic [0,1) stream for one game day. */
+export function dailyStockRolls(dayIndex) {
+  let s = (dayIndex >>> 0 || 1) >>> 0;
+  return () => {
+    s ^= s << 13;
+    s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+    return s / 0x100000000;
+  };
+}
+
+/** The classic day number DFU seeds from: whole days of game time. */
+export const stockDayIndex = (gameMinutes) => Math.floor((gameMinutes ?? 0) / MINUTES_PER_DAY);
+
+/** ItemBuilder.CreateRandomlyFilledSoulTrap (:285-306).
+ *
+ *  The soul is drawn from Range(Rat, Lamia + 1) - the WHOLE monster
+ *  range, 0..42 inclusive - and re-drawn while it lands on one of two
+ *  excluded ids. DFU's note explains the pair: Horse_Invalid (39) is
+ *  an unused career with no texture, and Dragonling (34) "is soulless,
+ *  only soul of Dragonling_Alternate (40) from B0B70Y16 has a soul".
+ *
+ *  Note what is NOT excluded: the nine other creatures whose SoulPts
+ *  are zero (Rat, Giant Bat, Grizzly Bear, Sabertooth, Spider,
+ *  Slaughterfish, Skeletal Warrior, Zombie, Giant Scorpion) are all
+ *  fair draws, and a trap filled with one of them is worth 5000 +
+ *  0 - exactly what an EMPTY trap is worth. That is DFU behaviour,
+ *  not an oversight here. */
+export const SOUL_TRAP_BASE_VALUE = 5000;
+const SOULLESS_DRAWS = new Set([34, 39]); // Dragonling, Horse_Invalid
+
+export function createRandomlyFilledSoulTrap(rolls = Math.random, soulPointsOf = null) {
+  let soul = -1;
+  // Range(Rat, Lamia + 1) = 0..42 inclusive, redrawn on the two vetoes.
+  // Bounded rather than `while (true)`: 41 of 43 draws are valid, so a
+  // stream that somehow never yields one is a broken stream, not a
+  // reason to hang the frame.
+  for (let i = 0; i < 64 && soul < 0; i++) {
+    const draw = Math.floor(rolls() * 43);
+    if (!SOULLESS_DRAWS.has(draw)) soul = draw;
+  }
+  if (soul < 0) soul = 0; // Rat: the first valid draw, so a dead stream still mints a legal gem
+  const pts = soulPointsOf ? (soulPointsOf(soul) ?? 0) : 0;
+  return mintCondition({
+    group: 'MiscItems',
+    templateIndex: SOUL_TRAP_TEMPLATE,
+    trappedSoulType: soul,
+    value: SOUL_TRAP_BASE_VALUE + pts,
+  });
+}
+
+/** An EMPTY trap as the service stocks it - a FLAT 5000, written onto
+ *  the item rather than left to the template's own 500 basePrice
+ *  (:255-257 sets value explicitly). */
+export function createEmptySoulTrap() {
+  return mintCondition({
+    group: 'MiscItems',
+    templateIndex: SOUL_TRAP_TEMPLATE,
+    trappedSoulType: null,
+    value: SOUL_TRAP_BASE_VALUE,
+  });
+}
+
+/**
+ * GetMerchantMagicItems (DaggerfallGuildServicePopupWindow:221-271) -
+ * ONE function serving TWO services, which is why they share a shelf
+ * size and a seed and why this is not two functions here either.
+ *
+ *   numOfItems = trunc(quality / 2) + 1, and both loops are
+ *   `i <= numOfItems` - INCLUSIVE, so each carries numOfItems + 1.
+ *
+ *   The seed is the DAY (classic minutes / minutes-per-day), so the
+ *   shelf is stable for twenty-four game hours and rotates after -
+ *   DFU's own note says classic's stocking method is unknown and this
+ *   is "good enough".
+ *
+ * THE MAGIC ARM RUNS FIRST AND CONSUMES DRAWS, so a guild that offers
+ * BOTH services shows DIFFERENT soul gems on its Buy Magic Items
+ * shelf than on its Buy Soulgems shelf, on the same day, from the
+ * same seed. That is the single random sequence being walked to two
+ * different depths, and it is observable.
+ *
+ * ...and the soul-gem arm runs whether or not `onlySoulGems` was
+ * asked for: a guild that sells gems sells them ON the magic shelf
+ * too, with a SPELLBOOK between the two runs.
+ */
+export function stockGuildMagicItems(
+  { quality = 0, gameMinutes = 0, sellsSoulGems = false, onlySoulGems = false } = {},
+  { magicItemTemplates = null, playerLevel = 1, gender = 0, soulPointsOf = null } = {},
+) {
+  const rolls = dailyStockRolls(stockDayIndex(gameMinutes));
+  const numOfItems = Math.trunc(quality / 2) + 1;
+  const out = [];
+  if (!onlySoulGems) {
+    for (let i = 0; i <= numOfItems; i++) {
+      // INCLUSIVE
+      // A shop's magic item arrives ALREADY IDENTIFIED (:242), which
+      // is why the Identify service never has anything to do with the
+      // stock of the guild that sells it.
+      if (!magicItemTemplates) break;
+      const it = createRegularMagicItem(magicItemTemplates, playerLevel, gender, rolls);
+      it.isIdentified = true;
+      out.push(it);
+    }
+    // F103: CreateItem runs SetItem, which writes the template's
+    // basePrice into value (DaggerfallUnityItem.cs:563). Without it
+    // the guild's spellbook cost the buyer nothing at all.
+    out.push(
+      mintCondition({
+        group: 'MiscItems',
+        templateIndex: SPELLBOOK_TEMPLATE_INDEX,
+        value: itemBaseValue({ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }),
+      }),
+    );
+  }
+  if (sellsSoulGems) {
+    for (let i = 0; i <= numOfItems; i++) {
+      // INCLUSIVE - numOfItems + 1 gems
+      // Dice100.FailedRoll(25): Random.Range(0,100) >= 25, true 75% of
+      // the time, and the true branch is the EMPTY gem.
+      out.push(
+        Math.floor(rolls() * 100) >= 25 ? createEmptySoulTrap() : createRandomlyFilledSoulTrap(rolls, soulPointsOf),
+      );
+    }
+  }
+  return out;
+}
+
+/** The Buy Soulgems shelf - GetMerchantMagicItems(onlySoulGems: true).
+ *  X6's own entry point, kept as the name its callers use. */
+export function stockSoulGems({ quality = 0, gameMinutes = 0 } = {}, { soulPointsOf = null } = {}) {
+  return stockGuildMagicItems({ quality, gameMinutes, sellsSoulGems: true, onlySoulGems: true }, { soulPointsOf });
+}
+
+/** GUILD-SHELF (2026-09-27, Discord: "Potion seller restock instantly"): ONE SHELF A DAY. The shelf a guild's Buy
+ *  service shows is `store[service]` while it was minted today (the day is stockDayIndex's, the one the stock is seeded
+ *  from), and a fresh `mint()` otherwise - which it then becomes. The trade window buys out of that same array, so what
+ *  was bought stays gone until the day turns. DFU mints on every open (below), which never runs out; the departure and
+ *  why are scenes/worldModes.js guildShelf's. A null store keeps nothing and answers a fresh mint. */
+export function dayShelf(store, service, gameMinutes, mint) {
+  const today = stockDayIndex(gameMinutes);
+  const kept = store?.[service];
+  if (shelfStands(kept, today)) return kept;
+  if (store)
+    for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k]; // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it
+  const shelf = { day: today, items: mint() };
+  _mintedThisSession.add(shelf);
+  if (store) store[service] = shelf;
+  return shelf;
+}
+/** AUDIT LIVED1b A3 (a sibling of AUDIT LIVED1 I, older than LIVED1): WHAT WAS BOUGHT STAYS GONE THROUGH A STEP BACK.
+ *  Online the day is the world's (the host reads worldMinutes), and the world's reading steps back - the relay's offset
+ *  corrected at a welcome, this machine's clock set back between two - so a step across a midnight minted yesterday's
+ *  shelf over today's bought-out one, and the day's turn a frame later minted today's afresh: five potions, all bought,
+ *  and five on the shelf again. A shelf THIS session minted for a later day stands while the reading is behind it; one
+ *  a save carried (a copy's, dated on another clock) is re-minted as ever, and offline nothing reads differently. */
+const _mintedThisSession = new WeakSet();
+const shelfStands = (kept, today) =>
+  !!kept &&
+  Array.isArray(kept.items) &&
+  (kept.day === today || (isOnlinePage() && kept.day > today && _mintedThisSession.has(kept)));
+
+/**
+ * GetMerchantPotions (:273-280). `n = quality; while (n-- >= 0)` is
+ * quality + 1 potions, and it does NOT reseed - it walks on from
+ * wherever the sequence stands, so the potion shelf is not stable the
+ * way the magic one is. Seeded on the day here anyway, because the
+ * port has no ambient global stream to walk on from. The seed alone did
+ * not stop the free restock - the same lot came back at every open, the
+ * bought potions with it - so the host keeps the day's shelf (dayShelf
+ * above, GUILD-SHELF).
+ *
+ * AND THE DISCARDED DRAW: DFU passes `Random.Range(1, 5)` as
+ * CreateRandomPotion's stackSize, and CreateRandomPotion
+ * (ItemBuilder:761-766) NEVER READS stackSize - the argument is
+ * dropped on the floor. The DRAW still happens though, and it still
+ * advances the sequence, so the potion that comes back is the one
+ * AFTER it. Consumed here for that reason and for no other.
+ */
+export function stockGuildPotions({ quality = 0, gameMinutes = 0 } = {}) {
+  const rolls = dailyStockRolls(stockDayIndex(gameMinutes));
+  const out = [];
+  for (let n = quality; n >= 0; n--) {
+    // quality + 1 potions
+    rolls(); // Range(1, 5) - drawn, discarded, still counted
+    out.push(createRandomPotion(rolls));
+  }
+  return out;
+}

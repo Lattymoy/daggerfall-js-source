@@ -1,0 +1,29 @@
+[
+  {
+    "name": "ETR-the-row-unmeasured",
+    "file": "src/ui/hud/hudEscortFaces.js",
+    "old": "  _startY = escortStartY({ clearPx: touchRowClearPx(canvas, scale), scale });",
+    "new": "  _startY = escortStartY({ clearPx: 0, scale });",
+    "tests": [
+      "test/systems/quest/escortfaces.test.js"
+    ]
+  },
+  {
+    "name": "ETR-the-air-dropped",
+    "file": "src/ui/hud/hudEscortFaces.js",
+    "old": "export const ESCORT_TOUCH_AIR = 8;",
+    "new": "export const ESCORT_TOUCH_AIR = 0;",
+    "tests": [
+      "test/systems/quest/escortfaces.test.js"
+    ]
+  },
+  {
+    "name": "ETR-the-foot-counted",
+    "file": "src/ui/hud/hudEscortFaces.js",
+    "old": "    if (crossesColumn && r.top < viewHeight / 2) rowBottom = Math.max(rowBottom, r.bottom);",
+    "new": "    if (crossesColumn) rowBottom = Math.max(rowBottom, r.bottom);",
+    "tests": [
+      "test/systems/quest/escortfaces.test.js"
+    ]
+  }
+]

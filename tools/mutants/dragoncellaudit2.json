@@ -1,0 +1,113 @@
+[
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E1-the-clock-the-sockets",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (r?.c !== c) m.set(ws, (r = { c, at: !r && isCellRoom(a.key) ? (a.at ?? now) : now }));",
+    "new": "  if (!r) m.set(ws, (r = { c, at: !r && isCellRoom(a.key) ? (a.at ?? now) : now }));",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E1-a-private-room-judged",
+    "file": "server/src/dragonFights.js",
+    "old": "  a?.pose &&\n  !a.pose.dd &&\n  (isBattleRoom(a.key) || (isCellRoom(a.key) && inCover(a, cellRoomOfWire(a.pose.x, a.pose.z))))",
+    "new": "  a?.pose && !a.pose.dd && (isBattleRoom(a.key) || !isCellRoom(a.key) || inCover(a, cellRoomOfWire(a.pose.x, a.pose.z)))",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E1-the-first-clock-the-sockets-anywhere",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (r?.c !== c) m.set(ws, (r = { c, at: !r && isCellRoom(a.key) ? (a.at ?? now) : now }));",
+    "new": "  if (r?.c !== c) m.set(ws, (r = { c, at: !r ? (a.at ?? now) : now }));",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E2-an-in-unwaited",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (\n    !f?.players?.[a.sub] &&\n    (!stood(room, ws, a, mapPixelOfWire(a.pose.x, a.pose.z), now) ||\n      (dragonWatchesAbout(now).includes(m.w) && !(await judged(room, a, [dragonJudgedCell(site[0], site[1])], m.w))))\n  )\n    return; // DRAGON-BUDGET: a watch about (any other is `gone` below, as the clock says)",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-BUDGET). Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E2-a-fighter-made-to-wait",
+    "file": "server/src/dragonFights.js",
+    "old": "    !f?.players?.[a.sub] &&\n    (!stood(room, ws, a, mapPixelOfWire(a.pose.x, a.pose.z), now) ||\n      (dragonWatchesAbout(now).includes(m.w) && !(await judged(room, a, [dragonJudgedCell(site[0], site[1])], m.w))))",
+    "new": "    !stood(room, ws, a, mapPixelOfWire(a.pose.x, a.pose.z), now) ||\n    (dragonWatchesAbout(now).includes(m.w) && !(await judged(room, a, [dragonJudgedCell(site[0], site[1])], m.w)))",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-BUDGET)."
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E3-a-new-socket-told-null",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (!p || !stood(room, ws, a, p, now) || !(await judged(room, a, dragonReachCells(p[0], p[1]), m.w))) return; // DRAGON-BUDGET: and within its account's cells, each it could be told (G4)",
+    "new": "  if (!p) return;\n  if (!stood(room, ws, a, p, now)) {\n    if (now >= dragonQuietAt(m.w)) say(room, ws, { k: 'omen', w: m.w, s: null });\n    return;\n  }\n  if (!(await judged(room, a, dragonReachCells(p[0], p[1]), m.w))) return;",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-BUDGET). Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E4-the-land-unread",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": " || !(land() > 0)) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E6-the-read-begun-again",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "      if (dig?.key !== key) dig = {",
+    "new": "      dig = {",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E6-the-old-read-kept",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "grounds8.clear(); dig = null; theatres = null;",
+    "new": "grounds8.clear(); theatres = null;",
+    "tests": [
+      "test/net/dragon/dragoncellaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E7-no-timer-for-the-bay",
+    "file": "src/scenes/world.js",
+    "old": "    const idle = pageIdle();",
+    "new": "    const idle = globalThis.requestIdleCallback ? pageIdle() : null;",
+    "tests": [
+      "test/scenes/auditwb_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E8-a-lone-comma",
+    "file": "src/ui/heldMap.js",
+    "old": "[entry.regionName, entry.way].filter(Boolean).join(', ')",
+    "new": "`${entry.regionName}, ${entry.way}`",
+    "tests": [
+      "test/ui/findfound.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DRAGON-CELL-II-E13-omens-rolled-off-one-seed",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "    const c = { w: o.w, s: o.seeds[i] >>> 0 },",
+    "new": "    const c = { w: o.w, s: dragonRoll({ w: o.w, s: o.seeds[0] }, 100 + i) },",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  }
+]

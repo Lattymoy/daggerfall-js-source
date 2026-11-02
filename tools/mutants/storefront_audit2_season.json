@@ -1,0 +1,380 @@
+[
+  {
+    "name": "AUDIT2-B1-the-fall-kept-on-the-fissure-s-record",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    if (fallen.has(fo)) return;\n    fallen.add(fo);",
+    "new": "    if ((F.counted ??= new WeakSet()).has(fo)) return;\n    F.counted.add(fo);",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-the-kept-id-unread",
+    "file": "server-account/src/battlePass.js",
+    "old": "  if (kept) return kept;\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-the-id-written-outside-the-find-s-batch",
+    "file": "server-account/src/battlePass.js",
+    "old": "      ...asked,\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-the-twin-s-refusal-thrown",
+    "file": "server-account/src/battlePass.js",
+    "old": "    if (twin) return twin;\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-the-sweep-s-cutoff",
+    "file": "server-account/src/battlePass.js",
+    "old": "day - PASS_ASK_KEEP_DAYS",
+    "new": "day + 1",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-never-swept",
+    "file": "server-account/src/battlePass.js",
+    "old": "      ...(ask.asks === 1 ? [passAskSweep(db, player.id, day)] : []),",
+    "new": "      ...([]),",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-the-door-drops-the-id",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/pass/find', { source, rid })",
+    "new": "post('/v1/pass/find', { source })",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-a-new-id-each-time",
+    "file": "src/systems/pass/passClient.js",
+    "old": "      const r = await _api.find(source, rid).catch(() => null);",
+    "new": "      const r = await _api.find(source, _doors.rid()).catch(() => null);",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-never-asked-again",
+    "file": "src/systems/pass/passClient.js",
+    "old": "      if (!unreached(r)) { _rest.refused(r?.error); return settle(0); }",
+    "new": "      if (r?.ok !== true) { _rest.refused(r?.error); return settle(0); }",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B2-the-wait-unbounded",
+    "file": "src/systems/pass/passClient.js",
+    "old": "Math.min(PASS_FIND_RETRY_MAX_MS, PASS_FIND_RETRY_MS * 2 ** i)",
+    "new": "PASS_FIND_RETRY_MS * 2 ** i",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-B4-the-old-words",
+    "file": "src/ui/passText.js",
+    "old": "'Make, socket or reforge {n, plural, one {# item} other {# items}}'",
+    "new": "'Make or find {n, plural, one {# item} other {# items}}'",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-kept-id-on-its-own-day-alone",
+    "file": "server-account/src/seasonClaim.js",
+    "old": "  if (kept) return { ok: true, day: kept.day };",
+    "new": "  if (kept && kept.day === utcDay(nowS)) return { ok: true, day: kept.day };",
+    "tests": [
+      "test/server/storefront_audit2_pass.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-record-never-kept",
+    "file": "src/scenes/seasonHost.js",
+    "old": "        held.set(rid, { day: a.data?.day ?? null, who: who(), taken: true, askAt: -Infinity });\n        keepHeld();\n",
+    "new": "        held.set(rid, { day: a.data?.day ?? null, who: who(), taken: true, askAt: -Infinity });\n",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-id-not-the-piece-s",
+    "file": "src/scenes/seasonHost.js",
+    "old": "        item.uid = rid;   // the piece's ledger id is its claim's: a save holding it says so at the next stand-up\n",
+    "new": "",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-stand-up-asking-nothing",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      void claimMaul(rid).then(",
+    "new": "      void Promise.resolve(null).then(",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-asked-behind-the-season-s-gate",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      tendMaul(Date.now());   // AUDIT-STOREFRONT II (lane D 2): a held Maul outlives its stage\n      if (!at || !online() || !heard()) { this.destroyAll(); return; }\n",
+    "new": "      if (!at || !online() || !heard()) { this.destroyAll(); return; }\n      tendMaul(Date.now());\n",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-a-landing-that-lets-nothing-go",
+    "file": "src/scenes/seasonHost.js",
+    "old": "return (/** @type {any} */ r) => { if (r?.ok === true) letGo(mine); };",
+    "new": "return () => {};",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-a-checkpoint-handed-before-the-mint-lets-it-go",
+    "file": "src/scenes/seasonHost.js",
+    "old": "const mine = takenRids(); return (/** @type {any} */ r) => { if (r?.ok === true) letGo(mine); };",
+    "new": "return (/** @type {any} */ r) => { if (r?.ok === true) letGo(takenRids()); };",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-a-slot-save-unheard",
+    "file": "src/scenes/seasonHost.js",
+    "old": "  (host.onSlotSaved ?? onSlotSaved)(",
+    "new": "  (() => {})(",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-any-character-s-slot",
+    "file": "src/scenes/seasonHost.js",
+    "old": ".filter((rid) => held.get(rid)?.who.endsWith(`|${ch}`))",
+    "new": "",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-load-unheard",
+    "file": "src/scenes/seasonHost.js",
+    "old": "  (host.onSlotLoaded ?? onSlotLoaded)(",
+    "new": "  (() => {})(",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-never-asked-again",
+    "file": "src/scenes/seasonHost.js",
+    "old": "h.askAt = t + SEASON_MAUL_REASK_MS;",
+    "new": "h.askAt = Infinity;",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-save-s-pack-unread",
+    "file": "src/scenes/seasonHost.js",
+    "old": "(keys.has(rid) || stowed.has(rid))",
+    "new": "false",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-season-host-deaf-to-the-realm",
+    "file": "src/scenes/seasonHost.js",
+    "old": "(host.hearRealmSaves ?? hearRealmSaves)(",
+    "new": "(host.hearRealmSaves ?? (() => {}))(",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-sink-s-puts-unheard",
+    "file": "src/scenes/shared.js",
+    "old": "return sink ? (/** @type {any} */ snap) => heardPut(sink, snap) : null;",
+    "new": "return sink;",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D3-the-cards-made-every-poll",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (!cardGatesMoved(t) && list === cards.list && cards.text === textRevision()) return cards.out;",
+    "new": "      if (false) return cards.out;",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D3-the-stage-s-list-unread",
+    "file": "src/scenes/seasonHost.js",
+    "old": "!cardGatesMoved(t) && list === cards.list && ",
+    "new": "!cardGatesMoved(t) && ",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D3-the-gate-s-day-unread",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    if (!moved) return false;\n",
+    "new": "    return false;\n",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D3-the-language-unread",
+    "file": "src/scenes/seasonHost.js",
+    "old": "list === cards.list && cards.text === textRevision()) return cards.out;",
+    "new": "list === cards.list) return cards.out;",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D3-the-reader-made-again-every-poll",
+    "file": "src/ui/fissureMapMark.js",
+    "old": "  if (kept && kept.x0 === box.x0 && kept.y0 === box.y0 && kept.w === box.w && kept.h === box.h) return kept.out;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D3-the-key-not-the-marks-",
+    "file": "src/ui/fissureMapMark.js",
+    "old": "if (k === undefined) { k = raidMarksKey(marks); _keys.set(marks, k); }",
+    "new": "if (k === undefined) { k = ''; _keys.set(marks, k); }",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D4-a-cog-s-footprint-its-radius-alone",
+    "file": "src/world/fissureModel.js",
+    "old": "hz: g.r * COG_TIP });",
+    "new": "hz: g.r });",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D4-the-pillar-s-capital-unread",
+    "file": "src/world/fissureModel.js",
+    "old": "rod(L.pillar, PILLAR.x0, PILLAR.capX, Math.max(PILLAR.r, PILLAR.capR))",
+    "new": "rod(L.pillar, PILLAR.x0, PILLAR.x1, PILLAR.r)",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D4-the-stands-unchecked",
+    "file": "src/world/fissureModel.js",
+    "old": "if (free(Math.cos(a) * r, Math.sin(a) * r)) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D4-the-colossus-at-the-heart",
+    "file": "src/world/fissureModel.js",
+    "old": "const x = e.x + Math.sign(e.x) * d;",
+    "new": "const x = Math.sign(e.x) * d;",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D4-the-ring-laid-in-the-world-s-frame",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      const [x, z] = toWorld(F, lx, lz), y = groundAt(x, z)",
+    "new": "      const x = F.heart[0] + lx, z = F.heart[2] + lz, y = groundAt(x, z)",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D4-the-spot-turned-the-other-way",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      const [x, z] = toWorld(F, lx, lz), y = groundAt(x, z)",
+    "new": "      const [x, z] = toWorld(F, lx, -lz), y = groundAt(x, z)",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-checkpoint-ask-unread",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "export function askCheckpoint() {\n  _asked = true;\n}",
+    "new": "export function askCheckpoint() {}",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-the-checkpoint-ask-kept",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "        _asked = false;\n        if (session && !session.lost) checkpoint();",
+    "new": "        if (session && !session.lost) checkpoint();",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-asked-before-the-world-stands",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "      if (stands() && _asked) {",
+    "new": "      if (_asked) {",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-a-lost-session-asked",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "        if (session && !session.lost) checkpoint();",
+    "new": "        if (session) checkpoint();",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-D2-no-checkpoint-asked-at-the-mint",
+    "file": "src/scenes/seasonHost.js",
+    "old": "        (host.askCheckpoint ?? askCheckpoint)();",
+    "new": "        void askCheckpoint;",
+    "tests": [
+      "test/scenes/storefront_audit2_world.test.js"
+    ]
+  }
+]

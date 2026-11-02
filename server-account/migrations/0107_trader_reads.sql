@@ -1,0 +1,26 @@
+-- PATRON-LOAD II (2026-10-11, the owner: "I think the database is overloaded"): THE INDEXES THE TRADERS ARE READ BY.
+-- Read off the database (wrangler d1 insights, a day): the region's traders read (market.js marketVendors,
+-- /v1/market/vendors - every online client in a living town each PATRON_READ_S) was 4.2 billion of the day's 5.66
+-- billion rows and about 83 minutes of D1's time in the 2.5 hours after LW15 deployed - ~720,000 rows each of its two
+-- statements, ~860 ms each - and rows read an hour went from ~190 million to 1.0-1.6 billion. PATRON-LOAD (acct109) took
+-- the reckoning out of that read; the read itself was the weight. Its plan:
+--
+--   SEARCH l USING INDEX idx_market_open (state=?)              every open listing in the market, every region
+--   SEARCH d USING INDEX idx_home_decor_yard (map_id=? AND yard=?)   every piece inside every home of that town
+--   SEARCH h USING INDEX sqlite_autoindex_homes_1 ...            and the region asked only then
+--
+-- A listing names its trader by (vendor_map, vendor_id) and home_decor's key is (map_id, building_key, id), so the join
+-- found a trader by its town alone. Each index below cuts one factor; together the read walks its own region's trader
+-- listings, newest first, one decor row and one home each.
+--
+-- A trader's piece by its town and its id - the join every trader read makes (the region's, a trader's own, the
+-- patrons' towns, a listing's stocking): one row, not a town's every piece. `yard` third because every one of those
+-- joins asks `d.yard = 0` too: with three columns bound this outranks idx_home_decor_yard (map_id, yard) on a database
+-- with no ANALYZE statistics, as D1's is - with two it tied, and SQLite kept the old index.
+CREATE INDEX IF NOT EXISTS idx_home_decor_piece ON home_decor (map_id, id, yard);
+--
+-- A region's open trader listings, newest first. A trader's listing takes its home's region when it is stocked
+-- (market.js listGood: `region = Number(h.region)`) and nothing moves either after, so `l.region = ?` asks the same
+-- question the home's region does - and this index answers it without the rest of the market. Partial: a board listing
+-- is never a trader's.
+CREATE INDEX IF NOT EXISTS idx_market_vendor_region ON market_listings (region, at) WHERE state = 'open' AND vendor_id IS NOT NULL;

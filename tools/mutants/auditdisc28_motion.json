@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AUDIT-DISC28-MO1-a-wall-is-a-floor-again",
+    "file": "src/player/collider.js",
+    "old": "\n            && (R ? faceNyTurned(tri, R) : faceNy(tri)) >= GROUND_NY;",
+    "new": ";",
+    "tests": [
+      "test/player/auditdisc28_motion.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO1-no-face-is-a-floor",
+    "file": "src/player/collider.js",
+    "old": "            && (R ? faceNyTurned(tri, R) : faceNy(tri)) >= GROUND_NY;",
+    "new": "            && (R ? faceNyTurned(tri, R) : faceNy(tri)) > 1;",
+    "tests": [
+      "test/player/auditdisc28_motion.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO1-the-face-read-by-its-x",
+    "file": "src/player/collider.js",
+    "old": "return l > 0 ? Math.abs(ny) / l : 0;",
+    "new": "return l > 0 ? Math.abs(nx) / l : 0;",
+    "tests": [
+      "test/player/auditdisc28_motion.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO2-rising-kills-PH1",
+    "file": "src/player/collider.js",
+    "old": "const lowOneWay = straddle ? axis : true;",
+    "new": "const lowOneWay = straddle ? false : true;",
+    "tests": [
+      "test/player/disc28_swim.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO2-rest-kills-PH1",
+    "file": "src/player/collider.js",
+    "old": "const lowOneWay = straddle ? axis : true;",
+    "new": "const lowOneWay = straddle ? axis : false;",
+    "tests": [
+      "test/player/disc28_swim.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO3-the-stroke-in-one-move",
+    "file": "src/scenes/deepWater/deepWatersSwimMove.js",
+    "old": "  const n = Number.isFinite(m) ? Math.min(STROKE_PIECES_MAX, Math.max(1, Math.ceil(m / EXACT_SWEEP_MAX))) : 1;",
+    "new": "  const n = 1;",
+    "tests": [
+      "test/player/auditdisc28_motion.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO3-one-piece-at-most",
+    "file": "src/scenes/deepWater/deepWatersSwimMove.js",
+    "old": "const STROKE_PIECES_MAX = 8;",
+    "new": "const STROKE_PIECES_MAX = 1;",
+    "tests": [
+      "test/player/auditdisc28_motion.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO3-the-exact-sweep-overstated",
+    "file": "src/player/collider.js",
+    "old": "export const EXACT_SWEEP_MAX = SUBSTEPS_MAX * SUBSTEP_LEN;",
+    "new": "export const EXACT_SWEEP_MAX = 2 * SUBSTEPS_MAX * SUBSTEP_LEN;",
+    "tests": [
+      "test/player/auditdisc28_motion.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO4-the-read-finds-nothing",
+    "file": "src/characters/enemy/enemyAnchor.js",
+    "old": "  return Number.isFinite(d) ? at[1] + 0.2 - d : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO4-the-read-from-the-marker-itself",
+    "file": "src/characters/enemy/enemyAnchor.js",
+    "old": "  const d = collider.raycast([at[0], at[1] + 0.2, at[2]], [0, -1, 0], idleH / 2 + 0.4);",
+    "new": "  const d = collider.raycast([at[0], at[1], at[2]], [0, -1, 0], idleH / 2 + 0.4);",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO4-the-door-hangs-given-feet",
+    "file": "src/characters/enemy/enemyAnchor.js",
+    "old": "  return feetGiven ? [at[0], at[1], at[2]] : flyerSpawnFeet(at, idleH, floorUnderHang(collider, at, idleH));",
+    "new": "  return flyerSpawnFeet(at, idleH, floorUnderHang(collider, at, idleH));",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO4-the-builder-drops-feetGiven",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "flyerStandFeet(collider, [e.x, e.y, e.z], idleH, feetGiven)",
+    "new": "flyerStandFeet(collider, [e.x, e.y, e.z], idleH)",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO4-the-builder-hangs-as-before",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "flyerStandFeet(collider, [e.x, e.y, e.z], idleH, feetGiven)",
+    "new": "[e.x, e.y - idleH / 2, e.z]",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-MO4-the-shared-puppet-rehung",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "spawnDistanceType: 0 }, false, { puppet: true, feetGiven: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the host's encounter",
+    "new": "spawnDistanceType: 0 }, false, { puppet: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the host's encounter",
+    "tests": [
+      "test/characters/enemy/disc28_flyer.test.js"
+    ]
+  }
+]

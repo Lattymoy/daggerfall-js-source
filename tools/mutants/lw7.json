@@ -1,0 +1,963 @@
+[
+  {
+    "name": "LW7-hand-minute-unasked",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (!turnOk(key) || hand.has(key) || !Number.isFinite(at?.t)) return false;",
+    "new": "        if (!turnOk(key) || hand.has(key)) return false;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-twice",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (!turnOk(key) || hand.has(key) || !Number.isFinite(at?.t)) return false;",
+    "new": "        if (!turnOk(key) || !Number.isFinite(at?.t)) return false;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-name-uncut",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "  const nameOk = (who) => (typeof who === 'string' ? who.slice(0, HAND_NAME_MAX) : '');",
+    "new": "  const nameOk = (who) => (typeof who === 'string' ? who : '');",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-unseen",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        hand.set(key, { t: Number(at?.t), seen: !!at?.seen, who: nameOk(at?.who) });",
+    "new": "        hand.set(key, { t: Number(at?.t), seen: false, who: nameOk(at?.who) });",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-cap",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));",
+    "new": "        if (false) hand.delete(/** @type {string} */ (hand.keys().next().value));",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-version",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));\n        turnsVersion++;\n        return true;",
+    "new": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));\n        return true;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-record-seen-dropped",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        HAND_KINDS.filter((k) => hands[k].size).map((k) => [\n          k,\n          [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who]),\n        ]),",
+    "new": "        HAND_KINDS.filter((k) => hands[k].size).map((k) => [k, [...hands[k]].map(([key, h]) => [key, h.t, 0, h.who])]),",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-record-who-dropped",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "          [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who]),",
+    "new": "          [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, '']),",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-record-old-kinds",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        HAND_KINDS.filter((k) => hands[k].size).map((k) => [\n          k,\n          [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who]),\n        ]),",
+    "new": "        HAND_KINDS.map((k) => [k, [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who])]),",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-record-load-unread",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (turnOk(key) && Number.isFinite(Number(t)))\n          hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
+    "new": "        if (false) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-record-bad-kept",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (turnOk(key) && Number.isFinite(Number(t)))\n          hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
+    "new": "        if (turnOk(key)) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-tone-twice",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (/** @type {any} */ (e)[tone] === day) delta = 0;\n        else /** @type {any} */ (e)[tone] = day;",
+    "new": "        /** @type {any} */ (e)[tone] = day;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-tone-shared",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "            ? 'blunt'",
+    "new": "            ? 'polite'",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-tone-unsaved",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (e.polite != null) people[id].polite = e.polite; // LW7: only once counted",
+    "new": "        void 0; // LW7: only once counted",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-tone-unloaded",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        if (Number.isFinite(d)) /** @type {any} */ (got)[tone] = d;",
+    "new": "        if (false) /** @type {any} */ (got)[tone] = d;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-slain-weight",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "  slain: -75, // one of their own - their household, their party - struck down by the player",
+    "new": "  slain: -60, // one of their own - their household, their party - struck down by the player",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-unread",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
+    "new": "  const at = turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW7-died-unread",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
+    "new": "  const at = turns?.slain?.get(key) ?? turns?.killed?.get(key) ?? null;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW7-hand-not-a-death",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "export const fateHits = (res, k, turns) => handDeath(res, k, turns) != null || roadHits(res, k, turns);",
+    "new": "export const fateHits = (res, k, turns) => roadHits(res, k, turns);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-turn-uncounted",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "  return !!turns?.fallen?.has(turnKey(res, k)) || handDeath(res, k, turns) != null || quietBefore(res, k, turns);",
+    "new": "  return !!turns?.fallen?.has(turnKey(res, k)) || quietBefore(res, k, turns);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-fallen-uncounted",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "  return !!turns?.fallen?.has(turnKey(res, k)) || handDeath(res, k, turns) != null || quietBefore(res, k, turns);",
+    "new": "  return handDeath(res, k, turns) != null || quietBefore(res, k, turns);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-made-road",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "  const dies = roadHits(res, k, turns) && (!!turns?.fallen?.has(turnKey(res, k)) || quiet);",
+    "new": "  const dies = fateHits(res, k, turns) && (!!turns?.fallen?.has(turnKey(res, k)) || quiet);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-fallen-not-road",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "  const dies = roadHits(res, k, turns) && (!!turns?.fallen?.has(turnKey(res, k)) || quiet);",
+    "new": "  const dies = roadHits(res, k, turns) && quiet;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-minute-dropped",
+    "file": "src/systems/livingWorld/lives.js",
+    "old": "  return { vacant: false, holder: last, dies, diced, since: last, hand: handDeath(res, k, turns) };",
+    "new": "  return { vacant: false, holder: last, dies, diced, since: last, hand: null };",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hands-after-trip",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (t != null && t < trip.backT1) hands.push({ res: m, t, s: 0, hand: true });",
+    "new": "    if (t != null) hands.push({ res: m, t, s: 0, hand: true });",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-hand-unmarked",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (t != null && t < trip.backT1) hands.push({ res: m, t, s: 0, hand: true });",
+    "new": "    if (t != null && t < trip.backT1) hands.push({ res: m, t, s: 0, hand: false });",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-remains-hand",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const fell = trip.fallen?.filter((f) => !f.hand);   // LW7",
+    "new": "    const fell = trip.fallen;   // LW7",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-news-hand",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const fell = tr.fallen?.filter((f) => !f.hand) ?? [];",
+    "new": "    const fell = tr.fallen ?? [];",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-news-enc",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "out.push({ id: tr.id, enc: enc.id, kind:",
+    "new": "out.push({ id: tr.id, enc: tr.id, kind:",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-slain-unseen-words",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "          ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
+    "new": "          ? SLAIN_NEWS.seen",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "LEGACY6 (PIN MOVED): re-aimed by content - the pool asks a kinsman's news first now (KIN_NEWS), so the slain arm opens its own line."
+  },
+  {
+    "name": "LW7-died-words",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "            ? DIED_NEWS",
+    "new": "            ? null",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-helped-words",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]",
+    "new": "                    : false && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-helped-no-fallback",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]",
+    "new": "                    : item.helped",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-player-unfilled",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "player: ctx.player,   // LW7",
+    "new": "player: null,   // LW7",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-witness-range",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (Math.hypot(p[0] - at[0], p[2] - at[2]) > WITNESS_M) continue;",
+    "new": "      if (Math.hypot(p[0] - at[0], p[2] - at[2]) > WITNESS_M * 3) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-witness-blind",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (this.o.sees && !this.o.sees([p[0], p[1] + 1.6, p[2]], [at[0], at[1] + 1, at[2]])) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-witness-eyes",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (this.o.sees && !this.o.sees([p[0], p[1] + 1.6, p[2]], [at[0], at[1] + 1, at[2]])) continue;",
+    "new": "      if (this.o.sees && !this.o.sees([p[0], p[1], p[2]], [at[0], at[1], at[2]])) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-witness-self",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (!row.visible || !row.res || row.res.id === exceptId) continue;",
+    "new": "      if (!row.visible || !row.res) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-kin-visitor",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (visit) return visit.trip.party.filter((m) => m.id !== res.id);",
+    "new": "    if (false) return visit.trip.party.filter((m) => m.id !== res.id);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-kin-crew-berth",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " && c.berth?.k === crew.berth?.k).map((c) => c.res);",
+    "new": ").map((c) => c.res);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-kin-home",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return this.peopleOf(day).filter((r) => r.id !== res.id && householdKeyOf(r) === hh);",
+    "new": "    return this.peopleOf(day).filter((r) => r.id !== res.id);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "LW7-slain-unmade",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.o.slay?.(res, this._now, seen.length > 0);",
+    "new": "    void seen;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-slain-seen-always",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.o.slay?.(res, this._now, seen.length > 0);",
+    "new": "    this.o.slay?.(res, this._now, true);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-slain-kin-spared",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const kin of this.kinOf(res)) rel?.note(kin.id, 'slain', day);",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-slain-unwitnessed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const w of seen) rel?.note(w.id, 'crime', day);",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-slain-left-standing",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down\n    this._take(res);",
+    "new": "    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "WATCH-DAY (re-aimed by content): WATCH-FIX set killed() between slain() and struck(), and the record's text - the take before the struck's comment - had moved onto killed()'s own take, where lw7_deeds cannot see it (it survived); aimed at slain()'s take again, and killed()'s has its own record (watchfix.json WATCH-FIX-killed-left-standing)."
+  },
+  {
+    "name": "LW7-slain-other-town",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (!res || person.living.town !== this) return null;\n    const day = this.dayOf(this._now);\n    const rel = this.o.relations?.();\n    const seen",
+    "new": "    if (!res) return null;\n    const day = this.dayOf(this._now);\n    const rel = this.o.relations?.();\n    const seen",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-struck-unremembered",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    rel?.note(res.id, 'struck', day);",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-struck-unwitnessed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const w of this.witnesses(person.pos, res.id)) rel?.note(w.id, 'crime', day);",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-caught-unwitnessed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const w of this.witnesses(person.pos, id)) rel?.note(w.id, 'crime', day);",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-tone-swapped",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const kind = taste > 0 ? 'polite' : taste < 0 ? 'insulted' : null;",
+    "new": "    const kind = taste < 0 ? 'polite' : taste > 0 ? 'insulted' : null;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-deed-known-now",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        const known = h.t + DEED_KNOWN_MIN;",
+    "new": "        const known = h.t;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-deed-window",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " || !(known <= t && t - known < NEWS_DAYS * DAY_MIN)) continue;",
+    "new": " || !(known <= t)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-deed-any-town",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        if (!key.startsWith(prefix) || !(known",
+    "new": "        if (!(known",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-deed-census-name",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        const who = h.who || res?.name || '';",
+    "new": "        const who = h.who || '';",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW7-deed-died-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {",
+    "new": "    for (const kind of /** @type {const} */ (['slain', 'killed'])) {",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW7-deed-order",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return out.sort((a, b) => b.t - a.t);",
+    "new": "    return out;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-deeds-untold",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (deeds.length) ctx.news = [...(ctx.news ?? []), ...deeds];",
+    "new": "    void deeds;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-deeds-nameless",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    ctx.player = this.o.playerName?.() ?? '';",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-holder-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      const x = h?.has(r.id) ? h.get(r.id) : (hold && r.roll !== 't' ? hold(r, day) : r);",
+    "new": "      const x = h?.has(r.id) ? h.get(r.id) : r;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-holder-asks-travellers",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      const x = h?.has(r.id) ? h.get(r.id) : (hold && r.roll !== 't' ? hold(r, day) : r);",
+    "new": "      const x = h?.has(r.id) ? h.get(r.id) : (hold ? hold(r, day) : r);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-holder-gate",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const own = h || hold ? this.residents.flatMap((r) => {",
+    "new": "    const own = h ? this.residents.flatMap((r) => {",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-dead-walk",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (this._taken.get(res.id) === day || this.o.deadAt?.(res, t)) {",
+    "new": "if (this._taken.get(res.id) === day) {",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW7-road-slay-unmade",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      deps.slay?.(res, t, true);",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-road-unseen",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      deps.slay?.(res, t, true);",
+    "new": "      deps.slay?.(res, t, false);",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-road-party-spared",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      for (const m of p ? membersAt(p.trip, t) : []) if (m.id !== res.id) rel?.note(m.id, 'slain', dayOf(t));",
+    "new": "      void p;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-road-self-noted",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      for (const m of p ? membersAt(p.trip, t) : []) if (m.id !== res.id) rel?.note(m.id, 'slain', dayOf(t));",
+    "new": "      for (const m of p ? membersAt(p.trip, t) : []) rel?.note(m.id, 'slain', dayOf(t));",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-road-no-refresh",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      timer = ROADS_TICK_S;",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-road-tone-swapped",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      const kind = taste > 0 ? 'polite' : taste < 0 ? 'insulted' : null;",
+    "new": "      const kind = taste < 0 ? 'polite' : taste > 0 ? 'insulted' : null;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-empty-mark",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      if (!members.length) continue;   // LW7: nobody left of it on the road",
+    "new": "      void 0;   // LW7: nobody left of it on the road",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-town-cycle",
+    "file": "src/scenes/world.js",
+    "old": "    if (res.roll !== 't') return cycleOf(res, day, livingScale()).k;",
+    "new": "    if (false) return cycleOf(res, day, livingScale()).k;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-traveller-cycle",
+    "file": "src/scenes/world.js",
+    "old": "    return placeCycle(roster.find((r) => r.slot === res.slot) ?? res, roster, day, livingScale());",
+    "new": "    return cycleOf(res, day, livingScale()).k;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-dead-any",
+    "file": "src/scenes/world.js",
+    "old": "    if (!turns.slain.size && !turns.died.size && !turns.killed.size) return false;",
+    "new": "    if (!turns.slain.size) return false;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW7-host-dead-before",
+    "file": "src/scenes/world.js",
+    "old": "    return h != null && h <= t;",
+    "new": "    return h != null;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-slay-unseen",
+    "file": "src/scenes/world.js",
+    "old": "{ t, seen, who: res.name });\n  };",
+    "new": "{ t, seen: false, who: res.name });\n  };",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-slay-cycle",
+    "file": "src/scenes/world.js",
+    "old": "livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))),",
+    "new": "livingRelations.turn('slain', turnKey(res, 0),",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-hand-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      got = { holder, dies: !pl.vacant && pl.dies, hand: pl.hand };",
+    "new": "      got = { holder, dies: !pl.vacant && pl.dies, hand: null };",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-trouble-takes-hand",
+    "file": "src/scenes/world.js",
+    "old": "    dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies && pl.hand == null; },   // LW7",
+    "new": "    dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies; },   // LW7",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-hands-off",
+    "file": "src/scenes/world.js",
+    "old": "      f = handsOn(f, (m) => livingPlaceOf(m, livingCycleOf(m, Math.floor((trip.outT0 - 240) / 1440))).hand);",
+    "new": "      void handsOn;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-helped",
+    "file": "src/scenes/world.js",
+    "old": "helped: won.has(n.enc) })) };",
+    "new": "helped: false })) };",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "LW16 (re-aimed by content): the town's news at any minute (livingRoadNewsAt)."
+  },
+  {
+    "name": "LW7-host-crew-holder",
+    "file": "src/scenes/world.js",
+    "old": "      const res = livingPlaceOf(c.res, livingCycleOf(c.res, day)).holder;",
+    "new": "      const res = c.res;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-town-options",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          holderOf: (res, day) => (host.legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay,",
+    "new": "          deadAt: livingDeadAt, slay: livingSlay,",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "LEGACY5 (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "LW7-host-sees-blind",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "            return !(Number.isFinite(hit) && hit < len - 0.25);",
+    "new": "            return true;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-pool-person",
+    "file": "src/scenes/world.js",
+    "old": "    pos, fwdYaw: person.facingYaw, guard: person.guard, person,",
+    "new": "    pos, fwdYaw: person.facingYaw, guard: person.guard,",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-pool-raw",
+    "file": "src/scenes/world.js",
+    "old": "player.pos, livingStruckPool(_guardPool()),",
+    "new": "player.pos, _guardPool(),",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-pool-deedless",
+    "file": "src/scenes/world.js",
+    "old": "disable: () => { livingDeedOf(e.person, e.pos); e.disable(); }",
+    "new": "disable: () => { e.disable(); }",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-guard-slain",
+    "file": "src/scenes/world.js",
+    "old": "    if (!person.guard) { town.slain(person); return; }",
+    "new": "    { town.slain(person); return; }",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-watch-untracked",
+    "file": "src/scenes/livingWorld/livingWatch.js",
+    "old": "    if (!g?.livingFrom || g.livingFollowed) continue;",
+    "new": "    if (!g?.livingFrom || g.livingFollowed || true) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/watchfix_watch.test.js",
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW7-host-trample",
+    "file": "src/scenes/world.js",
+    "old": "    retire: (person) => { livingDeedOf(person); for",
+    "new": "    retire: (person) => { for",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-watch-unstepped",
+    "file": "src/scenes/world.js",
+    "old": "    if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }",
+    "new": "    if (livingWorldOn()) { livingPeerWatchStep(); }",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW7-host-road-unstruck",
+    "file": "src/scenes/world.js",
+    "old": "            r ||= livingStrikeRoad(cam.pos, lookFwd);",
+    "new": "            void livingStrikeRoad;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
+  },
+  {
+    "name": "LW7-host-road-reach",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    if (!near || near.distance > WEAPON_REACH) return false;",
+    "new": "    if (!near) return false;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
+  },
+  {
+    "name": "LW7-host-road-wall",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    if (Number.isFinite(wall) && wall < near.distance - 1e-3) return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
+  },
+  {
+    "name": "LW7-host-road-tally",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    tallyCrimeGuildRequirements(playerEntity, false, 5);\n    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });",
+    "new": "    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
+  },
+  {
+    "name": "LW7-host-road-racial",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });\n    return ROAD_STRUCK;",
+    "new": "    return ROAD_STRUCK;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
+  },
+  {
+    "name": "LW7-host-tone",
+    "file": "src/scenes/world.js",
+    "old": "    livingTone: (person, taste) => person?.living?.town?.toned?.(person, taste),",
+    "new": "    livingTone: null,",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-road-tone",
+    "file": "src/scenes/world.js",
+    "old": "  _livingRoadsDoor.toned = (p, taste) => livingRoads?.toned(p, taste) ?? null;",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-host-road-slay",
+    "file": "src/scenes/world.js",
+    "old": "    slay: livingRoadSlay,   // LW7: a traveller struck down",
+    "new": "    slay: null,   // LW7: a traveller struck down",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-talk-tone-unheard",
+    "file": "src/scenes/townTalk.js",
+    "old": "  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, _toneTaste()); };",
+    "new": "  const _toneHeard = () => {};",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-talk-target-unset",
+    "file": "src/scenes/townTalk.js",
+    "old": "    _toneTarget = _toneNext;   // LW7",
+    "new": "    _toneTarget = null;   // LW7",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-talk-target-unnamed",
+    "file": "src/scenes/townTalk.js",
+    "old": "      _toneNext = target.person.living ? target.person : null;   // LW7: a resident's",
+    "new": "      _toneNext = null;   // LW7: a resident's",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-talk-next-kept",
+    "file": "src/scenes/townTalk.js",
+    "old": "    _toneNext = null;",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-talk-answer",
+    "file": "src/scenes/townTalk.js",
+    "old": "          _toneHeard();   // LW7: the question's tone",
+    "new": "          void 0;   // LW7: the question's tone",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  },
+  {
+    "name": "LW7-talk-work",
+    "file": "src/scenes/townTalk.js",
+    "old": "        askWork: () => {\n          _toneHeard();\n",
+    "new": "        askWork: () => {\n",
+    "tests": [
+      "test/systems/livingWorld/lw7_deeds.test.js"
+    ]
+  }
+]

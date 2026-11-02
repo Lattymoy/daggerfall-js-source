@@ -1,0 +1,48 @@
+[
+  {
+    "name": "R1-index-edited-under-shipped-version",
+    "file": "server/src/index.js",
+    "old": "    await this._sayParty(next, now);\n    return null;\n  }\n}",
+    "new": "    await this._sayParty(next, now);\n    return null;\n  }\n}\n// a comment is a different bundle",
+    "tests": [
+      "test/net/relayversion.test.js"
+    ],
+    "note": "PARTY-LEAD (re-aimed by content): _partyLead is the hub class's last method now."
+  },
+  {
+    "name": "R2-wire-edited",
+    "file": "src/net/wire.js",
+    "old": "export const POSE_FAR_SHARE = 4;",
+    "new": "export const POSE_FAR_SHARE = 4;   // edited",
+    "tests": [
+      "test/net/relayversion.test.js"
+    ]
+  },
+  {
+    "name": "R3-mat4-edited-the-graph-reaches-it",
+    "file": "src/world/mat4.js",
+    "old": "export function wrapAngle(a) {",
+    "new": "// edited\nexport function wrapAngle(a) {",
+    "tests": [
+      "test/net/relayversion.test.js"
+    ]
+  },
+  {
+    "name": "R4-relay-door-edited",
+    "file": "server/src/relay.js",
+    "old": "export * from '../../src/net/wire.js';",
+    "new": "export * from '../../src/net/wire.js';\n// edited",
+    "tests": [
+      "test/net/relayversion.test.js"
+    ]
+  },
+  {
+    "name": "R5-index-import-line-added",
+    "file": "server/src/index.js",
+    "old": "import { roomOf, parseClient,",
+    "new": "import './relay.js';\nimport { roomOf, parseClient,",
+    "tests": [
+      "test/net/relayversion.test.js"
+    ]
+  }
+]

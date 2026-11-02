@@ -1,0 +1,20 @@
+-- GLYPH-WEAR (2026-10-02) - A PLAYER TAKES A GLYPH OFF, AND PUTS IT BACK.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). SQLite has no ADD COLUMN IF NOT EXISTS, so a
+-- second run errors harmlessly and the ledger is what stops it.
+--
+-- Mac: "can we make it where players can also equip/unequip their
+-- glyphs". A glyph is still TRUE of a player (ACC3: a config list, an
+-- account's age, a title held) and still derived at every read; what is
+-- stored is the one thing that is a choice - which of them the player has
+-- taken off. `glyphs_off`, the glyphs hidden, space-separated; null or ''
+-- is none, which every row gets, so every glyph shows as it did.
+--
+-- HIDING IS PAINT ALONE. The token still signs every glyph that is true
+-- (`g`), so the rights that ride one - /red, /dm, /mute, the staff
+-- commands - are untouched; the hidden ones ride beside it (`gx`) and
+-- every face that draws a badge leaves them out.
+ALTER TABLE players ADD COLUMN glyphs_off TEXT;

@@ -1,0 +1,110 @@
+[
+  {
+    "name": "AUDIT-STOREFRONT-II-C1-the-veil-unread",
+    "file": "src/net/peer/peerFx.js",
+    "old": "      mounts.step(\n        id,\n        veiled ? null : ridden,\n        feet,\n        pose.yaw,\n        peerMoving(pose) ? (pose.mv === 2 ? 2 : 1) : 0,\n        t - (s.ft ?? t),\n      );",
+    "new": "      mounts.step(id, ridden, feet, pose.yaw, peerMoving(pose) ? (pose.mv === 2 ? 2 : 1) : 0, t - (s.ft ?? t));",
+    "tests": [
+      "test/net/storefront_audit2_fx_veil.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C1-the-hosts-word-never-given",
+    "file": "src/scenes/world.js",
+    "old": "p.fx ?? null, _hiddenPeers.has(p.id) || _veils.has(p.id));",
+    "new": "p.fx ?? null);",
+    "tests": [
+      "test/net/storefront_audit2_fx_veil.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C1-the-translucent-left-out",
+    "file": "src/scenes/world.js",
+    "old": "p.fx ?? null, _hiddenPeers.has(p.id) || _veils.has(p.id));",
+    "new": "p.fx ?? null, _hiddenPeers.has(p.id));",
+    "tests": [
+      "test/net/storefront_audit2_fx_veil.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C2-the-kill-pass-marked-only-when-it-stood",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      killBroken = fxBroken = true;\n",
+    "new": "      fxBroken = true;\n",
+    "tests": [
+      "test/scenes/storefront_audit2_fx_magic.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C2-the-impact-pass-marked-only-when-it-stood",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      killBroken = fxBroken = true;\n",
+    "new": "      killBroken = true;\n",
+    "tests": [
+      "test/scenes/storefront_audit2_fx_magic.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C3-the-failure-thrown-at-the-picture",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": ".then((m) => m.RIDER_MASKS, () => { _riders = null; return null; })",
+    "new": ".then((m) => m.RIDER_MASKS)",
+    "tests": [
+      "test/systems/horse/storefront_audit2_fx_dye.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C3-the-failure-kept-for-the-session",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "() => { _riders = null; return null; }",
+    "new": "() => null",
+    "tests": [
+      "test/systems/horse/storefront_audit2_fx_dye.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C4-the-hairs-seed-left-to-the-last-dye",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "  p.seed = 0;\n  for (let o = r0 * width * 4, end = r1 * width * 4; o < end; o += 4) {",
+    "new": "  for (let o = r0 * width * 4, end = r1 * width * 4; o < end; o += 4) {",
+    "tests": [
+      "test/systems/horse/storefront_audit2_fx_dye.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C5-the-new-stage-never-told-the-effect",
+    "file": "src/ui/characterSlots.js",
+    "old": "      playEffect();\n      loadBody();",
+    "new": "      loadBody();",
+    "tests": [
+      "test/ui/storefront_audit2_fx_stage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C6-read-once-as-the-horse-was-made",
+    "file": "src/ui/mountPreview.js",
+    "old": "const still = typeof reduced === 'function' ? reduced : () => !!reduced;",
+    "new": "const still = ((r) => () => r)(typeof reduced === 'function' ? reduced() : !!reduced);",
+    "tests": [
+      "test/ui/storefront_audit2_fx_stage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C6-the-default-read-once",
+    "file": "src/ui/mountPreview.js",
+    "old": "reduced = () => prefersReducedMotion() } = {}) {",
+    "new": "reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches } = {}) {",
+    "tests": [
+      "test/ui/storefront_audit2_fx_stage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-C6-the-clock-stopped-under-less-motion",
+    "file": "src/ui/mountPreview.js",
+    "old": "    raf = globalThis.requestAnimationFrame?.(draw) ?? 0;   // the clock runs on under less motion, so its end is seen too",
+    "new": "    if (!still() || parts.length) raf = globalThis.requestAnimationFrame?.(draw) ?? 0;",
+    "tests": [
+      "test/ui/storefront_audit2_fx_stage.test.js"
+    ]
+  }
+]

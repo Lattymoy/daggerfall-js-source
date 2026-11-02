@@ -1,0 +1,211 @@
+[
+  {
+    "name": "TACT1-no-height-floor",
+    "file": "src/ai/cover.js",
+    "old": "  return h >= COVER_MIN_H && w >= COVER_MIN_W;",
+    "new": "  return w >= COVER_MIN_W;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-no-width-floor",
+    "file": "src/ai/cover.js",
+    "old": "  return h >= COVER_MIN_H && w >= COVER_MIN_W;",
+    "new": "  return h >= COVER_MIN_H;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-excluded-archives-cover",
+    "file": "src/ai/cover.js",
+    "old": "  if (NOT_COVER_ARCHIVES.has(archive)) return false;\n  const w = size?.w ?? 0,",
+    "new": "  const w = size?.w ?? 0,",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-inside-blocks",
+    "file": "src/ai/cover.js",
+    "old": "  const startIn = ox * ox + oz * oz <= rr && o[1] >= cy && o[1] <= top;",
+    "new": "  const startIn = false;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ],
+    "note": "PIN MOVED (AUDIT FB1031 F1): the start-inside law is the middle's now; unread, a ray from inside a crown meets its cap"
+  },
+  {
+    "name": "TACT1-side-height-ignored",
+    "file": "src/ai/cover.js",
+    "old": "        if (y >= cy && y <= top) best = s;",
+    "new": "        best = s;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-side-reach-ignored",
+    "file": "src/ai/cover.js",
+    "old": "      if (s >= 0 && s <= maxDist && s < best) {",
+    "new": "      if (s >= 0 && s < best) {",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-far-root",
+    "file": "src/ai/cover.js",
+    "old": "      const s = (-b - Math.sqrt(disc)) / a;",
+    "new": "      const s = (-b + Math.sqrt(disc)) / a;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-no-caps",
+    "file": "src/ai/cover.js",
+    "old": "  if (Math.abs(d[1]) > 1e-12) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-frame-ignored",
+    "file": "src/ai/cover.js",
+    "old": "      lo[0] = origin[0] - t[0];\n      lo[1] = origin[1] - t[1];\n      lo[2] = origin[2] - t[2];",
+    "new": "      lo[0] = origin[0];\n      lo[1] = origin[1];\n      lo[2] = origin[2];",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-first-not-nearest",
+    "file": "src/ai/cover.js",
+    "old": "            );\n            if (s < best) best = s;",
+    "new": "            );\n            if (s < best) return s;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ],
+    "note": "PIN MOVED (AUDIT BANTHA1 TREE-1): aimed by the fine grid's own stamp line - the wide grid's loop carries the same test"
+  },
+  {
+    "name": "TACT1-one-cell",
+    "file": "src/ai/cover.js",
+    "old": "      const gz0 = Math.floor(Math.min(lo[2], ez) / COVER_CELL),\n        gz1 = Math.floor(Math.max(lo[2], ez) / COVER_CELL);",
+    "new": "      const gz0 = Math.floor(lo[2] / COVER_CELL),\n        gz1 = gz0;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-switch-ignored",
+    "file": "src/ai/cover.js",
+    "old": "  if (!cover || !cover.on()) return Infinity;",
+    "new": "  if (!cover) return Infinity;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-degenerate-stood",
+    "file": "src/ai/cover.js",
+    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue; // AUDIT TACT B3: a person is no cover",
+    "new": "      if (!it || it.c?.noCover) continue; // AUDIT TACT B3: a person is no cover",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-stand-unfiltered",
+    "file": "src/ai/cover.js",
+    "old": "    if (!size || !isCoverFlat(archive, record, size)) continue;",
+    "new": "    if (!size) continue;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-sight-blind",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "  return (!Number.isFinite(hit) || hit >= el - 1e-3) && !coveredSight(collider, eye, ex / el, ey / el, ez / el, el);",
+    "new": "  return (!Number.isFinite(hit) || hit >= el - 1e-3);",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-sight-door-arm-blind",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    return seen && !coveredSight(collider, eye, ex / el, ey / el, ez / el, el);",
+    "new": "    return seen;",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-shot-blind",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    return !Number.isFinite(hit.dist) && !(coverDistance(this.collider, origin, [dx, dy, dz], dist - originDistance, true) < dist - originDistance - 1e-3)   // AUDIT TACT B2: to the target, which a crown it stands in does not hide\n",
+    "new": "    return !Number.isFinite(hit.dist)\n",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-arrow-through",
+    "file": "src/combat/arrowFlight.js",
+    "old": "coverDistance(c, m.pos, unit, reach, false, struckBy?.length ? struckPoints(m.pos, unit, struckBy, _struck) : null)",
+    "new": "Infinity",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-bucket-keeps-cover",
+    "file": "src/player/collider.js",
+    "old": "    this.cover?.remove(bucketKey);   // TACT1: a bucket's cover leaves with it\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-pixel-unstood",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE), coverT);",
+    "new": "collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE));",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-dungeon-centre",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (isCoverFlat(archive, record, size)) for (const c of based) coverItems.push(coverProxy(c, size));",
+    "new": "    if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(coverProxy(c, size));",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-bolt-through",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  const cs = coverStep(coverDistance(collider, pos, unit, reach, false, holds), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
+    "new": "  const cs = coverStep(Infinity, collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "TACT1-witness-through",
+    "file": "src/scenes/cityGuards.js",
+    "old": "          const clear = (!Number.isFinite(hit) || hit >= dist - 1e-3) && !(coverDistance(collider, eye, dir, dist, true) < dist - 1e-3);",
+    "new": "          const clear = (!Number.isFinite(hit) || hit >= dist - 1e-3);",
+    "tests": [
+      "test/scenes/tact1.test.js"
+    ]
+  }
+]

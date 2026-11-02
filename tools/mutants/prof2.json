@@ -1,0 +1,656 @@
+[
+  {
+    "name": "PROF2-1-strikes-flat",
+    "file": "src/net/professionLaw.js",
+    "old": "export const strikesFor = (tier) => (tier <= 2 ? 4 : tier <= 4 ? 5 : 7);",
+    "new": "export const strikesFor = (tier) => 4;",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-2-glints-floor",
+    "file": "src/net/professionLaw.js",
+    "old": "export const glintsMax = (tier) => Math.ceil(strikesFor(tier) / 2);",
+    "new": "export const glintsMax = (tier) => Math.floor(strikesFor(tier) / 2);",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-3-gem-chance-tenfold",
+    "file": "src/net/professionLaw.js",
+    "old": "export const GEM_CHANCE = 0.03;",
+    "new": "export const GEM_CHANCE = 0.3;",
+    "tests": [
+      "test/net/prof2_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-4-deep-delver-on-the-surface",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (deep && deepDelver) y *= DEEP_DELVER_MULT;",
+    "new": "  if (deepDelver) y *= DEEP_DELVER_MULT;",
+    "tests": [
+      "test/net/prof2_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-5-cut-one-to-one",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (cut) return { material: 'stone:cut', qty: Math.max(1, wholeYield(y / CUT_RATIO, chance)) };",
+    "new": "  if (cut) return { material: 'stone:cut', qty: Math.max(1, wholeYield(y, chance)) };",
+    "tests": [
+      "test/net/prof2_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-6-unconfirmed-any-tier",
+    "file": "src/net/nodeLaw.js",
+    "old": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);",
+    "new": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), 7);",
+    "tests": [
+      "test/net/prof2_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-7-signature-unconfirmed",
+    "file": "src/net/nodeLaw.js",
+    "old": "const signatureOres = (region, confirmed) => (confirmed && region !== null ?",
+    "new": "const signatureOres = (region, confirmed) => (region !== null ?",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the signature on unconfirmed ground - signatureOres, read by nodeSlots and vein."
+  },
+  {
+    "name": "PROF2-8-daggerfall-one-moonstone",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (k === 'daggerfall') return sig('ore:moonstone', 2);",
+    "new": "  if (k === 'daggerfall') return sig('ore:moonstone', 1);",
+    "tests": [
+      "test/net/prof2_law.test.js"
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): Daggerfall's one Moonstone - the signature names each slot's ore now (`ores`)."
+  },
+  {
+    "name": "PROF2-9-a-dungeon-with-none",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const dungeonVeinCount = (dungeon, day) => 1 + (nodeRoll('dvein', dungeon, 0, day, 0, 0) % DUNGEON_VEINS_MAX);",
+    "new": "export const dungeonVeinCount = (dungeon, day) => (nodeRoll('dvein', dungeon, 0, day, 0, 0) % DUNGEON_VEINS_MAX);",
+    "tests": [
+      "test/net/prof2_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-10-unconfirmed-dungeon-deep",
+    "file": "src/net/nodeLaw.js",
+    "old": "  const table = confirmed ? dungeonVeinTable(climate) : DUNGEON_VEINS;",
+    "new": "  const table = dungeonVeinTable(climate);",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/deepopen.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-11-gem-on-unconfirmed-ground",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (!confirmed && kind !== 'dvein') return null;\n  const chance = GEM_CHANCE",
+    "new": "  const chance = GEM_CHANCE",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-12-wayrest-loses-its-seat",
+    "file": "src/net/kingdomLaw.js",
+    "old": "regions: regions(23, 33, 34,",
+    "new": "regions: regions(33, 34,",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-13-steel-without-charcoal",
+    "file": "src/net/professionLaw.js",
+    "old": "  ingot('ingot:steel', [\n    ['ingot:iron', 1],\n    ['wood:charcoal', 1],\n  ]),",
+    "new": "  ingot('ingot:steel', [['ingot:iron', 1]]),",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-14-smith-xp-tierless",
+    "file": "src/net/professionLaw.js",
+    "old": "  const xp = 10 * tier * units;",
+    "new": "  const xp = 10 * units;",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-15-origin-rounds-down",
+    "file": "src/net/professionLaw.js",
+    "old": "b = Math.max(b, Math.ceil(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
+    "new": "b = Math.max(b, Math.floor(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
+    "tests": [
+      "test/net/prof2_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-16-no-crafters-limit",
+    "file": "src/net/professionLaw.js",
+    "old": "  return past >= CRAFTS_ABOVE_JOURNEYMAN ? xpForRank(JOURNEYMAN_RANK + 1) - 1 : PROF_XP_MAX;",
+    "new": "  return PROF_XP_MAX;",
+    "tests": [
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-17-glints-unbounded",
+    "file": "server-account/src/professions.js",
+    "old": "  const glints = Number.isSafeInteger(act?.glints) ? Math.max(0, Math.min(most, act.glints)) : 0;",
+    "new": "  const glints = Number.isSafeInteger(act?.glints) ? Math.max(0, act.glints) : 0;",
+    "tests": [
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-18-clean-by-the-claims-word",
+    "file": "server-account/src/professions.js",
+    "old": "  return { glints, clean: act?.clean === true && glints === most };",
+    "new": "  return { glints, clean: act?.clean === true };",
+    "tests": [
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-19-any-rank-mines-deep",
+    "file": "server-account/src/professions.js",
+    "old": "    tier = found.tier;\n    if (!tierOpen(rank, tier)) return { error: 'prof-rank' };\n    const s = strikesOf(act, tier);",
+    "new": "    tier = found.tier;\n    const s = strikesOf(act, tier);",
+    "tests": [
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-21-a-dungeon-witnessed-as-a-pixel",
+    "file": "server-account/src/professions.js",
+    "old": "  const wkind = deep ? 'dungeon' : 'pixel';",
+    "new": "  const wkind = 'pixel';",
+    "tests": [
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-22-a-gem-into-full-stores",
+    "file": "server-account/src/professions.js",
+    "old": "        CASE WHEN COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?14), 0) < ?11 THEN ?14 END, ?13, ?2, ?3",
+    "new": "        ?14, ?13, ?2, ?3",
+    "tests": [
+      "test/net/prof2_service.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the gem is ?14 now."
+  },
+  {
+    "name": "PROF2-23-smelt-from-nothing",
+    "file": "server-account/src/professions.js",
+    "old": "      WHERE ${held.join(' AND ')}\n",
+    "new": "      WHERE 1\n",
+    "tests": [
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-24-smelt-past-the-most",
+    "file": "server-account/src/professions.js",
+    "old": "  if (!Number.isSafeInteger(count) || count < 1 || count > SMELT_MAX) return { error: 'bad-qty' };",
+    "new": "  if (!Number.isSafeInteger(count) || count < 1) return { error: 'bad-qty' };",
+    "tests": [
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-25-bought-smelted-own",
+    "file": "server-account/src/professions.js",
+    "old": "      SELECT ?1, ?3, ?2, ?4, ?5, ${per} * (?5 - MIN(?5, ${bought})), ${per} * (MIN(?5, ${bought}) - MIN(?5, ${loose})), ${per} * MIN(?5, ${loose}),\n",
+    "new": "      SELECT ?1, ?3, ?2, ?4, ?5, ${per} * ?5, 0, 0,\n",
+    "tests": [
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-26-glint-counts-one",
+    "file": "src/systems/mineAct.js",
+    "old": "      st.points += onGlint ? 2 : 1;",
+    "new": "      st.points += 1;",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-27-no-swing",
+    "file": "src/systems/mineAct.js",
+    "old": "      if (!attack || st.swing > 0) return;",
+    "new": "      if (!attack) return;",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-28-the-glint-stays",
+    "file": "src/systems/mineAct.js",
+    "old": "      moveGlint();\n    },",
+    "new": "    },",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-29-gentle-glints",
+    "file": "src/systems/mineAct.js",
+    "old": "    if (gentle) {\n      st.glint = -1;\n      return;\n    }\n    let g;",
+    "new": "    let g;",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-30-clean-with-one-glint",
+    "file": "src/systems/mineAct.js",
+    "old": "clean: !gentle && st.glints === st.strikes };",
+    "new": "clean: !gentle && st.glints > 0 };",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-31-boulders-anywhere",
+    "file": "src/scenes/mineHost.js",
+    "old": "    } else if (!fields) {\n",
+    "new": "    } else {\n",
+    "tests": [
+      "test/net/prof2_client.test.js",
+      "test/scenes/stoneheaps.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-32-a-piece-holds-two",
+    "file": "src/scenes/mineHost.js",
+    "old": "export const NODE_SPACING_M = 6;",
+    "new": "export const NODE_SPACING_M = 0;",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-33-no-stone-tile",
+    "file": "src/scenes/mineHost.js",
+    "old": "return nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, solid, pass, beach) ?? outside(natureStandsAt(",
+    "new": "return outside(natureStandsAt(",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-34-no-pick-needed",
+    "file": "src/scenes/mineHost.js",
+    "old": "  if (!pick) return { harvest, verb, rest: 'needs a Pick-Axe', ready: false };\n",
+    "new": "",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-35-a-harvest-asked-twice",
+    "file": "src/net/profBook.js",
+    "old": "(h.nextAt ?? 0) <= now() && !sending.has(h.rid));",
+    "new": "(h.nextAt ?? 0) <= now());",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-36-the-gem-not-stored",
+    "file": "src/net/profBook.js",
+    "old": "      applyStore(r.data?.gemStore);   // PROF2: a gem the strikes found\n",
+    "new": "",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-37-ingots-undyed",
+    "file": "src/systems/item/itemTemplates.js",
+    "old": "  if (Number.isFinite(t.iconDye)) return { archive, record, dye: t.iconDye, dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n",
+    "new": "",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-38-iron-counted",
+    "file": "src/systems/professions/profItems.js",
+    "old": "  'Iron',\n  'Copper',",
+    "new": "  'Copper',",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-39-a-forge-for-nothing",
+    "file": "src/net/decorLaw.js",
+    "old": "  forge: 50_000,",
+    "new": "  forge: 0,",
+    "tests": [
+      "test/net/prof2_client.test.js",
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "PROF2-40-smeltable-past-the-most",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  let n = SMELT_MAX;\n  for (const inp of r.inputs)",
+    "new": "  let n = Infinity;\n  for (const inp of r.inputs)",
+    "tests": [
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-embers-dropped",
+    "file": "src/net/professionLaw.js",
+    "old": "  ingot(\n    'ingot:daedric',\n    [\n      ['ingot:ebony', 1],\n      [DAEDRA_HEART.key, 1, true],\n    ],\n    { embers: DAEDRIC_EMBERS },\n  ),",
+    "new": "  ingot('ingot:daedric', [\n    ['ingot:ebony', 1],\n    [DAEDRA_HEART.key, 1, true],\n  ]),",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-catalyst-unmarked",
+    "file": "src/net/professionLaw.js",
+    "old": "      [DAEDRA_HEART.key, 1, true],",
+    "new": "      [DAEDRA_HEART.key, 1],",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-the-smelt-gone",
+    "file": "src/net/professionLaw.js",
+    "old": "  ingot(\n    'ingot:daedric',\n    [\n      ['ingot:ebony', 1],\n      [DAEDRA_HEART.key, 1, true],\n    ],\n    { embers: DAEDRIC_EMBERS },\n  ),\n]);",
+    "new": "]);",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-origin-catalyst-counted",
+    "file": "src/net/professionLaw.js",
+    "old": "    if (!inp.catalyst) b = Math.max(b, Math.ceil(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
+    "new": "    if (inp) b = Math.max(b, Math.ceil(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-no-work-spends-embers",
+    "file": "src/net/professionLaw.js",
+    "old": "  Number.isSafeInteger(r?.embers) && r.embers > 0 && Number.isSafeInteger(count) && count > 0 ? r.embers * count : 0;",
+    "new": "  Number.isSafeInteger(r?.embers) && r.embers > 0 && Number.isSafeInteger(count) && count > 0 ? r.embers : 0;",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-ember-made-empty",
+    "file": "src/net/professionLaw.js",
+    "old": "export const EMBER_MADE = Object.freeze([\n  ...new Set(WORK_RECIPES.filter((r) => workEmbers(r, 1) > 0).map((r) => r.out)),\n]);",
+    "new": "export const EMBER_MADE = Object.freeze([]);",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-heart-unregistered",
+    "file": "src/net/professionLaw.js",
+    "old": "const LOOSE = new Map([...GRADED_GEMS, DAEDRA_HEART].map((m) => [m.key, m]));",
+    "new": "const LOOSE = new Map(GRADED_GEMS.map((m) => [m.key, m]));",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-heart-not-dfus",
+    "file": "src/net/professionLaw.js",
+    "old": "export const DAEDRA_HEART = dfu('part:daedra-heart', 'hides', gemTierOfPrice(500), 'CreatureIngredients1', 53);",
+    "new": "export const DAEDRA_HEART = dfu('part:daedra-heart', 'hides', gemTierOfPrice(500), 'CreatureIngredients1', 54);",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-ingot-unyielded-again",
+    "file": "src/net/marketLaw.js",
+    "old": "export const UNYIELDED = Object.freeze([]);",
+    "new": "export const UNYIELDED = Object.freeze(['ingot:daedric']);",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-the-heart-yielded",
+    "file": "src/net/professionLaw.js",
+    "old": "export const LOOSE_ONLY_KEYS = Object.freeze([...GRADED_GEMS, DAEDRA_HEART].map((g) => g.key));",
+    "new": "export const LOOSE_ONLY_KEYS = Object.freeze(GRADED_GEMS.map((g) => g.key));",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/daedricsmelt_service.test.js"
+    ],
+    "note": "Re-aimed at the merge with main's CLOTH-GEMS: the heart is the loose door's (LOOSE_ONLY_KEYS), no longer UNYIELDED's"
+  },
+  {
+    "name": "DAEDRIC-SMELT-a-chain-plans-it",
+    "file": "src/net/chainLaw.js",
+    "old": "!!r && !r.spec && !r.embers && r.inputs.every(",
+    "new": "!!r && !r.spec && r.inputs.every(",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-a-writ-asks-its-kit",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  RECIPES.filter(\n    (r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key)),\n  ),",
+    "new": "  RECIPES.filter((r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key))),",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-service-purse-unasked",
+    "file": "server-account/src/professions.js",
+    "old": "    held.push(`(SELECT ${EMBERS_EARNED_SQL} - insignia_spent FROM players WHERE id = ?1) >= ?${binds.length}`);",
+    "new": "    held.push(`(SELECT ${EMBERS_EARNED_SQL} - insignia_spent FROM players WHERE id = ?1) >= 0 * ?${binds.length}`);",
+    "tests": [
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-service-ember-unspent",
+    "file": "server-account/src/professions.js",
+    "old": "    ...(embers > 0 ? [db.prepare(`UPDATE players SET insignia_spent = insignia_spent + ?4",
+    "new": "    ...(embers > 0 ? [db.prepare(`UPDATE players SET insignia_spent = insignia_spent + 0 * ?4",
+    "tests": [
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-service-catalyst-counted",
+    "file": "server-account/src/professions.js",
+    "old": "    if (inp.catalyst) return;   // DAEDRIC-SMELT: a catalyst's units give the products no origin (professionLaw smeltOrigin)\n",
+    "new": "",
+    "tests": [
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-service-refusal-the-stores",
+    "file": "server-account/src/professions.js",
+    "old": "  if (embers > 0 && (await emberPurse(db, player.id)) < embers) return { error: 'prof-embers' };",
+    "new": "  void emberPurse;",
+    "tests": [
+      "test/net/daedricsmelt_service.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-book-pack-unasked",
+    "file": "src/net/profBook.js",
+    "old": "        if (embers > 0 && pack && pack.held() < embers) { m.promise = null; return { ok: false, error: 'embers', need: embers, have: pack.held() }; }",
+    "new": "        void pack;",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-book-never-takes",
+    "file": "src/net/profBook.js",
+    "old": "        const took = embers > 0 && pack ? pack.take(embers) : null;",
+    "new": "        const took = null;",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-book-kept-on-a-refusal",
+    "file": "src/net/profBook.js",
+    "old": "        if (!r?.ok) took?.back();",
+    "new": "        void took;",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-hands-spend-the-locked",
+    "file": "src/systems/sigil/sigilBroker.js",
+    "old": "    held: () => stoneCount(spendableStonesIn(items() ?? [])),",
+    "new": "    held: () => stoneCount(items() ?? []),",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-hands-undo-twice",
+    "file": "src/systems/sigil/sigilBroker.js",
+    "old": "back: () => { if (given) return; given = true; addItem(",
+    "new": "back: () => { given = true; addItem(",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-forge-unbounded",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (r.embers > 0 && Number.isSafeInteger(embers)) n = Math.min(n, Math.floor(embers / r.embers));",
+    "new": "  void embers;",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-forge-line-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (daedricWaits(book)) detail.append(el('p', 'px-note', daedricWord()));",
+    "new": "  void daedricWaits, daedricWord;",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SMELT-world-hands-never-handed",
+    "file": "src/scenes/world.js",
+    "old": "  carryHands.embers = emberHands(playerEntity, saveSoon.changed);",
+    "new": "  void emberHands;",
+    "tests": [
+      "test/net/daedricsmelt_law.test.js"
+    ]
+  },
+  {
+    "name": "DEEP-OPEN-the-cap-back",
+    "file": "src/net/nodeLaw.js",
+    "old": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4));",
+    "new": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);",
+    "tests": [
+      "test/net/deepopen.test.js",
+      "test/net/prof2_law.test.js"
+    ]
+  },
+  {
+    "name": "DEEP-OPEN-a-climate-ore-everywhere",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const deepClimateOres = (climate) => dungeonVeinTable(climate).filter((k) => !DUNGEON_VEINS.includes(k));",
+    "new": "export const deepClimateOres = (climate) => dungeonVeinTable(climate);",
+    "tests": [
+      "test/net/deepopen.test.js",
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "DEEP-OPEN-the-dungeon-gem-held",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (!confirmed && kind !== 'dvein') return null;",
+    "new": "  if (!confirmed) return null;",
+    "tests": [
+      "test/net/deepopen.test.js",
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "DEEP-OPEN-card-dungeons-the-surface",
+    "file": "src/ui/oreMapTip.js",
+    "old": "t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(DUNGEON_VEINS) })",
+    "new": "t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(table) })",
+    "tests": [
+      "test/net/deepopen.test.js",
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "DEEP-OPEN-card-deep-unsaid",
+    "file": "src/ui/oreMapTip.js",
+    "old": "  const deep = deepClimateOres(climate).map(oreWord);",
+    "new": "  const deep = [];",
+    "tests": [
+      "test/net/deepopen.test.js",
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "DEEP-OPEN-the-page-says-silver",
+    "file": "src/ui/professions/profPages.js",
+    "old": "Deep veins in dungeons can hold any of their ores, Dwarven Scrap and Adamantium among them, in any dungeon; only a woodland dungeon\\'s Moonstone waits for three players to gather in it.",
+    "new": "Deep veins in dungeons hold Silver anywhere.",
+    "tests": [
+      "test/net/deepopen.test.js"
+    ]
+  }
+]

@@ -1,0 +1,1060 @@
+{
+ "_": "PlayerBillboard.InitializeStates, extracted from the shipped assembly's IL. 21 tables of 8 states. Carried so the port's GENERATED table can be checked against the mod's own rather than against a sentence in a comment.",
+ "archives": {
+  "foot": 112364,
+  "horse": 112382,
+  "lycan": 112380
+ },
+ "tables": {
+  "Idle": [
+   {
+    "name": "IdleForward",
+    "record": 0,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleForwardLeft",
+    "record": 1,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleLeft",
+    "record": 2,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleBackwardLeft",
+    "record": 3,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleBackward",
+    "record": 4,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleBackwardRight",
+    "record": 3,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleRight",
+    "record": 2,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleForwardRight",
+    "record": 1,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "Move": [
+   {
+    "name": "MoveForward",
+    "record": 5,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveForwardLeft",
+    "record": 6,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveLeft",
+    "record": 7,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveBackwardLeft",
+    "record": 8,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveBackward",
+    "record": 9,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveBackwardRight",
+    "record": 8,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveRight",
+    "record": 7,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveForwardRight",
+    "record": 6,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "Death": [
+   {
+    "name": "Death",
+    "record": 10,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "Death",
+    "record": 11,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "Death",
+    "record": 12,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "Death",
+    "record": 13,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "Death",
+    "record": 14,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "Death",
+    "record": 13,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "Death",
+    "record": 12,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "Death",
+    "record": 11,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "IdleMelee": [
+   {
+    "name": "ReadyMeleeForward",
+    "record": 15,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyMeleeForwardLeft",
+    "record": 16,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyMeleeLeft",
+    "record": 17,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyMeleeBackwardLeft",
+    "record": 18,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyMeleeBackward",
+    "record": 19,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyMeleeBackwardRight",
+    "record": 18,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyMeleeRight",
+    "record": 17,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyMeleeForwardRight",
+    "record": 16,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "MoveMelee": [
+   {
+    "name": "MoveMeleeForward",
+    "record": 20,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveMeleeForwardLeft",
+    "record": 21,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveMeleeLeft",
+    "record": 22,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveMeleeBackwardLeft",
+    "record": 23,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveMeleeBackward",
+    "record": 24,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveMeleeBackwardRight",
+    "record": 23,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveMeleeRight",
+    "record": 22,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveMeleeForwardRight",
+    "record": 21,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "AttackMelee": [
+   {
+    "name": "AttackMeleeForward",
+    "record": 25,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackMeleeForwardLeft",
+    "record": 26,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackMeleeLeft",
+    "record": 27,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackMeleeBackwardLeft",
+    "record": 28,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackMeleeBackward",
+    "record": 29,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackMeleeBackwardRight",
+    "record": 28,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackMeleeRight",
+    "record": 27,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackMeleeForwardRight",
+    "record": 26,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "IdleRanged": [
+   {
+    "name": "ReadyRangedForward",
+    "record": 30,
+    "frames": 3,
+    "mirror": false
+   },
+   {
+    "name": "ReadyRangedForwardLeft",
+    "record": 31,
+    "frames": 3,
+    "mirror": true
+   },
+   {
+    "name": "ReadyRangedLeft",
+    "record": 32,
+    "frames": 3,
+    "mirror": true
+   },
+   {
+    "name": "ReadyRangedBackwardLeft",
+    "record": 33,
+    "frames": 3,
+    "mirror": true
+   },
+   {
+    "name": "ReadyRangedBackward",
+    "record": 34,
+    "frames": 3,
+    "mirror": false
+   },
+   {
+    "name": "ReadyRangedBackwardRight",
+    "record": 33,
+    "frames": 3,
+    "mirror": false
+   },
+   {
+    "name": "ReadyRangedRight",
+    "record": 32,
+    "frames": 3,
+    "mirror": false
+   },
+   {
+    "name": "ReadyRangedForwardRight",
+    "record": 31,
+    "frames": 3,
+    "mirror": false
+   }
+  ],
+  "MoveRanged": [
+   {
+    "name": "MoveRangedForward",
+    "record": 35,
+    "frames": 3,
+    "mirror": false
+   },
+   {
+    "name": "MoveRangedForwardLeft",
+    "record": 36,
+    "frames": 3,
+    "mirror": true
+   },
+   {
+    "name": "MoveRangedLeft",
+    "record": 37,
+    "frames": 3,
+    "mirror": true
+   },
+   {
+    "name": "MoveRangedBackwardLeft",
+    "record": 38,
+    "frames": 3,
+    "mirror": true
+   },
+   {
+    "name": "MoveRangedBackward",
+    "record": 39,
+    "frames": 3,
+    "mirror": false
+   },
+   {
+    "name": "MoveRangedBackwardRight",
+    "record": 38,
+    "frames": 3,
+    "mirror": false
+   },
+   {
+    "name": "MoveRangedRight",
+    "record": 37,
+    "frames": 3,
+    "mirror": false
+   },
+   {
+    "name": "MoveRangedForwardRight",
+    "record": 36,
+    "frames": 3,
+    "mirror": false
+   }
+  ],
+  "AttackRanged": [
+   {
+    "name": "AttackRangedForward",
+    "record": 40,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackRangedForwardLeft",
+    "record": 41,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackRangedLeft",
+    "record": 42,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackRangedBackwardLeft",
+    "record": 43,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackRangedBackward",
+    "record": 44,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackRangedBackwardRight",
+    "record": 43,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackRangedRight",
+    "record": 42,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackRangedForwardRight",
+    "record": 41,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "IdleSpell": [
+   {
+    "name": "ReadySpellForward",
+    "record": 45,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadySpellForwardLeft",
+    "record": 46,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadySpellLeft",
+    "record": 47,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadySpellBackwardLeft",
+    "record": 48,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadySpellBackward",
+    "record": 49,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadySpellBackwardRight",
+    "record": 48,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadySpellRight",
+    "record": 47,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadySpellForwardRight",
+    "record": 46,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "MoveSpell": [
+   {
+    "name": "MoveSpellForward",
+    "record": 50,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveSpellForwardLeft",
+    "record": 51,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveSpellLeft",
+    "record": 52,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveSpellBackwardLeft",
+    "record": 53,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveSpellBackward",
+    "record": 54,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveSpellBackwardRight",
+    "record": 53,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveSpellRight",
+    "record": 52,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveSpellForwardRight",
+    "record": 51,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "AttackSpell": [
+   {
+    "name": "AttackSpellForward",
+    "record": 55,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackSpellForwardLeft",
+    "record": 56,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackSpellLeft",
+    "record": 57,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackSpellBackwardLeft",
+    "record": 58,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackSpellBackward",
+    "record": 59,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackSpellBackwardRight",
+    "record": 58,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackSpellRight",
+    "record": 57,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackSpellForwardRight",
+    "record": 56,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "IdleHorse": [
+   {
+    "name": "IdleForward",
+    "record": 0,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleForwardLeft",
+    "record": 1,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleLeft",
+    "record": 2,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleBackwardLeft",
+    "record": 3,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleBackward",
+    "record": 4,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleBackwardRight",
+    "record": 3,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleRight",
+    "record": 2,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleForwardRight",
+    "record": 1,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "MoveHorse": [
+   {
+    "name": "MoveForward",
+    "record": 5,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveForwardLeft",
+    "record": 6,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveLeft",
+    "record": 7,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveBackwardLeft",
+    "record": 8,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveBackward",
+    "record": 9,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveBackwardRight",
+    "record": 8,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveRight",
+    "record": 7,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveForwardRight",
+    "record": 6,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "GallopHorse": [
+   {
+    "name": "MoveForward",
+    "record": 10,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveForwardLeft",
+    "record": 11,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveLeft",
+    "record": 12,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveBackwardLeft",
+    "record": 13,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveBackward",
+    "record": 14,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveBackwardRight",
+    "record": 13,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveRight",
+    "record": 12,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveForwardRight",
+    "record": 11,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "IdleLycan": [
+   {
+    "name": "IdleForward",
+    "record": 0,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleForwardLeft",
+    "record": 1,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleLeft",
+    "record": 2,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleBackwardLeft",
+    "record": 3,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "IdleBackward",
+    "record": 4,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleBackwardRight",
+    "record": 3,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleRight",
+    "record": 2,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "IdleForwardRight",
+    "record": 1,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "MoveLycan": [
+   {
+    "name": "MoveForward",
+    "record": 5,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveForwardLeft",
+    "record": 6,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveLeft",
+    "record": 7,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveBackwardLeft",
+    "record": 8,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "MoveBackward",
+    "record": 9,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveBackwardRight",
+    "record": 8,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveRight",
+    "record": 7,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "MoveForwardRight",
+    "record": 6,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "IdleMeleeLycan": [
+   {
+    "name": "ReadyLycanForward",
+    "record": 15,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyLycanForwardLeft",
+    "record": 16,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyLycanLeft",
+    "record": 17,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyLycanBackwardLeft",
+    "record": 18,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyLycanBackward",
+    "record": 19,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyLycanBackwardRight",
+    "record": 18,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyLycanRight",
+    "record": 17,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyLycanForwardRight",
+    "record": 16,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "MoveMeleeLycan": [
+   {
+    "name": "ReadyLycanForward",
+    "record": 20,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyLycanForwardLeft",
+    "record": 21,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyLycanLeft",
+    "record": 22,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyLycanBackwardLeft",
+    "record": 23,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "ReadyLycanBackward",
+    "record": 24,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyLycanBackwardRight",
+    "record": 23,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyLycanRight",
+    "record": 22,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "ReadyLycanForwardRight",
+    "record": 21,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "AttackMeleeLycan": [
+   {
+    "name": "AttackLycanForward",
+    "record": 25,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackLycanForwardLeft",
+    "record": 26,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackLycanLeft",
+    "record": 27,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackLycanBackwardLeft",
+    "record": 28,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "AttackLycanBackward",
+    "record": 29,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackLycanBackwardRight",
+    "record": 28,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackLycanRight",
+    "record": 27,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "AttackLycanForwardRight",
+    "record": 26,
+    "frames": 0,
+    "mirror": false
+   }
+  ],
+  "DeathLycan": [
+   {
+    "name": "Death",
+    "record": 10,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "Death",
+    "record": 11,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "Death",
+    "record": 12,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "Death",
+    "record": 13,
+    "frames": 0,
+    "mirror": true
+   },
+   {
+    "name": "Death",
+    "record": 14,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "Death",
+    "record": 13,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "Death",
+    "record": 12,
+    "frames": 0,
+    "mirror": false
+   },
+   {
+    "name": "Death",
+    "record": 11,
+    "frames": 0,
+    "mirror": false
+   }
+  ]
+ }
+}

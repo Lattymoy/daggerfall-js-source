@@ -1,0 +1,242 @@
+[
+  {
+    "name": "LIVED1-the-rest-is-not-the-characters",
+    "file": "src/scenes/shared.js",
+    "old": "if (sharedClockOn()) { if (tickInFlight()) { advanceOwnMinutes(minutes); _raiseWaiting = true; return null; } return this.tick(0, undefined, 0, minutes); }",
+    "new": "if (sharedClockOn()) { if (tickInFlight()) { advanceOwnMinutes(minutes); _raiseWaiting = true; return null; } return this.tick(0, undefined, 0); }",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-characters-clock-stands-while-they-play",
+    "file": "src/systems/worldTick.js",
+    "old": "    _ownMinutes = classicMinutes + (worldTo - worldFrom) + (raiseMinutes > 0 ? raiseMinutes : 0);",
+    "new": "    _ownMinutes = classicMinutes + (raiseMinutes > 0 ? raiseMinutes : 0);",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-a-new-characters-first-window-is-counted-twice",
+    "file": "src/systems/worldTick.js",
+    "old": "    classicMinutes = _ownMinutes ?? worldFrom;",
+    "new": "    classicMinutes = ownMinutes();",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-broker-claims-the-worlds-window",
+    "file": "src/systems/worldTick.js",
+    "old": "  const magicRoundWindow = claimMagicRounds(classicMinutes, next);",
+    "new": "  const magicRoundWindow = claimMagicRounds(_sharedClock ? worldFrom : classicMinutes, _sharedClock ? worldTo : next);",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-rounds-sky-is-the-characters",
+    "file": "src/systems/worldTick.js",
+    "old": "  const rounds = runMagicRoundsFor(entity, magicRoundWindow.from, magicRoundWindow.to, { sinks, rolls, say, skyMinutes: _sharedClock ? skyMinutes() : null });",
+    "new": "  const rounds = runMagicRoundsFor(entity, magicRoundWindow.from, magicRoundWindow.to, { sinks, rolls, say, skyMinutes: null });",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-vampires-thirst-reads-the-sky",
+    "file": "src/systems/worldTick.js",
+    "old": "    vampirismMagicRound(entity, { nowMinutes: clockMinutes, skyMinutes: sky });",
+    "new": "    vampirismMagicRound(entity, { nowMinutes: sky, skyMinutes: sky });",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-vampires-day-reads-their-own-clock",
+    "file": "src/systems/vampirism.js",
+    "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
+    "new": "  const mod = vampireStatMod(nowMinutes, racialSunAverse(entity));",
+    "tests": [
+      "test/systems/lived1.test.js",
+      "test/systems/vampday.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-disease-day-is-the-worlds",
+    "file": "src/systems/worldTick.js",
+    "old": "    updateDiseases(entity, Math.floor((r + 1) / MINUTES_PER_DAY), sinks, rolls, say);",
+    "new": "    updateDiseases(entity, Math.floor(sky / MINUTES_PER_DAY), sinks, rolls, say);",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-infection-day-is-the-worlds",
+    "file": "src/systems/worldTick.js",
+    "old": "    runInfections(entity, Math.floor(clockMinutes / MINUTES_PER_DAY), { clockMinutes });",
+    "new": "    runInfections(entity, Math.floor(sky / MINUTES_PER_DAY), { clockMinutes });",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-landlord-reads-the-worlds-window",
+    "file": "src/systems/worldTick.js",
+    "old": "    runDayChange({ entity, lastMinutes, nowMinutes, rolls, say, arms: DAY_ARMS.own });",
+    "new": "    runDayChange({ entity, lastMinutes: Math.floor(worldFrom), nowMinutes: Math.floor(worldTo), rolls, say, arms: DAY_ARMS.own });",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-characters-calendar-walks-the-worlds-window",
+    "file": "src/systems/worldTick.js",
+    "old": "    runCalendarArms(entity, lastMinutes, nowMinutes, { rolls, arms: DAY_ARMS.own });",
+    "new": "    runCalendarArms(entity, Math.floor(worldFrom), Math.floor(worldTo), { rolls, arms: DAY_ARMS.own });",
+    "tests": [
+      "test/systems/lived1.test.js",
+      "test/systems/auditdisc28_time.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-conjured-hour-is-the-worlds",
+    "file": "src/systems/worldTick.js",
+    "old": "    removeExpiredItems(entity, Math.floor(next));",
+    "new": "    removeExpiredItems(entity, Math.floor(worldMinutes()));",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-arrival-lives-the-absence",
+    "file": "src/systems/worldTick.js",
+    "old": "  _sharedLastTick = _sharedClock ? nowMinutes : null;\n  return true;",
+    "new": "  _sharedLastTick = _sharedClock ? (_sharedLastTick ?? nowMinutes) : null;\n  return true;",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-rise-lives-the-span",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (_sharedClock) _sharedLastTick = nowMinutes;\n  entity.preventEnemySpawns = true;",
+    "new": "  entity.preventEnemySpawns = true;",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-load-restores-the-worlds-minute-as-theirs",
+    "file": "src/systems/save/save.js",
+    "old": "    setOwnMinutes(own);",
+    "new": "    setOwnMinutes(at);",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-save-forgets-the-worlds-minute",
+    "file": "src/systems/save/save.js",
+    "old": "  if (sharedClockOn()) snap.worldMinutes = worldMinutesToSave();\n",
+    "new": "",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-absence-is-measured-on-the-characters-clock",
+    "file": "src/systems/save/save.js",
+    "old": "const left = snap.joinFresh ? null : Number.isFinite(snap.worldMinutes) ? Math.floor(snap.worldMinutes) : own;",
+    "new": "const left = snap.joinFresh ? null : own;",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-load-reads-the-needs-on-the-worlds-clock",
+    "file": "src/systems/save/save.js",
+    "old": "    alignSurvival(entity, own, own);",
+    "new": "    alignSurvival(entity, Math.floor(at), Math.floor(at));",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-time-left-read-off-the-worlds-clock",
+    "file": "src/systems/worldTick.js",
+    "old": "  const left = Math.max(0, Math.ceil(untilMinutes - ownMinutes()));",
+    "new": "  const left = Math.max(0, Math.ceil(untilMinutes - worldMinutes()));",
+    "tests": [
+      "test/systems/lived1.test.js",
+      "test/systems/ol3.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-play-is-said-in-game-minutes",
+    "file": "src/systems/worldTick.js",
+    "old": "  const playMinutes = Math.ceil(left / ONLINE_MINUTES_PER_MS / 60000);",
+    "new": "  const playMinutes = left;",
+    "tests": [
+      "test/systems/lived1.test.js",
+      "test/systems/ol3.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-nightfall-is-said-in-game-minutes",
+    "file": "src/systems/worldTick.js",
+    "old": "  const real = Math.max(1, Math.ceil(ms / 60000));",
+    "new": "  const real = Math.max(1, Math.ceil(dusk - sky));",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-refusal-says-no-nightfall",
+    "file": "src/scenes/world.js",
+    "old": "  function withNightfall(text) { const nf = worldNightfallText(); return nf ? `${text} ${nf}` : text; }",
+    "new": "  function withNightfall(text) { return text; }",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-journey-passes-nothing-online",
+    "file": "src/scenes/world.js",
+    "old": "setSyntheticTimeIncrease(true); playerTicker.advance(computed.minutes);",
+    "new": "setSyntheticTimeIncrease(true); if (!sharedClockOn()) playerTicker.advance(computed.minutes);",
+    "tests": [
+      "test/systems/lived1.test.js",
+      "test/systems/audit64_travel.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-tavern-calendar-is-the-characters",
+    "file": "src/ui/tavernWindow.js",
+    "old": "      date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },",
+    "new": "      date: { dayOfYear: dayOfYearFromMinutes(now) },",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-host-hands-the-tavern-the-characters-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "      worldNow: () => Math.floor(skyMinutes()),   // LIVED1: the calendar",
+    "new": "      worldNow: () => Math.floor(ownMinutes()),   // LIVED1: the calendar",
+    "tests": [
+      "test/systems/lived1.test.js"
+    ]
+  },
+  {
+    "name": "LIVED1-the-spawn-table-reads-the-characters-hour",
+    "file": "src/systems/encounters.js",
+    "old": "  const timeOfDay = (((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440) + 1440) % 1440;",
+    "new": "  const timeOfDay = ((ctx.gameMinutes % 1440) + 1440) % 1440;",
+    "tests": [
+      "test/systems/lived1.test.js",
+      "test/systems/encounters.test.js"
+    ]
+  }
+]

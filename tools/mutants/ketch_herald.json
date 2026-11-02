@@ -1,0 +1,75 @@
+[
+  {
+    "name": "KTH-the-arrival-pinging",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "    title: `The Sky-Ketch is over ${city}`,",
+    "new": "    role: '123456789012345678',\n    title: `The Sky-Ketch is over ${city}`,",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-family-another",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "  ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff, thread: 'ktThread' }), // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)",
+    "new": "  ketch: Object.freeze({ name: 'The Ketch', colour: 0x7cc4ff, thread: 'ktThread' }), // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-her-colour-not-her-ring",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "  ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff, thread: 'ktThread' }), // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)",
+    "new": "  ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4fe, thread: 'ktThread' }), // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-gate-role-first",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "export const ketchHeraldRole = (own, gate) => heraldRole(own) ?? heraldRole(gate);",
+    "new": "export const ketchHeraldRole = (own, gate) => heraldRole(gate) ?? heraldRole(own);",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-floor-an-older-relay",
+    "file": "src/net/relayCfg.js",
+    "old": "  ktThread: 255,",
+    "new": "  ktThread: 254,",
+    "note": "AUDIT HORIZONTAL B7 (LOOT-DOOR, re-aimed by content): lootDoor's floor stands at the line's end. PIN MOVED: SD-PARTY world275, re-aimed by content.",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-sighting-owed-before-its-instant",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "    return { n: v.n, k: name, i: k, at: Math.max(now, at) };",
+    "new": "    return { n: v.n, k: name, i: k, at: now };",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-a-passed-window-posted",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "    if (now >= until) continue; // its window gone - let go",
+    "new": "    if (now >= until && until < 0) continue; // its window gone - let go",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-a-posted-moment-owed-again",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "    if (v.n < P.n || (v.n === P.n && k <= P.k)) continue; // posted, or before what was",
+    "new": "    if (v.n < P.n || (v.n === P.n && k < P.k)) continue; // posted, or before what was",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  }
+]

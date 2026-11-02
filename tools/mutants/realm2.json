@@ -1,0 +1,92 @@
+[
+  {
+    "name": "REALM2-no-resync",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (!r.ok && r.error === 'seq' && r.seq === current + 1 && unsure) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-offline-drops-the-save",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (!pending) pending = job;\n",
+    "new": "",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-lost-still-sends",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (lost) return Promise.resolve({ ok: false, error: lost });\n",
+    "new": "",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-leave-drops-the-waiting",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (!keepalive) { if (running) await running; if (pending) await session.checkpoint(pending.text, pending.summary); }\n",
+    "new": "",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-left-still-writes",
+    "file": "src/systems/realmSaves.js",
+    "old": "      lost = 'left';\n",
+    "new": "",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-auth-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (error === 'auth') forgetSession(io.storage);",
+    "new": "    void forgetSession;",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-summary-unsent",
+    "file": "src/systems/realmSaves.js",
+    "old": "...(summary ? { 'x-realm-summary': headerJson(summary) } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-lease-not-lost",
+    "file": "src/systems/realmSaves.js",
+    "old": "export const REALM_LOST = Object.freeze(['lease', 'no-realm-character', 'auth', 'signed-out']);",
+    "new": "export const REALM_LOST = Object.freeze(['no-realm-character', 'auth', 'signed-out']);",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-newest-not-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "        pending = { text, summary, waiters: [...(pending?.waiters ?? []), settle] };\n        if (!running)",
+    "new": "        pending = pending ? { ...pending, waiters: [...pending.waiters, settle] } : { text, summary, waiters: [settle] };\n        if (!running)",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  },
+  {
+    "name": "REALM2-keepalive-dropped",
+    "file": "src/systems/realmSaves.js",
+    "old": "method, headers, body: json ? JSON.stringify(json) : (raw ?? undefined), ...(keepalive ? { keepalive: true } : {}),",
+    "new": "method, headers, body: json ? JSON.stringify(json) : (raw ?? undefined),",
+    "tests": [
+      "test/server/realm2.test.js"
+    ]
+  }
+]

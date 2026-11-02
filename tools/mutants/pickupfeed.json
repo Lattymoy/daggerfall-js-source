@@ -1,0 +1,501 @@
+[
+  {
+    "name": "PICKUP-FEED-a-bump-adds-nothing",
+    "file": "src/ui/pickupFeed.js",
+    "old": "          c.count += e.count;",
+    "new": "          c.count = e.count;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-bump-keeps-the-old-clock",
+    "file": "src/ui/pickupFeed.js",
+    "old": "          c.at = now;",
+    "new": "          c.at = c.at;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-same-thing-is-a-second-card",
+    "file": "src/ui/pickupFeed.js",
+    "old": "        const i = cards.findIndex((c) => c.key === e.key);",
+    "new": "        const i = -1;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-bumped-card-stays-where-it-was",
+    "file": "src/ui/pickupFeed.js",
+    "old": "          block.push(c);",
+    "new": "          cards.splice(i, 0, c);",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-twins-in-a-press-are-two-cards",
+    "file": "src/ui/pickupFeed.js",
+    "old": "        if (mine) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
+  },
+  {
+    "name": "PICKUP-FEED-no-cap",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      cards = [...block, ...cards].slice(0, Math.max(1, max));",
+    "new": "      cards = [...block, ...cards];",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-press-reversed",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      cards = [...block, ...cards].slice(0, Math.max(1, max));",
+    "new": "      cards = [...block.reverse(), ...cards].slice(0, Math.max(1, max));",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-never-fades",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      return cards.map((c) => ({ ...c, fading: now - c.at >= holdOf(c) }));",
+    "new": "      return cards.map((c) => ({ ...c, fading: false }));",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
+  },
+  {
+    "name": "PICKUP-FEED-never-gone",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    cards = cards.filter((c) => now - c.at < holdOf(c) + fade);",
+    "new": "    cards = cards.filter(() => true);",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
+  },
+  {
+    "name": "PICKUP-FEED-a-gone-card-is-bumped-back",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      tick(now);\n      const block = [];",
+    "new": "      const block = [];",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-one-is-counted",
+    "file": "src/ui/pickupFeed.js",
+    "old": "export const pickupCountText = (line) => (!line.gold && line.count > 1 ? `×${line.count}` : '');",
+    "new": "export const pickupCountText = (line) => (!line.gold && line.count >= 1 ? `×${line.count}` : '');",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-gold-is-an-item",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  if (isGoldPieces(item))",
+    "new": "  if (false)",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-tier-not-worn",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  if (l.gold) el.classList.add('is-gold');\n  if (l.rarity) el.dataset.rarity = l.rarity;",
+    "new": "  if (l.gold) el.classList.add('is-gold');\n  if (false) el.dataset.rarity = l.rarity;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
+  },
+  {
+    "name": "PICKUP-FEED-gold-wears-a-second-plus",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  if (!l.gold) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-mid-line-ignored",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  let top = Math.max(Number.isFinite(base) ? base : up, up);",
+    "new": "  let top = up;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-tall-stack-runs-into-the-hud",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    if (top + height(shown) > lower) top = Math.max(up, lower - height(shown));",
+    "new": "    if (false) top = Math.max(up, lower - height(shown));",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-tall-stack-rises-over-the-plaque",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    if (top + height(shown) > lower) top = Math.max(up, lower - height(shown));",
+    "new": "    if (top + height(shown) > lower) top = lower - height(shown);",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-every-card-shown-into-the-hud",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    while (shown > 1 && top + height(shown) > lower) shown -= 1;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-what-stands-above-unread",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  for (const sel of PICKUP_KEEP_ABOVE) {\n    const r = rect(d.querySelector?.(sel));\n    if (r) upper = Math.max(upper, r.bottom + gap);\n  }",
+    "new": "  void PICKUP_KEEP_ABOVE;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-foot-unread",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    if (r) lower = Math.min(lower, r.top - gap);",
+    "new": "    if (r) lower = lower + 0;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-mid-line-said-unread",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  if (mid && mid.style?.display !== 'none' && mid.textContent) {\n    const r = rect(mid);\n    if (r) upper = Math.max(upper, r.bottom + gap);\n  }",
+    "new": "  void mid;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-oldest-not-hidden",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  for (let i = 0; i < kids.length; i++) kids[i].classList.toggle('pf-over', i >= shown);",
+    "new": "  void kids;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-classic-skin-dressed",
+    "file": "src/ui/pickupFeed.js",
+    "old": "export function showPickups(moved, identity = undefined) {\n  try {\n    if (!isEnhanced()) return false;\n    const d = doc();",
+    "new": "export function showPickups(moved, identity = undefined) {\n  try {\n    if (false) return false;\n    const d = doc();",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ],
+    "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
+  },
+  {
+    "name": "PICKUP-FEED-the-node-never-appended",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  d.body.append(node);",
+    "new": "  void node;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-sheet-laid-twice",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  if (!d.getElementById?.(PICKUP_FEED_STYLE_ID)) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-no-ticker",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  if (!_ticking) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-ticker-that-runs-forever",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  if (!lines.length) return;",
+    "new": "  if (!lines.length) {\n    const gen = _tickGen;\n    _ticking = _raf(() => frame(gen)) != null;\n    return;\n  }",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-an-expired-card-left-standing",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  for (const [id, c] of drawn)\n    if (!live.has(id)) {\n      try {\n        c.el.remove();\n      } catch {\n        /* already gone */\n      }\n      drawn.delete(id);\n    }",
+    "new": "  for (const [id] of drawn) if (!live.has(id)) drawn.delete(id);",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-fade-never-drawn",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      c.el.classList.toggle('fading', l.fading);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-bumped-count-not-rewritten",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      c.num.textContent = pickupCountText(l);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-second-bump-does-not-pop",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      target.classList.add(l.bumps % 2 ? 'bump-a' : 'bump-b');",
+    "new": "      target.classList.add('bump-a');",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-late-picture-never-lands",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      if (drawn.get(l.id) === c) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-frame-with-no-picture",
+    "file": "src/ui/pickupFeed.js",
+    "old": "    c.icon.remove();\n    c.el.classList.add('no-icon');",
+    "new": "    c.el.classList.add('no-icon');",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-no-watchdog",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  _watchdog = armDrawWatchdog(\n    PICKUP_WATCHDOG_MS,\n    () => {\n      _watchdog = null;\n      clearPickupFeed();\n    },\n    { schedule: _schedule, cancel: _cancel },\n  );",
+    "new": "  _watchdog = null;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-watchdog-that-clears-nothing",
+    "file": "src/ui/pickupFeed.js",
+    "old": "      clearPickupFeed();\n    },",
+    "new": "    },",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-node-left-on-the-body",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  try {\n    node?.remove();\n  } catch {\n    /* already gone */\n  }\n  node = null;",
+    "new": "  node = null;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-stale-frame-runs-a-second-chain",
+    "file": "src/ui/pickupFeed.js",
+    "old": "  if (gen !== _tickGen) return;\n  _ticking = false;",
+    "new": "  _ticking = false;",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-hide-leaves-the-cards-painted",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  clearPickupFeed();   // PICKUP-FEED:",
+    "new": "  void 0;   // PICKUP-FEED:",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-plaque-teardown-misses-the-feed",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  // the hosts' one teardown for quick loot is this function.\n  destroyPickupFeed();",
+    "new": "  // the hosts' one teardown for quick loot is this function.",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-line-said-over-the-card",
+    "file": "src/systems/quickLoot.js",
+    "old": "    if (!shownBy(took, moved, playerEntity)) say(tookItemText(got));",
+    "new": "    shownBy(took, moved, playerEntity);\n    say(tookItemText(got));",
+    "tests": [
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-face-never-asked",
+    "file": "src/systems/quickLoot.js",
+    "old": "    if (!shownBy(took, moved, playerEntity)) say(tookItemText(got));",
+    "new": "    say(tookItemText(got));",
+    "tests": [
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-classic-line-lost",
+    "file": "src/systems/quickLoot.js",
+    "old": "    return took(moved, playerEntity) === true;",
+    "new": "    took(moved, playerEntity);\n    return true;",
+    "tests": [
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-face-that-throws-takes-the-frame",
+    "file": "src/systems/quickLoot.js",
+    "old": "  try {\n    return took(moved, playerEntity) === true;\n  } catch (e) {\n    console.warn(`[quick-loot] the pickup face failed; the line is said instead: ${e?.message ?? e}`);\n    return false;\n  }",
+    "new": "  return took(moved, playerEntity) === true;",
+    "tests": [
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-the-refusal-swallowed-with-the-count",
+    "file": "src/systems/quickLoot.js",
+    "old": "      if (refusal?.text) say(refusal.text);\n    } else if (n)",
+    "new": "    } else if (n)",
+    "tests": [
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-an-empty-say-blanks-the-line",
+    "file": "src/systems/quickLoot.js",
+    "old": "      if (refusal?.text) say(refusal.text);",
+    "new": "      say(refusal?.text ?? '');",
+    "tests": [
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-gold-counted-at-what-stayed",
+    "file": "src/systems/quickLoot.js",
+    "old": "  moved?.push({ item: got, count: plan.amount }); // PICKUP-FEED: the plan's amount, not the record's - gold answers the pile's own row, whose stack is what STAYED",
+    "new": "  moved?.push({ item: got, count: got.stackCount ?? 1 }); // PICKUP-FEED: the plan's amount, not the record's - gold answers the pile's own row, whose stack is what STAYED",
+    "tests": [
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-a-take-all-tells-the-face-nothing",
+    "file": "src/systems/quickLoot.js",
+    "old": "      const got = takeThrough(playerEntity, items, it, getQuest, moved);",
+    "new": "      const got = takeThrough(playerEntity, items, it, getQuest);",
+    "tests": [
+      "test/systems/pickupfeed.test.js",
+      "test/systems/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-world-body-take-passes-none",
+    "file": "src/scenes/world.js",
+    "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-world-pile-take-passes-none",
+    "file": "src/scenes/world.js",
+    "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
+    "new": " })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-exterior-body-take-passes-none",
+    "file": "src/scenes/exterior.js",
+    "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-exterior-pile-take-passes-none",
+    "file": "src/scenes/exterior.js",
+    "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
+    "new": " })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-worldModes-body-take-passes-none",
+    "file": "src/scenes/worldModes.js",
+    "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-worldModes-pile-take-passes-none",
+    "file": "src/scenes/worldModes.js",
+    "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
+    "new": " })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  },
+  {
+    "name": "PICKUP-FEED-dungeon-take-passes-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1: the window's own resolver (openInventory's, :1512); PICKUP-FEED: the cards",
+    "new": " })) {   // AUDIT QL-WEIGHT1: the window's own resolver (openInventory's, :1512); PICKUP-FEED: the cards",
+    "tests": [
+      "test/systems/pickupfeed.test.js"
+    ]
+  }
+]

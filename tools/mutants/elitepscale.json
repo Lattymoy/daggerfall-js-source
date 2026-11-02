@@ -1,0 +1,29 @@
+[
+  {
+    "name": "EPS-the-melee-hit-is-not-weighed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "_weighHit(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
+    "new": "((_f, d) => d)(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
+    "tests": [
+      "test/scenes/elitepscale.test.js"
+    ]
+  },
+  {
+    "name": "EPS-elite-copies-are-not-shared",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
+    "new": "    return (isRoomFoe(f) && !f.entity?.elite) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
+    "tests": [
+      "test/scenes/elitepscale.test.js"
+    ]
+  },
+  {
+    "name": "EPS-camp-room-asks-the-ungrown-group",
+    "file": "src/scenes/world.js",
+    "old": "            const size = campMembers(h.mobileTypes).length;",
+    "new": "            const size = h.mobileTypes.length;",
+    "tests": [
+      "test/scenes/elitepscale.test.js"
+    ]
+  }
+]

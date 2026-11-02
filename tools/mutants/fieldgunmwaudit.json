@@ -1,0 +1,155 @@
+[
+  {
+    "name": "F1-gate-back-to-isBow",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const armShoots = (fpArm.active() || fpArm.thirdActive()) && !!playerWeapon.machine.ranged;",
+    "new": "const armShoots = (fpArm.active() || fpArm.thirdActive()) && !!playerWeapon.machine.isBow;",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F1-voice-fires-on-the-click-under-the-arm",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const trigger = armShoots ? fired : (m.state !== 'Idle' && _tlState === 'Idle');",
+    "new": "const trigger = (m.state !== 'Idle' && _tlState === 'Idle');",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F1-voice-never-fires-under-the-arm",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const trigger = armShoots ? fired : (m.state !== 'Idle' && _tlState === 'Idle');",
+    "new": "const trigger = armShoots ? false : (m.state !== 'Idle' && _tlState === 'Idle');",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F1-flash-on-the-machine-frame-under-the-arm",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "(armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE))",
+    "new": "muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE)",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F1-hold-reports-no-fire",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "          out.push('hit');\n          return { evs: out, fired: true };",
+    "new": "          out.push('hit');\n          return { evs: out, fired: false };",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F2-muzzle-prefers-the-sprite-record-under-the-arm",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');",
+    "new": "      if (false) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F2-muzzle-first-person-only",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp()",
+    "new": "      if (fpArm.active()) return fpArm.weaponMuzzle(pairUp()",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F2-flight-ignores-a-world-muzzle",
+    "file": "src/systems/spellcast.js",
+    "old": "  if (muzzle?.world) return [...muzzle.world];\n  return muzzle ? playerMuzzleOrigin(eye, lookDir, muzzle) : playerArrowOrigin(eye, lookDir);",
+    "new": "  return muzzle ? playerMuzzleOrigin(eye, lookDir, muzzle) : playerArrowOrigin(eye, lookDir);",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F2-nearest-vertex-is-the-muzzle",
+    "file": "src/combat/rigMuzzle.js",
+    "old": "    if (d > bestD) {",
+    "new": "    if (bestD < 0 || d < bestD) {",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F2-forward-sign-flipped",
+    "file": "src/combat/rigMuzzle.js",
+    "old": "  return { right: vx / unitsPerMetre, up: vy / unitsPerMetre, forward: -vz / unitsPerMetre };",
+    "new": "  return { right: vx / unitsPerMetre, up: vy / unitsPerMetre, forward: vz / unitsPerMetre };",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F2-third-person-answers-a-lens-offset",
+    "file": "src/combat/fpArm.js",
+    "old": "        return { world: worldPointOf(at, lastThirdModel) };",
+    "new": "        return viewOffsetOf(at, lastThirdModel, lastFrame?.view ?? lastThirdModel, MW_UNITS_PER_METER);",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "F2-drawThird-forgets-its-frame",
+    "file": "src/combat/fpArm.js",
+    "old": "      lastThirdModel = model;   // AUDIT FIELD-GUN-MW F2: the body's frame, for the muzzle behind the camera\n",
+    "new": "",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  },
+  {
+    "name": "MW2-own-arm-removed",
+    "file": "src/combat/fpArm.js",
+    "old": "  const own = ownWeaponModelFor(weapon);\n  if (own) {\n    const path = `meshes/${own.model}`;",
+    "new": "  const own = null;\n  if (own) {\n    const path = `meshes/${own.model}`;",
+    "tests": [
+      "test/formats/morrowind/fieldgunmw.test.js"
+    ]
+  },
+  {
+    "name": "MW3-animates-as-nothing",
+    "file": "src/characters/ownModels/ownWeaponModels.js",
+    "old": "    animateAs: 10,",
+    "new": "    animateAs: 0,",
+    "tests": [
+      "test/formats/morrowind/fieldgunmw.test.js"
+    ]
+  },
+  {
+    "name": "MW2-hangs-on-a-bone-no-skeleton-has",
+    "file": "src/characters/ownModels/ownWeaponModels.js",
+    "old": "    model: 'thunderlock.nif',\n    bone: 'Weapon Bone',",
+    "new": "    model: 'thunderlock.nif',\n    bone: 'Bip01 Nowhere',",
+    "tests": [
+      "test/formats/morrowind/fieldgunmw.test.js"
+    ]
+  },
+  {
+    "name": "MW3-borrows-the-crossbow-bolt",
+    "file": "src/combat/fpArm.js",
+    "old": "    return { mwType: own.animateAs, parts, weaponInfo, arrowInfo, notes };\n  }",
+    "new": "  }",
+    "tests": [
+      "test/formats/morrowind/fieldgunmw.test.js"
+    ]
+  },
+  {
+    "name": "F2-dungeon-seam-restates-the-fork",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      ? playerShotOrigin(from, dir, muzzle)   // AUDIT FIELD-GUN-MW F2: the one fork, so a world muzzle lands here too",
+    "new": "      ? (muzzle ? playerMuzzleOrigin(from, dir, muzzle) : playerArrowOrigin(from, dir))",
+    "tests": [
+      "test/combat/fieldgunmwaudit.test.js"
+    ]
+  }
+]

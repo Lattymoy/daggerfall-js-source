@@ -1,0 +1,555 @@
+// X1: THE EFFECT LIBRARY'S MISSING ARMS - the effects the spell maker
+// could sell but the runtime could not honour. Each slice moves rows
+// out of spellEffects.js's inert set, so the maker's "(no effect
+// yet)" marks disappear as the arms land.
+
+import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+import { applySpell } from '../../src/systems/effects.js';
+import { jumpSpeedMultiplier, JUMP_SPELL_MULTIPLIER } from '../../src/systems/skills.js';
+import { climbingDeps } from '../../src/scenes/shared.js';
+import { buildCustomSpell, blankEffectSettings } from '../../src/systems/spell/spellMaker.js';
+import { effectByKey } from '../../src/systems/spell/spellEffects.js';
+
+const entity = () => ({
+  stats: { luck: 50, willpower: 50 }, skills: [], activeEffects: [],
+  race: 'Breton', level: 1, health: 20, maxHealth: 20,
+});
+const castSelf = (ent, type, subType = 255, settings = {}) => applySpell(
+  buildCustomSpell({ slots: [{ type, subType, settings: { ...blankEffectSettings(), durationBase: 10, ...settings } }], rangeType: 0 }),
+  1, ent, {}, () => 0.5, null, {});
+
+test('X1 Jumping: the spell adds AcrobatMotor\'s +0.6, on top of the skill term', () => {
+  const e = entity();
+  assert.equal(JUMP_SPELL_MULTIPLIER, 0.6, 'jumpSpellMultiplier (AcrobatMotor.cs:16)');
+  const base = jumpSpeedMultiplier(e);
+  assert.equal(base, 1, 'a skill-less Breton jumps at 1.0');
+  const out = castSelf(e, 27);
+  assert.equal(out.skipped, 0, 'the library honours it now');
+  assert.equal(out.buffs, 1);
+  assert.deepEqual(e.activeEffects.map((a) => a.kind), ['jumping']);
+  assert.equal(jumpSpeedMultiplier(e), base + 0.6, 'IsEnhancedJumping adds the spell term (:104-105)');
+  // and it leaves when the effect does
+  e.activeEffects.length = 0;
+  assert.equal(jumpSpeedMultiplier(e), base, 'End() clears it');
+});
+
+test('X1 Climbing: the spell doubles the effective skill, through the seam that was hardcoded false', () => {
+  const e = entity();
+  assert.equal(climbingDeps(e).inputs().enhanced, false);
+  const out = castSelf(e, 28);
+  assert.equal(out.skipped, 0);
+  assert.deepEqual(e.activeEffects.map((a) => a.kind), ['climbing']);
+  assert.equal(climbingDeps(e).inputs().enhanced, true,
+    'FormulaHelper.cs:304-306 doubles the skill; climbing.js reads `enhanced`');
+  e.activeEffects.length = 0;
+  assert.equal(climbingDeps(e).inputs().enhanced, false);
+});
+
+test('X1 both buffs renew their rounds like every other incumbent, and the catalog marks them live', () => {
+  const e = entity();
+  castSelf(e, 27);
+  const first = e.activeEffects[0].roundsRemaining;
+  e.activeEffects[0].roundsRemaining = 1;
+  castSelf(e, 27);
+  assert.equal(e.activeEffects.length, 1, 'one incumbent, not two');
+  assert.equal(e.activeEffects[0].roundsRemaining, first, 'a recast RENEWS the rounds, never stacks them (the port\'s incumbent law)');   // PIN MOVED (STACK-CAP)
+  // the spell maker no longer warns about these two
+  assert.equal(effectByKey('27,255').ported, true);
+  assert.equal(effectByKey('28,255').ported, true);
+});
+
+// ── X1b: Open and Lock ────────────────────────────────────────────
+import { doorSpellFor, exteriorOpenSpellFor, consumeDoorSpell, wireDoorSpells } from '../../src/scenes/shared.js';
+import { triggerOpen, triggerLock, DOOR_SPELL_TEXT } from '../../src/systems/mysticism.js';
+
+const castTouch = (ent, type, level = 5) => applySpell(
+  buildCustomSpell({ slots: [{ type, subType: 255, settings: { ...blankEffectSettings(), chanceBase: 100 } }], rangeType: 1 }),
+  level, ent, {}, () => 0.0, null, {});
+const door = (lock = 0, state = 'start') => ({ kind: 'door', currentLockValue: lock, state });
+
+test('X1 Open/Lock: the cast ARMS and waits - DFU never acts at cast time', () => {
+  const e = entity();
+  const out = castTouch(e, 17);
+  assert.equal(out.skipped, 0, 'the library honours Open now');
+  assert.equal(out.armed, 'openArmed');
+  // forcedRoundsRemaining = 1 with RemoveRound undecremented: the entry
+  // must NOT expire on its own - only the door (or a recast) ends it
+  assert.equal(e.activeEffects[0].permanent, true);
+  // X3: the level is the HOLDER's, read HERE - the cast was at level 5
+  // (castTouch's casterLevel) and the entity is level 1, so 1 is what
+  // travels to the door.
+  assert.deepEqual(doorSpellFor(e), { kind: 'open', holderLevel: 1, skeletonKey: false });
+  // Lock arms its own marker
+  const e2 = entity();
+  assert.equal(castTouch(e2, 16).armed, 'lockArmed');
+  assert.equal(doorSpellFor(e2).kind, 'lock');
+  // nothing armed = nothing to hand the door
+  assert.equal(doorSpellFor(entity()), null);
+  assert.equal(exteriorOpenSpellFor(entity()), null);
+});
+
+test('AUDIT 63 F41: BOTH armed - the action door LOCKS, the building still opens', () => {
+  // Open and Lock are two independent IncumbentEffects (Open.cs:22,
+  // Lock.cs:22, IsLikeKind => other is Lock), each parked on
+  // forcedRoundsRemaining, so casting one then the other leaves BOTH
+  // armed. ActivateActionDoor then runs
+  //   if (HandleLockEffect(actionDoor)) return;
+  //   if (HandleOpenEffect(actionDoor)) return;
+  // (PlayerActivate.cs:693-696) - Lock is tested and RETURNS first, so
+  // the door is locked to the caster's level and swung shut
+  // (Lock.cs:100-129), not opened.
+  const e = entity();
+  assert.equal(castTouch(e, 17).armed, 'openArmed');
+  assert.equal(castTouch(e, 16).armed, 'lockArmed');
+  assert.equal(e.activeEffects.filter((a) => a.kind === 'openArmed' || a.kind === 'lockArmed').length, 2,
+    'nothing merges the two incumbents');
+  assert.equal(doorSpellFor(e).kind, 'lock', 'HandleLockEffect is tested first and returns');
+  // ...while the EXTERIOR door asks Open on its own
+  // (HandleOpenEffectOnExteriorDoor, PlayerActivate.cs:1036-1043, which
+  // has no Lock test at all), so an armed Lock cannot mask it there.
+  assert.equal(exteriorOpenSpellFor(e).kind, 'open');
+});
+
+test('X1 Open: the lock yields only to a caster whose LEVEL reaches it (Open.cs:118-121)', () => {
+  const weak = door(9);
+  assert.deepEqual(triggerOpen(weak, 5), { unlocked: false, opened: false, alert: 'openFailed' });
+  assert.equal(weak.currentLockValue, 9, 'a lock too powerful is untouched');
+  const yields = door(3);
+  const r = triggerOpen(yields, 5);
+  assert.equal(r.unlocked, true);
+  assert.equal(yields.currentLockValue, 0);
+  assert.equal(r.opened, true, 'an unlocked, closed door swings');
+  // the level test is <=, so an exactly-matching lock yields
+  const exact = door(5);
+  assert.equal(triggerOpen(exact, 5).unlocked, true);
+  // the Skeleton's Key ignores the level rule entirely
+  const artifact = door(99);
+  assert.equal(triggerOpen(artifact, 1, { castBySkeletonKey: true }).unlocked, true);
+  // an already-open door is not re-opened
+  assert.equal(triggerOpen(door(0, 'end'), 5).opened, false);
+});
+
+test('X1 Lock: no level test, locks to the CASTER\'s level, refuses an already-locked door (Lock.cs:116)', () => {
+  const open = door(0);
+  assert.deepEqual(triggerLock(open, 7), { locked: true, closed: false, alert: 'doorLocked' });
+  assert.equal(open.currentLockValue, 7, 'the caster\'s own level becomes the lock');
+  const already = door(4);
+  assert.deepEqual(triggerLock(already, 9), { locked: false, closed: false, alert: 'doorAlreadyLocked' });
+  assert.equal(already.currentLockValue, 4, 'refused, not re-locked harder');
+  // a standing-open door is swung shut
+  assert.equal(triggerLock(door(0, 'end'), 3).closed, true);
+});
+
+test('X1 door spells: the armed effect is CONSUMED by the door, spent whether or not the lock gave', () => {
+  const e = entity();
+  castTouch(e, 17);
+  const said = [];
+  const actions = { onDoorSpell: null, toggleDoor: () => {} };
+  wireDoorSpells(actions, e, (t) => said.push(t));
+  // a lock too powerful still spends the cast
+  actions.onDoorSpell(door(99), 'open', triggerOpen(door(99), 5));
+  assert.deepEqual(said, [DOOR_SPELL_TEXT.openFailed]);
+  assert.equal(doorSpellFor(e), null, 'CancelEffect on trigger - the cast is spent');
+  // and consuming what was never armed is harmless
+  consumeDoorSpell(entity(), 'lock');
+});
+
+test('X1 door spells: a failed chance roll wastes the cast and arms nothing', () => {
+  const e = entity();
+  const out = applySpell(
+    buildCustomSpell({ slots: [{ type: 17, subType: 255, settings: { ...blankEffectSettings(), chanceBase: 1 } }], rangeType: 1 }),
+    1, e, {}, () => 0.99, null, {});
+  assert.equal(out.chanceFailed, 1);
+  assert.equal(out.armed, undefined);
+  assert.equal(doorSpellFor(e), null);
+  // the catalog now lists both as live
+  assert.equal(effectByKey('16,255').ported, true);
+  assert.equal(effectByKey('17,255').ported, true);
+});
+
+// ── X1c: the magic defences ───────────────────────────────────────
+import { elementalResistanceChance, savingThrow } from '../../src/systems/spellcast.js';
+import { spellAbsorptionChance, effectCastingCost } from '../../src/systems/absorption.js';
+import { spellResistanceChance } from '../../src/systems/effects.js';
+
+// a NORD - Bretons carry racial magic resistance, which would mask
+// every defence test behind a saving throw of its own
+const target = (over = {}) => ({
+  stats: { luck: 50, willpower: 50 }, skills: [], activeEffects: [], race: 'Nord',
+  level: 1, health: 50, maxHealth: 50, magicka: 0, maxMagicka: 300, ...over,
+});
+const grant = (ent, type, chance = 100) => applySpell(
+  buildCustomSpell({ slots: [{ type, subType: 255, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: chance } }], rangeType: 0 }),
+  1, ent, {}, () => 0.5, null, {});
+const incoming = (ent, rangeType = 2, mag = 10, roll = 0.5) => applySpell(
+  buildCustomSpell({ slots: [{ type: 4, subType: 0, settings: { ...blankEffectSettings(), magnitudeBaseLow: mag, magnitudeBaseHigh: mag } }], rangeType }),
+  5, ent, {}, () => roll, { level: 5 }, {});
+
+test('X1 Elemental Resistance: a successful roll drops the effect WHOLE, per element, stacking additively', () => {
+  const e = target();
+  const out = applySpell(
+    buildCustomSpell({ slots: [{ type: 8, subType: 0, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 100 } }], rangeType: 0 }),
+    1, e, {}, () => 0.5, null, {});
+  assert.equal(out.skipped, 0);
+  assert.equal(e.activeEffects[0].element, 0, 'the subType IS the element');
+  assert.ok(elementalResistanceChance(e, 0) >= 100);
+  assert.equal(elementalResistanceChance(e, 1), 0, 'resisting Fire is not resisting Frost');
+  // the saving throw returns 0 - resisted whole, not scaled - and only
+  // for the element resisted. A roll that would NOT save normally.
+  assert.equal(savingThrow(0, 8, e, 0, () => 0.99), 0, 'Fire is resisted outright');
+  assert.equal(savingThrow(1, 16, e, 0, () => 0.99), 100, 'Frost lands in full');
+  // a like-kind recast (SAME element) merges: AddState merges ROUNDS
+  // (renewed, never stacked - STACK-CAP) and touches nothing else, so
+  // the incumbent keeps its OWN chance (ElementalResistance.cs:148-157)
+  const s = target();
+  const half = buildCustomSpell({ slots: [{ type: 8, subType: 3, settings: { ...blankEffectSettings(), durationBase: 5, chanceBase: 30 } }], rangeType: 0 });
+  applySpell(half, 1, s, {}, () => 0.5, null, {});
+  const chance1 = elementalResistanceChance(s, 3);
+  const rounds1 = s.activeEffects[0].roundsRemaining;
+  s.activeEffects[0].roundsRemaining = 1;
+  applySpell(half, 1, s, {}, () => 0.5, null, {});
+  assert.equal(s.activeEffects.length, 1, 'like-kind merges into one incumbent');
+  assert.equal(s.activeEffects[0].roundsRemaining, rounds1, 'rounds RENEWED, never stacked');   // PIN MOVED (STACK-CAP)
+  assert.equal(elementalResistanceChance(s, 3), chance1, 'the chance is the incumbent\'s, unchanged');
+  // a DIFFERENT element is not like-kind - its own instance
+  applySpell(buildCustomSpell({ slots: [{ type: 8, subType: 1, settings: { ...blankEffectSettings(), durationBase: 5, chanceBase: 30 } }], rangeType: 0 }), 1, s, {}, () => 0.5, null, {});
+  assert.equal(s.activeEffects.length, 2);
+});
+
+test('X1 Spell Absorption: the effect arm swallows the spell and credits its cost as magicka', () => {
+  const e = target();
+  grant(e, 20);
+  // ABSORB-NERF (2026-09-30): a crafted 100 is built at the maker's 50, and the chance caps at 50 - a roll under it
+  assert.equal(spellAbsorptionChance(e), 50);
+  const cost = effectCastingCost(
+    buildCustomSpell({ slots: [{ type: 4, subType: 0, settings: { ...blankEffectSettings(), magnitudeBaseLow: 10, magnitudeBaseHigh: 10 } }] }).effects[0], 2, e);
+  const out = incoming(e, 2, 10, 0.4);
+  assert.equal(out.absorbed, cost, 'the points absorbed ARE the recomputed casting cost');
+  assert.equal(out.damage, 0, 'and the effect never lands');
+  assert.equal(e.magicka, Math.floor(cost / 2), 'ABSORB-NERF: half of them credited to the target');
+  // without it the same spell hurts
+  assert.ok(incoming(target()).damage > 0);
+});
+
+test('X1 Spell Absorption: all-or-nothing - no room for the whole cost means no absorption at all', () => {
+  // DFU refuses a PARTIAL absorb (EEM:1180-1182): if the cost exceeds
+  // the free magicka the effect passes through untouched.
+  const e = target({ magicka: 295, maxMagicka: 300 });
+  grant(e, 20);
+  const out = incoming(e, 2, 10, 0.4);   // ABSORB-NERF: a roll the capped 50% would absorb on - it is the room that refuses
+  assert.equal(out.absorbed, undefined, 'nothing absorbed');
+  assert.ok(out.damage > 0, 'the spell lands in full');
+  assert.equal(e.magicka, 295, 'and no magicka was gained');
+});
+
+test('X1 Spell Resistance: the effect is silently DROPPED, and a self-cast is never resisted', () => {
+  const e = target();
+  grant(e, 22);
+  assert.ok(spellResistanceChance(e) >= 100);
+  const out = incoming(e, 2);
+  assert.equal(out.resisted, 1);
+  assert.equal(out.damage, 0, 'dropped, not reduced');
+  assert.equal(out.absorbed, undefined, 'resistance grants no magicka');
+  assert.equal(e.magicka, 0);
+  // TargetTypes.CasterOnly is never resisted (:1256) - your own buff
+  // cannot be refused by your own resistance
+  assert.ok(incoming(e, 0).damage > 0, 'a self-cast lands');
+  // X11 closed the last gap in this row: the catalog now marks all
+  // EIGHT live, Reflection included - its re-target path is the host
+  // seam (scenes/hostMagic.js), which is where DFU puts it too.
+  for (const k of ['8,0', '8,1', '8,2', '8,3', '8,4', '20,255', '21,255', '22,255']) {
+    assert.equal(effectByKey(k).ported, true, `${k} is live`);
+  }
+});
+
+// ── X1d: Shield's damage pool ─────────────────────────────────────
+import { hurtPlayer, damageShieldPool } from '../../src/characters/playerEntity.js';
+
+const shieldSpell = (mag) => buildCustomSpell({
+  slots: [{ type: 35, subType: 255, settings: { ...blankEffectSettings(), durationBase: 10, magnitudeBaseLow: mag, magnitudeBaseHigh: mag } }],
+  rangeType: 0,
+});
+const shielded = (mag = 20) => {
+  const e = target({ health: 100, maxHealth: 100 });
+  applySpell(shieldSpell(mag), 1, e, {}, () => 0.5, null, {});
+  return [e, e.activeEffects.find((a) => a.kind === 'shield')];
+};
+
+test('X1 Shield: all-or-overflow per hit - the magnitude IS the pool, one point per hit point', () => {
+  const [e, a] = shielded();
+  assert.equal(a.shieldRemaining, a.startingShield, 'the pool opens full');
+  const pool = a.shieldRemaining;
+  // a hit no larger than the pool is reduced to ZERO
+  hurtPlayer(e, pool - 5);
+  assert.equal(e.health, 100, 'fully absorbed - no health lost');
+  assert.equal(a.shieldRemaining, 5);
+  // the hit that empties it passes ONLY its excess
+  hurtPlayer(e, 25);
+  assert.equal(e.health, 80, 'the 5-point pool ate 5 of the 25');
+  assert.equal(a.shieldRemaining, 0);
+  assert.equal(a.ended, true, 'running out ends the effect at once');
+  // a busted pool absorbs nothing further
+  hurtPlayer(e, 10);
+  assert.equal(e.health, 70);
+});
+
+test('X1 Shield: exactly zeroing the pool still BUSTS it, and passes zero through', () => {
+  const [e, a] = shielded();
+  hurtPlayer(e, a.startingShield);
+  assert.equal(e.health, 100, 'nothing got through');
+  assert.equal(a.ended, true, 'but the shield is spent');
+  assert.equal(a.shieldRemaining, 0);
+});
+
+test('X1 Shield: a recast tops the pool up, capped at the ORIGINAL starting pool', () => {
+  const [e, a] = shielded();
+  const start = a.startingShield;
+  hurtPlayer(e, 5);
+  assert.equal(a.shieldRemaining, start - 5);
+  const rounds = a.roundsRemaining;
+  a.roundsRemaining = 1;
+  applySpell(shieldSpell(20), 1, e, {}, () => 0.5, null, {});
+  assert.equal(e.activeEffects.filter((x) => x.kind === 'shield').length, 1, 'one incumbent');
+  assert.equal(a.shieldRemaining, start, 'topped up to the cap, never above');
+  assert.equal(a.startingShield, start, 'and startingShield itself never rises');
+  assert.equal(a.roundsRemaining, rounds, 'rounds renewed to a fresh cast\'s, never stacked');   // PIN MOVED (STACK-CAP)
+});
+
+test('X1 Shield: the pool sits on the ONE damage door, so every source is covered', () => {
+  // damageShieldPool is the primitive hurtPlayer calls; anything that
+  // reaches the player's health goes through it
+  const [, a] = shielded();
+  assert.equal(damageShieldPool({ activeEffects: [a] }, 3), 0, 'absorbed');
+  assert.equal(damageShieldPool({ activeEffects: [] }, 7), 7, 'no shield: damage passes unchanged');
+  // and hurtPlayer really routes through it: a shielded entity takes
+  // no health loss from a hit the pool covers, whatever the source
+  const [e2, a2] = shielded();
+  const before = e2.health;
+  assert.equal(hurtPlayer(e2, a2.shieldRemaining - 1), false, 'no death transition');
+  assert.equal(e2.health, before, 'the one door consulted the pool');
+  assert.equal(effectByKey('35,255').ported, true);
+});
+
+test('X1 REVIEW: a busted Shield resigns - a recast makes a NEW live pool, and the corpse stays dead', () => {
+  // The review's P0/P1, found by two reviewers independently: findInc
+  // matched the busted entry, so a recast refilled a pool that
+  // damageShieldPool skips (ended) while pushing rounds back above 0
+  // so the ticker never swept it. Shield stopped absorbing for good
+  // after its first bust, and every later cast fed the corpse.
+  const [e, dead] = shielded();
+  hurtPlayer(e, dead.startingShield + 5);
+  assert.equal(dead.ended, true);
+  applySpell(shieldSpell(20), 1, e, {}, () => 0.5, null, {});
+  const live = e.activeEffects.filter((a) => a.kind === 'shield' && !a.ended);
+  assert.equal(live.length, 1, 'the recast is its own live incumbent');
+  assert.notEqual(live[0], dead);
+  assert.equal(dead.roundsRemaining, 0, 'the corpse was never revived');
+  // and the fresh pool really absorbs
+  const h = e.health;
+  hurtPlayer(e, 10);
+  assert.equal(e.health, h, 'the new shield works');
+});
+
+test('X1 REVIEW: SetHealth(0) bypasses the shield - drowning and the collapse still kill', () => {
+  // DFU's drowning and lethal exhaustion SET health to zero rather
+  // than dealing damage, so no pool stands between them and the
+  // player. The port routes them through the one damage door (so the
+  // death presenter fires once), which made a Shield survive them.
+  const [e] = shielded();
+  hurtPlayer(e, e.health, { bypassShield: true });
+  assert.equal(e.health, 0, 'the collapse is not absorbable');
+  // and the ordinary door still shields
+  const [e2, a2] = shielded();
+  hurtPlayer(e2, 5);
+  assert.equal(e2.health, 100);
+  assert.ok(a2.shieldRemaining < a2.startingShield);
+});
+
+test('X1 REVIEW: the four SetHealth(0) callers all say bypassShield, and each names the 3-argument door', () => {
+  // The dungeon drown call had lost its entity argument entirely -
+  // health went in as `entity`, damage was undefined, and the guard
+  // at the top of hurtPlayer returned at once: dungeon drowning never
+  // dealt a point. Pre-dates X1; found reviewing the shield's door.
+  //
+  // AUDIT 26 (F049) CORRECTS WHAT THIS PIN THEN ASKED. It demanded the
+  // literal `hurtPlayer(playerEntity, playerEntity.health, ...)` in all
+  // four hosts - and in dungeonContext that NAME is not the import: the
+  // file aliases the import to hurtEntity (:26) and declares its own
+  // one-argument hurtPlayer(dmg) (:1030), which shadows it. So the pin
+  // passed on a call that still handed the entity in as `dmg` and did
+  // nothing at all. What matters is the DOOR each host names, not the
+  // spelling, so each host is checked against the binding it imported.
+  const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+  const DOOR = {
+    'src/scenes/worldModes.js': 'hurtPlayer',
+    'src/scenes/world.js': 'hurtPlayer',
+    'src/scenes/exterior.js': 'hurtPlayer',
+    // aliased at import, because a one-argument wrapper owns the name here
+    'src/scenes/dungeonContext.js': 'hurtEntity',
+  };
+  // PIN MOVED (FIELD BUGS 2026-10-13e SPENT-ASHORE): the exhaustion collapse is no SetHealth(0) in any host now - with
+  // foes about (and in the water, SWIM-SPENT) it costs a share of the health through the same door, the shield still
+  // bypassed - so exterior.js and worldModes.js, whose only SetHealth(0) it was, are held to that arm; the drownings
+  // (world.js's Deep Waters breath, the dungeon's) still kill.
+  const KILLS = new Set(['src/scenes/world.js', 'src/scenes/dungeonContext.js']);
+  for (const [p, door] of Object.entries(DOOR)) {
+    const src = rd(p);
+    assert.match(src, new RegExp(`import \\{[^}]*\\b(hurtPlayer as ${door}|${door})\\b[^}]*\\} from '\\.\\./characters/playerEntity\\.js'`),
+      `${p} imports the shared damage door as ${door}`);
+    if (KILLS.has(p)) {
+      assert.match(src, new RegExp(`${door}\\(playerEntity, playerEntity\\.health, \\{ bypassShield: true \\}\\)`),
+        `${p} kills rather than damages, through the 3-argument door it imported`);
+    }
+    assert.match(src, new RegExp(`if \\(out\\.kind === 'spent'\\) \\{[^\\n]*\\b${door}\\(playerEntity, out\\.damage, \\{ bypassShield: true \\}\\)`),
+      `${p} spends the collapse's share past the shield, through the 3-argument door it imported`);
+  }
+  assert.doesNotMatch(rd('src/scenes/dungeonContext.js'), /hurtPlayer\(playerEntity\.health\)/, 'the entity-less call is gone');
+  assert.doesNotMatch(rd('src/scenes/dungeonContext.js'), /hurtPlayer\(playerEntity,/,
+    'and nothing calls the one-argument wrapper with the world hosts\' argument list');
+});
+
+// ── X2: the defence parity gaps ───────────────────────────────────
+test('X2: absorption recomputes from the TARGET level at absorb time; resistance stays frozen at the caster level', () => {
+  // The one asymmetry in DFU's defence chain:
+  // TryEffectBasedAbsorption reads entity.Level of the TARGET
+  // (EEM:1287-1292), while TryResistance goes through RollChance ->
+  // ChanceValue, which uses the CASTER's level (EntityEffect:740-745).
+  const settings = { ...blankEffectSettings(), durationBase: 20, chanceBase: 5, chanceMod: 5, chancePerLevel: 1 };
+  const abs = buildCustomSpell({ slots: [{ type: 20, subType: 255, settings }], rangeType: 0 });
+  const t = target({ level: 2 });
+  applySpell(abs, 12, t, {}, () => 0.5, null, {});   // a level-12 caster
+  assert.equal(spellAbsorptionChance(t), 15, 'the TARGET is level 2: 5 + 5*2');
+  t.level = 8;
+  assert.equal(spellAbsorptionChance(t), 45, 'levelling up raises it live - the arithmetic is at absorb time');
+  t.level = 10;
+  assert.equal(spellAbsorptionChance(t), 50, 'ABSORB-NERF: and never past the 50% cap');
+  // resistance is the opposite: the caster's level, fixed at cast
+  const res = buildCustomSpell({ slots: [{ type: 22, subType: 255, settings }], rangeType: 0 });
+  const r = target({ level: 2 });
+  applySpell(res, 12, r, {}, () => 0.5, null, {});
+  assert.equal(spellResistanceChance(r), 65, 'the CASTER was level 12: 5 + 5*12');
+  r.level = 40;
+  assert.equal(spellResistanceChance(r), 65, 'and the target levelling changes nothing');
+});
+
+test('X2: absorption and resistance read ONE incumbent, never a sum (Elemental Resistance keeps its sum)', () => {
+  // FindIncumbentEffect returns the first match and nothing else
+  // (EEM:666-678). Summing made a 50% enchanted item alongside a 50%
+  // spell read as a certainty. ElementalResistance is the genuine
+  // exception - RaiseResistanceChance sums onto a cleared slate.
+  const e = target();
+  e.activeEffects.push({ kind: 'spellResistance', chance: 50, roundsRemaining: 99 });
+  e.activeEffects.push({ kind: 'spellResistance', chance: 50, roundsRemaining: 99 });
+  assert.equal(spellResistanceChance(e), 50, 'one incumbent, not 100');
+  const a = target();
+  a.activeEffects.push({ kind: 'spellAbsorption', chance: 40, roundsRemaining: 99 });
+  a.activeEffects.push({ kind: 'spellAbsorption', chance: 40, roundsRemaining: 99 });
+  assert.equal(spellAbsorptionChance(a), 40, 'and a pre-X2 frozen chance is still honoured');
+  // the elemental sum stands
+  const el = target();
+  const half = buildCustomSpell({ slots: [{ type: 8, subType: 3, settings: { ...blankEffectSettings(), durationBase: 5, chanceBase: 30 } }], rangeType: 0 });
+  applySpell(half, 1, el, {}, () => 0.5, null, {});
+  el.activeEffects.push({ kind: 'elementalResistance', element: 3, chance: 30, roundsRemaining: 99 });
+  assert.ok(elementalResistanceChance(el, 3) > 31, 'elemental chances still ADD');
+});
+
+test('X2: a non-CasterOnly defence buff can be SAVED against and dropped whole; a self-cast never is', () => {
+  // SupportMagnitude is false on all three, so AssignBundle runs the
+  // no-magnitude saving throw and `continue`s past the effect when the
+  // target makes it (EEM:563-579).
+  const touch = (type) => buildCustomSpell({
+    slots: [{ type, subType: 255, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 50 } }], rangeType: 1 });
+  // a Breton carries racial magic resistance, so a low roll saves
+  const b = target({ race: 'Breton', isPlayer: true });
+  const out = applySpell(touch(22), 1, b, {}, () => 0.2, { level: 5 }, {});
+  assert.equal(out.saved, 1, 'the save was made');
+  assert.equal(b.activeEffects.length, 0, 'and the buff was dropped WHOLE, not weakened');
+  // the same cast at CasterOnly is never saved against
+  const c = target({ race: 'Breton', isPlayer: true });
+  applySpell(buildCustomSpell({ slots: [{ type: 22, subType: 255, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 50 } }], rangeType: 0 }),
+    1, c, {}, () => 0.2, { level: 5 }, {});
+  assert.equal(c.activeEffects.length, 1, 'your own buff cannot be refused');
+  // and Elemental Resistance rides the same gate
+  const el = target({ race: 'Breton', isPlayer: true });
+  const outEl = applySpell(buildCustomSpell({ slots: [{ type: 8, subType: 0, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 50 } }], rangeType: 1 }),
+    1, el, {}, () => 0.2, { level: 5 }, {});
+  assert.equal(outEl.saved, 1);
+});
+
+// ── X3: the last five X1-review findings ──────────────────────────
+test('X3 Open/Lock: the level travels LIVE from the HOLDER, and a recast latches nothing', () => {
+  // Both triggers read manager.EntityBehaviour.Entity.Level AT THE
+  // DOOR (Open.cs:118, Lock.cs:116), and both AddState overrides are
+  // EMPTY bodies (Open.cs:77-79, Lock.cs:72-74) - so there is no
+  // cast-time level anywhere in the effect. The port used to freeze
+  // the caster's level into the armed entry and refresh it on recast:
+  // a character who levelled while the spell was armed opened doors
+  // at their old level.
+  const e = entity();
+  castTouch(e, 17, 5);
+  assert.equal(e.level, 1);
+  assert.equal(doorSpellFor(e).holderLevel, 1, 'the level-5 CAST does not travel');
+  assert.equal(e.activeEffects[0].casterLevel, undefined, 'nothing is latched on the entry');
+  // level up while armed: the door now sees the new level
+  e.level = 9;
+  assert.equal(doorSpellFor(e).holderLevel, 9);
+  // and a recast is a no-op on the incumbent - one entry, unchanged
+  const before = { ...e.activeEffects[0] };
+  castTouch(e, 17, 40);
+  assert.equal(e.activeEffects.length, 1, 'AddState merges, it does not add');
+  assert.deepEqual({ ...e.activeEffects[0] }, before, 'and an EMPTY AddState changes nothing');
+});
+
+test('X3 Lock: the auto-close is ToggleDoor(activatedByPlayer) - it fires the door record', () => {
+  // Lock.cs:122-126 passes the same activatedByPlayer both branches
+  // use; the port passed `false` on the close alone, which suppresses
+  // the door's own action record (a trap or linked mover wired to the
+  // door stayed silent when a Lock spell shut it).
+  const rd = readFileSync(join(ROOT, 'src/world/actionSystem.js'), 'utf8');
+  const arm = rd.slice(rd.indexOf('if (doorSpell && o.kind'), rd.indexOf('// R1: ActivateActionDoor'));
+  assert.match(arm, /if \(result\.opened\) this\.toggleDoor\(o, true\);/);
+  assert.match(arm, /if \(result\.closed\) this\.toggleDoor\(o, true\);/);
+  assert.doesNotMatch(arm, /toggleDoor\(o, false\)/, 'no byPlayer=false swing survives on this path');
+});
+
+test('X3 Open/Lock: the host SPEAKS the arming line - it is the only sign the spell worked', () => {
+  // Neither effect acts at cast, so "Ready to open."/"Ready to lock."
+  // (Open.cs:93-97, Lock.cs:84-89) is the entire visible outcome.
+  // out.armed had zero readers before X3: the spell was silent AND
+  // invisible until you touched a door.
+  assert.equal(castTouch(entity(), 17).armed, 'openArmed');
+  assert.equal(castTouch(entity(), 16).armed, 'lockArmed');
+  const host = readFileSync(join(ROOT, 'src/scenes/hostMagic.js'), 'utf8');
+  assert.match(host, /if \(r\.armed\) say\(r\.armed === 'openArmed' \? DOOR_SPELL_TEXT\.readyToOpen : DOOR_SPELL_TEXT\.readyToLock\)/,
+    'applySpellToPlayer is the "host manager is player" gate, so only the player hears it');
+  assert.equal(DOOR_SPELL_TEXT.readyToOpen, 'Ready to open.');
+  assert.equal(DOOR_SPELL_TEXT.readyToLock, 'Ready to lock.');
+});
+
+test('X3 Open: the EXTERIOR building door arm exists, spends the spell either way, and refuses Lock', () => {
+  // PlayerActivate.cs:519-520 tries HandleOpenEffectOnExteriorDoor
+  // BEFORE the mode ladder; Open.cs:158 cancels outside the success
+  // branch, so a failed exterior trigger falls through to the normal
+  // refusal with the spell gone. The catalog claimed 17,255 ported
+  // while this half did not exist.
+  const wm = readFileSync(join(ROOT, 'src/scenes/worldModes.js'), 'utf8');
+  const arm = wm.slice(wm.indexOf('let opened = unlocked;'), wm.indexOf('tallySkill(playerEntity, SKILLS.Lockpicking, 1)'));
+  // AUDIT 63 F41: an armed LOCK still has no exterior arm - but the
+  // reason is DFU's ROUTING, not a priority inside the lookup.
+  // HandleOpenEffectOnExteriorDoor (PlayerActivate.cs:1036-1043) does its
+  // own FindIncumbentEffect<Open>; PlayerActivate calls HandleLockEffect
+  // only from ActivateActionDoor (:693). So this host reads Open
+  // directly, and an armed Lock can no longer hide it.
+  assert.match(arm, /const spell = exteriorOpenSpellFor\(playerEntity\);/, 'an armed LOCK has no exterior arm in DFU and is left alone');
+  assert.match(arm, /triggerExteriorOpen\(lockValue, spell\.holderLevel\)/);
+  // the consume is UNCONDITIONAL - not inside the success branch
+  const consumeAt = arm.indexOf("consumeDoorSpell(playerEntity, 'open')");
+  const openedAt = arm.indexOf('opened = r.opened');
+  assert.ok(consumeAt > 0 && consumeAt < openedAt, 'the cast is spent before the outcome is read');
+  assert.equal(effectByKey('17,255').ported, true);
+});

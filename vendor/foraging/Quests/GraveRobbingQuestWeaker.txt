@@ -1,0 +1,234 @@
+-- Edited by Harbinger451
+-- StartsBy: Script
+-- Questee: anyone with a spade
+Quest: GraveRobbingQuestWeaker
+DisplayName: Grave Robbing!
+-- Message panels
+QRC:
+
+Message:  1013
+<ce> You spend some time digging up a grave, but
+<ce> you were unable to find anything of value!
+
+Message:  1014
+<ce> You spend some time digging up a grave and
+<ce> you were able to find a _loot1_!
+
+Message:  1015
+<ce> You spend some time digging up a grave and
+<ce> you were able to find a _loot1_
+<ce> and a _loot2_!
+
+Message:  1016
+<ce> You spend some time digging up a grave and
+<ce> you were able to find a _loot1_,
+<ce> a _loot2_ and some _loot3_!
+
+Message:  1024
+<ce> While robbing the grave, you
+<ce> discovered a _weapon_
+<ce> that must be worth some decent coin.
+
+Message:  1025
+<ce> While robbing the grave, you
+<ce> discovered a _armor_
+<ce> that must be worth some decent coin.
+
+Message:  1026
+<ce> While robbing the grave, you
+<ce> discovered a _magic_
+<ce> that must be worth some decent coin.
+
+Message:  1027
+<ce> While robbing the grave, you
+<ce> discovered a _potion_
+<ce> that must be worth some decent coin.
+
+Message:  1030
+<ce> While robbing the grave, you
+<ce> discovered a copy of the book
+<ce> _book_
+<ce> that must be worth some decent coin.
+
+Message:  1033
+<ce> While robbing the grave, you
+<ce> discovered the body within was fresh
+<ce> and would be a fine subject for Necromancy.
+
+Message:  1034
+<ce> While robbing the grave, you
+<ce> discovered a _mensclothing_
+<ce> that might be worth some coin.
+
+Message:  1035
+<ce> While robbing the grave, you
+<ce> discovered a _womensclothing_
+<ce> that might be worth some coin.
+
+Message:  1036
+<ce> Your Grave Robbing has disturbed the dead!
+
+
+QBN:
+
+Item _loot1_ trinket
+Item _loot2_ religious
+Item _loot3_ organs
+Item _weapon_ weapon
+Item _armor_ armor
+Item _magic_ magic_item
+Item _potion_ potion
+Item _book_ book
+Item _body_ dead_body
+Item _mensclothing_ mens_clothing
+Item _womensclothing_ womens_clothing
+
+Foe _ghost_ is Ghost
+Foe _wraith_ is Wraith
+
+
+-- Quest start-up:
+	reduce player fatigue by 30
+	raise time by 2:00
+	pick one of _0loot_ _1loot_ _1loot_ _2loot_ _2loot_ _3loot_
+
+
+_weakluc_ task:
+	when attribute Luck is at least 0
+
+_evenluc_ task:
+	when attribute Luck is at least 40
+
+_strongluc_ task:
+	when attribute Luck is at least 60
+
+_verystrongluc_ task:
+	when attribute Luck is at least 80
+
+_worstchanceluc_ task:
+	when _weakluc_ and not _evenluc_
+
+_evenchanceluc_ task:
+	when _evenluc_ and not _strongluc_
+
+_goodchanceluc_ task:
+	when _strongluc_ and not _verystrongluc_
+
+_bestchanceluc_ task:
+	when _verystrongluc_
+
+variable _0loot_ 
+
+_foundnothing_ task:
+	when _0loot_ and _0bonus_
+	say 1013
+
+_1loot_ task:
+	say 1014
+	get item _loot1_
+	make _loot1_ permanent
+
+_2loot_ task:
+	say 1015
+	get item _loot1_
+	make _loot1_ permanent
+	get item _loot2_
+	make _loot2_ permanent
+
+_3loot_ task:
+	say 1016
+	get item _loot1_
+	make _loot1_ permanent
+	get item _loot2_
+	make _loot2_ permanent
+	get item _loot3_
+	make _loot3_ permanent
+
+_looted_ task:
+	when _0loot_ or _1loot_ or _2loot_ or _3loot_
+	pick one of _disturb_ _notdisturb_ _notdisturb_ _notdisturb_ _notdisturb_
+
+_disturb_ task:
+	pick one of _ghostdisturbed_ _ghostdisturbed_ _ghostdisturbed_ _wraithdisturbed_
+
+_ghostdisturbed_ task:
+	say 1036
+	create foe _ghost_ every 0 minutes 1 times with 100% success
+
+_wraithdisturbed_ task:
+	say 1036
+	create foe _wraith_ every 0 minutes 1 times with 100% success
+
+variable _notdisturb_
+
+_bonusweak_ task:
+	when _looted_ and _worstchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_
+
+_bonuseven_ task:
+	when _looted_ and _evenchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_
+
+_bonusgood_ task:
+	when _looted_ and _goodchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_ _1bonus_
+
+_bonusbest_ task:
+	when _looted_ and _bestchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_ _1bonus_ _1bonus_
+
+_0bonus_ task:
+	end quest
+
+_1bonus_ task:
+	pick one of _weaponitem_ _armoritem_ _magicitem_ _potionitem_ _bookitem_ _bodyitem_ _mensitem_ _womensitem_
+
+_weaponitem_ task:
+	update-quest-item _weapon_ Leveled
+	say 1024
+	get item _weapon_
+	make _weapon_ permanent
+	end quest
+
+_armoritem_ task:
+	update-quest-item _armor_ Leveled
+	say 1025
+	get item _armor_
+	make _armor_ permanent
+	end quest
+
+_magicitem_ task:
+	say 1026
+	get item _magic_
+	make _magic_ permanent
+	end quest
+
+_potionitem_ task:
+	say 1027
+	get item _potion_
+	make _potion_ permanent
+	end quest
+
+_bookitem_ task:
+	say 1030
+	get item _book_
+	make _book_ permanent
+	end quest
+
+_bodyitem_ task:
+	say 1033
+	get item _body_
+	make _body_ permanent
+	end quest
+
+_mensitem_ task:
+	say 1034
+	get item _mensclothing_
+	make _mensclothing_ permanent
+	end quest
+
+_womensitem_ task:
+	say 1035
+	get item _womensclothing_
+	make _womensclothing_ permanent
+	end quest

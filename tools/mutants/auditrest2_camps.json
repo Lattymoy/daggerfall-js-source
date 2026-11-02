@@ -1,0 +1,331 @@
+[
+  {
+    "name": "AUDITREST2-H1-the-arm-reads-cacheScene",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (dungeonCtx) { if (load) dungeonCtx.camps?.dropOwn?.(); else carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0; }",
+    "new": "      if (dungeonCtx) { if (!cacheScene) dungeonCtx.camps?.dropOwn?.(); else carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0; }",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js",
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H1-the-load-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "modes?.forceExitToExterior({ cacheScene: false, load: true });",
+    "new": "modes?.forceExitToExterior({ cacheScene: false });",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H1-dropOwn-silent",
+    "file": "src/scenes/camps.js",
+    "old": "    if (n) onChanged?.();   // AUDIT REST II H1",
+    "new": "    void n;   // AUDIT REST II H1",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H1-dropOwn-always-tells",
+    "file": "src/scenes/camps.js",
+    "old": "    if (n) onChanged?.();   // AUDIT REST II H1",
+    "new": "    onChanged?.();   // AUDIT REST II H1",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H2-no-openRest",
+    "file": "src/scenes/worldModes.js",
+    "old": "    openRest: () => { if (interiorOverlay?.done) { interiorOverlay = null; interiorWindows.reconcile(null); } interiorKeyCtx.toggleRest(); },\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H2-the-plaque-row-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorCamps.activate(key, getInteractionMode(), plaqueActionFor(key));",
+    "new": "interiorCamps.activate(key, getInteractionMode());",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H3-the-advance-never-tends",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    camps.tend();   // AUDIT REST II H3",
+    "new": "    void 0;   // AUDIT REST II H3",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H3-tend-a-no-op",
+    "file": "src/scenes/camps.js",
+    "old": "  const tend = () => tendWhileResting(now());",
+    "new": "  const tend = () => {};",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H4-said-into-the-dying-dungeon",
+    "file": "src/scenes/camps.js",
+    "old": "    if (n) { if (!quiet) say(CAMP_TEXT.carriedOut); onChanged?.(); }",
+    "new": "    if (n) { say(CAMP_TEXT.carriedOut); onChanged?.(); }",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H4-the-walk-out-never-says",
+    "file": "src/scenes/worldModes.js",
+    "old": "the lock never outlives a mode change\n    if (carried) say(CAMP_TEXT.carriedOut);",
+    "new": "the lock never outlives a mode change\n    void carried;",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H4-the-teleport-never-says",
+    "file": "src/scenes/worldModes.js",
+    "old": "the lock never outlives a mode change\n      if (carried) say(CAMP_TEXT.carriedOut);",
+    "new": "the lock never outlives a mode change\n      void carried;",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H5-the-fires-left-in-the-save",
+    "file": "src/scenes/world.js",
+    "old": "          standOuterCamps(); carrySavedFires();   // AUDIT REST II H5 + H6",
+    "new": "          standOuterCamps();   // AUDIT REST II H5 + H6",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H5-no-entrance-keeps-them",
+    "file": "src/scenes/world.js",
+    "old": "          if (!entered) carrySavedFires();",
+    "new": "          void entered;",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H5-carry-says-nothing-puts-nothing",
+    "file": "src/scenes/world.js",
+    "old": "          (playerEntity.items ??= []).push(...items);\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H6-the-composer-drops-them",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "world: { ...collectWorld(), outerCamps: opts.outerCampsSave?.() ?? null, delve: delve.snapshot() },",
+    "new": "world: { ...collectWorld(), delve: delve.snapshot() },",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H6-the-host-never-hands-them",
+    "file": "src/scenes/world.js",
+    "old": "    outerCampsSave: () => camps.snapshot(campToRecord),",
+    "new": "    outerCampsSave: () => null,",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H6-the-entered-load-never-stands-them",
+    "file": "src/scenes/world.js",
+    "old": "          standOuterCamps();   // AUDIT REST II H6: the save's camps outside, in or out\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H5-a-tent-minted",
+    "file": "src/systems/survival/camp.js",
+    "old": "    .filter((r) => r?.kind === CAMP_KIND.Fire) // a fire alone, as packOwnFires; packCamp stamps out one with no fuel of its own",
+    "new": "    .filter((r) => !!r) // a fire alone, as packOwnFires; packCamp stamps out one with no fuel of its own",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H5-every-fire-stamped",
+    "file": "src/systems/survival/camp.js",
+    "old": "    .map((r) => packCamp(r).item)",
+    "new": "    .map(() => null)",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H7-the-campfire-mended",
+    "file": "src/systems/survival/items.js",
+    "old": "    isNotRepairable: true,\n  },",
+    "new": "  },",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H7-a-supply-recharged",
+    "file": "src/systems/rest/restItemRows.js",
+    "old": "    isNotRepairable: !stackable,",
+    "new": "    isNotRepairable: false,",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H8-every-shelf-cc",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })) items.push(it);",
+    "new": "    if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: true })) items.push(it);",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H8-every-shelf-online",
+    "file": "src/systems/shopStock.js",
+    "old": "    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls)) items.push(it); // REST2: online the Campfire is the rest's, the arc on or off",
+    "new": "    else if (sharedClockOn()) for (const it of campfireStock(rolls)) items.push(it); // REST2: online the Campfire is the rest's, the arc on or off",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H8-the-draw-skipped",
+    "file": "src/systems/survival/items.js",
+    "old": "  const fires = n(2, 4); // AUDIT REST II H8: drawn on every shelf, so each shelf's later draws stay its own; stood on one",
+    "new": "  const fires = campfires ? n(2, 4) : 0; // AUDIT REST II H8: drawn on every shelf, so each shelf's later draws stay its own; stood on one",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H5-a-lost-dungeon-keeps-them",
+    "file": "src/scenes/world.js",
+    "old": "        if (!pixel) { standOuterCamps(); carrySavedFires(); }",
+    "new": "        if (!pixel) { standOuterCamps(); }",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H9-the-counter-unread",
+    "file": "src/systems/realmCustoms.js",
+    "old": "    for (const list of new Set([\n      ...carriedItemLists(snap),\n      ...(Array.isArray(snap.otherItems) ? [snap.otherItems] : []),\n    ])) {",
+    "new": "    for (const list of new Set([...carriedItemLists(snap)])) {",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ],
+    "note": "AUDIT REST III B4 (PIN MOVED): the lists walked once, the foreign ones uncounted; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-H10-the-pack-unasked",
+    "file": "src/systems/rest/restItems.js",
+    "old": "  if (entity && !(entity.items ?? []).includes(item)) return { kind: 'text', text: REST_ITEM_TEXT.candleNotCarried };",
+    "new": "",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H10-the-entity-dropped",
+    "file": "src/systems/rest/restItems.js",
+    "old": "  offlineUse((item, list, ctx) => useCandle(item, list, ctx?.entity)),",
+    "new": "  offlineUse((item, list) => useCandle(item, list)),",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H11-room-unasked",
+    "file": "src/scenes/camps.js",
+    "old": "    const packed = kits.filter((it) => (it.currentCondition ?? 0) < capOf(it)).sort(",
+    "new": "    const packed = kits.filter(() => true).sort(",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H11-the-full-word-lost",
+    "file": "src/scenes/camps.js",
+    "old": "say(near.length || kits.length ? REST_ITEM_TEXT.firewoodFull : REST_ITEM_TEXT.firewoodNone);",
+    "new": "say(near.length ? REST_ITEM_TEXT.firewoodFull : REST_ITEM_TEXT.firewoodNone);",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ],
+    "note": "AUDIT REST III B3 (PIN MOVED): the fires in reach are a list now; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-H12-the-cold-arm-off",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (online && !fireLit(camp, now)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H12-the-stoke-not-first",
+    "file": "src/systems/survival/camp.js",
+    "old": "    return [...stoke, ...rows.filter((r) => (r.key !== 'rest' || restable) && r.key !== 'stoke')];",
+    "new": "    return rows.filter((r) => r.key !== 'rest' || restable);",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ],
+    "note": "AUDIT REST III A3 (PIN MOVED): my own cold tent's Rest kept; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-H12-the-plaque-unlaned",
+    "file": "src/scenes/camps.js",
+    "old": "    if (lit && campMenu(c.rec, now(), mine(c), { online: sharedClockOn() }).some(",
+    "new": "    if (lit && campMenu(c.rec, now(), mine(c)).some(",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H13-the-jar-a-campfire",
+    "file": "src/scenes/camps.js",
+    "old": "    const jar = c.rec.kind === CAMP_KIND.Fire && !!c.rec.jar;",
+    "new": "    const jar = false;",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H14-the-offline-bedroll-stocked",
+    "file": "src/systems/rest/restItems.js",
+    "old": "    if (t === REST_ITEM.Bedroll && !online) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-H15-the-salts-hold-dropped",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (sleepNow === 'exhausted' && !resting && !wakingHeld(s, now)) tire(DRAIN.exhausted, 'sleep');",
+    "new": "    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted, 'sleep');",
+    "tests": [
+      "test/systems/auditrest2_camps.test.js",
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  }
+]

@@ -1,0 +1,276 @@
+[
+  {
+    "name": "GUILD1e-pin-not-a-member-still",
+    "file": "server-account/src/guildBoard.js",
+    "old": "      WHERE EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4 AND guild_id = ?2)",
+    "new": "      WHERE 1 = 1",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-live-bound-one-over",
+    "file": "server-account/src/guildBoard.js",
+    "old": "        AND (SELECT COUNT(*) FROM guild_notes WHERE guild_id = ?2 AND author = ?3 AND expires_at > ?8) < ?11`,",
+    "new": "        AND (SELECT COUNT(*) FROM guild_notes WHERE guild_id = ?2 AND author = ?3 AND expires_at > ?8) <= ?11`,",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-read-muted-shown",
+    "file": "server-account/src/guildBoard.js",
+    "old": "    WHERE n.guild_id = ?1 AND n.expires_at > ?2 AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)",
+    "new": "    WHERE n.guild_id = ?1 AND n.expires_at > ?2 AND (1 = 1 OR n.author = ?3)",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-read-any-guild",
+    "file": "server-account/src/guildBoard.js",
+    "old": "    WHERE n.guild_id = ?1 AND n.expires_at > ?2 AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)",
+    "new": "    WHERE n.guild_id IS NOT NULL AND n.expires_at > ?2 AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-read-one-more",
+    "file": "server-account/src/guildBoard.js",
+    "old": "    .bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN)",
+    "new": "    .bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN + 1)",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-down-a-members-rank",
+    "file": "server-account/src/guildBoard.js",
+    "old": "    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND ${guildPowerSql('notes', 'rank', '?2')}))`,",
+    "new": "    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND rank IN (0, 1, 2)))`,",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-down-another-guilds",
+    "file": "server-account/src/guildBoard.js",
+    "old": "      `DELETE FROM guild_notes WHERE id = ?1 AND guild_id = ?2",
+    "new": "      `DELETE FROM guild_notes WHERE id = ?1 AND ?2 IS NOT NULL",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-down-author-not-own",
+    "file": "server-account/src/guildBoard.js",
+    "old": "    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND ${guildPowerSql('notes', 'rank', '?2')}))`,",
+    "new": "    AND (0 = 1 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND ${guildPowerSql('notes', 'rank', '?2')}))`,",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-switch-unasked",
+    "file": "server-account/src/guildBoard.js",
+    "old": "  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n  const a = await guildActorOf(db, player, character);",
+    "new": "  const a = await guildActorOf(db, player, character);",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-muted-pins",
+    "file": "server-account/src/guildBoard.js",
+    "old": "  if (isMuted(player, nowS)) return { error: 'muted' };\n  if (typeof rid !== 'string' || !BOARD_RID_RE.test(rid)) return { error: 'board-rid' };",
+    "new": "  if (typeof rid !== 'string' || !BOARD_RID_RE.test(rid)) return { error: 'board-rid' };",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-account-in-the-answer",
+    "file": "server-account/src/guildBoard.js",
+    "old": "  subject: maskText(n.subject),",
+    "new": "  author: n.author,\n  subject: maskText(n.subject),",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-keeper-unsaid",
+    "file": "server-account/src/guildBoard.js",
+    "old": "      keeper: guildMay(me.rank, 'notes', powers), // GUILD-RANKS: as the guild set it",
+    "new": "      keeper: false, // GUILD-RANKS: as the guild set it",
+    "tests": [
+      "test/net/guild1e_service.test.js",
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-guild-gone-notes-stay",
+    "file": "server-account/migrations/0047_guild_board.sql",
+    "old": "  FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE,",
+    "new": "  FOREIGN KEY (guild_id) REFERENCES guilds(id),",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-poster-without-a-banner",
+    "file": "server-account/src/board.js",
+    "old": "heraldry: heraldryOfRow(n.guild_heraldry) } } : {}),",
+    "new": "heraldry: null } } : {}),",
+    "tests": [
+      "test/net/guild1e_service.test.js",
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-notes-power-a-members",
+    "file": "src/net/hallLaw.js",
+    "old": "  notes: Object.freeze([0, 1]), // GUILD1e: another member's note taken down from the guild's board",
+    "new": "  notes: Object.freeze([0, 1, 2]), // GUILD1e: another member's note taken down from the guild's board",
+    "tests": [
+      "test/net/guild1e_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-book-no-cache",
+    "file": "src/net/noticeBook.js",
+    "old": "    guildBoards.set(character, e);\n    if (!force && nowMs() - e.at < BOARD_CACHE_MS)",
+    "new": "    guildBoards.set(character, e);\n    if (false && nowMs() - e.at < BOARD_CACHE_MS)",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-book-rid-per-try",
+    "file": "src/net/noticeBook.js",
+    "old": "        (id) => door.guildPin({ character, ...note }, id),",
+    "new": "        () => door.guildPin({ character, ...note }, rid()),",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-book-stale-after-pin",
+    "file": "src/net/noticeBook.js",
+    "old": "        async () => {\n          forgetGuild(character);\n          await readGuild(character, { force: true });\n        },",
+    "new": "        async () => {},",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-book-town-words",
+    "file": "src/net/noticeBook.js",
+    "old": "      return {\n        ok: false,\n        error: r?.error ?? 'server',\n        text: after ? guildRefusal(r?.error) : accountRefusalText(r?.error),\n      };",
+    "new": "      return { ok: false, error: r?.error ?? 'server', text: accountRefusalText(r?.error) };",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-tab-unshown",
+    "file": "src/ui/noticeWindow.js",
+    "old": "            ...(guildsShown() ? [['guilds', 'Guilds']] : []),\n            ...(seatShown() ? [['seat', 'Seat']] : []),",
+    "new": "            ...(seatShown() ? [['seat', 'Seat']] : []),",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ],
+    "note": "SEAT1b (PIN MOVED): re-aimed by content - the board's tabs gained the Seat tab after Guilds."
+  },
+  {
+    "name": "GUILD1e-posters-any-note",
+    "file": "src/ui/noticeWindow.js",
+    "old": "export const recruitPosters = (board) => (board?.notes ?? []).filter((n) => n?.button === 'guild' && n.guild);",
+    "new": "export const recruitPosters = (board) => (board?.notes ?? []).filter((n) => !!n?.guild);",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-banner-never",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if (!heraldry) return null;",
+    "new": "    return null;",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-hall-reads-the-town",
+    "file": "src/ui/noticeWindow.js",
+    "old": "      return;\n    } // GUILD1e: the hall's board reads no town",
+    "new": "    } // GUILD1e: the hall's board reads no town",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-anyone-takes-down",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if (c.gnote && (c.gnote.mine || gme().keeper))",
+    "new": "    if (c.gnote && (c.gnote.mine || true))",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-board-in-a-home",
+    "file": "src/systems/decor/decorCatalogue.js",
+    "old": "        (!e.hall || (!!room?.hall && !room?.yard)) &&",
+    "new": "        (!e.hall || true) &&",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-scan-without-the-board",
+    "file": "src/systems/decor/decorScan.js",
+    "old": "      entries = Object.freeze([\n        ...decorCatalogue(mods ? addDecorMods(read) : read),\n        HALL_BOARD_ENTRY,\n        ...GUILD_FURNITURE_ENTRIES,\n      ]); // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings",
+    "new": "      entries = Object.freeze([...decorCatalogue(mods ? addDecorMods(read) : read), ...GUILD_FURNITURE_ENTRIES]); // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ],
+    "note": "DECOR-MODS (FIELD BUGS 2026-10-05b, PIN MOVED): re-aimed by content - the town mods' furnishings join before the board. AUDIT 05b (PIN MOVED): re-aimed by content - the mods join whatever is on (A3)."
+  },
+  {
+    "name": "GUILD1e-any-model-a-board",
+    "file": "src/scenes/worldModes.js",
+    "old": "piece?.model === BULLETIN_BOARD_MODEL_ID && !piece.item;",
+    "new": "piece?.model != null && !piece.item;",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-visitor-reads-the-board",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!hallMemberHere()) { say(hallBoardShutLine(hallNameHere())); return; }\n",
+    "new": "",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-town-board-no-guilds",
+    "file": "src/scenes/world.js",
+    "old": "      guilds: true,   // GUILD1e",
+    "new": "      guilds: false,   // GUILD1e",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1e-hall-board-a-town",
+    "file": "src/scenes/world.js",
+    "old": "guildOnly: { name: name || 'the guild' } }) : false);",
+    "new": "guildOnly: null }) : false);",
+    "tests": [
+      "test/net/guild1e_client.test.js"
+    ]
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "name": "STEED-KEPT-a-vehicle-taken",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  && !WILD_NEVER_GROUPS.has(item.group) && !DECOR_OWN_KEPT_BACK.has(item.templateIndex)",
+    "new": "  && !DECOR_OWN_KEPT_BACK.has(item.templateIndex)",
+    "tests": [
+      "test/systems/revenant/fb1019f_steedkept.test.js",
+      "test/systems/rvn8_took.test.js"
+    ]
+  },
+  {
+    "name": "STEED-KEPT-the-spellbook-taken",
+    "file": "src/systems/revenant/revenant.js",
+    "old": " && !DECOR_OWN_KEPT_BACK.has(item.templateIndex) && !BOAT_TEMPLATES",
+    "new": " && !BOAT_TEMPLATES",
+    "tests": [
+      "test/systems/revenant/fb1019f_steedkept.test.js"
+    ]
+  },
+  {
+    "name": "STEED-KEPT-a-ships-deed-taken",
+    "file": "src/systems/revenant/revenant.js",
+    "old": " && !BOAT_TEMPLATES.includes(item.templateIndex)   // STEED-KEPT",
+    "new": "   // STEED-KEPT",
+    "tests": [
+      "test/systems/revenant/fb1019f_steedkept.test.js"
+    ]
+  },
+  {
+    "name": "STEED-KEPT-every-piece-handed-back",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "    const home = r.took.filter((it) => !revenantMayTake(it));",
+    "new": "    const home = r.took.slice();",
+    "tests": [
+      "test/systems/revenant/fb1019f_steedkept.test.js"
+    ]
+  },
+  {
+    "name": "STEED-KEPT-the-return-unsaid",
+    "file": "src/systems/revenant/revenant.js",
+    "old": " hudTextWhenShown(tookHomeLine(r, it));",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/fb1019f_steedkept.test.js"
+    ]
+  },
+  {
+    "name": "STEED-KEPT-said-twice",
+    "file": "src/systems/revenant/revenant.js",
+    "old": " hudTextWhenShown(tookHomeLine(r, it));",
+    "new": " hudTextWhenShown(tookHomeLine(r, it)); hudTextWhenShown(tookHomeLine(r, it));",
+    "tests": [
+      "test/systems/revenant/fb1019f_steedkept.test.js"
+    ]
+  },
+  {
+    "name": "STEED-KEPT-the-words-lost",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "'{name} could not keep your {item}. It is back in your pack.'",
+    "new": "'{name} could not keep it.'",
+    "tests": [
+      "test/systems/revenant/fb1019f_steedkept.test.js"
+    ]
+  }
+]

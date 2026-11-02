@@ -1,0 +1,47 @@
+[
+  {
+    "name": "HELM-NET-busy-never-asked",
+    "file": "src/scenes/fishHost.js",
+    "old": "      if (dungeon || host.busy?.() || !foragingToolIn(entity, FT.FishingNet) || !inWater()) return [];",
+    "new": "      if (dungeon || !foragingToolIn(entity, FT.FishingNet) || !inWater()) return [];",
+    "tests": [
+      "test/scenes/fb1002_fieldbugs.test.js"
+    ]
+  },
+  {
+    "name": "HELM-NET-busy-read-backwards",
+    "file": "src/scenes/fishHost.js",
+    "old": "      if (dungeon || host.busy?.() || !foragingToolIn(entity, FT.FishingNet) || !inWater()) return [];",
+    "new": "      if (dungeon || !host.busy?.() || !foragingToolIn(entity, FT.FishingNet) || !inWater()) return [];",
+    "tests": [
+      "test/scenes/fb1002_fieldbugs.test.js"
+    ]
+  },
+  {
+    "name": "HELM-NET-the-guns-forgotten",
+    "file": "src/scenes/professionsHost.js",
+    "old": "            busy: () => !!csaRuntime?.isSailing?.() || !!host.naval?.aiming || !!host.naval?.boarding,",
+    "new": "            busy: () => !!csaRuntime?.isSailing?.(),",
+    "tests": [
+      "test/scenes/fb1002_fieldbugs.test.js"
+    ]
+  },
+  {
+    "name": "HELM-HUSH-every-play-counted-again",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  const audioPlay = (src) => { if (!src.isPlaying) src.plays = (src.plays ?? 0) + 1; src.isPlaying = true; deps.audio?.play?.(src); };",
+    "new": "  const audioPlay = (src) => { src.plays = (src.plays ?? 0) + 1; src.isPlaying = true; deps.audio?.play?.(src); };",
+    "tests": [
+      "test/scenes/fb1002_fieldbugs.test.js"
+    ]
+  },
+  {
+    "name": "HELM-HUSH-the-stopped-fade-left-where-it-stood",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (fading != null) { fading.stopped = true; fading.settle?.(); }   // StopCoroutine(fading)",
+    "new": "    if (fading != null) { fading.stopped = true; }   // StopCoroutine(fading)",
+    "tests": [
+      "test/scenes/fb1002_fieldbugs.test.js"
+    ]
+  }
+]

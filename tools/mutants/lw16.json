@@ -1,0 +1,667 @@
+[
+  {
+    "name": "LW16-window",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "    if (!(v.inT <= t && t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
+    "new": "    if (!(v.inT <= t && t - v.inT <= NEWS_DAYS * DAY_MIN)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-in",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "    if (!(v.inT <= t && t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
+    "new": "    if (!(t - v.inT < NEWS_DAYS * DAY_MIN)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-set-out",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, w.outT0)].filter((it) => it.t <= w.outT0);",
+    "new": "  const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, w.outT0)];",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-own",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "      if (ownKeys.has(key) || (best.get(key)?.t ?? Infinity) <= v.inT) continue;",
+    "new": "      if ((best.get(key)?.t ?? Infinity) <= v.inT) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-first",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "      if (ownKeys.has(key) || (best.get(key)?.t ?? Infinity) <= v.inT) continue;",
+    "new": "      if (ownKeys.has(key)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-deeds",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, w.outT0)].filter((it) => it.t <= w.outT0);",
+    "new": "  const toldAt = (w) => [...(w.news ?? []), ...deedsAt(w.from, Infinity)].filter((it) => it.t <= w.outT0);",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-courier",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "    if (v.courier) {",
+    "new": "    if (v.relay) {",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-hop-before",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "        if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue; // heard at home before the courier set out",
+    "new": "        if (!(v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue; // heard at home before the courier set out",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-hop-days",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "        if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue; // heard at home before the courier set out",
+    "new": "        if (!(r.inT <= v.outT0)) continue; // heard at home before the courier set out",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-hop-from",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "          items.push({ ...it, key: carriedKey(it), from: it.from || (r.from?.name ?? ''), t: r.inT });",
+    "new": "          items.push({ ...it, key: carriedKey(it), from: it.from || (v.from?.name ?? ''), t: r.inT });",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-hop-key",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "        for (const it of toldAt(r))\n          items.push({ ...it, key: carriedKey(it), from: it.from || (r.from?.name ?? ''), t: r.inT });",
+    "new": "        for (const it of toldAt(r)) items.push({ ...it, from: it.from || (r.from?.name ?? ''), t: r.inT });",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-saved",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  if (item.kind === 'home') return 'saved';",
+    "new": "  if (item.kind === 'homes') return 'saved';",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-routed",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  if (item.kind === 'routed') return 'routed';",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-robbed",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  if (item.kind === 'held') return 'robbed';",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-slain-seen",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  if (item.kind === 'slain') return item.seen ? 'slain' : null;",
+    "new": "  if (item.kind === 'slain') return 'slain';",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-helped",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  return item.helped ? 'helped' : null;",
+    "new": "  return 'helped';",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-kin",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  if (!item || item.kin) return null;",
+    "new": "  if (!item) return null;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-bound-min",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  return { regard: Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum)), deeds: deeds.sort((a, b) => b.t - a.t) };",
+    "new": "  return { regard: Math.min(REPUTE_MAX, sum), deeds: deeds.sort((a, b) => b.t - a.t) };",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-bound-max",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  return { regard: Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum)), deeds: deeds.sort((a, b) => b.t - a.t) };",
+    "new": "  return { regard: Math.max(REPUTE_MIN, sum), deeds: deeds.sort((a, b) => b.t - a.t) };",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-order",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  return { regard: Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum)), deeds: deeds.sort((a, b) => b.t - a.t) };",
+    "new": "  return { regard: Math.max(REPUTE_MIN, Math.min(REPUTE_MAX, sum)), deeds: deeds.sort((a, b) => a.t - b.t) };",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-stranger",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "export const regardWithRepute = (known, own, repute) => (known ? own : repute);",
+    "new": "export const regardWithRepute = (known, own, repute) => repute;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-share",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "  if (!deeds?.length || ((seed >>> 0) % 1000) / 1000 >= HEARD_SHARE) return null;",
+    "new": "  if (!deeds?.length || ((seed >>> 0) % 1000) / 1000 >= 1) return null;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-repute-saved",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "export const REPUTE = Object.freeze({ saved: 4, helped: 2, routed: 5, slain: -8, robbed: -5 });",
+    "new": "export const REPUTE = Object.freeze({ saved: 5, helped: 2, routed: 5, slain: -8, robbed: -5 });",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-max",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "export const REPUTE_MAX = FRIEND_AT - 1;",
+    "new": "export const REPUTE_MAX = FRIEND_AT;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-carried-share",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "export const CARRIED_SHARE = 0.3;",
+    "new": "export const CARRIED_SHARE = 0.5;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-none-carried",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  const list =\n    carried.length && (!own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE) ? carried : own; // 'CARR'",
+    "new": "  const list = !own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE ? carried : own; // 'CARR'",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
+  },
+  {
+    "name": "LW16-own-alone",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  const own = carried.length ? news.filter((n) => !n.carried) : news;",
+    "new": "  const own = news;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-opener",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  return { item, script: item.carried ? carriedScript(Math.floor(rng() * CARRIED_OPENERS.length), script) : script };",
+    "new": "  return { item, script: false ? carriedScript(Math.floor(rng() * CARRIED_OPENERS.length), script) : script };",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-same-array",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  return (row[o] ??= Object.freeze([CARRIED_OPENERS[o], ...script]));",
+    "new": "  return Object.freeze([CARRIED_OPENERS[o], ...script]);",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-held-words",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "                  : item.kind === 'held'\n                    ? HELD_NEWS // LW16: a party the player robbed\n                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                      ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                      : item.sea\n                        ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words\n                        : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
+    "new": "                  : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                    ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                    : item.sea\n                      ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words\n                      : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-from-fallback",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  from: 'the next town',\n}); // CHAP5b: {guild}, a chapter's; LW16: {from}, the town the word came from   // LW-STIR: {hour}, the watch's call",
+    "new": "}); // CHAP5b: {guild}, a chapter's; LW16: {from}, the town the word came from   // LW-STIR: {hour}, the watch's call",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ],
+    "note": "Re-aimed by content at the merge: CHAP5b's {guild} beside it."
+  },
+  {
+    "name": "LW16-talk-from",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "    from: told?.item.from ?? null,   // LW16: the town the word was carried from\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-town",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const prefix = `L${town.mapId >>> 0}.`;",
+    "new": "    const prefix = `L${this.o.town.mapId >>> 0}.`;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-held-region",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (!key.startsWith(charged) || known > t",
+    "new": "if (known > t",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-held-known",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (!key.startsWith(charged) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;",
+    "new": "if (!key.startsWith(charged) || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-held-window",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (!key.startsWith(charged) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;",
+    "new": "if (!key.startsWith(charged) || known > t || !h.who) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-held-early",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " && !turns.routed?.size && !turns.held?.size)) return [];",
+    "new": " && !turns.routed?.size)) return [];",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-talk",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (carried.length) ctx.news = [...(ctx.news ?? []), ...carried];\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-carried-own",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const out = carriedNews(visits, t, { own, deedsAt, here: this.o.town.mapId });",
+    "new": "const out = carriedNews(visits, t, { deedsAt, here: this.o.town.mapId });",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ],
+    "note": "AUDIT LW-II (re-aimed by content).",
+    "equivalent": true,
+    "why": "AUDIT LW-II B8 made it belt-and-braces: a visit's deeds are its own town's (L<town>. prefix) with its own region's tales filtered out, and a courier's relay of this town's own word is skipped by `here` - nothing a visit carries can be this town's own any more; the own-keys check stays as the law's guard"
+  },
+  {
+    "name": "LW16-carried-deeds",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const out = carriedNews(visits, t, { own, deedsAt, here: this.o.town.mapId });",
+    "new": "const out = carriedNews(visits, t, { own, here: this.o.town.mapId });",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
+  },
+  {
+    "name": "LW16-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (c && c.visits === visits && c.m === m && c.v === v) return c.out;",
+    "new": "if (false) return c.out;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-repute-carried",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "return reputeOf([...this._roadNewsAt(t), ...this.deedNews(t), ...this.carriedAt(t)]);",
+    "new": "return reputeOf([...this._roadNewsAt(t), ...this.deedNews(t)]);",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
+  },
+  {
+    "name": "LW16-repute-road",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "return reputeOf([...this._roadNewsAt(t), ...this.deedNews(t), ...this.carriedAt(t)]);",
+    "new": "return reputeOf([...this.deedNews(t), ...this.carriedAt(t)]);",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ],
+    "note": "AUDIT LW-II (re-aimed by content)."
+  },
+  {
+    "name": "LW16-regard-known",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "return regardWithRepute(!!rel?.known(res.id),",
+    "new": "return regardWithRepute(false,",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-greet-heard",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const deed = pool === LIVING_GREETINGS.stranger ? heardOf(",
+    "new": "const deed = false ? heardOf(",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-greet-who",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "who: deed.kind === 'routed' ? deed.who : firstNameOf(deed.who),",
+    "new": "who: deed.who,",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-word",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const visits = this._roads ? this.o.carriedOf?.(this._roads.day) : null;",
+    "new": "const visits = null;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-tale",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
+    "new": "        if (alive && rep.who && rep.region >= 0)",
+    "tests": [
+      "test/systems/livingWorld/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW16-tale-void",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
+    "new": "        if (rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)",
+    "tests": [
+      "test/systems/livingWorld/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW16-tale-written",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0)\n          r.turn('held', `R${rep.region >>> 0}.${rep.at}~${rep.crime}`, { t: rep.at, who: rep.who });",
+    "new": "        if (alive && rep.crime !== CRIMES.Murder && rep.who && rep.region >= 0) void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW16-robbed-goods",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        report(trip, deps.clock(), CRIMES.Theft, trip.leader?.name ?? ''); // LW16: the one robbed, for the tale",
+    "new": "        report(trip, deps.clock(), CRIMES.Theft, ''); // LW16: the one robbed, for the tale",
+    "tests": [
+      "test/systems/livingWorld/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW16-robbed-holdup",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        report(trip, t, CRIMES.Theft, trip.leader?.name ?? ''); // LW16: the one robbed, for the tale",
+    "new": "        report(trip, t, CRIMES.Theft, ''); // LW16: the one robbed, for the tale",
+    "tests": [
+      "test/systems/livingWorld/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW16-robbed-purse",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      return trip ? report(trip, t, CRIMES.Pickpocketing, res.name ?? '') : false;",
+    "new": "      return trip ? report(trip, t, CRIMES.Pickpocketing, '') : false;",
+    "tests": [
+      "test/systems/livingWorld/lw11_caravan.test.js"
+    ]
+  },
+  {
+    "name": "LW16-tale-kind",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "export const TALE_KINDS = Object.freeze(['home', 'routed', 'held']);",
+    "new": "export const TALE_KINDS = Object.freeze(['home', 'routed']);",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-option",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          carriedOf: (day) => livingCarriedOf(livingTown, day),   // LW16: the word carried in from the towns about\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-courier",
+    "file": "src/scenes/world.js",
+    "old": "const heard = relay && courier ? yield* livingVisitsGen(",
+    "new": "const heard = relay ? yield* livingVisitsGen(",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-fresh",
+    "file": "src/scenes/world.js",
+    "old": "    livingWordFresh();   // LW16: the town's news kept with the roads\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-slice",
+    "file": "src/scenes/world.js",
+    "old": "const LIVING_CARRIED_SLICE_MS = 3;",
+    "new": "const LIVING_CARRIED_SLICE_MS = 30;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-step",
+    "file": "src/scenes/world.js",
+    "old": "    if (livingWorldOn()) livingCarriedStep(LIVING_CARRIED_SLICE_MS);   // LW16: the word carried, worked a slice a frame\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-regard",
+    "file": "src/scenes/world.js",
+    "old": "      regard: livingRegardOf(res, day), personality:",
+    "new": "      regard: livingRelations.regard(res.id, day), personality:",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-whole",
+    "file": "src/scenes/world.js",
+    "old": "      if (whole) { if (_livingToldKept.size",
+    "new": "      if (true) { if (_livingToldKept.size",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-clear",
+    "file": "src/scenes/world.js",
+    "old": "_livingCarried.clear(); _livingVisitorsKept.clear(); _livingToldKept.clear();",
+    "new": "_livingCarried.clear(); _livingVisitorsKept.clear();",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-partial",
+    "file": "src/scenes/world.js",
+    "old": "      if (vs === undefined) out.partial = true;   // a way still asked: the word worked again later\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-host-retry",
+    "file": "src/scenes/world.js",
+    "old": "    if (e?.visits?.partial && performance.now() - e.at > LIVING_CARRIED_RETRY_MS) e = null;",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B3-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      let d = kept.get(k);",
+    "new": "      let d = null;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B8-own-region",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        d = this.deedNews(minute, town).filter((x) => !((x.kind === 'routed' || x.kind === 'held') && region != null && (town.area ?? town.region) === region));",
+    "new": "        d = this.deedNews(minute, town);",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B8-come-back",
+    "file": "src/systems/livingWorld/carried.js",
+    "old": "        if (here != null && (r.from?.mapId ?? null) === here) continue; // AUDIT LW-II B8: its own word come back\n        for (const it of toldAt(r))",
+    "new": "        for (const it of toldAt(r))",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B9-known",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return news.every((n) => n.t <= t) ? news : news.filter((n) => n.t <= t);",
+    "new": "    return news;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B10-carried-only",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  const list =\n    carried.length && (!own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE) ? carried : own; // 'CARR'",
+    "new": "  const list = carried.length && seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE ? carried : own; // 'CARR'",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B14-band-whole",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "who: told ? (told.item.kind === 'routed' ? told.item.who : firstNameOf(told.item.who)) : null,",
+    "new": "who: told ? firstNameOf(told.item.who) : null,",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B4-partial",
+    "file": "src/scenes/world.js",
+    "old": "        if (!said.whole) out.partial = true;   // AUDIT LW-II B4: a day of its town's news still asked - the word worked again\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B11-last",
+    "file": "src/scenes/world.js",
+    "old": "    return e.visits ?? _livingCarriedLast.get(town.mapId >>> 0) ?? null;",
+    "new": "    return e.visits;",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  },
+  {
+    "name": "LW16-AUDIT-B13-guard",
+    "file": "src/scenes/world.js",
+    "old": "try { r = e.gen.next(); } catch (err) {",
+    "new": "try { r = e.gen.next(); } finally {",
+    "tests": [
+      "test/systems/livingWorld/lw16_word.test.js"
+    ]
+  }
+]

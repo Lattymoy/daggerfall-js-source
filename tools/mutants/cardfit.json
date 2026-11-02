@@ -1,0 +1,434 @@
+[
+  {
+    "name": "CARDFIT-the-cap-never-written",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  card.style.maxHeight = `${Math.round(room)}px`;\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-a-step-skipped",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    card.classList.add(cls);\n    took.push(cls);\n",
+    "new": "    took.push(cls);\n",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-shed-with-room-to-spare",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (!over()) break;\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-card-height-not-the-body",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const over = () => (body ? body.scrollHeight > body.clientHeight + 1 : card.scrollHeight > card.clientHeight + 1);",
+    "new": "  const over = () => card.scrollHeight > card.clientHeight + 1;",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-fitted-after-the-height-is-read",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "        fitCard(card, (sheet ? Math.round(window.innerHeight * CARD_SHEET_SHARE) : bandFoot - bandTop) - chrome);\n        if (sheet) return;\n        const tw = tip.offsetWidth; const th = tip.offsetHeight;\n",
+    "new": "        if (sheet) return;\n        const tw = tip.offsetWidth; const th = tip.offsetHeight;\n        fitCard(card, (sheet ? Math.round(window.innerHeight * CARD_SHEET_SHARE) : bandFoot - bandTop) - chrome);\n",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-window-alone",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "bandFoot = Math.min(w.bottom, window.innerHeight) - 10;",
+    "new": "bandFoot = w.bottom - 10;",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-frame-origin",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "        const box = tip.offsetParent ?? frame;\n",
+    "new": "        const box = frame;\n",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-sheet-placed-as-a-tip",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "        if (sheet) return;\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-buttons-inside-the-body",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const { c, line, big } = infoCard(picked, side, render, { body: true });",
+    "new": "  const { c, line, big } = infoCard(picked, side, render, { body: false });",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-lore-back-on-the-card",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "itemPowerLines(picked, deps, { set: false, lore: false, technique: false })",
+    "new": "itemPowerLines(picked, deps, { set: false, lore: true, technique: false })",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js",
+      "test/systems/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-lore-never-left-out",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const words = !lore ? null : item.legendary",
+    "new": "  const words = item.legendary",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-info-box-without-the-tiers-lines",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (tier.length) boxes.splice(1, 0, tier.map((text) => ({ text, center: true }))); }",
+    "new": "    void tier; }",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-a-line-said-twice",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    const tier = rarityLines(item, { sigil: false, set: false, technique: false }).filter((t) => t && !said.has(t));",
+    "new": "    const tier = rarityLines(item, { sigil: false, set: false, technique: false }).filter((t) => t);",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-set-block-whole-on-the-card",
+    "file": "src/ui/setCard.js",
+    "old": "  const box = el('section', full ? 'setbox' : 'setbox compact');",
+    "new": "  full = true;\n  const box = el('section', full ? 'setbox' : 'setbox compact');",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js",
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-brief-not-the-row",
+    "file": "src/ui/setCard.js",
+    "old": "    body.append(el('span', 'set-tier-text', full ? t.text : t.brief));",
+    "new": "    body.append(el('span', 'set-tier-text', t.text));",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js",
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-recovery-tag-dropped",
+    "file": "src/ui/setCard.js",
+    "old": "    if (!full && t.recover != null) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-stage-off-the-head",
+    "file": "src/ui/setCard.js",
+    "old": "  head.append(\n    el('span', 'set-name', v.name),\n    el('span', 'set-count', full || v.stage < 0 ? `${v.count}/${v.of}` : `${v.count}/${v.of} · ${v.stageName}`),\n  );",
+    "new": "  head.append(el('span', 'set-name', v.name), el('span', 'set-count', `${v.count}/${v.of}`));",
+    "tests": [
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-sentence-off-the-row",
+    "file": "src/ui/setCard.js",
+    "old": "    const whole = full ? '' : t.text;",
+    "new": "    const whole = '';",
+    "tests": [
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-sigil-whole-on-the-card",
+    "file": "src/ui/sigilCard.js",
+    "old": "  if (!full) return compactSigil(box, head, v, setPiece);\n  // what it gives in my hand now, and at its full growth - SET5: a set's armour carries no blow; its sigil is its",
+    "new": "  // what it gives in my hand now, and at its full growth - SET5: a set's armour carries no blow; its sigil is its",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js",
+      "test/ui/enhanced/sigilui1.test.js",
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-fill-on-my-renown-stage",
+    "file": "src/ui/sigilCard.js",
+    "old": "    const next = i === v.rank + 1; // the stage it is growing INTO - its own growth's, whatever my Renown lets it burn at",
+    "new": "    const next = i === v.stage + 1; // the stage it is growing INTO - its own growth's, whatever my Renown lets it burn at",
+    "tests": [
+      "test/ui/enhanced/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-long-numbers",
+    "file": "src/ui/sigilCard.js",
+    "old": "  const prog = el(\n    'span',\n    'sigil-progress',\n    v.to == null ? 'Fully grown' : `${v.xp.toLocaleString('en-US')}/${v.to.toLocaleString('en-US')}`,\n  );",
+    "new": "  const prog = el('span', 'sigil-progress', sigilProgressText(v));",
+    "tests": [
+      "test/ui/enhanced/sigilui1.test.js",
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-hold-unsaid-on-the-card",
+    "file": "src/ui/sigilCard.js",
+    "old": "  if (v.held) box.append(el('p', 'sigil-note', `Renown limit: ${v.stages[v.stage + 1].name} at Renown ${v.unlock}`));",
+    "new": "  if (false) box.append(el('p', 'sigil-note', `Renown limit: ${v.stages[v.stage + 1].name} at Renown ${v.unlock}`));",
+    "tests": [
+      "test/ui/enhanced/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-a-brief-over-the-line",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "        (v) => `Cheat death, then half damage ${v.halved}s`,",
+    "new": "        (v) => `Cheat death, then all damage is halved for ${v.halved}s`,",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-a-brief-saying-its-recovery",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "        (v) => `A kill: a ${v.ward}-point ward`,",
+    "new": "        (v) => `A kill: a ${v.ward}-point ward, every ${v.recover}s`,",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-recovery-dropped-from-the-view",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "        recover: Number.isFinite(values.recover) ? values.recover : null,",
+    "new": "        recover: null,",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js",
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-line-saying-the-sentence",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "        `${t.at} pieces - ${t.name}: ${t.brief}${t.recover != null ? `, every ${t.recover}s` : ''}${t.awake ? '' : v.count < t.at ? ` (${t.at - v.count} more)` : ' (inactive)'}`,",
+    "new": "        `${t.at} pieces - ${t.name}: ${t.text}${t.recover != null ? `, every ${t.recover}s` : ''}${t.awake ? '' : v.count < t.at ? ` (${t.at - v.count} more)` : ' (inactive)'}`,",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js",
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-buttons-scroll-away",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".pack-shell .packtip.packdetail .card > .acts { flex: 0 0 auto; margin-top: 8px; padding-top: 10px;",
+    "new": ".pack-shell .packtip.packdetail .card > .acts { margin-top: 8px; padding-top: 10px;",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-tip-stretched-to-the-column",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  max-height: none; bottom: auto; right: auto; }",
+    "new": "  }",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-sheet-with-no-foot",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "left: 0 !important; right: 0; top: auto !important; bottom: 0; max-height: none; }",
+    "new": "left: 0 !important; right: 0; top: auto !important; }",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-close-bar-on-a-tip",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "@media (min-width: 641px) { .pack-shell .packtip.packdetail .sheet-close { display: none; } }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-a-pair-in-the-grid",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".stats > .pair { display: contents; }",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-last-affix-as-lore",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".packdetail ul.rarity li.lore { color: var(--dim); font-style: italic; }",
+    "new": ".packdetail ul.rarity li:last-child:not(:first-child):not(:nth-child(2)) { color: var(--dim); font-style: italic; }",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARDFIT-the-hover-pair-in-the-grid",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".inv-tip dl.stats > .pair { display: contents; }   /* CARD-FIT: a pair's group steps out of the hover card's grid */\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U4-brief-with-the-tiers-and-lore",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const lines = itemPowerLines(item, d, { set: false, lore: false });\n  const sigil = setSigilLines(item)[0];",
+    "new": "  const lines = itemPowerLines(item, d);\n  const sigil = setSigilLines(item)[0];",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U10-brief-without-the-sigil",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (sigil) lines.push(sigil);\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U4-strip-grows",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": ".ptrade-shell .trade-detail-info { max-height: min(30dvh, 180px); overflow-y: auto; overscroll-behavior: contain; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U4-strip-squeezed-on-a-phone",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "@media (max-width: 640px) { .ptrade-shell .trade-detail { flex-wrap: wrap; }",
+    "new": "@media (max-width: 640px) { .ptrade-shell .trade-detail { }",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U6-back-past-the-card",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (overlayAction(e) === 'back' && picked) { e.preventDefault(); e.stopPropagation(); if (!e.repeat) { picked = null; render(); } return; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U5-host-a-scroller",
+    "file": "src/ui/inventoryDoor.js",
+    "old": "background:transparent;overflow:hidden;overflow:clip';",
+    "new": "background:transparent;overflow:hidden';",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U9-dim-read-as-inside",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const away = (e) => { if (e.target === mine || !mine.contains(e.target)) { e.stopPropagation(); closeInfo(); } };",
+    "new": "  const away = (e) => { if (!mine.contains(e.target)) { e.stopPropagation(); closeInfo(); } };",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U9-close-scrolls-away",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".inv-info > .card { width: min(380px, 92vw); max-height: 86vh; overflow: hidden;",
+    "new": ".inv-info > .card { width: min(380px, 92vw); max-height: 86vh; overflow: auto;",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U9-words-in-the-card",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const body = el('div', 'inv-info-body');\n  card.append(body);\n",
+    "new": "  const body = card;\n",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U14-hover-over-its-own-card",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (item === picked) return;   // CARD-FIT U14",
+    "new": "  // CARD-FIT U14",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U15-unanchored-unbounded",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "        if (!tip.isConnected) return;\n        const w = frame.getBoundingClientRect();",
+    "new": "        if (!on || !tip.isConnected) return;\n        const w = frame.getBoundingClientRect();",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-U16-strip-grows",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "  max-height: 136px; overflow-y: auto; overscroll-behavior: contain; }",
+    "new": "  overscroll-behavior: contain; }",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-pips-lost-in-the-body",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ", .card[data-rarity] > .card-body > ul.rarity > li:first-child::before { content: var(--rar-pips);",
+    "new": " { content: var(--rar-pips);",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  },
+  {
+    "name": "CARD-FIT-tier-colour-lost-in-the-body",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".card[data-rarity] > ul.rarity > li:first-child, .card[data-rarity] > .card-body > ul.rarity > li:first-child { color: var(--rar);",
+    "new": ".card[data-rarity] > ul.rarity > li:first-child { color: var(--rar);",
+    "tests": [
+      "test/ui/enhanced/cardfit.test.js"
+    ]
+  }
+]

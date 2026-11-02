@@ -1,0 +1,48 @@
+[
+  {
+    "name": "LITANY-STAND-judged-every-word",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "  if (led.p !== DP.work || on < 0 || (stayed && on !== led.order[led.next])) return ev;",
+    "new": "  if (led.p !== DP.work || on < 0 || false) return ev;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "LITANY-STAND-never-stepped-off",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "  rec.pl = on;",
+    "new": "  if (on >= 0) rec.pl = on;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "LITANY-STAND-stayed-never-heard",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "  if (led.p !== DP.work || on < 0 || (stayed && on !== led.order[led.next])) return ev;",
+    "new": "  if (led.p !== DP.work || on < 0 || stayed) return ev;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js",
+      "test/scenes/delve/dlv2_host.test.js"
+    ]
+  },
+  {
+    "name": "LITANY-STAND-offline-no-plate",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "    w.st = site.kind === 'litany' && iw ? plate : -1;",
+    "new": "    w.st = -1;",
+    "tests": [
+      "test/scenes/delve/dlv2_host.test.js"
+    ]
+  },
+  {
+    "name": "LITANY-STAND-online-this-frame",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "    w.st =\n      site.kind === 'litany' && holds(site, heardFeet)\n        ? plateAt(r.plates, heardFeet[0], heardFeet[1], heardFeet[2])\n        : -1; // LITANY-STAND: where the room hears me (WEIGH-POSE)",
+    "new": "    w.st = site.kind === 'litany' && holds(site, feet) ? plateAt(r.plates, feet[0], feet[1], feet[2]) : -1; // LITANY-STAND: where the room hears me (WEIGH-POSE)",
+    "tests": [
+      "test/scenes/delve/dlv3_e2e.test.js"
+    ]
+  }
+]

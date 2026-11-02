@@ -1,0 +1,162 @@
+[
+  {
+    "name": "NAVBAKE-coarsened-again",
+    "file": "src/ai/nav/navBake.js",
+    "old": "  const ag = agent;",
+    "new": "  const ag = { ...agent, cs: agent.cs * 2.5 };",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-two-rings-of-erosion",
+    "file": "src/ai/nav/navBake.js",
+    "old": "export const SOUP_AGENT = Object.freeze({ ...AGENT, radius: AGENT.cs });",
+    "new": "export const SOUP_AGENT = Object.freeze({ ...AGENT });",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-doors-kept-in-the-soup",
+    "file": "src/ai/nav/navBake.js",
+    "old": "    if (exclude && exclude.has(key)) continue;\n    use.push(bucket);",
+    "new": "    use.push(bucket);",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-player-anchor-only",
+    "file": "src/ai/nav/navBake.js",
+    "old": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
+    "new": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-anchors-unlanded-tolerance",
+    "file": "src/ai/nav/navBake.js",
+    "old": "            if (dy <= tol && (!best || dy < best.dy))",
+    "new": "            if (!best || dy < best.dy)",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-flat-floor-dropped",
+    "file": "src/ai/triRaster.js",
+    "old": "export const FLAT_EPS = 1e-4;",
+    "new": "export const FLAT_EPS = 0;",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-phantom-plane-back",
+    "file": "src/ai/nav/navBake.js",
+    "old": "  let nav = buildNav(cols, ag, [], { at: () => -Infinity, min: floor });",
+    "new": "  let nav = buildNav(cols, ag, [], { at: () => floor, min: floor });",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-host-passes-no-doors",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "exclude: new Set([...actions.objects.values()].filter((o) => isActionDoorObject(o) && !(o.currentLockValue > 0)).map((o) => o.key)), key: _locationKey })",
+    "new": "exclude: null, key: _locationKey })",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-worker-death-bakes-here",
+    "file": "src/ai/nav/navClient.js",
+    "old": "    if (!result && this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-cache-version-unbumped",
+    "file": "src/ai/nav/navClient.js",
+    "old": "export const NAV_BAKE_VERSION = 4;",
+    "new": "export const NAV_BAKE_VERSION = 3;",
+    "tests": [
+      "test/ai/nav/audit62_enhancedai.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-the-worker-drops-the-union",
+    "file": "src/ai/nav/navWorker.js",
+    "old": "        anchors: m.anchors ?? null,",
+    "new": "        anchors: null,",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-the-client-sends-the-worker-no-union",
+    "file": "src/ai/nav/navClient.js",
+    "old": "      const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, anchors, agent }, input).catch((e) => {",
+    "new": "      const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, agent }, input).catch((e) => {",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-the-key-forgets-the-union",
+    "file": "src/ai/nav/navClient.js",
+    "old": "  const u = anchors?.length ? `:u${anchors.length}.${(h >>> 0).toString(36)}` : '';",
+    "new": "  const u = '';",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-an-anchor-lands-in-its-own-column-only",
+    "file": "src/ai/nav/navBake.js",
+    "old": "    for (let r = 0; r <= 1 && !best; r++)",
+    "new": "    for (let r = 0; r <= 0 && !best; r++)",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-an-anchor-lands-on-an-eroded-span",
+    "file": "src/ai/nav/navBake.js",
+    "old": "            if (!s.walkable) continue;\n            const y = chf.ymin + s.floor * chf.ch,",
+    "new": "            const y = chf.ymin + s.floor * chf.ch,",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-the-anchor-tolerance-ten-times-over",
+    "file": "src/ai/nav/navBake.js",
+    "old": "export const ANCHOR_Y_TOLERANCE = 0.6;",
+    "new": "export const ANCHOR_Y_TOLERANCE = 6;",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
+    ]
+  },
+  {
+    "name": "NAVBAKE-no-ring-of-erosion",
+    "file": "src/ai/nav/navBake.js",
+    "old": "export const SOUP_AGENT = Object.freeze({ ...AGENT, radius: AGENT.cs });",
+    "new": "export const SOUP_AGENT = Object.freeze({ ...AGENT, radius: 0 });",
+    "tests": [
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
+    ]
+  }
+]

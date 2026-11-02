@@ -1,0 +1,168 @@
+[
+  {
+    "name": "RENOWN-CHAR-the-mint-reads-the-best-track",
+    "file": "server-account/src/index.js",
+    "old": "((await renownTrackOf(ctx, who.player.id, body.character)) ?? { xp: 0, level: 1 })",
+    "new": "((await renownTracksOf(ctx, who.player.id, 1))[0] ?? { xp: 0, level: 1 })",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-the-card-sends-one-track",
+    "file": "server-account/src/index.js",
+    "old": "renownTracksOf(ctx, who.player.id), marksCardOf",
+    "new": "renownTracksOf(ctx, who.player.id, 1), marksCardOf",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
+  },
+  {
+    "name": "RENOWN-CHAR-the-founding-asks-the-best",
+    "file": "server-account/src/guilds.js",
+    "old": "  const track = await renownTrackOf({ db }, player.id, character);",
+    "new": "  const track = await renownTrackOf({ db }, player.id, (await db.prepare('SELECT char_id FROM renown_tracks WHERE player = ?1 ORDER BY xp DESC LIMIT 1').bind(player.id).first())?.char_id ?? character);",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-the-raid-read-at-the-best",
+    "file": "server-account/src/raids.js",
+    "old": "  const before = await renownTrackOf({ db }, player.id, character);",
+    "new": "  const before = await renownTrackOf(\n    { db },\n    player.id,\n    (\n      await db\n        .prepare('SELECT char_id FROM renown_tracks WHERE player = ?1 ORDER BY xp DESC LIMIT 1')\n        .bind(player.id)\n        .first()\n    )?.char_id ?? character,\n  );",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-a-writ-onto-every-track",
+    "file": "server-account/src/professions.js",
+    "old": "      WHERE player = ?1 AND char_id = ?2 AND ${filled}`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX),",
+    "new": "      WHERE player = ?1 AND ?2 IS NOT NULL AND ${filled}`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX),",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-a-writ-track-past-the-bound",
+    "file": "server-account/src/professions.js",
+    "old": "        AND ${renownHeldSql('?1')} < ?8`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),",
+    "new": "        AND ${renownHeldSql('?1')} < ?8 + 1`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-the-account-total-added",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "    MAX(0, a.xp - COALESCE((SELECT MAX(t.xp) FROM renown_tracks t WHERE t.player = a.player), 0)),",
+    "new": "    a.xp,",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-a-negative-gain-taken",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "    MAX(0, a.xp - COALESCE(",
+    "new": "    (a.xp - COALESCE(",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-the-cap-unread",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "  xp = MIN(2318660, xp + (SELECT s.gain",
+    "new": "  xp = (xp + (SELECT s.gain",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ],
+    "equivalent": true,
+    "why": "no track is above the account's best, and the account's total never passed the cap (the service capped every credit), so a track's own plus the gains is at most that total - the MIN is a belt for a row the service never wrote"
+  },
+  {
+    "name": "RENOWN-CHAR-migration-the-report-in-flight-credited",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "  last_rid = COALESCE((SELECT s.last_rid FROM renown_char_seed s WHERE s.player = renown_tracks.player), last_rid),",
+    "new": "  last_rid = last_rid,",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-the-card-order-left-to-ids",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "  updated_at = MAX(updated_at, COALESCE((SELECT r.updated_at FROM realm_characters r",
+    "new": "  updated_at = MAX(updated_at, 0 * COALESCE((SELECT r.updated_at FROM realm_characters r",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-a-new-track-stamped-now",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "CAST(strftime('%s', 'now') AS INTEGER), played",
+    "new": "CAST(strftime('%s', 'now') AS INTEGER), CAST(strftime('%s', 'now') AS INTEGER)",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-a-realm-character-left-at-nothing",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "    WHERE s.gain > 0\n",
+    "new": "    WHERE s.gain > 0 AND 0\n",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-an-empty-track-made",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "    WHERE s.gain > 0\n",
+    "new": "    WHERE s.gain >= 0\n",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-the-bound-unread",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "  WHERE n <= room;",
+    "new": "  WHERE n <= 999;",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-migration-the-last-played-taken-last",
+    "file": "server-account/migrations/0035_renown_characters.sql",
+    "old": "ORDER BY r.updated_at DESC, r.id",
+    "new": "ORDER BY r.updated_at ASC, r.id",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-a-track-of-any-shape-drawn",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "  return Array.isArray(r) ? r.filter((t) => renownText(t?.level) && Number.isSafeInteger(t?.xp) && t.xp >= 0) : [];",
+    "new": "  return Array.isArray(r) ? r : [];",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-CHAR-the-dialogs-old-word",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "Its Renown, professions, Stores, the homes it bought and its guild place are lost. Homes belong to your account, so your other characters lose them too. Any offline copy you made stays.",
+    "new": "Its professions, Stores, the homes it bought and its guild place are lost. Homes belong to your account, so your other characters lose them too. Your Renown belongs to your account and stays, as does any offline copy you made.",
+    "tests": [
+      "test/server/renown_char.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the door names the homes it bought, a home being the account's."
+  }
+]

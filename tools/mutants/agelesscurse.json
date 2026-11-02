@@ -1,0 +1,57 @@
+[
+  {
+    "name": "AGELESS-CURSE-the-toll-taken-from-the-cursed",
+    "file": "src/systems/legacy/age.js",
+    "old": "  if (ageless) return { final: false, years: 0, age: ageOf(person, lived), spent: false, ageless: true };\n  if (isSpent(person, lived)) return { final: true, years: 0, age: ageOf(person, lived), spent: true };",
+    "new": "  if (isSpent(person, lived)) return { final: true, years: 0, age: ageOf(person, lived), spent: true };",
+    "tests": [
+      "test/systems/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "AGELESS-CURSE-a-spent-vampire-dies-of-years",
+    "file": "src/systems/legacy/age.js",
+    "old": "  if (ageless) return { final: false, years: 0, age: ageOf(person, lived), spent: false, ageless: true };",
+    "new": "  if (ageless && !isSpent(person, lived))\n    return { final: false, years: 0, age: ageOf(person, lived), spent: false, ageless: true };",
+    "tests": [
+      "test/systems/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "AGELESS-CURSE-the-line-the-tolls",
+    "file": "src/systems/legacy/age.js",
+    "old": "  if (ageless) return `The curse in ${name}'s blood keeps Arkay at bay. No years are taken.`;\n  const y = `${years} ${years === 1 ? 'year' : 'years'}`;",
+    "new": "  const y = `${years} ${years === 1 ? 'year' : 'years'}`;",
+    "tests": [
+      "test/systems/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "AGELESS-CURSE-the-host-asks-no-curse",
+    "file": "src/scenes/legacyHost.js",
+    "old": "lived: p.lived, ageless: cursed };",
+    "new": "lived: p.lived, ageless: false };",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)",
+    "tests": [
+      "test/systems/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "AGELESS-CURSE-the-vampires-curse-forgotten",
+    "file": "src/scenes/legacyHost.js",
+    "old": "(liveVampirism(deps.entity) || liveLycanthropy(deps.entity))",
+    "new": "(liveLycanthropy(deps.entity))",
+    "tests": [
+      "test/systems/legacy1_family.test.js"
+    ]
+  },
+  {
+    "name": "AGELESS-CURSE-the-lycanthropes-forgotten",
+    "file": "src/scenes/legacyHost.js",
+    "old": "(liveVampirism(deps.entity) || liveLycanthropy(deps.entity))",
+    "new": "(liveVampirism(deps.entity))",
+    "tests": [
+      "test/systems/legacy1_family.test.js"
+    ]
+  }
+]

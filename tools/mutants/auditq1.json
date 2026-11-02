@@ -1,0 +1,120 @@
+[
+  {
+    "name": "registry-missing-weather",
+    "file": "src/systems/quest/actions.js",
+    "old": "    new WeatherCondition(null),\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "registry-say-registered-twice",
+    "file": "src/systems/quest/actions.js",
+    "old": "    new Say(null),\n",
+    "new": "    new Say(null),\n    new Say(null),\n",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "say-by-name-matches-nothing",
+    "file": "src/systems/quest/actions.js",
+    "old": "  get pattern() { return /say (?<id>\\d+)|say (?<idName>\\w+)/; }",
+    "new": "  get pattern() { return /say (?<id>\\d+)/; }",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "restore-forgets-display-name",
+    "file": "src/systems/quest/quest.js",
+    "old": "    this.displayName = data.displayName ?? null; // an older envelope has no field; C# deserialises to null",
+    "new": "    this.displayName = null; // an older envelope has no field; C# deserialises to null",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "restore-forgets-tombstone-time",
+    "file": "src/systems/quest/quest.js",
+    "old": "    this.questTombstoneTime = data.questTombstoneTime;\n    this.smallerDungeonsState = data.smallerDungeonsState ?? 0; // AUDIT 28 W4: the frozen state, restored (NotSet on an older envelope)",
+    "new": "    this.smallerDungeonsState = data.smallerDungeonsState ?? 0; // AUDIT 28 W4: the frozen state, restored (NotSet on an older envelope)",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "table-loads-the-disabled-row",
+    "file": "src/systems/quest/table.js",
+    "old": "    for (let i = 0; i < lines.length; i++) {\n      let text = lines[i].trim();\n      if (text.startsWith('-')) continue;\n      if (!text) continue;\n      text = text.split(INLINE_COMMENT)[0];\n      if (/^schema:/i.test(text)) {",
+    "new": "    for (let i = 0; i < lines.length; i++) {\n      let text = lines[i].trim();\n      if (!text) continue;\n      text = text.split(INLINE_COMMENT)[0];\n      if (/^schema:/i.test(text)) {",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "host-drops-lord-name",
+    "file": "src/scenes/questWorld.js",
+    "old": "    lordNameForFaction: (id, old = false) => lordNameForFaction(townTalk.factionDict, id, old),\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "host-drops-legal-rep",
+    "file": "src/scenes/questWorld.js",
+    "old": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "exemption-gone-stale",
+    "file": "src/scenes/questWorld.js",
+    "old": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n",
+    "new": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n    talkHonoric: () => null,\n",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "registry-order-swapped",
+    "file": "src/systems/quest/actions.js",
+    "old": "    new EndQuest(null),\n    new Prompt(null),\n",
+    "new": "    new Prompt(null),\n    new EndQuest(null),\n",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "task-restore-forgets-dropped",
+    "file": "src/systems/quest/task.js",
+    "old": "    this.dropped = data.dropped;\n    this.globalVarName = data.globalVarName;",
+    "new": "    this.globalVarName = data.globalVarName;",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "task-restore-forgets-prev-triggered",
+    "file": "src/systems/quest/task.js",
+    "old": "    this.prevTriggered = data.prevTriggered;\n    this.type = data.type;",
+    "new": "    this.type = data.type;",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ]
+  },
+  {
+    "name": "log-step-time-not-saved",
+    "file": "src/systems/quest/quest.js",
+    "old": "    this.activeLogMessages.set(stepID, { stepID, messageID, time: this.worldSeconds?.() ?? 0 }); // TIME3: the step's date, as the start's",
+    "new": "    this.activeLogMessages.set(stepID, { stepID, messageID }); // TIME3: the step's date, as the start's",
+    "tests": [
+      "test/systems/quest/auditquests_linkage.test.js"
+    ],
+    "note": "TIME3 (PIN MOVED): the step's time is stamped on the event clock (worldSeconds) now; re-aimed by content."
+  }
+]

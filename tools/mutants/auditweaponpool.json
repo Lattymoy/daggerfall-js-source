@@ -1,0 +1,56 @@
+[
+  {
+    "name": "AUDIT-WEAPON-POOL-P1-found-mark-left-behind",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  if (isFoundMarked(item)) item.foundCondition = share(item.foundCondition);\n  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);",
+    "new": "  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);",
+    "tests": [
+      "test/systems/auditweaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P2-no-move-before-wear",
+    "file": "src/systems/equip.js",
+    "old": "  repoolWeapon(item);\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditweaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P3-booked-job-moved",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    it.repairData != null ||\n    !Object.isExtensible(it) ||",
+    "new": "    !Object.isExtensible(it) ||",
+    "tests": [
+      "test/systems/auditweaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P4-classic-artifact-moved",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    it.artifact ||\n    it.repairData != null ||",
+    "new": "    it.repairData != null ||",
+    "tests": [
+      "test/systems/auditweaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P6-group-test-on-armour-alone",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    it.group !== 'Weapons' ||",
+    "new": "    it.group === 'Armor' ||",
+    "tests": [
+      "test/systems/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P7-neighbours-row-read",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    ITEM_TEMPLATES[templateIndex]?.hitPoints,",
+    "new": "    ITEM_TEMPLATES[templateIndex - 1]?.hitPoints,",
+    "tests": [
+      "test/systems/weaponpool.test.js"
+    ]
+  }
+]

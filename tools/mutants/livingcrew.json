@@ -1,0 +1,488 @@
+[
+  {
+    "name": "CREW-roster-order",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    mobiles = [m.captain, ...m.men].slice(0, CREW_SHOWN[hull] ?? 0);",
+    "new": "    mobiles = [...m.men, m.captain].slice(0, CREW_SHOWN[hull] ?? 0);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-count-share-unread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "Math.round(shipClass.boarders * Math.min(1, Math.max(0, crewShare)))",
+    "new": "Math.round(shipClass.boarders)",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-seed-unread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "  const rng = seededRng(((seed >>> 0) ^ 0x6c1e5ea) >>> 0);",
+    "new": "  const rng = seededRng(1);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-stations-walk",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "  for (const p of places) (deck?.walkable(p[0], p[2]) && !(p[1] > main + FLIGHT_OVER) ? onDeck : stations).push(p);",
+    "new": "  for (const p of places) onDeck.push(p);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-walks-straight",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    const path = deck?.path?.([m.pos[0], m.pos[2]], [to[0], to[2]]);",
+    "new": "    const path = [[...m.pos], [to[0], to[1], to[2]]];",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-talk-turns-unread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "          say(m.talk.line % 2 === 0 ? m : o, lines[m.talk.line]);",
+    "new": "          say(m, lines[m.talk.line]);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-chorus-leader-alone",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "            else for (const m of live()) if (!m.mate) say(m, sung(song.chorus), 'sing');",
+    "new": "            else say(chanty.leader, sung(song.chorus), 'sing');",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-bard-unread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "          const bard = crew.find((m) => m.mobile === MOBILE.Bard);",
+    "new": "          const bard = null;",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-blurbs-unspaced",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "        m.blurbT = within(rng, CREW_BLURB_S) * (battle ? 0.35 : struck ? 2 : 1);",
+    "new": "        m.blurbT = 0;",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-song-under-the-guns",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "    if (!battle && !muster && !struck && !asleep) {   // SHIP-WATCH: no song in the night watch\n      if (chanty) {",
+    "new": "    if (!muster && !struck && !asleep) {   // SHIP-WATCH: no song in the night watch\n      if (chanty) {",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-muster-side-unread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "          const at = deck?.rail?.(muster, z, undefined, level) ?? m.pos;",
+    "new": "          const at = deck?.rail?.(1, z, undefined, level) ?? m.pos;",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-muster-unspread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "          const z = ext ? ext[0] + (ext[1] - ext[0]) * ((zs[n] + 0.5) / walkers.length) : m.pos[2];",
+    "new": "          const z = m.pos[2];",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-muster-facing-unread",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "        case 'ready':\n          m.face = muster > 0 ? Math.PI / 2 : muster < 0 ? -Math.PI / 2 : m.face;",
+    "new": "        case 'ready':\n          m.face = null;",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-walked-through",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "< 0.8) return false;   // someone in the way: wait",
+    "new": "< 0) return false;   // someone in the way: wait",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-never-gives-up",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "> CREW_BLOCKED_S) { m.path = null; m.blockT = 0; if (m.state === 'toTalk') endTalk(m); }",
+    "new": "> 1e9) { m.path = null; m.blockT = 0; if (m.state === 'toTalk') endTalk(m); }",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-captain-sent-over",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "        if (skip > 0) { skip--; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "CREW-trim-from-the-first",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "      for (let i = members.length - 1; i >= 0 && alive > n; i--) {",
+    "new": "      for (let i = 0; i < members.length && alive > n; i++) {",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "DECK-rail-side-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "            const i = side > 0 ? nx - 1 - n : n,",
+    "new": "            const i = n,",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "DECK-rail-row-unread",
+    "file": "src/systems/naval/navalDeck.js",
+    "old": "      const k0 = Math.min(nz - 1, Math.max(0, Math.floor((z - minZ) / cell)));",
+    "new": "      const k0 = 0;",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "HOST-flats-left-up",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "          f.renderer.m_Enabled = false;\n        }",
+    "new": "        }",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "HOST-rowers-taken",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "        const flats = peopleFlatsOf(w.boat).filter((f) => f.feet[1] >= main - DECK_STEP); // never the rowers below her deck",
+    "new": "        const flats = peopleFlatsOf(w.boat); // never the rowers below her deck",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "HOST-carry-by-the-root",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "      const m = ship.boat.MeshObject?.worldMatrix?.();",
+    "new": "      const m = ship.boat.GameObject?.worldMatrix?.();",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "HOST-flats-never-back",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "    for (const f of ship.flats) f.renderer.m_Enabled = f.was; // the mod's flats stand again\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "HOST-take-in-her-frame",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "      const feet = m ? outOfDeck(m, t.pos) : [...t.pos];",
+    "new": "      const feet = [...t.pos];",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "HOST-hold-unread",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "      if (w.hold && !ship.held) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "HOST-count-unread",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "      else if (!w.hold && ship.life.standing() > w.count) ship.life.trim(w.count);",
+    "new": "      else if (false) ship.life.trim(w.count);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "HOST-reset-unread",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "    reset(key) {\n      const ship = ships.get(key);\n      if (ship) {\n        standDown(ship);\n        ships.delete(key);\n      }\n    },",
+    "new": "    reset() {},",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-crew-places-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        const spot = c && free(c.feet) ? claim([c.feet, c.yaw]) : pick(deal);",
+    "new": "        const spot = pick(deal);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-landing-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      deps.board?.placePlayer?.((landing ?? first)[0], (landing ?? first)[1]);",
+    "new": "      deps.board?.placePlayer?.(first[0], first[1]);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-hands-a-warrior",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        const handle = deps.board?.spawnFoe?.(mine[i]?.mobile ?? HAND, spot[0], spot[1], 'ally', { boat: entry.boat,",
+    "new": "        const handle = deps.board?.spawnFoe?.(HAND, spot[0], spot[1], 'ally', { boat: entry.boat,",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-hands-rail-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        const spot = pick(rail, deal);",
+    "new": "        const spot = pick(deal);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-captain-sent-over",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const party = deps.board?.crewOf?.(entry.boat, n, { from: 1 }) ?? [];",
+    "new": "    const party = deps.board?.crewOf?.(entry.boat, n) ?? [];",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-repel-rail-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const spot = pick(rail, deal);\n      if (!spot) break;\n      const handle = deps.board?.spawnFoe?.(party[i]",
+    "new": "      const spot = pick(deal);\n      if (!spot) break;\n      const handle = deps.board?.spawnFoe?.(party[i]",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-repel-hands-moved",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const spot = mine[i] && free(mine[i].feet) ? claim([mine[i].feet, mine[i].yaw]) : pick(deal);",
+    "new": "      const spot = pick(deal);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-prize-unheld",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        const hold = st === SHIP_STATES.prize || (mine ?",
+    "new": "        const hold = (mine ?",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-battle-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        const battle = st === SHIP_STATES.afloat && e.ship.mode !== 'cruise';",
+    "new": "        const battle = false;",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SAY-every-line",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const chosen = [...said.values()].slice(0, CREW_SAY_MAX);",
+    "new": "  const chosen = [...said.values()];",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SAY-rebuilt",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  while (saySlots.length < want.length) {",
+    "new": "  if (want.length) saySlots = [];\n  while (saySlots.length < want.length) {",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SAY-never-hidden",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
+    "new": "  const want = layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SAY-fade-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    set('a', String(Math.round(tagAlpha(p.distance, CREW_SAY_RANGE, CREW_SAY_FADE_FROM) * 100) / 100), (v) => {",
+    "new": "    set('a', String(Math.round(tagAlpha(0, CREW_SAY_RANGE, CREW_SAY_FADE_FROM) * 100) / 100), (v) => {",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SAY-song-plain",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    set('kind', p.kind === 'sing' || p.kind === 'shout' ? `dfnaval-say ${p.kind}` : 'dfnaval-say', (v) => {",
+    "new": "    set('kind', 'dfnaval-say', (v) => {",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-crew-unstepped",
+    "file": "src/scenes/world.js",
+    "old": "      navalCrewFrame(gamePaused() ? 0 : foeDt);   // LIVING CREW: the crews at their work on the decks near the eye - AUDIT NAV2 F53: held with the sea under a window\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-crew-undrawn",
+    "file": "src/scenes/world.js",
+    "old": "      livePersonBatches.push(...exteriorFoes.batches(), ...navalCrew.batches());",
+    "new": "      livePersonBatches.push(...exteriorFoes.batches());",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-words-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      navalCrewLines(proj, view, mwv.eye, dt);   // LIVING CREW: the lines over their heads\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-clear-unwired",
+    "file": "src/scenes/world.js",
+    "old": "navalFlames.clear(); navalCrew.clear();",
+    "new": "navalFlames.clear();",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-hands-never-home",
+    "file": "src/scenes/world.js",
+    "old": "    if (_crewBoarding && !b) for (const boat of csa.boats) navalCrew.reset(boat);   // the fight over: my hands come home\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-muster-one-side",
+    "file": "src/scenes/world.js",
+    "old": "_crewCtx.muster = _crewThem[0] >= 0 ? 1 : -1;",
+    "new": "_crewCtx.muster = 1;",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-walked-through",
+    "file": "src/scenes/world.js",
+    "old": "        intoDeck(m, player.pos, _crewMe);",
+    "new": "        intoDeck(m, cam.pos, _crewMe);",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-room-one-seed",
+    "file": "src/scenes/world.js",
+    "old": "seed = _crewSeed(boat.peerKey ?? '');",
+    "new": "seed = _crewSeed('');",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-doors-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      crewOf: (boat, n, opts) => navalCrew.takeByBoat(boat, n, opts),",
+    "new": "      crewOf: () => [],",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-crewman-a-stranger",
+    "file": "src/scenes/world.js",
+    "old": "team: side === 'ally' ? null : team, ...(gender ? { gender } : {}) })",
+    "new": "team: side === 'ally' ? null : team })",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-landing-her-middle",
+    "file": "src/scenes/world.js",
+    "old": "    return navalDeckPoint(boat, deck, deck.land(local[0], local[2], local[1]));",
+    "new": "    return navalDeckPoint(boat, deck, deck.nearest(0, 0));",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-rail-side-unread",
+    "file": "src/scenes/world.js",
+    "old": "side = t[0] >= 0 ? 1 : -1, k = Math.floor(n), out = [], taken = new Set();",
+    "new": "side = -1, k = Math.floor(n), out = [], taken = new Set();",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "PEERS-key-unstamped",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "          boat.peerKey = `${owner}:${i}`;\n          boat.uid = w.uid ?? 0;",
+    "new": "          boat.uid = w.uid ?? 0;",
+    "tests": [
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  }
+]

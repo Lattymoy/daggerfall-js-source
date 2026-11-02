@@ -1,0 +1,227 @@
+[
+  {
+    "name": "QREPAIR-the-lost-placement-left",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    try {\n      it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false);\n    } catch {\n      report.failed++;\n      continue;\n    } // a Place with no markers throws: that one is not repairable here",
+    "new": "    continue; // a Place with no markers throws: that one is not repairable here",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-held-set-unread",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
+    "new": "    if (it.ambiguous || goneOnPurpose(it.res, quest, env)) continue;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-ambiguous-placed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
+    "new": "    if (held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-nothing-gone-on-purpose",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;",
+    "new": "    if (it.ambiguous || held.has(name)) continue;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-a-destroyed-person-placed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "  if (res.isPerson) return !!res.isDestroyed || !!(res.isIndividualNPC && res.isIndividualAtHome);",
+    "new": "  if (res.isPerson) return !!(res.isIndividualNPC && res.isIndividualAtHome);",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-a-carried-item-placed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (carriesQuestItem?.(res)) return true;\n    const df = res.daggerfallUnityItem ?? null;",
+    "new": "    const df = res.daggerfallUnityItem ?? null;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-a-gift-placed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (df) for (const r of quest.resources?.values?.() ?? []) if (r?.isFoe && r.itemQueue?.includes?.(df)) return true; // given to a foe\n    return false;",
+    "new": "    return false;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-a-dead-foe-placed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "  if (res.isFoe) return !!res.isHidden || !((res.killCount ?? 0) < (res.spawnCount ?? 0));",
+    "new": "  if (res.isFoe) return !!res.isHidden;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-last-assigned-place-unread",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (!it.res.isPerson || !it.res.assignedPlaceSymbol) continue;",
+    "new": "    if (true) continue;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-a-placement-not-yet-run-counted",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "      if (!field || !a.isComplete) continue;",
+    "new": "      if (!field) continue;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-a-link-per-site-not-per-quest",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "          const linked = (machine.siteLinks ?? []).some(\n            (l) => l.questUID === quest.uid && l.placeSymbol?.name === r.symbol?.name,\n          );",
+    "new": "          const linked = machine.hasSiteLink(quest, r.symbol);",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-a-link-for-every-place",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "          if (!r?.isPlace || !placeHoldsTargets(r)) continue;",
+    "new": "          if (!r?.isPlace) continue;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-reveal-skipped",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "            if (a?.typeName !== 'RevealLocation' || !a.isComplete) continue;",
+    "new": "            continue;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-topics-re-added",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "        if (env.hasQuestTopics && env.addQuestTopics && !env.hasQuestTopics(quest)) {",
+    "new": "        if (env.addQuestTopics) {",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-mount-by-identity",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "  if (machine) machine.mountByName = true; // every mount the pass runs matches by name (sceneMount.js)",
+    "new": "",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-flag-left-up",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (machine) machine.mountByName = was;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-one-throw-ends-the-pass",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "            try {\n              if (env.discoverLocation?.(place.siteDetails.regionName, place.siteDetails.locationName) === true)\n                report.revealed++;\n            } catch {\n              report.failed++;\n            }",
+    "new": "            if (env.discoverLocation?.(place.siteDetails.regionName, place.siteDetails.locationName) === true)\n              report.revealed++;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-a-finished-quest-repaired",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "export const questRunning = (quest) => !!quest && !quest.questComplete && !quest.questTombstoned;",
+    "new": "export const questRunning = (quest) => !!quest;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-by-name-always",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "  { enableNPCs = true, enableFoes = true, enableItems = true, byName = !!machine?.mountByName } = {},",
+    "new": "  { enableNPCs = true, enableFoes = true, enableItems = true, byName = true } = {},",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-by-name-never",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "    if (\n      byName &&\n      behaviour.questUID === resource.parentQuest?.uid &&\n      behaviour.targetSymbol?.name === resource.symbol?.name\n    )\n      return true;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-by-name-the-quest-unread",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "    if (\n      byName &&\n      behaviour.questUID === resource.parentQuest?.uid &&\n      behaviour.targetSymbol?.name === resource.symbol?.name\n    )\n      return true;",
+    "new": "    if (byName && behaviour.targetSymbol?.name === resource.symbol?.name) return true;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-row-live-at-the-door",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  const can = pause && typeof hooks?.repairQuests === 'function';",
+    "new": "  const can = typeof hooks?.repairQuests === 'function' || true;",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-no-confirm",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    ask(t('menu.questRepair.title', 'Repair Active Quests'), questRepairAsk(), t('menu.questRepair.go', 'Repair'), () => {",
+    "new": "    ((a, b, c, f) => f())(t('menu.questRepair.title', 'Repair Active Quests'), questRepairAsk(), t('menu.questRepair.go', 'Repair'), () => {",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-dungeon-without-the-hook",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        repairQuests: () => opts.questBridge?.repair?.() ?? null,   // QREPAIR\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  },
+  {
+    "name": "QREPAIR-the-interior-pause-without-the-hook",
+    "file": "src/scenes/worldModes.js",
+    "old": "    repairQuests: () => host.repairQuests?.() ?? null,   // QREPAIR: the host's own bridge\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/qrepair.test.js"
+    ]
+  }
+]

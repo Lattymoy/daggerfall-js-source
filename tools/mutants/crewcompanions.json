@@ -1,0 +1,425 @@
+[
+  {
+    "name": "CC-max-three",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "export const COMPANION_MAX = 2;",
+    "new": "export const COMPANION_MAX = 3;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-rest-short",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "export const REST_MIN = 8 * 60;",
+    "new": "export const REST_MIN = 60;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-resting-comes-early",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      if (r && now < r.until) return COMPANION_WHY.resting;",
+    "new": "      if (r && now < r.until - 60) return COMPANION_WHY.resting;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-full-refuses-the-one-ashore",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      if (party.length >= COMPANION_MAX && !find(boat, hand.name)) return COMPANION_WHY.full;",
+    "new": "      if (party.length >= COMPANION_MAX) return COMPANION_WHY.full;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-take-twice",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      if (!isBoat(boat) || !isName(hand?.name) || find(boat, hand.name) || this.why(boat, hand, now) != null)\n        return null;",
+    "new": "      if (!isBoat(boat) || !isName(hand?.name) || this.why(boat, hand, now) != null) return null;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-knock-no-rest",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      resting.push({ boat, name, until: now + REST_MIN });",
+    "new": "      resting.push({ boat, name, until: now });",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-knock-anyone",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      if (!this.sendBack(boat, name)) return false;",
+    "new": "      this.sendBack(boat, name);",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-wake-never",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      const woke = resting.filter((r) => now >= r.until);",
+    "new": "      const woke = resting.filter((r) => now > r.until + 1e9);",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-hurt-whole-kept",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      c.health = health >= maxHealth ? null : Math.max(1, health);",
+    "new": "      c.health = Math.max(1, health);",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-hurt-at-nothing",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      c.health = health >= maxHealth ? null : Math.max(1, health);",
+    "new": "      c.health = health >= maxHealth ? null : health;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-prune-spares-the-fallen",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      if (gone.length) party = party.filter((p) => lives(p.boat, p.name));",
+    "new": "      if (gone.length) party = party.filter(() => true);",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-prune-keeps-the-rest",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      resting = resting.filter((r) => lives(r.boat, r.name));",
+    "new": "      resting = resting.filter(() => true);",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-restore-past-max",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      if (\n        party.length >= COMPANION_MAX ||\n        !c ||\n        !isBoat(c.boat) ||\n        !isName(c.name) ||\n        party.some((p) => same(p, c.boat, c.name))\n      )\n        continue;",
+    "new": "      if (!c || !isBoat(c.boat) || !isName(c.name) || party.some((p) => same(p, c.boat, c.name))) continue;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-restore-resting-and-ashore",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "      if (party.some((p) => same(p, r.boat, r.name))) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-row-back-offered-as-take",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "    if (companions.isAshore(boat, h.name))\n      return { id: h.name, label: `${COMPANION_TEXT.back}: ${called}`, back: true };\n    const why = companions.why(boat, h, now, crewed);",
+    "new": "    const why = companions.why(boat, h, now, crewed);",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-slot-in-front",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "  return [-fx * back + fz * side, -fz * back - fx * side];",
+    "new": "  return [fx * back + fz * side, fz * back - fx * side];",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CC-slot-one-side",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "    side = n > 1 ? (i === 0 ? -1 : 1) * 1.1 : 0;",
+    "new": "    side = n > 1 ? 1.1 : 0;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-knock-kept",
+    "file": "src/scenes/crewAshore.js",
+    "old": "      if (rec._knockedOut) {",
+    "new": "      if (rec._knockedOut && false) {",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-knock-leaves-body",
+    "file": "src/scenes/crewAshore.js",
+    "old": "        leave(s); // COMPANION-PORTAL: carried off through a portal\n        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was",
+    "new": "        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-swept-never-restood",
+    "file": "src/scenes/crewAshore.js",
+    "old": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) {\n        carry(s);\n        stood.delete(k);\n        continue;\n      } // AUDIT WK-M3: with his spells",
+    "new": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) continue; // AUDIT WK-M3: with his spells",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-sent-back-stays",
+    "file": "src/scenes/crewAshore.js",
+    "old": "      if (i < 0) {\n        stood.delete(k);\n        leave(s);\n        continue;\n      } // sent back aboard - COMPANION-PORTAL: through a portal",
+    "new": "      if (i < 0) continue; // sent back aboard - COMPANION-PORTAL: through a portal",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-health-forgotten",
+    "file": "src/scenes/crewAshore.js",
+    "old": "        party.hurt(s.c.boat, s.c.name, rec.entity.health, rec.entity.maxHealth);\n        // AUDIT CC-A4: the player's, whatever turned him (a blow of mine that reached him, a reset of an ally's team)",
+    "new": "        // AUDIT CC-A4: the player's, whatever turned him (a blow of mine that reached him, a reset of an ally's team)",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-no-catch-up",
+    "file": "src/scenes/crewAshore.js",
+    "old": "        const away =\n          Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M ||\n          (L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY);",
+    "new": "        const away = Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-catch-up-keeps-target",
+    "file": "src/scenes/crewAshore.js",
+    "old": "          if (typeof rec.ai.resumeLive === 'function') rec.ai.resumeLive();\n          else {\n            rec.ai.target = null;\n            rec.ai.path = null;\n            rec.ai.velY = 0;\n          }\n          rec.ai._restGrounded = false;",
+    "new": "          rec.ai._restGrounded = false;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-door-keeps-bodies",
+    "file": "src/scenes/crewAshore.js",
+    "old": "      liftAll();\n      placeKey = key;",
+    "new": "      placeKey = key;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-late-stand-kept",
+    "file": "src/scenes/crewAshore.js",
+    "old": "          if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) {",
+    "new": "          if (!party.isAshore(c.boat, c.name) || deps.party() !== party) {",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-not-a-shipmate",
+    "file": "src/scenes/crewAshore.js",
+    "old": "          rec.shipmate = true;\n          if (rec.entity) {",
+    "new": "          if (rec.entity) {",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-health-not-carried",
+    "file": "src/scenes/crewAshore.js",
+    "old": "            if (c.maxHealth > 0) {",
+    "new": "            if (false) {",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-heel-one-distance",
+    "file": "src/scenes/crewAshore.js",
+    "old": "  const followOf = (i) => ({\n    feet: () => deps.leader()?.feet ?? null,\n    stop: HEEL_M + i * HEEL_STEP_M,\n    trail: () => trail,\n  }); // COMPANION-TRAIL",
+    "new": "  const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M, trail: () => trail }); // COMPANION-TRAIL",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CA-stand-twice",
+    "file": "src/scenes/crewAshore.js",
+    "old": "      if (stood.has(k) || pending.has(k)) return;",
+    "new": "      if (stood.has(k)) return;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "FM-no-follow",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    if (this._following) this._followTicks(classicTicks, dt);",
+    "new": "    if (false) this._followTicks(classicTicks, dt);",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "FM-follow-while-fighting",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    if (this.target == null) return true;\n    const tf",
+    "new": "    return true;\n    const tf",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "FM-no-leash",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    if (home > leash || (tf && Math.hypot(tf[0] - leader[0], tf[2] - leader[2]) > leash)) {",
+    "new": "    if (tf && Math.hypot(tf[0] - leader[0], tf[2] - leader[2]) > leash) {",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "FM-no-slack",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    if (d <= stop || (!this._followWalking && d <= stop + FOLLOW_SLACK)) {",
+    "new": "    if (d <= stop) {",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "FM-walks-into-leader",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    if (d <= stop || (!this._followWalking",
+    "new": "    if (d <= 0.1 || (!this._followWalking",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "FM-leash-constant",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "export const FOLLOW_LEASH = 20;",
+    "new": "export const FOLLOW_LEASH = 200;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "EM-follow-straight",
+    "file": "src/ai/enhancedMotor.js",
+    "old": "      this._repathToward(chf, leader, dt);",
+    "new": "      if (true) return leader;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "EM-follow-path-dropped",
+    "file": "src/ai/enhancedMotor.js",
+    "old": "      if (this._following) {",
+    "new": "      if (this._following && false) {",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "ET-companion-unfought",
+    "file": "src/characters/enemy/enemyTargets.js",
+    "old": "      if (!isPlayer && selfMobileTeam !== 'PlayerAlly' && !(c.companion != null && ai.isHostile)) continue;",
+    "new": "      if (!isPlayer && selfMobileTeam !== 'PlayerAlly') continue;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "ET-companion-takes-an-ally",
+    "file": "src/characters/enemy/enemyTargets.js",
+    "old": "    if (self.companion != null && (c.companion != null || targetEntity?.team === 'PlayerAlly')) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CL-away-mended-back",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "        if (!m.gone || m.taken || m.ashore) continue;",
+    "new": "        if (!m.gone || m.taken) continue;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "CL-home-never",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "        } else if (!out && m.ashore) {",
+    "new": "        } else if (false) {",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "PX-companion-killed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (f.companion != null) { f.entity.health = 1; if (!f._knockedOut) f._knockedBy = striker; f._knockedOut = true; return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "PD-companion-killed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (foe.companion != null) { foe.entity.health = 1; if (!foe._knockedOut) foe._knockedBy = striker; foe._knockedOut = true; return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "PD-my-blow-lands",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (foe.dead || (fromPlayer && !peer && foe.companion != null)) return;",
+    "new": "    if (foe.dead) return;",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "PD-companion-saved",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f._ownFrom == null && f.companion == null).map((f) => ({",
+    "new": "f._ownFrom == null).map((f) => ({",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  },
+  {
+    "name": "PD-my-swing-lands",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const live = dropFateHeld(foes.filter((f) => !f.dead && f.companion == null));",
+    "new": "    const live = dropFateHeld(foes.filter((f) => !f.dead));",
+    "tests": [
+      "test/systems/naval/crewcompanions.test.js"
+    ]
+  }
+]

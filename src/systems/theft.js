@@ -1,0 +1,149 @@
+// PT1 - STEALING HAD NO CONSEQUENCE.
+//
+// Two flags stood in worldModes' interior arm, both routed to "the
+// crime arc": the shop-shelf stealing roll beside SetShopShelfStealing,
+// and the theft basket behind `loot.houseOwned`. Every dependency they
+// were waiting on has shipped - CG2's TallyCrimeGuildRequirements, G1's
+// SpawnCityGuards, the crime table, TallySkill - so what was left was
+// the two laws themselves, which live here.
+//
+// THEY ARE NOT THE SAME LAW, and the shop-shelf flag said they were:
+// it promised "the shoplifting ROLL and its crime tally". DFU's
+// shop-shelf arm has NO ROLL. Reading both members side by side
+// (DaggerfallInventoryWindow.cs):
+//
+//   SHOP SHELF (:681-687, at the window's own teardown)
+//       if (shopShelfStealing && remoteItems.Count < lootTargetStartCount)
+//           playerEntity.TallyCrimeGuildRequirements(true, 1);
+//   - a COUNT comparison against the shelf as it stood when the window
+//     opened, and nothing else. No chance, no guards, no crime record.
+//     Robbing a closed shop earns you Thieves Guild credit and no
+//     trouble at all, which is classic's own answer. (The count is
+//     DFU's; the port reads the shop's keeping since STOLEN-GOODS
+//     AUDIT S1 - shopShelfTheft below.)
+//
+//   PRIVATE PROPERTY (:2277-2281 -> AttemptPrivatePropertyTheft :1848-1863)
+//       TallyCrimeGuildRequirements(true, 1);
+//       weightAndNumItems = (int)basket.GetWeight() + basket.Count;
+//       chance = CalculateShopliftingChance(player, buildingQuality, weightAndNumItems);
+//       if (!Dice100.FailedRoll(chance)) { CrimeCommitted = Theft; SpawnCityGuards(true); }
+//       else                             { TallySkill(Pickpocket, 1); }
+//   - the tally FIRST and unconditionally, then the roll. The guards
+//     come for you in someone's house; they do not come for a shelf.
+//
+// THE BASKET, and why this port does not need one. DFU accumulates
+// `theftBasket` as the player clicks - added on a take, removed on a
+// put-back - because the window must WEIGH what was taken. The set it
+// ends up holding is "present in the container when the window
+// opened, absent when it closed", so a snapshot diff answers the same
+// question from the same two facts. Putting one of your OWN items into
+// the container does not enter it either way (DFU's RemoveItem finds
+// nothing to remove; the diff sees a gain, not a loss). STOLEN-GOODS
+// AUDIT S1 (2026-10-16): nearly - DFU's basket holds the half a SPLIT
+// minted too, which a diff of the list never sees (the stack still
+// stands); the snapshot is the owner's keeping now, which the take grows
+// by that half (theftBasket below), and the shelf arm reads it too.
+//
+// AND THE NEAR-MISS THAT WROTE ITSELF DOWN. The tree had
+// `Math.floor(rolls() * 100) >= chance` written out inline in three
+// places, each commented "Dice100.FailedRoll", and this slice set out
+// to give that member one home - by adding a fourth export. formulas.js
+// has had `dice100` since T3a, one screen above where the new one went,
+// and `!dice100(chance, roll)` IS FailedRoll. Reading the neighbouring
+// pickpocket call site is what caught it, which is the same way SD1's
+// duplicate module was caught. The three sites now route through the
+// export that already existed.
+import { calculateShopliftingChance, dice100 } from '../combat/formulas.js';
+import { totalWeight } from './inventory.js';
+
+/** The theft basket, as a diff. `before` is the container's contents
+ *  when the window opened, `after` when it closed; the answer is what
+ *  left. Identity is by REFERENCE, which is the port's item identity
+ *  everywhere else - two Iron Daggers are two objects.
+ *  STOLEN-GOODS AUDIT S1 (2026-10-16): `before` is THE OWNER'S KEEPING,
+ *  the Set the host takes as the window opens and hands the window as
+ *  `loot.stolenFrom` - which the take grows by the half a split mints
+ *  off the owner's stack (systems/stolenGoods.js takenFromKeeping). So
+ *  the basket counts a partial take too, as DFU's own basket holds the
+ *  split item it added (the diff of the list saw the stack still
+ *  standing, and four arrows of a stranger's ten were no theft), and it
+ *  is what the mark marked - the one Set both read. Any iterable. */
+export function theftBasket(before, after) {
+  const kept = new Set(after ?? []);
+  return [...(before ?? [])].filter((it) => !kept.has(it));
+}
+
+/** `(int)theftBasket.GetWeight() + theftBasket.Count` (:1852). The
+ *  TRUNCATION is the law and it is load-bearing: a pocketful of
+ *  featherweight trinkets contributes its count and almost no weight,
+ *  while one heavy breastplate contributes both. */
+export const shopliftingLoad = (basket) => Math.trunc(totalWeight(basket ?? [])) + (basket ?? []).length;
+
+/** AttemptPrivatePropertyTheft (:1848-1863), as a DECISION. The host
+ *  owns the effects; this owns the order and the arithmetic.
+ *
+ *  Answers null when the basket is empty - the window's own gate
+ *  (:2277, `theftBasket.Count != 0`), kept here rather than at the
+ *  call site so a second host cannot forget it.
+ *
+ *  `detected` is `!Dice100.FailedRoll(chance)`: the roll landing UNDER
+ *  the chance is the bad outcome, because `chance` is the chance of
+ *  being SEEN. */
+export function privatePropertyTheft({ basket, pickpocketSkill = 0, shopQuality = 0, rolls = Math.random } = {}) {
+  const load = shopliftingLoad(basket);
+  if (!(basket ?? []).length) return null;
+  const chance = calculateShopliftingChance(pickpocketSkill, shopQuality, load);
+  return {
+    // The tally is not conditional and does not wait for the roll -
+    // it is the first line of the member.
+    tally: true,
+    weightAndNumItems: load,
+    chance,
+    detected: dice100(chance, rolls()),
+  };
+}
+
+/** AUDIT 63 F48: THE THIRD MEMBER - DaggerfallTradeWindow.DoSteal
+ *  (:907-932), the OPEN shop's shoplift. Same arithmetic as the
+ *  private-property member above and the OPPOSITE order of tallies,
+ *  which is why it is a sibling and not a caller:
+ *
+ *      if (WindowMode == Buy && cost > 0) {
+ *          weightAndNumItems = (int)basketItems.GetWeight() + basketItems.Count;
+ *          chance = CalculateShopliftingChance(player, quality, weightAndNumItems);
+ *          TallySkill(Pickpocket, 1);                      // :914, ALWAYS, BEFORE the roll
+ *          if (Dice100.FailedRoll(chance)) {               // got away with it
+ *              AddHUDText("stealSuccess", 2);
+ *              PlayerEntity.Items.TransferAll(basketItems);
+ *              TallyCrimeGuildRequirements(true, 1);       // :921, SUCCESS ONLY
+ *          } else {
+ *              AddHUDText("stealFailure", 2);
+ *              CrimeCommitted = Theft; SpawnCityGuards(true);
+ *          }
+ *          CloseWindow();
+ *      }
+ *
+ *  AttemptPrivatePropertyTheft inverts both: its guild tally is
+ *  unconditional and its Pickpocket tally fires only when it got away.
+ *  Do not fold the two together.
+ *
+ *  `caught` is `!Dice100.FailedRoll(chance)` - the roll landing UNDER
+ *  the chance is the bad outcome, because `chance` is the chance of
+ *  being SEEN. There is NO empty-basket guard here: DFU gates on
+ *  `cost > 0` at the call site, not on the count, so that gate is the
+ *  window's. */
+export function shopliftAttempt({ basket, pickpocketSkill = 0, shopQuality = 0, rolls = Math.random } = {}) {
+  const weightAndNumItems = shopliftingLoad(basket);
+  const chance = calculateShopliftingChance(pickpocketSkill, shopQuality, weightAndNumItems);
+  return { weightAndNumItems, chance, caught: dice100(chance, rolls()) };
+}
+
+/** The shop-shelf arm (:681-687): a Thieves Guild tally when the shut
+ *  shelf gave up anything of the shop's. STOLEN-GOODS AUDIT S1
+ *  (2026-10-16), a departure: DFU compares the shelf's COUNT with what
+ *  it held when the window opened, so a piece of your own put down hid
+ *  the shop's piece taken, and a handful off a stack was no theft - while
+ *  the mark (systems/stolenGoods.js) marked both. The shelf reads the
+ *  shop's keeping now, as the private-property arm reads the owner's:
+ *  any piece of the shop's gone out of it (theftBasket). */
+export const shopShelfTheft = (keeping, after) => theftBasket(keeping, after).length > 0;

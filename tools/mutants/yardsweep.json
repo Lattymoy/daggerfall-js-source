@@ -1,0 +1,52 @@
+[
+  {
+    "name": "YARD-SWEEP-bound",
+    "file": "server-account/migrations/0109_yard_height_sweep.sql",
+    "old": "AS REAL) > 4;",
+    "new": "AS REAL) > 48;",
+    "tests": [
+      "test/server/yardsweep.test.js"
+    ],
+    "note": "the tower kept: the lot's widest bound"
+  },
+  {
+    "name": "YARD-SWEEP-comparison",
+    "file": "server-account/migrations/0109_yard_height_sweep.sql",
+    "old": "AS REAL) > 4;",
+    "new": "AS REAL) >= 4;",
+    "tests": [
+      "test/server/yardsweep.test.js"
+    ],
+    "note": "a piece at the bound itself swept"
+  },
+  {
+    "name": "YARD-SWEEP-room-asked",
+    "file": "server-account/migrations/0109_yard_height_sweep.sql",
+    "old": "  WHERE yard = 1\n",
+    "new": "  WHERE yard IN (0, 1)\n",
+    "tests": [
+      "test/server/yardsweep.test.js"
+    ],
+    "note": "a room's high shelf swept"
+  },
+  {
+    "name": "YARD-SWEEP-read-unfiltered",
+    "file": "server-account/src/yardCells.js",
+    "old": "    if (!piece || !decorYardPieceOf(piece) || !decorYardHighOk(piece)) continue;",
+    "new": "    if (!piece || !decorYardPieceOf(piece)) continue;",
+    "tests": [
+      "test/server/yardsweep.test.js"
+    ],
+    "note": "the service serves a tower's piece Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
+  },
+  {
+    "name": "YARD-SWEEP-client-unfiltered",
+    "file": "src/scenes/yardCellSync.js",
+    "old": "      byKey.set(\n        yard.buildingKey,\n        yard.pieces.map(decorYardPieceOf).filter((piece) => piece && decorYardHighOk(piece)),\n      );",
+    "new": "      byKey.set(yard.buildingKey, yard.pieces.map(decorYardPieceOf).filter(Boolean));",
+    "tests": [
+      "test/server/yardsweep.test.js"
+    ],
+    "note": "the client stands a tower's piece an older service answers Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
+  }
+]

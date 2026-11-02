@@ -1,0 +1,1052 @@
+[
+  {
+    "name": "OH-B-hash-arithmetic-shift",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const num2 = Math.imul(num ^ (num >>> 16), 2146121005);",
+    "new": "  const num2 = Math.imul(num ^ (num >> 16), 2146121005);",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-hash-unsalted",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const num = Math.imul(mapPixelX, 73856093) ^ Math.imul(mapPixelY, 19349663) ^ (salt | 0);",
+    "new": "  const num = Math.imul(mapPixelX, 73856093) ^ Math.imul(mapPixelY, 19349663);",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-pit-rate-one-bucket",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const num4 = Math.trunc(f32(clamp01(f32(Number(rate) || 0))) * (2.0 * num2));",
+    "new": "  const num4 = Math.trunc(f32(clamp01(f32(Number(rate) || 0))) * num2);",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-pit-buckets-unshuffled",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const num3 = (num % 48) * num2 + Math.floor(num / 48);",
+    "new": "  const num3 = num;",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-placement-unsalted",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const h = stableHash(mapPixelX, mapPixelY, (PLACEMENT_SALT ^ salt) >>> 0) & 0xffff;",
+    "new": "  const h = stableHash(mapPixelX, mapPixelY, salt) & 0xffff;",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-placement-to-the-edge",
+    "file": "src/world/oceanHoles.js",
+    "old": "  return f32(f32(0.28) + f32(f32(f32(h) / 65535) * f32(0.44)));",
+    "new": "  return f32(f32(f32(h) / 65535));",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-pit-depth-unscaled",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const num = f32(32 * scale);\n  const num2 = f32(9 * scale);",
+    "new": "  const num = 32;\n  const num2 = 9;",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-pit-depth-linear",
+    "file": "src/world/oceanHoles.js",
+    "old": "  num3 = f32(f32(num3 * num3) * f32(3 - f32(2 * num3)));\n  return f32(14 * num3);",
+    "new": "  return f32(14 * num3);",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-flatten-always",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const flattened = !!allowFlatten && num5 > 0 && num8 > 5;",
+    "new": "  const flattened = !!allowFlatten && num5 > 0;",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-flatten-unverified",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const flattened = !!allowFlatten && num5 > 0 && num8 > 5;",
+    "new": "  const flattened = num5 > 0 && num8 > 5;",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-carve-grid-only",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const n = Math.floor(positions.length / 3);",
+    "new": "  const n = Math.min(4225, Math.floor(positions.length / 3));",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-grid-reads-the-walls",
+    "file": "src/world/oceanHoles.js",
+    "old": "  if (!grid || positions.length / 3 < num) return grid;\n  for (let i = 0; i < num; i++) grid[i] = positions[i * 3 + 1];",
+    "new": "  if (!grid) return grid;\n  for (let i = 0; i < positions.length / 3; i++) grid[i] = positions[i * 3 + 1];",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-ray-from-the-sea",
+    "file": "src/world/oceanHoles.js",
+    "old": "  const top = f32(surfaceY + 5);",
+    "new": "  const top = f32(surfaceY);",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-opening-lowest",
+    "file": "src/world/oceanHoles.js",
+    "old": "    if (y != null) floorY = Math.max(floorY, y);",
+    "new": "    if (y != null) floorY = Math.min(floorY, y);",
+    "tests": [
+      "test/world/oh_placement.test.js",
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-location-cut",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    if (hasLocation(entry)) {\n      markTerrainProcessed(st, v, 'rejected:has-location');\n      return;\n    }",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-shallow-cut",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    if (num6 < MINIMUM_DEPTH) {",
+    "new": "    if (num6 < 0) {",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-floor-asked-once",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "      if (num || st.attempts % 30 === 0) deepWaters.refreshLoadedTile(entry); // RequestSeafloorRefresh",
+    "new": "      if (num) deepWaters.refreshLoadedTile(entry); // RequestSeafloorRefresh",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-floor-cut-twice",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    if (st.appliedFloorBuildVersion === v) return { ok: true, flattened };\n    try {",
+    "new": "    try {",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-edge-distance-unread",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "      if (num < MINIMUM_EDGE_DISTANCE)\n        return { ok: false, rejection: `rejected:edge-distance-${num.toFixed(1)}`, verified: false };",
+    "new": "      if (num < 0) return { ok: false, rejection: `rejected:edge-distance-${num.toFixed(1)}`, verified: false };",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-suppression-in-local-space",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    const num = f32(worldPosition[0] - f32(t[0] + m.localX));",
+    "new": "    const num = f32(worldPosition[0] - m.localX);",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-abyss-dials-recut",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    if (snap !== snapshot) {",
+    "new": "    {",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-a-lost-pit-cut-again",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "      if (flag && st.appliedFloorBuildVersion === v) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-C-entrance-every-frame",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "      e.nextAllowedTime = t + 1;\n      onEnterPit(e.mapX, e.mapY);",
+    "new": "      onEnterPit(e.mapX, e.mapY);",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-C-entrance-on-foot",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "      if (t < e.nextAllowedTime || inside || !swimming) return false;",
+    "new": "      if (t < e.nextAllowedTime || inside) return false;",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-dw-built-event-dropped",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "      onSeafloorBuilt?.(entry);   // OH-B: RaiseTerrainEvent(OnSeafloorBuilt) follows BuildOrRefreshFloor\n",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-dw-commit-keeps-the-old-grid",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "      heightGridFromPositions(s.floor.positions, s.floor.vertexLocalY);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-dw-refresh-waits-its-turn",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "        const d = urgent.has(k) ? -1 : chebyshev({ x: e.px, y: e.py }, here);",
+    "new": "        const d = chebyshev({ x: e.px, y: e.py }, here);",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-dw-refresh-rebuilds-current",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "      if (!force && this.isSeafloorCurrent(entry)) return;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-B-dw-refresh-while-frozen",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "if (disposed || !entry || !bake || !canMutateTerrainData()) return;",
+    "new": "if (disposed || !entry || !bake) return;",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-C-miasma-uncapped",
+    "file": "src/world/oceanHolesMiasma.js",
+    "old": "      if (particles.length < max) emit();",
+    "new": "      emit();",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-C-miasma-no-prewarm",
+    "file": "src/world/oceanHolesMiasma.js",
+    "old": "  for (let t = 0; t < DEFAULT_DURATION; t += 1 / 60) step(1 / 60);\n  return {",
+    "new": "  return {",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-C-miasma-size-linear",
+    "file": "src/world/oceanHolesMiasma.js",
+    "old": "      return v0 + (v1 - v0) * (u * u * (3 - 2 * u));",
+    "new": "      return v0 + (v1 - v0) * u;",
+    "tests": [
+      "test/world/oh_placement.test.js"
+    ]
+  },
+  {
+    "name": "OH-C-miasma-inputs-left-to-the-linker",
+    "file": "src/render/oceanHolesRender.js",
+    "old": "layout(location = 1) in vec2 aCorner;\nlayout(location = 2) in vec2 aSizeRot;",
+    "new": "in vec2 aCorner;\nin vec2 aSizeRot;",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-C-disc-input-left-to-the-linker",
+    "file": "src/render/oceanHolesRender.js",
+    "old": "layout(location = 0) in vec3 aPos;",
+    "new": "in vec3 aPos;",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-enter-dry",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    if (player.isInside() || !player.isSwimming()) return false;",
+    "new": "    if (player.isInside()) return false;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-refusal-seconds",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "hud('The darkness below refuses to open.', 3);",
+    "new": "hud('The darkness below refuses to open.', 4);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-depth-any",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      hasReturnPitDepth = num > 0.5;",
+    "new": "      hasReturnPitDepth = num > 0;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-gps-unnamed-before-door",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    if (!moved) { entryPending = false; transitioning = false; return false; }\n    renameGpsLocation(gpsName());",
+    "new": "    if (!moved) { entryPending = false; transitioning = false; return false; }",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-not-building",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    buildingAbyss = true;\n    let entered = false;",
+    "new": "    let entered = false;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-refusal-left-entering",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    if (!entered && entryPending) {\n      if (player.isRespawning())",
+    "new": "    if (false) {\n      if (player.isRespawning())",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-failure-to-pit",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    await restoreOceanPosition(data.ReturnWorldX, data.ReturnWorldZ, false);",
+    "new": "    await restoreOceanPosition(data.ReturnWorldX, data.ReturnWorldZ, true);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-feet-on-box",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      place = [x, f32(top + 0.25), z];",
+    "new": "      place = [x, top, z];",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-surface-level",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    else if (surface != null) player.placeCentreY(f32(surface - 0.1));",
+    "new": "    else if (surface != null) player.placeCentreY(surface);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-exit-respawn-teleports",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      if (player.isRespawning()) { clearAbyssState(); return false; }\n      captureCurrentRecallBinding();",
+    "new": "      captureCurrentRecallBinding();",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-rise-line",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "hud(`You rise from ${name}.`, 3);",
+    "new": "hud(`You rose from ${name}.`, 3);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-descend-seconds",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "hud(`You descend into ${data.DungeonName}.`, 4);",
+    "new": "hud(`You descend into ${data.DungeonName}.`, 3);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-build-no-replacement",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      renameDungeon(d, data.DungeonName);\n      processAbyssEnemies(d, true);",
+    "new": "      renameDungeon(d, data.DungeonName);\n      processAbyssEnemies(d, false);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-respawner-ignores-load",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      if (player.loadInProgress() || !isBoundAbyssDungeon()) clearAbyssState();",
+    "new": "      if (!isBoundAbyssDungeon()) clearAbyssState();",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-load-anywhere",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      if (!isLoadedTemplateDungeon()) { data.Active = false; renameGps(null, null); return; }",
+    "new": "      if (false) { data.Active = false; renameGps(null, null); return; }",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-no-refresh-restored",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      waitFrame().then(() => { if (data.Active && player.isInsideDungeon()) prepareAbyssDungeon(modes.dungeon()); });   // RefreshRestoredDungeon",
+    "new": "      // RefreshRestoredDungeon",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-anchor-bound-loose",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "  return f32(f32(f32(dx * dx) + f32(dy * dy)) + f32(dz * dz)) < f32(0.01);",
+    "new": "  return f32(f32(f32(dx * dx) + f32(dy * dy)) + f32(dz * dz)) < f32(0.1);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-anchor-in-doubles",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "  const d = (i) => f32(f32(anchor.position[i]) - f32(binding.AnchorPosition[i]));",
+    "new": "  const d = (i) => anchor.position[i] - binding.AnchorPosition[i];",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-pending-recall-in-load",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    if (!player.isRespawning() || player.loadInProgress()) return false;",
+    "new": "    if (!player.isRespawning()) return false;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-binding-never-dropped",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    else if (data.RecallBinding && !matchesRecallAnchor(data.RecallBinding, anchor)) data.RecallBinding = null;",
+    "new": "    else if (false) data.RecallBinding = null;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-name-refresh-fast",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "        nextNameRefresh = t + 1;",
+    "new": "        nextNameRefresh = t + 0.5;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-no-stale-release",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      if (data.Active && isLoadedTemplateDungeon() && !isPlayerAtTemplateLocation()) clearAbyssState();   // ReleaseStaleAbyssContext",
+    "new": "      // ReleaseStaleAbyssContext",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-one-in-two",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    if (!aquaticOnly && !flag && num % 3 !== 0) return;",
+    "new": "    if (!aquaticOnly && !flag && num % 2 !== 0) return;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-whole-hash-monster",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    const hash = aquaticOnly || flag ? num : Math.floor(num / 3);",
+    "new": "    const hash = num;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-seducer-taken",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "|| type === MOBILE_TYPES.DaedraSeducer || !flag2",
+    "new": "|| !flag2",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-glow-taken",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "|| !flag2 || row?.noShadow || row?.glowColor) return;",
+    "new": "|| !flag2) return;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-class-any-kind",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    const pick = tryPickUnderwaterEnemy(hash, flag && !aquaticOnly, aquaticOnly, underwaterEnemyTypes());",
+    "new": "    const pick = tryPickUnderwaterEnemy(hash, false, aquaticOnly, underwaterEnemyTypes());",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-quota-in-doubles",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    const num3 = Math.ceil(f32(num * MINIMUM_AQUATIC_ENEMY_FRACTION));",
+    "new": "    const num3 = Math.ceil(num * 0.3);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-quota-humanoid-first",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "        if ((j === 0 && wasHumanoid) || (j === 1 && !wasHumanoid)) continue;",
+    "new": "        if ((j === 1 && wasHumanoid) || (j === 0 && !wasHumanoid)) continue;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-render-ambient-unscaled",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "        renderAmbient: [f32(ambient[0] * dungeonAmbientLightScale), f32(ambient[1] * dungeonAmbientLightScale), f32(ambient[2] * dungeonAmbientLightScale), f32(ambient[3] * dungeonAmbientLightScale)],",
+    "new": "        renderAmbient: [...ambient],",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-torch-left-on",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "        indirect: 0, magicLightScale: ABYSS_MAGIC_LIGHT_SCALE, torchOff: true,",
+    "new": "        indirect: 0, magicLightScale: ABYSS_MAGIC_LIGHT_SCALE, torchOff: false,",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-no-pending-recall-loot",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    shouldUpgradeLoot() { return buildingAbyss || (data.Active && isBoundAbyssDungeon()) || isPendingAbyssRecall(); },",
+    "new": "    shouldUpgradeLoot() { return buildingAbyss || (data.Active && isBoundAbyssDungeon()); },",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-spawn-during-load",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      if (player.loadInProgress() || !shouldAffectDungeon(d)) return undefined;",
+    "new": "      if (!shouldAffectDungeon(d)) return undefined;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-spawn-any-dungeon",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "    return !!d && modes.dungeon() === d;",
+    "new": "    return !!d;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-fog-blend",
+    "file": "src/world/oceanHoles.js",
+    "old": "export const ABYSS_FOG_BLEND_AT_MIDPOINT = f32(0.85);",
+    "new": "export const ABYSS_FOG_BLEND_AT_MIDPOINT = f32(0.8);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-bonus-halving",
+    "file": "src/world/oceanHoles.js",
+    "old": "    num2 = f32(num2 * f32(0.5));",
+    "new": "    num2 = f32(num2 * f32(0.75));",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-bonus-untruncated",
+    "file": "src/world/oceanHoles.js",
+    "old": "  while (dice100(Math.trunc(num2), rolls())) {",
+    "new": "  while (dice100(Math.max(1, Math.round(num2)), rolls())) {",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-bonus-counts-nothing",
+    "file": "src/world/oceanHoles.js",
+    "old": "    if (it) {\n      items.push(it);\n      num++;\n    } // AddItem(item, AddPosition.Back)",
+    "new": "    if (it) items.push(it);\n    num++;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-arrow-spared",
+    "file": "src/world/oceanHoles.js",
+    "old": "    if (item.group === 'Weapons') {\n      // && GroupIndex != 131 - always so (the header)",
+    "new": "    if (item.group === 'Weapons' && item.templateIndex !== 131) {",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-daedric-weapon-past-top",
+    "file": "src/world/oceanHoles.js",
+    "old": "      if (num < 9) fresh = remintWeapon(item.templateIndex, num + 1);",
+    "new": "      if (num <= 9) fresh = remintWeapon(item.templateIndex, Math.min(9, num + 1));",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-stack-kept",
+    "file": "src/world/oceanHoles.js",
+    "old": "    Object.assign(item, fresh, { flags: 0, stackCount: 1 }); // SetItem (DaggerfallUnityItem.cs:565, :572), then the material pass",
+    "new": "    Object.assign(item, fresh, { flags: 0 }); // SetItem (DaggerfallUnityItem.cs:565, :572), then the material pass",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-magic-not-kept",
+    "file": "src/world/oceanHoles.js",
+    "old": "    if (enchanted)\n      for (const [k, v] of Object.entries(kept)) {\n        if (v === undefined) delete item[k];\n        else item[k] = v;\n      }",
+    "new": "    void kept;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-identified-kept-plain",
+    "file": "src/world/oceanHoles.js",
+    "old": "    delete item.isIdentified;\n    if (enchanted)",
+    "new": "    if (enchanted)",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-variant-reset",
+    "file": "src/world/oceanHoles.js",
+    "old": "      if (next !== (item.material ?? 0))\n        fresh = remintArmor(\n          item.templateIndex,\n          next,\n          clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0),\n        );",
+    "new": "      if (next !== (item.material ?? 0)) fresh = remintArmor(item.templateIndex, next, 0);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-quest-items-upgraded",
+    "file": "src/world/oceanHoles.js",
+    "old": "    if (!item || isCustom(item) || item.questItem || item.artifact) continue;",
+    "new": "    if (!item || isCustom(item) || item.artifact) continue;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-arrow-value-floor",
+    "file": "src/combat/enemyEquipment.js",
+    "old": "    value: t ? materialValue(t.basePrice, material) : 1, // F103: SetItem's basePrice through SetItemPropertiesByMaterial (:649)",
+    "new": "    value: itemBaseValue({ group: 'Weapons', templateIndex, material }), // F103: SetItem's basePrice through SetItemPropertiesByMaterial (:649)",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-matrix-fallback",
+    "file": "src/systems/loot/loot.js",
+    "old": "export const lootMatrix = (key) => rriLootMatrix(key) ?? LOOT_MATRICES[key] ?? LOOT_MATRICES['-'];",
+    "new": "export const lootMatrix = (key) => rriLootMatrix(key) ?? LOOT_MATRICES[key] ?? LOOT_MATRICES.A;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-worn-dropped",
+    "file": "src/scenes/hostCombat.js",
+    "old": "items: entity.items, worn: eq?.worn ?? [], where, rolls, roller: player });",
+    "new": "items: entity.items, worn: [], where, rolls, roller: player });",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-bonus-wrong-column",
+    "file": "src/scenes/ohLootHost.js",
+    "old": "    addBonusMagicLoot(lootMatrix(key).MI, items, () => {",
+    "new": "    addBonusMagicLoot(lootMatrix(key).WP, items, () => {",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-no-layout-dungeon",
+    "file": "src/scenes/world.js",
+    "old": "      dungeon: () => ohDungeonOf(modes?.dungeonCtx) ?? ohLayingOutOf(modes?.layingOutLocation),   // PlayerEnterExit.Dungeon",
+    "new": "      dungeon: () => ohDungeonOf(modes?.dungeonCtx),   // PlayerEnterExit.Dungeon",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-layout-unmarked",
+    "file": "src/scenes/worldModes.js",
+    "old": "      layingOutLoc = dfLocation;   // OH-E",
+    "new": "      // OH-E",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-dungeon-save-no-mods",
+    "file": "src/scenes/worldModes.js",
+    "old": "          modSaveRecords: () => host.modSaveRecords?.() ?? {},\n",
+    "new": "",
+    "tests": [
+      "test/systems/wa1_warmAshesShips.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-build-on-cache",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const dfLocation = ownDungeonLocation(sized);",
+    "new": "    const dfLocation = sized;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-D-blocks-shared",
+    "file": "src/scenes/worldModes.js",
+    "old": "    dungeon: loc.dungeon && { ...loc.dungeon, blocks: loc.dungeon.blocks?.map((b) => ({ ...b })) },",
+    "new": "    dungeon: loc.dungeon,",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-E-pile-event-only-in-window",
+    "file": "src/systems/loot/loot.js",
+    "old": "  if (alphabetIndex >= 10 && alphabetIndex <= 15) {\n    // between keys J and O",
+    "new": "  if (alphabetIndex < 10 || alphabetIndex > 15) return items;\n  {",
+    "tests": [
+      "test/scenes/oh_abyss.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A1-settings-below-the-gate",
+    "file": "src/scenes/world.js",
+    "old": "_ohTime += gamePaused() ? 0 : dt * worldTimeScale(); oceanHoles.checkSettings(); ohAbyss?.update(); }",
+    "new": "_ohTime += gamePaused() ? 0 : dt * worldTimeScale(); ohAbyss?.update(); }",
+    "tests": [
+      "test/scenes/oh_host.test.js",
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A1-check-applies-nothing",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    s = next; // ApplySettings, every change\n    if (snap !== snapshot) {",
+    "new": "    if (snap !== snapshot) {",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A3-active-indoors",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "  const isActive = (e) => !inside() && built.get(keyOf(e)) === e;",
+    "new": "  const isActive = (e) => built.get(keyOf(e)) === e;",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A3-refresh-inactive",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    for (const e of built.values()) if (isActive(e)) deepWaters.refreshLoadedTile(e, true);",
+    "new": "    for (const e of built.values()) deepWaters.refreshLoadedTile(e, true);",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A3-saveload-inactive",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "      for (const e of built.values()) if (isActive(e)) promoted(e);",
+    "new": "      for (const e of built.values()) promoted(e);",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A3-no-queue-indoors",
+    "file": "src/scenes/world.js",
+    "old": "      if (oceanHoles) oceanHoles.processOneTerrain();\n",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A2-no-drift",
+    "file": "src/world/oceanHolesMiasma.js",
+    "old": "    out = radius + DRIFT * SURFACE_MIASMA_LIFETIME + half;",
+    "new": "    out = radius + half;",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A2-no-rise",
+    "file": "src/world/oceanHolesMiasma.js",
+    "old": "  return [-out, -half, -out, out, height + half, out];",
+    "new": "  return [-out, -half, -out, out, half, out];",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-A2-box-not-grown",
+    "file": "src/scenes/oceanHolesPits.js",
+    "old": "if (b) for (let i = 0; i < 3; i++) { b[i] = Math.min(b[i], c[i] + reach[i]); b[3 + i] = Math.max(b[3 + i], c[i] + reach[3 + i]); }",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B1-destroy-not-saved",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        ...(f.abyssDestroyed ? { abyssDestroyed: true } : {}),   // AUDIT OH-F B1: Object.Destroy'd - in DFU's save not at all\n",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B1-destroy-restored-as-corpse",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (sf.abyssDestroyed) { if (!f.abyssDestroyed) { f.abyssDestroyed = true; questPoolOps.removeFoe(f); } return; }",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B1-restore-not-settled",
+    "file": "src/scenes/world.js",
+    "old": "await modes?.restoreDungeonSave?.(extras); }",
+    "new": "modes?.restoreDungeonSave?.(extras); }",
+    "tests": [
+      "test/scenes/oh_abyss.test.js",
+      "test/systems/save/mac6.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B5-respawn-destroyed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (f.abyssDestroyed) return false;   // AUDIT OH-F B5/C1: Object.Destroy's enemy (the drowned dungeon's flame foe) is gone for good\n",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B2-no-rebuild",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "loadRebuilds: (saved) => buildingAbyss || entryPending || data.Active || !!saved?.Active,",
+    "new": "loadRebuilds: (saved) => buildingAbyss || entryPending || data.Active,",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B2-live-not-asked",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "loadRebuilds: (saved) => buildingAbyss || entryPending || data.Active || !!saved?.Active,",
+    "new": "loadRebuilds: (saved) => !!saved?.Active,",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B3-every-host-upgraded",
+    "file": "src/scenes/ohLootHost.js",
+    "old": "if (where !== 'dungeon' || !ohAbyss.shouldUpgradeLoot()) return;",
+    "new": "if (!ohAbyss.shouldUpgradeLoot()) return;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B3-pile-untagged",
+    "file": "src/systems/loot/loot.js",
+    "old": "  if (lootTableKey !== '-')\n    raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });",
+    "new": "  if (lootTableKey !== '-') raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, quarters });",
+    "tests": [
+      "test/scenes/oh_abyss.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B4-respawn-races",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "      if (player.isRespawning()) { entryPending = false; buildingAbyss = false; transitioning = false; data.Active = false; renameGps(null, null); }\n      else await transitionFailed();",
+    "new": "      await transitionFailed();",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B4-moves-not-held",
+    "file": "src/scenes/world.js",
+    "old": "_respawning || _loading || !!ohAbyss?.entering;",
+    "new": "_respawning || _loading;",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B5-wake-at-template",
+    "file": "src/scenes/world.js",
+    "old": "const px = ohReturn?.pixel ?? playerTravelPixel();",
+    "new": "const px = playerTravelPixel();",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-B5-no-return-point",
+    "file": "src/scenes/oceanHolesAbyss.js",
+    "old": "returnPoint: () => (data.Active ? { worldX: data.ReturnWorldX, worldZ: data.ReturnWorldZ, pixel: { x: data.PitMapX, y: data.PitMapY } } : null),",
+    "new": "returnPoint: () => null,",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-C3-quest-mark-late",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "get questSpawn() { return !!rec.questBehaviour || !!rec.src?.questSpawn; }",
+    "new": "get questSpawn() { return !!rec.questBehaviour; }",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-C4-alliance-after-build",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (e?.allied && entity) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/loosefoespawn.test.js",
+      "test/systems/artifacts.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-C6-pool-order",
+    "file": "src/characters/dungeonEnemies.js",
+    "old": "      k:\n        i < layoutCount && Number.isInteger(f?.src?.blockIndex)\n          ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i]\n          : [Infinity, 2, i],",
+    "new": "      k: i < layoutCount && Number.isInteger(f?.src?.blockIndex) ? [f.src.blockIndex, 0, i] : [Infinity, 2, i],",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-C6-spawns-interleaved",
+    "file": "src/characters/dungeonEnemies.js",
+    "old": "      k:\n        i < layoutCount && Number.isInteger(f?.src?.blockIndex)\n          ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i]\n          : [Infinity, 2, i],",
+    "new": "      k: Number.isInteger(f?.src?.blockIndex) ? [f.src.blockIndex, f.src.fixed ? 0 : 1, i] : [Infinity, 2, i],",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-C7-wabbajack-numbered",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "Promise.resolve(spawnLooseFoe(mobileType, at, { loadID: 0 })).then((nf) => {",
+    "new": "Promise.resolve(spawnLooseFoe(mobileType, at)).then((nf) => {",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  },
+  {
+    "name": "OH-F-C8-raw-variant",
+    "file": "src/world/oceanHoles.js",
+    "old": "      if (next !== (item.material ?? 0))\n        fresh = remintArmor(\n          item.templateIndex,\n          next,\n          clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0),\n        );",
+    "new": "      if (next !== (item.material ?? 0)) fresh = remintArmor(item.templateIndex, next, item.variant ?? 0);",
+    "tests": [
+      "test/scenes/oh_abyss.test.js"
+    ]
+  }
+]

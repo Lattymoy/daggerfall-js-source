@@ -1,0 +1,290 @@
+[
+  {
+    "name": "contact-length",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_CONTACT_LENGTH = 0.6;",
+    "new": "export const AIR_CONTACT_LENGTH = 0.0;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-thickness",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_CONTACT_THICKNESS = 0.8;",
+    "new": "export const AIR_CONTACT_THICKNESS = 1000;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-floor-black",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_CONTACT_FLOOR = 0.15;",
+    "new": "export const AIR_CONTACT_FLOOR = 0.0;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-unit",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_CONTACT_UNIT = 12;",
+    "new": "export const AIR_CONTACT_UNIT = 0;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-door-ignored",
+    "file": "src/render/airPass.js",
+    "old": "  return pageParam('contact', search) !== 'off'; // PERF-URL",
+    "new": "  return true; // PERF-URL",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-glsl-on-when-off",
+    "file": "src/render/airPass.js",
+    "old": "  if (uContactParams.w <= 0.0) return 1.0;\n  float len = min(dist, uContactParams.x);",
+    "new": "  float len = min(dist, uContactParams.x);",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-glsl-past-light",
+    "file": "src/render/airPass.js",
+    "old": "  float len = min(dist, uContactParams.x);",
+    "new": "  float len = uContactParams.x;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-glsl-thin",
+    "file": "src/render/airPass.js",
+    "old": "    occ = max(occ, smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind) * (1.0 - smoothstep(uContactParams.y * 0.75, uContactParams.y, behind)));",
+    "new": "    occ = max(occ, smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind));",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "contact-glsl-current-terms",
+    "file": "src/render/airPass.js",
+    "old": "    float behind = c.w - sceneDist;   // c.w is the point's view distance under that projection",
+    "new": "    float behind = sceneDist - c.w;   // c.w is the point's view distance under that projection",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "frame-one-depth",
+    "file": "src/render/airPass.js",
+    "old": "    f.depthIndex ^= 1;\n    f.depth = f.depths[f.depthIndex];",
+    "new": "    f.depth = f.depths[f.depthIndex];",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "frame-depth-not-attached",
+    "file": "src/render/airPass.js",
+    "old": "    f.fbo = f.fbos[f.depthIndex]; // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
+    "new": "    f.fbo = f.fbos[f.depthIndex ^ 1]; // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "prepare-no-prev",
+    "file": "src/render/airPass.js",
+    "old": "    if (this.f) {\n      this.prevVP.set(this._vp);\n      this.prevProjInfo.set(this.projInfo);\n      this.prevValid = !!this.frame && !this._cut && !jumped;\n      holdPrevRect(this.prevRect, this.rect, this.canvas);\n    }\n    this._cut = false;",
+    "new": "    this._cut = false;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "prepare-prev-is-current",
+    "file": "src/render/airPass.js",
+    "old": "    if (this.f) {\n      this.prevVP.set(this._vp);\n      this.prevProjInfo.set(this.projInfo);\n      this.prevValid = !!this.frame && !this._cut && !jumped;\n      holdPrevRect(this.prevRect, this.rect, this.canvas);\n    }\n    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) {\n      pe[0] = e[0];\n      pe[1] = e[1];\n      pe[2] = e[2];\n    }\n    this.f = f;\n    this.fresh = true; // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
+    "new": "    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) {\n      pe[0] = e[0];\n      pe[1] = e[1];\n      pe[2] = e[2];\n    }\n    this.f = f;\n    this.fresh = true; // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp);\n    this.prevProjInfo.set(this.projInfo);\n    this.prevValid = !!this.frame;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "upload-contact-always-on",
+    "file": "src/render/airPass.js",
+    "old": "    const live = on && this.prevValid && this.frame;",
+    "new": "    const live = !!this.frame;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "upload-contact-current-depth",
+    "file": "src/render/airPass.js",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.prevDepth : null); // AUDIT 68 S16-air-dead-fields: bound on or off - `live` only flags the march (both arms of the old ternary bound this)",
+    "new": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.depth : null); // AUDIT 68 S16-air-dead-fields: bound on or off - `live` only flags the march (both arms of the old ternary bound this)",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "lane-no-contact",
+    "file": "src/render/enhancedLighting.js",
+    "old": "      : mix(contactShadow(wp, n, Ln, d), 1.0, smoothstep(uPointLights[i].w * ${glslFloat(EL_CONTACT_FADE_START)}, uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}, d));",
+    "new": "      : 1.0;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "renderer-contact-in-sprite",
+    "file": "src/render/renderer.js",
+    "old": "this._contactWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);",
+    "new": "this._contactWanted !== false && this._studioDepth === 0 && !this._panelSaved);",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "renderer-no-contact-door",
+    "file": "src/render/renderer.js",
+    "old": "this._contactWanted !== false && this._spriteDepth === 0",
+    "new": "this._spriteDepth === 0",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "renderer-no-contact-without-air",
+    "file": "src/render/renderer.js",
+    "old": "    else this._uploadNoContact(this._el[key].contact);\n",
+    "new": "",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "table-size",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_CASTER_TABLE = 48;",
+    "new": "export const SHADOW_CASTER_TABLE = 16;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "table-not-filled",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (i < SHADOW_CASTER_TABLE) this.casterOf[i] = k;\n",
+    "new": "",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "table-not-uploaded",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.uniform1iv(loc.casterOf, this.casterOf);   // EL8\n",
+    "new": "",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "glsl-table-lit",
+    "file": "src/render/shadowPass.js",
+    "old": "  int k = uCasterOf[i];\n  return k >= 0 ? casterShadowAt(k, L, wp, n) : 1.0;",
+    "new": "  return 1.0;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-far-every-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (c === last && this._sunDrawn[c] && !SHADOW_TUNING.steady && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;\n",
+    "new": "",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-far-never-first",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (c === last && this._sunDrawn[c] && !SHADOW_TUNING.steady && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;",
+    "new": "        if (c === last && !SHADOW_TUNING.steady && this.frameNo % SHADOW_FAR_CASCADE_EVERY !== 0) continue;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-stale-matrix",
+    "file": "src/render/shadowPass.js",
+    "old": "        this.sunVP[c].set(this._sunVPNew[c]);\n",
+    "new": "",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-casters-every-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "      const due = SHADOW_TUNING.steady || near || selfNear || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;",
+    "new": "      const due = true;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-no-change-check",
+    "file": "src/render/shadowPass.js",
+    "old": "        const staticStale = changed || !this._slotCached[k] || this._slotSig[k * 2] !== sigHash || this._slotSig[k * 2 + 1] !== sigCount;",
+    "new": "        const staticStale = !this._slotCached[k] || this._slotSig[k * 2] !== sigHash || this._slotSig[k * 2 + 1] !== sigCount;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "cadence-near-none",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_NEAR_CASTERS = 2;",
+    "new": "export const SHADOW_NEAR_CASTERS = 0;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "perf-door",
+    "file": "src/render/perfMeter.js",
+    "old": "    return /[?&]perf\\b/.test(search);",
+    "new": "    return /perf/.test(search);",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "perf-every-frame",
+    "file": "src/render/perfMeter.js",
+    "old": "    if (this.frames % PERF_EVERY !== 0) return null;\n    if (this.zones) {",
+    "new": "    if (this.zones) {",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  },
+  {
+    "name": "perf-line-gpu",
+    "file": "src/render/perfMeter.js",
+    "old": "  const gpu = gpuMs == null ? 'gpu n/a' : `gpu ${gpuMs.toFixed(2)}ms`;",
+    "new": "  const gpu = gpuMs == null ? 'gpu n/a' : `gpu ${gpuMs.toFixed(0)}ms`;",
+    "tests": [
+      "test/render/el8_contact.test.js"
+    ]
+  }
+]

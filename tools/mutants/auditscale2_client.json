@@ -1,0 +1,382 @@
+[
+  {
+    "name": "AUDIT-SCALE2-C1-search-asks-any-relay",
+    "file": "src/net/online.js",
+    "old": "    if (!this.findOk || !isSocialRoom(this.room) || typeof q !== 'string') return false;",
+    "new": "    if (!isSocialRoom(this.room) || typeof q !== 'string') return false;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "`/find` sent to a relay before the shards - it closes the hub link 1008"
+  },
+  {
+    "name": "AUDIT-SCALE2-C1-guild-asks-any-relay",
+    "file": "src/net/online.js",
+    "old": "    if (!this.findOk || !isSocialRoom(this.room) || !this._ws || !this._welcomed.has(this._ws)) return false;",
+    "new": "    if (!isSocialRoom(this.room) || !this._ws || !this._welcomed.has(this._ws)) return false;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the Guild tab's ask sent to a relay before the shards, every frame it is drawn"
+  },
+  {
+    "name": "AUDIT-SCALE2-C1-word-never-reset",
+    "file": "src/net/online.js",
+    "old": "        this.findOk = false;   // AUDIT SCALE II C-1: likewise",
+    "new": "        // findOk kept   // AUDIT SCALE II C-1: likewise",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a new socket asks on the last relay's word, before its own welcome"
+  },
+  {
+    "name": "AUDIT-SCALE2-C1-version-unread",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.findOk = hubShardsSupported(relayV);",
+    "new": "      if (primary) this.findOk = true;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "any relay's welcome read as one that answers `find`"
+  },
+  {
+    "name": "AUDIT-SCALE2-C1-welcomed-before-welcome",
+    "file": "src/net/online.js",
+    "old": "  get welcomed() { return this.status === 'open' && !!this._ws && this._welcomed.has(this._ws); }",
+    "new": "  get welcomed() { return this.status === 'open' && !!this._ws; }",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a socket open and unanswered read as its relay's word"
+  },
+  {
+    "name": "AUDIT-SCALE2-C1-line-says-offline",
+    "file": "src/scenes/world.js",
+    "old": "note(hub?.welcomed && !hub.findOk ? FIND_RELAY_TEXT : FIND_OFFLINE_TEXT); return 'read'; }",
+    "new": "note(FIND_OFFLINE_TEXT); return 'read'; }",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a hub online on an old relay told it is offline"
+  },
+  {
+    "name": "AUDIT-SCALE2-C2-miss-by-status",
+    "file": "src/net/online.js",
+    "old": "if (isChannelShard(room) && !this._opened.has(ws) && !this._closedByUs && ++this._shardMiss >= 2)",
+    "new": "if (isChannelShard(room) && this.status === 'connecting' && !this._closedByUs && ++this._shardMiss >= 2)",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the miss read off `status`, which a browser's `error` has written over"
+  },
+  {
+    "name": "AUDIT-SCALE2-C2-open-unremembered",
+    "file": "src/net/online.js",
+    "old": "      this._opened.add(ws);\n",
+    "new": "",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "every shard socket's close a miss - a deploy's drop of an open one too"
+  },
+  {
+    "name": "AUDIT-SCALE2-C2-wave-by-status",
+    "file": "src/net/online.js",
+    "old": "      const was = this._statusAtError.get(ws) ?? this.status;",
+    "new": "      const was = this.status;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a deploy's unclean close (`error` first) never weighed as a wave"
+  },
+  {
+    "name": "AUDIT-SCALE2-C2-error-status-unkept",
+    "file": "src/net/online.js",
+    "old": "if (!this._statusAtError.has(ws)) this._statusAtError.set(ws, this.status); this.status = 'error';",
+    "new": "this.status = 'error';",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the status before the error never kept"
+  },
+  {
+    "name": "AUDIT-SCALE2-C2-one-flag",
+    "file": "src/scenes/world.js",
+    "old": "  const hubShardsSeenKey = () => `${HUB_SHARDS_SEEN_KEY}@${online?.url ?? ''}`;",
+    "new": "  const hubShardsSeenKey = () => HUB_SHARDS_SEEN_KEY;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "one flag for every relay - a staging visit poisons production"
+  },
+  {
+    "name": "AUDIT-SCALE2-C2-links-left-on-shards",
+    "file": "src/scenes/world.js",
+    "old": "if (!keeps) channelLinksOffShards(); ",
+    "new": "",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a relay without shards leaves the links refused at their shards' door"
+  },
+  {
+    "name": "AUDIT-SCALE2-C2-welcomed-link-moved",
+    "file": "src/scenes/world.js",
+    "old": "if (isChannelShard(link.room) && !link.welcomed) link.join(channelOf(link.room));",
+    "new": "if (isChannelShard(link.room)) link.join(channelOf(link.room));",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a link its own shard welcomed moved to the bus"
+  },
+  {
+    "name": "AUDIT-SCALE2-R3-4-neighbour-layer",
+    "file": "src/scenes/world.js",
+    "old": "return !!c && c[0] === at[0] && c[1] === at[1];",
+    "new": "return !!c && Math.max(Math.abs(c[0] - at[0]), Math.abs(c[1] - at[1])) <= 1;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a mate's layer of the next cell asked of mine (the head's law)"
+  },
+  {
+    "name": "AUDIT-SCALE2-R3-4-row-unread",
+    "file": "src/scenes/world.js",
+    "old": "return !!c && c[0] === at[0] && c[1] === at[1];",
+    "new": "return !!c && c[0] === at[0];",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a mate a cell north or south counted as here"
+  },
+  {
+    "name": "AUDIT-SCALE2-R3-4-column-unread",
+    "file": "src/scenes/world.js",
+    "old": "return !!c && c[0] === at[0] && c[1] === at[1];",
+    "new": "return !!c && c[1] === at[1];",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a mate a cell east or west counted as here"
+  },
+  {
+    "name": "AUDIT-SCALE2-R3-10-primary-at-the-place",
+    "file": "src/net/online.js",
+    "old": "const ly = room === this.room ? (this.room === this._layerRoom && this.layer > 0 ? this.layer : this.layerHint) : (this._halo.get(room)?.ly ?? 0);",
+    "new": "const ly = room === this.room ? 0 : (this._halo.get(room)?.ly ?? 0);",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "my replacement walked from the place itself - out of my party's layer"
+  },
+  {
+    "name": "AUDIT-SCALE2-R3-10-primary-asks-the-hint",
+    "file": "src/net/online.js",
+    "old": "const ly = room === this.room ? (this.room === this._layerRoom && this.layer > 0 ? this.layer : this.layerHint) : (this._halo.get(room)?.ly ?? 0);",
+    "new": "const ly = room === this.room ? this.layerHint : (this._halo.get(room)?.ly ?? 0);",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the replacement asks my party's hint, not the layer I stand in"
+  },
+  {
+    "name": "AUDIT-SCALE2-R3-10-halo-at-the-place",
+    "file": "src/net/online.js",
+    "old": ": (this._halo.get(room)?.ly ?? 0);\n      try { ws = loneAhead(this, this._leased(new this._WS(",
+    "new": ": 0;\n      try { ws = loneAhead(this, this._leased(new this._WS(",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "LEASE1 (PIN MOVED): the socket is now wrapped by _leased. a halo's replacement walked from the place itself"
+  },
+  {
+    "name": "AUDIT-SCALE2-R3-10-layer-unasked",
+    "file": "src/net/online.js",
+    "old": "      try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}${isLayered(room) && ly > 0 ? `?ly=${ly}` : ''}`), room), room); } catch { continue; }",
+    "new": "      try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}`), room), room); } catch { continue; }",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "LEASE1 (PIN MOVED): the socket is now wrapped by _leased. the replacement asks no layer at all (the head)"
+  },
+  {
+    "name": "AUDIT-SCALE2-C3-cap-the-arrival-hour",
+    "file": "src/scenes/world.js",
+    "old": "        if (_renownSentHour === hour && _renownCapHour !== hour) {",
+    "new": "        if (_renownCapHour !== hour) {",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a cap stamped with the hour its answer arrived in - the next hour spent"
+  },
+  {
+    "name": "AUDIT-SCALE2-C3-sent-hour-unkept",
+    "file": "src/scenes/world.js",
+    "old": "{ _renownSentHour = renownHour(); return renownAccount.report(",
+    "new": "{ return renownAccount.report(",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the report's hour never kept - no cap ever stands"
+  },
+  {
+    "name": "AUDIT-SCALE2-C4-hour-end-unread",
+    "file": "src/net/renownTracker.js",
+    "old": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4\n  if (!Number.isSafeInteger(xp) || !Number.isSafeInteger(room)) return true;",
+    "new": "  if (!Number.isSafeInteger(xp) || !Number.isSafeInteger(room)) return true;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the hour's last minute coalesced - its XP charged to the next hour"
+  },
+  {
+    "name": "AUDIT-SCALE2-C4-hour-end-strict",
+    "file": "src/net/renownTracker.js",
+    "old": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4",
+    "new": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) < RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the last minute's edge left to wait"
+  },
+  {
+    "name": "AUDIT-SCALE2-C4-hour-end-five-minutes",
+    "file": "src/net/renownTracker.js",
+    "old": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4",
+    "new": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_COALESCE_MS) return true; // AUDIT SCALE II C-4",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the hour's last five minutes at the minute's pace - four reports an hour for nothing"
+  },
+  {
+    "name": "AUDIT-SCALE2-C4-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "capped: _renownCapHour === renownHour(), hourLeftMs: renownHourLeftMs(),",
+    "new": "capped: _renownCapHour === renownHour(),",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the host never says the hour's end"
+  },
+  {
+    "name": "AUDIT-SCALE2-C5-one-region",
+    "file": "src/net/renownTracker.js",
+    "old": "      for (const k of [...pend.keys()]) {",
+    "new": "      for (const k of []) {",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the last word carries one region's pending - the rest die with the page"
+  },
+  {
+    "name": "AUDIT-SCALE2-C5-held-first",
+    "file": "src/net/renownTracker.js",
+    "old": "      for (const k of [...pend.keys()]) {\n        const r = mint(k);\n        if (!r) continue;\n        try {\n          leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd);\n        } catch {\n          pend.set(k, (pend.get(k) ?? 0) + r.xp);\n          vdPend += r.vd;\n        } // not sent: still pending\n      }\n      try {\n        leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd);\n        return true;\n      } catch {\n        return false;\n      }",
+    "new": "      try {\n        leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd);\n      } catch {\n        return false;\n      }\n      for (const k of [...pend.keys()]) {\n        const r = mint(k);\n        if (!r) continue;\n        try {\n          leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd);\n        } catch {\n          pend.set(k, (pend.get(k) ?? 0) + r.xp);\n          vdPend += r.vd;\n        } // not sent: still pending\n      }\n      return true;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the held report first - a page brought back sends it again, credited twice"
+  },
+  {
+    "name": "AUDIT-SCALE2-C5-id-shared",
+    "file": "src/net/renownTracker.js",
+    "old": "          leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd);",
+    "new": "          leave(r.character, r.xp, name?.() ?? null, h.rid, r.region, r.vd);",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "each region's report under the held report's id - answered repeats, credited nothing"
+  },
+  {
+    "name": "AUDIT-SCALE2-C5-unsent-dropped",
+    "file": "src/net/renownTracker.js",
+    "old": "          pend.set(k, (pend.get(k) ?? 0) + r.xp);\n          vdPend += r.vd;",
+    "new": "          /* lost */",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a report the page could not send dropped from what is pending"
+  },
+  {
+    "name": "AUDIT-SCALE2-C6-kept-past-a-leave",
+    "file": "src/net/online.js",
+    "old": "    this._forgetHubLists();   // AUDIT SCALE II C-6: and the hub's lists",
+    "new": "    // this._forgetHubLists();   // AUDIT SCALE II C-6: and the hub's lists",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a link left, or moved to another region, lists the room it left"
+  },
+  {
+    "name": "AUDIT-SCALE2-C6-kept-past-a-terminal-close",
+    "file": "src/net/online.js",
+    "old": "    if (room === this.room) this._forgetHubLists();   // AUDIT SCALE II C-6",
+    "new": "    // if (room === this.room) this._forgetHubLists();   // AUDIT SCALE II C-6",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a superseded or refused link lists the hub for the life of the page"
+  },
+  {
+    "name": "AUDIT-SCALE2-C6-world-floor-kept",
+    "file": "src/net/online.js",
+    "old": "    this.hubOnline = new Map(); this._hubWhoAt = -Infinity;",
+    "new": "    this.hubOnline = new Map();",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the next room's World or Region tab waits out the last room's floor"
+  },
+  {
+    "name": "AUDIT-SCALE2-C6-guild-floor-kept",
+    "file": "src/net/online.js",
+    "old": "    this.guildOnline = new Map(); this._guildWhoAt = -Infinity;",
+    "new": "    this.guildOnline = new Map();",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the next welcome's Guild tab waits out the last socket's floor"
+  },
+  {
+    "name": "AUDIT-SCALE2-D7-unopened-primary-a-drop",
+    "file": "src/net/online.js",
+    "old": "      if (!this._closedByUs) this._dropAt = was === 'open' ? this._wave.dropped(this._now()) : null;",
+    "new": "      if (!this._closedByUs) this._dropAt = this._wave.dropped(this._now());",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a reconnect that never opened starts a second wave (lane D's LD-main-connecting-a-drop)"
+  },
+  {
+    "name": "AUDIT-SCALE2-D7-unopened-halo-a-drop",
+    "file": "src/net/online.js",
+    "old": "h.dropAt = wasOpen && code !== CLOSE_BUSY && !noToken ?",
+    "new": "h.dropAt = code !== CLOSE_BUSY && !noToken ?",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a halo that never opened starts a second wave (lane D's LD-halo-unopened-a-drop)"
+  },
+  {
+    "name": "AUDIT-SCALE2-D7-spread-cap-moved",
+    "file": "src/net/reconnectWave.js",
+    "old": "export const WAVE_SPREAD_MAX_MS = 40_000;",
+    "new": "export const WAVE_SPREAD_MAX_MS = 30_000;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "the spread's cap moved under the bible's 40 s (lane D's LD-spread-cap-30s)"
+  },
+  {
+    "name": "AUDIT-SCALE2-D8-rise-rule-unread",
+    "file": "src/net/renownTracker.js",
+    "old": "  return p.need > 0 && n >= p.need - p.into;",
+    "new": "  return false;",
+    "tests": [
+      "test/net/auditscale2_client.test.js"
+    ],
+    "note": "a rise waits the coalescing - SCALE4h's fighter-hour pin held under it before D-8; test/server/scale4h.test.js's fighter hour now fails it too (run alone: --test-name-pattern \"fighter\")"
+  }
+]

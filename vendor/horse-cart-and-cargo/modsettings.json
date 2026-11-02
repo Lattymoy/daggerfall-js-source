@@ -1,0 +1,105 @@
+{
+  "Version": "1",
+  "Sections": [
+    {
+      "Name": "Persistence",
+      "Description": "Controls whether owned transport remains as physical objects when left behind.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Value": true,
+          "Name": "PhysicalPersistence",
+          "Description": "Physical Horse & Wagon Persistence. On: horse and wagon positions persist when left behind. Off: remote positions are forgotten and owned transport is recalled for vanilla-style transport and wagon access; the moving trailing wagon remains. Re-enabling starts fresh with owned transport at the player.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Presentation",
+      "Description": "Controls optional transport presentation details.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Value": true,
+          "Name": "ShowTrailingWagon",
+          "Description": "Trailing Wagon While Riding. When disabled, hides only the wagon that trails behind you in Cart mode. Deployed and following wagons, cargo storage, physical persistence, and wagon gameplay remain enabled.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Following",
+      "Description": "Controls how owned transport follows the player.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Min": 2,
+          "Max": 8,
+          "Value": 3,
+          "Name": "HorseFollowDistance",
+          "Description": "Horse Follow Distance. Sets how closely a following horse stays behind you. This also applies to the horse leading a following wagon.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+        },
+        {
+          "Value": true,
+          "Name": "AvoidCombat",
+          "Description": "Following Horse Avoids Combat. When enabled, a following horse or horse-and-wagon team will try to keep away from hostile enemies during combat.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        },
+        {
+          "Value": true,
+          "Name": "FollowFastTravel",
+          "Description": "Following Transport Fast Travels With You. When disabled, transport currently commanded to Follow waits where it was when fast travel begins.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "WagonAccess",
+      "Description": "Controls entrance-associated wagon access from interiors.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Min": 10,
+          "Max": 100,
+          "Value": 50,
+          "Name": "InteriorAccessDistance",
+          "Description": "Interior Wagon Access Distance. Sets how close your wagon must be parked to a building or dungeon entrance to access it from inside.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+        }
+      ],
+      "$version": "v1"
+    },
+    {
+      "Name": "Hotkeys",
+      "Description": "Optional keyboard shortcuts. Enter a Unity KeyCode name, or None to disable a shortcut.",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "Value": "K",
+          "Name": "QuickMountDismount",
+          "Description": "Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Enter a Unity KeyCode name such as K, F10, or Keypad5; use None to disable.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+        },
+        {
+          "Value": "G",
+          "Name": "SummonTransport",
+          "Description": "Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Enter a Unity KeyCode name such as G, F10, or Keypad5; use None to disable.",
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+        }
+      ],
+      "$version": "v1"
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+[
+  {
+    "name": "SCALE4f-lease-unread",
+    "file": "server-account/src/realm.js",
+    "old": "  if (!row || row.dead_at != null || row.lease == null) return none;",
+    "new": "  if (!row || row.dead_at != null) return none;",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a character not in play read as held - its level and arms signed for a tab that does not play it (INT9)"
+  },
+  {
+    "name": "SCALE4f-summary-unread",
+    "file": "server-account/src/realm.js",
+    "old": "  const lv = row.level_seen ?? summary?.level;",
+    "new": "  const lv = row.level_seen;",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a character before its first judged checkpoint signed no level"
+  },
+  {
+    "name": "SCALE4f-bounds-unread",
+    "file": "server-account/src/realm.js",
+    "old": "    cl: Number.isSafeInteger(lv) && lv >= 1 && lv <= REALM_LEVEL_CLAIM_MAX ? lv : null,",
+    "new": "    cl: Number.isSafeInteger(lv) ? lv : null,",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a level past the claim's bound signed"
+  },
+  {
+    "name": "SCALE4f-bow-unread",
+    "file": "server-account/src/realm.js",
+    "old": "  const arms = row.arms_top != null ? [row.arms_top, row.arms_bow === 1 ? 1 : 0] : null;",
+    "new": "  const arms = row.arms_top != null ? [row.arms_top, 0] : null;",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a bow's reach never signed"
+  },
+  {
+    "name": "SCALE4f-arms-law-unread",
+    "file": "server-account/src/realm.js",
+    "old": "    wa: armsIssuable(arms) ? /** @type {[number, 0|1]} */ (arms) : null,",
+    "new": "    wa: arms,",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "arms the claim's law refuses, signed"
+  },
+  {
+    "name": "SCALE4f-house-never",
+    "file": "server-account/src/realm.js",
+    "old": "    house: houseOn(row.record, row.person), // no line, no record: none (houseOn's own null)",
+    "new": "    house: null,",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "no house signed - LEGACY7's line gone from every token"
+  },
+  {
+    "name": "SCALE4f-stmt-wait-uncounted",
+    "file": "server-account/src/metrics.js",
+    "old": "          } finally {\n            tripDone(tally, Date.now() - started);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+    "new": "          } finally {\n            tripDone(tally, 0);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a statement's wait never counted - the primary's queue invisible again"
+  },
+  {
+    "name": "SCALE4f-batch-wait-uncounted",
+    "file": "server-account/src/metrics.js",
+    "old": "          } finally {\n            tripDone(tally, Date.now() - started);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+    "new": "          } finally {\n            tripDone(tally, 0);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a batch's wait never counted - every write path's SCALE4h (re-aimed by content): each answer's rows charged to its own statement's table."
+  },
+  {
+    "name": "SCALE4f-rows-unread",
+    "file": "server-account/src/metrics.js",
+    "old": "  add(tally, 'rr', m.rows_read);",
+    "new": "",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "the rows read never summed"
+  },
+  {
+    "name": "SCALE4f-replica-unread",
+    "file": "server-account/src/metrics.js",
+    "old": "  if (m.served_by_primary === false) add(tally, 'replica', 1);",
+    "new": "",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "whether a replica serves the mint (SCALE4d) unmeasured"
+  },
+  {
+    "name": "SCALE4f-batch-given-timed",
+    "file": "server-account/src/metrics.js",
+    "old": "            const rs = await batch.call(\n              target,\n              Array.isArray(list) ? list.map((st) => REAL.get(st) ?? st) : list,\n              ...rest,\n            );",
+    "new": "            const rs = await batch.call(target, list, ...rest);",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "D1's batch handed the timed statements - workerd's refuses what it did not make, and every write path fails"
+  },
+  {
+    "name": "SCALE4f-bind-untimed",
+    "file": "server-account/src/metrics.js",
+    "old": "      if (key === 'bind') return (/** @type {any[]} */ ...args) => timedStatement(v.apply(target, args), tally, sql);",
+    "new": "      if (key === 'bind') return v.bind(target);",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a bound statement untimed - almost every statement the service runs SCALE4h (re-aimed by content): the bound statement keeping its SQL."
+  },
+  {
+    "name": "SCALE4f-point-as-before",
+    "file": "server-account/src/metrics.js",
+    "old": "        tally.n,\n        tally.rw,\n        tally.ms,\n        tally.rr,\n        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements",
+    "new": "        tally.n, // SCALE4f: rows written, D1's wait, rows read, a replica's statements",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "the point as SCALE1 wrote it - nothing of D1's wait reaches the dataset SCALE4h (re-aimed by content): the hot rows' four after SCALE4f's."
+  },
+  {
+    "name": "SCALE4f-overload-unread",
+    "file": "server-account/src/index.js",
+    "old": "  if (!d1Overloaded(e)) return no('server', 500, origin);",
+    "new": "  return no('server', 500, origin);",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "an overload a fault like any other BUSY-GATE (PIN MOVED, re-aimed by content): `thrown` answers a fault 500 behind the overload's guard now - the mutant makes every throw that 500, the overload's included."
+  },
+  {
+    "name": "SCALE4f-every-fault-503",
+    "file": "server-account/src/index.js",
+    "old": "  if (!d1Overloaded(e)) return no('server', 500, origin);",
+    "new": "",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a bug counted as an overload BUSY-GATE (PIN MOVED, re-aimed by content): the guard taken away sends every throw down the overload's path - a 503 and the shed."
+  },
+  {
+    "name": "SCALE4f-four-asked-again",
+    "file": "server-account/src/index.js",
+    "old": "        const cl = facts.cl;\n",
+    "new": "        const cl = rc ? (await ctx.db.prepare('SELECT level_seen FROM realm_characters WHERE id = ? AND player = ?').bind(body.character, who.player.id).first())?.level_seen ?? facts.cl : null;\n",
+    "tests": [
+      "test/server/scale4f.test.js"
+    ],
+    "note": "a second read of the row - the fold undone by one"
+  }
+]

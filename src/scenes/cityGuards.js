@@ -1,0 +1,1975 @@
+// G1: city guards - the crime response (DFU PlayerEntity.
+// SpawnCityGuards / SpawnCityGuard, MIT Daggerfall Workshop), shared
+// by both exterior motor hosts. Guards are Knight_CityWatch class
+// foes (mobileType 146, texture 399, CLASS18.CFG career) built with
+// the C17 recipe and driven by the C11 stack (EnemyAI + EnemyAttack
+// + MobileUnit) against the host's collider.
+//
+// The verbatim spawn law:
+//  - never in dungeons; at most 5 active guards (maxActiveGuardSpawns);
+//  - IMMEDIATE (a witnessed crime): convert nearby pool NPCs within
+//    77.5 units - wandering GUARDS first (classic disables the source
+//    NPC), then non-guards BEHIND the player (angle >= 105.469 from
+//    the player's forward) at 1/4 each; if none converted, the foe
+//    spawner fallback: Random.Range(2,6) guards at 12.8..51.2 units;
+//  - NON-IMMEDIATE: an NPC within 77.5 facing the player (<= 95 deg)
+//    with line of sight SEES the crime; a seeing guard NPC converts
+//    on the spot; seen by civilians only -> guards arrive after a
+//    Random.Range(5,11)-second countdown (re-fired as immediate).
+//  - hostility: classic does nothing special - our guards acquire
+//    through the ordinary senses (they spawn close with LOS).
+//    AUDIT 24 (wave 41): the "HALT bark on the detection rising edge"
+//    this used to describe was an invention - DFU has no such edge.
+//    EnemySounds runs a 3-9 second ATTRACT cadence while the player is
+//    within 16m, and the watch is the one class enemy its human mute
+//    spares. Same clip, continuously, instead of once and never again.
+//
+// Enemy-vs-enemy is IN - the MT-ii wave paid the C15 residual this
+// header used to hold open. _armed wraps a host's senses with
+// runTargetMachine (characters/enemy/enemyTargets.js) whenever the host
+// hands over `candidates`, and MeleeDamage takes DFU's two-arm split
+// (EnemyAttack.cs:199-209): a selected non-player target eats a real
+// swing through applyDamageToNonPlayer (scenes/hostCombat.js). A host
+// that hands over no candidates - exterior.js's guard-only pool -
+// keeps the watch player-only because there is nothing else in the
+// pool to fight, which is that context's answer and not a missing
+// arm. (The
+// "guard archers forced melee" flag retired in AUDIT 18: DFU's
+// Knight_CityWatch has HasRangedAttack1 = false, so the watch never
+// had a bow to force away.) G3: corpse loot is
+// LIVE - killed guards (corpse flag, never walk-aways) are pickup
+// targets through the hosts' E ray on the dungeon's S2 shape.
+// G4: murder/assault are LIVE - killing the watch is Murder
+// (HandleAttackFromSource), striking a wandering civilian is
+// one-hit Murder + the response, striking a wandering guard NPC is
+// Assault + an on-the-spot conversion (WeaponManager verbatim).
+
+import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
+import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around
+import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
+import { lycanthropeAttackVoice, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V4: the beast's attack voice   // GUARD1: EnemyEntity.cs:188's FOURTH despawn term
+import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
+import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
+import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
+import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
+import { hasMagickaToCast } from '../characters/enemy/enemyCasting.js';   // AUDIT 24 (wave 35) / D9: GetDestination's magic term
+import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too   // ROAD-B: PlayerController.radius, for the indoor arm's door clearance
+import { findLowestOuterInteriorDoor } from '../player/enterExit.js';   // ROAD-B: DaggerfallInterior.FindLowestOuterInteriorDoor
+import { coverDistance } from '../ai/cover.js';   // TACT1: a witness does not see through a tree
+import { blowConnects, blowScaled } from '../ai/foeBlows.js';   // TACT4
+import { foeGlint } from '../ai/tactics.js';   // TELL2: a wind-up's glint (bible/12-Enhanced-AI/Feud-Arc.md section 4.2)
+import { SOUND } from '../systems/soundClips.js';
+import { hunterTaken, mirrorOnto } from '../systems/wild/villainHunt.js';   // PVP-GUARDS: a villain's hunters
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { copyEffectEntry } from '../systems/save/save.js';   // AUDIT 26 F217
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { MobileUnit } from '../characters/mobile/mobileUnit.js';
+import { EnemyAI, withinYaw, isBackFacing, foeFrameDt } from '../characters/enemy/enemyMotor.js';
+import { EnhancedEnemyAI } from '../ai/enhancedMotor.js';   // FIELD BUGS 2026-10-16b INDOOR-WATCH: the routes, where the host hands a mesh (`nav`)
+import { getPref } from '../systems/uiPrefs.js';   // INDOOR-WATCH: the Enhanced AI switch, as the dungeon's construction sites read it
+import { spaceFoes, DOORWAY_DEPTH } from '../characters/foeSpacing.js';   // FOE-SPACING: the watch keeps apart   // TACT3c: past the threshold
+import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, wireRecipient, bumpAtkCount, staticTeamOf } from '../characters/enemy/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
+import { applyDamageToNonPlayer, spawnEnemyLoot, windupDoor, tellCues, landBlowEffect } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer; TELL1: the poise door
+import { TELL } from '../ai/tells.js';   // TELL1: the breaking blow's shove
+import { stampWonWeapons } from '../systems/loot/lootRarity.js';   // SIGIL1: a body's weapons won online
+import { EnemyAttack } from '../characters/enemy/enemyAttack.js';
+import { makeEnemyEntity } from '../characters/enemy/enemyEntity.js';
+import { ClassFile } from '../formats/classFile.js';
+import { inflictPoison } from '../systems/poisons.js';
+import {
+  calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
+  dropWeaponIfTargetImmune,   // AUDIT 58: EnemyAttack.cs:191-194, the foe-vs-foe metal drop
+  enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies,
+  enemyLanguageSkill, calculateEnemyPacification,   // AUDIT 24 (wave 42)
+} from '../combat/formulas.js';
+import {
+  backstabChanceOf, tallySwingSkills,
+  zeroDamageHitSound,
+  enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
+  tickEnemySound, playEnemyClip, enemySoundOccluded,   // AUDIT 24 (wave 41); HALT-ONE: the one voice's call, dampened as an attract sound is
+  tryLanguagePacification,         // AUDIT 24 (wave 42)
+} from './hostCombat.js';   // AUDIT 18: the laws every host must share
+import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
+import { enemyControllerHeight, idleSpriteHeight } from '../characters/enemy/enemyAnchor.js';   // REVIEW 2026-09-05 (PR #55): the watch wore the player's capsule
+import { tallySkill, SKILLS } from '../systems/skills.js';
+import { WEAPON_REACH } from '../combat/playerWeapon.js';
+import { getBool } from '../systems/settings/settings.js';   // AUDIT DISC19: MeleeAttackFriendlyProtection, which the defenders' cross-pool sparing is
+import { rayPersonDistance } from './townTalk.js';
+import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, physicalCorpseSources, corpseEntryFor, corpseContents, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath, corpseEntityName } from './corpseMarker.js';
+import { rollCorpseKit } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door
+import { liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
+import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
+import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // the port's own name, the index law in one place (a LIVE one's fallback)
+import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { bloodHit, LETHAL_HIT } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
+import { EnemySoundSource, acuteHearingMultiplier, WatchVoice, ATTRACT_RADIUS, OCCLUDED_VOLUME_SCALE } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home; HALT-ONE: the watch's one voice
+import { placeFoeEnv, entityOccupancy } from './quest/questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // D9: PlayerEntity.cs:687 spawns through FoeSpawner like everything else
+import { SPAWNER_ARMS } from '../systems/encounters.js';   // the CreateFoeSpawner call-site table - cityGuards is one of its rows
+import { popAllowChange, POP_VISIBLE_RANGE } from '../systems/town/townPopulation.js';   // WATCH-LEAVES: a defender walking off goes only where a walker may
+import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, the one home the other placement hosts read
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
+import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
+import { registerFoeDoor } from '../systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: Namira's reflection on a watchman through his own door
+import { foeHitFlash, setBatchHitFlash, setBatchGlint, prefersReducedMotion } from '../systems/hitFlash.js';   // HITFLASH1; TELL2: a wind-up's glint
+import { reportPlayerKill, killFxOf } from '../systems/playerKills.js';
+import { createHostNpcBodies, npcBodiesOn, WATCH_BODY_TIERS } from '../characters/npcBodies.js';   // MWNPC6: the watch in Morrowind bodies
+import { isClassFoe, foeActor, foeFx } from '../characters/foeBodies.js';   // SET2: my own kills, told
+
+// PlayerEntity.Crimes (the two this module levies - the enum lives
+// whole in systems/court.js).
+const CRIME_ASSAULT = 4;
+const CRIME_MURDER = 5;
+
+export const GUARD_MOBILE_TYPE = KNIGHT_CITY_WATCH;   // AUDIT 24 (wave 41): one home
+export const MAX_ACTIVE_GUARD_SPAWNS = 5;
+/** WERE-FRIGHT: how long a watchman frightened off by a beast runs before he is gone (frighten, below) - long
+ *  enough to be seen running, some twenty-odd metres at the watch's pace. The port's own number. */
+export const FRIGHTENED_RUN_SECONDS = 5;
+/** WATCH-LEAVES (bible/01-Overview/bugs/Field-Bugs-2026-10-12e.md): one leg of a stood-down defender's walk off - aimed
+ *  away from where the player stands as it begins, and aimed afresh from where they stand at its end. The port's own
+ *  number: short enough that a player who moves is walked away from, not followed. */
+export const DEFENDER_LEAVE_LEG_SECONDS = 3;
+export const GUARD_NPC_SPAWN_RANGE = 77.5;
+export const GUARD_BEHIND_ANGLE = 105.469;     // convert non-guards this far behind the player
+export const GUARD_SEEN_ANGLE = 95;            // an NPC facing the player within this sees a crime
+/** The ring's band. ONE HOME is encounters.js's SPAWNER_ARMS.cityGuards
+ *  (the table of every CreateFoeSpawner call site); these two are kept
+ *  as the named pair the crime law reads and are asserted equal to it. */
+export const GUARD_FALLBACK_MIN_DIST = SPAWNER_ARMS.cityGuards.minDistance;   // 12.8
+export const GUARD_FALLBACK_MAX_DIST = SPAWNER_ARMS.cityGuards.maxDistance;   // 51.2
+/** DFU's spawner retries next frame forever; the port bounds it, the
+ *  same number world.js's LOOSE_FOE_PLACE_ATTEMPTS uses. */
+export const GUARD_PLACE_ATTEMPTS = 12;
+/** PlayerEntity.cs:634 - `lowestDoorPos += lowestDoorNormal *
+ *  (PlayerController.radius + 0.1f)`: the indoor arm stands its
+ *  watchmen one player-radius clear of the door plane, the same
+ *  clearance PositionPlayerToDungeonExit uses (enterExit's
+ *  DUNGEON_EXIT_OFFSET is the identical number from the identical
+ *  expression, for a different law). */
+export const GUARD_INDOOR_DOOR_OFFSET = CAPSULE_RADIUS + 0.1;   // 0.45
+
+export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random, say = null,
+  hitEffects = null, groundStands = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool; FALL-HOLD: exteriorFoes.js's ground law - the watch has no distance cull at all
+  levelBonus = null,   // SEAT1d (Seats-Arc 7.6): CURFEW - () => the levels a watchman is posted stronger (at night in a Curfew town)
+  guardScale = null,   // ZONE-WATCH: () => how many times as strong a watchman is posted (the open zone's towns: ten)
+  // MWNPC6: the watch's Morrowind bodies - whether the lane is wanted and how one is made; a test hands its own
+  wantNpcBodies = npcBodiesOn, makeNpcBodies = null,
+  shake = null,   // AUDIT TELL H6: the host's camera kick (its player's maxShake), for my blow that staggers a watchman
+  // GameObjectHelper.CreateEnemyCorpseMarker (:836-839) hands an
+  // OUTSIDE corpse to StreamingWorld.TrackLooseObject, which stamps it
+  // with the streamer's CURRENT map pixel (:462-476). exteriorFoes
+  // carries the same dep and the same default: a host with no streamed
+  // pixels never collects, which is a pixel that never leaves range.
+  currentPixelKey = () => null,
+  // ROAD-B B4: PlayerEnterExit's entry latches, for SpawnCityGuards'
+  // OUTER gate (IsPlayerInsideDungeon, PlayerEntity.cs:625) and its
+  // INDOOR arm (PlayerEntity.cs:628-641). Handed in raw -
+  // { isPlayerInsideDungeon, isPlayerInside, insideOpenShop,
+  // insideTavern, insideResidence } - so the conjunction stays in this
+  // file with the rest of the law. AUDIT 62 F13: no HOST in the tree
+  // is flagless any more - ?world and ?exterior both mount the mode
+  // machine, and the interior watch pool is mounted by the machine
+  // itself - so the null default now only covers a pool built with no
+  // mode machine at all (the test rigs), which is flags all false.
+  enterExitFlags = () => null,
+  // AUDIT 62 F22: EnemySenses.cs:267's PlayerEnterExit.IsPlayerInside,
+  // which picks the spawn/despawn band at :269-286 - true in a BUILDING
+  // interior (PlayerEnterExit.cs:111-113), not dungeons only. The mode
+  // machine mounts this pool inside a building (makeInteriorGuards) and
+  // the hard-coded `false` gave that watch the flat 102.4m exterior band
+  // with no Y test. The default keeps the two street pools as they were.
+  playerInside = false,
+  // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
+  // area, the encounter pool's dep to the line (exteriorFoes.js:"when it is false.").
+  // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
+  // enemy is struck by the player, and Knight_CityWatch is an
+  // EnemyClass - one of the two EntityTypes that walk (:250). This
+  // pool had no dep at all, so striking a PACIFIED watchman (the
+  // Etiquette/Streetwise stand-down, or a restored `hostile: false`)
+  // turned nobody, where C# walks the whole active database. A host
+  // that owns several pools hands in the union, because DFU's
+  // ActiveGameObjectDatabase is ONE database for the scene.
+  makeAreaHostile = null,
+  playerWeaponSheathed = () => false,   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
+  raidHere = () => false,   // RAID-GUARDS: is a raid on in the town the player stands in (raidingParties.js raidDefendingHere)
+  fightHere = () => false,   // PROTECT-FIGHT: is the player in a fight - over the street's pools (AUDIT FB1025i D3: encounters.js fightNear, AreEnemiesNearby or a peer's foe in the band)
+  // AUDIT 63 F42 (review round): exteriorFoes' dep to the line
+  // (exteriorFoes.js), for the same reason and at the same mount.
+  // ObstacleCheck's `GetComponent<DaggerfallActionDoor>()`
+  // (EnemyMotor.cs:1158-1171) is not dungeon-scoped, and
+  // DaggerfallInterior.AddActionDoors gives every building swing door
+  // that very component off the door prefab
+  // (Internal/DaggerfallInterior.cs:1277-1281) - so a watchman called
+  // into a shop meets action doors and must walk at them, not detour.
+  // The two STREET pools pass nothing and keep the `() => false`
+  // fallback, which is right for them.
+  isActionDoor = null,
+  // HALT-ONE (2026-10-05, Mac: "reduce the HALT noise"): the living watch's lane - () => true where the town is the
+  // living world's (scenes/world.js, scenes/worldModes.js: livingWorldOn). The watch then CALLS AS ONE
+  // (characters/enemy/enemySounds.js WatchVoice): one Halt as it first comes for the player, then at most one every
+  // HALT_GAP_S from the whole watch while it is after him; never a defender's, a pacified, running or walking-away
+  // watchman's, and nobody's while a window is over the world (`windowUp`). Off - the classic skin, the row off, the
+  // fixed-city page - EnemySounds.FixedUpdate per watchman, 1:1.
+  oneVoice = () => false,
+  windowUp = () => false,
+  // WATCH-LEAVES: () => the camera's yaw, for the walk-off's one law (popAllowChange: behind the player's view). A host
+  // that hands none (null) has its defenders go by the distance term alone - never in a view it cannot read.
+  viewYaw = () => null,
+  // FIELD BUGS 2026-10-16b INDOOR-WATCH (ENHANCED AI 5's interior half, scenes/interiorNav.js): the room's mesh -
+  // `{ chf, world, goal }`, the bake's thunk, the routes' world and the off-mesh goal - where the host has one (the mode machine's building);
+  // with the Enhanced AI switch on a watchman walks the routes (EnhancedEnemyAI), as a dungeon's foe does. The street's
+  // two pools hand none and keep the classic motor.
+  nav = null }) {
+  // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
+  // let a guard's poisoned hit anchor at minute 0, and the next world
+  // tick (absolute clock ~523,530) caught the whole course up at once.
+  if (typeof currentMinute !== 'function') throw new Error('createCityGuards needs currentMinute (the classic-minute clock)');
+  const guards = [];       // { mobile, ai, attack, entity, batch, tex, archive, dead, sounds }
+  const voice = new WatchVoice();   // HALT-ONE: the watch's one voice, in the living watch's lane
+  const corpseBatches = [];
+  // AUDIT-39r / THE FOUR HOSTS RULE: an IN-FLIGHT spawn's feet, the
+  // encounter pool's list to the line (exteriorFoes.js). spawnGuardAt
+  // crosses two real awaits (CLASS18.CFG on the first watchman of the
+  // session, then a cold texture archive) before its record joins
+  // `guards`, and offsetAll can only shift what the pool already
+  // holds - so a recenter inside that window left the new guard a map
+  // pixel (819.2) from the crime. `feet` is repointed at the AI's own
+  // array as soon as there is one, because EnemyAI COPIES the
+  // position it is handed.
+  const spawning = [];     // { feet, defender }
+  // WATCH-FIX: THE WALKERS A CONVERSION HAS CLAIMED and not yet disabled (turnNpc) - its own pool entry's person, held
+  // across the spawn's await so no other arm turns the same walker twice.
+  const claimed = new Set();
+  // WATCH-FIX: THE CRIME RESPONSE'S TURN. PlayerEntity.SpawnCityGuards, MakeNPCGuardsIntoEnemiesIfGuardsSpawned and the
+  // town watch's summons each read the cap (HowManyEnemiesOfType <= maxActiveGuardSpawns) and then stand their guards in
+  // one synchronous member; here every stand awaits, so two calls interleaved - the second read the cap before the
+  // first's guards had landed (two crimes in one swing's reach rang the watch twice over its cap). A call begins at once
+  // when none is running, as DFU's does; one made while another runs waits for it to finish, and does nothing if its
+  // world was swept while it waited (`inTurn`). `_turn` is the last call's settling; `_turnN` the calls begun or waiting.
+  let _turn = null;
+  let _turnN = 0;
+  let _summonsWaiting = 0;   // WATCH-FIX: summons waiting their turn - each a squad on its way (defenderCount)
+  // AUDIT-39r: THE SWEEP'S EPOCH - clearLive's other half. Emptying
+  // `guards`/`corpseBatches` cannot reach a spawn or a corpse mint
+  // still crossing its awaits; that work resolves after the sweep and
+  // pushes a departure-world record into the destination. DFU
+  // instantiates synchronously and has no such window. Everything
+  // that lands late compares its starting epoch against this.
+  let epoch = 0;
+  let _career = null;      // CLASS18.CFG, fetched once
+  let countdown = 0;       // guardsArriveCountdown (seconds)
+  // PlayerEntity.cs:741 - `guardsArriveCountdownLocation = dfLocation;`
+  // "Also track location so guards don't appear if player leaves during
+  // countdown". The host's streamed pixel IS the port's location handle
+  // (a location occupies one map pixel); a host that streams nothing
+  // answers null on both reads, which is one unchanging location.
+  let countdownLocation = null;
+  let _nextGuardId = 0;    // the corpse's stable loot key (droppedLoot's _nextId shape)
+  // The last camera-view predicate a host handed resolvePlayerHit.
+  // Both exterior hosts call resolvePlayerHit with a live
+  // makeInView() every swing and only then fall through to
+  // resolveCivilianHit, so the assault-carry swing has one to reuse -
+  // and DFU applies the camera test to that swing too.
+  let _lastInView = null;
+
+  async function ensureCareer() {
+    if (_career) return _career;
+    const cf = new ClassFile();
+    cf.load(await fetchBytes('CLASS18.CFG'));
+    _career = cf.career;
+    return _career;
+  }
+
+  const activeCount = () => guards.filter((g) => !g.dead).length;
+
+  /** WATCH-FIX: one call of the crime response at a time, in the order called (`_turn`, above) - `run(gen)` with the
+   *  epoch it was called in; never run once the world it was called for is swept. */
+  function inTurn(run) {
+    const gen = epoch;
+    const go = () => (gen === epoch ? run(gen) : undefined);
+    const done = () => { if (--_turnN === 0) _turn = null; };   // finished before its caller hears it: the next call, made then, begins at once
+    const start = ++_turnN === 1 ? new Promise((resolve) => resolve(go())) : /** @type {Promise<void>} */ (_turn).then(go);   // begun at once, a throw a rejection
+    const out = start.then((v) => { done(); return v; }, (e) => { done(); throw e; });
+    _turn = out.then(() => {}, () => {});
+    return out;
+  }
+
+  /** WATCH-FIX: THE CONVERSION - SpawnCityGuard(npc.position, npc.forward) then npc.SetActive(false) (PlayerEntity.cs
+   *  :663-666 and :776-779, WeaponManager.cs's guard arm), one law for every arm that turns a walker into a watchman. DFU's
+   *  two statements are one synchronous step; here the stand awaits (CLASS18.CFG, a cold archive), and another arm walking
+   *  the same street in that window - a second crime's, the minute's sweep, a swing, the town watch's summons - turned the
+   *  same walker again: two watchmen from one. So a walker is CLAIMED across the await, and one its host says is off the
+   *  street already (`live()` false: a pool read before another arm took it) is never turned. The guard stood MARKS whom
+   *  it stands for (`livingFrom` - the living world's resident, its identity as it was turned: scenes/livingWorld/livingWatch.js
+   *  follows it). Answers the guard, or null (refused, or the world it was posted to is gone - the walker then stays). */
+  async function turnNpc(p, attackerFeet, opts = undefined) {
+    const who = p.person ?? p;
+    if (claimed.has(who) || p.live?.() === false) return null;
+    claimed.add(who);
+    try {
+      const g = await spawnGuardAt(p.pos, p.fwdYaw, attackerFeet, opts);
+      if (!g) return null;
+      if (p.person?.living) g.livingFrom = p.person.living;
+      p.disable();   // "Classic disables the NPC that the guard is spawned from"
+      return g;
+    } finally {
+      claimed.delete(who);
+    }
+  }
+
+  /** SpawnCityGuard: the C17 class-foe recipe at a position/facing. */
+  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null, defender = false, threat = null, bearer = false, mirror = null } = {}) {   // PVP-GUARDS: `mirror` a villain's hunter (systems/wild/villainHunt.js)   // AUDIT ALL A6: a restore hands the saved level in as final; DISC19-F: a DEFENDER comes for the threat, as the player's ally
+    const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
+    const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]], defender: !!defender, bearer: !!bearer };   // AUDIT-39r: shifted by offsetAll until the record lands; AUDIT DISC19: a defender counts from its mint (defenderCount)
+    spawning.push(pending);
+    const gen = epoch;   // AUDIT-39r: the world this guard is being posted to
+    try {
+      const career = await ensureCareer();
+      const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, level ?? effectiveLevel(playerEntity) + (levelBonus?.() ?? 0), Math.random, { exactLevel: level != null });   // SEAT1d: a Curfew's night watch   // AUDIT ALL A6: a quickload re-rolled every standing watchman's Range(3,7) bonus - a free difficulty re-roll, and online the streamed `l` moved and every reader tore its puppet down
+      // RF2: SetEnemyCareer's whole loot chain, one seam
+      // (hostCombat.spawnEnemyLoot) - the table on the PLAYER's gender
+      // (AUDIT 18; Knight_CityWatch has NO LootTableKey in DFU, so the
+      // table roll is legitimately empty and the corpse's loot is the
+      // equipment), the kit put on, the trio off this host's stream,
+      // the port's roll (a guard is a class enemy - its entity level is
+      // its tier).
+      // ZONE-WATCH (2026-10-08, the owner: "Guards in the cities are 10x times as strong"): the zone's watch - its health
+      // and every blow it lands (formulas.js calculateAttackDamage's damageScale) ten times
+      if (mirror) mirrorOnto(entity, mirror);   // PVP-GUARDS: a hunter is the villain's mirror instead - never the zone's tenfold
+      else { const k = Number(guardScale?.() ?? 1); if (k > 1) { entity.maxHealth = Math.max(1, Math.round((entity.maxHealth || 1) * k)); entity.health = entity.maxHealth; entity.healthMult = (entity.healthMult ?? 1) * k; entity.damageScale = (Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1) * k; entity.zoneWatch = true; } }
+      spawnEnemyLoot(entity, GUARD_MOBILE_TYPE, basics, playerEntity, { rolls: rand });
+      const archive = basics.maleTexture;
+      const tex = await getTexture(archive);
+      // AUDIT-39r: a sweep crossed this spawn - the town it was posted
+      // to is gone, and pushing it now would land a departure-point
+      // watchman in the destination beside restoreWorld's copies.
+      // Nothing is allocated yet, so dropping the record is the whole
+      // cancel; both callers already read a missing guard as no spawn.
+      // (REVIEW 2026-09-05: the fetch moved above the AI so the capsule
+      // can read the idle sprite - SetupDemoEnemy.cs:103-115 sizes a
+      // watchman's controller like any other enemy's.)
+      if (gen !== epoch) return null;
+      const idleH = idleSpriteHeight(tex);
+      const ai = new (nav && getPref('enhancedAI') ? EnhancedEnemyAI : EnemyAI)(collider, pending.feet, yaw, {   // INDOOR-WATCH: the switch chooses the motor where the room has a mesh; the bake is read per step
+        nav: nav?.chf, navWorld: nav?.world, navGoal: nav?.goal, navSeed: Math.imul(_nextGuardId + 1, 0x9e3779b1) >>> 0,   // the dungeon's three (its seed off the spawn's yaw; the watch faces one way, so off his number), and the room's goal for a player off its mesh (AUDIT W1)
+        liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
+        seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
+        height: enemyControllerHeight(idleH, basics.behaviour ?? 'General'),   // REVIEW 2026-09-05: SetupDemoEnemy.cs:103-115
+        centreOffset: idleH / 2,
+        playerInside,   // AUDIT 23 (characters-7) / AUDIT 62 F22: EnemySenses.cs:267-269 - the mount's IsPlayerInside picks the band
+        isActionDoor,   // AUDIT 63 F42: ObstacleCheck's DaggerfallActionDoor arm (EnemyMotor.cs:1158-1171)
+        // wave 35: DoRangedAttack's band. Knight_CityWatch has
+        // HasRangedAttack1 = false and CastsMagic = false
+        // (EnemyBasics.cs:2197-2212), which is why attack.rangedAttack
+        // below is the literal `false` and not a computed value - so the
+        // stand-off can never engage for the watch. Passed rather than
+        // defaulted, beside the same literal, so the two stay together if
+        // the table ever changes.
+        hasBowAttack: false,
+        canCastRangedSpell: () => false,   // D9: no spell list and no EnemyCaster - CanCastRangedSpell's list half is empty
+        hasMagickaToCast: () => hasMagickaToCast(entity), vitals: () => entity,   // GetDestination's own term (:539-540) still asks the entity; TACT2: the brain reads his health
+      });
+      pending.feet = ai.feet;   // AUDIT-39r: the AI's copy is the live array from here
+      // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
+      // crime-responding guard pursues without having seen the player.
+      // DISC19-F: a DEFENDER is the player's ally instead - the allied
+      // summon's shape (both per-instance teams, exteriorFoes.js), so
+      // DFU's own target chain never picks the player - and it is sent
+      // at the THREAT with the same tripled give-up timer.
+      if (defender) {
+        entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly';
+        if (threat?.ai) ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);
+      } else ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
+      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => effectiveLevel(playerEntity), reflexes: playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
+      // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
+      // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
+      // HasRangedAttack1 = false / CastsMagic = false - so DFU's
+      // predicate is FALSE here and this literal IS the verbatim value,
+      // not an interim. (Checked in AUDIT 18: the routed claim that 146
+      // carries HasRangedAttack1 does not hold against the table.)
+      attack.rangedAttack = false;
+      const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
+      const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
+      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _swingSeq: 0, _mout: null, defender: !!defender, raidBearer: !!bearer, leaving: false, beset: false, hunter: !!mirror,   // AUDIT WORLD-EVENTS L4-6: a raid's Standard-Bearer (raidSitesHost.js) - none of the watch's comings and goings; DISC19-F; WATCH-LEAVES: a defender stood down, walking off (dismissDefenders) - and one set upon on his way (update)
+        // WATCH1: THE WATCH RIDES THE CELL'S STREAM. `seq` is this watchman's number on the wire, minted by the
+        // encounter pool's own counter the first time he rides a frame (one number space with the foes, so a
+        // peer's blow names one thing); `_atkA`/`_atkB` the attack count and its recipient in the pool's spelling
+        // (WORLD6b / AUDIT WORLD6b-iii(a) A3), latched at the strike edge below. Null and zero until he rides.
+        seq: null, _atkA: 0, _atkB: '',
+        sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand),
+        // MT-ii: THE CROSS-POOL DAMAGE DOOR. A striker resolves its
+        // melee frame inside its OWN pool's loop, so the target's pool
+        // has to expose its death chain on the record itself - the
+        // candidate IS the handle both pools already share. `fromPlayer
+        // = false`: a monster's blow is not the player's, so it levies
+        // no Murder (DaggerfallEntityBehaviour.cs:203).
+        hurtFromFoe: (dmg, dir, striker = null) => damageGuard(g, dmg, null, dir ?? null, { fromPlayer: false, striker }) };   // AUDIT 24 (wave 41); TELL1: and whose blow (its weight on a wind-up)
+      // A5: the CONCEALMENT closure the illusion gate has read since
+      // MT-i and nothing ever built (the encounter pool's law, one
+      // spelling). BlockedByIllusionEffect (EnemySenses.cs:658-683)
+      // reads the TARGET's IsInvisible/IsBlending/IsAShade whether
+      // that target is the player or another enemy, and
+      // ConcealmentEffect writes the flag entity-blind (:63) - so a
+      // concealed watchman is concealed from the foe fighting it.
+      Object.defineProperty(g, 'concealment', { value: () => concealmentFlags(g.entity), enumerable: false });
+      registerFoeDoor(entity, (n) => damageGuard(g, n, null, null, { fromPlayer: false }));   // AUDIT PSCALE1 DOORS-2: a reflected blow runs his death through his door - and, as before, levies no crime of mine
+      guards.push(g);
+      return g;   // AUDIT 26 F217: the restore overlays the record it minted - two interleaved async spawns make `guards[length-1]` a race
+    } finally {
+      // The hand-off is synchronous with `guards.push`, so there is no
+      // frame in which the spawn is in neither list.
+      const i = spawning.indexOf(pending);
+      if (i >= 0) spawning.splice(i, 1);
+    }
+  }
+
+  /** CreateFoeSpawner(true, Knight_CityWatch, Random.Range(2, 5+1), 12.8f, 51.2f) - PlayerEntity.cs:687. D9: the
+   *  SPAWNER is FoeSpawner, which places through PlaceFoeFreely (FoeSpawner.cs:130-200), the law every spawner call
+   *  site in the port goes through, so a watchman never stands in a wall, on another guard or on the player. This pool
+   *  holds all it needs: its collider, the player's feet and facing, and the live guards for the occupancy term.
+   *  lineOfSightCheck TRUE (SPAWNER_ARMS.cityGuards): the watch converges from OUTSIDE the field of view. */
+  function ringEnv(playerFeet, playerFwd) {
+    return placeFoeEnv({
+      collider,
+      playerFeet: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],   // the ray casts from the controller CENTRE
+      playerYawRad: Math.atan2(playerFwd?.[0] ?? 0, playerFwd?.[2] ?? 1),
+      fovDegrees: (fieldOfView() * 180) / Math.PI,   // fieldOfView() answers RADIANS
+      rolls: rand,
+      isOccupied: entityOccupancy((g) => g.ai?.feet, () => guards.filter((g) => !g.dead), playerFeet),
+    });
+  }
+  /** One spot on the ring, facing the player (FinalizeFoe's LookAt, FoeSpawner.cs:210-226 - the watch never flies), or
+   *  null. DFU's spawner tries again next frame; the port retries in place, world.js's loose-foe budget. */
+  function ringSpot(env, playerFeet) {
+    let spot = null;
+    for (let a = 0; a < GUARD_PLACE_ATTEMPTS && !spot; a++) spot = placeFoeFreely(env, SPAWNER_ARMS.cityGuards);
+    return spot ? { pos: [spot.x, spot.y, spot.z], yaw: Math.atan2(playerFeet[0] - spot.x, playerFeet[2] - spot.z) } : null;
+  }
+  /** PVP-GUARDS (scenes/pvpGuardsHost.js): one hunter on the watch's ring, the villain's `mirror` at its level -
+   *  hostile to the player, as a crime's watchman is. Resolves to the guard, or null (no spot, or the world moved on). */
+  async function huntGuard(playerFeet, playerFwd, mirror) {
+    const spot = ringSpot(ringEnv(playerFeet, playerFwd), playerFeet);
+    return spot ? spawnGuardAt(spot.pos, spot.yaw, playerFeet, { level: mirror.level, mirror }) : null;
+  }
+
+  /** The verbatim SpawnCityGuards law. pool = live persons as
+   *  [{ pos, fwdYaw, guard, disable() }] in the SAME frame as
+   *  playerFeet/playerFwd (the host converts).
+   *
+   *  ROAD-B: `interior` is the INDOOR arm's half of PlayerEnterExit
+   *  (PlayerEntity.cs:628-642) - `{ doors, origin, eligible }`, where
+   *  `eligible` is IsPlayerInside && (IsPlayerInsideOpenShop ||
+   *  IsPlayerInsideTavern || IsPlayerInsideResidence), all three
+   *  latched at the door as DFU latches them (PlayerActivate.cs
+   *  :1120-1122). Absent (an above-ground host) the arm is skipped
+   *  and the street law below runs, which is what being outside IS. */
+  function spawnCityGuards(immediate, o) {
+    return inTurn((gen) => spawnCityGuardsNow(immediate, o, gen));   // WATCH-FIX: the crime response's turn
+  }
+  async function spawnCityGuardsNow(immediate, { playerFeet, playerFwd, pool = [], interior = null }, gen) {
+    const _ee = enterExitFlags?.();
+    // PlayerEntity.cs:625, the FIRST of the two terms that enclose the
+    // WHOLE member: `if (!IsPlayerInsideDungeon && HowManyEnemiesOfType(
+    // Knight_CityWatch, false, true) <= maxActiveGuardSpawns)`. The
+    // indoor arm and both street arms live inside that one `if`, so
+    // underground SpawnCityGuards does nothing from any caller - the
+    // quest action `spawncityguards` included, which ticks in dungeon
+    // mode. Without it that call fell through to the street law with an
+    // empty pool and rang 2-5 watchmen onto the exterior collider at
+    // the player's dungeon-local feet.
+    if (_ee?.isPlayerInsideDungeon) return;
+    if (activeCount() > MAX_ACTIVE_GUARD_SPAWNS) return;
+    // PlayerEntity.cs:628-642, the FIRST thing inside the cap gate and
+    // ahead of both street arms: the watch does not come down the road
+    // when the crime happened in a shop, a tavern or someone's house -
+    // it comes through that building's own front door, 2-5 of them,
+    // all facing Vector3.forward. `immediate` is not read here at all:
+    // the indoor arm is the same either way, and the RETURN is
+    // unconditional - a building whose door query fails spawns
+    // nothing and still does NOT fall through to the street.
+    // ROAD-B (b2+b4 composed): PlayerEntity.cs:628-641's arm has two
+    // halves and each pool carries the one it can state exactly. A pool
+    // WITH interior-door reach (the mode machine's watch) spawns 2-5 at
+    // the lowest outer door; the STREET pool, told by enterExitFlags
+    // that the player is inside an open shop, tavern or residence,
+    // returns and spawns nobody - the C# return is unconditional, and
+    // the watch never comes through the wall.
+    if (!interior?.eligible && _ee && _ee.isPlayerInside
+        && (_ee.insideOpenShop || _ee.insideTavern || _ee.insideResidence)) {
+      return;
+    }
+    if (interior?.eligible) {
+      const door = findLowestOuterInteriorDoor(interior.doors, interior.origin);
+      if (door) {
+        const at = [
+          door.pos[0] + door.normal[0] * GUARD_INDOOR_DOOR_OFFSET,
+          door.pos[1] + door.normal[1] * GUARD_INDOOR_DOOR_OFFSET,
+          door.pos[2] + door.normal[2] * GUARD_INDOOR_DOOR_OFFSET,
+        ];
+        const guardCount = 2 + Math.floor(rand() * 4);   // Random.Range(2, 6), int-exclusive
+        for (let i = 0; i < guardCount; i++) {
+          // SpawnCityGuard(lowestDoorPos, Vector3.forward), +Z; TACT3c
+          // (always on): not all at that ONE point - a guard wall in the
+          // doorway - but each into the room on its own lane (below).
+          await spawnGuardAt(indoorWatchSpot(at, door.normal, i, collider), 0, playerFeet ?? null);
+          if (gen !== epoch) return;   // WATCH-FIX: the world this call was for is gone - nothing more of it stands
+        }
+      }
+      return;
+    }
+    if (immediate) {
+      let spawned = 0;
+      for (const p of pool) {
+        const d = [p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]];
+        if (Math.hypot(...d) > GUARD_NPC_SPAWN_RANGE) continue;
+        if (p.guard) {
+          if (await turnNpc(p, playerFeet ?? null)) spawned++;   // classic disables the NPC the guard spawns from - WATCH-FIX: one law (turnNpc)
+        } else if (angleDeg(d, playerFwd) >= GUARD_BEHIND_ANGLE && Math.floor(rand() * 4) === 0) {
+          await spawnGuardAt(p.pos, p.fwdYaw, playerFeet ?? null);
+          spawned++;
+        }
+        if (gen !== epoch) return;
+      }
+      if (spawned === 0) {
+        // CreateFoeSpawner(true, Knight_CityWatch, Random.Range(2, 5+1),
+        // 12.8f, 51.2f) - PlayerEntity.cs:687. D9: the SPAWNER is
+        // FoeSpawner, and FoeSpawner places through PlaceFoeFreely
+        // (FoeSpawner.cs:130-200), which is the same law every other
+        // spawner call site in the port already goes through. This
+        // arm used to roll a uniform bearing over the whole circle and
+        // a uniform distance in the band and take collider.heightAt
+        // with no clearance and no occupancy test - so a fallback
+        // watchman could stand inside a wall, on top of another guard,
+        // or on top of the player.
+        //
+        // Everything the law wants, this pool already holds: its own
+        // collider (it raycasts against it for the crime line), the
+        // player's feet and facing, and the live guard list for the
+        // occupancy term. The FOV is the settings read the other
+        // hosts use, not a host object - one import, same one home.
+        //
+        // lineOfSightCheck TRUE (SPAWNER_ARMS.cityGuards, from the
+        // table that names every DFU call site): the watch converges
+        // from OUTSIDE the field of view - you hear them before you
+        // see them - which is what the spawner's own flag means.
+        const count = 2 + Math.floor(rand() * 4);
+        const env = ringEnv(playerFeet, playerFwd);
+        for (let i = 0; i < count; i++) {
+          const spot = ringSpot(env, playerFeet);
+          if (!spot) continue;
+          await spawnGuardAt(spot.pos, spot.yaw, playerFeet ?? null);
+          if (gen !== epoch) return;
+        }
+      }
+      return;
+    }
+    // Non-immediate: witnesses. VERBATIM QUIRK (audit 2026-08-17c):
+    // DFU's `if (seenByGuard)` conversion sits INSIDE the pool loop
+    // but OUTSIDE the range/LOS gate - once ANY guard NPC has seen
+    // the crime, EVERY REMAINING pool NPC (in range or not, guard or
+    // not) converts into a spawned guard and is disabled. Preserved
+    // 1:1 (we had converted only the seeing guard).
+    let seen = false, seenByGuard = false;
+    for (const p of pool) {
+      const toPlayer = [playerFeet[0] - p.pos[0], playerFeet[1] - p.pos[1], playerFeet[2] - p.pos[2]];
+      const dist = Math.hypot(...toPlayer);
+      if (dist <= GUARD_NPC_SPAWN_RANGE) {
+        const fwd = [Math.sin(p.fwdYaw), 0, Math.cos(p.fwdYaw)];
+        if (angleDeg(toPlayer, fwd) <= GUARD_SEEN_ANGLE) {
+          // line of sight from the NPC's eye to the player's chest
+          const eye = [p.pos[0], p.pos[1] + 0.7, p.pos[2]];
+          const dir = [toPlayer[0] / (dist || 1), (toPlayer[1] + 0.6) / (dist || 1), toPlayer[2] / (dist || 1)];
+          // AUDIT 24 scenes: PlayerEntity.cs:722-728 puts only `seen`
+          // behind the ray actually reaching the player. `seenByGuard`
+          // sits inside `if (Physics.Raycast(...))` alone - ANY hit,
+          // wall or player - so a guard NPC in range and facing the
+          // crime raises the watch even from behind a market stall.
+          const hit = collider.raycast(eye, dir, dist);
+          const clear = (!Number.isFinite(hit) || hit >= dist - 1e-3) && !(coverDistance(collider, eye, dir, dist, true) < dist - 1e-3);   // TACT1: not through a tree or a stall's crates
+          if (clear) seen = true;
+          // ...and seenByGuard rides the RAYCAST ITSELF, not the clear
+          // line. DFU's `Physics.Raycast(ray, out hit, 77.5f)` is aimed
+          // at the player's eye from inside 77.5m, so it always hits
+          // SOMETHING - the player, or the wall between. The port's
+          // collider carries no player, so a clear line answers
+          // Infinity and a blocked one a finite distance: the two
+          // together are the same "hit something", which is why this
+          // is unconditional rather than a test that can only be true.
+          if (p.guard) seenByGuard = true;
+        }
+      }
+      if (seenByGuard) {
+        await turnNpc(p, playerFeet ?? null);   // WATCH-FIX: one law (turnNpc) - every one, guard or not, DFU's quirk
+        if (gen !== epoch) return;
+      }
+    }
+    // AUDIT 24 scenes: `Random.Range(5, 10 + 1)` is the INT overload -
+    // one of {5,6,7,8,9,10}, never 7.3 and never short of 10.
+    // PlayerEntity.cs:739-741: the location is stored WITH the
+    // countdown, and the arrival below is gated on it.
+    if (!seenByGuard && seen) { countdown = 5 + Math.floor(rand() * 6); countdownLocation = currentPixelKey(); }   // Random.Range(5, 11) seconds
+  }
+
+  /** GameManager.HowManyEnemiesOfType(Knight_CityWatch, ...) over THIS
+   *  pool (:740-762). `includingPacified` false is the default and is
+   *  two terms, not one: a watchman counts only while it is HOSTILE
+   *  and not on the player's team - so a guard talked down by a
+   *  Language skill, or one charmed onto the player's side, is not a
+   *  watchman standing in the street as far as any caller is
+   *  concerned. `stopLookingIfFound` is a short-circuit, not a
+   *  different answer, so the port takes a boolean when that is what
+   *  the caller wanted. */
+  const anyWatchStanding = () => guards.some(watchStands);
+  /** HALT-ONE: one watchman of the count above - the watch standing after the player, the one that calls (WatchVoice). */
+  function watchStands(g) {
+    return !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';   // DISC19-F: a defender is not the crime's watch (AUDIT DISC19: a half-reset one read as standing and turned every wandering guard); WERE-FRIGHT: nor a man running from a beast, struck or not
+  }
+
+  /**
+   * WERE-FRIGHT (2026-09-29, Mac: the beast "cannot surrender, but instead a chance to frighten"; frightened, the
+   * guards "flee, crime dropped"): THE WATCH FRIGHTENED OFF. scenes/arrestFlow.js rolls the beast's roar and, when it
+   * works, forgets the crime and calls this: every watchman of the crime runs from the player (EnemyAI.flee) for
+   * FRIGHTENED_RUN_SECONDS and is then the walk-away (update). The watch still on its way - the witnesses' 5-10 second
+   * countdown - is called off with it. A defender is not the crime's watch and holds his post. A fleer no longer
+   * counts as the watch standing, so the halt is asked afresh of the next watch that comes. Answers how many ran.
+   */
+  function frighten(playerFeet, seconds = FRIGHTENED_RUN_SECONDS) {
+    countdown = 0;
+    let ran = 0;
+    for (const g of guards) {
+      if (g.dead || g.defender || g.fleeing) continue;
+      g.ai.flee(playerFeet, seconds);
+      g.fleeing = true;
+      ran++;
+    }
+    return ran;
+  }
+
+  /** PlayerEntity.MakeNPCGuardsIntoEnemiesIfGuardsSpawned
+   *  (:764-789), verbatim: WHILE enemy watchmen are up, every
+   *  wandering guard NPC in the location's population becomes one too
+   *  - it is replaced by a real Knight_CityWatch at its own position
+   *  and facing, and the mobile it came from is disabled, exactly as
+   *  the witnessed-crime arm converts them.
+   *
+   *  There is NO range test and NO cap here (SpawnCityGuards' 77.5
+   *  units and its maxActiveGuardSpawns are that method's, not this
+   *  one's) and no `immediate` fork: once the watch is out, the whole
+   *  town's guard population is the watch. That is what makes running
+   *  from the guards in a city an escalating thing rather than a
+   *  fixed fight, and it is why walking past a fresh patrol while
+   *  wanted turns it hostile.
+   *
+   *  The gate is HowManyEnemiesOfType(Knight_CityWatch, true) > 0 -
+   *  pacified and allied watchmen excluded, per the note above - so
+   *  the conversion stops the moment the last hostile guard is dead,
+   *  arrested away or talked down.
+   *
+   *  @param pool live persons as [{ pos, fwdYaw, guard, disable() }],
+   *    the same shape the witness arm takes (the host converts). */
+  function makeNpcGuardsIntoEnemies({ pool = [], playerFeet = null } = {}) {
+    return inTurn(async (gen) => {   // WATCH-FIX: the crime response's turn
+      if (!anyWatchStanding()) return 0;
+      let made = 0;
+      for (const p of pool) {
+        if (!p.guard) continue;
+        if (await turnNpc(p, playerFeet ?? null)) made++;   // "Classic disables the NPC that the guard is spawned from" - WATCH-FIX: one law (turnNpc)
+        if (gen !== epoch) break;
+      }
+      return made;
+    });
+  }
+
+  function angleDeg(v, fwd) {
+    const l = Math.hypot(v[0], v[2]) || 1e-9;
+    const f = Math.hypot(fwd[0], fwd[2]) || 1e-9;
+    const cos = (v[0] * fwd[0] + v[2] * fwd[2]) / (l * f);
+    return Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
+  }
+
+  /** REP1: THE GUARD WHO SEES YOU. The witness arm's own eye (range GUARD_NPC_SPAWN_RANGE, facing within
+   *  GUARD_SEEN_ANGLE, the ray from the NPC's eye to the player's chest) asked of the town's GUARD NPCs alone, with the
+   *  line CLEAR - the watch stops a known criminal it can actually see, never through a wall. Answers the pool entry, or
+   *  null. The pool is the host's live persons in the player's frame (spawnCityGuards's own). */
+  function guardSeesPlayer({ playerFeet, pool = [] }) {
+    for (const p of pool) {
+      if (!p?.guard) continue;
+      const toPlayer = [playerFeet[0] - p.pos[0], playerFeet[1] - p.pos[1], playerFeet[2] - p.pos[2]];
+      const dist = Math.hypot(...toPlayer);
+      if (dist > GUARD_NPC_SPAWN_RANGE) continue;
+      if (angleDeg(toPlayer, [Math.sin(p.fwdYaw), 0, Math.cos(p.fwdYaw)]) > GUARD_SEEN_ANGLE) continue;
+      const eye = [p.pos[0], p.pos[1] + 0.7, p.pos[2]];
+      const dir = [toPlayer[0] / (dist || 1), (toPlayer[1] + 0.6) / (dist || 1), toPlayer[2] / (dist || 1)];
+      const hit = collider.raycast(eye, dir, dist);
+      if ((!Number.isFinite(hit) || hit >= dist - 1e-3) && !(coverDistance(collider, eye, dir, dist, true) < dist - 1e-3)) return p;   // TACT1: cover hides him
+    }
+    return null;
+  }
+
+  /** DISC19-F: THE WATCH DEFENDS THE TOWN (systems/town/townWatch.js
+   *  decides when; this is the arrival). The crime response's own two
+   *  arms, with the defenders minted as the player's allies and sent at
+   *  the threat nearest them:
+   *    - the wandering guards within GUARD_NPC_SPAWN_RANGE of the player
+   *      first, converted where they stand and the source NPC disabled
+   *      (the immediate arm's conversion, PlayerEntity.cs:659-671);
+   *    - else 2-5 at the spawner's band, out of the player's view
+   *      (CreateFoeSpawner's fallback, :687 - SPAWNER_ARMS.cityGuards).
+   *  Not the crime response's third place, the townsperson behind the
+   *  player (:675-680) - a defender is a guard who came, not one made
+   *  out of a passer-by. The cap is the watch's own
+   *  maxActiveGuardSpawns, shared with any watchman standing. Never
+   *  underground (:625's gate) and never while the player is inside a
+   *  building - the port's own rule: DFU's crime watch comes to the
+   *  building's door (:628-642), but a monster in the street is not a
+   *  crime indoors. Answers how many came. */
+  function summonDefenders(o = {}) {
+    // WATCH-FIX: the crime response's turn - it reads the same cap. AUDIT DISC19's law across the wait: the town watch
+    // decides on defenderCount, and a summons waiting behind a crime's stand is a squad on its way, as one still minting is
+    let waiting = true;
+    _summonsWaiting++;
+    const begun = () => { if (waiting) { waiting = false; _summonsWaiting--; } };
+    return inTurn((gen) => { begun(); return summonDefendersNow(o, gen); }).then((n) => { begun(); return n ?? 0; }, (e) => { begun(); throw e; });
+  }
+  async function summonDefendersNow({ playerFeet, playerFwd = [0, 0, 1], pool = [], threats = [] } = {}, gen = epoch) {
+    const _ee = enterExitFlags?.();
+    if (_ee?.isPlayerInsideDungeon || _ee?.isPlayerInside) return 0;
+    const live = threats.filter((t) => t?.ai?.feet && !t.dead);
+    if (!playerFeet || !live.length) return 0;
+    const room = () => MAX_ACTIVE_GUARD_SPAWNS - activeCount();
+    const nearestThreat = (at) => {
+      let best = null, bd = Infinity;
+      for (const t of live) { const d = Math.hypot(t.ai.feet[0] - at[0], t.ai.feet[2] - at[2]); if (d < bd) { bd = d; best = t; } }
+      return best;
+    };
+    let came = 0;
+    // WATCH-LEAVES: the watch still in the street comes first - a squad stood down and walking off turns back, each at
+    // the threat nearest him, before any walker is turned or anyone minted (they already count in the cap)
+    for (const g of guards) if (!g.dead && g.leaving) { recallDefender(g, nearestThreat(g.ai.feet)); came++; }
+    if (came > 0) return came;
+    for (const p of pool) {
+      if (!p.guard || room() <= 0) continue;
+      if (Math.hypot(p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]) > GUARD_NPC_SPAWN_RANGE) continue;
+      const g = await turnNpc(p, null, { defender: true, threat: nearestThreat(p.pos) });   // "Classic disables the NPC that the guard is spawned from" - WATCH-FIX: one law (turnNpc)
+      if (gen !== epoch) return came;
+      if (!g) continue;
+      came++;
+    }
+    if (came > 0) return came;
+    const count = Math.min(room(), 2 + Math.floor(rand() * 4));   // Random.Range(2, 6)
+    if (count <= 0) return 0;
+    const env = placeFoeEnv({
+      collider,
+      playerFeet: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],
+      playerYawRad: Math.atan2(playerFwd?.[0] ?? 0, playerFwd?.[2] ?? 1),
+      fovDegrees: (fieldOfView() * 180) / Math.PI,
+      rolls: rand,
+      isOccupied: entityOccupancy((g) => g.ai?.feet, () => guards.filter((g) => !g.dead), playerFeet),
+    });
+    for (let i = 0; i < count; i++) {
+      let spot = null;
+      for (let a = 0; a < GUARD_PLACE_ATTEMPTS && !spot; a++) spot = placeFoeFreely(env, SPAWNER_ARMS.cityGuards);
+      if (!spot) continue;
+      const threat = nearestThreat([spot.x, spot.y, spot.z]);
+      const yaw = threat ? Math.atan2(threat.ai.feet[0] - spot.x, threat.ai.feet[2] - spot.z) : 0;
+      if (await spawnGuardAt([spot.x, spot.y, spot.z], yaw, null, { defender: true, threat })) came++;
+      if (gen !== epoch) return came;
+    }
+    return came;
+  }
+  /** RAID1: ONE DEFENDER, where a raid stands it - World Events - Raiding
+   *  Parties' guard spawn (systems/raidingParties.js), one foe in flight
+   *  at a time on the mod's own spawner band, just outside the view
+   *  [IL_07f0]. The watchman is the watch's own, minted as
+   *  summonDefenders mints its fallback arm: the player's ally, sent at
+   *  the raider nearest the spot. The raid keeps its own cap and clock;
+   *  this is the placement and the mint, under summonDefenders' gate
+   *  (never underground, never with the player indoors). Resolves to the
+   *  guard, or null when no spot was found. */
+  async function standDefender({ playerFeet, playerFwd = [0, 0, 1], threats = [], minDistance, maxDistance } = {}) {
+    const where = enterExitFlags?.();
+    if (!playerFeet || where?.isPlayerInsideDungeon || where?.isPlayerInside) return null;
+    // WATCH-LEAVES: a defender stood down and walking off is the one the raid gets back, before one is minted
+    const back = guards.find((w) => !w.dead && w.leaving);
+    if (back) {
+      let near = null, bd = Infinity;
+      for (const t of threats) { if (!t?.ai?.feet || t.dead) continue; const d = Math.hypot(t.ai.feet[0] - back.ai.feet[0], t.ai.feet[2] - back.ai.feet[2]); if (d < bd) { bd = d; near = t; } }
+      recallDefender(back, near);
+      return back;
+    }
+    const placing = placeFoeEnv({
+      collider,
+      playerFeet: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],   // the controller's centre, as the fallback arm casts from
+      playerYawRad: Math.atan2(playerFwd?.[0] ?? 0, playerFwd?.[2] ?? 1),
+      fovDegrees: (fieldOfView() * 180) / Math.PI,
+      rolls: rand,
+      isOccupied: entityOccupancy((w) => w.ai?.feet, () => guards.filter((w) => !w.dead), playerFeet),
+    });
+    let spot = null;
+    for (let a = 0; a < GUARD_PLACE_ATTEMPTS && !spot; a++) spot = placeFoeFreely(placing, { minDistance, maxDistance, lineOfSightCheck: true });
+    if (!spot) return null;
+    let foe = null, best = Infinity;
+    for (const t of threats) {
+      if (!t?.ai?.feet || t.dead) continue;
+      const d = Math.hypot(t.ai.feet[0] - spot.x, t.ai.feet[2] - spot.z);
+      if (d < best) { best = d; foe = t; }
+    }
+    const face = foe ? foe.ai.feet : playerFeet;
+    return spawnGuardAt([spot.x, spot.y, spot.z], Math.atan2(face[0] - spot.x, face[2] - spot.z), null, { defender: true, threat: foe });
+  }
+  /** DISC19-F: the town is quiet, the player left it, or the switch went
+   *  off - the defenders stand down: no corpse and nothing to loot.
+   *  WATCH-LEAVES (Field-Bugs-2026-10-12e): and they WALK OFF. This took
+   *  them out of the world on the spot - the crime watch's despawn
+   *  (EnemyEntity.cs:184-191), which is DFU's for the crime's watch and
+   *  was never this squad's: the feature promises the watch "leaves once
+   *  it's safe", and the player saw guards vanish where they stood, in
+   *  plain view. Each one now drops his fight and walks away from the
+   *  player (update, below), and goes from the world only where DFU's
+   *  PopulationManager lets any walker go (popAllowChange: beyond
+   *  allowVisiblePopRange, or behind the player). Answers how many stood
+   *  down. */
+  function dismissDefenders() {
+    let n = 0;
+    for (const g of guards) {
+      if (g.dead || !g.defender || g.leaving || g.raidBearer) continue;   // AUDIT WORLD-EVENTS L4-6: the Standard-Bearer holds his post through a lull
+      g.leaving = true;
+      g.ai.target = null; g.ai.secondaryTarget = null;   // his fight is over - a target he holds from here was a monster's doing (update)
+      n++;
+    }
+    return n;
+  }
+  /** WATCH-LEAVES: a defender walking off turns back to the fight - at `threat` (the summons' nearest, or a raid's) -
+   *  and is the town's answer again (defenderCount). */
+  function recallDefender(g, threat = null) {
+    g.leaving = false;
+    g.ai.fleeLeft = 0;   // the walk over (revenantFate.js's spelling)
+    if (threat?.ai) g.ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);
+  }
+  /** AUDIT DISC19: the in-flight mints count - the town watch decides
+   *  on this number, and a summon still fetching its archive read as no
+   *  defenders at all: a cold load over the countdown summoned twice,
+   *  past the cap. */
+  const defenderCount = () => guards.filter((g) => !g.dead && g.defender && !g.leaving && !g.raidBearer).length + spawning.filter((p) => p.defender && !p.bearer).length + _summonsWaiting;   // AUDIT WORLD-EVENTS L4-6: never the Standard-Bearer (a raid's, not the watch's answer - his standing held off its summons and filled one of the raid's eight)   // WATCH-FIX: and the summons waiting their turn; WATCH-LEAVES: never one walking off - the town has stood him down, and the next summons calls him back
+  /** DISC19-F: a crime turns a defender into the ordinary watch on the
+   *  spot - its species' team back on both per-instance fields (the
+   *  allied copy would otherwise keep the player out of its target list,
+   *  EnemySenses.cs:776) and the crime watch's own pursuit seeded. */
+  function enlistDefender(g, playerFeet) {
+    if (g.raidBearer) return;   // AUDIT WORLD-EVENTS L4-6: the Standard-Bearer keeps the square whatever the player's crime - he holds it for the town
+    g.defender = false;
+    g.leaving = false; g.ai.fleeLeft = 0;   // WATCH-LEAVES: one walking off turns back for the criminal
+    g.entity.team = g.entity.mobileTeam = staticTeamOf(GUARD_MOBILE_TYPE);
+    g.ai.isHostile = true;
+    g.ai.makeHostileToPlayer(600, playerFeet ?? null);
+  }
+
+  /** AUDIT 24 (the seven-slice sweep): free a guard's LIVE billboard
+   *  batch the moment nothing will draw it again. `batches()` skips
+   *  every dead guard and a corpse draws from its own entry in
+   *  corpseBatches, so the live batch - a VAO and two GL buffers - was
+   *  simply abandoned, on both death paths, for every guard the watch
+   *  ever spawned. AUDIT 39: the RECORD goes too once nothing is left
+   *  on it - the prune at the end of update(). What made that
+   *  impossible was lootTargets keying corpses by their array INDEX;
+   *  the key is the guard's own `id` now, so a splice cannot hand the
+   *  player someone else's purse. */
+  function releaseGuardBatch(g) {
+    if (!g.batch) return;
+    renderer.destroyBillboardBatch(g.batch);
+    g.batch = null;
+  }
+
+  /** ROAD-G G1: DaggerfallEntityBehaviour.HandleAttackFromSource's
+   *  aggro block for an EnemyClass/EnemyMonster target
+   *  (DaggerfallEntityBehaviour.cs:250-261), lifted out of the damage
+   *  door exactly as the encounter pool lifts it (exteriorFoes.js's
+   *  handleAttackFromPlayer). Two statements and a third that is the
+   *  player arm's entity-side half:
+   *    - `if (!enemyMotor.IsHostile) GameManager.MakeEnemiesHostile()`
+   *      (:255-258) - the WHOLE active database, not this foe;
+   *    - `MakeEnemyHostileToAttacker(PlayerEntityBehaviour)` (:259) -
+   *      this foe's own target/give-up bookkeeping, seeded with where
+   *      the blow came from;
+   *    - the ally TEAM reset (:204-213), which lives on the entity.
+   *  The `!isHostile` read MUST precede the walk: the second call
+   *  raises this guard's own flag, so reading after it would make the
+   *  walk unreachable for the only case that needs it - a watchman
+   *  talked down by Etiquette/Streetwise, or one restored peaceful by
+   *  cityGuards' own `hostile: false` arm. DFU runs this for every
+   *  blow that CONNECTED, damage or none (WeaponManager.cs:615, :630),
+   *  and ALL THREE of this pool's arms reach the door: the melee swing
+   *  and the spell through `damageGuard`'s `fromPlayer` gate below, and
+   *  the player's ARROW through the hosts' `onAttackFromPlayer` seam,
+   *  which arrowFlight.js calls unconditionally (arrowFlight.js:"onAttackFromPlayer?.(foe, dmg)")
+   *  because `dealDamage` is inside its own `dmg > 0` fork - so the
+   *  door is PUBLIC (the returned surface below), exactly as the
+   *  encounter pool's is (exteriorFoes.js:"foes, spawnFoe, damageFoe"). */
+  function handleAttackFromPlayer(g, playerFeet = null) {
+    if (!g?.ai) return;
+    // DISC19-F (AUDIT DISC19): A BLOW ON A DEFENDER IS ASSAULT. The
+    // defender is the wandering guard NPC it was a moment ago (or its
+    // like), and a blow on that NPC is Assault (WeaponManager's
+    // mobile-NPC branch, resolveCivilianHit below) - so this one is too,
+    // and the whole squad is the crime's watch from this blow (both
+    // teams back, the pursuit seeded). Without it the ally team reset
+    // below touched `team` alone: the struck defender turned on the
+    // player for a second, then on the other defenders, and read as a
+    // standing watch with no crime - which turned every wandering guard
+    // in town. A crime already held is not lowered to this one.
+    if (g.defender) {
+      if (!playerEntity.crimeCommitted) setCrimeCommitted(playerEntity, CRIME_ASSAULT);   // V4: through the one setter (SuppressCrime)
+      for (const d of guards) if (!d.dead && d.defender) enlistDefender(d, playerFeet);
+    }
+    if (!g.ai.isHostile) makeAreaHostile?.();
+    g.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);
+    resetAllyTeamOnPlayerAttack(g.ai, g.entity, GUARD_MOBILE_TYPE);
+  }
+
+  /** AUDIT 26 F035 + MT-ii: `fromPlayer` is this door's provenance
+   *  flag, the hurtPlayer(bypassShield) idiom. DFU assigns the Murder
+   *  crime inside HandleAttackFromSource's `sourceEntityBehaviour ==
+   *  PlayerEntityBehaviour` gate (DaggerfallEntityBehaviour.cs:203,
+   *  :265-269), and EnemyMotor.ApplyFallDamage calls DecreaseHealth
+   *  and nothing else (:1398-1401) - so a watchman who dies falling
+   *  while chasing must not brand the player a murderer for a kill
+   *  they never made. Defaults TRUE: every player blow is unchanged.
+   *
+   *  TWO LANES FOUND THIS GATE INDEPENDENTLY, from opposite ends: the
+   *  audit from the fall, and MT from infighting, where the stakes
+   *  are higher still - the moment a spawned monster can kill a
+   *  watchman, an ungated crime FRAMES THE PLAYER for a murder they
+   *  did not commit, and the watch responds to that crime, so the
+   *  town turns on them for a rat's work. */
+  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false, kind = 'melee', weapon = null, round = false, striker = null, wc = null } = {}) {   // TELL8: `wc` a peer's blow's class   // TELL1: the blow's kind, the player's weapon, a spell's later round and the striking foe - its weight on a wind-up's poise
+    if (g.dead) return;   // AUDIT 68 S20-foe-dies-twice: a corpse takes no blow - a magic round after the killing one tallied a second Murder and minted a second body
+    damage = hunterTaken(g.entity, damage);   // PVP-GUARDS: a villain's hunter takes 5% of every hit, whoever strikes
+    if (fromPlayer && !peer && g.defender && raidHere()) return;   // RAID-GUARDS: whatever road a blow of the player's takes to the door, a raid's defender takes none of it - and no Assault comes of one
+    // AUDIT WATCH1 A4: a PEER's blow (WATCH1's net seam) is the encounter pool's peer law (AUDIT WORLD6b B2): no
+    // reveal of this player's and no kill notice of this player's - the striker's own rang at the striker.
+    if (damage > 0 && !peer) markConcealedHit(g, _ecvT);   // ECV1: a hit on an unseen watchman flashes him
+    // ROAD-G G1: HandleAttackFromSource's MOBILE-ENEMY AGGRO BLOCK
+    // (DaggerfallEntityBehaviour.cs:250-261), which this door carried
+    // none of while both encounter pools carried it whole. The order is
+    // C#'s: the `!IsHostile` read and the whole-area walk come FIRST
+    // (:255-258), because the second call flips this guard too, and
+    // both stand AHEAD of the Knight_CityWatch murder tally below
+    // (:265-269) - one member, three statements, in that sequence.
+    // Inside DFU's `source == Player` gate (:203), so a watchman killed
+    // by a rat or by a fall turns nothing, which is F035's law.
+    if (fromPlayer) handleAttackFromPlayer(g, playerFeet);
+    // AUDIT 58: THE SHIELD POOL, on the FOE door as well as the
+    // player's. DFU's hook is inside the ABSTRACT BASE's
+    // DecreaseHealth (DaggerfallEntity.cs:313-328 - "Allow an active
+    // shield effect to mitigate incoming damage from all sources"), so
+    // every entity absorbs alike; Shield's AllowedTargets is
+    // TargetFlags_All (Shield.cs:35), and the port's own applySpell
+    // really does push the pool onto a foe (systems/effects.js, kind
+    // 'shield'). Only the player's door consumed it, so a Shield cast
+    // on a foe was carried and never read. The pool is consulted at
+    // the SUBTRACTION only: DFU's knockback reads the RAW damage and
+    // runs BEFORE DecreaseHealth (WeaponManager.cs:576-596, :627), and
+    // HandleAttackFromSource runs after it unconditionally (:630), so
+    // a fully absorbed blow still knocks back and still turns the foe.
+    const healthDamage = bypassShield ? damage : damageShieldPool(g.entity, damage);
+    g.entity.health -= healthDamage;
+    if (g.entity.health <= 0) {
+      g.dead = true;
+      if (fromPlayer && !peer) reportPlayerKill(g.entity, { kind: 'melee', fx: killFxOf(g) });   // SET2: MY blow killed him (a set's "each kill"); STOREFRONT: where he falls
+      g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
+      releaseGuardBatch(g);
+      g.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';   // WATCH-FIX: whose hand - the player's own blow (DFU's `source == Player`, :203) is the living world's deed; any other its loss (scenes/livingWorld/livingWatch.js)
+      // EnemyDeath:131-136 - the clear gates on `senses.Target ==
+      // PlayerEntityBehaviour`, which MT-ii makes observable.
+      if (isPlayerTarget(g.ai?.target) && g.ai?.detected) setEnemyAlert(playerEntity, false);
+      if (!peer) sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice (AUDIT WATCH1 A4: the striker's alone)
+      // AUDIT WATCH1 A3: A BODY ANOTHER HAND FELLED CARRIES NOTHING. Killing the watch yourself is Murder, a
+      // Brotherhood tally and a legal-reputation cost; a peer's kill is none of those for the owner (the crime is
+      // whose it was), and had left five armed and armoured bodies in the street for the owner to strip for free -
+      // two clients could clear a town's watch at no cost to anyone. The walk-away precedent (G3: "walk-aways
+      // vanish with their items") is the same law: only a body the owner killed is the owner's to loot.
+      if (peer) g.entity.items = [];
+      // DISC19-F (AUDIT DISC19): ...and a DEFENDER a monster (or a fall)
+      // killed is the same law - the town sent him, not the player. His
+      // kit stayed on the body, and a monster the squad could not beat
+      // drew a fresh squad every countdown: seventy items off one
+      // centaur in two minutes, with no crime.
+      else if (g.defender && !fromPlayer) g.entity.items = [];
+      // UL1: OnEnemyDeath (:139). AUDIT VC6 (2026-09-18, chasing a test
+      // that failed one run in eight): the handlers ROLL - SURV2's puts
+      // the body's food on it - and this seam handed them neither a
+      // stream nor a luck, so the drop fell to Math.random and read the
+      // player's luck as 50 while `spawnEnemyLoot` three lines up was
+      // already taking this pool's own `rand`. One kill in eight grew
+      // two items nobody could predict, and the guard's rations ignored
+      // the luck DFU rolls them against. Every pool hands both now.
+      rollCorpseKit(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });   // KIT-ROLL: a watchman's kit on the plain ladder, before the sigils and the chime read the body (a peer's kill, or a DEFENDER's death by a monster or a fall, left it bare above - AUDIT 625 L7)
+      stampWonWeapons(g.entity.items, 1, { rolls: rand });   // SIGIL1: a body's Magic+ weapons won online may carry a sigil (the watch is never a party's fight)
+      raiseEnemyDeath(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });
+      // G4 (HandleAttackFromSource, verbatim): killing the city watch
+      // IS Murder, and CG2 landed the second half -
+      // DaggerfallEntityBehaviour.cs:267's
+      // TallyCrimeGuildRequirements(false, 1). A guard is worth ONE to
+      // the Dark Brotherhood where a civilian is worth five: the
+      // Brotherhood is unimpressed by killing the watch, which is
+      // usually self-defence. F035/MT-ii: and only when the PLAYER is
+      // the source - the whole block is inside DFU's player gate.
+      if (fromPlayer) {
+        setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
+        tallyCrimeGuildRequirements(playerEntity, false, 1);
+        // REP2: a watchman fell to the player in this chase - the one case the watch no longer takes a beaten
+        // criminal alive (court.js surrenderToCityGuards). Cleared with the crime (update, below).
+        playerEntity.watchSlain = true;
+      }
+      // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
+      // home (this was the second copy of exteriorFoes' mint, to the
+      // line). It gains FindGroundPosition (:817) - the watch walks, so
+      // the ground is usually its feet, but a guard killed on a stair
+      // or a rooftop no longer leaves its body on the slope - and
+      // BodyFall (:126-129), which no pool in the port ever played.
+      // TrackLooseObject runs INSIDE CreateEnemyCorpseMarker, so the
+      // pixel is read at the death, not when the texture lands.
+      const _corpsePixel = currentPixelKey();
+      const _corpseGen = epoch;   // AUDIT-39r: the world this body falls in
+      mintCorpseMarker({
+        renderer, getTexture, uploadRecordFrame, collider,
+        corpseTexture: ENEMY_BASICS[GUARD_MOBILE_TYPE].corpseTexture,
+        feet: g.ai.feet,
+        fallbackSize: billboardSize(g.tex, 0),
+        stillDead: () => g.dead,
+      }).then((c) => {
+        if (!c) return;
+        // AUDIT-39r: the sweep took this pool's world while the marker
+        // was still loading its art. `stillDead` cannot catch it - the
+        // guard stays dead - and the batch would be stamped with the
+        // departure pixel, already torn down, so collectPixel could
+        // never free it and batches() would draw it at the old
+        // position for the rest of the session.
+        if (_corpseGen !== epoch) { renderer.destroyBillboardBatch(c.batch); return; }
+        g.corpseMarker = c;
+        // TrackLooseObject's stamp: the streamer's pixel at the death.
+        c.pixelKey = g.corpsePixelKey = _corpsePixel;
+        corpseBatches.push(c);
+        playBodyFall(audio, c.pos);
+        playRareDrop(audio, c.pos, g.entity.items);   // LR3
+      }).catch(() => {});
+      return;
+    }
+    // C15 knockback: the watch is a CLASS enemy (Knight_CityWatch) and
+    // every class row leaves MobileEnemy.Weight at 0, so only the first
+    // arm of WeaponManager's gate can ever fire here - it re-knocks
+    // once the current shove decays under the threshold. Written
+    // through the shared gate anyway (AUDIT 24 wave 38): the pool
+    // should not be the place that remembers which arm applies to it.
+    const guardWeight = ENEMY_BASICS[GUARD_MOBILE_TYPE]?.weight ?? 0;
+    // TELL1 (bible/12-Enhanced-AI/Feud-Arc.md section 3): a watchman WINDING UP holds through the blow - no shove, no
+    // Hurt - and the blow weighs on his poise; past it the wind-up breaks and he is staggered, the breaking blow's shove
+    // half again as hard. Not winding up, this answers null and DFU's knockback stands (hostCombat.windupDoor's one law)
+    const _tell = (g.ai?._tac?.state !== 'windup' && g.ai?._tac?.state !== 'overreach') ? null : windupDoor(g, damage, {   // only a watchman winding up (TELL4: or overreached) builds the blow's bag
+      kind, weapon, round, peer, striker, from: striker?.ai?.feet ?? playerFeet, wc, fromPlayer,   // TELL8: a peer's blow's class; AUDIT TELL U6: whose blow
+      claws: fromPlayer && !peer && !weapon && !!playerEntity?.isInBeastForm,
+      weight: () => enemyWeightClassicUnits(true, 'male', guardWeight, g.entity?.items),
+    }, { audio, hitEffects, shake: fromPlayer && !peer && !striker ? shake : null });   // AUDIT TELL H6: the watch's stagger kicks my camera as every pool's does
+    if (_tell === 'hold') return;
+    if (knockDir && weaponKnockbackApplies(g.ai.knockbackSpeed, true, guardWeight)) {
+      // EW1: a guard is the one foe whose kit is never empty - the
+      // watch spawns armed and armoured, so this is the call site
+      // where the missing item term moved the answer most.
+      const w = enemyWeightClassicUnits(true, 'male', guardWeight, g.entity?.items);
+      g.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w) * (_tell === 'stagger' ? TELL.STAGGER_KNOCK : 1);
+      g.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
+    }
+  }
+
+  /** MT-ii: this guard's armed senses context - the twin of the
+   *  encounter pool's. Unarmed (no `candidates` in the context) it
+   *  hands the object straight back and the watch stays player-only,
+   *  which is what exterior.js's guard-only host wants anyway. */
+  function _armed(g, senses) {
+    if (!senses?.candidates) return senses;
+    return {
+      ...senses,
+      targeting: (ai, pf, cdt) => runTargetMachine(g, senses.candidates(), pf, cdt, {
+        playerEntity: senses.playerEntity ?? null,
+        playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
+      }),
+    };
+  }
+  const _targetFeet = (g, playerFeet) => {
+    const t = g.ai.target;
+    if (t == null) return g.ai._armedTargeting ? null : playerFeet;
+    return isPlayerTarget(t) ? playerFeet : t.ai.feet;
+  };
+
+  /** Per-frame drive; returns the live mobile batches (the host draws
+   *  them on the flats' axis with the corpses). */
+  let _ecvT = 0;   // ECV1: the watch's clock (seconds), for the shimmer and the hit reveal
+  /** BLOOD2c: how the bleeding ledger reads a watchman. */
+  const guardBleedView = (g) => ({ feet: g.ai?.feet, health: g.entity?.health, maxHealth: g.entity?.maxHealth, bloodIndex: ENEMY_BASICS[GUARD_MOBILE_TYPE]?.bloodIndex ?? 0, dead: !!g.dead, corpse: !!g.corpse });
+  function update(dt, playerFeet, eye, senses = {}) {
+    hitEffects?.bleed?.(dt, guards, guardBleedView);   // BLOOD2c: a wounded watchman drips, a killed one bleeds out (a walk-away has no body and leaves no pool)
+    _ecvT += dt;
+    const ecvOn = combatVisualsOn();   // ECV1: once per frame
+    // EnemyEntity.Update (:184-191): the city watch DESPAWNS when the
+    // active crime returns to None (court release, fast travel, the
+    // location-rect exit).
+    //
+    // GUARD1 (2026-09-15, relayed by Mac: "after a while of chasing me
+    // around the villages they disappeared. And then i was free to go
+    // on a killing spree"). THE FOURTH TERM WAS MISSING. DFU's
+    // condition is FOUR clauses, and this carried three:
+    //
+    //     entityType == EnemyClass && careerIndex == Knight_CityWatch
+    //       && CrimeCommitted == None
+    //       && !PlayerEffectManager.IsTransformedLycanthrope()
+    //
+    // That last clause is not decoration - it is the whole reason the
+    // watch can hunt a werewolf at all, because DFU ALSO ports
+    // LycanthropyEffect.SuppressCrime (:121-124), which this port
+    // carries too (court.js's one setter, systems/lycanthropy.js's
+    // racialSuppressCrime): while transformed, EVERY crime write
+    // resolves to Crimes.None. So the two laws compose into a trap.
+    // A transformed lycanthrope can never hold a crime, therefore the
+    // three-clause test is true on EVERY frame, therefore the entire
+    // watch was deleted the instant the player shapechanged - and
+    // never spawned again while the change lasted, since the pool the
+    // crime would have summoned is the one being emptied. A
+    // transformed player was simply immune to the city watch, free to
+    // murder a whole village unopposed. DFU's fourth clause is what
+    // holds the watch standing through exactly that window.
+    // MOD (player follow-up, online mode): once arrestFlow's guard-hit
+    // fix has taken effect the watch can no longer land a hit while
+    // the player waits out the surrender/court/prison sequence, but
+    // vanilla's own despawn law above only fires on the CRIME clearing
+    // (release, at the very end) - so online, other clients still saw
+    // a harmless but very present watch standing over an arrested
+    // player for the whole wait. `playerEntity.arrested` (arrestFlow's
+    // own flag, set the instant the surrender is accepted and cleared
+    // on every court exit) covers exactly that window, so the watch
+    // despawns for its length rather than only at the door. JAIL-HIT
+    // (2026-09-27): offline too - the watch keeps WINFOE1's clock under
+    // the court's windows, where DFU's pushed windows stop it, so it
+    // walks away for the trial in both modes (arrestFlow's inCourt).
+    // DISC19-F: a CRIME turns the town's defenders into that watch
+    // first - they are guards, and the law below is theirs from here on.
+    if (playerEntity.crimeCommitted) for (const g of guards) if (!g.dead && g.defender) enlistDefender(g, playerFeet);
+    if ((!playerEntity.crimeCommitted || playerEntity.arrested) && !isTransformedLycanthrope(playerEntity)) {
+      for (const g of guards) if (!g.dead && !g.defender && !g.hunter) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away; DISC19-F: a defender is not the crime's and leaves on the town watch's word; PVP-GUARDS: nor a villain's hunter (its host stands it down)
+    }
+    // AUDIT 17e F7 - PlayerEntity.cs:533-537 verbatim: the surrender
+    // dialogue flag resets once no city watch is alive. It only ever
+    // cleared inside the court flow, so a player who killed or
+    // outran the watch never saw the surrender box again - and that
+    // box is the ONLY call site of LowerRepForCrime.
+    //
+    // The count is HowManyEnemiesOfType(Knight_CityWatch, true) - the
+    // positional `true` is stopLookingIfFound, and `includingPacified`
+    // keeps its default FALSE (GameManager.cs:740/752), so a watchman
+    // talked down by Etiquette/Streetwise or charmed onto team
+    // PlayerAlly is NOT counted and the flag clears with him standing.
+    // That is `anyWatchStanding` above, this member's one spelling of
+    // the predicate; a bare liveness test held the flag raised through
+    // the rest of an active crime and swallowed the next surrender box.
+    if (playerEntity.haveShownSurrenderDialogue && !anyWatchStanding()) {
+      playerEntity.haveShownSurrenderDialogue = false;
+    }
+    // REP2: THE CHASE ENDS WITH THE CRIME. Whatever cleared it - a court's release, the town's edge, a fast travel, a
+    // load - the crime's one charge (arrestFlow.js chargeOnce) and a slain watchman's refusal (court.js) end with it.
+    if (!playerEntity.crimeCommitted) { playerEntity.chargedCrime = 0; playerEntity.watchSlain = false; }
+    if (countdown > 0) {
+      countdown -= dt;
+      // PlayerEntity.cs:355-359 verbatim: the arrival is gated on
+      // `guardsArriveCountdownLocation == CurrentPlayerLocationObject`.
+      // A player who left the location inside the 5-10 second window is
+      // not ambushed by a ring of watchmen in the wilderness - and the
+      // countdown is spent either way, exactly as DFU spends it.
+      if (countdown <= 0 && currentPixelKey() === countdownLocation) {
+        spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback
+      }
+    }
+    const one = !!oneVoice();   // HALT-ONE: the living watch's lane - the watch calls as one (after the walk, below)
+    const calling = [];
+    spaceFoes(guards, collider, foeFrameDt(dt));   // FOE-SPACING: two watchmen in one spot are pushed apart (characters/foeSpacing.js)
+    for (const g of guards) {
+      if (g.dead) continue;
+      // AUDIT 24 (wave 32): PARALYSIS. This pool passed the literal `false`
+      // for the motor's paralyzed argument and ran the attack machine
+      // unconditionally, so a paralysed watchman kept chasing and kept
+      // swinging. EnemyMotor.HandleParalysis (:247-260) drops CanAct, and
+      // EnemyAttack returns at the top of Update (:91-94) and FixedUpdate
+      // (:55-57) - a city guard is an ordinary EnemyClass entity with no
+      // exemption from either.
+      const _gParalyzed = entityIsParalyzed(g.entity);   // S22: the FreeAction read-time fold
+      // WATCH-LEAVES: A DEFENDER STOOD DOWN WALKS OFF (dismissDefenders). He goes from the world only where DFU's
+      // PopulationManager lets any walker go - beyond allowVisiblePopRange or behind the player (popAllowChange) - so
+      // nobody sees him vanish. Set upon on his way - a monster's blow (MakeEnemyHostileToAttacker) or its pick
+      // (EnemySenses' recruit, EnemySenses.cs:403-407) hands him a target, as the walk itself never does (EnemyAI.flee) -
+      // he stops and defends himself, still stood down: whether he is the town's answer again is the town watch's word
+      // (a monster on a defender is its threat, and its summons calls him back), never his. Else he walks on, a leg at a
+      // time, away from where the player stands.
+      g.beset = false;
+      if (g.leaving) {
+        const yaw = viewYaw?.();
+        const dx = g.ai.feet[0] - playerFeet[0], dz = g.ai.feet[2] - playerFeet[2];
+        const dist = Math.hypot(dx, g.ai.feet[1] - playerFeet[1], dz);
+        if (Number.isFinite(yaw) ? popAllowChange(dx, dz, yaw, dist) : dist > POP_VISIBLE_RANGE) { g.dead = true; releaseGuardBatch(g); continue; }   // no body - he walked away
+        const foe = g.ai.target;
+        g.beset = !!foe && !isPlayerTarget(foe) && !foe.dead;
+        if (g.beset) g.ai.fleeLeft = 0;   // he stands and fights
+        else if (!(g.ai.fleeLeft > 0)) g.ai.flee(playerFeet, DEFENDER_LEAVE_LEG_SECONDS);
+      }
+      applyEnemyMotorEffectFlags(g.ai, g.entity);   // A5: Levitate.SetEnemyMotor's IsLevitating, folded from the effect's presence
+      if (groundStands && !groundStands(g.ai.feet[0], g.ai.feet[2])) g.ai.holdFrame(); else g.ai.update(foeFrameDt(dt), playerFeet, _armed(g, senses), _gParalyzed);   // FALL-HOLD (exteriorFoes.js); FOE-CATCHUP: three steps a frame at most
+      // WERE-FRIGHT: a watchman frightened off (frighten, above) whose run is over is gone - the walk-away, no body,
+      // as the watch goes when a crime clears. While he runs he only runs: no target, so no swing (below), no bark
+      // (below), and - his run sensing nothing (EnemyAI.flee) - no alert and no tongue roll.
+      if (g.fleeing && !(g.ai.fleeLeft > 0)) { g.dead = true; releaseGuardBatch(g); continue; }
+      const _tgt = g.fleeing || (g.leaving && !g.beset) ? null : _targetFeet(g, playerFeet);   // MT-ii: whatever it SELECTED; WERE-FRIGHT: a fleer selects nothing; WATCH-LEAVES: nor one walking off (a blow the brain still held would land on the player) - one set upon fights his attacker
+      // AUDIT 24 (wave 36): EnemySenses.cs:531-535 - ANY enemy that is
+      // targeting and seeing the player raises the alert, as the last
+      // statement of FixedUpdate at method-body indent, not inside a
+      // conditional. The watch is an ordinary EnemyClass entity and
+      // MakeEnemyHostileToAttacker (PlayerEntity.cs:755) clears the one
+      // gate in GetTargets that would exclude it. This pool never
+      // touched the flag, while exteriorFoes has raised it since the
+      // X-slice - so the alert the watch should raise never armed the
+      // dungeon spawn roll, and one it inherited never cleared.
+      // MT-ii: and the source's `Target == PlayerEntityBehaviour` term
+      // with it (:531) - a watchman trading blows with a rat must not
+      // hold the player's alert state up.
+      if (isPlayerTarget(g.ai.target) && g.ai.inSight && g.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());   // WERE-FRIGHT: a fleer never raises it - its run sees and detects nothing (EnemyAI.flee)
+      // CH3 (characters-8): a past-threshold landing bills the fall
+      // formula through the pool's damage door. EnemyMotor.ApplyFallDamage
+      // (:173, :1384-1418) runs unconditionally for every enemy and the
+      // motor has always produced landedFall for guards too - the value
+      // was simply read by nobody, and discarded.
+      // AUDIT 62 F20: EnemyMotor.cs:1403-1406 splashes at bare
+      // `transform.position`, and a DFU enemy's transform is the
+      // idle sprite's CENTRE, not the capsule base - the prefab
+      // centres the controller on it (m_Center 0) and
+      // SetupDemoEnemy.cs:98-115 moves only controller.center
+      // (GameObjectHelper.cs:360 confirms: height * 0.52f). That is
+      // `centreOffset`, which _centre() answers. The FallDamage
+      // clip keeps the FEET: :1409 rings it at FindGroundPosition().
+      if (g.ai.landedFall > 0 && !g.dead) {
+        const gdmg = Math.trunc(FALL_HP_PER_METRE * (g.ai.landedFall - FALL_DAMAGE_THRESHOLD));
+        g.ai.landedFall = 0;
+        if (gdmg > 0) {
+          audio?.play3d?.(SOUND.FallDamage, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]], 1, { maxDistance: 16 });
+          // AUDIT 26 F040: EnemyMotor.cs:1403-1407 splashes on EVERY
+          // enemy fall past the threshold. This arm billed the damage
+          // and played the clip but never bled, where exteriorFoes has
+          // splashed since CH3.
+          // AUDIT 62 F20: the TRANSFORM (feet + centreOffset), per the note above.
+          hitEffects?.showBloodSplash(0, g.ai._centre(), null, bloodHit(gdmg, g.entity));   // BLOOD1b: a fall bleeds by what it cost
+          damageGuard(g, gdmg, null, null, { fromPlayer: false });   // F035: ApplyFallDamage carries no crime
+          if (g.dead) continue;
+        }
+      }
+      // AUDIT 24 (wave 42): the watch is a CLASS enemy, so its tongue
+      // is Etiquette (or Streetwise for the stealth careers) - which
+      // means a courteous player can stand a guard down on sight, and
+      // could not before because only the dungeon ran the roll.
+      tryLanguagePacification(g.ai, g.entity, GUARD_MOBILE_TYPE, playerEntity, {
+        sheathed: playerWeaponSheathed(),
+        enemyLanguageSkill, calculateEnemyPacification,
+        say: say ?? (() => {}),
+      });
+      // AUDIT 24 (wave 41): EnemySounds.FixedUpdate. This used to be a
+      // single HALT on the detection rising edge and nothing ever
+      // again - DFU has no detection-edge bark at all. It runs the
+      // 3-9 second attract cadence for as long as the watchman is
+      // within 16m, and the watch is the ONE class enemy the human
+      // mute spares (:222), which is why you hear it and not a
+      // brigand.
+      // HALT-ONE: in the living watch's lane a watchman standing after the player inside the attract radius is one of
+      // the watch's callers, his own clock left still; the call is the one voice's, after the walk. `quietVoice`: his
+      // wind-up and his stagger are a person's, never the Halt (hostCombat.js tellCues, windupFeedback).
+      g.quietVoice = one;
+      if (one) {
+        const d = playerFeet ? Math.hypot(playerFeet[0] - g.ai.feet[0], playerFeet[1] - g.ai.feet[1], playerFeet[2] - g.ai.feet[2]) : Infinity;
+        if (d < ATTRACT_RADIUS && watchStands(g)) calling.push({ g, dist: d });
+      } else {
+        tickEnemySound(g.sounds, g.ai.feet, g.fleeing ? null : playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });   // WERE-FRIGHT: a man running from a beast calls no halt - the attract bark asks no hostility, only the player inside 16 m, so a fleer is handed no player (the cadence steps as DFU's does with the player out of range)
+      }
+      g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
+      if (!_gParalyzed && _tgt) g.attack.update(foeFrameDt(dt), g.ai, _tgt);   // MT-ii: at the SELECTED target;/ AUDIT (pre-merge) P5: FOE-CATCHUP's step - the motor's clock, not the frame's (a 1 s hitch no longer swings at once)
+      const seq = g.attack.swingSeq;   // AUDIT 68 S04-strike-edge-cut: EnemyAttack's own start count, the foes' one edge law
+      const strikeEdge = seq !== g._swingSeq;
+      g._swingSeq = seq;
+      if (strikeEdge && g.ai._blowHold !== true) playEnemyClip(audio, g.sounds.attack(), g.ai.feet, acuteHearingMultiplier(playerEntity));   // AUDIT 24 (wave 41); CF1: acute hearing; TELL2: a telegraphed swing's start is its WIND cue (tellCues)
+      // WATCH1: the attack count on the wire, the ranged bit low (the watch never shoots - `rangedAttack = false`
+      // above, AUDIT 18), and whom the swing was at: '.' me, '' a foe of mine (a watchman brawling a rat, MT-ii). A
+      // peer is never a watchman's target (the hunt's candidates are this host's own, never the roster), so a puppet
+      // of him lands nothing at its reader (exteriorFoes' update, the puppet arm: `recipientIsMe(f, f._pupBlowAt)`)
+      // and only draws the swing. AUDIT WATCH1 A2: read off the TARGET (`g.ai.target`), through the one home - the
+      // first cut handed `_tgt`, which is the target's FEET, to isPlayerTarget, so the '.' arm was dead code.
+      if (strikeEdge) { g._atkA = bumpAtkCount(g._atkA, false); g._atkB = wireRecipient(g.ai.target); }
+      g._mout = g.mobile.update(dt, {
+        moving: g.ai.moving,
+        striking: strikeEdge,
+        hurting: g.ai.hurtKnock || g.ai.staggered,   // TELL1: a staggered watchman's Hurt held for his stagger
+        casting: false,
+        rangedStriking: false,
+        hold: g.ai._blowHold,   // TELL2: a telegraphed blow's swing, held at its raised arm until the landing
+      }, g.ai.yaw, g.ai.feet, eye);
+      tellCues(g, audio, acuteHearingMultiplier(playerEntity));   // TELL2: its wind, its release and its landing in the ear
+      // C16: the -1 damage marker resolves the melee vs the player
+      // EnemyAttack.Update returns at the top while paralysed (:91-94), so no
+      // damage frame resolves - the swing may still be drawn, nothing lands.
+      if (!_gParalyzed && g.mobile.doMeleeDamage && _tgt) {
+        g.mobile.doMeleeDamage = false;
+        // MT-ii: MeleeDamage's two-arm split (EnemyAttack.cs:199-209).
+        // The watch fighting a monster is the whole point of the
+        // CityWatch team; everything below is the player arm.
+        const _foeTarget = g.ai._armedTargeting && g.ai.target && !isPlayerTarget(g.ai.target)
+          ? g.ai.target : null;
+        if (_foeTarget) {
+          const fdx = _tgt[0] - g.ai.feet[0], fdz = _tgt[2] - g.ai.feet[2];
+          // EnemyAttack.cs:191-194 runs BEFORE the reach fork: a target
+          // that refuses this metal drops the weapon and the watchman
+          // swings hand-to-hand (dropWeaponIfTargetImmune), which is the
+          // only place MinMetalToHit is live - the player has none.
+          const fwpn = chooseEnemyWeapon(dropWeaponIfTargetImmune(g.entity.weapon, _foeTarget.entity), ENEMY_BASICS[GUARD_MOBILE_TYPE]);
+          const ffwd = [Math.sin(g.ai.yaw), 0, Math.cos(g.ai.yaw)];   // transform.forward (:208)
+          if (meleeHitConnects(g.ai._dist, g.ai.inSight, withinYaw(g.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG))) {
+            applyDamageToNonPlayer(g, _foeTarget, {
+              weapon: fwpn, direction: ffwd, rolls: Math.random,
+              calculateAttackDamage,
+              dealDamage: (t, d) => t.hurtFromFoe?.(d, ffwd, g),   // TELL1: the striker rides the blow (its weapon weighs it on a wind-up)
+              audio, hitEffects,
+              // AUDIT 58: FormulaHelper.cs:691-696 has NO player gate -
+              // the watch's poisoned blade doses the monster it strikes.
+              // Without the hook the formula still cleared the dose, so
+              // the blade was spent against the player too.
+              onInflictPoison: (att, tgt, pt) => inflictPoison(tgt, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+              say,   // C-slice: equipment breaks speak (ItemBreaks pops for any owner)
+            });
+          } else {
+            audio?.play3d?.(enemyMissSound(fwpn), [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
+          }
+          const gv = enemyAttackVoice(g);   // :216-226 fires whatever the target
+          if (gv && gv.clip >= 0) audio?.play3d?.(gv.clip, [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + gv.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
+          continue;
+        }
+        const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
+        const wpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
+        const gmid = [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]];
+        if (blowConnects(g.ai, meleeHitConnects(g.ai._dist, g.ai.inSight, withinYaw(g.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG)))) {   // TACT4: a telegraphed blow's shape decides
+          // AUDIT 2026-08-17c: every resolved enemy attack on the
+          // player tallies Dodging (EnemyAttack, before the damage
+          // branch) - it was never tallied anywhere.
+          tallySkill(playerEntity, SKILLS.Dodging, 1);
+          // AUDIT 18: the player is the Humanoid group
+          // (GetBonusOrPenaltyByEnemyType's PlayerEntity arm), and the
+          // InflictPoison seam the dungeon host already passes -
+          // guard weapon poison was ROLLED at spawn and could never
+          // be inflicted, because the exterior call dropped the hook.
+          const dmg = blowScaled(g.ai, calculateAttackDamage(g.entity, playerEntity, {   // TACT4: a telegraphed blow's weight
+            weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
+            onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+            say,   // C-slice: equipment breaks speak
+          }));
+          // AUDIT 24 (wave 39): EnemyAttack.cs:406 -
+          // `PlayerObject.SendMessage("RemoveHealth", damage)` - which
+          // is ShowPlayerDamage.Flash's trigger. An enemy's BLOW
+          // flashes the screen; the poison it carries does not.
+          const hp0 = playerEntity.health;   // AUDIT TELL L8: what the blow did is what reached health
+          if (dmg > 0) { onPlayerHurt?.(dmg, wpn, { guardLevel: g.entity.level }); flashPlayerDamage(dmg); }   // G2: the host's arrest interception rides this; WERE-FRIGHT: with the striker's level, for a beast's roar
+          // C2-slice (combat-9): a connected attack that LOST the
+          // roll rings the miss sound (ApplyDamageToPlayer's else)
+          else audio?.play3d?.(enemyMissSound(wpn), gmid, 1, { maxDistance: 16 });
+          landBlowEffect(g, hp0 - playerEntity.health, playerFeet);   // TELL6e: what a telegraphed blow's landing does (its word spent, landed or not); AUDIT TELL L8: after the court's word - a blow it took, or a shield, does nothing more
+        } else {
+          // C2-slice (combat-9): the out-of-reach whiff rings too
+          audio?.play3d?.(enemyMissSound(wpn), gmid, 1, { maxDistance: 16 });
+        }
+        // C2-slice (combat-17): the 20% attack voice - the watch is
+        // the Knight_CityWatch class, whose voice is FORCED male.
+        const v = enemyAttackVoice(g);
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
+      }
+    }
+    // FIELD BUGS 2026-10-06 (WATCH-SWING): THE DRAW READS THE FRAME'S
+    // END. It sat at the bottom of the drive above, and a watchman read
+    // alive at the top of his iteration could be dead by the bottom of
+    // it - killed by HIS OWN BLOW, through his own door. The blow's
+    // struck tail (calculateAttackDamage's: the Ring of Namira bouncing
+    // it back) and the host's hurt seam (the player's damage door:
+    // Spite of the Spurned, the loot's thorns) land through damageGuard,
+    // whose kill frees his live batch and nulls it, and the loop went on
+    // to dress it: "Cannot set properties of null (setting 'conceal')",
+    // the frame loop's CRASH. The same interleave kept a batch in the
+    // list that a later watchman's blow had freed (the Warden's Nova
+    // strikes every foe around the player), and the foe arm's
+    // `continue` skipped a striker's draw for the frame. So the list is
+    // built here, from every watchman still standing once all of them
+    // have acted - the encounter pool's order (exteriorFoes.js
+    // batches(), read after its update has driven every foe).
+    const out = [];
+    // MWNPC6 (bible/04-Characters/Morrowind-NPCs.md section 11): THE WATCH IN ITS BODIES - the encounter pool's law
+    // (section 10c) on its own lane and its own caps (WATCH_BODY_TIERS): every watchman offered dressed as his
+    // billboard, by his pool id (his wire number comes late); the dead from the kill until the corpse is collected;
+    // drawBodies syncs, marks the cast-only and draws
+    const npcLane = wantNpcBodies() ? (_npcLane ??= (makeNpcBodies ? makeNpcBodies() : createHostNpcBodies({ renderer, collider: () => collider, tiers: WATCH_BODY_TIERS }))) : null;
+    if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }
+    _npcStood.length = 0;
+    npcLane?.begin();
+    _npcOffered = !!npcLane;
+    for (const g of guards) {
+      if (g.dead) continue;   // WATCH-SWING: whatever the frame's doors did, after all of them
+      // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
+      // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
+      // true has its renderer disabled. The watchman keeps acting; it
+      // is simply not drawn. ECV1: on the enhanced skin with the
+      // switch on, drawn concealed instead (systems/combatVisuals.js).
+      const ecv = foeDraw(g, ecvOn, _ecvT);
+      if (ecv.kind === 'hidden') continue;
+      g.batch.conceal = ecv.kind === 'conceal' ? ecv.visual : null;
+      setBatchHitFlash(g.batch, foeHitFlash(g, performance.now() / 1000));   // HITFLASH1: a foe struck flashes red - any blow, mine, a peer's, or its owner's stream
+      setBatchGlint(g.batch, foeGlint(g.ai, undefined, prefersReducedMotion()));   // TELL2: a wind-up's glint on the body
+
+      const o = g._mout;
+      const rkey = `${o.record}#${o.frame}`;
+      if (!renderer.textures.has(`${g.archive}_${rkey}`)) uploadRecordFrame(g.archive, o.record, o.frame);
+      const sz = mobileBillboardSize(g.tex, o.record);   // AUDIT MM1: a mobile unit
+      g.batch.record = rkey;
+      g.batch.size = { w: o.flip ? -sz.w : sz.w, h: sz.h };
+      g.batch.origin = g.ai.feet;
+      g.batch.castOnly = false;   // MWNPC6: drawn until drawBodies says his body stands
+      if (npcLane && isClassFoe(g)) { npcLane.stand('watch', foeActor(g, g.id), g.batch.conceal ?? null, g.batch.hitFlash || 0, foeFx(g)); _npcStood.push(g); }
+      out.push(g.batch);
+    }
+    // AUDIT 39: THE PRUNE, on the encounter pool's schedule
+    // (exteriorFoes.js). A guard with no corpse left on it - the
+    // walk-away when the crime clears, and the killed body whose
+    // pixel collectPixel has taken - is DFU's
+    // `GameObject.Destroy(sender.gameObject)` (EnemyEntity.cs:184-191),
+    // and every per-frame walk over `guards` paid for it for the rest
+    // of the session. A KILLED body stays while its corpse does, which
+    // is what DFU keeps too (EnemyDeath disables, never destroys).
+    // HALT-ONE: the watch's one voice - over when no watchman stands after the player, so the next incident is met by
+    // its first call at once; the call at its caller's feet, dampened by a wall between as DFU's attract sound is
+    // (SetVolumeScale), linear to the attract radius (playEnemyClip), and never under a window.
+    if (one) {
+      if (!anyWatchStanding()) voice.end();
+      const c = voice.tick(dt, calling, { quiet: !!windowUp() });
+      if (c) playEnemyClip(audio, { clip: ENEMY_BASICS[GUARD_MOBILE_TYPE].barkSound, volume: enemySoundOccluded(collider, c.g.ai.feet, playerFeet) ? OCCLUDED_VOLUME_SCALE : 1 }, c.g.ai.feet, acuteHearingMultiplier(playerEntity));
+    }
+    for (let i = guards.length - 1; i >= 0; i--) if (guards[i].dead && !guards[i].corpse) guards.splice(i, 1);
+    // MWNPC6: the dead watch from the kill until the corpse is collected, the corpse flat casting alone under the body
+    for (const c of corpseBatches) c.batch.castOnly = false;
+    if (npcLane) for (const g of guards) if (g.dead && g.corpse && isClassFoe(g) && g.ai) { npcLane.stand('watch', foeActor(g, g.id), null, 0, foeFx(g, g.corpseMarker?.batch)); _npcStood.push(g); }
+    return [...out, ...corpseBatches.map((c) => c.batch)];
+  }
+
+  // MWNPC6: the watch's lane, the watchmen offered to it this frame, and whether update() offered since the last draw
+  let _npcLane = null;
+  const _npcStood = [];
+  let _npcOffered = false;
+  /** MWNPC6: the bodies update() offered this frame - the lane synced, each offered watchman's billboard (a corpse's
+   *  flat for the dead) cast-only where his body stands, the bodies drawn in one bind. A host calls it after update()
+   *  and BEFORE it draws the batches update() returned.
+   *  @param {any} canvas @param {Float32Array} proj @param {Float32Array} view @param {number[]} eye @param {number} dt */
+  function drawBodies(canvas, proj, view, eye, dt) {
+    const lane = _npcLane;
+    if (!lane || !_npcOffered) return;
+    _npcOffered = false;
+    lane.end(dt, eye);
+    for (const g of _npcStood) { const b = g.dead ? g.corpseMarker?.batch : g.batch; if (b) b.castOnly = lane.has('watch', g.id); }
+    renderer.beginCharacterSpriteBatch?.();
+    try { lane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }
+  }
+  /** MWNPC6: the concealed watchmen's bodies, translucent - after the host's opaque world. */
+  function drawVeiledBodies() { _npcLane?.drawVeiled(); }
+
+  /** RAID-GUARDS (2026-09-29, Mac: "Raids shouldnt let you damage the guards"): THE GUARDS THE PLAYER'S BLOWS PASS
+   *  BY. A defender - DISC19-F's watch fighting beside the player, a raid's own among them - under friendly
+   *  protection (FB0929), and while a raid is on in this town WHATEVER the setting. The swing and the riding charge
+   *  (world.js rrRiding) ask this one question, as the player's spells, shafts and torches have always passed a
+   *  defender by (AUDIT DISC19 W4); the damage door below holds the raid's half against any other road. The crime
+   *  watch is never spared. */
+  function playerSpares(g) {
+    return !!g?.defender && (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere());
+  }
+
+  /** RAID-GUARDS-NPC (FIELD BUGS 2026-09-29g, ! OG: "Hit a guard killed him in a raid ... Protect bystanders was on
+   *  tooo"): THE TOWN'S WANDERING GUARDS ARE THE RAID'S GUARDS TOO. RAID-GUARDS spared the watch the raid stands (its
+   *  defenders) and left the town's own walking guards - a MobilePersonNPC with `guard` - to DFU's mobile-NPC branch,
+   *  where one swing or a riding trample is Assault and turns him into a watchman on the spot; and ANY crime turns
+   *  every defender into the crime watch the next frame (update's enlist), which is how one stray swing in a raid
+   *  became a squad to kill and a Halt to pay. While a raid is on here the player's blows pass such a guard by, as
+   *  they pass a defender (Mac: "Raids shouldnt let you damage the guards") - and a townsperson too (Mac, on 29g's
+   *  first draft: "Spare townspeople in raid"): no Murder, the squad still the player's. No raid, DFU's rule.
+   *  PROTECT-FIGHT (FIELD BUGS 2026-09-30, "Protect bystanders needs to work again - lost rep for no reason"): AND UNDER
+   *  THE PROTECTION, IN A FIGHT. The setting the menu calls Protect Bystanders is DFU's MeleeAttackFriendlyProtection,
+   *  which spares a pacified foe and an ally and never a townsperson - so a swing at a foe just past the reach landed on
+   *  the townsperson on the look ray: Murder (-20 legal) or, a walking guard, Assault and the watch. While enemies are
+   *  near (`fightHere` - AUDIT FB1025i D3: encounters.js fightNear, the rest's own AreEnemiesNearby or a peer's foe in the
+   *  classic band of the player's feet) the protection passes the street's walkers by as a raid does - ROAD-SPARE: and
+   *  the road's travellers (scenes/livingWorld/roadStrike.js);
+   *  with none near, a blow at a townsperson is meant - a vampire's feeding, the Brotherhood's count - and DFU's rule
+   *  stands, as it does with the protection off. A declared departure (Port-Ledger A). */
+  /** AUDIT 29g: what resolveCivilianHit answers when the swing STOPPED on a spared body - not `false`, which the hosts
+   *  read as a swing that met nobody and hand to the door behind him (a bash, and in town a break-in). */
+  const SWING_SPARED = Object.freeze({ spared: true });
+  function playerSparesPerson(person) {
+    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));
+  }
+
+  /** The player's swing resolves against live guards (the dungeon's
+   *  resolvePlayerHit shape over playerWeapon.resolveHit). */
+  function resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound, { swing = null } = {}) {
+    if (inViewFn) _lastInView = inViewFn;   // the assault-carry swing below reaches here without one
+    const view = inViewFn ?? _lastInView;
+    // DISC19-F / FB0929: UNDER FRIENDLY PROTECTION A DEFENDER TAKES NONE
+    // OF THE SWING, whatever pass a host makes - as he takes none of the
+    // player's spells, shafts and torches (AUDIT DISC19 W4). The host
+    // resolves this pool BEFORE the monsters', so a defender in reach
+    // beside the centaur took the swing meant for it; the pass that then
+    // offered the defenders alone handed them to resolveHit's protected
+    // fallback, whose nearest-in-reach stand-in for DFU's look ray
+    // (WeaponManager.cs:1057-1064, Audit 28) put every swing that met no
+    // raider on a defender - and a blow on one is Assault (the door
+    // below), so a raid's squad arrested the player holding the town
+    // (Discord, 2026-09-29). DFU's ray would still strike an ally alone
+    // in front: Port-Ledger A. The protection is a setting (AUDIT
+    // DISC19): with it off DFU's box pass strikes an ally like anything
+    // else.
+    const live = guards.filter((g) => !g.dead && !playerSpares(g));   // RAID-GUARDS: protection, or a raid here
+    if (!live.length) return false;
+    const canSee = (g) => {
+      const c = [g.ai.feet[0], g.ai.feet[1] + (g.ai.height ?? 1.8) / 2, g.ai.feet[2]];   // REVIEW 2026-09-05: the watchman's own capsule centre
+      const dx = c[0] - eye[0], dy = c[1] - eye[1], dz = c[2] - eye[2];
+      const dist = Math.hypot(dx, dy, dz);
+      const l = dist || 1;
+      const hit = collider.raycast(eye, [dx / l, dy / l, dz / l], dist);
+      // WeaponManager.cs:951-955 applies `if (!IsPositionInCameraView
+      // (center)) canHit = false;` UNCONDITIONALLY, before the LOS
+      // test - so a missing projection cannot mean "accept". This
+      // default was ACCEPT, contradicting cameraView.js's own note.
+      return { dist, inView: view ? view(c) : false, losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
+    };
+    let any = false;
+    // C2-slice (combat-17): the player's 20% attack grunt, once per
+    // hit frame (melee-only path). AUDIT DISC19: once per SWING - the
+    // host offers one swing to up to three pools, and each rolled its
+    // own; `swing` is the host's token for the one swing.
+    if (!swing?.voiced) {
+      if (swing) swing.voiced = true;
+      const grunt = playerAttackGrunt(playerEntity, false, rand);   // ENGINE-PRNG RULE: the pool's seam - the bare default leaked Math.random into the parry pin (the recurring suite flake, root-caused)
+      if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
+      { const v = lycanthropeAttackVoice(playerEntity, rand); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
+    }
+    // AUDIT 18: the backstab argument was hard-zeroed, so guard combat
+    // had no backstab at all where the dungeon host computes facing
+    // per foe - and CalculateBackstabChance's Backstabbing tally
+    // (FormulaHelper.cs:975-990) ran nowhere in the port.
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rand,
+      (g) => backstabChanceOf(playerEntity, isBackFacing(g.ai.yaw, g.ai.feet, eye), g), say,
+      (g, pt) => inflictPoison(g.entity, pt, false, { currentMinute: Math.floor(currentMinute()) }))) {   // C2-slice (combat-11)
+      any = true;
+      if (damage > 0) {
+        onHitSound?.(foe);
+        // WeaponManager.cs:569-573, beside the hit sound (see the note
+        // in exteriorFoes: no raycast impact point here, so the body
+        // centre stands in - DFU's own no-raycast formula).
+        hitEffects?.showBloodSplash(ENEMY_BASICS[GUARD_MOBILE_TYPE]?.bloodIndex ?? 0,
+          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.strikingWeapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
+        // C2-slice (combat-17): the struck watchman cries out 40%
+        const pain = enemyPainVoice(foe, damage);
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
+        damageGuard(foe, damage, playerFeet, lookDir, { weapon: playerWeapon.strikingWeapon });   // TELL1: the blow's weapon weighs it on a wind-up's poise
+      } else {
+        // WeaponManager.cs:609-615: a connecting swing that dealt
+        // nothing still makes a noise. The exterior hosts played
+        // nothing at all.
+        const snd = zeroDamageHitSound({
+          weapon: playerWeapon.strikingWeapon, arrowHit: false,   // DISC10-E: :611's strikingWeapon - the hand's item, null for the beast's claws
+          parrySounds: !!ENEMY_BASICS[GUARD_MOBILE_TYPE]?.parrySounds, roll: rand(),
+        });
+        if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
+        else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
+        // AUDIT 58: ...and the swing still reaches the damage door.
+        // WeaponManager.cs:627/:630 - DecreaseHealth(damage) and
+        // HandleAttackFromSource - run AFTER the `damage > 0` fork
+        // closes (:615), so a connecting swing that lost the roll is
+        // not a nothing. The ray is NOT passed: WeaponManager's
+        // knockback (:575-582) is inside the damage arm, and
+        // weaponKnockbackSpeed(0, w) returns the 15/ratio floor.
+        // Knight_CityWatch is EnemyClass, so DaggerfallEntityBehaviour
+        // .cs:250-261's hostility pair covers it - ROAD-G G1 built that
+        // pair into damageGuard itself (handleAttackFromPlayer above),
+        // so this arm reaches it through the door like the damaging one
+        // does, which is exactly why DFU's :630 sits outside the
+        // `damage > 0` fork.
+        damageGuard(foe, 0, playerFeet, null);
+      }
+      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: GUARD_MOBILE_TYPE });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too
+    }
+    // WeaponManager.cs:419-436: a connecting swing tallies the weapon
+    // skill AND CriticalStrike.
+    //
+    // AUDIT 24 (wave 42): the FATIGUE drain that used to sit here was
+    // a SECOND one. DFU charges swingWeaponFatigueLoss exactly once
+    // per swing, at :420, inside WeaponManager's single
+    // `isDamageFinished` block - it is a property of swinging, not of
+    // what you swung at. Both exterior hosts already drain it in their
+    // melee arm before calling this, and the early `if (!live.length)
+    // return false` above meant the extra charge landed only while a
+    // guard was ALIVE: 22 fatigue a swing near the watch, 11
+    // everywhere else. The dungeon never had it, which is what the
+    // shape should have been all along.
+    if (any) tallySwingSkills(playerEntity, playerWeapon.weapon, playerWeapon.blowWeight);
+    return any;
+  }
+
+  // G4: the weapon strike against WANDERING townsfolk (WeaponManager's
+  // mobile-NPC branch, verbatim): a CIVILIAN dies to one hit - the
+  // motor disables, TallyCrimeGuildRequirements(false, 5) (CG2),
+  // Murder + SpawnCityGuards(true) through the host's onMurder; a
+  // wandering GUARD NPC converts on the spot - Assault - and the
+  // swing carries onto the fresh guard foe (DFU re-points the hit).
+  // Returns false (the swing met nobody: the hosts offer it to the doors),
+  // {spared: true} (a spared body stood first on the ray and the swing
+  // stopped on him - no door behind him is struck; AUDIT 29g),
+  // {crime:'murder'} or {crime:'assault', carriedHit}.
+  async function resolveCivilianHit(playerWeapon, eye, lookDir, playerFeet, pool, { onMurder = () => {}, onHitSound = null, inViewFn = null, swing = null } = {}) {
+    let best = null, bestD = Infinity;
+    for (const p of pool) {
+      const d = rayPersonDistance(eye, lookDir, p.pos);
+      if (d < bestD) { best = p; bestD = d; }
+    }
+    if (!best || bestD > WEAPON_REACH) return false;
+    const wall = collider.raycast(eye, lookDir, bestD);
+    if (Number.isFinite(wall) && wall < bestD - 1e-3) return false;   // occluded
+    // FB0929: a defender the swing spared (resolvePlayerHit) standing on
+    // the ray in front of the person is the body DFU's SphereCast meets
+    // first (WeaponManager.cs:1057-1064) - the swing stops on him.
+    if (guards.some((g) => !g.dead && g.defender && rayPersonDistance(eye, lookDir, g.ai.feet) < bestD)) return SWING_SPARED;
+    // RAID-GUARDS-NPC: a raid on here, the town's walkers are spared - guard or townsperson - and the first on the ray
+    // stops the swing as a spared defender does (no Assault, no Murder, no watchman minted, nobody behind struck)
+    if (playerSparesPerson(best)) return SWING_SPARED;
+    if (!best.guard) {
+      // WeaponManager.cs:504-508 - murdering a wandering civilian
+      // splashes record 0, NOT a BloodIndex: a MobilePersonNPC has no
+      // MobileEnemy to read one from. And this is the ONE port site
+      // that has DFU's actual impactPosition - the ray already found
+      // the person at bestD.
+      hitEffects?.showBloodSplash(0,
+        [eye[0] + lookDir[0] * bestD, eye[1] + lookDir[1] * bestD, eye[2] + lookDir[2] * bestD],
+        null, LETHAL_HIT);   // BLOOD1b: one hit kills a civilian, so the blow took ALL of them - the hundred rung, not an overkill
+      best.disable();   // one weapon hit kills a civilian (SetActive(false))
+      setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
+      // CG2: WeaponManager.cs:510's TallyCrimeGuildRequirements(false,
+      // 5) - the murdered civilian, worth FIVE to the Dark
+      // Brotherhood against a guard's one. Three such killings arm the
+      // invitation where it takes fifteen dead watchmen.
+      tallyCrimeGuildRequirements(playerEntity, false, 5);
+      onMurder();       // SpawnCityGuards(true)
+      // DISC10-D H1: `entityBehaviour.Entity.SetHealth(0)` then
+      // OnWeaponHitEntity (WeaponManager.cs:514-521) - the vampire feeds and
+      // the werewolf's KilledInnocent reads a dead CivilianNPC. The port's
+      // wandering townsperson carries no entity, so the one DFU zeroes is
+      // stood in by its only read field, the health, at 0.
+      playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });
+      return { crime: 'murder' };
+    }
+    setCrimeCommitted(playerEntity, CRIME_ASSAULT);   // V4: through the one setter (SuppressCrime)
+    await turnNpc(best, playerFeet ?? null);   // WATCH-FIX: one law (turnNpc) - claimed across the await, the guard marked with whom it stands for (LW-FIX2)
+    const carriedHit = resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn ?? _lastInView, onHitSound, { swing });   // AUDIT DISC19: the same swing, re-pointed - one grunt
+    return { crime: 'assault', carriedHit };
+  }
+
+  // G3: corpse loot on the dungeon's S2 pickup shape - killed guards
+  // with items are activation targets for the hosts' E ray; takeLoot
+  // transfers into the player entity (the corpse billboard stays, as
+  // dungeon corpses do; 'You take N items.' - TEXT.RSC pends with the
+  // dungeon's).
+  // AUDIT 24 (wave 38): the same seam as exteriorFoes now, in
+  // corpseMarker.js. Two corrections came with the fold: an EMPTY body
+  // is still a target (DFU tells you it has no treasure and only THEN
+  // disables the container, :942-947 - this skipped it silently), and
+  // a body holding nothing but arrows is collected whole (:948-952),
+  // which is the ordinary outcome of killing a guard with a bow.
+  /** WHICH GUARD IS A BODY, AND WHICH BODY - once, as the encounter
+   *  pool's (AUDIT-WH H3). The targets, the namer and the contents walk
+   *  this list under the same two rules; writing the bag out at each of
+   *  them is three chances for the plaque to disagree with the press. */
+  /** WHICH GUARD IS WHICH - alive or dead, one identity. AUDIT 39:
+   *  stable across the walk-away prune, where an index is not. */
+  const idOf = (g) => g.id;
+  const corpseLens = {
+    isCorpse: (g) => !!g.corpse && !!g.entity,
+    feetOf: (g) => g.corpseMarker?.pos ?? g.ai?.feet ?? null,
+    idOf,
+  };
+  function lootTargets() {
+    return corpseLootTargets(guards, 'guardCorpse', corpseLens);
+  }
+  /** WORLD-HOVER: as the encounter pool's - one namer beside the one
+   *  producer, so the watch's bodies and the encounter pool's can never
+   *  read differently. */
+  const hoverName = (key) => {
+    const e = corpseEntryFor(guards, key, 'guardCorpse', corpseLens);
+    return e ? { title: corpseName(corpseEntityName(e.mobileType)) } : null;   // .cs:526 - loot.entityName (GameObjectHelper.cs:701, L10N3e)
+  };
+  /** ...and what it holds (AUDIT-WH H3). `guardCorpse:` itemises, so
+   *  without this a dead guard read "Empty" over the sword and mail the
+   *  press would have shown you. The watch has no puppets - a peer's
+   *  guard is not a thing this pool stands - so there is no owner arm
+   *  here, unlike the encounter pool's. */
+  const hoverContents = (key) => corpseContents(corpseEntryFor(guards, key, 'guardCorpse', corpseLens));
+  /** WORLD-HOVER (AUDIT-WH H2): THE LIVE BODIES, as ray targets.
+   *
+   *  The mod names a living entity inside MobileNPCActivationDistance
+   *  (.cs:304-312) and the plaque had no sight of one at all: a foe
+   *  standing between the crosshair and a shopfront lost the plaque's
+   *  race outright and the door behind it drew its name. The press had
+   *  always raced them (`tryMobileEnemyActivate`, its own AABB sweep),
+   *  which is precisely the disagreement the slice exists to prevent.
+   *
+   *  Minted here rather than swept in the host, for the reason the
+   *  corpses are: the key vocabulary is the POOL's, so the namer below
+   *  can answer off the same list and cannot name a foe this pool did
+   *  not stand. The AABB is `pickFoeAlong`'s own (half 0.45, the ai's
+   *  height) so the two sweeps agree on what the ray strikes, and the
+   *  RAY's distance with the MOD's reach beside it is AUDIT 65 MC-2's
+   *  law - the band's 6.4 is a gate inside the handler, not a shorter
+   *  ray.
+   */
+  function liveTargets() {
+    return liveFoeTargets(guards, 'mobileGuard', { idOf });
+  }
+  /** ...and what a live one is called (.cs:308-311) - the encounter
+   *  pool's twin. A watchman standing his post is NOT hostile, so this
+   *  is the arm that actually speaks in a peaceful street; one who has
+   *  been raised on you says nothing, which is the mod's own silence. */
+  const liveHoverName = (key) => {
+    // AUDIT-WH C1: `liveFoeFor` refuses a non-string key itself - the
+    // host's namer ladder is handed EVERY key the ray can win, and the
+    // exterior door's is a bare NUMBER.
+    const g = liveFoeFor(guards, key, 'mobileGuard', { idOf });
+    if (!g) return null;
+    const t = mobileEntityName(liveEntityName(g, enemyDisplayName(g.mobileType)), { hostile: !!g.ai?.isHostile });   // HOVER-PLAIN: the one law at every live arm
+    return t ? { title: t } : null;
+  };
+  // MAC-E: and the general arm is the WINDOW now (PlayerActivate.cs:957),
+  // not a bulk transfer - `openWindow` is the host's own inventory door.
+  function takeLoot(key, say2 = () => {}, openWindow = null) {
+    const id = Number(key.split(':')[1]);
+    return openCorpseLoot(guards.find((g) => g.id === id), { playerEntity, say: say2, openWindow });
+  }
+
+  /** CollectLooseObjects (StreamingWorld.cs:1040-1052), the corpse
+   *  half - exteriorFoes' twin, and the same law droppedLoot.
+   *  collectPixel already carried for player-dropped piles: a tracked
+   *  loose object whose map pixel leaves the streamed range is
+   *  DESTROYED, and ClearStreamingWorld (:993, from InitWorld :584)
+   *  collects every one of them, which is what a teleport and a fast
+   *  travel do. Nothing removed a corpse batch before, so the watch's
+   *  dead grew a VAO and two GL buffers per kill for the session.
+   *
+   *  Clearing `corpse` is the whole destroy: batches() stops drawing
+   *  it, lootTargets stops probing it, and update()'s prune takes the
+   *  record itself on the next frame. */
+  function collectPixel(pixelKey) {
+    for (let i = corpseBatches.length - 1; i >= 0; i--) {
+      if (corpseBatches[i].pixelKey !== pixelKey) continue;
+      renderer.destroyBillboardBatch(corpseBatches[i].batch);
+      corpseBatches.splice(i, 1);
+    }
+    for (const g of guards) {
+      if (!g.corpse || g.corpsePixelKey !== pixelKey) continue;
+      g.corpse = false;
+      g.corpseMarker = null;
+    }
+  }
+
+  /** AUDIT 39: CleanupUntrackedObjects (StreamingWorld.cs:1624-1635),
+   *  which a teleport reaches too through ClearStreamingWorld ->
+   *  CollectLooseObjects(true) (:993-998) - loose enemies survive
+   *  neither a load nor a fast travel. collectPixel above frees only
+   *  CORPSES, so a quickload mid-pursuit re-minted the save's watch on
+   *  top of the live one and the player was hunted by two of it.
+   *  Emptying `guards` is safe HERE where a splice is not: the index
+   *  keys lootTargets hands out are read back the same frame, and
+   *  nothing survives the teleport to read a stale one. */
+  function clearLive() {
+    // AUDIT-39r: the epoch turns FIRST, so anything already in flight
+    // (a spawn between its two awaits, a corpse marker waiting on its
+    // texture) resolves into a world it can see it does not belong to.
+    epoch++;
+    for (const g of guards) releaseGuardBatch(g);
+    for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
+    corpseBatches.length = 0;
+    guards.length = 0;
+    _npcLane?.destroy(); _npcLane = null;   // MWNPC6: the bodies with them (an interior's watch is torn down here)
+  }
+
+  /** AUDIT 17e F23 / THE FOUR HOSTS RULE: the ?world host recenters
+   *  the floating origin by shifting the camera and player, but live
+   *  guards, their corpse billboards and the corpse loot AABBs are
+   *  world-space too - they were left 819.2 units behind on every
+   *  recenter (guards marching to where the player USED to be, corpses
+   *  un-lootable). The fixed exterior host never recenters, so this
+   *  only ever manifested in ?world. */
+  function offsetAll(offset) {
+    const [dx, dy, dz] = offset;
+    for (const g of guards) g.ai.offsetOrigin(offset);   // AUDIT 68 S20-offset-ai-memory: the pursuit memory and the fall anchor with the feet
+    // AUDIT-39r: the spawns still crossing their awaits move too - the
+    // encounter pool's law, and this pool is recentred from the same
+    // host frame (world.js's cityGuards/exteriorFoes offsetAll pair).
+    for (const s of spawning) { s.feet[0] += dx; s.feet[1] += dy; s.feet[2] += dz; }
+    // live guards rebuild their billboards every frame from ai.feet,
+    // so shifting the feet is enough for them; the persistent CORPSE
+    // batches bake their centers into a static buffer and must be
+    // rebuilt at the new origin.
+    for (const c of corpseBatches) {
+      c.pos[0] += dx; c.pos[1] += dy; c.pos[2] += dz;
+      renderer.destroyBillboardBatch(c.batch);
+      c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
+      c.batch.frame = 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too
+    }
+    _npcLane?.offsetAll(offset);   // MWNPC6: the bodies' feet with the origin
+  }
+
+  /** AUDIT LANDFORMS II G1: THE GROUND MOVED UNDER A PIXEL - a rebuild the reference never makes (the road network
+   *  landing, which the landforms cut metres into the land; a late World of Daggerfall pack; the gate's clearing) - and
+   *  a body lying in its box [x0, x1) x [z0, z1) rides it by `dy(x, z)` (world.js's publish): its marker, which is where
+   *  the body is drawn and searched (the lens's feetOf reads it). The living walk on whatever is there. */
+  function groundMoved(x0, z0, x1, z1, dy) {
+    for (const c of corpseBatches) {
+      if (!(c.pos[0] >= x0 && c.pos[0] < x1 && c.pos[2] >= z0 && c.pos[2] < z1)) continue;
+      const d = dy(c.pos[0], c.pos[2]);
+      if (!d) continue;
+      c.pos[1] += d;
+      renderer.destroyBillboardBatch(c.batch);
+      c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
+      c.batch.frame = 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too
+    }
+  }
+
+  /** AUDIT 26 F217: the watch's half of the SAVE ENVELOPE - the same
+   *  law as the encounter pool's (exteriorFoes.js snapshotWorld):
+   *  natives in, dead guards out. A quickload during a pursuit
+   *  despawned the whole watch - a free escape from any crime. */
+  function snapshotWorld(toNative) {
+    // DISC19-F: a DEFENDER is not saved - it is the town's answer to the
+    // monsters standing, and a load that restores those monsters raises
+    // the answer again through the town watch's own countdown.
+    // WERE-FRIGHT: nor is a watchman frightened off - he is leaving, and a load that raised him again would set him
+    // on a beast whose crime the fright forgot.
+    return guards.filter((g) => !g.dead && !g.defender && !g.fleeing).map((g) => {
+      const wc = toNative(g.ai.feet);
+      return {
+        nativeX: wc.x, nativeZ: wc.z, y: g.ai.feet[1], yaw: g.ai.yaw,
+        health: g.entity.health, maxHealth: g.entity.maxHealth, level: g.entity.level,   // AUDIT ALL A6: the level the bonus was rolled into
+        magicka: g.entity.magicka ?? 0, fatigue: g.entity.fatigue ?? 0,
+        items: (g.entity.items ?? []).map((it) => ({ ...it })),
+        activeEffects: (g.entity.activeEffects ?? []).map(copyEffectEntry),
+        hostile: g.ai.isHostile !== false,
+        ...(typeof g.livingFrom?.id === 'string' ? { living: g.livingFrom.id } : {}),   // WATCH-FIX: the resident he stands for, by id - a load finds him again (scenes/livingWorld/livingWatch.js)
+      };
+    });
+  }
+  function restoreWorld(saved, fromNative, yOffset = 0) {
+    for (const sg of saved ?? []) {
+      const [lx, lz] = fromNative(sg.nativeX, sg.nativeZ);
+      spawnGuardAt([lx, sg.y + yOffset, lz], sg.yaw ?? 0, null, { level: Number.isFinite(sg.level) ? sg.level : null }).then((g) => {
+        if (!g) return;
+        g.entity.maxHealth = sg.maxHealth ?? g.entity.maxHealth;
+        g.entity.health = Math.min(sg.health ?? g.entity.health, g.entity.maxHealth);
+        if (sg.magicka != null) g.entity.magicka = sg.magicka;
+        if (sg.fatigue != null) g.entity.fatigue = sg.fatigue;
+        if (sg.items) g.entity.items = sg.items.map((it) => ({ ...it }));
+        if (sg.activeEffects) g.entity.activeEffects = sg.activeEffects.map((a) => ({ ...a }));
+        // spawnGuardAt seeds the crime pursuit (makeHostileToPlayer);
+        // a restored PEACEFUL guard stands down.
+        if (sg.hostile === false) g.ai.isHostile = false;
+        if (typeof sg.living === 'string') g.livingFrom = { id: sg.living, res: null, town: null };   // WATCH-FIX: whom he stands for - the town and the resident found by the id (livingWatch.js)
+      }).catch((e) => console.error('[guards] restore failed:', e?.message ?? e));
+    }
+  }
+  /** ROAD-G G1: WabbajackEffect.cs:86 - `targetEntity.gameObject
+   *  .SetActive(false)`, the struck enemy taken off the scene with no
+   *  corpse, no loot and no death chain, so the transform's new career
+   *  can be CreateEnemy'd in its place (:87-88). This is the encounter
+   *  pool's `removeFoe` to the line (exteriorFoes.js's questPoolOps),
+   *  and the pair it belongs to is the HOST's: the new career is never
+   *  a Knight_CityWatch (WabbajackEffect's careerIDs are seventeen
+   *  monsters), so the re-stand goes through the host's own encounter
+   *  pool - the same parent transform, which is what "under the struck
+   *  enemy's parent" means here. Without this door the watch was the
+   *  one EnemyEntity in the port the Wabbajack could not touch. */
+  function removeGuard(g) {
+    if (!g || g.dead) return;
+    releaseGuardBatch(g);
+    g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
+  }
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, frighten, guardSeesPlayer, update, offsetAll, groundMoved, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, drawBodies, drawVeiledBodies, playerSpares, playerSparesPerson, activeCount, summonDefenders, standDefender, dismissDefenders, defenderCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(guards, key, 'guardCorpse', corpseLens)), physicalCorpses: () => physicalCorpseSources(guards, 'guardCorpse', corpseLens), snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,   // LOOT-STACK: a body as the loot window's tab; PI1: physicalCorpses, the bodies whose items stand round them (scenes/physicalItemsLayer.js)
+    /** RR2: PlayerEntity.SpawnCityGuard(position, direction) (PlayerEntity.cs:678-694) for a caller
+     *  outside the watch's own call - the ONE watchman minted where a walker stood, facing their
+     *  way, hostile to the player. Resolves to the guard record (or null when the world moved on). */
+    spawnCityGuard: (pos, yaw, attackerFeet = null) => spawnGuardAt([...pos], yaw, attackerFeet),
+    /** RAID5: a raid's Standard-Bearer - one of the watch, a DEFENDER (the player's ally, a raid's), minted where its
+     *  standard is held (scenes/raidSitesHost.js makes him hardy and keeps him at his post). */
+    standBearer: (pos, yaw = 0) => spawnGuardAt([...pos], yaw, null, { defender: true, bearer: true }),
+    huntGuard,
+    // M2 (spellcasting above ground): the player's spell damage rides
+    // THE SAME door the melee swing uses - corpse, Murder on the kill,
+    // hostility - so a fireball is not a free crime channel.
+    // AUDIT-39r: and the PLAYER's ARROW carries a direction. C15's
+    // knockback block is wholly gated on knockDir, so the spell-shaped
+    // null this door was written for meant a shaft could never shove a
+    // watchman - while the melee swing (lookDir), an ENEMY's arrow
+    // (hurtFromFoe) and the same shaft on an encounter foe all did.
+    // WeaponManager.cs:576-595 sets KnockbackDirection = direction
+    // inside `if (damage > 0)` for every EnemyClass hit, and
+    // DaggerfallMissile.cs:681-687 hands the arrow's forward in as that
+    // direction - Knight_CityWatch is EnemyClass, so the first arm
+    // fires. A caller with no direction (a spell) still passes none.
+    hurtGuard: (g, dmg, playerFeet, knockDir = null, opts = undefined) => damageGuard(g, dmg, playerFeet, knockDir, opts),   // AUDIT WORLD6b-iii(a) B2: and the provenance (a foe's blast on a guard is not my blow)
+    // ROAD-G G1 (review): the seam forwards the OPTIONS bag too, so the
+    // `fromPlayer` gate (F035's law, DaggerfallEntityBehaviour.cs:203)
+    // has a negative arm a test can drive. The real `fromPlayer: false`
+    // callers are three: the cross-pool `hurtFromFoe` minted at spawn
+    // (the record above) and the fall arm inside update(), which need
+    // ARENA2 to reach, and WATCH1's `watch.hurt` net seam (world.js's
+    // exteriorFoes.setNet), which hands `{ fromPlayer: false, peer: true }`
+    // through `hurtGuard` and is the one a test drives (test/characters/enemy/watch1.test.js).
+    _damage: (i, dmg, opts) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null, opts); },   // probe/test seam through the REAL death path
+    _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
+}
+
+/** TACT3c: how far into the room past the door's threshold the indoor watch stands, metres, and the gap between the
+ *  lanes of its fan (centre, right, left, two right, two left). */
+export const GUARD_INDOOR_INSET = DOORWAY_DEPTH + 0.6;
+export const GUARD_INDOOR_LANE = 0.9;
+/** TACT3c: the i-th watchman's spot - from the classic arrival point `at`, walked along the door's into-the-room
+ *  `normal` past the threshold and out to its lane, through `collider` so a wall or a drop stops it short (no
+ *  collider: straight there). */
+export function indoorWatchSpot(at, normal, i, collider = null) {
+  const nl = Math.hypot(normal[0], normal[2]) || 1;
+  const nx = normal[0] / nl, nz = normal[2] / nl;
+  const lane = i === 0 ? 0 : (i % 2 ? 1 : -1) * Math.ceil(i / 2) * GUARD_INDOOR_LANE;
+  const inset = GUARD_INDOOR_INSET - GUARD_INDOOR_DOOR_OFFSET;
+  const spot = [...at];
+  // AUDIT TACT C3: `at` is the door's CENTRE, a metre or more over the sill (a static door's quad middle) - down to the
+  // floor first, or the walk's step-down refuses both legs and every watchman stands at the one point after all
+  if (collider?.raycast) {
+    const down = collider.raycast([spot[0], spot[1] + 0.1, spot[2]], [0, -1, 0], 3.5);
+    if (Number.isFinite(down)) spot[1] = spot[1] + 0.1 - down;
+  }
+  const legs = [[nx * inset, nz * inset], [-nz * lane, nx * lane]];
+  for (const [dx, dz] of legs) {
+    if (!(Math.hypot(dx, dz) > 1e-6)) continue;
+    if (!collider?.move) { spot[0] += dx; spot[2] += dz; continue; }
+    const was = [...spot];
+    const r = collider.move(spot, dx, 0, dz, CAPSULE_HEIGHT, true);
+    if (r && r.grounded === false) { spot[0] = was[0]; spot[1] = was[1]; spot[2] = was[2]; }
+  }
+  return spot;
+}

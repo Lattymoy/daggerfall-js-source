@@ -1,0 +1,227 @@
+[
+  {
+    "name": "NOTICE1-1-dev-opens-to-everyone",
+    "file": "server-account/src/board.js",
+    "old": "  return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
+    "new": "  return s !== 'off';",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-2-a-muted-authors-notes-stay-up",
+    "file": "server-account/src/board.js",
+    "old": "      AND (COALESCE(p.muted_until, 0) <= ?2 OR ?3 = 1 OR n.author = ?4)",
+    "new": "      AND (COALESCE(p.muted_until, 0) <= ?2 OR ?3 = 1 OR n.author = ?4 OR 1 = 1)",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-3-reports-never-hide",
+    "file": "server-account/src/board.js",
+    "old": "      AND (n.hidden <> 1 OR ?3 = 1 OR n.author = ?4)",
+    "new": "      AND (n.hidden <> 9 OR ?3 = 1 OR n.author = ?4)",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-4-the-reporter-still-sees-it",
+    "file": "server-account/src/board.js",
+    "old": "WHERE r.note_id = n.id AND r.reporter = ?4)",
+    "new": "WHERE r.note_id = n.id AND r.reporter = ?4 AND 1 = 0)",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-5-a-fourth-live-note",
+    "file": "server-account/src/board.js",
+    "old": "WHERE (SELECT COUNT(*) FROM board_notes WHERE author = ? AND expires_at > ?) < ?`)",
+    "new": "WHERE (SELECT COUNT(*) FROM board_notes WHERE author = ? AND expires_at > ?) <= ?`)",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-6-a-guest-pins",
+    "file": "server-account/src/board.js",
+    "old": "  if (accountKind(player) !== 'linked') return { error: 'board-need-account' };\n  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n  if (isMuted(player, nowS)) return { error: 'muted' };",
+    "new": "  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n  if (isMuted(player, nowS)) return { error: 'muted' };",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-7-a-recruit-recruits",
+    "file": "server-account/src/board.js",
+    "old": "    if (!guildMay(a.me.rank, 'invite', a.powers)) return { error: 'guild-rank' };",
+    "new": "    if (false) return { error: 'guild-rank' };",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-8-a-gone-guilds-button-stays",
+    "file": "server-account/src/board.js",
+    "old": "    button: n.button === 'guild' && !guildOk ? null : (n.button ?? null),",
+    "new": "    button: n.button ?? null,",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-9-the-third-report-does-not-hide",
+    "file": "server-account/src/board.js",
+    "old": "AND p.created_at <= ?2 - ?4) >= ?3`)",
+    "new": "AND p.created_at <= ?2 - ?4) > ?3`)",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-10-a-restored-note-hides-again",
+    "file": "server-account/src/board.js",
+    "old": "  await db.prepare(`UPDATE board_notes SET hidden = 1 WHERE id = ?1 AND hidden = 0",
+    "new": "  await db.prepare(`UPDATE board_notes SET hidden = 1 WHERE id = ?1 AND hidden <> 1",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-11-ones-own-note-reported",
+    "file": "server-account/src/board.js",
+    "old": "  if (note.author === reader.id) return { error: 'own-note' };",
+    "new": "  if (false) return { error: 'own-note' };",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-12-anyone-takes-a-note-down",
+    "file": "server-account/src/board.js",
+    "old": "'DELETE FROM board_notes WHERE id = ? AND author = ?'",
+    "new": "'DELETE FROM board_notes WHERE id = ? AND author <> ?'",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-13-anyone-moderates",
+    "file": "server-account/src/board.js",
+    "old": "  if (!canModerate(mod, env)) return { error: 'not-moderator' };",
+    "new": "  if (false) return { error: 'not-moderator' };",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-14-anyone-posts-a-notice",
+    "file": "server-account/src/board.js",
+    "old": "export async function postNotice({ db, rand, nowS }, dev, env, { subject, body, days, rid } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
+    "new": "export async function postNotice({ db, rand, nowS }, dev, env, { subject, body, days, rid } = {}) {\n  if (false) return { error: 'not-developer' };",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-15-an-expired-row-kept",
+    "file": "server-account/src/board.js",
+    "old": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)'",
+    "new": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at < ? LIMIT ?)'",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-16-four-live-notes",
+    "file": "src/net/boardLaw.js",
+    "old": "export const NOTES_LIVE_MAX = 3;",
+    "new": "export const NOTES_LIVE_MAX = 4;",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-17-any-days",
+    "file": "src/net/boardLaw.js",
+    "old": "  if (!NOTE_DAYS.includes(/** @type {number} */ (days))) return { error: 'bad-note-days' };",
+    "new": "  if (false) return { error: 'bad-note-days' };",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-18-the-cache-a-moment-long",
+    "file": "src/net/noticeBook.js",
+    "old": "    boards.set(map, e);\n    if (!force && nowMs() - e.at < BOARD_CACHE_MS)",
+    "new": "    boards.set(map, e);\n    if (!force && nowMs() - e.at <= BOARD_CACHE_MS)",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-19-a-closed-board-still-shown",
+    "file": "src/net/noticeBook.js",
+    "old": "        e.board = null;\n      } // AUDIT 28 N11: not this account's now - DFU's box",
+    "new": "      } // AUDIT 28 N11: not this account's now - DFU's box",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-20-a-retry-a-new-note",
+    "file": "src/net/noticeBook.js",
+    "old": "      once(`pin:${map}`, note, (id) => door.pin({ map, ...note }, id), 'Your note is pinned up.', map),",
+    "new": "      once(`pin:${map}`, note, () => door.pin({ map, ...note }, rid()), 'Your note is pinned up.', map),",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-21-read-to-the-oldest",
+    "file": "src/net/noticeBook.js",
+    "old": "    const newest = Math.max(\n      0,",
+    "new": "    const newest = Math.min(\n      Infinity,",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-22-the-name-row-on-the-card",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "        rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === town.shown)),",
+    "new": "        rows.map((r) => r.text),",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-23-the-board-before-the-service-says",
+    "file": "src/scenes/world.js",
+    "old": "    if (noticeBook.open !== true) { noticeBook.read(town.mapId); return false; }",
+    "new": "    if (false) { noticeBook.read(town.mapId); return false; }",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-25-a-refusal-without-words",
+    "file": "src/net/accountClient.js",
+    "old": "  'notes-full': () => t('account.refusal.notesFull', 'You have {max} notes up already. Take one down first.', { max: NOTES_LIVE_MAX }),\n",
+    "new": "",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  },
+  {
+    "name": "NOTICE1-26-a-refusal-asked-every-frame",
+    "file": "src/net/noticeBook.js",
+    "old": "      e.at = nowMs(); // a refusal is an answer too: asked again after the minute, not on the next frame\n      return { board: e.board, error: e.error, stale: !!e.board };",
+    "new": "      return { board: e.board, error: e.error, stale: !!e.board };",
+    "tests": [
+      "test/net/notice1.test.js"
+    ]
+  }
+]

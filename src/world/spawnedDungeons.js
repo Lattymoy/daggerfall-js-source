@@ -1,0 +1,504 @@
+// SPAWNED DUNGEONS (Lost, 2026-09-19: "one dungeon per loaded chunk when wandering around with a chance of 30% per
+// chunk ... online mode only for now"). The pure law - the roll, the id and the clone. The host (scenes/world.js
+// buildPixelNow) owns the ground: it asks `spawnedDungeonAt`'s pieces here and stands the answer in `locationIndex`.
+//
+// THE ROLL is a hash of (WORLD_SALT, pixel), never a fresh Math.random: a pixel unloads and reloads as the player walks,
+// and a roll per LOAD would reroll it (a dungeon that vanishes when you look away). The salt is ONE constant for every
+// client, so every player rolls the same pixels, sees the same dungeons and enters the same room - and a pixel holds
+// at most one, however many players stand in it. No relay word is needed for any of that.
+//
+// THE ID keeps DFU's own law: MapId & 0xfffff IS the map pixel (systems/map/mapDirectory.js, systems/discovery.js key
+// on it), so the low 20 bits are this pixel's id and the high 12 are the salt - unique per (salt, pixel), an unsigned
+// 32-bit number the relay's room law admits (wire.js WORLD_ROOM, `dungeon:m<1-10 digits>`), and it cannot equal a real
+// location's id because a spawn only ever stands on a pixel that has no location. SPAWN-WORLD (2026-10-26): past the
+// Bay a pixel id names no one pixel, so a spawn there is named in the world's spawn lane (world/worldWide/worldLanes.js
+// SPAWN_WORLD_LANE over the pixel's world key) - never a Bay pixel id, unique per world pixel, as the zone halls are.
+
+import { mapPixelToLongitudeLatitude } from '../formats/mapsFile.js';
+import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is the clock's own, never a second 1440
+import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION, SCALED_OCEAN_ELEVATION, sampleKernel } from './terrain/terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side; SPAWN-SHORE: the ground a ruin is flattened to
+import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM, BEACH_JITTER } from './terrain/terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
+import { dataPoint, PATH_KEYS } from '../systems/travel/travelPaths.js';   // SPAWN-ROADS: the network's own byte per pixel
+import { hash32, BLOCK_M } from './blockHash.js';   // RUMARE-WATER: their home a leaf, the Imperial City's plan's and the workers'
+import { inBay } from './tamriel/tamrielFrame.js';   // SPAWN-WORLD: the Bay's pixel ids, and its network, are its own
+import { worldLaneMapId, SPAWN_WORLD_LANE } from './worldWide/worldLanes.js';   // SPAWN-WORLD: a spawn's id past the Bay
+import { inWorldGrid } from './worldWide/worldGrid.js';   // SPAWN-WORLD: a ledger row's pixel the world's
+import { arenaPathsAt } from './arenaRoads.js';   // SPAWN-WORLD: the roads past the Bay - TESA's layer (TESA4, TESA14)
+import { onGhostfence } from './tamriel/ghostfence.js';   // AUDIT RED-MOUNTAIN G1: no ruin on the Ghostfence's line
+import { redMountainLavaIn } from './tamriel/redMountain.js';   // LAVA-CLEAR: nor a ruin where Red Mountain's lava runs
+
+/** The chance a pixel holds a NORMAL spawned dungeon. */
+export const SPAWN_CHANCE = 0.30;
+
+// ---------------------------------------------------------------- ELITE DUNGEONS
+//
+// A spawned dungeon may be ELITE: the same template, the same look, but three foes stand at
+// every enemy marker and each foe has double health and deals double damage. Elite and normal
+// share ONE hash lane and split it: [0, SPAWN_CHANCE) is a normal dungeon, the next ELITE_CHANCE
+// is an elite one, the rest is empty land. So the bands are exactly 30% and 10%, a pixel never
+// holds both, every client agrees which spawns are elite, and a reload never flips one.
+// SPAWN-THIN then keeps three quarters of whichever band a pixel fell in (SPAWN_KEEP), on a second
+// lane, so the world is a quarter thinner and a survivor's kind does not change.
+
+/** The chance a pixel holds an ELITE spawned dungeon (on top of SPAWN_CHANCE, never the same pixel). */
+export const ELITE_CHANCE = 0.10;
+/** Either kind: the chance a pixel's roll falls in a spawn band. SPAWN-THIN (below) then keeps three quarters of those. */
+export const ANY_SPAWN_CHANCE = SPAWN_CHANCE + ELITE_CHANCE;
+/** SPAWN-THIN (2026-10-19, the owner: "Reduce the density of spawning dungeons by 25%"): a second roll, on its own
+ *  hash lane, keeps this share of the pixels the band already chose. The band is not narrowed, so a dungeon that
+ *  remains is the same kind on the same pixel - a normal stays normal, an elite stays elite - and one the keep
+ *  drops is simply absent. Changing WORLD_SALT would have moved every dungeon; this does not. */
+export const SPAWN_KEEP = 0.75;
+/** Foes per enemy marker in an elite dungeon (a normal dungeon has one). */
+export const ELITE_FOE_MULTIPLIER = 3;
+/** Health multiplier for an elite dungeon's foes. */
+export const ELITE_HEALTH_SCALE = 2;
+/** Damage multiplier for an elite dungeon's foes. */
+export const ELITE_DAMAGE_SCALE = 2;
+/** Loot in an elite dungeon: item drop chance x1.2 (+20%), rarity odds x1.2 (+20%) - corpses and treasure piles. */
+export const ELITE_LOOT_DROP_MULT = 1.2;
+export const ELITE_LOOT_QUALITY_MULT = 1.2;
+/** Name prefix, so the automap, the sight line and the Where-is list all say so. */
+export const ELITE_NAME_PREFIX = 'Elite ';
+/** The salt fills the id's high 12 bits; 0 is left out so an id is never below 2^20. */
+export const SALT_MAX = 4095;
+/** The one salt every client rolls with. Changing it moves every spawned dungeon in the world (and their rooms). */
+export const WORLD_SALT = 1;
+
+const PIXEL_ID_MAX = 500 * 1000;   // getMapPixelID's ceiling (y < 500, x < 1000) - under 2^20
+
+/** FNV-1a-ish mix of a few small integers to an unsigned 32-bit - RUMARE-WATER: its home world/blockHash.js, a leaf. */
+export { hash32 };
+
+/** The pixel's spawn roll, [0, 1). Deterministic in (salt, px, py). */
+export const spawnRoll = (salt, px, py) => hash32(salt, px, py, 1) / 4294967296;
+
+/** SPAWN-THIN: does the keep roll spare this pixel? Its own lane (the kind band is lane 1, the template lane 2), so
+ *  thinning never moves a survivor from one kind to the other. */
+export const spawnKept = (salt, px, py, keep = SPAWN_KEEP) => hash32(salt, px, py, 3) / 4294967296 < keep;
+
+/** Does this pixel hold a spawned dungeon of either kind? Deterministic in (salt, px, py). An explicit `chance` other
+ *  than the world's band is a probe of that band alone (the pins pass 0 and 1) and is not thinned. */
+export function spawnsDungeon(salt, px, py, chance = ANY_SPAWN_CHANCE) {
+  if (!(spawnRoll(salt, px, py) < chance)) return false;
+  if (chance !== ANY_SPAWN_CHANCE) return true;
+  return spawnKept(salt, px, py);
+}
+
+/** SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): does no path cross this pixel?
+ *  Every path in the network runs from its pixel's CENTRE out to the edges its compass byte names
+ *  (travelPaths.js), and the centre is where a spawned ruin flattens its plateau - so a pixel with any
+ *  road, track, river or stream bit stands no ruin, and a pixel with none has no path inside it at all.
+ *  `net` is the terrain's network (terrainGen.roads()); an array it does not carry (the generated
+ *  network has no water) answers no path, which is dataPoint's own 0. */
+export function pathFreePixel(net, px, py) {
+  // SPAWN-WORLD: past the Bay the network is TESA's road layer (world/arenaRoads.js - the roads and tracks the regions laid,
+  // each pixel's compass byte, its curves its own: world/road/roadCurves.js), which lays no river or stream; the Bay's
+  // arrays carry nothing there (dataPoint's 0), so a ruin stood on every road past the Bay
+  if (!inBay(px, py)) return !arenaPathsAt(px, py);
+  for (let t = 0; t < PATH_KEYS.length; t++) if (dataPoint(net, t, px, py)) return false;
+  return true;
+}
+
+/** SPAWN-SHORE (2026-09-29, Shabalako: "An elite dungeon spawned like this on a beach/sea"): the Ocean-climate gate
+ *  alone let ruins onto the sea. The boot spreads land climates two pixels out into it (terrainHelper.js
+ *  dilateCoastalClimate, StreamingWorld.ReadyCheck's repair), so a coast's first sea pixels READ as land. And a
+ *  location is flattened to its WHOLE pixel's average height (terrainGen.js: calcAvgMaxHeight then
+ *  blendLocationTerrain, DFU's own), so on a mostly-sea pixel the plateau sits at the waterline and the ruin stood on a
+ *  square of sand in the sea. A spawn now stands only where that plateau is DRY: above the beach band's highest
+ *  dirt (SCALED_BEACH_ELEVATION + its jitter, terrainTiles.js generateTileData).
+ *
+ *  The plateau is read WITHOUT the ground noise (sampleKernel's `groundNoise` false): that term is never negative and
+ *  the ocean clamp and clamp01 are monotone, so the noiseless average is at or under the real one - a strict lower
+ *  bound, a pixel it admits is dry for certain, at less than half the kernel's cost. Pure in the height map, which
+ *  every client holds alike, so every client agrees which pixels hold a spawn. */
+export const SPAWN_DRY_ELEVATION = SCALED_BEACH_ELEVATION + BEACH_JITTER;
+
+/** The plateau a location on (px, py) would be flattened to, metres - the noiseless lower bound (see above). */
+export function spawnPlateauFloor(woods, px, py) {
+  const k = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, false);
+  let sum = 0;
+  for (let x = 0; x < HEIGHTMAP_DIMENSION; x++) for (let y = 0; y < HEIGHTMAP_DIMENSION; y++) sum += k(x, y);
+  return (sum / (HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION)) * MAX_TERRAIN_HEIGHT;
+}
+
+/** TESA13: the kernel's columns in the order plateauDry sums them - every sixteenth column at a time, spread across the
+ *  pixel, so a sum part-way through is the whole pixel's and not its western edge's. */
+export const DRY_COLUMN_STRIDE = 16;
+const DRY_COLUMN_ORDER = Object.freeze([0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15]);
+/** TESA13: how near the threshold, as a part of it, a sum must not stand for plateauDry to answer without
+ *  spawnPlateauFloor - floating sums in another order agree far closer than this. */
+export const DRY_MARGIN = 1e-9;
+/**
+ * TESA13: IS THE PLATEAU DRY - `spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION`, the same answer, for a part of
+ * the cost where the land stands clear of the beach (the held map asks it of every candidate place in its view,
+ * world/tamrielCountry.js createCountryGround). Every sample the kernel answers lies between the ocean's clamp and 1
+ * (sampleKernel), so the samples still to come can only move the sum so far: the columns are summed in
+ * DRY_COLUMN_ORDER, and once the sum is past the threshold even if every sample left were the ocean's, or short of it
+ * even if every one were 1, the answer is known. A sum that ends within DRY_MARGIN of the threshold asks
+ * spawnPlateauFloor itself.
+ */
+export function plateauDry(woods, px, py) {
+  const k = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, false);
+  const n = HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION;
+  const goal = (SPAWN_DRY_ELEVATION / MAX_TERRAIN_HEIGHT) * n, lo = SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT, margin = goal * DRY_MARGIN;
+  let sum = 0, left = n;
+  for (const off of DRY_COLUMN_ORDER) {
+    for (let x = off; x < HEIGHTMAP_DIMENSION; x += DRY_COLUMN_STRIDE) {
+      for (let y = 0; y < HEIGHTMAP_DIMENSION; y++) sum += k(x, y);
+      left -= HEIGHTMAP_DIMENSION;
+    }
+    if (sum + left * lo > goal + margin) return true;
+    if (sum + left < goal - margin) return false;
+  }
+  return Math.abs(sum - goal) > margin ? sum > goal : spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION;
+}
+
+/**
+ * WILD-DRY (2026-10-12, a player's live client: the map's first open froze 6.7 s - the zone's giants' walking ground,
+ * systems/wild/wildGiants.js cellsOf, asks every pixel of the zone whether it is dry, and each answer read the whole
+ * 129 x 129 kernel): WHETHER THE PLATEAU ON (px, py) STANDS OVER SPAWN_DRY_ELEVATION - `spawnPlateauFloor(...) >
+ * SPAWN_DRY_ELEVATION` to the bit, read only until it is certain. Every sample is in [0, 1] (sampleKernel's clamp01),
+ * so the running sum never falls - and a float sum of non-negatives never falls either, nor do the division and the
+ * product by positive constants - so once the column's running average is over the line, the whole one is; and a pixel
+ * that never gets there is answered by the very sum spawnPlateauFloor makes, in its very order. `kernelOf` the kernel's
+ * maker (the pins count its reads).
+ */
+export function spawnGroundDry(woods, px, py, kernelOf = sampleKernel) {
+  const k = kernelOf(woods, px, py, HEIGHTMAP_DIMENSION, false);
+  const n = HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION;
+  let sum = 0;
+  for (let x = 0; x < HEIGHTMAP_DIMENSION; x++) {
+    for (let y = 0; y < HEIGHTMAP_DIMENSION; y++) sum += k(x, y);
+    if ((sum / n) * MAX_TERRAIN_HEIGHT > SPAWN_DRY_ELEVATION) return true;
+  }
+  return false;
+}
+
+/** Would a ruin on (px, py) stand on dry ground? Kept per pixel: the height map does not change under a session, and
+ *  the build and the Overworld's far found spawns both ask. WILD-DRY: answered by spawnGroundDry. AUDIT RED-MOUNTAIN G1:
+ *  never on the Ghostfence's line - the lairs keep off it (tamrielDungeons.js), and 42 spawns stood on it. */
+export function createSpawnGround(woods) {
+  const dry = new Map();
+  return (px, py) => {
+    const key = `${px},${py}`;   // WW-C2: a world map pixel's (a hall past the Bay's) - `y * 1000 + x` met another pixel past x 999
+    let d = dry.get(key);
+    if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && spawnGroundDry(woods, px, py));   // LAVA-CLEAR: nor where the lava runs
+    return d;
+  };
+}
+
+/** Is this pixel's spawned dungeon elite? The slice of the same roll just above the normal share. SPAWN-THIN: the
+ *  world's own band stands only where the keep spares the pixel, so an elite answer is a dungeon that stands. A probe
+ *  that names another band is that band alone, and is not thinned. */
+export const isEliteSpawn = (salt, px, py, normal = SPAWN_CHANCE, elite = ELITE_CHANCE) => {
+  const r = spawnRoll(salt, px, py);
+  if (!(r >= normal && r < normal + elite)) return false;
+  if (normal !== SPAWN_CHANCE || elite !== ELITE_CHANCE) return true;
+  return spawnKept(salt, px, py);
+};
+
+/** The spawned dungeon's MapId: salt in the high 12 bits, MapsFile.getMapPixelID in the low 20. SPAWN-WORLD: past the Bay,
+ *  the world's spawn lane over the pixel's world key (world/worldWide/worldLanes.js) - the world salt's alone (the one
+ *  salt any spawn past the Bay rolls with; a zone hall's id is its own lane's, handed in). */
+export function spawnedMapId(salt, px, py) {
+  if (!Number.isInteger(salt) || salt < 1 || salt > SALT_MAX) throw new RangeError(`salt ${salt}`);
+  if (!inBay(px, py)) {
+    if (salt !== WORLD_SALT || !inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);
+    return worldLaneMapId(SPAWN_WORLD_LANE, px, py);
+  }
+  const id = py * 1000 + px;
+  if (!Number.isInteger(id) || px < 0 || px > 999 || py < 0 || id >= PIXEL_ID_MAX) throw new RangeError(`pixel ${px},${py}`);
+  return ((salt << 20) | id) >>> 0;
+}
+
+/** Which template this pixel clones - deterministic in (salt, px, py); null for an empty list. */
+export const pickTemplate = (templates, salt, px, py) => (templates?.length ? templates[hash32(salt, px, py, 2) % templates.length] : null);
+
+/**
+ * A NON-MUTATING clone of a real dungeon location standing on (px, py) under its own id (the locations are cached
+ * objects shared with the exterior layout - smallerDungeons.js's own law). What changes: the map row (id, the pixel's
+ * longitude/latitude), the two locationIds the dungeon's room key and the save's `dungeon:<id>` read, the name (the
+ * automap is keyed by region + name, so two spawns of one template must not share a map), and everything that is a
+ * property of WHERE it stands - region, politic, climate (`where`, from the host, which owns the map files).
+ * `locationIndex` is -1: the quest machine and the music read it as "a real table row", and this is none.
+ * @param {object} template a real, non-main-story location with hasDungeon
+ * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}, elite?:boolean, mapId?:number|null}} o
+ */
+export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, elite = false, mapId: id = null }) {
+  const mapId = id ?? spawnedMapId(salt, px, py);   // WW-C2: a zone hall's own id (net/wire.js spawnedHallMapId - a world pixel's lane), the Bay's spawns' salt and pixel
+  const ll = mapPixelToLongitudeLatitude(px, py);
+  return {
+    ...template,
+    name: `${elite ? ELITE_NAME_PREFIX : ''}${template.name} (${px},${py})`,
+    regionIndex: where.regionIndex ?? template.regionIndex,
+    regionName: where.regionName ?? template.regionName,
+    politic: where.politic ?? template.politic,
+    climate: where.climate ?? template.climate,
+    locationIndex: -1,
+    mapTableData: { ...template.mapTableData, mapId, longitude: ll.x, latitude: ll.y },
+    exterior: { ...template.exterior, exteriorData: { ...template.exterior?.exteriorData, locationId: mapId } },
+    dungeon: { ...template.dungeon, recordElement: { ...template.dungeon?.recordElement, header: { ...template.dungeon?.recordElement?.header, locationId: mapId } } },
+    spawned: true,
+    elite: !!elite,   // ELITE: dungeonContext triples the foes and scales them; nothing else reads it
+  };
+}
+
+/**
+ * The real locations a spawn may clone: a dungeon with blocks and an exterior, never a main-story one (`isMain`, by
+ * MapId - world/dungeon/dungeonTextures.js), and - to keep every spawned exterior as cheap as the smallest real ones - a
+ * one-block exterior when any exist.
+ */
+export function spawnTemplates(locations, isMain = () => false) {
+  const dungeons = [...(locations ?? [])].filter((l) => l?.hasDungeon && !l.country && l.dungeon?.blocks?.length   // TESA8: never a lair past the Bay (world/tamrielDungeons.js) - its plan is its own
+    && l.exterior?.exteriorData && !isMain(l.mapTableData?.mapId) && !l.spawned && !l.ether && !l.arena   // AUDIT CAPTAIN'S SEA P3: never an isle's place - a session that stood ruins past the Veil first cloned other templates on every Bay pixel than its party; TESA2: nor an Arena place, the same way
+    && spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M);   // SPAWNED-DUNGEONS3: never one the player could cross into inside 300 m
+  const small = dungeons.filter((l) => l.exterior.exteriorData.width * l.exterior.exteriorData.height === 1);
+  return small.length ? small : dungeons;
+}
+
+// ---------------------------------------------------------------- SPAWNED-DUNGEONS3
+//
+// THE PLAYER'S OWN PIXEL, AT A DISTANCE (2026-09-24, Mac: "Dungeons that
+// currently spawn on the player's exact pixel or up to 2 pixels away
+// should now always spawn directly on the player's pixel. Additionally,
+// the nearby direction message should display the distance/direction in
+// meters. The dungeon has to spawn 300+ meter away from the player in
+// the same pixel/chunk.")
+//
+// WHERE A SPAWN STANDS IN ITS PIXEL is the same place every location
+// stands: CENTRED (terrainTiles.js getLocationTerrainTileOrigin -
+// TerrainHelper.SetLocationTiles' own law), so the host's layout, its
+// doors and its Where-is directory need no second placement. A pixel is
+// 819.2 metres on a side and a block 102.4, so a one-block dungeon's
+// exterior runs 358.4..460.8 across the pixel on both axes, and a player
+// entering at the middle of an edge is 358 metres from its nearest
+// edge and 410 from its centre - the "300+ metres" rule holds by
+// construction for a walk-in. What COULD break it is the template: an
+// exterior three blocks wide leaves 256 metres of clearance, eight
+// leaves none. So the clearance is the template gate, and the old
+// "no one-block exterior: any real dungeon" fallback is gone - a
+// fallback that breaks the rule is not one.
+
+/** The least distance a player entering the pixel may be from the spawn's exterior. */
+export const SPAWN_CLEARANCE_M = 300;
+/** A block's side, metres: eight to a pixel - RUMARE-WATER: its home world/blockHash.js. */
+export { BLOCK_M };
+/** Metres from a pixel's edge to the nearest edge of a centred w x h block exterior (the tighter axis). */
+export const spawnClearance = (width, height) => (TERRAIN_SIZE - Math.max(width | 0, height | 0) * BLOCK_M) / 2;
+
+/**
+ * A location's centre in its pixel's LOCAL frame, metres: [x east, z
+ * north] from the pixel's south-west corner - the frame the streaming
+ * host's `pixelTranslation` puts at the pixel's origin (scene x runs
+ * east; scene z runs NORTH, because that translation negates py, and
+ * the layout stands a location at `tilePos * tileSide` on both axes).
+ * Tile 0 is the corner; a tile is 6.4 metres.
+ */
+export function spawnedLocationCentreLocal(loc) {
+  const tile = TERRAIN_SIZE / WORLD_MAP_TILE_DIM;
+  const o = getLocationTerrainTileOrigin(loc);
+  const w = loc.exterior.exteriorData.width, h = loc.exterior.exteriorData.height;
+  return [(o.x + w * 8) * tile, (o.y + h * 8) * tile];
+}
+
+/** The line, with the distance to the nearest ten metres and the compass word the host resolved. */
+export function dungeonSightLine(metres, direction, tier = 'regular') {
+  // TIER1 (Super-Dungeons.md section 12): the tier's words - an Elite's and (SD2) a Super's; a regular spawn is "a Dungeon"
+  const what = tier === 'super' ? 'an Abyss Dungeon' : tier === 'elite' ? 'an Elite Dungeon' : 'a Dungeon';
+  return sightLineOf(what, metres, direction);
+}
+/** EG-F (bible/11-Multiplayer/Elite-Gates.md section 2, the sight line): the line's law for any thing seen - `what` (its
+ *  article with it), the distance to the nearest ten metres (never under ten), the host's compass word. An Elite Breach's
+ *  arch says it (scenes/eliteGates/egArch.js): "You see an Elite Breach 140 metres to the North!" */
+export function sightLineOf(what, metres, direction) {
+  const m = Math.max(10, Math.round(metres / 10) * 10);
+  return `You see ${what} ${m} meters to the ${direction}!`;
+}
+
+// ---------------------------------------------------------------- TTL1
+//
+// THE TWO LIVES OF A SPAWNED DUNGEON (2026-09-20, the creator's rule
+// relayed by Mac): "Spawned Dungeons should expire/removed after 2
+// ingame days when cleared when there is no player in it - and after 7
+// ingame days in general when there is no player in it."
+//
+// So there are TWO clocks and a spawn dies on whichever runs out first:
+// a SHORT one that starts when the place is emptied, and a LONG one
+// that has been running since it was first entered (SPAWN-REBIRTH below:
+// it ran from the pixel's first build, entered or not). Clearing a dungeon
+// does not extend its life - a spawn cleared on day 6 of its seven is
+// gone on day 7, not day 8 - which is why both are tested and the
+// answer is an OR rather than a fork.
+//
+// THE CLOCK IS THE GAME'S. Everything here is in the same classic
+// minutes `playerTicker.classicMinutes` counts, so resting through a
+// week expires what a week of walking would. [AUDIT LIVED1b R: offline.
+// Online those minutes are the WORLD's (the ticker's classicMinutes is
+// worldMinutes), which a rest does not move - the ledger ages with the
+// world alone, as every player sees it.]
+
+/** Emptied, and left alone this long: gone. */
+export const CLEARED_TTL_DAYS = 2;
+/** ...and never more than this from first entry, cleared or not. */
+export const GENERAL_TTL_DAYS = 7;
+export const CLEARED_TTL_MINUTES = CLEARED_TTL_DAYS * MINUTES_PER_DAY;
+export const GENERAL_TTL_MINUTES = GENERAL_TTL_DAYS * MINUTES_PER_DAY;
+
+// ---------------------------------------------------------------- SPAWN-REBIRTH
+//
+// THE LOCKOUT (2026-10-12, a player's report, "Overworld Persistence Causes Permanent Regional Depletion of Procedural &
+// Elite Dungeons", and Mac: "Do all 3"). Three laws together emptied a region for good:
+//   1. the long clock started when a pixel STREAMED IN (spawnedDungeonAt noted every spawn within the terrain distance),
+//      so walking a road started seven days - fourteen real hours online, at the shared clock's 12x - on every dungeon
+//      three pixels either side of it, entered or not;
+//   2. a dead spawn never came back: its roll is a pure hash of the pixel, so AUDIT OW5b D2 kept its row as a tombstone,
+//      and the cell's ledger (net/overworldLaw.js) kept that row sixty real days for everyone in the cell;
+//   3. the save kept every row forever, so a character's own tombstones outlived the cell's - and its min-merge refused
+//      a later life another player started (a later first entry never lowers an earlier one).
+// So: the long clock starts on ENTRY (world.js onDungeonSpawned, the one first-entry door - a dungeon nobody went into
+// stands); a dead spawn STANDS AGAIN REBIRTH_TTL_DAYS after it died, the same dungeon on fresh clocks; and a row whose
+// spawn has stood again is nobody's - the ledger, the cell and the save all let it go.
+
+/** A dead spawn's pixel stands empty this long, then the same dungeon stands again on fresh clocks. Twelve game days -
+ *  twenty-four real hours on the online clock (net/wire.js ONLINE_MINUTES_PER_MS: twelve game minutes a real one). */
+export const REBIRTH_TTL_DAYS = 12;
+export const REBIRTH_TTL_MINUTES = REBIRTH_TTL_DAYS * MINUTES_PER_DAY;
+
+/**
+ * When a spawn's life ends (classic minutes): the earlier of its two clocks - two days from its first clearing, seven
+ * from its first entry. NaN for a record no clock has started.
+ */
+export function spawnDeath(rec) {
+  if (!rec) return NaN;
+  const a = Number.isFinite(rec.cleared) ? rec.cleared + CLEARED_TTL_MINUTES : Infinity;
+  const b = Number.isFinite(rec.seen) ? rec.seen + GENERAL_TTL_MINUTES : Infinity;
+  const d = Math.min(a, b);
+  return Number.isFinite(d) ? d : NaN;
+}
+
+/** SPAWN-REBIRTH: has this record's spawn died AND stood again by `now` - its death REBIRTH_TTL_MINUTES behind? Then the
+ *  record is of a life that is over: nothing of it holds the pixel. */
+export function spawnReborn(rec, now) {
+  const d = spawnDeath(rec);
+  return Number.isFinite(d) && Number.isFinite(now) && now - d >= REBIRTH_TTL_MINUTES;
+}
+
+/**
+ * Has this spawn's time run out by `now` (classic minutes) - and not yet come round again?
+ *
+ * A record is `{ seen, cleared }` - when the place was first entered (SPAWN-REBIRTH: it was when the pixel was first
+ * built), and when it was first emptied (absent until it is). Nothing is expired by a clock that has not run: a record
+ * with no `seen` is one this ledger has never met. SPAWN-REBIRTH: nor is one whose spawn has stood again.
+ *
+ * A NEGATIVE ELAPSED IS NEVER EXPIRY. Loading an older save winds the
+ * clock BACK, and a spawn whose record outlived the load would
+ * otherwise read as astronomically old and vanish on sight.
+ */
+export function spawnExpired(rec, now) {
+  // AUDIT SPAWN-REBIRTH F8: the two clocks are spawnDeath's alone (they were written twice, here and there): dead from
+  // its death, back REBIRTH_TTL_MINUTES after it
+  const d = spawnDeath(rec);
+  return Number.isFinite(d) && Number.isFinite(now) && now >= d && now - d < REBIRTH_TTL_MINUTES;
+}
+
+/**
+ * The ledger of what this client has met and when.
+ *
+ * WHAT IT IS, said plainly: this is ONE CLIENT'S memory. The roll that
+ * puts a dungeon on a pixel is a pure hash every client shares, so every
+ * client agrees a spawn is THERE without a word from the relay - but
+ * expiry is a fact about TIME PASSING, which their clocks do not share,
+ * so two players could disagree about whether one is gone. Making them
+ * agree needed the relay to own the ledger, and it did not have a
+ * message for it. OW6L (2026-09-29) GAVE IT ONE: a cell room keeps a row
+ * a pixel (net/overworldLaw.js - `[px, py, seen, cleared?]`, the clocks
+ * in shared classic minutes) and MIN-MERGES what its players say, the
+ * `dg` word of net/wire.js's `ow` frame. This client says its own row
+ * when a spawn is first entered and when it is cleared (`wireRow` below,
+ * through net/online.js sendOverworld), and folds in every row the cell
+ * says (`merge`: the earliest entry and the earliest clear win, so a
+ * spawn's clocks only ever run out sooner) - its cell's welcome hands
+ * the whole of it to a player who walks in later.
+ *
+ * SPAWN-REBIRTH: a row whose spawn has stood again (spawnReborn) is of a life that is over. It is as good as no row:
+ * `note` and `clear` start the new life's clocks over it, `has` and `expired` read it as none, `merge` neither takes one
+ * nor lets one stand in the way of a later life's row, and the save leaves it out (`toJSON`, at the clock the ledger
+ * was last asked at since it was made or loaded - none asked, every row kept: an offline session never reads these
+ * clocks).
+ */
+export function createSpawnLedger() {
+  /** @type {Map<string, {seen:number, cleared?:number}>} */
+  const rows = new Map();
+  // SPAWN-REBIRTH: the clock the last call carried - what the save judges a life over by. AUDIT SPAWN-REBIRTH F4: the
+  // LAST, never the highest (a clock read fast before the shared offset landed, then corrected, left every row its high
+  // mark had passed out of the next save), and a load forgets it (the rows it judged are gone)
+  let last = NaN;
+  const at = (now) => { if (Number.isFinite(now)) last = now; return now; };
+  /** The row a key holds at `now` - none for one whose spawn has stood again. */
+  const live = (key, now) => { const r = rows.get(key); return r && !spawnReborn(r, now) ? r : null; };
+  return {
+    /** First entry starts the long clock; later entries do not restart it. SPAWN-REBIRTH: unless the spawn has died and
+     *  stood again since - then this is the new life's first entry. */
+    note(key, now) {
+      if (!key || !Number.isFinite(at(now))) return null;
+      let r = live(key, now);
+      if (!r) { r = { seen: now }; rows.set(key, r); }
+      return r;
+    },
+    /** Emptied. The FIRST clearing starts the short clock - walking back
+     *  into a dungeon you already emptied does not buy it another two
+     *  days, or a cleared spawn beside a road would never die. */
+    clear(key, now) {
+      if (!key || !Number.isFinite(now)) return null;
+      const r = this.note(key, now);
+      if (r && !Number.isFinite(r.cleared)) r.cleared = now;
+      return r;
+    },
+    expired: (key, now) => spawnExpired(rows.get(key), at(now)),
+    /** SPAWN-REBIRTH: does this ledger hold a row of the spawn's CURRENT life at `now` - one that is no first entry? */
+    has: (key, now) => !!live(key, at(now)),
+    /** OW6L: a row HEARD - the cell's word (net/online.js onOverworld's `dg`) - MIN-MERGED in: the earlier first entry
+     *  and the earlier clear of the two are kept, a row this ledger never met is made, and nothing is ever raised (a
+     *  heard clock only runs a spawn out sooner). A non-finite `seen` is no row at all; a non-finite `cleared` is none.
+     *  SPAWN-REBIRTH: at `now`, a heard row whose spawn has stood again is taken as none, and one this ledger holds is
+     *  replaced by the later life's (min-merged, a life gone by would end the new one on the old one's clocks). Answers
+     *  whether anything changed. */
+    merge(key, seen, cleared, now = NaN) {
+      if (!key || !Number.isFinite(seen)) return false;
+      const clear = Number.isFinite(cleared) ? cleared : null;
+      if (spawnReborn(clear === null ? { seen } : { seen, cleared: clear }, at(now))) return false;
+      const r = live(key, now);
+      if (!r) { rows.set(key, clear === null ? { seen } : { seen, cleared: clear }); return true; }
+      let moved = false;
+      if (seen < r.seen) { r.seen = seen; moved = true; }
+      if (clear !== null && !(Number.isFinite(r.cleared) && r.cleared <= clear)) { r.cleared = clear; moved = true; }
+      return moved;
+    },
+    /** OW6L: a key's row as the `dg` word says it - `[px, py, seen]`, or `[px, py, seen, cleared]` once it is cleared -
+     *  or null when this ledger holds none (or the key is not a pixel's "px,py"). What this client tells its cell when
+     *  `note` first starts a row and when `clear` stamps one. */
+    wireRow(key) {
+      const r = rows.get(key);
+      const at = /^(-?\d{1,4}),(-?\d{1,4})$/.exec(String(key));   // SPAWN-WORLD: a world pixel's - past the Bay its spawns' clocks are the cell's too
+      if (!r || !at) return null;
+      const px = Number(at[1]), py = Number(at[2]);
+      if (!inWorldGrid(px, py) || `${px},${py}` !== key) return null;   // the pixel's one spelling, on the world's grid
+      return Number.isFinite(r.cleared) ? [px, py, r.seen, r.cleared] : [px, py, r.seen];
+    },
+    /** Gone for good: the pixel is free to be empty from here. */
+    forget(key) { return rows.delete(key); },
+    get size() { return rows.size; },
+    /** The whole ledger, for a save to carry and a test to read. SPAWN-REBIRTH: less the rows whose spawn has stood again
+     *  by the clock the ledger was last asked at - a save carries no life that is over. */
+    toJSON: () => [...rows].filter(([, r]) => !spawnReborn(r, last)).map(([k, r]) => [k, r.seen, ...(Number.isFinite(r.cleared) ? [r.cleared] : [])]),
+    load(rowsIn) {
+      rows.clear();
+      last = NaN;   // AUDIT SPAWN-REBIRTH F4
+      for (const [k, seen, cleared] of rowsIn ?? []) {
+        if (typeof k === 'string' && Number.isFinite(seen)) rows.set(k, Number.isFinite(cleared) ? { seen, cleared } : { seen });
+      }
+      return rows.size;
+    },
+  };
+}

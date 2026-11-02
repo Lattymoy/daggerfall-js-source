@@ -1,0 +1,155 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE WEIR ROAD, step 4 of 4 - the line's end.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Corvane's
+-- letter, then his table, and one `ask`, the line's outcome: what he tells the Empire of the Secretary who surrendered
+-- the keys - the truth (the sheet's `truth`, a Knightly Order's standing) or the mercy asked of him (`mercy`, his last
+-- gift). Lore: canon - the Imperial Secretary surrendered the Spire's portal keys in 3E 398, nearly every Battlemage was
+-- killed, and an apprentice drove the legions out; the Elder Council; the Knights of the Dragon. The port's own -
+-- Corvane, and why the keys were given up (said as his account, never against the canon). AUDIT QUESTLINES LINES-9:
+-- the page is dated "today", never a year the online calendar runs past (it was "3E 406"), and he has known "since
+-- the Spire fell", never a count of years.
+Quest: QLWR04
+DisplayName: The Battlemage’s Account
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       Corvane Tull has left _tavern_, his account still
+<ce>          unwritten. No one saw which way he went.
+
+QuestComplete:  [1004]
+<ce>       "For the halls you took back," Corvane says, and
+<ce>       counts out _gold_ gold. "For all of us who are
+<ce>                     not here to say it."
+
+QuestLogEntry:  [1010]
+%qdt:
+ Corvane Tull has been called to give the Empire
+ his account of 3E 398, and of the Imperial
+ Secretary who surrendered the Spire's portal keys.
+ He wants my counsel before he writes it. He is at
+ _tavern_ in __tavern_.
+
+Message:  1011
+%pcn,
+
+     The Elder Council has heard what we have been
+ doing in the torn halls, and it wants an account of
+ 3E 398 from the last of the last class. All of it -
+ the Secretary who surrendered the portal keys, too.
+
+     I know why the keys were given up. I have known
+ since the Spire fell. I need you to hear it before
+ I write it down. _tavern_, in __tavern_.
+
+<ce>                       Corvane Tull, Battlemage
+
+Message:  1012
+<ce>       The boy again, and this time he waits while you
+<ce>       read. "He asked me to say please," the boy says.
+<ce>                 "He has never said please."
+
+Message:  1013
+<ce>       "The Secretary gave up the keys to buy the last
+<ce>        class's lives. The legions had my classmates in
+<ce>        the long gallery with the doors burning, and the
+<ce>        keys were the price. They took the keys, and
+<ce>        killed them anyway."
+<ce>
+<ce>       "I lived because I was in Daggerfall on an errand.
+<ce>        One apprentice drove the legions out at the end.
+<ce>        It was not me." He looks at the page in front of
+<ce>        him. It is dated 3E 398.
+
+Message:  1014
+The Battlemage? Some knights came asking for him. He would not see them.
+<--->
+Corvane Tull has a letter on his table with an Imperial seal. He reads it every night.
+<--->
+They say the Elder Council wants to know what happened at the Battlespire. They say the Battlemage knows.
+
+Message:  1030
+<ce>       "The Secretary is an old man now. The letter on
+<ce>        the table is his, and it asks for mercy: that my
+<ce>        account say the keys were taken, not given. The
+<ce>        Knights of the Dragon will read whatever I write.
+<ce>        What do I tell the Empire, %pcf?"
+
+Message:  1031
+The truth. The keys were given, and why.
+
+Message:  1032
+The mercy he asks for. Let the keys have been taken.
+
+Message:  1040
+<ce>             Corvane nods slowly, and dips his pen.
+<ce>
+<ce>       "The truth, then. All of it, and his reasons with
+<ce>        it. The Empire can judge the rest." He writes for
+<ce>        a long time. When he looks up, the page is dated
+<ce>        today, and not 3E 398.
+
+Message:  1041
+<ce>       Corvane closes his eyes. "Taken, not given. He has
+<ce>        paid enough for those keys." He writes a short
+<ce>        page, and seals it.
+<ce>
+<ce>       Then he unbuckles the sword at his side, a
+<ce>       Battlemage's blade with a blue stone in its hilt,
+<ce>       and lays it in front of you. "My last gift. I
+<ce>        have no more use for it. You still do."
+
+-- Symbols used in the QRC file:
+--
+--               %pcf occurs 1 time.
+--               %pcn occurs 1 time.
+--               %qdt occurs 1 time.
+--             _gold_ occurs 1 time.
+--           _tavern_ occurs 3 times.
+--          __tavern_ occurs 2 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 500 to 900
+
+Person _corvane_ faction The_Mages_Guild male anyInfo 1014
+
+Place _tavern_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _corvane_ Corvane_Tull
+	place npc _corvane_ at _tavern_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_met_ task:
+	clicked npc _corvane_
+	say 1013
+	ask 1030 choices 1031 _totruth_ 1032 _tomercy_
+
+variable _totruth_
+variable _tomercy_
+
+_truthway_ task:
+	when _totruth_
+	say 1040
+	outcome _truth_
+	give pc _gold_
+	end quest
+
+_mercyway_ task:
+	when _tomercy_
+	say 1041
+	outcome _mercy_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

@@ -1,0 +1,164 @@
+[
+  {
+    "name": "PROF-SAVE-a-checkpoint-a-change",
+    "file": "src/systems/online/onlineCheckpoint.js",
+    "old": "    if (!queued) {\n      queued = true;\n      schedule(run);\n    }",
+    "new": "    queued = true;\n    schedule(run);",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-saved-inside-the-act",
+    "file": "src/systems/online/onlineCheckpoint.js",
+    "old": "      ask();",
+    "new": "      if (save) {\n        due = false;\n        save();\n      }\n      ask();",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-the-early-change-lost",
+    "file": "src/systems/online/onlineCheckpoint.js",
+    "old": "      if (due) ask();\n    },",
+    "new": "    },",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-the-early-change-dropped",
+    "file": "src/systems/online/onlineCheckpoint.js",
+    "old": "    if (!save) return; // no checkpoint yet: the change waits for `ready`\n    due = false;",
+    "new": "    due = false;\n    if (!save) return;",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-the-bank-unsaved",
+    "file": "src/systems/banking.js",
+    "old": "  if (Number.isSafeInteger(gold) && gold > 0) saved?.();\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-the-bank-saves-nothing",
+    "file": "src/systems/banking.js",
+    "old": "  if (Number.isSafeInteger(gold) && gold > 0) saved?.();",
+    "new": "  saved?.();",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-the-settle-unsaved",
+    "file": "src/scenes/worldModes.js",
+    "old": "void host.marks.settle(marksSaleCredit(() => playerEntity.bankAccounts, bankRegion, host.saveSoon))",
+    "new": "void host.marks.settle(marksSaleCredit(() => playerEntity.bankAccounts, bankRegion))",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-the-sale-unsaved",
+    "file": "src/scenes/worldModes.js",
+    "old": "host.marks.sell(n, marksSaleCredit(() => playerEntity.bankAccounts, bankRegion, host.saveSoon), bankRegion())",
+    "new": "host.marks.sell(n, marksSaleCredit(() => playerEntity.bankAccounts, bankRegion), bankRegion())",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-the-host-hands-none",
+    "file": "src/scenes/world.js",
+    "old": "    saveSoon: () => saveSoon.changed(),   // PROF-SAVE: a Marks sale's gold in the Bank's account saved soon\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-a-withdrawal-unsaved",
+    "file": "src/scenes/world.js",
+    "old": "taken from the Stores into your pack.`); saveSoon.changed(); }",
+    "new": "taken from the Stores into your pack.`); }",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-a-kept-fee-unsaved",
+    "file": "src/scenes/world.js",
+    "old": "deductGold(playerEntity, Math.min(kept.fee, totalGoldAmount(playerEntity))); saveSoon.changed(); }",
+    "new": "deductGold(playerEntity, Math.min(kept.fee, totalGoldAmount(playerEntity))); }",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-a-craft-unsaved",
+    "file": "src/scenes/world.js",
+    "old": "    if (pieces.length) { townTalk.say(craftedText(pieces)); saveSoon.changed(); }",
+    "new": "    if (pieces.length) { townTalk.say(craftedText(pieces)); }",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-a-market-mint-unsaved",
+    "file": "src/scenes/marketPiecesHost.js",
+    "old": "    host.townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\\'s things' : 'in your pack'}.`);\n    saveSoon.changed();\n",
+    "new": "    host.townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\\'s things' : 'in your pack'}.`);\n",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-a-listing-unsaved",
+    "file": "src/scenes/marketPiecesHost.js",
+    "old": "    list.splice(i, 1);\n    saveSoon.changed();\n    return true;",
+    "new": "    list.splice(i, 1);\n    return true;",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-a-settled-drop-unsaved",
+    "file": "src/scenes/marketPiecesHost.js",
+    "old": "      list.splice(i, 1);\n      saveSoon.changed();\n    }",
+    "new": "      list.splice(i, 1);\n    }",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-a-put-back-unsaved",
+    "file": "src/scenes/marketPiecesHost.js",
+    "old": "addItem((playerEntity.items ??= []), item, 'back');\n    saveSoon.changed();\n  };",
+    "new": "addItem((playerEntity.items ??= []), item, 'back');\n  };",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-a-smelt-fee-unsaved",
+    "file": "src/scenes/professionsHost.js",
+    "old": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }",
+    "new": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); }",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  },
+  {
+    "name": "PROF-SAVE-the-checkpoint-never-handed-in",
+    "file": "src/scenes/world.js",
+    "old": "  saveSoon.ready(() => onlineCheckpoint());   // PROF-SAVE: the professions' changes saved by the same checkpoint, from here on",
+    "new": "  // PROF-SAVE: the professions' changes saved by the same checkpoint, from here on",
+    "tests": [
+      "test/systems/online/profsave.test.js"
+    ]
+  }
+]

@@ -1,0 +1,188 @@
+[
+  {
+    "name": "MARKS1-1-a-third-gate-a-day",
+    "file": "server-account/src/marks.js",
+    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n",
+    "new": "    WHERE ${combatEarnedSql('?1', '?3')} <= ?6\n",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-2-the-gate-past-the-cap",
+    "file": "server-account/src/marks.js",
+    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS",
+    "new": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND 1\n      AND NOT EXISTS",
+    "tests": [
+      "test/net/marks1.test.js"
+    ],
+    "note": "SILVER-FINDS (MUT-AIM): the finds' strike carries the same purse line - aimed at the combat strike's by its own line above."
+  },
+  {
+    "name": "MARKS1-3-a-guest-strikes",
+    "file": "server-account/src/marks.js",
+    "old": "const strikesFor = (player, env) => accountKind(player) === 'linked' && marksOpenFor(player, env);",
+    "new": "const strikesFor = (player, env) => marksOpenFor(player, env);",
+    "tests": [
+      "test/net/marks1.test.js",
+      "test/net/audit28_marks.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-4-dev-opens-to-all",
+    "file": "server-account/src/marks.js",
+    "old": "  return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
+    "new": "  return s === 'on' || s === 'dev';",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-5-the-bank-sells-short",
+    "file": "server-account/src/marks.js",
+    "old": "    WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?2\n      AND COALESCE((SELECT SUM(amount) FROM marks_ledger WHERE src_id = ?1 AND kind = 'exchange'",
+    "new": "    WHERE 1\n      AND COALESCE((SELECT SUM(amount) FROM marks_ledger WHERE src_id = ?1 AND kind = 'exchange'",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-6-no-day-cap-at-the-bank",
+    "file": "server-account/src/marks.js",
+    "old": "kind = 'exchange' AND day = ?3), 0) + ?2 <= ?6`)",
+    "new": "kind = 'exchange' AND day = ?3), 0) + ?2 <= ?6 + 1000`)",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-7-a-deposit-id-sold-as-gold",
+    "file": "server-account/src/marks.js",
+    "old": "(line.kind !== 'exchange' ? { error: 'marks-rid' }",
+    "new": "(false ? { error: 'marks-rid' }",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-8-the-bank-pays-ten",
+    "file": "src/net/marksLaw.js",
+    "old": "export const MARKS_BANK = Object.freeze({ goldPerMark: 8, perDay: 300 });",
+    "new": "export const MARKS_BANK = Object.freeze({ goldPerMark: 10, perDay: 300 });",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-9-an-officer-takes-marks-out",
+    "file": "server-account/src/marks.js",
+    "old": "  if (!guildMay(a.me.rank, deposit ? 'deposit' : 'withdraw', a.powers)) return { error: 'guild-rank' };",
+    "new": "  if (!guildMay(a.me.rank, 'deposit', a.powers)) return { error: 'guild-rank' };",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-10-a-deposit-past-the-balance",
+    "file": "server-account/src/marks.js",
+    "old": "      WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?3\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?2), 0) + ?3 <= ?8",
+    "new": "      WHERE 1\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?2), 0) + ?3 <= ?8",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-11-a-disband-with-marks",
+    "file": "server-account/src/guilds.js",
+    "old": " AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = ?1 AND balance > 0)\n      AND NOT ${guildKeepsSql('?1')}\n      AND (?2 = 0",
+    "new": "\n      AND NOT ${guildKeepsSql('?1')}\n      AND (?2 = 0",
+    "tests": [
+      "test/net/marks1.test.js",
+      "test/net/audit28_marks.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-12-the-report-for-anyone",
+    "file": "server-account/src/marks.js",
+    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n",
+    "new": "",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-13-the-line-moves-no-payee",
+    "file": "server-account/migrations/0032_market.sql",
+    "old": "    ON CONFLICT (account) DO UPDATE SET balance = balance + excluded.balance;",
+    "new": "    ON CONFLICT (account) DO NOTHING;",
+    "tests": [
+      "test/net/marks1.test.js",
+      "test/server/accountworker.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-14-the-gate-mints-nothing",
+    "file": "server-account/src/index.js",
+    "old": "        return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : answer, 200, origin);",
+    "new": "        return json(answer, 200, origin);",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-15-a-lost-sale-dropped",
+    "file": "src/net/marksBook.js",
+    "old": "        if (!MARKS_FINAL.includes(r?.error)) return { ok: false, text: MARKS_TEXT.kept }; // the line may be there: kept\n        keep(null, key); // the service looked and said no: nothing burnt, nothing owed",
+    "new": "        keep(null, key); // the service looked and said no: nothing burnt, nothing owed",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-16-another-characters-gold",
+    "file": "src/net/marksBook.js",
+    "old": "  const slot = () => `${account() ?? ''}|${character() ?? ''}`;",
+    "new": "  const slot = () => `${account() ?? ''}|`;",
+    "tests": [
+      "test/net/marks1.test.js",
+      "test/net/audit28_marks.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-17-a-kept-sale-paid-into-the-bank-it-settles-at",
+    "file": "src/systems/banking.js",
+    "old": "Number.isSafeInteger(region) ? region : here()",
+    "new": "here()",
+    "tests": [
+      "test/net/marks1.test.js",
+      "test/net/audit28_marks.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-18-the-counting-box-dismissed",
+    "file": "src/ui/bankWindow.js",
+    "old": "    if (this.box?.waiting) return; // MARKS1: the counting box stays until the service answers\n    const b = this.box;",
+    "new": "    const b = this.box;",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-19-sell-with-nothing-held",
+    "file": "src/ui/bankWindow.js",
+    "old": "      return (\n        !!m &&\n        m.open() === true &&\n        (m.balance() ?? 0) > 0 &&\n        !m.pending() &&\n        this.transactionType === TRANSACTION_TYPE.None &&\n        !this.box\n      );",
+    "new": "      return !!m && m.open() === true && !m.pending() && this.transactionType === TRANSACTION_TYPE.None && !this.box;",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MARKS1-20-the-gate-says-no-marks",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "          for (const line of Array.isArray(marksLine) ? marksLine : [marksLine])\n            if (typeof line === 'string' && line) say(line);\n        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  }
+]

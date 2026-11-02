@@ -1,0 +1,416 @@
+[
+  {
+    "name": "EGA3-dusk-the-loop",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "!F.mem.groundedUntil && !F.mem.anchorsBackAt) {",
+    "new": "!F.mem.groundedUntil) {",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-dusk-anchors-rise-late",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "F.mem.anchorsBackAt = now + (L.ph >= 3 ? 40_000 : 20_000);",
+    "new": "F.mem.anchorsBackAt = now + (L.ph >= 3 ? 40_000 : 30_000);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-dusk-moonfall-no-divers",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (L.ph >= 3) egLegionSummon(F, [EG_KIND.diver, EG_KIND.diver], [Number.isFinite(y) ? [ax, az, y] : [ax, az]], now, out); }",
+    "new": "if (L.ph >= 4) egLegionSummon(F, [EG_KIND.diver, EG_KIND.diver], [Number.isFinite(y) ? [ax, az, y] : [ax, az]], now, out); }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-wyrm-lands-before-it-flies",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "      if (L.groundedUntil && now >= L.groundedUntil) { L.groundedUntil = 0; if (egObjsOf(F, 'pillar').length) { egSetFl(F, L, EG_FL.grounded, false, out); perch(F, spec, L, now, out); } }\n      // its perch broken (the pillar it leaves erupting in Burning Perches - egObjBroken), it lands, x1.3, for 25 s\n      if (!egHas(L, EG_FL.grounded) && !egObjsOf(F, 'pillar').some((p) => p.i === L.perch)) {",
+    "new": "      if (!egObjsOf(F, 'pillar').some((p) => p.i === L.perch) && !(L.groundedUntil > now)) {",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-wyrm-no-eruption",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const W = o.t === 'pillar' ? egLordsOf(F)",
+    "new": "const W = o.t === 'perch' ? egLordsOf(F)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-wyrm-eruption-in-phase-one",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "L.perch === o.i && L.ph === 2) : null;",
+    "new": "L.perch === o.i && L.ph >= 1) : null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-wyrm-the-last-landing-said-again",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "L.groundedUntil = 0; if (egObjsOf(F, 'pillar').length) { egSetFl(F, L, EG_FL.grounded, false, out); perch(F, spec, L, now, out); } }",
+    "new": "L.groundedUntil = 0; { egSetFl(F, L, EG_FL.grounded, false, out); perch(F, spec, L, now, out); } }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-twins-no-touch",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "landed(F, L, bl, struck) { for (const m of struck)",
+    "new": "landed(F, L, bl, struck) { for (const m of [])",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-twins-marks-swapped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "L.pt === 1 ? EG_MARK_FROST : EG_MARK_FIRE, bl.at + EG_TOUCH_MS)",
+    "new": "L.pt === 1 ? EG_MARK_FIRE : EG_MARK_FROST, bl.at + EG_TOUCH_MS)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-twins-touch-from-its-word",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "EG_MARK_FIRE, bl.at + EG_TOUCH_MS)",
+    "new": "EG_MARK_FIRE, bl.at - bl.wu + EG_TOUCH_MS)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-twins-touch-unsaid",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "bl.at + EG_TOUCH_MS); if (struck.length) F.mem.mkDirty = 1; },",
+    "new": "bl.at + EG_TOUCH_MS); },",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-twins-weight-dropped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "frost[2] > now)) x *= EG_TOUCH_X; }",
+    "new": "frost[2] > now)) x *= 1; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-landing-not-waited",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    if (bl.ld || now < bl.at) continue;",
+    "new": "    if (bl.ld) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-touch-everyone",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (bl) KITS[by.key].landed(F, by, bl, [{ sub: h.sub }]);",
+    "new": "if (bl) KITS[by.key].landed(F, by, bl, (F.subs ?? []).map((sub) => ({ sub })));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-gap-without-the-floor",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "  return Math.max(wu, f + EG_CHAIN_PAD_MS, EG_CHAIN_MIN_MS);",
+    "new": "  return Math.max(wu, EG_CHAIN_MIN_MS);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-gap-pad-short",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "export const EG_CHAIN_PAD_MS = 300;",
+    "new": "export const EG_CHAIN_PAD_MS = 200;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-gap-least-short",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "export const EG_CHAIN_MIN_MS = 1000;",
+    "new": "export const EG_CHAIN_MIN_MS = 900;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-gap-first-stamp-only",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "  for (const s of stamps ?? []) f = Math.max(f, egWindupFloorMs(s));",
+    "new": "  for (const s of (stamps ?? []).slice(1)) f = Math.max(f, egWindupFloorMs(s));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-fury-past-the-rule",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  const gap = egChainGapMs(blow.wu, blow.s);",
+    "new": "  const gap = Math.max(blow.wu, 1000);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-kneel-times-stun",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if ((L.kneelUntil ?? 0) > now) st = Math.max(st, EG_KNEEL_HIT_X);",
+    "new": "  if ((L.kneelUntil ?? 0) > now) st *= EG_KNEEL_HIT_X;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-scorch-at-the-stun",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "st = (L.scorchUntil ?? 0) > now ? EG_SCORCH_HIT_X : STUN_HIT_X;",
+    "new": "st = STUN_HIT_X;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-scorch-grounds-him",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "egStun(F, L, 4000, now, out); L.scorchUntil = now + 4000;",
+    "new": "egStun(F, L, 4000, now, out); L.scorchUntil = now + 4000; L.groundedUntil = now + 4000;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-scorch-weight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "export const EG_SCORCH_HIT_X = 1.3;",
+    "new": "export const EG_SCORCH_HIT_X = 1.4;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-kneel-weight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "export const EG_KNEEL_HIT_X = 1.5;",
+    "new": "export const EG_KNEEL_HIT_X = 1.6;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-grounded-weight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "export const EG_GROUNDED_HIT_X = 1.3;",
+    "new": "export const EG_GROUNDED_HIT_X = 1.2;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-whole-route-kept",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "F.mem.route = Math.abs(L.z - a) <= Math.abs(L.z - b) ? [a, mid] : [mid, b]; F.mem.halfRoute = 1;",
+    "new": "F.mem.halfRoute = 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-the-other-half",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "Math.abs(L.z - a) <= Math.abs(L.z - b) ? [a, mid] : [mid, b];",
+    "new": "Math.abs(L.z - a) <= Math.abs(L.z - b) ? [mid, b] : [a, mid];",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-gore-not-doubled",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "minGap: 4, minGap1: 0, w: 3, w1: 6, when",
+    "new": "minGap: 4, minGap1: 0, w: 3, when",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-gore-doubled-in-company",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "(ctx.n === 1 && b.w1 != null ? b.w1 : b.w ?? 1)",
+    "new": "(ctx.n === 2 && b.w1 != null ? b.w1 : b.w ?? 1)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-share-whole",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    const part = h.share / (mates.length + 1);",
+    "new": "    const part = h.share;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-mate-caught",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "({ ...h, sub: s, share: part, nm: '' })",
+    "new": "({ ...h, sub: s, share: part })",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-mate-away-shares",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "...mates.filter((s) => live.some((b) => b.sub === s)).map((s) => ({ ...h, sub: s, share: part, nm: '' })));",
+    "new": "...mates.map((s) => ({ ...h, sub: s, share: part, nm: '' })));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-element-divided",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    const c = h.share > 0 ? chains.find((q) => q.includes(h.sub)) : null;",
+    "new": "    const c = h.share >= 0 ? chains.find((q) => q.includes(h.sub)) : null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-judge-unshared",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "egLordsJudged(f.F, hits); return egChainShared(f.F, hits, bodies); },",
+    "new": "egLordsJudged(f.F, hits); return hits; },",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-garoth-fixed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "return GATE_ASPECTS[Math.max(0, Math.floor(c / 5) - 4) % GATE_ASPECTS.length];",
+    "new": "return GATE_ASPECTS[0];",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-reaspect-own-band",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "return L.valk || L.band < band ? gateAspectOf",
+    "new": "return L.valk || L.band <= band ? gateAspectOf",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-twins-reaspected",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (!L || key === 'twins') return null;",
+    "new": "  if (!L) return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-element-kept",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const elOf = (L, el) => (el != null && L?.asp ? gateAspectOf(L.asp)?.el ?? el : el);",
+    "new": "const elOf = (L, el) => el;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-meteor-name-kept",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  const nm = (B.ak && L.asp && gateAspectOf(L.asp)?.names?.[B.ak]) || B.nm;",
+    "new": "  const nm = B.nm;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-fight-unaspected",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (asp) L.asp = asp.id;",
+    "new": "  if (asp) L.aspect = asp.id;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-row-wrong-field",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "wu: A.windup, rec: A.recover,",
+    "new": "wu: A.recover, rec: A.windup,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-row-share-copied",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "p: A.pct, b: A.base,",
+    "new": "p: 0.45, b: A.base,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-pool-unlaid",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (blow && B.pool) (F.mem.pools ??= {})[blow.i]",
+    "new": "  if (blow && B.pools) (F.mem.pools ??= {})[blow.i]",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-pool-plain",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "{ p: pl[2], b: pl[3], el: bl.el, y: bl.y }",
+    "new": "{ p: pl[2], b: pl[3], el: null, y: bl.y }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-pool-from-its-word",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "shDisc(st[1], st[2], pl[0]), bl.at, bl.at + pl[1]",
+    "new": "shDisc(st[1], st[2], pl[0]), bl.at - bl.wu, bl.at - bl.wu + pl[1]",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-cleave-copied",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "ATTACKS.cleave.r, ATTACKS.cleave.arc)] }) },\n  { ...SLAM, duelNo: 1, make:",
+    "new": "9, 100)] }) },\n  { ...SLAM, duelNo: 1, make:",
+    "tests": [
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  }
+]

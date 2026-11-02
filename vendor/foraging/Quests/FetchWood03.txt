@@ -1,0 +1,130 @@
+-- Edited by Harbinger451
+-- StartsBy: Commoner
+-- Questee: anyone
+Quest: FetchWood03
+DisplayName: Collect Firewood for a Witch Burning
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You look like you don't mind getting your hands dirty!
+<ce> I have a spot of work, if you're interested?
+<--->
+<ce> How do you feel about doing some honest
+<ce> salt-of-the-earth labor, %ra?
+<ce> It pays well.
+<--->
+<ce> I'm in need of someone willing to do some
+<ce> menial but well paid laboring!
+<ce> Might you fit the bill?
+
+RefuseQuest:  [1001]
+<ce> That's the trouble with people these days.
+<ce> Afraid of good old-fashioned hard work.
+<--->
+<ce> I should have known better than to ask a %ra!
+
+AcceptQuest:  [1002]
+<ce> We're running short of firewood, you see.
+<ce> And we have a very important Witch burning scheduled
+<ce> in =deadline_ days, so you simply must get us six
+<ce> wood bundles before that day has passed.
+<ce> I'll reward you with _reward_ gold if you do this.
+<ce> Spare me the details of how you get them ...
+<ce> just be sure you get them to me in time for
+<ce> the Witch Burning.
+<--->
+<ce> I really need to source a large amount of firewood.
+<ce> We have a very exciting Witch Burning coming up,
+<ce> you see. In =deadline_ days time.
+<ce> I need you to get six wood bundles at least, to make
+<ce> sure that fire burns nice and strong and bright.
+<ce> Get them to me before the deadline and
+<ce> I'll pay you _reward_ gold.
+
+QuestFail:  [1003]
+<ce> You have failed to get _questgiver_
+<ce> %g3 firewood in time!
+
+QuestComplete:  [1004]
+<ce> Oh, good job, %pcn.
+<ce> These six wood bundles will make sure
+<ce> that Witch will burn good!
+<ce> Here's your _reward_ gold as promised.
+<--->
+<ce> My firewood ... nicely chopped and everything!
+<ce> Well done, %pcn. 
+<ce> %oth, that Witch will burn now!
+<ce> Here's your _reward_ gold.
+
+QuestorPostsuccess:  [1008]
+Hello %pcf. You did a fine job getting me that wood for the Witch Burning. How can I help you?
+
+QuestLogEntry:  [1010]
+%qdt
+_questgiver_ of __questgiver_ 
+at ___questgiver_
+has asked me to collect six wood bundles
+before =deadline_ days have passed.
+I will be paid _reward_ gold for all six of them.
+
+Message:  1011
+%qdt
+_questgiver_ of __questgiver_ 
+at ___questgiver_
+paid me _reward_ gold for six wood bundles.
+
+Message:  1012
+<ce> You don't have the six wood bundles I asked for.
+<ce> Come back when you have them all ...
+<ce> and not before.
+<--->
+<ce> Stop waisting my time, %pcn!
+<ce> Come back when you have the six wood bundles.
+
+Message:  1013
+<ce> You have the six wood bundles
+<ce> that _questgiver_ of __questgiver_ 
+<ce> at ___questgiver_ requires.
+
+
+QBN:
+
+Person _questgiver_ group Questor
+
+Clock _deadline_ 72:00
+
+Item _reward_ gold range 600 to 800
+
+--	Quest start-up:
+	log 1010 step 0
+	start timer _deadline_
+
+variable _deadline_
+
+_questgiverclicked_ task:
+	clicked npc _questgiver_
+
+_gotitem_ task:
+	player possesses 6 items class 20 subclass 1604
+	say 1013
+
+_success_ task:
+	when _questgiverclicked_ and _gotitem_
+	player handsover 6 items class 20 subclass 1604
+	give pc _reward_
+    remove log step 0
+	log 1011 step 1
+	clear _questgiverclicked_
+	end quest
+
+_failure_ task:
+	when _questgiverclicked_ and not _gotitem_
+	say 1012
+	clear _questgiverclicked_
+
+_timeout_ task:
+	when _deadline_ and not _success_
+	say 1003
+    remove log step 0
+	end quest

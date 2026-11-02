@@ -1,0 +1,1209 @@
+==== TYPE .<Module> (fields: [])
+==== TYPE TrailingWagon.Compatibility.HorseCartHarmonyInstaller (fields: ['HarmonyOwnerId', 'ExpandedInventoryTypeName', 'Uncanny12InventoryTypeName', 'UncannyRu191InventoryTypeName', 'DragonRiderTransportTypeName', 'DragonRiderRuntimeTypeName', 'requiredTargets', 'positiveInventoryRequests', 'inventoryClickDepth', 'harmony', 'installed', 'expandedAdapterInstalled', 'uncannyAdapterVariant', 'dragonRiderAdapterInstalled', 'dragonRiderIsMountedGetter', 'dragonRiderDismountMethod'])
+
+---- HorseCartHarmonyInstaller::Install rva=2050
+  maxstack=2 locals_sig=token(0x11000001) size=155
+  IL_025c: ldarg.1        
+  IL_025d: ldc.i4.0       
+  IL_025e: blt.s          612
+  IL_0260: ldarg.1        
+  IL_0261: ldc.i4.2       
+  IL_0262: ble.s          623
+  IL_0264: ldstr          "requiredUncannyUiAdapterVariant"
+  IL_0269: newobj         System.ArgumentOutOfRangeException::.ctor
+  IL_026e: throw          
+  IL_026f: ldsfld         HorseCartHarmonyInstaller::installed
+  IL_0274: brfalse.s      667
+  IL_0276: ldsfld         HorseCartHarmonyInstaller::expandedAdapterInstalled
+  IL_027b: ldarg.0        
+  IL_027c: bne.un.s       667
+  IL_027e: ldsfld         HorseCartHarmonyInstaller::uncannyAdapterVariant
+  IL_0283: ldarg.1        
+  IL_0284: bne.un.s       667
+  IL_0286: ldsfld         HorseCartHarmonyInstaller::dragonRiderAdapterInstalled
+  IL_028b: ldarg.2        
+  IL_028c: bne.un.s       667
+  IL_028e: call           HorseCartHarmonyInstaller::OwnsEveryRequiredTarget
+  IL_0293: brfalse.s      667
+  IL_0295: call           HorseCartHarmonyInstaller::BuildStatus
+  IL_029a: ret            
+  IL_029b: call           HorseCartHarmonyInstaller::Uninstall
+  IL_02a0: ldstr          "dfu.horse-cart-and-cargo.ui-compat"
+  IL_02a5: newobj         HarmonyLib.Harmony::.ctor
+  IL_02aa: stsfld         HorseCartHarmonyInstaller::harmony
+  IL_02af: call           HorseCartHarmonyInstaller::InstallRequiredVanillaPatches
+  IL_02b4: ldarg.0        
+  IL_02b5: brfalse.s      700
+  IL_02b7: call           HorseCartHarmonyInstaller::InstallExpandedInventoryAdapter
+  IL_02bc: ldarg.1        
+  IL_02bd: brfalse.s      709
+  IL_02bf: ldarg.1        
+  IL_02c0: call           HorseCartHarmonyInstaller::InstallUncannyUiAdapter
+  IL_02c5: ldarg.2        
+  IL_02c6: brfalse.s      717
+  IL_02c8: call           HorseCartHarmonyInstaller::InstallDragonRiderAdapter
+  IL_02cd: call           HorseCartHarmonyInstaller::OwnsEveryRequiredTarget
+  IL_02d2: brtrue.s       735
+  IL_02d4: ldstr          "one or more required UI patches failed ownership verification"
+  IL_02d9: newobj         System.InvalidOperationException::.ctor
+  IL_02de: throw          
+  IL_02df: ldc.i4.1       
+  IL_02e0: stsfld         HorseCartHarmonyInstaller::installed
+  IL_02e5: call           HorseCartHarmonyInstaller::BuildStatus
+  IL_02ea: stloc.0        
+  IL_02eb: leave.s        757
+  IL_02ed: pop            
+  IL_02ee: call           HorseCartHarmonyInstaller::Uninstall
+  IL_02f3: rethrow        
+  IL_02f5: ldloc.0        
+  IL_02f6: ret            
+
+---- HorseCartHarmonyInstaller::Uninstall rva=2108
+  maxstack=2 locals_sig=None size=100
+  IL_0314: ldsfld         HorseCartHarmonyInstaller::harmony
+  IL_0319: brtrue.s       810
+  IL_031b: ldstr          "dfu.horse-cart-and-cargo.ui-compat"
+  IL_0320: newobj         HarmonyLib.Harmony::.ctor
+  IL_0325: stsfld         HorseCartHarmonyInstaller::harmony
+  IL_032a: ldsfld         HorseCartHarmonyInstaller::harmony
+  IL_032f: ldstr          "dfu.horse-cart-and-cargo.ui-compat"
+  IL_0334: callvirt       HarmonyLib.Harmony::UnpatchAll
+  IL_0339: ldsfld         HorseCartHarmonyInstaller::requiredTargets
+  IL_033e: callvirt       ::Clear
+  IL_0343: ldsfld         HorseCartHarmonyInstaller::positiveInventoryRequests
+  IL_0348: callvirt       ::Clear
+  IL_034d: ldc.i4.0       
+  IL_034e: stsfld         HorseCartHarmonyInstaller::inventoryClickDepth
+  IL_0353: ldc.i4.0       
+  IL_0354: stsfld         HorseCartHarmonyInstaller::installed
+  IL_0359: ldc.i4.0       
+  IL_035a: stsfld         HorseCartHarmonyInstaller::expandedAdapterInstalled
+  IL_035f: ldc.i4.0       
+  IL_0360: stsfld         HorseCartHarmonyInstaller::uncannyAdapterVariant
+  IL_0365: ldc.i4.0       
+  IL_0366: stsfld         HorseCartHarmonyInstaller::dragonRiderAdapterInstalled
+  IL_036b: ldnull         
+  IL_036c: stsfld         HorseCartHarmonyInstaller::dragonRiderIsMountedGetter
+  IL_0371: ldnull         
+  IL_0372: stsfld         HorseCartHarmonyInstaller::dragonRiderDismountMethod
+  IL_0377: ret            
+
+---- HorseCartHarmonyInstaller::InstallRequiredVanillaPatches rva=2178
+  maxstack=9 locals_sig=token(0x11000002) size=551
+  IL_0384: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallInventoryWindow
+  IL_0389: call           System.Type::GetTypeFromHandle
+  IL_038e: stloc.0        
+  IL_038f: ldloc.0        
+  IL_0390: ldstr          "ShowWagon"
+  IL_0395: ldc.i4.s       36
+  IL_0397: ldc.i4.2       
+  IL_0398: ldtoken        typeref:System.Void
+  IL_039d: call           System.Type::GetTypeFromHandle
+  IL_03a2: ldc.i4.1       
+  IL_03a3: newarr         typeref:System.Type
+  IL_03a8: dup            
+  IL_03a9: ldc.i4.0       
+  IL_03aa: ldtoken        typeref:System.Boolean
+  IL_03af: call           System.Type::GetTypeFromHandle
+  IL_03b4: stelem.ref     
+  IL_03b5: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_03ba: ldstr          "InventoryShowWagonPrefix"
+  IL_03bf: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_03c4: ldloc.0        
+  IL_03c5: ldstr          "AllowDungeonWagonAccess"
+  IL_03ca: ldc.i4.s       20
+  IL_03cc: ldc.i4.0       
+  IL_03cd: ldtoken        typeref:System.Void
+  IL_03d2: call           System.Type::GetTypeFromHandle
+  IL_03d7: call           methodspec:System.Array::Empty
+  IL_03dc: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_03e1: ldstr          "InventoryAllowDungeonWagonAccessPostfix"
+  IL_03e6: call           HorseCartHarmonyInstaller::PatchPostfix
+  IL_03eb: ldloc.0        
+  IL_03ec: ldstr          "OnPop"
+  IL_03f1: ldc.i4.s       20
+  IL_03f3: ldc.i4.0       
+  IL_03f4: ldtoken        typeref:System.Void
+  IL_03f9: call           System.Type::GetTypeFromHandle
+  IL_03fe: call           methodspec:System.Array::Empty
+  IL_0403: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_0408: ldstr          "InventoryOnPopPostfix"
+  IL_040d: call           HorseCartHarmonyInstaller::PatchPostfix
+  IL_0412: ldloc.0        
+  IL_0413: ldstr          "WagonButton_OnMouseClick"
+  IL_0418: ldc.i4.s       36
+  IL_041a: ldc.i4.2       
+  IL_041b: ldtoken        typeref:System.Void
+  IL_0420: call           System.Type::GetTypeFromHandle
+  IL_0425: ldc.i4.2       
+  IL_0426: newarr         typeref:System.Type
+  IL_042b: dup            
+  IL_042c: ldc.i4.0       
+  IL_042d: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_0432: call           System.Type::GetTypeFromHandle
+  IL_0437: stelem.ref     
+  IL_0438: dup            
+  IL_0439: ldc.i4.1       
+  IL_043a: ldtoken        typeref:UnityEngine.Vector2
+  IL_043f: call           System.Type::GetTypeFromHandle
+  IL_0444: stelem.ref     
+  IL_0445: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_044a: ldstr          "InventoryClickPrefix"
+  IL_044f: ldstr          "InventoryClickFinalizer"
+  IL_0454: call           HorseCartHarmonyInstaller::PatchPrefixFinalizer
+  IL_0459: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTradeWindow
+  IL_045e: call           System.Type::GetTypeFromHandle
+  IL_0463: ldstr          "SelectWagon"
+  IL_0468: ldc.i4.s       36
+  IL_046a: ldc.i4.1       
+  IL_046b: ldtoken        typeref:System.Void
+  IL_0470: call           System.Type::GetTypeFromHandle
+  IL_0475: ldc.i4.1       
+  IL_0476: newarr         typeref:System.Type
+  IL_047b: dup            
+  IL_047c: ldc.i4.0       
+  IL_047d: ldtoken        typeref:System.Boolean
+  IL_0482: call           System.Type::GetTypeFromHandle
+  IL_0487: stelem.ref     
+  IL_0488: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_048d: ldstr          "TradeSelectWagonPrefix"
+  IL_0492: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_0497: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTransportWindow
+  IL_049c: call           System.Type::GetTypeFromHandle
+  IL_04a1: stloc.1        
+  IL_04a2: ldloc.1        
+  IL_04a3: ldstr          "HorseButton_OnMouseClick"
+  IL_04a8: ldc.i4.s       36
+  IL_04aa: ldc.i4.2       
+  IL_04ab: ldtoken        typeref:System.Void
+  IL_04b0: call           System.Type::GetTypeFromHandle
+  IL_04b5: ldc.i4.2       
+  IL_04b6: newarr         typeref:System.Type
+  IL_04bb: dup            
+  IL_04bc: ldc.i4.0       
+  IL_04bd: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_04c2: call           System.Type::GetTypeFromHandle
+  IL_04c7: stelem.ref     
+  IL_04c8: dup            
+  IL_04c9: ldc.i4.1       
+  IL_04ca: ldtoken        typeref:UnityEngine.Vector2
+  IL_04cf: call           System.Type::GetTypeFromHandle
+  IL_04d4: stelem.ref     
+  IL_04d5: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_04da: ldstr          "HorseMousePrefix"
+  IL_04df: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_04e4: ldloc.1        
+  IL_04e5: ldstr          "HorseButton_OnKeyboardEvent"
+  IL_04ea: ldc.i4.s       36
+  IL_04ec: ldc.i4.2       
+  IL_04ed: ldtoken        typeref:System.Void
+  IL_04f2: call           System.Type::GetTypeFromHandle
+  IL_04f7: ldc.i4.2       
+  IL_04f8: newarr         typeref:System.Type
+  IL_04fd: dup            
+  IL_04fe: ldc.i4.0       
+  IL_04ff: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_0504: call           System.Type::GetTypeFromHandle
+  IL_0509: stelem.ref     
+  IL_050a: dup            
+  IL_050b: ldc.i4.1       
+  IL_050c: ldtoken        typeref:UnityEngine.Event
+  IL_0511: call           System.Type::GetTypeFromHandle
+  IL_0516: stelem.ref     
+  IL_0517: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_051c: ldstr          "HorseKeyboardPrefix"
+  IL_0521: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_0526: ldloc.1        
+  IL_0527: ldstr          "CartButton_OnMouseClick"
+  IL_052c: ldc.i4.s       36
+  IL_052e: ldc.i4.2       
+  IL_052f: ldtoken        typeref:System.Void
+  IL_0534: call           System.Type::GetTypeFromHandle
+  IL_0539: ldc.i4.2       
+  IL_053a: newarr         typeref:System.Type
+  IL_053f: dup            
+  IL_0540: ldc.i4.0       
+  IL_0541: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_0546: call           System.Type::GetTypeFromHandle
+  IL_054b: stelem.ref     
+  IL_054c: dup            
+  IL_054d: ldc.i4.1       
+  IL_054e: ldtoken        typeref:UnityEngine.Vector2
+  IL_0553: call           System.Type::GetTypeFromHandle
+  IL_0558: stelem.ref     
+  IL_0559: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_055e: ldstr          "CartMousePrefix"
+  IL_0563: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_0568: ldloc.1        
+  IL_0569: ldstr          "CartButton_OnKeyboardEvent"
+  IL_056e: ldc.i4.s       36
+  IL_0570: ldc.i4.2       
+  IL_0571: ldtoken        typeref:System.Void
+  IL_0576: call           System.Type::GetTypeFromHandle
+  IL_057b: ldc.i4.2       
+  IL_057c: newarr         typeref:System.Type
+  IL_0581: dup            
+  IL_0582: ldc.i4.0       
+  IL_0583: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_0588: call           System.Type::GetTypeFromHandle
+  IL_058d: stelem.ref     
+  IL_058e: dup            
+  IL_058f: ldc.i4.1       
+  IL_0590: ldtoken        typeref:UnityEngine.Event
+  IL_0595: call           System.Type::GetTypeFromHandle
+  IL_059a: stelem.ref     
+  IL_059b: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_05a0: ldstr          "CartKeyboardPrefix"
+  IL_05a5: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_05aa: ret            
+
+---- HorseCartHarmonyInstaller::InstallExpandedInventoryAdapter rva=23ac
+  maxstack=9 locals_sig=token(0x11000003) size=252
+  IL_05b8: call           System.AppDomain::get_CurrentDomain
+  IL_05bd: callvirt       System.AppDomain::GetAssemblies
+  IL_05c2: ldsfld         <>c::<>9__20_0
+  IL_05c7: dup            
+  IL_05c8: brtrue.s       1505
+  IL_05ca: pop            
+  IL_05cb: ldsfld         <>c::<>9
+  IL_05d0: ldftn          <>c::<InstallExpandedInventoryAdapter>b__20_0
+  IL_05d6: newobj         ::.ctor
+  IL_05db: dup            
+  IL_05dc: stsfld         <>c::<>9__20_0
+  IL_05e1: call           methodspec:System.Linq.Enumerable::Select
+  IL_05e6: ldsfld         <>c::<>9__20_1
+  IL_05eb: dup            
+  IL_05ec: brtrue.s       1541
+  IL_05ee: pop            
+  IL_05ef: ldsfld         <>c::<>9
+  IL_05f4: ldftn          <>c::<InstallExpandedInventoryAdapter>b__20_1
+  IL_05fa: newobj         ::.ctor
+  IL_05ff: dup            
+  IL_0600: stsfld         <>c::<>9__20_1
+  IL_0605: call           methodspec:System.Linq.Enumerable::FirstOrDefault
+  IL_060a: stloc.0        
+  IL_060b: ldloc.0        
+  IL_060c: ldnull         
+  IL_060d: call           System.Type::op_Equality
+  IL_0612: brtrue.s       1574
+  IL_0614: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallInventoryWindow
+  IL_0619: call           System.Type::GetTypeFromHandle
+  IL_061e: ldloc.0        
+  IL_061f: callvirt       System.Type::IsAssignableFrom
+  IL_0624: brtrue.s       1585
+  IL_0626: ldstr          "Expanded Inventory 1 is enabled but its expected window type is unavailable"
+  IL_062b: newobj         System.InvalidOperationException::.ctor
+  IL_0630: throw          
+  IL_0631: ldloc.0        
+  IL_0632: ldstr          "ShowWagon"
+  IL_0637: ldc.i4.s       36
+  IL_0639: ldc.i4.1       
+  IL_063a: ldtoken        typeref:System.Void
+  IL_063f: call           System.Type::GetTypeFromHandle
+  IL_0644: ldc.i4.1       
+  IL_0645: newarr         typeref:System.Type
+  IL_064a: dup            
+  IL_064b: ldc.i4.0       
+  IL_064c: ldtoken        typeref:System.Boolean
+  IL_0651: call           System.Type::GetTypeFromHandle
+  IL_0656: stelem.ref     
+  IL_0657: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_065c: ldstr          "InventoryShowWagonPrefix"
+  IL_0661: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_0666: ldloc.0        
+  IL_0667: ldstr          "WagonButton_OnMouseClick"
+  IL_066c: ldc.i4.s       36
+  IL_066e: ldc.i4.1       
+  IL_066f: ldtoken        typeref:System.Void
+  IL_0674: call           System.Type::GetTypeFromHandle
+  IL_0679: ldc.i4.2       
+  IL_067a: newarr         typeref:System.Type
+  IL_067f: dup            
+  IL_0680: ldc.i4.0       
+  IL_0681: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_0686: call           System.Type::GetTypeFromHandle
+  IL_068b: stelem.ref     
+  IL_068c: dup            
+  IL_068d: ldc.i4.1       
+  IL_068e: ldtoken        typeref:UnityEngine.Vector2
+  IL_0693: call           System.Type::GetTypeFromHandle
+  IL_0698: stelem.ref     
+  IL_0699: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_069e: ldstr          "InventoryClickPrefix"
+  IL_06a3: ldstr          "InventoryClickFinalizer"
+  IL_06a8: call           HorseCartHarmonyInstaller::PatchPrefixFinalizer
+  IL_06ad: ldc.i4.1       
+  IL_06ae: stsfld         HorseCartHarmonyInstaller::expandedAdapterInstalled
+  IL_06b3: ret            
+
+---- HorseCartHarmonyInstaller::InstallUncannyUiAdapter rva=24b4
+  maxstack=9 locals_sig=token(0x11000004) size=323
+  IL_06c0: newobj         <>c__DisplayClass21_0::.ctor
+  IL_06c5: stloc.0        
+  IL_06c6: ldloc.0        
+  IL_06c7: ldarg.0        
+  IL_06c8: ldc.i4.1       
+  IL_06c9: beq.s          1746
+  IL_06cb: ldstr          "Game.Mods.UncannyUI.Scripts.UncannyInventoryWindow"
+  IL_06d0: br.s           1751
+  IL_06d2: ldstr          "DaggerfallWorkshop.Game.UserInterfaceWindows.UncannyInventoryWindow"
+  IL_06d7: stfld          <>c__DisplayClass21_0::typeName
+  IL_06dc: ldarg.0        
+  IL_06dd: ldc.i4.1       
+  IL_06de: beq.s          1767
+  IL_06e0: ldstr          "UncannyUI RU 1.9.1"
+  IL_06e5: br.s           1772
+  IL_06e7: ldstr          "UncannyUI 1.2"
+  IL_06ec: stloc.1        
+  IL_06ed: call           System.AppDomain::get_CurrentDomain
+  IL_06f2: callvirt       System.AppDomain::GetAssemblies
+  IL_06f7: ldloc.0        
+  IL_06f8: ldftn          <>c__DisplayClass21_0::<InstallUncannyUiAdapter>b__0
+  IL_06fe: newobj         ::.ctor
+  IL_0703: call           methodspec:System.Linq.Enumerable::Select
+  IL_0708: ldsfld         <>c::<>9__21_1
+  IL_070d: dup            
+  IL_070e: brtrue.s       1831
+  IL_0710: pop            
+  IL_0711: ldsfld         <>c::<>9
+  IL_0716: ldftn          <>c::<InstallUncannyUiAdapter>b__21_1
+  IL_071c: newobj         ::.ctor
+  IL_0721: dup            
+  IL_0722: stsfld         <>c::<>9__21_1
+  IL_0727: call           methodspec:System.Linq.Enumerable::FirstOrDefault
+  IL_072c: stloc.2        
+  IL_072d: ldloc.2        
+  IL_072e: ldnull         
+  IL_072f: call           System.Type::op_Equality
+  IL_0734: brtrue.s       1864
+  IL_0736: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallInventoryWindow
+  IL_073b: call           System.Type::GetTypeFromHandle
+  IL_0740: ldloc.2        
+  IL_0741: callvirt       System.Type::IsAssignableFrom
+  IL_0746: brtrue.s       1881
+  IL_0748: ldloc.1        
+  IL_0749: ldstr          " is enabled but its expected Inventory window type is unavailable"
+  IL_074e: call           System.String::Concat
+  IL_0753: newobj         System.InvalidOperationException::.ctor
+  IL_0758: throw          
+  IL_0759: ldloc.2        
+  IL_075a: ldstr          "ShowWagon"
+  IL_075f: ldc.i4.s       36
+  IL_0761: ldc.i4.2       
+  IL_0762: ldtoken        typeref:System.Void
+  IL_0767: call           System.Type::GetTypeFromHandle
+  IL_076c: ldc.i4.1       
+  IL_076d: newarr         typeref:System.Type
+  IL_0772: dup            
+  IL_0773: ldc.i4.0       
+  IL_0774: ldtoken        typeref:System.Boolean
+  IL_0779: call           System.Type::GetTypeFromHandle
+  IL_077e: stelem.ref     
+  IL_077f: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_0784: ldstr          "InventoryShowWagonPrefix"
+  IL_0789: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_078e: ldloc.2        
+  IL_078f: ldstr          "WagonButton_OnMouseClick"
+  IL_0794: ldc.i4.s       36
+  IL_0796: ldc.i4.2       
+  IL_0797: ldtoken        typeref:System.Void
+  IL_079c: call           System.Type::GetTypeFromHandle
+  IL_07a1: ldc.i4.2       
+  IL_07a2: newarr         typeref:System.Type
+  IL_07a7: dup            
+  IL_07a8: ldc.i4.0       
+  IL_07a9: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_07ae: call           System.Type::GetTypeFromHandle
+  IL_07b3: stelem.ref     
+  IL_07b4: dup            
+  IL_07b5: ldc.i4.1       
+  IL_07b6: ldtoken        typeref:UnityEngine.Vector2
+  IL_07bb: call           System.Type::GetTypeFromHandle
+  IL_07c0: stelem.ref     
+  IL_07c1: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_07c6: ldstr          "InventoryClickPrefix"
+  IL_07cb: ldstr          "InventoryClickFinalizer"
+  IL_07d0: call           HorseCartHarmonyInstaller::PatchPrefixFinalizer
+  IL_07d5: ldloc.2        
+  IL_07d6: ldstr          "OnPop"
+  IL_07db: ldc.i4.s       20
+  IL_07dd: ldc.i4.0       
+  IL_07de: ldtoken        typeref:System.Void
+  IL_07e3: call           System.Type::GetTypeFromHandle
+  IL_07e8: call           methodspec:System.Array::Empty
+  IL_07ed: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_07f2: ldstr          "InventoryOnPopPostfix"
+  IL_07f7: call           HorseCartHarmonyInstaller::PatchPostfix
+  IL_07fc: ldarg.0        
+  IL_07fd: stsfld         HorseCartHarmonyInstaller::uncannyAdapterVariant
+  IL_0802: ret            
+
+---- HorseCartHarmonyInstaller::InstallDragonRiderAdapter rva=2604
+  maxstack=9 locals_sig=token(0x11000005) size=587
+  IL_0810: call           System.AppDomain::get_CurrentDomain
+  IL_0815: callvirt       System.AppDomain::GetAssemblies
+  IL_081a: ldsfld         <>c::<>9__22_0
+  IL_081f: dup            
+  IL_0820: brtrue.s       2105
+  IL_0822: pop            
+  IL_0823: ldsfld         <>c::<>9
+  IL_0828: ldftn          <>c::<InstallDragonRiderAdapter>b__22_0
+  IL_082e: newobj         ::.ctor
+  IL_0833: dup            
+  IL_0834: stsfld         <>c::<>9__22_0
+  IL_0839: call           methodspec:System.Linq.Enumerable::Select
+  IL_083e: ldsfld         <>c::<>9__22_1
+  IL_0843: dup            
+  IL_0844: brtrue.s       2141
+  IL_0846: pop            
+  IL_0847: ldsfld         <>c::<>9
+  IL_084c: ldftn          <>c::<InstallDragonRiderAdapter>b__22_1
+  IL_0852: newobj         ::.ctor
+  IL_0857: dup            
+  IL_0858: stsfld         <>c::<>9__22_1
+  IL_085d: call           methodspec:System.Linq.Enumerable::FirstOrDefault
+  IL_0862: stloc.0        
+  IL_0863: ldloc.0        
+  IL_0864: ldnull         
+  IL_0865: call           System.Type::op_Equality
+  IL_086a: brtrue.s       2174
+  IL_086c: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow
+  IL_0871: call           System.Type::GetTypeFromHandle
+  IL_0876: ldloc.0        
+  IL_0877: callvirt       System.Type::IsAssignableFrom
+  IL_087c: brtrue.s       2185
+  IL_087e: ldstr          "Dragon Rider 1.1 is enabled but its expected Transport window type is unavailable"
+  IL_0883: newobj         System.InvalidOperationException::.ctor
+  IL_0888: throw          
+  IL_0889: ldloc.0        
+  IL_088a: callvirt       System.Type::get_Assembly
+  IL_088f: ldstr          "DragonRider.DragonRider"
+  IL_0894: ldc.i4.0       
+  IL_0895: callvirt       System.Reflection.Assembly::GetType
+  IL_089a: dup            
+  IL_089b: ldnull         
+  IL_089c: call           System.Type::op_Equality
+  IL_08a1: brfalse.s      2222
+  IL_08a3: ldstr          "DragonRider.DragonRider"
+  IL_08a8: newobj         System.TypeLoadException::.ctor
+  IL_08ad: throw          
+  IL_08ae: dup            
+  IL_08af: ldstr          "IsDragonMounted"
+  IL_08b4: ldc.i4.s       24
+  IL_08b6: callvirt       System.Type::GetProperty
+  IL_08bb: stloc.1        
+  IL_08bc: ldloc.1        
+  IL_08bd: ldnull         
+  IL_08be: call           System.Reflection.PropertyInfo::op_Inequality
+  IL_08c3: brtrue.s       2248
+  IL_08c5: ldnull         
+  IL_08c6: br.s           2255
+  IL_08c8: ldloc.1        
+  IL_08c9: ldc.i4.0       
+  IL_08ca: callvirt       System.Reflection.PropertyInfo::GetGetMethod
+  IL_08cf: stsfld         HorseCartHarmonyInstaller::dragonRiderIsMountedGetter
+  IL_08d4: ldstr          "DismountDragon"
+  IL_08d9: ldc.i4.s       24
+  IL_08db: ldnull         
+  IL_08dc: ldsfld         System.Type::EmptyTypes
+  IL_08e1: ldnull         
+  IL_08e2: callvirt       System.Type::GetMethod
+  IL_08e7: stsfld         HorseCartHarmonyInstaller::dragonRiderDismountMethod
+  IL_08ec: ldsfld         HorseCartHarmonyInstaller::dragonRiderIsMountedGetter
+  IL_08f1: ldnull         
+  IL_08f2: call           System.Reflection.MethodInfo::op_Equality
+  IL_08f7: brtrue.s       2364
+  IL_08f9: ldsfld         HorseCartHarmonyInstaller::dragonRiderIsMountedGetter
+  IL_08fe: callvirt       System.Reflection.MethodInfo::get_ReturnType
+  IL_0903: ldtoken        typeref:System.Boolean
+  IL_0908: call           System.Type::GetTypeFromHandle
+  IL_090d: call           System.Type::op_Inequality
+  IL_0912: brtrue.s       2364
+  IL_0914: ldsfld         HorseCartHarmonyInstaller::dragonRiderDismountMethod
+  IL_0919: ldnull         
+  IL_091a: call           System.Reflection.MethodInfo::op_Equality
+  IL_091f: brtrue.s       2364
+  IL_0921: ldsfld         HorseCartHarmonyInstaller::dragonRiderDismountMethod
+  IL_0926: callvirt       System.Reflection.MethodInfo::get_ReturnType
+  IL_092b: ldtoken        typeref:System.Void
+  IL_0930: call           System.Type::GetTypeFromHandle
+  IL_0935: call           System.Type::op_Inequality
+  IL_093a: brfalse.s      2380
+  IL_093c: ldstr          "DragonRider.DragonRider"
+  IL_0941: ldstr          "IsDragonMounted/DismountDragon"
+  IL_0946: newobj         System.MissingMethodException::.ctor
+  IL_094b: throw          
+  IL_094c: ldloc.0        
+  IL_094d: ldstr          "HorseButton_OnMouseClick"
+  IL_0952: ldc.i4.s       36
+  IL_0954: ldc.i4.2       
+  IL_0955: ldtoken        typeref:System.Void
+  IL_095a: call           System.Type::GetTypeFromHandle
+  IL_095f: ldc.i4.2       
+  IL_0960: newarr         typeref:System.Type
+  IL_0965: dup            
+  IL_0966: ldc.i4.0       
+  IL_0967: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_096c: call           System.Type::GetTypeFromHandle
+  IL_0971: stelem.ref     
+  IL_0972: dup            
+  IL_0973: ldc.i4.1       
+  IL_0974: ldtoken        typeref:UnityEngine.Vector2
+  IL_0979: call           System.Type::GetTypeFromHandle
+  IL_097e: stelem.ref     
+  IL_097f: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_0984: ldstr          "DragonHorseMousePrefix"
+  IL_0989: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_098e: ldloc.0        
+  IL_098f: ldstr          "HorseButton_OnKeyboardEvent"
+  IL_0994: ldc.i4.s       36
+  IL_0996: ldc.i4.2       
+  IL_0997: ldtoken        typeref:System.Void
+  IL_099c: call           System.Type::GetTypeFromHandle
+  IL_09a1: ldc.i4.2       
+  IL_09a2: newarr         typeref:System.Type
+  IL_09a7: dup            
+  IL_09a8: ldc.i4.0       
+  IL_09a9: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_09ae: call           System.Type::GetTypeFromHandle
+  IL_09b3: stelem.ref     
+  IL_09b4: dup            
+  IL_09b5: ldc.i4.1       
+  IL_09b6: ldtoken        typeref:UnityEngine.Event
+  IL_09bb: call           System.Type::GetTypeFromHandle
+  IL_09c0: stelem.ref     
+  IL_09c1: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_09c6: ldstr          "DragonHorseKeyboardPrefix"
+  IL_09cb: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_09d0: ldloc.0        
+  IL_09d1: ldstr          "CartButton_OnMouseClick"
+  IL_09d6: ldc.i4.s       36
+  IL_09d8: ldc.i4.2       
+  IL_09d9: ldtoken        typeref:System.Void
+  IL_09de: call           System.Type::GetTypeFromHandle
+  IL_09e3: ldc.i4.2       
+  IL_09e4: newarr         typeref:System.Type
+  IL_09e9: dup            
+  IL_09ea: ldc.i4.0       
+  IL_09eb: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_09f0: call           System.Type::GetTypeFromHandle
+  IL_09f5: stelem.ref     
+  IL_09f6: dup            
+  IL_09f7: ldc.i4.1       
+  IL_09f8: ldtoken        typeref:UnityEngine.Vector2
+  IL_09fd: call           System.Type::GetTypeFromHandle
+  IL_0a02: stelem.ref     
+  IL_0a03: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_0a08: ldstr          "DragonCartMousePrefix"
+  IL_0a0d: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_0a12: ldloc.0        
+  IL_0a13: ldstr          "CartButton_OnKeyboardEvent"
+  IL_0a18: ldc.i4.s       36
+  IL_0a1a: ldc.i4.2       
+  IL_0a1b: ldtoken        typeref:System.Void
+  IL_0a20: call           System.Type::GetTypeFromHandle
+  IL_0a25: ldc.i4.2       
+  IL_0a26: newarr         typeref:System.Type
+  IL_0a2b: dup            
+  IL_0a2c: ldc.i4.0       
+  IL_0a2d: ldtoken        typeref:DaggerfallWorkshop.Game.UserInterface.BaseScreenComponent
+  IL_0a32: call           System.Type::GetTypeFromHandle
+  IL_0a37: stelem.ref     
+  IL_0a38: dup            
+  IL_0a39: ldc.i4.1       
+  IL_0a3a: ldtoken        typeref:UnityEngine.Event
+  IL_0a3f: call           System.Type::GetTypeFromHandle
+  IL_0a44: stelem.ref     
+  IL_0a45: call           HorseCartHarmonyInstaller::RequireDeclaredMethod
+  IL_0a4a: ldstr          "DragonCartKeyboardPrefix"
+  IL_0a4f: call           HorseCartHarmonyInstaller::PatchPrefix
+  IL_0a54: ldc.i4.1       
+  IL_0a55: stsfld         HorseCartHarmonyInstaller::dragonRiderAdapterInstalled
+  IL_0a5a: ret            
+
+---- HorseCartHarmonyInstaller::RequireDeclaredMethod rva=285c
+  maxstack=6 locals_sig=token(0x11000006) size=83
+  IL_0a68: ldarg.0        
+  IL_0a69: ldarg.1        
+  IL_0a6a: ldarg.2        
+  IL_0a6b: ldc.i4.2       
+  IL_0a6c: or             
+  IL_0a6d: ldnull         
+  IL_0a6e: ldarg.s        argument(0x0005)
+  IL_0a70: ldnull         
+  IL_0a71: callvirt       System.Type::GetMethod
+  IL_0a76: stloc.0        
+  IL_0a77: ldloc.0        
+  IL_0a78: ldnull         
+  IL_0a79: call           System.Reflection.MethodInfo::op_Equality
+  IL_0a7e: brtrue.s       2720
+  IL_0a80: ldloc.0        
+  IL_0a81: callvirt       System.Reflection.MethodBase::get_IsStatic
+  IL_0a86: brtrue.s       2720
+  IL_0a88: ldloc.0        
+  IL_0a89: callvirt       System.Reflection.MethodInfo::get_ReturnType
+  IL_0a8e: ldarg.s        argument(0x0004)
+  IL_0a90: call           System.Type::op_Inequality
+  IL_0a95: brtrue.s       2720
+  IL_0a97: ldloc.0        
+  IL_0a98: ldarg.3        
+  IL_0a99: call           HorseCartHarmonyInstaller::HasExactAccess
+  IL_0a9e: brtrue.s       2745
+  IL_0aa0: ldarg.0        
+  IL_0aa1: callvirt       System.Type::get_FullName
+  IL_0aa6: ldarg.1        
+  IL_0aa7: ldarg.s        argument(0x0005)
+  IL_0aa9: call           HorseCartHarmonyInstaller::FormatParameters
+  IL_0aae: call           System.String::Concat
+  IL_0ab3: newobj         System.MissingMethodException::.ctor
+  IL_0ab8: throw          
+  IL_0ab9: ldloc.0        
+  IL_0aba: ret            
+
+---- HorseCartHarmonyInstaller::HasExactAccess rva=28bb
+  maxstack=8 locals_sig=None size=28
+  IL_0abc: ldarg.1        
+  IL_0abd: brtrue.s       2758
+  IL_0abf: ldarg.0        
+  IL_0ac0: callvirt       System.Reflection.MethodBase::get_IsPublic
+  IL_0ac5: ret            
+  IL_0ac6: ldarg.1        
+  IL_0ac7: ldc.i4.1       
+  IL_0ac8: bne.un.s       2769
+  IL_0aca: ldarg.0        
+  IL_0acb: callvirt       System.Reflection.MethodBase::get_IsFamily
+  IL_0ad0: ret            
+  IL_0ad1: ldarg.0        
+  IL_0ad2: callvirt       System.Reflection.MethodBase::get_IsPrivate
+  IL_0ad7: ret            
+
+---- HorseCartHarmonyInstaller::FormatParameters rva=28d8
+  maxstack=5 locals_sig=None size=68
+  IL_0ae4: ldstr          "("
+  IL_0ae9: ldstr          ", "
+  IL_0aee: ldarg.0        
+  IL_0aef: ldsfld         <>c::<>9__25_0
+  IL_0af4: dup            
+  IL_0af5: brtrue.s       2830
+  IL_0af7: pop            
+  IL_0af8: ldsfld         <>c::<>9
+  IL_0afd: ldftn          <>c::<FormatParameters>b__25_0
+  IL_0b03: newobj         ::.ctor
+  IL_0b08: dup            
+  IL_0b09: stsfld         <>c::<>9__25_0
+  IL_0b0e: call           methodspec:System.Linq.Enumerable::Select
+  IL_0b13: call           methodspec:System.Linq.Enumerable::ToArray
+  IL_0b18: call           System.String::Join
+  IL_0b1d: ldstr          ")"
+  IL_0b22: call           System.String::Concat
+  IL_0b27: ret            
+
+---- HorseCartHarmonyInstaller::PatchPrefix rva=2928
+  maxstack=6 locals_sig=token(0x11000006) size=40
+  IL_0b34: ldarg.1        
+  IL_0b35: call           HorseCartHarmonyInstaller::RequirePatchMethod
+  IL_0b3a: stloc.0        
+  IL_0b3b: ldsfld         HorseCartHarmonyInstaller::harmony
+  IL_0b40: ldarg.0        
+  IL_0b41: ldloc.0        
+  IL_0b42: newobj         HarmonyLib.HarmonyMethod::.ctor
+  IL_0b47: ldnull         
+  IL_0b48: ldnull         
+  IL_0b49: ldnull         
+  IL_0b4a: callvirt       HarmonyLib.Harmony::Patch
+  IL_0b4f: pop            
+  IL_0b50: ldsfld         HorseCartHarmonyInstaller::requiredTargets
+  IL_0b55: ldarg.0        
+  IL_0b56: callvirt       ::Add
+  IL_0b5b: ret            
+
+---- HorseCartHarmonyInstaller::PatchPostfix rva=295c
+  maxstack=6 locals_sig=token(0x11000006) size=40
+  IL_0b68: ldarg.1        
+  IL_0b69: call           HorseCartHarmonyInstaller::RequirePatchMethod
+  IL_0b6e: stloc.0        
+  IL_0b6f: ldsfld         HorseCartHarmonyInstaller::harmony
+  IL_0b74: ldarg.0        
+  IL_0b75: ldnull         
+  IL_0b76: ldloc.0        
+  IL_0b77: newobj         HarmonyLib.HarmonyMethod::.ctor
+  IL_0b7c: ldnull         
+  IL_0b7d: ldnull         
+  IL_0b7e: callvirt       HarmonyLib.Harmony::Patch
+  IL_0b83: pop            
+  IL_0b84: ldsfld         HorseCartHarmonyInstaller::requiredTargets
+  IL_0b89: ldarg.0        
+  IL_0b8a: callvirt       ::Add
+  IL_0b8f: ret            
+
+---- HorseCartHarmonyInstaller::PatchPrefixFinalizer rva=2990
+  maxstack=8 locals_sig=None size=48
+  IL_0b91: ldsfld         HorseCartHarmonyInstaller::harmony
+  IL_0b96: ldarg.0        
+  IL_0b97: ldarg.1        
+  IL_0b98: call           HorseCartHarmonyInstaller::RequirePatchMethod
+  IL_0b9d: newobj         HarmonyLib.HarmonyMethod::.ctor
+  IL_0ba2: ldnull         
+  IL_0ba3: ldnull         
+  IL_0ba4: ldarg.2        
+  IL_0ba5: call           HorseCartHarmonyInstaller::RequirePatchMethod
+  IL_0baa: newobj         HarmonyLib.HarmonyMethod::.ctor
+  IL_0baf: callvirt       HarmonyLib.Harmony::Patch
+  IL_0bb4: pop            
+  IL_0bb5: ldsfld         HorseCartHarmonyInstaller::requiredTargets
+  IL_0bba: ldarg.0        
+  IL_0bbb: callvirt       ::Add
+  IL_0bc0: ret            
+
+---- HorseCartHarmonyInstaller::RequirePatchMethod rva=29c1
+  maxstack=8 locals_sig=None size=50
+  IL_0bc2: ldtoken        typedef:TrailingWagon.Compatibility.HorseCartHarmonyInstaller
+  IL_0bc7: call           System.Type::GetTypeFromHandle
+  IL_0bcc: ldarg.0        
+  IL_0bcd: ldc.i4.s       40
+  IL_0bcf: call           System.Type::GetMethod
+  IL_0bd4: dup            
+  IL_0bd5: ldnull         
+  IL_0bd6: call           System.Reflection.MethodInfo::op_Equality
+  IL_0bdb: brfalse.s      3059
+  IL_0bdd: ldtoken        typedef:TrailingWagon.Compatibility.HorseCartHarmonyInstaller
+  IL_0be2: call           System.Type::GetTypeFromHandle
+  IL_0be7: callvirt       System.Type::get_FullName
+  IL_0bec: ldarg.0        
+  IL_0bed: newobj         System.MissingMethodException::.ctor
+  IL_0bf2: throw          
+  IL_0bf3: ret            
+
+---- HorseCartHarmonyInstaller::OwnsEveryRequiredTarget rva=29f4
+  maxstack=3 locals_sig=token(0x11000007) size=74
+  IL_0c00: ldc.i4.s       9
+  IL_0c02: stloc.0        
+  IL_0c03: ldsfld         HorseCartHarmonyInstaller::expandedAdapterInstalled
+  IL_0c08: brfalse.s      3086
+  IL_0c0a: ldloc.0        
+  IL_0c0b: ldc.i4.2       
+  IL_0c0c: add            
+  IL_0c0d: stloc.0        
+  IL_0c0e: ldsfld         HorseCartHarmonyInstaller::uncannyAdapterVariant
+  IL_0c13: brfalse.s      3097
+  IL_0c15: ldloc.0        
+  IL_0c16: ldc.i4.3       
+  IL_0c17: add            
+  IL_0c18: stloc.0        
+  IL_0c19: ldsfld         HorseCartHarmonyInstaller::dragonRiderAdapterInstalled
+  IL_0c1e: brfalse.s      3108
+  IL_0c20: ldloc.0        
+  IL_0c21: ldc.i4.4       
+  IL_0c22: add            
+  IL_0c23: stloc.0        
+  IL_0c24: ldsfld         HorseCartHarmonyInstaller::requiredTargets
+  IL_0c29: callvirt       ::get_Count
+  IL_0c2e: ldloc.0        
+  IL_0c2f: bne.un.s       3144
+  IL_0c31: ldsfld         HorseCartHarmonyInstaller::requiredTargets
+  IL_0c36: ldnull         
+  IL_0c37: ldftn          HorseCartHarmonyInstaller::OwnsTarget
+  IL_0c3d: newobj         ::.ctor
+  IL_0c42: call           methodspec:System.Linq.Enumerable::All
+  IL_0c47: ret            
+  IL_0c48: ldc.i4.0       
+  IL_0c49: ret            
+
+---- HorseCartHarmonyInstaller::OwnsTarget rva=2a4c
+  maxstack=2 locals_sig=token(0x11000008) size=41
+  IL_0c58: ldarg.0        
+  IL_0c59: ldnull         
+  IL_0c5a: call           System.Reflection.MethodBase::op_Inequality
+  IL_0c5f: brtrue.s       3172
+  IL_0c61: ldnull         
+  IL_0c62: br.s           3178
+  IL_0c64: ldarg.0        
+  IL_0c65: call           HarmonyLib.Harmony::GetPatchInfo
+  IL_0c6a: stloc.0        
+  IL_0c6b: ldloc.0        
+  IL_0c6c: brfalse.s      3199
+  IL_0c6e: ldloc.0        
+  IL_0c6f: callvirt       HarmonyLib.Patches::get_Owners
+  IL_0c74: ldstr          "dfu.horse-cart-and-cargo.ui-compat"
+  IL_0c79: callvirt       ::Contains
+  IL_0c7e: ret            
+  IL_0c7f: ldc.i4.0       
+  IL_0c80: ret            
+
+---- HorseCartHarmonyInstaller::BuildStatus rva=2a84
+  maxstack=2 locals_sig=token(0x11000001) size=88
+  IL_0c90: ldstr          "Inventory, Trade, Transport"
+  IL_0c95: stloc.0        
+  IL_0c96: ldsfld         HorseCartHarmonyInstaller::expandedAdapterInstalled
+  IL_0c9b: brfalse.s      3241
+  IL_0c9d: ldloc.0        
+  IL_0c9e: ldstr          "; Expanded Inventory 1 adapter"
+  IL_0ca3: call           System.String::Concat
+  IL_0ca8: stloc.0        
+  IL_0ca9: ldsfld         HorseCartHarmonyInstaller::uncannyAdapterVariant
+  IL_0cae: ldc.i4.1       
+  IL_0caf: bne.un.s       3263
+  IL_0cb1: ldloc.0        
+  IL_0cb2: ldstr          "; UncannyUI 1.2 adapter"
+  IL_0cb7: call           System.String::Concat
+  IL_0cbc: stloc.0        
+  IL_0cbd: br.s           3283
+  IL_0cbf: ldsfld         HorseCartHarmonyInstaller::uncannyAdapterVariant
+  IL_0cc4: ldc.i4.2       
+  IL_0cc5: bne.un.s       3283
+  IL_0cc7: ldloc.0        
+  IL_0cc8: ldstr          "; UncannyUI RU 1.9.1 adapter"
+  IL_0ccd: call           System.String::Concat
+  IL_0cd2: stloc.0        
+  IL_0cd3: ldsfld         HorseCartHarmonyInstaller::dragonRiderAdapterInstalled
+  IL_0cd8: brfalse.s      3302
+  IL_0cda: ldloc.0        
+  IL_0cdb: ldstr          "; Dragon Rider 1.1 adapter"
+  IL_0ce0: call           System.String::Concat
+  IL_0ce5: stloc.0        
+  IL_0ce6: ldloc.0        
+  IL_0ce7: ret            
+
+---- HorseCartHarmonyInstaller::InventoryAllowDungeonWagonAccessPostfix rva=2ae8
+  maxstack=8 locals_sig=None size=16
+  IL_0ce9: ldarg.0        
+  IL_0cea: brfalse.s      3320
+  IL_0cec: ldsfld         HorseCartHarmonyInstaller::positiveInventoryRequests
+  IL_0cf1: ldarg.0        
+  IL_0cf2: callvirt       ::Add
+  IL_0cf7: pop            
+  IL_0cf8: ret            
+
+---- HorseCartHarmonyInstaller::InventoryOnPopPostfix rva=2af9
+  maxstack=8 locals_sig=None size=16
+  IL_0cfa: ldarg.0        
+  IL_0cfb: brfalse.s      3337
+  IL_0cfd: ldsfld         HorseCartHarmonyInstaller::positiveInventoryRequests
+  IL_0d02: ldarg.0        
+  IL_0d03: callvirt       ::Remove
+  IL_0d08: pop            
+  IL_0d09: ret            
+
+---- HorseCartHarmonyInstaller::InventoryClickPrefix rva=2b0a
+  maxstack=8 locals_sig=None size=13
+  IL_0d0b: ldsfld         HorseCartHarmonyInstaller::inventoryClickDepth
+  IL_0d10: ldc.i4.1       
+  IL_0d11: add            
+  IL_0d12: stsfld         HorseCartHarmonyInstaller::inventoryClickDepth
+  IL_0d17: ret            
+
+---- HorseCartHarmonyInstaller::InventoryClickFinalizer rva=2b18
+  maxstack=8 locals_sig=None size=22
+  IL_0d19: ldsfld         HorseCartHarmonyInstaller::inventoryClickDepth
+  IL_0d1e: ldc.i4.0       
+  IL_0d1f: ble.s          3373
+  IL_0d21: ldsfld         HorseCartHarmonyInstaller::inventoryClickDepth
+  IL_0d26: ldc.i4.1       
+  IL_0d27: sub            
+  IL_0d28: stsfld         HorseCartHarmonyInstaller::inventoryClickDepth
+  IL_0d2d: ldarg.0        
+  IL_0d2e: ret            
+
+---- HorseCartHarmonyInstaller::InventoryShowWagonPrefix rva=2b30
+  maxstack=3 locals_sig=token(0x11000009) size=93
+  IL_0d3c: ldarg.1        
+  IL_0d3d: brtrue.s       3393
+  IL_0d3f: ldc.i4.1       
+  IL_0d40: ret            
+  IL_0d41: ldarg.0        
+  IL_0d42: call           HorseCartHarmonyInstaller::ConsumePositiveInventoryRequest
+  IL_0d47: stloc.0        
+  IL_0d48: ldloc.0        
+  IL_0d49: brfalse.s      3433
+  IL_0d4b: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_0d50: ldnull         
+  IL_0d51: call           UnityEngine.Object::op_Inequality
+  IL_0d56: brfalse.s      3433
+  IL_0d58: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_0d5d: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerEnterExit
+  IL_0d62: callvirt       DaggerfallWorkshop.Game.PlayerEnterExit::get_IsPlayerInsideDungeon
+  IL_0d67: brtrue.s       3436
+  IL_0d69: ldc.i4.0       
+  IL_0d6a: br.s           3437
+  IL_0d6c: ldc.i4.2       
+  IL_0d6d: call           TrailingWagon.HorseCartCompatibilityApi::CanAccessWagonStorage
+  IL_0d72: stloc.1        
+  IL_0d73: ldloc.1        
+  IL_0d74: ldfld          TrailingWagon.HorseCartAccessDecision::Allowed
+  IL_0d79: brfalse.s      3453
+  IL_0d7b: ldc.i4.1       
+  IL_0d7c: ret            
+  IL_0d7d: ldsfld         HorseCartHarmonyInstaller::inventoryClickDepth
+  IL_0d82: ldc.i4.0       
+  IL_0d83: cgt            
+  IL_0d85: ldloc.0        
+  IL_0d86: or             
+  IL_0d87: brfalse.s      3479
+  IL_0d89: ldloc.1        
+  IL_0d8a: ldfld          TrailingWagon.HorseCartAccessDecision::DenialMessage
+  IL_0d8f: ldc.i4.0       
+  IL_0d90: ldnull         
+  IL_0d91: call           DaggerfallWorkshop.Game.DaggerfallUI::MessageBox
+  IL_0d96: pop            
+  IL_0d97: ldc.i4.0       
+  IL_0d98: ret            
+
+---- HorseCartHarmonyInstaller::ConsumePositiveInventoryRequest rva=2b99
+  maxstack=8 locals_sig=None size=32
+  IL_0d9a: ldarg.0        
+  IL_0d9b: brfalse.s      3498
+  IL_0d9d: ldsfld         HorseCartHarmonyInstaller::positiveInventoryRequests
+  IL_0da2: ldarg.0        
+  IL_0da3: callvirt       ::Contains
+  IL_0da8: brtrue.s       3500
+  IL_0daa: ldc.i4.0       
+  IL_0dab: ret            
+  IL_0dac: ldsfld         HorseCartHarmonyInstaller::positiveInventoryRequests
+  IL_0db1: ldarg.0        
+  IL_0db2: callvirt       ::Remove
+  IL_0db7: pop            
+  IL_0db8: ldc.i4.1       
+  IL_0db9: ret            
+
+---- HorseCartHarmonyInstaller::TradeSelectWagonPrefix rva=2bbc
+  maxstack=3 locals_sig=token(0x1100000A) size=41
+  IL_0dc8: ldarg.0        
+  IL_0dc9: brtrue.s       3533
+  IL_0dcb: ldc.i4.1       
+  IL_0dcc: ret            
+  IL_0dcd: ldc.i4.1       
+  IL_0dce: call           TrailingWagon.HorseCartCompatibilityApi::CanAccessWagonStorage
+  IL_0dd3: stloc.0        
+  IL_0dd4: ldloc.0        
+  IL_0dd5: ldfld          TrailingWagon.HorseCartAccessDecision::Allowed
+  IL_0dda: brtrue.s       3562
+  IL_0ddc: ldloc.0        
+  IL_0ddd: ldfld          TrailingWagon.HorseCartAccessDecision::DenialMessage
+  IL_0de2: ldc.i4.0       
+  IL_0de3: ldnull         
+  IL_0de4: call           DaggerfallWorkshop.Game.DaggerfallUI::MessageBox
+  IL_0de9: pop            
+  IL_0dea: ldloc.0        
+  IL_0deb: ldfld          TrailingWagon.HorseCartAccessDecision::Allowed
+  IL_0df0: ret            
+
+---- HorseCartHarmonyInstaller::HorseMousePrefix rva=2bf1
+  maxstack=8 locals_sig=None size=8
+  IL_0df2: ldarg.0        
+  IL_0df3: ldc.i4.1       
+  IL_0df4: call           HorseCartHarmonyInstaller::RouteTransport
+  IL_0df9: ret            
+
+---- HorseCartHarmonyInstaller::HorseKeyboardPrefix rva=2bfa
+  maxstack=8 locals_sig=None size=22
+  IL_0dfb: ldarg.1        
+  IL_0dfc: brfalse.s      3591
+  IL_0dfe: ldarg.1        
+  IL_0dff: callvirt       UnityEngine.Event::get_type
+  IL_0e04: ldc.i4.5       
+  IL_0e05: beq.s          3593
+  IL_0e07: ldc.i4.1       
+  IL_0e08: ret            
+  IL_0e09: ldarg.0        
+  IL_0e0a: ldc.i4.1       
+  IL_0e0b: call           HorseCartHarmonyInstaller::RouteTransport
+  IL_0e10: ret            
+
+---- HorseCartHarmonyInstaller::CartMousePrefix rva=2c11
+  maxstack=8 locals_sig=None size=8
+  IL_0e12: ldarg.0        
+  IL_0e13: ldc.i4.2       
+  IL_0e14: call           HorseCartHarmonyInstaller::RouteTransport
+  IL_0e19: ret            
+
+---- HorseCartHarmonyInstaller::CartKeyboardPrefix rva=2c1a
+  maxstack=8 locals_sig=None size=22
+  IL_0e1b: ldarg.1        
+  IL_0e1c: brfalse.s      3623
+  IL_0e1e: ldarg.1        
+  IL_0e1f: callvirt       UnityEngine.Event::get_type
+  IL_0e24: ldc.i4.5       
+  IL_0e25: beq.s          3625
+  IL_0e27: ldc.i4.1       
+  IL_0e28: ret            
+  IL_0e29: ldarg.0        
+  IL_0e2a: ldc.i4.2       
+  IL_0e2b: call           HorseCartHarmonyInstaller::RouteTransport
+  IL_0e30: ret            
+
+---- HorseCartHarmonyInstaller::DragonHorseMousePrefix rva=2c31
+  maxstack=8 locals_sig=None size=8
+  IL_0e32: ldarg.0        
+  IL_0e33: ldc.i4.1       
+  IL_0e34: call           HorseCartHarmonyInstaller::RouteDragonRiderTransport
+  IL_0e39: ret            
+
+---- HorseCartHarmonyInstaller::DragonHorseKeyboardPrefix rva=2c3a
+  maxstack=8 locals_sig=None size=22
+  IL_0e3b: ldarg.1        
+  IL_0e3c: brfalse.s      3655
+  IL_0e3e: ldarg.1        
+  IL_0e3f: callvirt       UnityEngine.Event::get_type
+  IL_0e44: ldc.i4.5       
+  IL_0e45: beq.s          3657
+  IL_0e47: ldc.i4.1       
+  IL_0e48: ret            
+  IL_0e49: ldarg.0        
+  IL_0e4a: ldc.i4.1       
+  IL_0e4b: call           HorseCartHarmonyInstaller::RouteDragonRiderTransport
+  IL_0e50: ret            
+
+---- HorseCartHarmonyInstaller::DragonCartMousePrefix rva=2c51
+  maxstack=8 locals_sig=None size=8
+  IL_0e52: ldarg.0        
+  IL_0e53: ldc.i4.2       
+  IL_0e54: call           HorseCartHarmonyInstaller::RouteDragonRiderTransport
+  IL_0e59: ret            
+
+---- HorseCartHarmonyInstaller::DragonCartKeyboardPrefix rva=2c5a
+  maxstack=8 locals_sig=None size=22
+  IL_0e5b: ldarg.1        
+  IL_0e5c: brfalse.s      3687
+  IL_0e5e: ldarg.1        
+  IL_0e5f: callvirt       UnityEngine.Event::get_type
+  IL_0e64: ldc.i4.5       
+  IL_0e65: beq.s          3689
+  IL_0e67: ldc.i4.1       
+  IL_0e68: ret            
+  IL_0e69: ldarg.0        
+  IL_0e6a: ldc.i4.2       
+  IL_0e6b: call           HorseCartHarmonyInstaller::RouteDragonRiderTransport
+  IL_0e70: ret            
+
+---- HorseCartHarmonyInstaller::RouteDragonRiderTransport rva=2c74
+  maxstack=3 locals_sig=None size=91
+  IL_0e80: call           TrailingWagon.HorseCartCompatibilityApi::get_PhysicalPersistenceEnabled
+  IL_0e85: brtrue.s       3721
+  IL_0e87: ldc.i4.1       
+  IL_0e88: ret            
+  IL_0e89: ldarg.1        
+  IL_0e8a: call           TrailingWagon.HorseCartCompatibilityApi::TryUseTransport
+  IL_0e8f: ldfld          TrailingWagon.HorseCartTransportActionResult::Succeeded
+  IL_0e94: brfalse.s      3792
+  IL_0e96: ldsfld         HorseCartHarmonyInstaller::dragonRiderIsMountedGetter
+  IL_0e9b: ldnull         
+  IL_0e9c: call           System.Reflection.MethodInfo::op_Inequality
+  IL_0ea1: brfalse.s      3792
+  IL_0ea3: ldsfld         HorseCartHarmonyInstaller::dragonRiderDismountMethod
+  IL_0ea8: ldnull         
+  IL_0ea9: call           System.Reflection.MethodInfo::op_Inequality
+  IL_0eae: brfalse.s      3792
+  IL_0eb0: ldsfld         HorseCartHarmonyInstaller::dragonRiderIsMountedGetter
+  IL_0eb5: ldnull         
+  IL_0eb6: ldnull         
+  IL_0eb7: callvirt       System.Reflection.MethodBase::Invoke
+  IL_0ebc: unbox.any      typeref:System.Boolean
+  IL_0ec1: brfalse.s      3792
+  IL_0ec3: ldsfld         HorseCartHarmonyInstaller::dragonRiderDismountMethod
+  IL_0ec8: ldnull         
+  IL_0ec9: ldnull         
+  IL_0eca: callvirt       System.Reflection.MethodBase::Invoke
+  IL_0ecf: pop            
+  IL_0ed0: ldarg.0        
+  IL_0ed1: brfalse.s      3801
+  IL_0ed3: ldarg.0        
+  IL_0ed4: callvirt       DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_0ed9: ldc.i4.0       
+  IL_0eda: ret            
+
+---- HorseCartHarmonyInstaller::RouteTransport rva=2cdb
+  maxstack=8 locals_sig=None size=27
+  IL_0edc: call           TrailingWagon.HorseCartCompatibilityApi::get_PhysicalPersistenceEnabled
+  IL_0ee1: brtrue.s       3813
+  IL_0ee3: ldc.i4.1       
+  IL_0ee4: ret            
+  IL_0ee5: ldarg.1        
+  IL_0ee6: call           TrailingWagon.HorseCartCompatibilityApi::TryUseTransport
+  IL_0eeb: pop            
+  IL_0eec: ldarg.0        
+  IL_0eed: brfalse.s      3829
+  IL_0eef: ldarg.0        
+  IL_0ef0: callvirt       DaggerfallWorkshop.Game.UserInterface.UserInterfaceWindow::CloseWindow
+  IL_0ef5: ldc.i4.0       
+  IL_0ef6: ret            
+
+---- HorseCartHarmonyInstaller::.cctor rva=2cf7
+  maxstack=8 locals_sig=None size=21
+  IL_0ef8: newobj         ::.ctor
+  IL_0efd: stsfld         HorseCartHarmonyInstaller::requiredTargets
+  IL_0f02: newobj         ::.ctor
+  IL_0f07: stsfld         HorseCartHarmonyInstaller::positiveInventoryRequests
+  IL_0f0c: ret            
+==== TYPE .ExactMethodAccess (fields: ['value__', 'Public', 'Protected', 'Private'])
+==== TYPE .<>c (fields: ['<>9', '<>9__20_0', '<>9__20_1', '<>9__21_1', '<>9__22_0', '<>9__22_1', '<>9__25_0'])
+
+---- <>c::.cctor rva=2d0d
+  maxstack=8 locals_sig=None size=11
+  IL_0f0e: newobj         <>c::.ctor
+  IL_0f13: stsfld         <>c::<>9
+  IL_0f18: ret            
+
+---- <>c::.ctor rva=2d19
+  maxstack=8 locals_sig=None size=7
+  IL_0f1a: ldarg.0        
+  IL_0f1b: call           System.Object::.ctor
+  IL_0f20: ret            
+
+---- <>c::<InstallExpandedInventoryAdapter>b__20_0 rva=2d21
+  maxstack=8 locals_sig=None size=13
+  IL_0f22: ldarg.1        
+  IL_0f23: ldstr          "DaggerfallWorkshop.Game.UserInterfaceWindows.ExpandedInventoryWindow"
+  IL_0f28: ldc.i4.0       
+  IL_0f29: callvirt       System.Reflection.Assembly::GetType
+  IL_0f2e: ret            
+
+---- <>c::<InstallExpandedInventoryAdapter>b__20_1 rva=2d2f
+  maxstack=8 locals_sig=None size=8
+  IL_0f30: ldarg.1        
+  IL_0f31: ldnull         
+  IL_0f32: call           System.Type::op_Inequality
+  IL_0f37: ret            
+
+---- <>c::<InstallUncannyUiAdapter>b__21_1 rva=2d38
+  maxstack=8 locals_sig=None size=8
+  IL_0f39: ldarg.1        
+  IL_0f3a: ldnull         
+  IL_0f3b: call           System.Type::op_Inequality
+  IL_0f40: ret            
+
+---- <>c::<InstallDragonRiderAdapter>b__22_0 rva=2d41
+  maxstack=8 locals_sig=None size=13
+  IL_0f42: ldarg.1        
+  IL_0f43: ldstr          "DragonRider.DragonTransportWindow"
+  IL_0f48: ldc.i4.0       
+  IL_0f49: callvirt       System.Reflection.Assembly::GetType
+  IL_0f4e: ret            
+
+---- <>c::<InstallDragonRiderAdapter>b__22_1 rva=2d4f
+  maxstack=8 locals_sig=None size=8
+  IL_0f50: ldarg.1        
+  IL_0f51: ldnull         
+  IL_0f52: call           System.Type::op_Inequality
+  IL_0f57: ret            
+
+---- <>c::<FormatParameters>b__25_0 rva=2d58
+  maxstack=8 locals_sig=None size=7
+  IL_0f59: ldarg.1        
+  IL_0f5a: callvirt       System.Reflection.MemberInfo::get_Name
+  IL_0f5f: ret            
+==== TYPE .<>c__DisplayClass21_0 (fields: ['typeName'])
+
+---- <>c__DisplayClass21_0::.ctor rva=2d60
+  maxstack=8 locals_sig=None size=7
+  IL_0f61: ldarg.0        
+  IL_0f62: call           System.Object::.ctor
+  IL_0f67: ret            
+
+---- <>c__DisplayClass21_0::<InstallUncannyUiAdapter>b__0 rva=2d68
+  maxstack=8 locals_sig=None size=14
+  IL_0f69: ldarg.1        
+  IL_0f6a: ldarg.0        
+  IL_0f6b: ldfld          <>c__DisplayClass21_0::typeName
+  IL_0f70: ldc.i4.0       
+  IL_0f71: callvirt       System.Reflection.Assembly::GetType
+  IL_0f76: ret            

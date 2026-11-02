@@ -1,0 +1,9 @@
+schema: *key,text
+Settings.Persistence.PhysicalPersistence.Name,Physical Horse & Wagon Persistence
+Settings.Presentation.ShowTrailingWagon.Name,Trailing Wagon While Riding
+Settings.Following.HorseFollowDistance.Name,Horse Follow Distance
+Settings.Following.AvoidCombat.Name,Following Horse Avoids Combat
+Settings.Following.FollowFastTravel.Name,Following Transport Fast Travels With You
+Settings.WagonAccess.InteriorAccessDistance.Name,Interior Wagon Access Distance
+Settings.Hotkeys.QuickMountDismount.Name,Quick Mount / Dismount
+Settings.Hotkeys.SummonTransport.Name,Summon Horse & Wagon

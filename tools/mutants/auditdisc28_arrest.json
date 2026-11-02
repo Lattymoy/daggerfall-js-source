@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AR1-the-load-never-tells-the-flow",
+    "file": "src/scenes/world.js",
+    "old": "      arrestFlow.abandon();   // AUDIT DISC28 AR-1",
+    "new": "      // AUDIT DISC28 AR-1",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR1-abandon-leaves-the-arrest",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    playerEntity.arrested = false;   // OnPop\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR1-abandon-leaves-the-prison-flag",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    playerEntity.inPrison = false;   // OnPop\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR1-abandon-leaves-the-court-up",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    for (const win of t?.windows ?? []) win.done = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR1-an-abandoned-trial-still-steps",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "(t && trial === t && !t.released ? fn(...args) : undefined)",
+    "new": "fn(...args)",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR1-abandon-keeps-the-question",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "  function abandon() {\n    withdrawQuestion();\n",
+    "new": "  function abandon() {\n",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR1-a-withdrawn-question-surrenders",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "label: 'Y - surrender', action: () => {\n            if (surrenderBox !== box) return;\n",
+    "new": "label: 'Y - surrender', action: () => {\n",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR1-a-withdrawn-question-lands-the-blow",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "label: 'N - fight on', action: () => { if (surrenderBox !== box) return; ",
+    "new": "label: 'N - fight on', action: () => { ",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR2-the-body-asks-with-the-speed-alone",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "getMeleeWeaponAnimTime(last.liveSpeed, last.animCtx)",
+    "new": "getMeleeWeaponAnimTime(last.liveSpeed)",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR2-the-body-drops-the-weapon",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    animCtx: s.animCtx ?? null,",
+    "new": "    animCtx: null,",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR2-the-rig-hands-the-body-no-weapon",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    animCtx: playerWeapon.animCtx(),\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR3-N-lands-the-departed-guards-blow",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "if (surrenderBox !== box) return; awaitingSurrenderAnswer = false; if (crimeId() !== 0) applyDamage();",
+    "new": "if (surrenderBox !== box) return; awaitingSurrenderAnswer = false; applyDamage();",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR4-the-rig-freezes-its-speed-after-construction",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "  playerWeapon.animCtx = () => playerWeapon.swingCtx(entity);",
+    "new": "  playerWeapon.liveSpeed = playerWeapon.liveSpeed;\n  playerWeapon.animCtx = () => playerWeapon.swingCtx(entity);",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  },
+  {
+    "name": "AR4-the-rig-blind-to-speed-on-the-real-rig",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) })",
+    "new": "new PlayerWeapon({})",
+    "tests": [
+      "test/systems/auditdisc28_arrest.test.js"
+    ]
+  }
+]

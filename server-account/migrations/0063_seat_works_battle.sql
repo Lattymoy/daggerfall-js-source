@@ -1,0 +1,11 @@
+-- SEAT2b part two (b) (2026-10-01, Mac: "Finish the seats"; "Let's pick up 482") - THE WORKS IN BATTLE
+-- (bible/11-Multiplayer/Seats-Arc.md 6.2, 7.5): a siege's works, FROZEN at its first pass - `[walls, gatehouse (-1 none),
+-- rams, siegewright (0|1), barracks]` as JSON (net/siegeRef.js worksOf) - so every pass of the battle carries the same and
+-- the relay's room (which holds the first pass's battle and refuses a pass that differs) never turns a fighter away
+-- because a project stood between two passes (server-account/src/seatSiege.js siegePass). Null until then, and for a
+-- Tourney (no holder's works to fight behind).
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI).
+ALTER TABLE town_seat_battles ADD COLUMN works TEXT;

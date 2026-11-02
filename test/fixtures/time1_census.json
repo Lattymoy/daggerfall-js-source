@@ -1,0 +1,1345 @@
+{
+ "_": "TIME1 (bible/06-Systems/Online-Time-Arc.md section 8): every line in src/ that reads a shared clock, the clock it means and why. test/scenes/time1_census.test.js holds src/ to it both ways.",
+ "rows": [
+  {
+   "file": "src/net/crewSignLaw.js",
+   "has": "export const crewDayAt = (/** @type {number} */ nowMs) => Math.floor(sharedClassicMinutes(nowMs) / 1440);",
+   "clock": "event",
+   "why": "the crew hall's day (CREW-SIGNED) - a recruit signed online is held until it turns, the same day for every player and the service"
+  },
+  {
+   "file": "src/net/gate/gateLaw.js",
+   "has": "export const gameDayAt = (nowMs, lane = 0) => Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
+   "clock": "event",
+   "why": "the gate's day - its number, its room, its marks; WW2: a lane's, its stagger behind the Bay's (gateAt and the herald read it)"
+  },
+  {
+   "file": "src/net/gate/gateLaw.js",
+   "has": "const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));",
+   "clock": "event",
+   "why": "the gate's phases as relay ms"
+  },
+  {
+   "file": "src/net/serpent/serpentLaw.js",
+   "has": "export const serpentDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / SERPENT_DAY_MINUTES);",
+   "clock": "event",
+   "why": "the sea serpent's day - the gate's own, which days hold a serpent"
+  },
+  {
+   "file": "src/net/serpent/serpentLaw.js",
+   "has": "const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));",
+   "clock": "event",
+   "why": "the serpent's sighting, rising, storm and sounding as relay ms"
+  },
+  {
+   "file": "src/net/huntLaw.js",
+   "has": "export const huntGameDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / MINUTES_PER_DAY);",
+   "clock": "event",
+   "why": "HUNTERS-MARK: the day a bounty board posts on online - the window a reported clear is judged in (Bounty-Boards.md 12.1)"
+  },
+  {
+   "file": "src/scenes/exteriorFoes.js",
+   "has": "huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))",
+   "clock": "event",
+   "why": "a hunter's named mark on a mate's screen (HUNTERS-MARK-II) - the week its name and traits are off, the same week for every player"
+  },
+  {
+   "file": "src/scenes/huntersMark.js",
+   "has": "const wallNow = () => deps.wallNow?.() ?? wallMsForClassicMinutes(deps.now());",
+   "clock": "event",
+   "why": "HUNTERS-MARK: the event clock's instant as wall ms - a named mark's week and a report's window (Bounty-Boards.md 12.4)"
+  },
+  {
+   "file": "src/systems/starfall/starfallNight.js",
+   "has": "dayOfYearFromMinutes(Math.floor(skyClassicMinutes(n * STAR_HOUR_MS + STAR_FALLS_MS[0])));",
+   "clock": "sky",
+   "why": "the Starfall's Witches' Night - a star night whose dusk lands on the sky calendar's Witches Festival, the Heart-Star's (STAR1)"
+  },
+  {
+   "file": "src/net/nodeLaw.js",
+   "has": "Math.floor(skyClassicMinutes(day",
+   "clock": "sky",
+   "why": "a UTC day's season and month - the herbs, the Basket, the writs"
+  },
+  {
+   "file": "src/net/overworldLaw.js",
+   "has": "const nowMin = sharedClassicMinutes(nowMs);",
+   "count": 2,
+   "clock": "event",
+   "why": "the overworld rows' stamps and keep"
+  },
+  {
+   "file": "src/net/skyLaw.js",
+   "has": "sharedClassicMinutes(s.fromMs",
+   "clock": "law",
+   "why": "the sky's own law"
+  },
+  {
+   "file": "src/net/skyLaw.js",
+   "has": "0 ? sharedClassicMinutes(nowMs)",
+   "clock": "law",
+   "why": "the sky's own law"
+  },
+  {
+   "file": "src/net/skyLaw.js",
+   "has": "return wallMsForClassicMinutes(classicMinutes);",
+   "clock": "law",
+   "why": "the sky's own law"
+  },
+  {
+   "file": "src/scenes/arrestFlow.js",
+   "has": "banish(playerEntity, region(), trustedWorldMinutes());",
+   "clock": "event",
+   "why": "a banishment's term"
+  },
+  {
+   "file": "src/scenes/camps.js",
+   "has": "const now = () => worldMinutes();",
+   "clock": "event",
+   "why": "a camp fire's and a kit's hours"
+  },
+  {
+   "file": "src/scenes/droppedTorches.js",
+   "has": "if (!dropped.length) _lastMinutes = worldMinutes();",
+   "clock": "event",
+   "why": "a dropped torch's burn"
+  },
+  {
+   "file": "src/scenes/droppedTorches.js",
+   "has": "const now = worldMinutes();",
+   "clock": "event",
+   "why": "a dropped torch's burn"
+  },
+  {
+   "file": "src/scenes/droppedTorches.js",
+   "has": "_lastMinutes = worldMinutes();",
+   "count": 2,
+   "clock": "event",
+   "why": "a dropped torch's burn"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "? Math.floor(skyMinutes()) : null",
+   "clock": "sky",
+   "why": "the rest's rounds read the sky's sun and moons"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "const wm = skyMinutes();",
+   "clock": "sky",
+   "why": "the air's month and hour"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "now: () => Math.floor(skyMinutes()),",
+   "clock": "sky",
+   "why": "the sunlight seam"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "const _wallNow = () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : null);",
+   "clock": "event",
+   "why": "a foe's death and a looted chest, against the real-hour respawn"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "get classicMinutes() { return worldMinutes(); },",
+   "clock": "event",
+   "why": "the context's carrier - the music's day seed"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "let season = seasonPin ?? climateSeasonFromMinutes(skyMinutes());",
+   "clock": "sky",
+   "why": "the boot's season"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "let _seasonDay = Math.floor(skyMinutes() / MINUTES_PER_DAY);",
+   "clock": "sky",
+   "why": "the season's day, held to notice it turn"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const day = Math.floor(skyMinutes() / MINUTES_PER_DAY);",
+   "clock": "sky",
+   "why": "the season's day poll"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const want = climateSeasonFromMinutes(skyMinutes());",
+   "clock": "sky",
+   "why": "the season the day poll turns to"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "if (bootTod != null) setWorldMinutes(Math.floor(worldMinutes() / 1440) * 1440 + bootTod);",
+   "clock": "event",
+   "why": "?tod - offline only (the one clock)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const minuteNow = () => skyMinutes() % 1440;",
+   "clock": "sky",
+   "why": "the frame's hour - every isNight and hour read takes it"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "currentSeason: () => seasonValue(dateFromClassicMinutes(skyMinutes())),",
+   "clock": "sky",
+   "why": "the seasons mod's season"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const wm = skyMinutes();",
+   "count": 2,
+   "clock": "sky",
+   "why": "the air's month and hour, the forager's hour"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const gameDaysNow = () => Math.floor(playerTicker.classicMinutes / 1440);",
+   "clock": "event",
+   "why": "the music's daily playlist seed"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "skyMinutes: sharedClockOn() ? Math.floor(skyMinutes()) : null,",
+   "count": 2,
+   "clock": "sky",
+   "why": "the encounter and camp rolls' day and night (the camp's offline the minute walked - AUDIT TIME second round)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "ownNow: () => ownMinutes(), worldNow: () => trustedWorldMinutes(),",
+   "clock": "event",
+   "why": "a banishment's term"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "worldSeconds: () => playerTicker.classicMinutes * 60,",
+   "clock": "event",
+   "why": "the quest's journal dates (TIME3: the countdowns moved to the character's clock)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "skySeconds: () => skyMinutes() * 60,",
+   "clock": "sky",
+   "why": "a quest's hour, date and season (TIME3)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "dateTimeString: () => dateTimeString(dateFromClassicMinutes(skyMinutes())),",
+   "clock": "sky",
+   "why": "the notebook's date headers - the date the player sees"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(skyMinutes())),",
+   "clock": "sky",
+   "why": "the notebook's date headers - the date the player sees"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "sampleWeatherIndoors(Math.floor(playerTicker.classicMinutes),",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "renderer.setWet(wetGround.tick({ minutes: playerTicker.classicMinutes,",
+   "clock": "event",
+   "why": "the ground wets and dries at the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "renderer.setWet(wetGround.tick({ minutes: playerTicker.classicMinutes,",
+   "clock": "event",
+   "why": "the ground wets and dries at the weather's pace"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "monthValue: () => dateFromClassicMinutes(skyMinutes()).month,",
+   "clock": "sky",
+   "why": "the forager's month"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "return playerTicker.classicMinutes;",
+   "clock": "event",
+   "why": "a probe door"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "gameMinutes: () => Math.floor(skyMinutes()),",
+   "clock": "sky",
+   "why": "the holiday's words on entering a town"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const drained = tickWeather(Math.floor(playerTicker.classicMinutes), locClimateIndex);",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "sampleWeatherField(Math.floor(playerTicker.classicMinutes),",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "now: () => (_snowArrival !== null && worldMinutes() < _snowArrival ? _snowArrival : ((_snowArrival = null), worldMinutes()))",
+   "clock": "event",
+   "why": "PRECIP4 / AUDIT PRECIP HOST-2: the snow's one clock - the snowpack's event minute for the frames, a build's settle and the feet, a trip's arrival minute until its own time has run"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "nowMinutes: playerTicker.classicMinutes, tsec",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "minutes: playerTicker.classicMinutes, seconds",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "seasonValue(dateFromClassicMinutes(skyMinutes()))",
+   "clock": "sky",
+   "why": "the classic sky's season panorama"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "classicMinutes: playerTicker.classicMinutes, skyMinutes",
+   "clock": "sky",
+   "why": "the sky feed: the event clock walks the weather, the sky dates the moons"
+  },
+  {
+   "file": "src/scenes/hostEnchant.js",
+   "has": "const s = seasonValue(dateFromClassicMinutes(skyMinutes()));",
+   "clock": "sky",
+   "why": "a season's or a moon's enchantment"
+  },
+  {
+   "file": "src/scenes/hostEnchant.js",
+   "has": "const { masser, secunda } = lunarPhasesFromMinutes(skyMinutes());",
+   "clock": "sky",
+   "why": "a season's or a moon's enchantment"
+  },
+  {
+   "file": "src/scenes/interior.js",
+   "has": "Float32Array(roomAmbient(isNight(skyMinutes() %",
+   "clock": "sky",
+   "why": "the interior's night light (RPT1026-WORLD DARK-ROOM: an unlit room keeps it as its ambient)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "ketchDeck.frameLook(mwv.eye, _dgLit, skyMinutes() % 1440)",
+   "clock": "sky",
+   "why": "KETCH: the sky-ketch's deck by the hour - her light, her haze, her sun"
+  },
+  {
+   "file": "src/scenes/shared.js",
+   "has": "entity, classicMinutes: worldMinutes(), dt, sinks, activity, realSeconds, raiseMinutes,",
+   "clock": "event",
+   "why": "the tick's reading (online the character's clock is its own)"
+  },
+  {
+   "file": "src/scenes/shared.js",
+   "has": "get classicMinutes() { return worldMinutes(); },",
+   "clock": "event",
+   "why": "the ticker's carrier - spawned dungeons, the music, the weather"
+  },
+  {
+   "file": "src/scenes/shared.js",
+   "has": "hourNow: () => Math.floor((skyMinutes() % MINUTES_PER_DAY) / 60),",
+   "clock": "sky",
+   "why": "the vampire's turn: the hour it is"
+  },
+  {
+   "file": "src/scenes/shared.js",
+   "has": "sharedMinutes: () => (sharedClockOn() ? skyMinutes() : null),",
+   "clock": "sky",
+   "why": "the rest window's world time"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "sharedClassicMinutes(Date.now",
+   "clock": "law",
+   "why": "the install: the event clock and the sky beside it"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "let season = seasonPin ?? climateSeasonFromMinutes(skyMinutes());",
+   "clock": "sky",
+   "why": "the boot's season"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "let _fourSeason = seasonValue(dateFromClassicMinutes(skyMinutes()));",
+   "clock": "sky",
+   "why": "the seasons mod's season"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "MINUTES_PER_DAY : skyMinutes())),",
+   "clock": "sky",
+   "why": "the seasons mod's season"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "setWorldMinutes(Math.floor(worldMinutes() /",
+   "clock": "event",
+   "why": "?tod - offline only (the one clock)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const minuteNow = () => skyMinutes() % 1440;",
+   "clock": "sky",
+   "why": "the frame's hour - every isNight and hour read takes it"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "let _seasonDay = Math.floor(skyMinutes() / MINUTES_PER_DAY);",
+   "clock": "sky",
+   "why": "the season's day, held to notice it turn"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "function refreshSeason(atMinutes = skyMinutes()) {",
+   "clock": "sky",
+   "why": "the season's day poll"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const wm = skyMinutes();",
+   "count": 2,
+   "clock": "sky",
+   "why": "the air's month and hour, the forager's hour"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "_spawnClock = () => Math.floor(playerTicker.classicMinutes);",
+   "clock": "event",
+   "why": "spawned dungeons' lifetimes"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const gameDaysNow = () => Math.floor(playerTicker.classicMinutes / 1440);",
+   "clock": "event",
+   "why": "the music's daily playlist seed"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "dateFromClassicMinutes(skyMinutes());",
+   "clock": "sky",
+   "why": "the sea map's date marks"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "day: Math.floor(worldMinutes() / 1440",
+   "clock": "event",
+   "why": "the naval day - notoriety, grog, departures, traffic"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "day: () => Math.floor(worldMinutes() / 1440),",
+   "count": 3,
+   "clock": "event",
+   "why": "CAPT-BOARD and ETHER-SEA: the captain's day - a port's board and exchange, the strands' regrowth and the legends' rise; SHIPYARDS: the crew hall's day - which sailors a port town's hall has, the same for everyone in the town"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "arriveMinutes: sharedClockOn() ? skyMinutes() : worldMinutes() + minutes,",
+   "clock": "sky",
+   "why": "ETHER-CROSSING: the landfall's arrival - its season (offline the one clock's arrival, CROSS_DAYS on)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(skyMinutes())),",
+   "clock": "sky",
+   "why": "a Curfew's night watch (SEAT1d; AUDIT SEATS-3 E1)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "skyMinute: () => Math.floor(skyMinutes()),",
+   "clock": "sky",
+   "why": "the wilds' night (SOFTCAP5)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "skyMinutes: sharedClockOn() ? Math.floor(skyMinutes()) : null,",
+   "clock": "sky",
+   "why": "the encounter roll's day and night"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "ownNow: () => ownMinutes(), worldNow: () => trustedWorldMinutes(),",
+   "clock": "event",
+   "why": "a banishment's term"
+  },
+  {
+   "file": "src/scenes/pixelBuild.js",
+   "has": "known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
+   "clock": "event",
+   "why": "a banishment's term - the living watch's word (WATCH-KNOWS)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "patrolHalts(playerEntity, trip.from.region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
+   "clock": "event",
+   "why": "a banishment's term - a patrol's halt of a wanted player on the road (LW9), outside the grace an answered law gives (FIELD BUGS 2026-10-21d PATROL-GRACE)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "warnsFirst: () => livingWorldOn(), regionName: (r) => REGION_NAMES[r] ?? 'this region', worldNow: () => trustedWorldMinutes(),",
+   "clock": "event",
+   "why": "a banishment's term - no first offence warned to a banished one (WATCH-KNOWS)"
+  },
+  {
+   "file": "src/scenes/professionsHost.js",
+   "has": "hour: () => Math.floor((((skyMinutes() % 1440) + 1440) % 1440) / 60),",
+   "clock": "sky",
+   "why": "the sound host's hour"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "refreshSeason(arriveMinutes ?? skyMinutes());",
+   "clock": "sky",
+   "why": "the arrival's season"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y), Math.floor(playerTicker.classicMinutes), fieldXZ(), climateAt);",
+   "count": 2,
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "weatherRespawn(Math.floor(playerTicker.classicMinutes),",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "{ arriveMinutes: sharedClockOn() ? skyMinutes() : worldMinutes() + computed.minutes,",
+   "clock": "sky",
+   "why": "the arrival's season (offline the one clock's arrival)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(pick.pixel.x",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const clamp = arrivalClampMinutes(playerTicker.classicMinutes, {",
+   "clock": "event",
+   "why": "the dusk arrival clamp - offline only"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "setWorldMinutes(extras.classicMinutes ?? worldMinutes());",
+   "count": 2,
+   "clock": "event",
+   "why": "a load's clock - offline only"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const nowMin = Math.floor(skyMinutes());",
+   "count": 3,
+   "clock": "sky",
+   "why": "the sun's refusals - the career's, the curse's, the party's; and the driver's map's online (AUDIT IT1 W2)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "worldTimeNow: () => worldMinutes(),",
+   "clock": "event",
+   "why": "a journey's elapsed time (Travel Options)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "raidState().raids, worldMinutes(), { regionName",
+   "clock": "event",
+   "why": "the raids' schedule"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "raidActive(r, worldMinutes())",
+   "clock": "event",
+   "why": "TOWN-ECON: a raid at a town's gates, on the raids' schedule"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "nowClassicMinutes: () => playerTicker.classicMinutes,",
+   "clock": "event",
+   "why": "the rumours' lifetimes"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "worldSeconds: () => playerTicker.classicMinutes * 60,",
+   "clock": "event",
+   "why": "the quest's journal dates (TIME3: the countdowns moved to the character's clock)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "skySeconds: () => skyMinutes() * 60,",
+   "clock": "sky",
+   "why": "a quest's hour, date and season (TIME3)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "dateTimeString: () => dateTimeString(dateFromClassicMinutes(skyMinutes())),",
+   "clock": "sky",
+   "why": "the notebook's date headers - the date the player sees"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(skyMinutes())),",
+   "clock": "sky",
+   "why": "the notebook's date headers - the date the player sees"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "monthValue: () => dateFromClassicMinutes(skyMinutes()).month,",
+   "clock": "sky",
+   "why": "the forager's month"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "playerEntity, worldMinutes());",
+   "clock": "sky",
+   "why": "an arrival: the season the sky's (the weather's roll and the markers the event clock's)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "now: () => Math.floor(playerTicker.classicMinutes),",
+   "clock": "event",
+   "count": 2,
+   "why": "the bounty boards' day, and Project Legacy's stamps (a founding, a death, a rest)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "sampleWeatherIndoors(Math.floor(playerTicker.classicMinutes),",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "online ? skyClassicMinutes(ms)",
+   "clock": "sky",
+   "why": "a roaming band's night at its life's start"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "gameMinutes: () => Math.floor(skyMinutes()),",
+   "clock": "sky",
+   "why": "the holiday's words on entering a town"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "gameMinutes: Math.floor(playerTicker.classicMinutes),",
+   "clock": "event",
+   "why": "the camp ring's window cadence"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "skyMinutes: Math.floor(skyMinutes()),",
+   "clock": "sky",
+   "why": "the camp ring's day and night"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "sampleWeatherField(Math.floor(playerTicker.classicMinutes),",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const owForecast = createOverworldForecast({ climateAt, ground: mapGroundHere, minuteNow: () => playerTicker.classicMinutes,",
+   "clock": "event",
+   "why": "OW-FORECAST: the weather ahead read at the minute the sky's weather is sampled at (sampleWeatherField's) - the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "nowMinutes: playerTicker.classicMinutes, tsec",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "minutes: playerTicker.classicMinutes, seconds",
+   "clock": "event",
+   "why": "the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "? seasonValue(dateFromClassicMinutes(skyMinutes())) :",
+   "clock": "sky",
+   "why": "the classic sky's season panorama"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "minutes: () => worldMinutes(),",
+   "clock": "event",
+   "why": "SEAT1d: a Festival's game day, its buff's span (systems/seatEdicts.js)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "classicMinutes: playerTicker.classicMinutes, skyMinutes",
+   "clock": "sky",
+   "why": "the sky feed: the event clock walks the weather, the sky dates the moons"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "now: () => Math.floor(skyMinutes()),",
+   "clock": "sky",
+   "why": "the sunlight seam"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0),",
+   "clock": "sky",
+   "why": "a shop's holiday prices"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "commitTrade(shelf, m, staged, price, proceeds, identifySpell, { holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0), guildFactionId",
+   "clock": "sky",
+   "why": "the purchase's holiday its LAW-3 share is reckoned by, as its price was (AUDIT TOWN-ECON 2 PRICE-1)",
+   "count": 2
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "const gameDate = () => dateFromClassicMinutes(interiorTicker.classicMinutes);",
+   "clock": "event",
+   "why": "the day's stock and shelves"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "month: Math.floor(worldMinutes() / (MINUTES_PER_DAY * DAYS_PER_MONTH)),",
+   "clock": "event",
+   "why": "the month's houses for sale"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "const cardDay = () => Math.floor(worldMinutes() / MINUTES_PER_DAY);",
+   "clock": "event",
+   "why": "the card table regulars' day - their purses kept till the day turns (AUDIT CARDS-2 H2)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "worldNow: () => Math.floor(skyMinutes()),",
+   "clock": "sky",
+   "why": "the tavern's calendar and kitchen hours"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "service, Math.floor(worldMinutes()), mint",
+   "clock": "event",
+   "why": "a guild shelf's day"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "{ quality: shelfQuality(), gameMinutes: Math.floor(worldMinutes()) },",
+   "clock": "event",
+   "why": "a guild shelf's day"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "gameMinutes: Math.floor(worldMinutes()) })",
+   "clock": "event",
+   "why": "a guild shelf's day"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "gameMinutes: Math.floor(worldMinutes()),",
+   "clock": "event",
+   "why": "a guild shelf's day"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "dayOfYear: dayOfYearFromMinutes(Math.floor(skyMinutes())),",
+   "clock": "sky",
+   "why": "a Daedra prince's summoning day"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "rerollDay: dayOfYearFromMinutes(Math.floor(worldMinutes())),",
+   "clock": "event",
+   "why": "the coven's once-a-day re-roll, a stamp saved on the player"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "classicMinutes: () => Math.floor(skyMinutes()),",
+   "clock": "sky",
+   "why": "the spellbook's calendar (the Witches Festival)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "ownNow: () => ownMinutes(), worldNow: () => trustedWorldMinutes(),",
+   "clock": "event",
+   "why": "a pardon's term"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "rows, now: () => skyMinutes(), onClose: () => closeSelf(), godName,",
+   "clock": "sky",
+   "why": "the temple's cure days"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "const minutes = Math.floor(skyMinutes());",
+   "clock": "sky",
+   "why": "a door's hour and holiday"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "const _hour = Math.floor((Math.floor(skyMinutes()) % 1440) / 60);",
+   "clock": "sky",
+   "why": "an open shop's hour"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "isDayFromMinutes(Math.floor(skyMinutes()))",
+   "clock": "sky",
+   "why": "a torch doused by day"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "Float32Array(roomAmbient(isNight(skyMinutes() %",
+   "clock": "sky",
+   "why": "the interior's night light (RPT1026-WORLD DARK-ROOM: an unlit room keeps it as its ambient)"
+  },
+  {
+   "file": "src/scenes/townProbes.js",
+   "has": "const at = partyAt(p.trip, skyMinutes());",
+   "clock": "sky",
+   "why": "WW7-7's probe door: the road's parties where their trips have them at the sky's minute, as the roads layer places them"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "hour: Math.floor((Math.floor(skyMinutes()) % 1440) / 60),",
+   "clock": "sky",
+   "why": "the people probe's hour"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "const hour = Math.floor((Math.floor(skyMinutes()) % 1440) / 60);",
+   "clock": "sky",
+   "why": "who is in, by the hour"
+  },
+  {
+   "file": "src/systems/deathRespawn.js",
+   "has": "skipDeadMinutes(entity, worldMinutes()) :",
+   "clock": "event",
+   "why": "the world's half of a dead span"
+  },
+  {
+   "file": "src/systems/eventTimers.js",
+   "has": "const nextDay = Math.round(wallMsForClassicMinutes((gameDayAt(now) + 1) * GATE_DAY_MINUTES));",
+   "clock": "event",
+   "why": "the timers window's next game day (TIMERS1) - the gate's day turning over, as relay ms"
+  },
+  {
+   "file": "src/systems/loot/lootCodex.js",
+   "has": "const _day = () => Math.max(0, Math.floor((Number(worldMinutes()) || 0) / 1440));",
+   "clock": "event",
+   "why": "the day a find is dated"
+  },
+  {
+   "file": "src/systems/loot/lootPowers.js",
+   "has": "if (isNight(skyMinutes())) pct += p.pct + (group === 'animal' ? p.beast : 0);",
+   "clock": "sky",
+   "why": "a moon power's night"
+  },
+  {
+   "file": "src/combat/pvpGearPowers.js",
+   "has": "case 'moon': if (isNight(skyMinutes())) pct += p.pct; break;",
+   "clock": "sky",
+   "why": "PVP-GEAR: Hunter's Moon's night on a blow at a player"
+  },
+  {
+   "file": "src/systems/revenant/revenant.js",
+   "has": "const skyIsNight = () => { try { return isNight(skyMinutes()); }",
+   "clock": "sky",
+   "why": "RVN1/RVN2: whether a fight with a revenant began by night (its ledger's night scar), and a Night-stalker's night - its return and its blows"
+  },
+  {
+   "file": "src/systems/revenant/revenant.js",
+   "has": "const skyIsDay = () => { try { return !isNight(skyMinutes()); }",
+   "clock": "sky",
+   "why": "RVN3: whether the sky reads day - a daylight weakness bites"
+  },
+  {
+   "file": "src/systems/save/save.js",
+   "has": "? Math.floor(worldMinutes()), worldMinutes",
+   "clock": "event",
+   "why": "a save without a clock of its own"
+  },
+  {
+   "file": "src/systems/save/save.js",
+   "has": "const own = Math.floor(snap.classicMinutes ?? 0), at = worldMinutes();",
+   "clock": "event",
+   "why": "an absence measured on the event clock"
+  },
+  {
+   "file": "src/systems/skyCalendar.js",
+   "has": "skyClassicMinutes(wallMsForClassicMinutes",
+   "clock": "law",
+   "why": "the sky's date for an event minute"
+  },
+  {
+   "file": "src/systems/skyCalendar.js",
+   "has": "? skyClassicMinutes(wallMsForClassicMinutes(eventSeconds / 60)) * 60",
+   "clock": "law",
+   "why": "TIME3: a journal date, stamped on the event clock, on the sky's calendar"
+  },
+  {
+   "file": "src/systems/skyCalendar.js",
+   "has": "export const skyOfEventLaw = (eventMinutes) => skyClassicMinutes(wallMsForClassicMinutes(eventMinutes));",
+   "clock": "law",
+   "why": "BANISH-SKY: the sky's minute at an event minute as the law has it - the lane doors read an online save's banishment with it"
+  },
+  {
+   "file": "src/systems/skyCalendar.js",
+   "has": "export const eventOfSkyLaw = (skyMinutes) => sharedClassicMinutes(wallMsForSkyMinutes(skyMinutes));",
+   "clock": "law",
+   "why": "BANISH-SKY: the event minute at a sky minute - a banishment's thirty days of the sky's calendar, stamped on the event clock"
+  },
+  {
+   "file": "src/systems/revenant/revenantCompanions.js",
+   "has": "export const errandWorldNow = () => errandWorldMinute(trustedWorldMinutes(), sharedClockHeardMark(), _monotonic());",
+   "clock": "event",
+   "why": "OFFLINE-ROAD: a sworn one abroad keeps the world's time, held to the session's monotonic time since the welcome (AUDIT FB1021 L3-1)"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "_heardMark = Object.freeze({ world: worldMinutes(), perf, n: (_heardMark?.n ?? 0) + 1 });",
+   "clock": "law",
+   "why": "the event minute a welcome is heard at, marked with the session's monotonic time (AUDIT FB1021 L3-1)"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "regionIndex, minute = worldMinutes()) => worldRegionPricesOn",
+   "clock": "law",
+   "why": "the world's price index, by the event clock's day"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "const clockAtEntry = worldMinutes();",
+   "clock": "law",
+   "why": "the tick's entry reading (offline the one clock)"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "_sharedClock ? skyMinutes() : null",
+   "clock": "law",
+   "why": "the rounds' sun and moons"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "const jumped = worldMinutes() - clockAtEntry;",
+   "clock": "law",
+   "why": "a clock moved inside the tick (offline the one clock)"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "_sharedClockHeard ? NaN : worldMinutes());",
+   "clock": "law",
+   "why": "the event clock once the relay is heard"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "if (waiting) waiting.pay(worldMinutes());",
+   "clock": "law",
+   "why": "an absence paid on the event clock"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": ": Math.floor(worldMinutes()));",
+   "clock": "law",
+   "why": "the event minute a save stamps"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "const sky = skyMinutes();",
+   "clock": "law",
+   "why": "the nightfall words"
+  },
+  {
+   "file": "src/ui/enhanced/enhancedMenu.js",
+   "has": "const copy = onlineCopyOf(snap, sharedClassicMinutes(Date.now()));",
+   "clock": "event",
+   "why": "the event minute a character joins at"
+  },
+  {
+   "file": "src/ui/enhanced/enhancedMenu.js",
+   "has": "const d = dateFromClassicMinutes(Math.floor(skyMinutes()));",
+   "clock": "sky",
+   "why": "the menu's date and time"
+  },
+  {
+   "file": "src/ui/enhanced/enhancedMenu.js",
+   "has": "export function statsLaw(detail, entity, { worldNow = trustedWorldMinutes() } = {}) {",
+   "clock": "event",
+   "why": "a banishment's term"
+  },
+  {
+   "file": "src/ui/enhanced/enhancedMenu.js",
+   "has": "const midnight = wallMsForSkyMinutes(Math.ceil(skyClassicMinutes(turn) / 1440) * 1440);",
+   "clock": "sky",
+   "why": "the Online pane's sentence: the sky's first midnight after its switch, said in local minutes (TIME4)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "gameMinutes: () => worldMinutes(),",
+   "clock": "event",
+   "why": "ARENA3: the season a ladder bout's points go to, the laurel, the Records page"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "playerEntity, gameMinutes: () => worldMinutes(), showOverlay",
+   "clock": "event",
+   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arena/arenaGate.js heraldChoice / joined)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const ex = exhibitionFor(worldMinutes());",
+   "clock": "event",
+   "why": "ARENA2: the hour's exhibition on the city's sand",
+   "count": 2
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "gameMinutes: () => worldMinutes(),",
+   "clock": "event",
+   "why": "ARENA3: the season a ladder bout's points go to, the laurel, the Records page"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "playerEntity, gameMinutes: () => worldMinutes(), showOverlay",
+   "clock": "event",
+   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arena/arenaGate.js heraldChoice / joined)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const ex = exhibitionFor(worldMinutes());",
+   "clock": "event",
+   "why": "ARENA2: the hour's exhibition on the city's sand",
+   "count": 2
+  },
+  {
+   "file": "src/scenes/worldShotHooks.js",
+   "has": "hour: exhibitionFor(worldMinutes()),",
+   "clock": "event",
+   "why": "ARENA2: the hour's exhibition, run once an hour"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "setSearchClock(() => worldMinutes());",
+   "clock": "event",
+   "why": "a searchable's five hours (SEARCH1)"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "const at = Number.isFinite(stampMs) && sharedClockOn() ? sharedClassicMinutes(stampMs) : worldMinutes();",
+   "clock": "event",
+   "why": "the room's search stamp, as the world minute it was searched at (SEARCH1-PARTY)"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "markSearched(searchKey(searchLocationKey(), sb.key), Math.min(at, worldMinutes()), w?.who ?? null);",
+   "clock": "event",
+   "why": "a searchable's five hours, never from ahead of now (SEARCH1-PARTY) - GRAVE-PARTY: and its searcher's name"
+  },
+  {
+   "file": "src/scenes/searchPartyHost.js",
+   "has": "const now = worldMinutes();",
+   "count": 3,
+   "clock": "event",
+   "why": "a headstone's five hours - at the search, a partymate's stamp landed, the stone read again (GRAVE-PARTY; activateGrave's own, moved out of world.js)"
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "has": "const now = worldMinutes();",
+   "clock": "event",
+   "why": "a searchable's five hours, at the search (SEARCH1)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "setSearchClock(() => worldMinutes());",
+   "clock": "event",
+   "why": "a headstone's five hours (SEARCH1)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "rosterGrandChampions(playerEntity.arenaLeague, Math.floor(worldMinutes()))",
+   "clock": "event",
+   "why": "ARENA3: the Keeper of the Hall reads the Hall of Champions - the roster's Grand Champions by the season"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const nowS = raidNowMs() / 1000, t = skyMinutes(), rate = livingBaseRate();",
+   "clock": "sky",
+   "why": "LW5: a visiting crew's stay - her dwell on the ships' clock turned into the sky's minutes the living world lives by"
+  },
+  {
+   "file": "src/systems/livingWorld/regardClock.js",
+   "has": "export function characterRelations(record, own, online = false, sky = () => skyMinutes()) {",
+   "clock": "sky",
+   "why": "REGARD-OWN, AUDIT FB1021d RO-3: a sky-stamped record's grudges eased as the old sky law had eased them, read once at its load - no stamp is taken on the sky"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "day: () => Math.floor((skyMinutes() - 240) / 1440),",
+   "clock": "sky",
+   "why": "LW6: the living day the dives are read on (FIELD BUGS 2026-10-21d REGARD-OWN: a regard noted there is counted in the character's own day - systems/livingWorld/regardClock.js)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "LEGACY6: the towns' minute the house's news is stamped and told by - the Living World's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "_livingDiversList = here ? diversAt(here, skyMinutes(), livingTripWorld,",
+   "clock": "sky",
+   "why": "LW6: the companies diving the player's dungeon at the sky's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "relations: () => livingRelations, clock: () => skyMinutes(), day: (t) => Math.floor((t - 240) / 1440), roads: () => livingRoads,",
+   "clock": "sky",
+   "why": "LW11: the caravan's door - its counter's keeper, a report's landing minute and the escort on the living world's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "advanceOwnMinutes(Math.max(0, until - skyMinutes()));",
+   "clock": "sky",
+   "why": "LW11: offline, the escort travels on with the caravan to its next stop - the one clock moved as a journey moves it"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "if (p?.living?.res) caravanHostOf().caught(p.living.res, skyMinutes());",
+   "clock": "sky",
+   "why": "LW11: a hand caught on the road - its report carried on the living world's clock"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "clock: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "LW12: a band's hideout stood - its people by day or night, its chest's take and its rout on the living world's clock"
+  },
+  {
+   "file": "src/scenes/travelViewMarks.js",
+   "has": "livingHideoutsHostOf().marks(hereN.x, hereN.z, skyMinutes())",
+   "clock": "sky",
+   "why": "LW12: the Overworld's rumoured hideouts - the band standing at the living world's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const tBuild = skyMinutes();",
+   "clock": "sky",
+   "why": "LW14: a dungeon's build reads the dives of the living world's last day, on its clock - the stops a company left"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "t: skyClassicMinutes((p.hour * 3600 + p.minute * 60) * 1000), seed: p.seed",
+   "clock": "sky",
+   "why": "LW15: a patron's sale, told by its real hour and minute (the service's own UTC instant - AUDIT LW-II B5: no machine offset), read as the shared sky's minute of the sale (an online sky day is a real hour)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const t = skyClassicMinutes((pt.hour * 3600 + pt.minute * 60) * 1000);",
+   "clock": "sky",
+   "why": "LW15 / AUDIT LW-II B12: the Vendor page's buyer - the sale's sky minute, so the town names the one holding the place the day the patron comes"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "_livingRemainsList = here ? fallenIn(here, skyMinutes(), livingTripWorld,",
+   "clock": "sky",
+   "why": "LW6b: the dead of the dives into the player's dungeon at the sky's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "livingDivers.frame(_livingDiversList, skyMinutes());",
+   "clock": "sky",
+   "why": "LW6: the companies met read at the sky's minute - their hours done"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: false, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day indoors - the day's plan and its hour by the date and hour the player sees (WindMod.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: false, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day indoors - the day's plan and its hour by the date and hour the player sees (WindMod.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: true, weather, minutes: skyMinutes()",
+   "clock": "sky",
+   "why": "WINDFALL1: the wind's day - its windy period, its storm and its gusts by the date and hour the player sees"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill indoors - the snow builds, melts and fills back by the world's own hours (DynamicSnowController.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill - a meter of the world's time, the depth built and melted, the tracks filled back, by the world's own hours"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: true, player: null, weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill indoors - the snow builds, melts and fills back by the world's own hours (DynamicSnowController.Update runs inside too)"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60",
+   "clock": "event",
+   "why": "SNOWFALL1: the snowpack and the refill - a meter of the world's time, the depth built and melted, the tracks filled back, by the world's own hours"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "day: Math.floor(worldMinutes() / 1440)",
+   "clock": "event",
+   "why": "STEED1: the Stable's horses of the day - stood by the world's day, so every client in the town that day sees the same three"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "noteMinutes: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "L10N5: the minute a notebook header records, so a load draws its date in its own language - the sky's, as the header's own date line reads"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "noteMinutes: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "L10N5: the minute a notebook header records, as the streaming host's"
+  },
+  {
+   "file": "src/scenes/roomLootHost.js",
+   "has": "Math.floor(sharedClassicMinutes(stamp) / SEARCH_COOLDOWN_MINUTES)",
+   "clock": "event",
+   "why": "an older build's find word: the search period (SEARCH1's five hours, the find's generation) its relay stamp falls in"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "mapId: hit.dfLocation?.mapTableData?.mapId ?? 0, day: Math.floor(worldMinutes() / MINUTES_PER_DAY),",
+   "clock": "event",
+   "why": "the lamp keeper's day - which shop's keeper stands as the lamp (LAMP-KEEPER II)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "wallNow: () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : null)",
+   "clock": "event",
+   "why": "a cupboard's first-open instant - two first-opens in one breath keep the earlier mint by the relay's clock on every client, never a machine's own (OUTDOOR-LOOT R-3)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "const lines = lampLines(Math.floor(worldMinutes() / MINUTES_PER_DAY));",
+   "clock": "event",
+   "why": "the lamp's words for the day (LAMP-KEEPER II)"
+  },
+  {
+   "file": "src/scenes/witchesHost.js",
+   "has": "const day = dayOfYearFromMinutes(Math.floor(skyMinutes())), night = deadWalk(day, nowMs()) ? day : -1;",
+   "clock": "sky",
+   "why": "WITCH1: a night the dead walk - the sky's 13 Frostfall or 3 Hearthfire (the day the service's own find reads, skyDayAt) or the festival's own eve on the relay's clock"
+  },
+  {
+   "file": "src/scenes/witchesHost.js",
+   "has": "night: () => deadWalk(dayOfYearFromMinutes(Math.floor(skyMinutes())), nowMs()),",
+   "clock": "sky",
+   "why": "WITCH1: the Wyrd Sister's window says the night the dead walk"
+  },
+  {
+   "file": "src/net/sea/seaSeasonLaw.js",
+   "has": "arenaSeasonOf(Math.floor(wallMsForClassicMinutes(",
+   "clock": "event",
+   "why": "a voyage's game day as the realm's wall time - the season of the realm's eight weeks it falls in (SEA-SEASON, the arena's)"
+  },
+  {
+   "file": "src/scenes/ketch/ketchDeckHost.js",
+   "has": "export function ketchMoonNow(sky = skyMinutes(), weather = currentWeather()) {",
+   "clock": "sky",
+   "why": "KETCH-LOOK KL1: the moons over her decks - the world's own sky, its night key"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "drawSky: (yaw, pitch, fov, aspect, vp) => { sky.draw(yaw, pitch, fov, aspect, vp, minuteNow(), playerTicker.classicMinutes, skyMinutes());",
+   "clock": "sky",
+   "why": "KETCH-LOOK KL1: a made level's sky (the arena's floor, her decks) retimed to the sky's own hour"
+  },
+  {
+   "file": "src/net/starfall/starfallLaw.js",
+   "has": "export const starFrontDay = (n, k) => frontDayOfMinute(sharedClassicMinutes(starTimes(n, k).fallAt));",
+   "clock": "event",
+   "why": "the game day a star lands in - FRONTS: a province's star on its turn alone (net/frontLaw.js)"
+  },
+  {
+   "file": "src/net/superDungeon/sdLaw.js",
+   "has": "const day = frontDayOfMinute(sharedClassicMinutes(now)), next = frontNextDay(day, lane);",
+   "clock": "event",
+   "why": "the game day a Hollow's rise is asked on - FRONTS: a province's rise on its turn alone"
+  },
+  {
+   "file": "src/net/superDungeon/sdLaw.js",
+   "has": "return next === day ? now : Math.ceil(wallMsForClassicMinutes(next * FRONT_DAY_MINUTES)) + 1;",
+   "clock": "event",
+   "why": "a province's next turn as relay ms - the director's alarm (FRONTS)"
+  },
+  {
+   "file": "src/systems/frontWords.js",
+   "has": "export const frontDayAt = (now) => frontDayOfMinute(sharedClassicMinutes(now));",
+   "clock": "event",
+   "why": "the game day the Timers' fronts and the map card read (FRONTS)"
+  },
+  {
+   "file": "src/systems/frontWords.js",
+   "has": "export const frontDayStartMs = (day) => Math.round(wallMsForClassicMinutes(day * FRONT_DAY_MINUTES));",
+   "clock": "event",
+   "why": "a game day's start as relay ms - the fronts' rows' clocks (FRONTS)"
+  },
+  {
+   "file": "src/ui/enhanced/enhancedShop.js",
+   "has": "export const shopNow = () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now());",
+   "clock": "event",
+   "why": "the shop's now (AUDIT-STOREFRONT III B8) - the daily wares' UTC day, a ware's window and the season's, on the relay's instant, so every device says Buy at the instant the service sells"
+  },
+  {
+   "file": "src/scenes/aurumCacheHost.js",
+   "has": "const cofferWeekNow = () => aurumWeekOf(Math.floor((sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now()) / 1000));",
+   "clock": "event",
+   "why": "the coffer's UTC week, on the relay's instant, so every device fills an emptied coffer again at the Monday the service pays it again"
+  }
+ ]
+}

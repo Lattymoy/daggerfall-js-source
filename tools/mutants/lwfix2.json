@@ -1,0 +1,97 @@
+[
+  {
+    "name": "LW-FIX2-mark-find",
+    "file": "src/scenes/livingWorld/livingWatch.js",
+    "old": "    if (!g?.livingFrom || g.livingFollowed) continue;",
+    "new": "    if (!g || g.livingFollowed) continue;",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW-FIX2-deed",
+    "file": "src/scenes/livingWorld/livingWatch.js",
+    "old": "      if (g.killedBy === 'player') w.town.slain(person);",
+    "new": "      if (false) w.town.slain(person);",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW-FIX2-gone",
+    "file": "src/scenes/livingWorld/livingWatch.js",
+    "old": "    const ended = !!g.dead || !guards.includes(g);",
+    "new": "    const ended = !guards.includes(g);",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW-FIX2-wait",
+    "file": "src/scenes/livingWorld/livingWatch.js",
+    "old": "export const WATCH_WAIT = 600;",
+    "new": "export const WATCH_WAIT = 60;",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-word",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.o.relations?.()?.note(id, 'talk', this.dayOf(this._liveMinute()));",
+    "new": "    this.o.relations?.()?.note(id, 'talk', this.dayOf(this._now));",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-tone",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.o.relations?.()?.note(id, kind, this.dayOf(this._liveMinute()));",
+    "new": "    this.o.relations?.()?.note(id, kind, this.dayOf(this._now));",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-refusal",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const s = rel.standing(id, this.dayOf(this._liveMinute()));",
+    "new": "    const s = rel.standing(id, this.dayOf(this._now));",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-mark-swing",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (p.person?.living) g.livingFrom = p.person.living;",
+    "new": "      void p.person;",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "LW-FIX2-mark-trample",
+    "file": "src/systems/roleplayRealism/rrRidingHost.js",
+    "old": "if (g) { g.livingFrom = from; chargeFoe(g, fwd); }",
+    "new": "if (g) { chargeFoe(g, fwd); }",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ]
+  },
+  {
+    "name": "LW-FIX2-host",
+    "file": "src/scenes/world.js",
+    "old": "  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards, { resolve: livingResidentOf, localOf: livingLocalOf });",
+    "new": "  const livingWatchStep = () => watchStep(_livingWatchTurned, [], { resolve: livingResidentOf, localOf: livingLocalOf });",
+    "tests": [
+      "test/systems/livingWorld/lwfix2_watch.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  }
+]

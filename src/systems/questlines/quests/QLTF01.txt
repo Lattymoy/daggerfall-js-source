@@ -1,0 +1,154 @@
+-- STAR8 (2026-10-20; bible/11-Multiplayer/Starfall.md section 7): THE THIRTEENTH OF FROSTFALL, step 1 of 4.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner while the
+-- Starfall runs (`needs: ['starfall']`), never offered by a questor: the letter is the offer. A Wyrd Sister at a tavern's
+-- door hands it over - the Witches' Festival's vendors are Glenmoril's own (`ql act wyrd-met 1`, said as her window
+-- opens: scenes/witchesHost.js) - and if the player holds a fallen star before meeting one, Morwen saw its thread burn
+-- and her raven brings a note instead (AUDIT STAR8 T1: not a courier's clock - online REST8 cuts a delay to the short
+-- wait, two real minutes of play, and a raven on a clock would beat every Sister). One or the other, never both.
+-- Witnessed (net/questlineClaims.js `star`, the j1 receipt): it waits on a fallen star held (`ql act star-held 1`),
+-- then on the player at the Glenmoril Coven (`permanent GlenmorilCoven`, the lycanthropy cure's own place - $CUREWER).
+-- A coven is an open-air place in Daggerfall - one block of the wilds (WITCAA00.RMB), no building and no dungeon, so no
+-- quest marker to stand a person on - and DFU's own quests meet one as this does, by the player's arrival (`pc at`,
+-- S0000007's). Morwen meets the player at its fire. Lore: canon - the Witches' Festival on the 13th of Frostfall
+-- (TEXT.RSC 8392), the music in the woods (Q0C4XY04.QRC: "The witches must be celebrating"), the Glenmoril Witches who
+-- summon Hircine alone (FACTION.TXT 419, `summon: 4`), Mephala's summoning day the Festival's own
+-- (systems/daedraSummoning.js). The port's own: the covens' rite that sings a star down and binds it in black thread,
+-- Morwen of Glenmoril, her sisters at the taverns' doors, her raven.
+Quest: QLTF01
+DisplayName: Music in the Woods
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>         Morwen of Glenmoril has stopped waiting for
+<ce>                     word of a star.
+
+QuestComplete:  [1004]
+<ce>         Morwen presses _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Morwen of Glenmoril has written to me. When a star
+ falls on the Witches' Festival, I am to hold it
+ until the black thread on it burns away. Then I am
+ to find her at __glenmoril_ in ____glenmoril_.
+
+Message:  1011
+%pcn,
+
+     Did you hear music in the woods last night?
+ So did I. It was not ours.
+
+     It is the Witches' Festival, and the covens of
+ the Bay are singing to the sky. They sing until a
+ star comes down. You will see it fall, and you
+ will see what comes out of the dark for it.
+
+     Go to the star and hold it until the black
+ thread on it burns away. Then come to me at
+ __glenmoril_ in ____glenmoril_.
+
+<ce>                   Morwen of Glenmoril
+
+Message:  1012
+<ce>         A raven lands beside you with a note tied to
+<ce>         its leg. It waits until you take the note,
+<ce>                       then it goes.
+
+Message:  1013
+<ce>         A woman in a cloak of wolfskin steps out from
+<ce>         the trees by the coven's fire. "Morwen," she
+<ce>         says. "So you held one. I watched its thread
+<ce>                    burn from here."
+<ce>
+<ce>         "The covens take turns at the same rite, a
+<ce>          night each. They sing on Mephala's day, and
+<ce>          Mephala answers. The black thread you saw burn
+<ce>          is hers. It ties a star to the ground, and the
+<ce>          things the coven calls up drink its light."
+
+Message:  1014
+<ce>         "We of Glenmoril keep Hircine, and only Hircine.
+<ce>          The Hunt has no use for a star on a string, and
+<ce>          neither do I. Someone taught the covens to
+<ce>          spin that thread. I mean to find out who."
+<ce>
+<ce>         "Go and rest. My sisters keep the taverns' doors
+<ce>          this Festival, and my raven knows your face."
+
+Message:  1015
+%qdt:
+ I held a fallen star until the black thread on it
+ burned away. Morwen of Glenmoril waits for me at
+ __glenmoril_ in ____glenmoril_.
+
+Message:  1016
+<ce>         The Wyrd Sister takes a letter from her sleeve.
+<ce>          "From our sister at Glenmoril," she says. "She
+<ce>                  said you would come."
+
+Message:  1017
+%pcn,
+
+     A star came down tonight, and you held it until
+ its thread burned away. Come to me at
+ __glenmoril_ in ____glenmoril_.
+
+<ce>                   Morwen of Glenmoril
+
+Message:  1018
+<ce>         Woodsmoke, and somewhere ahead the low bark of a
+<ce>               hound. This is Hircine's ground.
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 2 times.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--       __glenmoril_ occurs 4 times.
+--     ____glenmoril_ occurs 4 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _note_ letter used 1017
+Item _gold_ gold range 300 to 600
+
+Place _glenmoril_ permanent GlenmorilCoven
+
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	pc at _glenmoril_ set _atcoven_ saying 1018
+
+variable _atcoven_
+
+_wyrd_ task:
+	ql act wyrd-met 1
+
+_held_ task:
+	ql act star-held 1
+	log 1015 step 1
+
+_sister_ task:
+	when _wyrd_ and not _raven_
+	get item _letter_ saying 1016
+	reveal _glenmoril_
+	log 1010 step 0
+	start timer _wait_
+
+_raven_ task:
+	when _held_ and not _sister_
+	get item _note_ saying 1012
+	reveal _glenmoril_
+	start timer _wait_
+
+_met_ task:
+	when _held_ and _atcoven_
+	say 1013
+	say 1014
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

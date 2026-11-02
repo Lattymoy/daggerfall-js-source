@@ -1,0 +1,7 @@
+[
+  {"name":"SmallShipAmbience","channels":1,"frequency":32000,"samples":5826351,"length":182.07347106933594,"loadType":0,"setup":"d6e0bbd4"},
+  {"name":"ShipExteriorAmbience2","channels":1,"frequency":44100,"samples":8918598,"length":202.23577880859375,"loadType":0,"setup":"d6e0bbd4"},
+  {"name":"Oars_In","channels":1,"frequency":22050,"samples":131982,"length":5.9855780601501465,"loadType":0,"setup":"8d00698d"},
+  {"name":"Oars_Sweep","channels":1,"frequency":22050,"samples":122865,"length":5.572108745574951,"loadType":0,"setup":"8d00698d"},
+  {"name":"Oars_Out","channels":1,"frequency":22050,"samples":134314,"length":6.09133768081665,"loadType":0,"setup":"8d00698d"}
+]

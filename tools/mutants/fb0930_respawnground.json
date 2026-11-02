@@ -1,0 +1,83 @@
+[
+  {
+    "name": "RESPAWN-GROUND-the-pixel-read-gone-from-before-the-exit",
+    "file": "src/scenes/world.js",
+    "old": "    const px = ohReturn?.pixel ?? playerTravelPixel();\n    const courtGate = modes?.gateArenaGate?.() ?? null;",
+    "new": "    const courtGate = modes?.gateArenaGate?.() ?? null;",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-GROUND-the-eye-left-in-the-dungeon-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (!(eye[0] >= 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0 && eye[2] < TERRAIN_SIZE)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-GROUND-every-eye-moved",
+    "file": "src/scenes/world.js",
+    "old": "    if (!(eye[0] >= 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0 && eye[2] < TERRAIN_SIZE)) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-GROUND-the-camera-moved-alone",
+    "file": "src/scenes/world.js",
+    "old": "      if (walkMode) player.spawn(TERRAIN_SIZE / 2, player.pos[1], TERRAIN_SIZE / 2);\n      cam.pos = walkMode ? player.eyeAt()",
+    "new": "      cam.pos = walkMode ? player.eyeAt()",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-GROUND-the-south-edge-unread",
+    "file": "src/scenes/world.js",
+    "old": "eye[0] < TERRAIN_SIZE && eye[2] >= 0 && eye[2] < TERRAIN_SIZE)) {",
+    "new": "eye[0] < TERRAIN_SIZE && eye[2] < TERRAIN_SIZE)) {",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-GROUND-the-north-edge-unread",
+    "file": "src/scenes/world.js",
+    "old": "eye[2] >= 0 && eye[2] < TERRAIN_SIZE)) {",
+    "new": "eye[2] >= 0)) {",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-GROUND-the-east-edge-unread",
+    "file": "src/scenes/world.js",
+    "old": "eye[0] >= 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0",
+    "new": "eye[0] >= 0 && eye[2] >= 0",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-GROUND-the-edge-counted-off",
+    "file": "src/scenes/world.js",
+    "old": "eye[0] >= 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0",
+    "new": "eye[0] > 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-GROUND-the-height-not-kept",
+    "file": "src/scenes/world.js",
+    "old": "      cam.pos = walkMode ? player.eyeAt() : [TERRAIN_SIZE / 2, cam.pos[1], TERRAIN_SIZE / 2];",
+    "new": "      cam.pos = walkMode ? player.eyeAt() : [TERRAIN_SIZE / 2, 0, TERRAIN_SIZE / 2];",
+    "tests": [
+      "test/player/fb0930_respawnground.test.js"
+    ]
+  }
+]

@@ -1,0 +1,10 @@
+[
+ { "name": "TITLEC-the-title-back-on-a-line", "file": "src/ui/chatPanel.js",
+   "old": "    const after = [];\n    const gt = guildTagText(peer?.gt);", "new": "    const after = peer?.title ? [el('span', `${prefix}-title`, String(peer.title))] : [];\n    const gt = guildTagText(peer?.gt);", "tests": ["test/ui/chatfit.test.js", "test/ui/enhanced/acc3wear.test.js"] },
+ { "name": "TITLEC-the-title-back-in-the-badge-key", "file": "src/ui/chatPanel.js",
+   "old": "  const badgeKeyOf = (b) => (b ? `${(Array.isArray(b.glyphs) ? b.glyphs : []).join('+')}|${b.gt ?? ''}` : '');", "new": "  const badgeKeyOf = (b) => (b ? `${b.title ?? ''}|${(Array.isArray(b.glyphs) ? b.glyphs : []).join('+')}|${b.gt ?? ''}` : '');", "tests": ["test/ui/chatfit.test.js"] },
+ { "name": "TITLEC-the-line-title-rule-back", "file": "src/ui/chatPanel.js",
+   "old": ".dfchat-line-glyph { width: calc(11px * var(--dfchat-scale, 1));", "new": ".dfchat-line-title { font-size: calc(11px * var(--dfchat-scale, 1)); text-transform: uppercase; margin-right: 4px; }\n.dfchat-line-glyph { width: calc(11px * var(--dfchat-scale, 1));", "tests": ["test/ui/chatfit.test.js"] },
+ { "name": "TITLEC-the-title-painted-through-the-chat-again", "file": "src/ui/chatPanel.js",
+   "old": "import { glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA } from './playerBadge.js';", "new": "import { glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA, paintTitle } from './playerBadge.js';", "tests": ["test/ui/shadowfang.test.js"] }
+]

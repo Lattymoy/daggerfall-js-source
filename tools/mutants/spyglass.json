@@ -1,0 +1,711 @@
+[
+  {
+    "name": "SPY-eye-unread",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (revealed || dist <= reach.eye || dist <= reach.lookout) k = Math.max(k, KNOW.colours);",
+    "new": "  if (revealed || dist <= reach.lookout) k = Math.max(k, KNOW.colours);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-lookout-unread",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (revealed || dist <= reach.eye || dist <= reach.lookout) k = Math.max(k, KNOW.colours);",
+    "new": "  if (revealed || dist <= reach.eye) k = Math.max(k, KNOW.colours);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-revealed-unread",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (revealed || dist <= reach.eye || dist <= reach.lookout) k = Math.max(k, KNOW.colours);",
+    "new": "  if (dist <= reach.eye || dist <= reach.lookout) k = Math.max(k, KNOW.colours);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-glass-any-hold",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (held >= GLASS_STUDY_S && dist <= reach.far) k = Math.max(k, KNOW.colours);",
+    "new": "  if (held > 0 && dist <= reach.far) k = Math.max(k, KNOW.colours);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-glass-any-range",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (held >= GLASS_STUDY_S && dist <= reach.far) k = Math.max(k, KNOW.colours);",
+    "new": "  if (held >= GLASS_STUDY_S) k = Math.max(k, KNOW.colours);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-study-far",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (held >= GLASS_STUDY_NEAR_S && dist <= reach.near) k = KNOW.studied;",
+    "new": "  if (held >= GLASS_STUDY_NEAR_S && dist <= reach.far) k = KNOW.studied;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-study-quick",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (held >= GLASS_STUDY_NEAR_S && dist <= reach.near) k = KNOW.studied;",
+    "new": "  if (held >= GLASS_STUDY_S && dist <= reach.near) k = KNOW.studied;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-struck-unread",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (struck) return KNOW.studied;\n  if (revealed || dist <= reach.eye || dist <= reach.lookout) k = Math.max(k, KNOW.colours);",
+    "new": "  if (revealed || dist <= reach.eye || dist <= reach.lookout) k = Math.max(k, KNOW.colours);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-unlearnt",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  let k = Math.max(KNOW.hull, Math.min(KNOW.studied, known | 0));",
+    "new": "  let k = KNOW.hull;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-unclamped",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  let k = Math.max(KNOW.hull, Math.min(KNOW.studied, known | 0));",
+    "new": "  let k = Math.max(KNOW.hull, known | 0);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-reach-worth-unread",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  const k = Math.max(1, Number(sight) || 1);",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-reach-worth-below",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  const k = Math.max(1, Number(sight) || 1);",
+    "new": "  const k = Number(sight) || 1;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-reach-night-unread",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  const at = (m) => nightSight(m * k, { night, lit });",
+    "new": "  const at = (m) => m * k;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-reach-eye-night",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  return {\n    far: at(GLASS_FAR_M),\n    near: at(GLASS_NEAR_M),\n    eye: night && !lit ? NAKED_EYE_DARK_M : NAKED_EYE_M,\n    lookout: lookout ? at(LOOKOUT_ID_M) : 0,\n  };",
+    "new": "  return { far: at(GLASS_FAR_M), near: at(GLASS_NEAR_M), eye: NAKED_EYE_M, lookout: lookout ? at(LOOKOUT_ID_M) : 0 };",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-reach-lookout-always",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "    lookout: lookout ? at(LOOKOUT_ID_M) : 0,",
+    "new": "    lookout: at(LOOKOUT_ID_M),",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-deceit-any-temper",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (!cls || cls.faction !== 'pirate' || cls.flagship || temper !== 'wary' || plain || !merchantOfHull(cls.hull))\n    return null;",
+    "new": "  if (!cls || cls.faction !== 'pirate' || cls.flagship || plain || !merchantOfHull(cls.hull)) return null;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-deceit-flagship",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (!cls || cls.faction !== 'pirate' || cls.flagship || temper !== 'wary' || plain || !merchantOfHull(cls.hull))\n    return null;",
+    "new": "  if (!cls || cls.faction !== 'pirate' || temper !== 'wary' || plain || !merchantOfHull(cls.hull)) return null;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-deceit-plain-unread",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (!cls || cls.faction !== 'pirate' || cls.flagship || temper !== 'wary' || plain || !merchantOfHull(cls.hull))\n    return null;",
+    "new": "  if (!cls || cls.faction !== 'pirate' || cls.flagship || temper !== 'wary' || !merchantOfHull(cls.hull)) return null;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-deceit-share",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (!(r() < DECEIT_SHARE)) return null;",
+    "new": "  if (!(r() < 0.5)) return null;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-deceit-one-crown",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  return CROWNS[Math.floor(r() * CROWNS.length) % CROWNS.length].name;",
+    "new": "  return CROWNS[0].name;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-holds-no-zoom",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  angle <=\n  Math.min(\n    field,\n    Math.max(Math.atan2(Math.max(1, half), Math.max(1, dist)), (RETICLE_DEG * Math.PI) / 180 / Math.max(1, zoom)),\n  );",
+    "new": "  angle <= Math.min(field, Math.max(Math.atan2(Math.max(1, half), Math.max(1, dist)), (RETICLE_DEG * Math.PI) / 180));",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-holds-no-hull",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  angle <=\n  Math.min(\n    field,\n    Math.max(Math.atan2(Math.max(1, half), Math.max(1, dist)), (RETICLE_DEG * Math.PI) / 180 / Math.max(1, zoom)),\n  );",
+    "new": "  angle <= Math.min(field, Math.max(0, (RETICLE_DEG * Math.PI) / 180 / Math.max(1, zoom)));",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-guns-bow-count",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "        ? `${/^[aeiou]/.test(kind(bow.gun)) ? 'an' : 'a'} ${kind(bow.gun)} gun forward`",
+    "new": "        ? `1 ${kind(bow.gun)} guns forward`",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-guns-stern-unsaid",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (stern)",
+    "new": "  if (false)",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-hands-exact",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  crew <= 0\n    ? 'no hands'\n    : crew < 1.5\n      ? 'a hand'\n      : crew < 2.5\n        ? 'a hand or two'\n        : `about ${Math.round(crew / 5) * 5} hands`; // AUDIT CAPTAIN'S SEA S18: never \"about 1 hands\"",
+    "new": "  crew <= 0 ? 'no hands' : crew < 1.5 ? 'a hand' : crew < 2.5 ? 'a hand or two' : `about ${crew} hands`; // AUDIT CAPTAIN'S SEA S18: never \"about 1 hands\"",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-cargo-unclamped",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  const c = Math.max(1, Math.min(4, cargo | 0));",
+    "new": "  const c = Math.max(1, cargo | 0);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-mind-board-unsaid",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  if (hostile) return mode === 'board' ? 'Closing to board you!' : 'Heading straight for you!';",
+    "new": "  if (hostile) return 'Heading straight for you!';",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-card-unknown-named",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "    return { title: unknownName(f.hull), sub: 'Colors not yet identified', rows, tone: 'unknown', study, hint }; // AUDIT CAPTAIN'S SEA S11: nothing of her stance - not even a red title",
+    "new": "    return { title: f.name, sub: 'Colors not yet identified', rows, tone: 'unknown', study, hint }; // AUDIT CAPTAIN'S SEA S11: nothing of her stance - not even a red title",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-card-disguise-unread",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  const disguised = !!f.falseFlag && known < KNOW.studied && !f.hostile;",
+    "new": "  const disguised = false;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-card-disguise-hostile",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  const disguised = !!f.falseFlag && known < KNOW.studied && !f.hostile;",
+    "new": "  const disguised = !!f.falseFlag && known < KNOW.studied;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-card-seen-unsaid",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "    if (f.falseFlag) rows.unshift(['False colors', 'Too many gunports for a trader. This is a pirate']);\n    rows.push(",
+    "new": "    rows.push(",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-card-bounty-unsaid",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "    if (f.bounty) rows.push(['Wanted', f.bounty]);\n    if (f.lore) rows.push(['Lore', f.lore]);",
+    "new": "    if (f.lore) rows.push(['Lore', f.lore]);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-card-hint-unsaid",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "  const hint =\n    within != null && known < KNOW.studied\n      ? `Close within ${Math.round(within)} m to make out ${known < KNOW.colours ? 'its colours' : 'its guns and hold'}`\n      : '';",
+    "new": "  const hint = false\n    ? `Close within ${Math.round(within)} m to make out ${known < KNOW.colours ? 'its colours' : 'its guns and hold'}`\n    : '';",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-card-study-kept",
+    "file": "src/systems/naval/shipKnowledge.js",
+    "old": "    study: known >= KNOW.studied ? 1 : study,",
+    "new": "    study,",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-tag-unknown",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk || knownOf(e) < KNOW.colours) continue;   // SPYGLASS: an unknown hull wears no tag",
+    "new": "      if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk) continue;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-tag-disguise-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const hid = disguisedOf(e);   // SPYGLASS: her false colours, read as they fly - a merchantman's friendly bar",
+    "new": "      const hid = false;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-card-captain-early",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "captain: known >= KNOW.studied ? s.names?.captain ?? null : null,",
+    "new": "captain: s.names?.captain ?? null,",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-card-stance-shown",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const stance = !made ? { hostile: false, friendly: false } : hid ?",
+    "new": "    const stance = hid ?",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ],
+    "equivalent": true,
+    "why": "GLASS-SPOT (2026-10-11): no card is drawn for a hull not made out - the look's and the laid guns' cards are gated before targetCardOf (navalHost.js targetCard), and its one other caller, the board card on foot, names only a ship struck or a prize, which knowStep makes out to the full (shipKnowledge.js knowledgeOf's `struck`) the frame she strikes. Her unknown rows are kept as the knowledge law's belt-and-braces; test/systems/naval/glassclear.test.js pins both gates."
+  },
+  {
+    "name": "SPY-H-card-faction-shown",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "faction: !made ? 'unknown' : hid ? 'merchant' : s.cls.faction,",
+    "new": "faction: hid ? 'merchant' : s.cls.faction,",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ],
+    "equivalent": true,
+    "why": "GLASS-SPOT (2026-10-11): no card is drawn for a hull not made out - the look's and the laid guns' cards are gated before targetCardOf (navalHost.js targetCard), and its one other caller, the board card on foot, names only a ship struck or a prize, which knowStep makes out to the full (shipKnowledge.js knowledgeOf's `struck`) the frame she strikes. Her unknown rows are kept as the knowledge law's belt-and-braces; test/systems/naval/glassclear.test.js pins both gates."
+  },
+  {
+    "name": "SPY-H-name-unknown",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (knownOf(e) < KNOW.colours) return unknownName(e.ship.hull);\n    if (disguisedOf(e)) return disguiseOf(e).name;",
+    "new": "    if (disguisedOf(e)) return disguiseOf(e).name;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ],
+    "equivalent": true,
+    "why": "GLASS-SPOT (2026-10-11): shownName's unknown branch has no reader left that can reach it - the tags skip a hull not made out (navalHost.js tags: SPYGLASS's no tag), and targetCardOf is reached for one only past GLASS-SPOT's gates, which give her no card (its board card on foot names a ship struck or a prize, made out to the full the frame she strikes). Kept as the knowledge law's belt-and-braces: a new reader of her name says \"Unknown galleon\" before it says hers; test/systems/naval/glassclear.test.js pins the gates."
+  },
+  {
+    "name": "SPY-H-glass-never-held",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    glassHeld += Math.max(0, dt);",
+    "new": "    glassHeld = 0;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-glass-kept-on-leave",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if ((best?.id ?? null) !== glassOn) { glassOn = best?.id ?? null; glassHeld = 0; }",
+    "new": "    if ((best?.id ?? null) !== glassOn) { glassOn = best?.id ?? null; }",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-glass-down-held",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!glassUp) { glassOn = null; glassHeld = 0; return null; }",
+    "new": "    if (!glassUp) { return null; }",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-glass-zoom-unclamped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    glassZoom = clamp(Number(zoom) || GLASS_ZOOM, GLASS_ZOOM_MIN, GLASS_ZOOM_MAX);",
+    "new": "    glassZoom = Number(zoom) || GLASS_ZOOM;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-know-unstepped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-held-any-ship",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const held = glassUp && glassOn === e.id ? glassHeld : 0;",
+    "new": "      const held = glassUp ? glassHeld : 0;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-lookout-uncalled",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        deps.say?.(`Lookout: ${withArticle(hullWord(s.hull))} flying ${colours}!`, 3);\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-lookout-unposted",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "lookout: !!deck?.crewed && !!st?.worth?.posts?.Lookout };",
+    "new": "lookout: false };",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-seen-through-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "deps.mid?.(`False colors! ${s.names?.name ?? 'It'} is a pirate.`, 4);",
+    "new": "void 0;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-black-flag-never",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const ff = engaged && !e.blackFlag ? falseFlagFor(e) : null;",
+    "new": "      const ff = null;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-pennant-true",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const colours = state === SHIP_STATES.afloat ? (falseFlagFor(e) && !e.blackFlag ? 'false' : 'hers') :",
+    "new": "    const colours = state === SHIP_STATES.afloat ? 'hers' :",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-hail-disguised",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (disguisedOf(e)) continue;   // SPYGLASS: under false colours she is a merchantman to my lookout - till her black flag\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-hail-named",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "${knownOf(best) >= KNOW.colours ? withArticle(classLine(s.cls, s.names?.crown)) : withArticle(hullWord(s.hull))}",
+    "new": "${withArticle(classLine(s.cls, s.names?.crown))}",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-H-revealed-any-mode",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      const revealed = (engaged && onMe && gunsOut && hostile(s, me, law)) || !!e.relief;",
+    "new": "      const revealed = hostile(s, me, law) || !!e.relief;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-ashore",
+    "file": "src/scenes/world.js",
+    "old": "  const spyglassAllowed = () => navalOn() && !!naval?.aboard?.() && _mode()",
+    "new": "  const spyglassAllowed = () => navalOn() && _mode()",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-under-a-broadside",
+    "file": "src/scenes/world.js",
+    "old": "&& !travelView?.active && !naval?.aiming && !(townTalk.overlay instanceof DeathScreen)\n",
+    "new": "&& !travelView?.active && !(townTalk.overlay instanceof DeathScreen)\n",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-never-lowered",
+    "file": "src/scenes/world.js",
+    "old": "    if (spyglass.up && !spyglassAllowed()) spyglass.up = false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-head-unheld",
+    "file": "src/scenes/world.js",
+    "old": "    mwViewHoldFirst(spyglass.up);\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-lens-unnarrowed",
+    "file": "src/scenes/world.js",
+    "old": "    const proj = horizonProj(glassFov(fieldOfView() + climbFeel.fovRad(), spyglass.lens), worldAspect, spyglass.near, tvf);",
+    "new": "    const proj = horizonProj(fieldOfView() + climbFeel.fovRad(), worldAspect, spyglass.near, tvf);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-look-unslowed",
+    "file": "src/scenes/world.js",
+    "old": "    lookFilter.add(e.movementX * lookScale() * glassLookScale(spyglass.lens), -e.movementY * lookScale() * lookInvert() * glassLookScale(spyglass.lens));",
+    "new": "    lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-wheel-unread",
+    "file": "src/scenes/world.js",
+    "old": "|| modes?.wheel?.(e) || spyglassWheel(e.deltaY) || shotWheel(e.deltaY) || mwViewWheel(e.deltaY)) e.preventDefault(); }",
+    "new": "|| modes?.wheel?.(e) || shotWheel(e.deltaY) || mwViewWheel(e.deltaY)) e.preventDefault(); }",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-road-aboard",
+    "file": "src/scenes/world.js",
+    "old": "  function travelFollowPressed() { return !naval?.aboard?.() && pressed(latch.edge, keys, 'FollowPaths'); }",
+    "new": "  function travelFollowPressed() { return pressed(latch.edge, keys, 'FollowPaths'); }",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-W-touch-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const pressedNow = hccActionPressed('Spyglass') || navalTouchGlass() || glassDoorPress || (taps.lower && spyglass.up);",
+    "new": "    const pressedNow = hccActionPressed('Spyglass') || glassDoorPress || (taps.lower && spyglass.up);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-ease-instant",
+    "file": "src/ui/spyglassView.js",
+    "old": "  const next = lens + (want - lens) * (1 - Math.exp(-Math.max(0, dt) / GLASS_EASE_S));",
+    "new": "  const next = want;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-ease-unsnapped",
+    "file": "src/ui/spyglassView.js",
+    "old": "  return Math.abs(want - next) < 0.01 ? want : next;",
+    "new": "  return next;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-fov-linear",
+    "file": "src/ui/spyglassView.js",
+    "old": "export const glassFov = (fov, lens) => (lens > 1 ? 2 * Math.atan(Math.tan(fov / 2) / lens) : fov);",
+    "new": "export const glassFov = (fov, lens) => (lens > 1 ? fov / lens : fov);",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-look-unslowed",
+    "file": "src/ui/spyglassView.js",
+    "old": "export const glassLookScale = (lens) => 1 / Math.max(1, lens);",
+    "new": "export const glassLookScale = (lens) => 1 / lens;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-rows-unwritten",
+    "file": "src/ui/spyglassView.js",
+    "old": "      parts.rows.append(b, s);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-tone-unread",
+    "file": "src/ui/spyglassView.js",
+    "old": "  set('tone', GLASS_TONES[c.tone] ?? GLASS_TONES.neutral, (v) => {",
+    "new": "  set('tone', GLASS_TONES.neutral, (v) => {",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-bar-always",
+    "file": "src/ui/spyglassView.js",
+    "old": "  set('studying', study < 1, (v) => {",
+    "new": "  set('studying', true, (v) => {",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-covered-unread",
+    "file": "src/ui/spyglassView.js",
+    "old": "  const on = !!model && !covered;",
+    "new": "  const on = !!model;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-V-foot-wheel-always",
+    "file": "src/ui/spyglassView.js",
+    "old": "  const magnify = pad ? (keys.zoom ? `${keys.zoom}: magnify` : null) : 'Wheel: magnify'; // S3: the pad's, the look stick's click",
+    "new": "  const magnify = 'Wheel: magnify'; // S3: the pad's, the look stick's click",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-N-press-unshown",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const glassOn = !!p && touch;",
+    "new": "  const glassOn = false;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-N-tap-kept",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const tapped = touchGlass > 0;\n  touchGlass = 0;\n  return tapped;",
+    "new": "  return touchGlass > 0;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-N-brass-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  cls('glassc', parts.glassBtn, glassUp ? 'dfnaval-glassbtn down' : 'dfnaval-glassbtn');",
+    "new": "  cls('glassc', parts.glassBtn, 'dfnaval-glassbtn');",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-M-no-hand-back",
+    "file": "src/player/mwView.js",
+    "old": "  if (h.changed) mwViewTogglePerspective(); // back out into the third person it stood in\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-M-travel-view-loses",
+    "file": "src/player/mwView.js",
+    "old": "    if (heldThird) return false;\n    const lane = eotbLane() ? 'eotb' : 'mw';",
+    "new": "    const lane = eotbLane() ? 'eotb' : 'mw';",
+    "tests": [
+      "test/systems/naval/spyglass.test.js"
+    ]
+  },
+  {
+    "name": "SPY-I-share-unseated",
+    "file": "src/systems/inputActions.js",
+    "old": "  Object.freeze(['KeyK', 'Spyglass', 'FollowPaths']),\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/spyglass.test.js",
+      "test/systems/inputactions.test.js"
+    ]
+  }
+]

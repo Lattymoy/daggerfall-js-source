@@ -1,0 +1,335 @@
+[
+  {
+    "name": "FBSEA-2-the-old-velY-reading",
+    "file": "src/scenes/world.js",
+    "old": "grounded: () => !!ai.isGrounded,",
+    "new": "grounded: () => ai.velY === 0,",
+    "tests": [
+      "test/characters/enemy/fbsea_aquatic.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-2-a-motor-never-moved-stands",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    this.isGrounded = false;\n",
+    "new": "    this.isGrounded = true;\n",
+    "tests": [
+      "test/characters/enemy/fbsea_aquatic.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-2-the-walker-move-unwritten",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "    const r = this.collider.move(this.feet, dxm, dy, dzm, this.controllerHeight, true, FOE_KEEPS_FLOOR, false, this.isGrounded);\n    this.isGrounded = r.grounded;\n",
+    "new": "    const r = this.collider.move(this.feet, dxm, dy, dzm, this.controllerHeight, true, FOE_KEEPS_FLOOR, false, this.isGrounded);\n",
+    "tests": [
+      "test/characters/enemy/fbsea_aquatic.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-1-the-bob-not-undone",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "    if (c !== boat.MeshObject) q = quatMultiply(q, c.localRotation);",
+    "new": "    q = quatMultiply(q, c.localRotation);",
+    "tests": [
+      "test/net/peer/fbsea_deck.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-1-the-whole-height",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "  l[1] -= (Number.isFinite(height) && height > 0 ? height : 1.8) / 2; // the feet, half a height under the pinned transform",
+    "new": "  l[1] -= Number.isFinite(height) && height > 0 ? height : 1.8; // the feet, half a height under the pinned transform",
+    "tests": [
+      "test/net/peer/fbsea_deck.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-1-the-helm-word-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "const csaDeckWord = () => (csaOn() ? (csaAboard.word(player.pos) ?? csaHelmWord() ?? naval?.deckWord?.(player.pos) ?? null) : null);",
+    "new": "const csaDeckWord = () => (csaOn() ? (csaAboard.word(player.pos) ?? naval?.deckWord?.(player.pos) ?? null) : null);",
+    "tests": [
+      "test/net/peer/fbsea_deck.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-1-the-bob-unapplied",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "  const Q = quatMultiply(quatMultiply(q, bob), [-q[0], -q[1], -q[2], q[3]]);",
+    "new": "  const Q = [0, 0, 0, 1];",
+    "tests": [
+      "test/net/peer/fbsea_deck.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-1-the-pace-off-the-world-feet",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      at = on ? peer.shown.deck : f;",
+    "new": "      at = f;",
+    "tests": [
+      "test/net/peer/fbsea_deck.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-1-the-deck-key-unasked",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    b.speed = stepPeerPace(b.speed, b.paceKey === on ? b.paceAt : null, at, dt); // HT-WAIST-BACK: net/peer/peerPace.js, the one home",
+    "new": "    b.speed = stepPeerPace(b.speed, b.paceAt, at, dt); // HT-WAIST-BACK: net/peer/peerPace.js, the one home",
+    "tests": [
+      "test/net/peer/fbsea_deck.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-1-the-moving-bit-off-the-world",
+    "file": "src/scenes/world.js",
+    "old": "const here = (carrier && csaLocalOf(csaDeckPose(carrier), [player.pos[0], player.pos[1] + player.height / 2, player.pos[2]])) || player.pos;",
+    "new": "const here = player.pos;",
+    "tests": [
+      "test/net/peer/fbsea_deck.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-3-the-ratio-unapplied",
+    "file": "src/player/seaZoom.js",
+    "old": "  const d = distance * SEA_ZOOM_RATIO ** -clicks;",
+    "new": "  const d = distance - clicks;",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-3-the-reach-unclamped",
+    "file": "src/player/seaZoom.js",
+    "old": "  return Math.min(far, Math.max(footFar, d));",
+    "new": "  return Math.max(footFar, d);",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-3-the-reach-one-half-extent",
+    "file": "src/player/seaZoom.js",
+    "old": "halfExtent > 0 ? halfExtent * SEA_ZOOM_REACH : 0;",
+    "new": "halfExtent > 0 ? halfExtent : 0;",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-3-the-save-past-the-reference",
+    "file": "src/player/mwCamera.js",
+    "old": "      return { firstPerson, baseDistance: Math.min(baseDistance, MAX_DISTANCE) };",
+    "new": "      return { firstPerson, baseDistance };",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-3-the-own-hull-unskipped",
+    "file": "src/scenes/world.js",
+    "old": "raycast: (o, d, m) => Math.min(collider.raycast(o, d, m, camFilter), hcc.cameraHit(o, d, m)),",
+    "new": "raycast: (o, d, m) => Math.min(collider.raycast(o, d, m), hcc.cameraHit(o, d, m)),",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-3-the-mods-far-end-at-sea",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "      const far = seaReach > -MAX_Z && !(cfg.overrides.Boat.enabled && isSailing) ? -seaReach : MAX_Z;",
+    "new": "      const far = MAX_Z;",
+    "tests": [
+      "test/player/fbsea_zoom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-5-the-entry-unresolved",
+    "file": "src/systems/testRoom.js",
+    "old": "  if (id === TEST_SEA.id) return { preset: testPresetById(TEST_SEA.preset), ride: false, sea: true };\n",
+    "new": "",
+    "tests": [
+      "test/systems/fbsea_testroom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-5-the-sea-to-the-classic-start",
+    "file": "src/systems/testRoom.js",
+    "old": "export const testStartsOutdoors = (id) => id === TEST_RIDE.id || id === TEST_SEA.id;",
+    "new": "export const testStartsOutdoors = (id) => id === TEST_RIDE.id;",
+    "tests": [
+      "test/systems/fbsea_testroom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-5-naval-combat-unturned",
+    "file": "src/systems/testRoom.js",
+    "old": "  setPref('naval', true);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fbsea_testroom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-5-the-boat-before-the-bay",
+    "file": "src/scenes/world.js",
+    "old": "    if (seaTestStage === 1 || !csa.ready()) return;",
+    "new": "    if (!csa.ready()) return;",
+    "tests": [
+      "test/systems/fbsea_testroom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-5-the-pirate-before-the-helm",
+    "file": "src/scenes/world.js",
+    "old": "    if (!csaRuntime?.isSailing() || !naval) return;   // at her helm first",
+    "new": "    if (!naval) return;   // at her helm first",
+    "tests": [
+      "test/systems/fbsea_testroom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-5-the-open-water-unasked",
+    "file": "src/scenes/world.js",
+    "old": "      if (!navalIsWater(f[0] + Math.sin(b) * TEST_SEA.range, f[2] + Math.cos(b) * TEST_SEA.range, TEST_SEA.hull)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fbsea_testroom.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-top-at-the-grounds-nought",
+    "file": "src/render/deepWatersRender.js",
+    "old": "      gl.polygonOffset(0, WATER_LAYER_UNITS.surface);",
+    "new": "      gl.polygonOffset(0, 0);",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-breakers-in-the-film",
+    "file": "src/render/comeSailAwayRender.js",
+    "old": "    gl.polygonOffset(0, WATER_LAYER_UNITS.breakers);",
+    "new": "    gl.polygonOffset(0, WATER_LAYER_UNITS.surface);",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-film-at-nought",
+    "file": "src/render/waterSurface.js",
+    "old": "  surface: -2,",
+    "new": "  surface: 0,",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-breakers-under-the-margin",
+    "file": "src/render/waterSurface.js",
+    "old": "  breakers: -6,",
+    "new": "  breakers: -3,",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-water1-off-the-table",
+    "file": "src/render/renderer.js",
+    "old": "    gl.polygonOffset(0, WATER_LAYER_UNITS.surface);",
+    "new": "    gl.polygonOffset(0, -2);",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-level-at-magnification",
+    "file": "src/render/comeSailAwayRender.js",
+    "old": "  return lambda > 0.5 ? min(int(ceil(lambda + 0.5)) - 1, uLastLevel) : 0;",
+    "new": "  return lambda > 0.0 ? min(int(ceil(lambda + 0.5)) - 1, uLastLevel) : 0;",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-level-unbounded",
+    "file": "src/render/comeSailAwayRender.js",
+    "old": "  return lambda > 0.5 ? min(int(ceil(lambda + 0.5)) - 1, uLastLevel) : 0;",
+    "new": "  return lambda > 0.5 ? int(ceil(lambda + 0.5)) - 1 : 0;",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-maps-half-texel",
+    "file": "src/render/comeSailAwayRender.js",
+    "old": "return min(ivec2((vec2(c) + 0.5) * vec2(sizeL) / vec2(size0)), sizeL - 1); }",
+    "new": "return min(ivec2(vec2(c) * vec2(sizeL) / vec2(size0)), sizeL - 1); }",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-cut-at-a-levels-mean",
+    "file": "src/render/comeSailAwayRender.js",
+    "old": "  } else if (tex.a * uColor.a - BAYER[((px.y + 4) & 7) * 8 + ((px.x + 4) & 7)] / 255.0 < 0.0) discard;",
+    "new": "  } else if (tex.a * uColor.a - uCutoff < 0.0) discard;",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-straight-alpha",
+    "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
+    "old": "    frame[o] = Math.round((d[o] * a) / 255);",
+    "new": "    frame[o] = d[o];",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-key-left-magenta",
+    "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
+    "old": "      frame[o] = snowMean[0];\n      frame[o + 1] = snowMean[1];\n      frame[o + 2] = snowMean[2];",
+    "new": "      frame[o] = 255;\n      frame[o + 1] = 0;\n      frame[o + 2] = 255;",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-level-0-composed",
+    "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
+    "old": "  levels[0] = { width: paint.width, height: paint.height, data: d }; // the paint itself, its key kept: level 0 is the mod's read",
+    "new": "  levels[0] = { width: paint.width, height: paint.height, data: levels[0].data }; // the paint itself, its key kept: level 0 is the mod's read",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-a-child-dropped",
+    "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
+    "old": "            out[o + c] = (src[a + c] + src[a + channels + c] + src[b + c] + src[b + channels + c]) * 0.25;",
+    "new": "            out[o + c] = (src[a + c] + src[a + channels + c] + src[b + c] + src[b + c]) * 0.25;",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-tail-unaligned",
+    "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
+    "old": "      while (E > 0 && !whole(E)) E--;\n      const { data: src, w: ew, h: eh } = exact[E],",
+    "new": "      const { data: src, w: ew, h: eh } = exact[E],",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  },
+  {
+    "name": "FBSEA-4-the-means-truncated",
+    "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
+    "old": "    for (let i = 0; i < v.length; i++) o[i] = v[i] + 0.5;",
+    "new": "    for (let i = 0; i < v.length; i++) o[i] = v[i];",
+    "tests": [
+      "test/render/fbsea_water.test.js"
+    ]
+  }
+]

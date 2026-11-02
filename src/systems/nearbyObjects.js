@@ -1,0 +1,322 @@
+// X4: PlayerGPS's NEARBY OBJECTS list (PlayerGPS.cs:105-123, :347-357,
+// :530-550, :747-836, MIT Daggerfall Workshop) - the low-frequency
+// scan of everything alive or lootable around the player, and the
+// flag query every detection/affinity system in DFU reads.
+//
+// This module is the PRODUCER three ported laws were already waiting
+// on, each shipped with no feed:
+//   - the three Detect effects (39,0/39,1/39,2), whose whole body is
+//     one GetNearbyObjects call per magic round;
+//   - mysticism.dispelNearby, which had no caller in src/ at all -
+//     DispelUndead/DispelDaedra are GetNearbyObjects(Undead|Daedra)
+//     scans (DispelUndead.cs:50, DispelDaedra.cs:50);
+//   - enchantments' nearbyFoes dep, declared in its header as
+//     "PlayerGPS.GetNearbyObjects - the affinity classifier lives
+//     HERE off ENEMY_BASICS" and supplied by ONE of the four hosts.
+//
+// THE LAWS, verbatim:
+//
+//  1. The list is REBUILT WHOLE on a timer, not queried live:
+//     refreshNearbyObjectsInterval = 0.33 s (:39), ticked from Update
+//     (:352-356). GetNearbyObjects' own docstring is explicit -
+//     "does not trigger a scene search, this only searches
+//     pre-populated list of nearby objects which is updated at low
+//     frequency" (:532-533). A detector therefore reads a snapshot
+//     that can be up to a third of a second stale, and that staleness
+//     is the design, not an artifact.
+//
+//  2. The rebuild walks enemy behaviours CONCAT civilian mobile
+//     behaviours, then loot (:751-775) - three pools, one list, each
+//     record { ref, distance, flags }.
+//
+//  3. GetEntityFlags (:779-819): an EnemyClass/EnemyMonster takes the
+//     Enemy bit PLUS exactly one group bit off its enemy group
+//     (Undead/Daedra/Humanoid/Animal); a CivilianNPC takes Humanoid
+//     ALONE and never Enemy - so a town wanderer is a Detect Enemy
+//     miss and a BadReactionsFrom humanoid hit at the same time.
+//
+//  4. The MAGIC bit is set for ANY entity carrying at least one live
+//     effect (:814-817), with DFU's own comment attached: "Not
+//     completely sure what conditions should flag entity for detect
+//     magic. Currently just assuming entity has active effects." That
+//     is an acknowledged approximation in DFU itself, carried here
+//     verbatim rather than improved - including its consequence, that
+//     a buffed friendly civilian lights up Detect Magic.
+//
+//  5. GetLootFlags (:822-836): the Treasure bit iff the container
+//     holds at least one item - an EMPTY pile is not treasure. DFU
+//     leaves two questions in the code here ("Are any other
+//     conditions required? Should corpse loot container be filtered
+//     out?"); the answer today is no filter, so a lootable corpse
+//     reads as treasure.
+//
+//  6. The query (:538-550) is an ALL-BITS match - `(no.flags & flags)
+//     == flags`, not an any-bits test. Asking for Undead|Daedra would
+//     find nothing, because no entity carries both group bits. Range
+//     is STRICT `distance < maxRange`, default 14, and DFU flags the
+//     number itself: "Not matched to classic range at this time."
+//     A None query answers null, not an empty list.
+//
+// The module is PURE: hosts adapt their own pools into the record
+// shape below, so one law serves all four rather than four hosts
+// each growing their own scan (which is how the port ended up with
+// world.js's lone nearbyFoes using an INCLUSIVE `<= range` where DFU
+// is strict).
+
+/** PlayerGPS.NearbyObjectFlags (:112-123), verbatim. */
+import { LOCATION_TYPES } from '../formats/mapsFile.js'; // V5: IsPlayerInTown's seven town types
+import { enemyCareerIndex } from '../characters/enemy/enemyBasics.js'; // DEX1: SetEnemyCareer's careerIndex - a class's ID - 128, a mod's id its own
+import { ENEMY_GROUPS, enemyEntityGroup } from '../combat/enemyGroups.js'; // AUDIT DEX C3: GetEnemyGroup's one home, a mod's door with it
+
+export const NEARBY = Object.freeze({
+  None: 0,
+  Enemy: 1,
+  Treasure: 2,
+  Magic: 4,
+  Undead: 8,
+  Daedra: 16,
+  Humanoid: 32,
+  Animal: 64,
+});
+
+export const REFRESH_NEARBY_OBJECTS_INTERVAL = 0.33; // :39
+// GetNearbyObjects' default maxRange (:538). DFU's own note: "Not
+// matched to classic range at this time" - a recorded approximation.
+export const NEARBY_DEFAULT_MAX_RANGE = 14;
+
+// FormulaHelper.GetEnemyEntityEnemyGroup (:2746-2806) - the group
+// classifier, a hardcoded CareerIndex switch. It is NOT the port's
+// ENEMY_BASICS `affinity` field, which is a DIFFERENT nine-value
+// classification (Human/Darkness/Undead/Daylight/Animal/Daedra/
+// Golem/Water/None) serving PotentVs and the item affinity arms.
+// Reaching for `affinity` here would misgroup half the bestiary -
+// every Darkness/Daylight/Golem/Water enemy would silently take no
+// group bit, and the four careers DFU deliberately regroups would
+// take the wrong one.
+// AUDIT DEX C3: the switch is read through its one home and the door a
+// mod's override answers through (combat/enemyGroups.js), as
+// GetEntityFlags and IsGroupMatch read EnemyEntity.GetEnemyGroup
+// (PlayerGPS.cs:788, PacifyEffect.cs:132). A copy of the switch stood
+// here, and a mod's enemies took no group bit from it.
+/** GetEntityFlags' group switch (PlayerGPS.cs:789-802): a group's flag, None's nothing. */
+const GROUP_FLAG = Object.freeze({
+  [ENEMY_GROUPS.Undead]: NEARBY.Undead,
+  [ENEMY_GROUPS.Daedra]: NEARBY.Daedra,
+  [ENEMY_GROUPS.Humanoid]: NEARBY.Humanoid,
+  [ENEMY_GROUPS.Animals]: NEARBY.Animal,
+});
+
+/** FormulaHelper.GetEnemyEntityEnemyGroup's flag. AUDIT 26
+ *  F080: the switch runs on e.CareerIndex (:2752), and for an
+ *  EnemyClass careerIndex is ID - 128 (EnemyEntity.cs:293) - so the
+ *  class enemies COLLIDE into the monster careers: a Mage (0 = Rat)
+ *  is Animals, a Burglar (7 = Orc) is Humanoid, Barbarian (15 =
+ *  SkeletalWarrior), Knight (17 = Zombie) and the City Watch (18 =
+ *  Ghost) are Undead. That collision is DFU's shipping behaviour -
+ *  PacifyEffect.IsGroupMatch (:132) and DispelUndead read the group
+ *  with NO class gate, whatever PacifyEffect's own comment claims -
+ *  and the old lookup answered None for anything >= 128, so Pacify
+ *  Animal never calmed a Mage and Dispel Undead could not destroy a
+ *  Knight. X8's Pacify family reads this rather than re-transcribing
+ *  the career switch, so the two cannot drift apart. */
+const careerIndexOf = (mobileType) => enemyCareerIndex(mobileType); // DEX1: SetEnemyCareer's careerIndex - a mod's id its own
+/**
+ * V5 - PlayerGPS.IsPlayerInTown (:504-527), verbatim including its
+ * two optional gates, because getting them backwards inverts the
+ * whole rest law.
+ *
+ *   IsPlayerInTown(mustBeInLocationRect = false, mustBeOutside = false)
+ *
+ * MUST BE OUTSIDE is the one to read twice: `IsPlayerInTown(true,
+ * true)` - CanRest's first test - is TRUE only standing in the open
+ * inside a town's rect, and FALSE the moment you step through a door.
+ * Read the other way round, every shop and inn in Tamriel would refuse
+ * to let you sleep and would charge you with vagrancy for asking.
+ *
+ * The seven town types are DFU's list, not "the three called Town":
+ * HomeFarms, HomeWealthy, Tavern and ReligionTemple are towns here too.
+ */
+export const TOWN_LOCATION_TYPES = Object.freeze(
+  new Set([
+    LOCATION_TYPES.TownCity,
+    LOCATION_TYPES.TownHamlet,
+    LOCATION_TYPES.TownVillage,
+    LOCATION_TYPES.HomeFarms,
+    LOCATION_TYPES.HomeWealthy,
+    LOCATION_TYPES.Tavern,
+    LOCATION_TYPES.ReligionTemple,
+  ]),
+);
+export function isPlayerInTown(
+  locationType,
+  { mustBeInLocationRect = false, mustBeOutside = false, inLocationRect = false, inside = false } = {},
+) {
+  if (!TOWN_LOCATION_TYPES.has(locationType)) return false;
+  if (mustBeInLocationRect && !inLocationRect) return false;
+  if (mustBeOutside && inside) return false;
+  return true;
+}
+
+export const enemyGroupOf = (mobileType) => GROUP_FLAG[enemyEntityGroup(careerIndexOf(mobileType))] ?? NEARBY.None;
+
+/** GetEntityFlags (:779-819).
+ *  rec = { mobileType, civilian?, effectCount? }.
+ *  A CIVILIAN takes Humanoid alone - never Enemy, and never a group
+ *  bit (DFU's civilian branch is an `else if` that skips the
+ *  enemy-group switch entirely).
+ *
+ *  A CLASS enemy (mobileType >= 128) reaches the switch through its
+ *  careerIndex (ID - 128) and takes the COLLIDING monster career's
+ *  group - F080; the old comment here claimed it fell to the default,
+ *  which is exactly the misreading the audit found. */
+export function entityFlags(rec) {
+  if (!rec) return NEARBY.None;
+  let result = NEARBY.None;
+  if (rec.civilian) {
+    result |= NEARBY.Humanoid;
+  } else {
+    result |= NEARBY.Enemy;
+    result |= enemyGroupOf(rec.mobileType);
+  }
+  // The Magic bit: DFU's acknowledged approximation - ANY live effect.
+  if ((rec.effectCount ?? 0) > 0) result |= NEARBY.Magic;
+  return result;
+}
+
+/** GetLootFlags (:822-836): non-empty containers only. */
+export function lootFlags(rec) {
+  if (!rec) return NEARBY.None;
+  return (rec.itemCount ?? 0) > 0 ? NEARBY.Treasure : NEARBY.None;
+}
+
+const dist3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+
+/** UpdateNearbyObjects (:747-776): clear, then entities (enemies
+ *  CONCAT civilians) then loot, each measured from the player's
+ *  position at THIS rebuild. Records keep their host `ref` so a
+ *  consumer can act on the thing itself (dispel destroys it, the
+ *  compass reads its position, VampiricEffect drains it). */
+export function updateNearbyObjects(playerPos, { entities = [], loot = [] } = {}) {
+  const out = [];
+  for (const rec of entities) {
+    if (!rec?.pos) continue;
+    out.push({
+      ref: rec.ref ?? rec,
+      pos: [rec.pos[0], rec.pos[1], rec.pos[2]],
+      distance: dist3(playerPos, rec.pos),
+      flags: entityFlags(rec),
+      active: rec.active !== false,
+    });
+  }
+  for (const rec of loot) {
+    if (!rec?.pos) continue;
+    out.push({
+      ref: rec.ref ?? rec,
+      pos: [rec.pos[0], rec.pos[1], rec.pos[2]],
+      distance: dist3(playerPos, rec.pos),
+      flags: lootFlags(rec),
+      active: rec.active !== false,
+    });
+  }
+  return out;
+}
+
+/** GetNearbyObjects (:538-550), verbatim including its three quirks:
+ *  a None query answers NULL rather than an empty list; the flag test
+ *  is ALL-BITS (`(flags & want) == want`), so a multi-bit query wants
+ *  every bit; and the range test is STRICT. */
+export function getNearbyObjects(list, flags, maxRange = NEARBY_DEFAULT_MAX_RANGE, activeInHierarchy = true) {
+  if (flags === NEARBY.None) return null;
+  return (list ?? []).filter(
+    (no) => (no.flags & flags) === flags && no.distance < maxRange && no.active === activeInHierarchy,
+  );
+}
+
+/** The 0.33 s rebuild timer (:352-356), as a tiny stateful pump a
+ *  host frame can drive. `rebuild` is called with no arguments and
+ *  answers the new list. The timer resets to 0 on fire - it does NOT
+ *  subtract the interval, so a long frame does not bank a second
+ *  rebuild (DFU's `nearbyObjectsUpdateTimer = 0`, :356). */
+export function createNearbyScan(rebuild) {
+  let timer = 0;
+  let list = [];
+  return {
+    get list() {
+      return list;
+    },
+    tick(dt) {
+      timer += dt;
+      if (timer > REFRESH_NEARBY_OBJECTS_INTERVAL) {
+        list = rebuild() ?? [];
+        timer = 0;
+      }
+      return list;
+    },
+    /** A scene change must not carry the previous scene's objects. */
+    reset() {
+      timer = 0;
+      list = [];
+    },
+  };
+}
+
+// ── the bridge from a live Detect effect to the scan ──────────────
+
+/** The three Detect effects' BUFF_KINDS names -> the flag each scans
+ *  with (DetectMagic.cs:69, DetectEnemy.cs:69, DetectTreasure.cs:69).
+ *  Kept here rather than in effects.js: effects.js knows only that
+ *  three duration buffs exist, which is all DFU's effect classes do
+ *  beyond holding a list. */
+export const DETECT_KIND_FLAG = Object.freeze({
+  detectMagic: NEARBY.Magic,
+  detectEnemy: NEARBY.Enemy,
+  detectTreasure: NEARBY.Treasure,
+});
+
+/** HUDCompass.DrawTrackedObjects (:198-217) flattened: every live
+ *  detector contributes its own GetNearbyObjects result, and the
+ *  compass walks the detectors OUTSIDE and the objects inside.
+ *
+ *  Two consequences of that nesting are kept rather than tidied:
+ *  an object matched by TWO live Detect spells is emitted TWICE (DFU
+ *  draws two markers exactly on top of each other), and a detector
+ *  whose scan is empty contributes nothing rather than blocking the
+ *  others. An ENDED entry is skipped - DFU's HasEnded test, which is
+ *  also what expires it off registeredDetectors.
+ *
+ *  Answers the marker positions as [x, z] pairs, which is all the
+ *  compass consumes. */
+export function detectedMarkers(entity, list) {
+  const out = [];
+  for (const a of entity?.activeEffects ?? []) {
+    if (a.ended) continue;
+    const flag = DETECT_KIND_FLAG[a.kind];
+    if (flag == null) continue;
+    for (const no of getNearbyObjects(list, flag) ?? []) out.push([no.pos[0], no.pos[2]]);
+  }
+  return out;
+}
+
+// TWO DFU DEFECTS THIS SHAPE AVOIDS, recorded so the divergence is
+// deliberate rather than accidental. DFU's compass keeps its own
+// `registeredDetectors` LIST, pushed by Start and popped by End:
+//   - a duplicate cast pushes a SECOND detector which the manager then
+//     discards as a like-kind merge - and nothing ever deregisters it,
+//     so the list grows for the rest of the session;
+//   - there is no Resume() override, so a Detect spell that survives a
+//     save/load keeps counting down but never re-registers, and shows
+//     no markers for the remainder of its duration.
+// Neither can happen here because there IS no separate registry: the
+// entity's own activeEffects list is the registry, so a recast merges
+// into the incumbent by the same law every other buff uses, and a
+// restored entry is a live detector the moment it is read back. The
+// port is closer to the effect's INTENT than DFU's own bookkeeping;
+// where that is a behaviour difference a player could notice, it is
+// this one, and it favours the port.
+
+/** Is any Detect effect live? The hosts' gate for doing the scan at
+ *  all - DFU keeps its nearby list warm for every system that reads
+ *  it, but the port has only these consumers so far, and a scan
+ *  nothing reads is pure per-frame cost. */
+export const hasLiveDetector = (entity) =>
+  (entity?.activeEffects ?? []).some((a) => !a.ended && DETECT_KIND_FLAG[a.kind] != null);

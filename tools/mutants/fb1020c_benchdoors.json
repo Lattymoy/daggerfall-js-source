@@ -1,0 +1,57 @@
+[
+  {
+    "name": "FB1020c-BENCH-DOORS-the-bench-middle-again",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "        for (const { aabb: b } of targetsOf(y)) {",
+    "new": "        for (const { aabb: b } of targetsOf(y).filter((t) => t.key.endsWith('|bench')).map(({ aabb: a }) => { const m = [(a.min[0] + a.max[0]) / 2, 0, (a.min[2] + a.max[2]) / 2]; return { aabb: { min: m, max: m } }; })) {",
+    "tests": [
+      "test/scenes/fb1020c_benchdoors.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BENCH-DOORS-the-bench-alone",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "        for (const { aabb: b } of targetsOf(y)) {",
+    "new": "        for (const { aabb: b } of targetsOf(y).filter((t) => t.key.endsWith('|bench'))) {",
+    "tests": [
+      "test/scenes/fb1020c_benchdoors.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BENCH-DOORS-the-carpenter-no-door",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "        for (const { aabb: b } of targetsOf(y)) {",
+    "new": "        for (const { aabb: b } of targetsOf(y).filter((t) => !t.key.endsWith('|keeper'))) {",
+    "tests": [
+      "test/scenes/fb1020c_benchdoors.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BENCH-DOORS-the-board-no-door",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "        for (const { aabb: b } of targetsOf(y)) {",
+    "new": "        for (const { aabb: b } of targetsOf(y).filter((t) => !t.key.endsWith('|sign'))) {",
+    "tests": [
+      "test/scenes/fb1020c_benchdoors.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BENCH-DOORS-a-corner-for-the-box",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "const dx = Math.max(b.min[0] - f[0], 0, f[0] - b.max[0]), dz = Math.max(b.min[2] - f[2], 0, f[2] - b.max[2]);",
+    "new": "const dx = b.min[0] - f[0], dz = b.min[2] - f[2];",
+    "tests": [
+      "test/scenes/fb1020c_benchdoors.test.js",
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BENCH-DOORS-the-rise-turned",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "Math.abs(f[1] - y.at[1]) > YARD_BENCH_RISE) continue;",
+    "new": "Math.abs(f[1] - y.at[1]) < YARD_BENCH_RISE) continue;",
+    "tests": [
+      "test/scenes/fb1020c_benchdoors.test.js"
+    ]
+  }
+]

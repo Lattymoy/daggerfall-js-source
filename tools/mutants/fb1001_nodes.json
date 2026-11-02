@@ -1,0 +1,84 @@
+[
+  {
+    "name": "NODE-SPAN-the-span-ends-at-the-aim-point",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        const top = Math.max(lift, k.mark?.(n, markCtx)?.h ?? 0);",
+    "new": "        const top = lift;",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "NODE-CLEAR-the-patch-inside-taken",
+    "file": "src/scenes/herbHost.js",
+    "old": "    if (!base || insideRocks(rocks, base.x, base.z)) continue; // NODE-CLEAR",
+    "new": "    if (!base) continue; // NODE-CLEAR",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "NODE-CLEAR-the-tree-inside-taken",
+    "file": "src/scenes/treeHost.js",
+    "old": "(woods.length ? woods : all).filter((f) => !insideRocks(rocks, f.x, f.z))",
+    "new": "(woods.length ? woods : all)",
+    "note": "JUNGLE-WOODS (PIN MOVED): the rock check is asked once a flat, before the trees' loop - the mutation is the rock check gone, as it was",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "NODE-CLEAR-the-patches-handed-no-rocks",
+    "file": "src/scenes/herbHost.js",
+    "old": "        rocks: [...(entry.rocks ?? []), ...(near ?? [])], // NODE-CLEAR: and never inside a rock piece; ROCK-NEAR: a neighbour's reaching in too\n        verge: entry.verge ?? null, // VERGE1: nor over a road",
+    "new": "        verge: entry.verge ?? null, // VERGE1: nor over a road",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "NODE-CLEAR-the-trees-handed-no-rocks",
+    "file": "src/scenes/treeHost.js",
+    "old": "forest: entry.forest ?? null, rocks: [...(entry.rocks ?? []), ...(near ?? [])] });",
+    "new": "forest: entry.forest ?? null });",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "STEADY-SAID-the-key-never-named",
+    "file": "src/scenes/herbHost.js",
+    "old": "        label: plan.harvest === 'food' ? 'click the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
+    "new": "        label: plan.harvest === 'food' ? 'click the glint' : '',",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "STEADY-SAID-the-meter-names-none",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "            : label\n              ? t('prof.reticle.steady.stillKey', 'hold {key} and keep still ({deg} degrees)', { key: label, deg })\n              : t('prof.reticle.steady.still', 'keep still ({deg} degrees)', { deg })",
+    "new": "            : t('prof.reticle.steady.still', 'keep still ({deg} degrees)', { deg })",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "SEASONAL-EYE-the-spec-unread",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (eye !== standSpecs) { if (standSpecs !== undefined) restandAll(); standSpecs = eye; }",
+    "new": "      if (eye !== standSpecs) { standSpecs = eye; }",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "NAVAL-E-the-sea-never-asked",
+    "file": "src/scenes/world.js",
+    "old": "!naval?.takesActivate?.() && (gatherHost?.press() ?? false);",
+    "new": "(gatherHost?.press() ?? false);",
+    "tests": [
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  }
+]

@@ -1,0 +1,133 @@
+[
+  {
+    "name": "HOME-STATIONS-any-word-taken",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;",
+    "new": "  if (station !== null && storage) return null;",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-holds-and-serves",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;",
+    "new": "  if (station !== null && !DECOR_STATIONS.includes(station)) return null;",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-key-always-written",
+    "file": "src/net/decorLaw.js",
+    "old": "    ...(station ? { station } : {}),",
+    "new": "    station,",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
+  },
+  {
+    "name": "HOME-STATIONS-own-item-serves",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null; // HOME-STATIONS: one's own item serves no craft",
+    "new": "  if (!what || !place || (what.item && (place.paid !== 0 || place.storage))) return null; // HOME-STATIONS: one's own item serves no craft",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-licence-unpaid",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (!act && fee > 0) deps.wallet().pay(fee);\n",
+    "new": "",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ],
+    "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
+  },
+  {
+    "name": "HOME-STATIONS-paid-short",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (fee > (deps.wallet?.().gold ?? 0) + (batching ? draftGoldNow() : 0)) { deps.say?.(decorStationGoldLine(want)); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-paid-for-a-dropped-craft",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if ((stood.station ?? null) !== want) { deps.say?.(DECOR_STATION_UNKEPT); return false; }",
+    "new": "    if (false) { deps.say?.(DECOR_STATION_UNKEPT); return false; }",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-refund-on-unmaking",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (!act && fee > 0) deps.wallet().pay(fee);",
+    "new": "    if (!act && fee > 0) deps.wallet().pay(fee); else deps.wallet().credit?.(DECOR_STATION_FEES[piece.station] / 2);",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ],
+    "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
+  },
+  {
+    "name": "HOME-STATIONS-station-holds-things",
+    "file": "src/ui/decorPanel.js",
+    "old": "(it.piece.storage && it.holds) || !!it.piece.station || door;",
+    "new": "(it.piece.storage && it.holds) || door;",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-storage-made-a-station",
+    "file": "src/ui/decorPanel.js",
+    "old": "    stationPick.disabled = !it || !!it.piece.item || it.piece.storage || door;",
+    "new": "    stationPick.disabled = !it || door;",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-chooser-stuck",
+    "file": "src/ui/decorPanel.js",
+    "old": "const o = stationsOffered(view?.trader !== false); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length];",
+    "new": "const o = stationsOffered(view?.trader !== false); stationOffer = o[0];",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "HOME-STATIONS-never-pressed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS\n",
+    "new": "",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-any-visitor-served",
+    "file": "src/scenes/worldModes.js",
+    "old": "  function useDecorStation(piece) {\n    if (!stationOwnerHere() && !decorMayStation(piece.id)) {",
+    "new": "  function useDecorStation(piece) {\n    if (false) {",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ]
+  },
+  {
+    "name": "HOME-STATIONS-service-drops-the-craft",
+    "file": "server-account/src/decor.js",
+    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}), ...(hung ? { hung } : {}) });   // HOME-STATIONS: the craft, when it serves one",
+    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(name ? { name } : {}), ...(hung ? { hung } : {}) });   // HOME-STATIONS: the craft, when it serves one",
+    "tests": [
+      "test/ui/homestations.test.js"
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
+  }
+]

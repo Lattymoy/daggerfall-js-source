@@ -1,0 +1,140 @@
+[
+ {
+  "name": "SURV7-the-feed-ignores-the-switch",
+  "file": "src/systems/survival/env.js",
+  "old": "  if (!rules || !entity || !env) return null;",
+  "new": "  if (!entity || !env) return null;",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-nothing-is-worn",
+  "file": "src/systems/survival/env.js",
+  "old": "  const deps = { worn: entity.equip?.slots ?? null, ctx: survivalCtx(entity, full), rules };",
+  "new": "  const deps = { worn: null, ctx: survivalCtx(entity, full), rules };",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-every-race-is-a-breton",
+  "file": "src/systems/survival/env.js",
+  "old": "    raceTemplate: raceById(entity?.raceId ?? 1) ?? {},",
+  "new": "    raceTemplate: {},",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-gate-reads-no-felt",
+  "file": "src/systems/survival/env.js",
+  "old": "    tempWord: felt == null ? 'comfortable' : temperatureWord(felt),",
+  "new": "    tempWord: 'comfortable',",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-gate-sees-no-fire",
+  "file": "src/systems/survival/env.js",
+  "old": "    byFire: !!env?.byFire,",
+  "new": "    byFire: false,",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-ticker-feeds-nothing",
+  "file": "src/scenes/shared.js",
+  "old": "      survival: survivalFeed(entity, survivalEnv?.() ?? null, { say }),   // SURV7: the needs' minute, when the host says where the player stands\n",
+  "new": "",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-no-gate-on-the-seam",
+  "file": "src/scenes/shared.js",
+  "old": "  if (survivalEnv) installSurvivalGate(registerPreventRestCondition, () => entity, survivalEnv);\n",
+  "new": "",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-tick-skips-the-minutes",
+  "file": "src/systems/worldTick.js",
+  "old": "  if (survival && nowMinutes > lastMinutes) {",
+  "new": "  if (false) {",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-world-feeds-the-dungeon-too",
+  "file": "src/scenes/world.js",
+  "old": "    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),",
+  "new": "    survivalEnv: () => survivalEnvNow(),",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ],
+  "why": "TO-FIELD3 re-aimed this back by content: Mac took the accelerated-journey arm off, so the world's reader is the dungeon's silence and nothing else again."
+ },
+ {
+  "name": "SURV7-the-interior-has-no-roof",
+  "file": "src/scenes/worldModes.js",
+  "old": "    survivalEnv: () => (mode === 'interior' && host.survivalEnv ? { ...host.survivalEnv(), insideBuilding: true, insideDungeon: false, inSunlight: false, swimming: false, byFire: interiorCamps.byFire(player.pos) } : null),",
+  "new": "    survivalEnv: () => (mode === 'interior' && host.survivalEnv ? { ...host.survivalEnv(), insideBuilding: false, insideDungeon: false, inSunlight: false, swimming: false, byFire: interiorCamps.byFire(player.pos) } : null),",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-dungeon-fire-warms-nobody",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      byFire: !!(_fpFeet && camps.byFire(_fpFeet)),",
+  "new": "      byFire: false,",
+  "note": "AUDIT C&C (lens T): re-aimed by content - the castle's word now follows the fire's line, so the record names the fire's line alone, the only one in the file.",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "SURV7-the-load-aligns-nothing",
+  "file": "src/systems/save/save.js",
+  "old": "    alignSurvival(entity, own, own);\n",
+  "new": "",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-holds-the-accruals-too",
+  "file": "src/systems/survival/needs.js",
+  "old": "    s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);",
+  "new": "    if (!resting) s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-pays-the-starving-fatigue-anyway",
+  "file": "src/systems/survival/needs.js",
+  "old": "  if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving, 'hunger');",
+  "new": "  if (hungerAfter === 'starving') tire(DRAIN.starving, 'hunger');",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FIELD-resting-pays-the-exhausted-fatigue-anyway",
+  "file": "src/systems/survival/needs.js",
+  "old": "    if (sleepNow === 'exhausted' && !resting && !wakingHeld(s, now)) tire(DRAIN.exhausted, 'sleep');",
+  "new": "    if (sleepNow === 'exhausted' && !wakingHeld(s, now)) tire(DRAIN.exhausted, 'sleep');",
+  "tests": [
+   "test/systems/surv7_feed.test.js"
+  ],
+  "note": "REST6 (PIN MOVED): re-aimed by content."
+ }
+]

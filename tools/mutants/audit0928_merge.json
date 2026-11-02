@@ -1,0 +1,182 @@
+[
+  {
+    "name": "AUDIT0928-M1-a-puppet-heard-as-my-spawn",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (_layoutStood && !puppet) { if (rec.src)",
+    "new": "if (_layoutStood) { if (rec.src)",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-hosts-encounter-built-as-mine",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "spawnDistanceType: 0 }, false, { puppet: true, feetGiven: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the host's encounter",
+    "new": "spawnDistanceType: 0 }, false, { feetGiven: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the host's encounter",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-owners-foe-built-as-mine",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "spawnDistanceType: 0 }, false, { puppet: true, feetGiven: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the owner's foe",
+    "new": "spawnDistanceType: 0 }, false, { feetGiven: true });   // DISC28-H: `r.f` is the owner's feet; AUDIT PRE-MERGE 0928 M1: the owner's foe",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-place-taken-without-the-room",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      foes[at] = rec;\n      takeRoomPlace(old, rec);",
+    "new": "      foes[at] = rec;\n",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-rooms-map-left-on-the-dead",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "rec._encId = old._encId; _sharedById.set(rec._encId, rec);",
+    "new": "rec._encId = old._encId;",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-rooms-number-left-on-the-dead",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (old._encId != null) { rec._encId = old._encId; _sharedById.set(rec._encId, rec); }",
+    "new": "if (old._encId != null) { _sharedById.set(old._encId, rec); }",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-loose-mark-left-on-the-dead",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (old._loose) rec._loose = true;\n",
+    "new": "",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-lane-number-left-on-the-dead",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (old._ownSeq != null) rec._ownSeq = old._ownSeq;\n",
+    "new": "",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-a-new-species-by-that-number-ignored",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        dropSharedFoe(r.i, f);   // AUDIT PRE-MERGE 0928 M1: another species",
+    "new": "        continue;   // AUDIT PRE-MERGE 0928 M1: another species",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-abyss-reads-the-runners-foes",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "filter((f) => !f.dead && f.entity && !runByAnother(f)).map(abyssFoeView)",
+    "new": "filter((f) => !f.dead && f.entity).map(abyssFoeView)",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-abyss-destroys-a-puppet",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "destroyFoe: (v) => { if (runByAnother(v.rec)) return; v.rec.abyssDestroyed = true;",
+    "new": "destroyFoe: (v) => { v.rec.abyssDestroyed = true;",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-abyss-replaces-a-puppet",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (runByAnother(v.rec)) return;   // AUDIT PRE-MERGE 0928 M1: its runner's abyss replaces it",
+    "new": "        // AUDIT PRE-MERGE 0928 M1: its runner's abyss replaces it",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-seat-half-forgotten",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f != null && ((!_authority && isRoomFoe(f, i)) || f._ownFrom != null);",
+    "new": "f != null && (f._ownFrom != null);",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-owners-half-forgotten",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f != null && ((!_authority && isRoomFoe(f, i)) || f._ownFrom != null);",
+    "new": "f != null && ((!_authority && isRoomFoe(f, i)));",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M4-the-others-torches-burn-in-the-abyss",
+    "file": "src/scenes/worldModes.js",
+    "old": "host.peerLights?.({ torches: !_abyss?.torchOff })",
+    "new": "host.peerLights?.({ torches: true })",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M4-the-others-candles-at-full",
+    "file": "src/scenes/worldModes.js",
+    "old": ".map((l) => abyssCandle(_dgTint(l), _abyss)), ...dungeonCtx.campLights()",
+    "new": ".map(_dgTint), ...dungeonCtx.campLights()",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M4-the-candle-halved-before-its-tint",
+    "file": "src/scenes/worldModes.js",
+    "old": ".map((l) => abyssCandle(_dgTint(l), _abyss)), ...dungeonCtx.campLights()",
+    "new": ".map((l) => _dgTint(abyssCandle(l, _abyss))), ...dungeonCtx.campLights()",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M4-the-hook-drops-the-word",
+    "file": "src/scenes/world.js",
+    "old": "peerLights: (o) => peerTorchLights(o),",
+    "new": "peerLights: (o) => peerTorchLights(),",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M4-torches-whatever-the-word",
+    "file": "src/scenes/world.js",
+    "old": "for (const p of torches ? online.peers.values() : []) {",
+    "new": "for (const p of online.peers.values()) {",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0928-M1-the-abyss-keeps-its-own-test",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const runByAnother = (f) => isPuppetFoe(f);",
+    "new": "const runByAnother = (f) => f._ownFrom != null;",
+    "tests": [
+      "test/characters/audit0928_merge.test.js"
+    ]
+  }
+]

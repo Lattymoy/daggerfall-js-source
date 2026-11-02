@@ -1,0 +1,84 @@
+[
+  {
+    "name": "REP3-the-lesser-crime-rolled",
+    "file": "src/systems/court.js",
+    "old": "  const failed2 = !BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold2;",
+    "new": "  const failed2 = Math.floor(rolls() * 100) >= threshold2;",
+    "tests": [
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "REP3-the-rolls-drawn-for-all",
+    "file": "src/systems/court.js",
+    "old": "  const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
+    "new": "  const punishmentType = failed2 && (Math.floor(rolls() * 100) >= threshold1 || !BANISHABLE_CRIMES.has(crime)) ? 2 : 0;",
+    "tests": [
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "REP3-for-ever",
+    "file": "src/systems/standing.js",
+    "old": "  if (worldNow >= r.banishedUntil) {\n    liftBanishment(player, regionIndex);\n    return false;\n  }\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "REP3-the-term-never-stamped",
+    "file": "src/systems/standing.js",
+    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null; // BANISH-SKY: the calendar's thirty days\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "REP3-the-term-dropped-on-save",
+    "file": "src/systems/region/regionConditions.js",
+    "old": "    ...(Number.isFinite(r.banishedUntil) ? { b: r.banishedUntil } : {}), // REP3: only a banishment standing carries one",
+    "new": "    ...{}, // REP3: only a banishment standing carries one",
+    "tests": [
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "REP3-the-pardon-never-lifts",
+    "file": "src/systems/standing.js",
+    "old": "  liftBanishment(player, regionIndex);\n  const s = standingOf(player);",
+    "new": "  const s = standingOf(player);",
+    "tests": [
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "REP3-the-price-never-rises",
+    "file": "src/systems/standing.js",
+    "old": "  return PARDON_BASE_PRICE * ((standingOf(player).pardons[regionIndex] ?? 0) + 1);",
+    "new": "  return PARDON_BASE_PRICE;",
+    "tests": [
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "REP3-the-short-purse-pardoned",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "        if (totalGoldAmount(entity) < o.price) return",
+    "new": "        if (false) return",
+    "tests": [
+      "test/systems/rep3_banishment.test.js"
+    ]
+  },
+  {
+    "name": "REP3-the-court's-banishment-untimed",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      banish(playerEntity, region(), trustedWorldMinutes());",
+    "new": "      severePunishment(1);",
+    "tests": [
+      "test/systems/rep3_banishment.test.js",
+      "test/systems/audit39_guildstravel.test.js"
+    ]
+  }
+]

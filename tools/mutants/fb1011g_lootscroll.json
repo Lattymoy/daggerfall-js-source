@@ -1,0 +1,101 @@
+[
+  {
+    "name": "LOOT-SCROLL-a-the-frame-capped-again",
+    "file": "src/systems/worldHover.js",
+    "old": "hoverLines(contents?.(key) ?? null, Infinity);",
+    "new": "hoverLines(contents?.(key) ?? null);",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SCROLL-b-the-window-still",
+    "file": "src/systems/worldHover.js",
+    "old": "  else if (lit >= top + max) top = lit - max + 1;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SCROLL-c-it-jumps-a-page",
+    "file": "src/systems/worldHover.js",
+    "old": "  else if (lit >= top + max) top = lit - max + 1;",
+    "new": "  else if (lit >= top + max) top = Math.min(lit, n - max);",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SCROLL-d-nothing-above-counted",
+    "file": "src/systems/worldHover.js",
+    "old": "rows: f.rows.slice(top, top + max), above: top,",
+    "new": "rows: f.rows.slice(top, top + max), above: 0,",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SCROLL-e-the-take-bounded-by-the-window",
+    "file": "src/systems/quickLoot.js",
+    "old": "  return hoverItemAt(items, _sel.row, Infinity); // LOOT-SCROLL: the lit row may stand past the first HOVER_MAX",
+    "new": "  return hoverItemAt(items, _sel.row); // LOOT-SCROLL: the lit row may stand past the first HOVER_MAX",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SCROLL-f-the-light-counted-from-the-piles-top",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  paint(n, win.frame, lit >= 0 ? lit - win.from : -1, stats);",
+    "new": "  paint(n, win.frame, lit, stats);",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SCROLL-g-the-classic-rows-above-unsaid",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "  const above = frame?.above > 0 ? frame.above : 0;",
+    "new": "  const above = 0;",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SCROLL-h-the-plaques-rows-above-unsaid",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (f.above > 0) {   // LOOT-SCROLL: what the window leaves above it",
+    "new": "  if (false) {   // LOOT-SCROLL: what the window leaves above it",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SCROLL-i-the-window-forgets-its-top",
+    "file": "src/ui/worldPlaque.js",
+    "old": "plaqueWindow(frame, lit, frame?.key != null && frame.key === _winKey ? _winFrom : 0)",
+    "new": "plaqueWindow(frame, lit, 0)",
+    "tests": [
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
+    ]
+  }
+]

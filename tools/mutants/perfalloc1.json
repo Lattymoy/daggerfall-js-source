@@ -1,0 +1,128 @@
+[
+  {
+    "name": "PERFALLOC1-order",
+    "file": "src/render/shadowPass.js",
+    "old": "  out[12] = -(x0 * eye[0] + x1 * eye[1] + x2 * eye[2]);",
+    "new": "  out[12] = -(x2 * eye[2] + x1 * eye[1] + x0 * eye[0]);",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "PERFALLOC1-near",
+    "file": "src/render/shadowPass.js",
+    "old": "  const proj = perspectiveInto(_faceProj, Math.PI / 2, 1, SHADOW_POINT_NEAR, far);",
+    "new": "  const proj = perspectiveInto(_faceProj, Math.PI / 2, 1, SHADOW_POINT_NEAR * 0.5, far);",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "PERFALLOC1-unnormalised",
+    "file": "src/render/shadowPass.js",
+    "old": "  x0 /= xl; x1 /= xl; x2 /= xl;\n  const y0",
+    "new": "  x0 /= xl; x1 /= xl;\n  const y0",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "PERFALLOC1-centre",
+    "file": "src/render/shadowPass.js",
+    "old": "lookAtInto(_faceView, pos, pos[0] + d[0], pos[1] + d[1], pos[2] + d[2], up)",
+    "new": "lookAtInto(_faceView, pos, pos[0] + d[0], pos[1] + d[2], pos[2] + d[1], up)",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "PERFALLOC1-minted",
+    "file": "src/render/shadowPass.js",
+    "old": "    multiply(proj, lookAtInto(_faceView, pos, pos[0] + d[0], pos[1] + d[1], pos[2] + d[2], up), out[f]);",
+    "new": "    multiply(proj, lookAt(pos, [pos[0] + d[0], pos[1] + d[1], pos[2] + d[2]], up), out[f]);",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "PERFALLOC1-into-stale",
+    "file": "src/render/shadowPass.js",
+    "old": "  out.fill(0);\n  out[0] = f / aspect;",
+    "new": "  out[0] = f / aspect;",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "PERFALLOC2-boxed-again",
+    "file": "src/render/shadowPass.js",
+    "old": "                if (!placementsInCubeOf(b, cube)) continue;",
+    "new": "                if (!placementsInCube(b, rad, cube[1], cube[2], cube[3], cube[4])) continue;",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "PERFALLOC2-cube-short",
+    "file": "src/render/bounds.js",
+    "old": "    far = c[4];",
+    "new": "    far = c[4] - c[0];",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "LA-hypot-z",
+    "file": "src/render/shadowPass.js",
+    "old": "  const zl = Math.hypot(zx, zy, zz);",
+    "new": "  const zl = Math.sqrt(zx * zx + zy * zy + zz * zz);",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "LA-hypot-x",
+    "file": "src/render/shadowPass.js",
+    "old": "  const xl = Math.hypot(x0, x1, x2);",
+    "new": "  const xl = Math.sqrt(x0 * x0 + x1 * x1 + x2 * x2);",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "LA-reciprocal",
+    "file": "src/render/shadowPass.js",
+    "old": "  x0 /= xl; x1 /= xl; x2 /= xl;\n  const y0",
+    "new": "  const ixl = 1 / xl; x0 *= ixl; x1 *= ixl; x2 *= ixl;\n  const y0",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "LA-negzero",
+    "file": "src/render/shadowPass.js",
+    "old": "  out[12] = -(x0 * eye[0] + x1 * eye[1] + x2 * eye[2]);",
+    "new": "  out[12] = 0 - (x0 * eye[0] + x1 * eye[1] + x2 * eye[2]);",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "LA-y-form",
+    "file": "src/render/shadowPass.js",
+    "old": "  x0 /= xl; x1 /= xl; x2 /= xl;\n  const y0 = z1 * x2 - z2 * x1,",
+    "new": "  x0 /= xl; x1 /= xl; x2 /= xl;\n  const y0 = -(z2 * x1 - z1 * x2),",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  },
+  {
+    "name": "WALK-scratch-module",
+    "file": "src/render/shadowPass.js",
+    "old": "const lim = this._candLim, o = rank * 5, sp = this._bSphere, cube = this._cubeArgs;",
+    "new": "const lim = this._candLim, o = rank * 5, sp = this._bSphere, cube = new Float64Array(5);",
+    "tests": [
+      "test/render/perfalloc1.test.js"
+    ]
+  }
+]

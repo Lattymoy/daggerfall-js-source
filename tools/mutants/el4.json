@@ -1,0 +1,321 @@
+[
+  {
+    "name": "pack-linear",
+    "file": "src/render/airPass.js",
+    "old": "  const v = (Math.log2(Math.max(x, 1e-9)) - range[0]) / (range[1] - range[0]);",
+    "new": "  const v = (x - range[0]) / (range[1] - range[0]);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "unpack-linear",
+    "file": "src/render/airPass.js",
+    "old": "  return Math.pow(2, range[0] + v * (range[1] - range[0]));",
+    "new": "  return range[0] + v * (range[1] - range[0]);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-no-clamp",
+    "file": "src/render/airPass.js",
+    "old": "  const target = Math.min(Math.max(AIR_ADAPT_KEY / Math.max(lum, 1e-6), AIR_ADAPT_MIN), AIR_ADAPT_MAX);",
+    "new": "  const target = AIR_ADAPT_KEY / Math.max(lum, 1e-6);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-one-rate",
+    "file": "src/render/airPass.js",
+    "old": "  const rate = target > prev ? AIR_ADAPT_OPEN : AIR_ADAPT_CLOSE;",
+    "new": "  const rate = AIR_ADAPT_OPEN;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-unbounded-dt",
+    "file": "src/render/airPass.js",
+    "old": "  const t = 1 - Math.exp(-Math.min(Math.max(dt, 0), AIR_ADAPT_MAX_DT) * rate);",
+    "new": "  const t = 1 - Math.exp(-Math.max(dt, 0) * rate);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-max",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_ADAPT_MAX = 1.8;",
+    "new": "export const AIR_ADAPT_MAX = 4;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-min",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_ADAPT_MIN = 0.7;",
+    "new": "export const AIR_ADAPT_MIN = 0.3;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-rates-swapped",
+    "file": "src/render/airPass.js",
+    "old": "export const AIR_ADAPT_OPEN = 0.6;\nexport const AIR_ADAPT_CLOSE = 3.0;",
+    "new": "export const AIR_ADAPT_OPEN = 3.0;\nexport const AIR_ADAPT_CLOSE = 0.6;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "glsl-adapt-range",
+    "file": "src/render/airPass.js",
+    "old": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
+    "new": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])};",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "glsl-adapt-no-clamp",
+    "file": "src/render/airPass.js",
+    "old": "  float target = clamp(uAdaptParams.y / max(lum, 1e-6), uAdaptParams.z, uAdaptParams.w);",
+    "new": "  float target = uAdaptParams.y / max(lum, 1e-6);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "glsl-lum-top-mip",
+    "file": "src/render/airPass.js",
+    "old": "  float lv = textureLod(uLum, vec2(0.5), ${Math.log2(AIR_LUM_SIZE)}.0).r;",
+    "new": "  float lv = texture(uLum, vec2(0.5)).r;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "frame-no-realloc",
+    "file": "src/render/airPass.js",
+    "old": "    if (kept && kept.w === W && kept.h === H) {",
+    "new": "    if (kept) {",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ],
+    "note": "RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer."
+  },
+  {
+    "name": "frame-target-not-set",
+    "file": "src/render/airPass.js",
+    "old": "    setFrameTarget(f.fbo);\n    this.canvas[0] = W;",
+    "new": "    this.canvas[0] = W;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "adapt-images-start-dark",
+    "file": "src/render/airPass.js",
+    "old": "    const [hi, lo] = packAdapt(1); // LA-POST4: the multiplier 1 at sixteen bits - [128, 0]",
+    "new": "    const [hi, lo] = [0, 0]; // LA-POST4: the multiplier 1 at sixteen bits - [128, 0]",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-swap",
+    "file": "src/render/airPass.js",
+    "old": "      this.adaptIndex = 1 - this.adaptIndex;\n    }",
+    "new": "    }",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-dt-unbounded",
+    "file": "src/render/airPass.js",
+    "old": "    const dt = this._lastResolve ? Math.min(Math.max((now - this._lastResolve) / 1000, 0), AIR_ADAPT_MAX_DT) : 0;",
+    "new": "    const dt = this._lastResolve ? Math.max((now - this._lastResolve) / 1000, 0) : 0;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-mipmap",
+    "file": "src/render/airPass.js",
+    "old": "      gl.bindTexture(gl.TEXTURE_2D, this.lum.tex);\n      gl.generateMipmap(gl.TEXTURE_2D);\n      // 2. the adaptation step, into the other 1x1 image",
+    "new": "      // 2. the adaptation step, into the other 1x1 image",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-frame-kept",
+    "file": "src/render/airPass.js",
+    "old": "    setFrameTarget(null);\n    gl.viewport(0, 0, F.w, F.h);",
+    "new": "    gl.viewport(0, 0, F.w, F.h);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ],
+    "note": "RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer."
+  },
+  {
+    "name": "resolve-no-threshold",
+    "file": "src/render/airPass.js",
+    "old": "      gl.uniform1f(PB.uThreshold, AIR_BRIGHT_THRESHOLD);",
+    "new": "      gl.uniform1f(PB.uThreshold, 0.0);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "resolve-no-vignette",
+    "file": "src/render/airPass.js",
+    "old": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
+    "new": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, 0, AIR_CONTRAST]);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "release-keeps-target",
+    "file": "src/render/airPass.js",
+    "old": "    if (this.frame) setFrameTarget(null);\n    this.pending = false;",
+    "new": "    this.pending = false;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "rt-withtarget-canvas",
+    "file": "src/render/renderTarget.js",
+    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget); // EL4: the frame, or the canvas",
+    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "rt-finishvolume-canvas",
+    "file": "src/render/renderTarget.js",
+    "old": "export function finishVolume(gl, volume, restoreViewport) {\n  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget); // EL4",
+    "new": "export function finishVolume(gl, volume, restoreViewport) {\n  gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "renderer-frame-in-panel",
+    "file": "src/render/renderer.js",
+    "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ?",
+    "new": "    this._frameFbo = this._air ? this._air.beginFrameTarget(retro ?",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ],
+    "note": "RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer."
+  },
+  {
+    "name": "renderer-frame-not-bound",
+    "file": "src/render/renderer.js",
+    "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas') : null;",
+    "new": "    this._frameFbo = null;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ],
+    "note": "RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer."
+  },
+  {
+    "name": "renderer-air-off-no-release",
+    "file": "src/render/renderer.js",
+    "old": "    else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }",
+    "new": "    else { this._air = null; }",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "renderer-no-adapt-loc",
+    "file": "src/render/renderer.js",
+    "old": "      a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };",
+    "new": "      a.ao = { adapt: null };",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-no-adapt",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure",
+    "new": "  float ex = uELExposure;   // EL4",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-dungeon-scale",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_DUNGEON_AMBIENT_SCALE = 0.35;",
+    "new": "export const EL_DUNGEON_AMBIENT_SCALE = 0.6;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-dungeon-always",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (!on) return rgb;\n  return new Float32Array([",
+    "new": "  return new Float32Array([",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-trilight-unscaled",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (!on || !tri) return tri;",
+    "new": "  if (!on || tri) return tri;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-spec-gloss",
+    "file": "src/render/enhancedLighting.js",
+    "old": "export const EL_SPEC_GLOSS = 24;",
+    "new": "export const EL_SPEC_GLOSS = 8;",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "lane-spec-dropped",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];",
+    "new": "    acc += att * max(dot(n, Ln), 0.0) * uPointColors[i];",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "farring-no-adapt",
+    "file": "src/render/farRing.js",
+    "old": "      gl.uniform1i(this.u.uAdapt, 11);\n",
+    "new": "",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  },
+  {
+    "name": "farring-adapt-dark",
+    "file": "src/render/farRing.js",
+    "old": "new Uint8Array([128, 128, 128, 255])",
+    "new": "new Uint8Array([0, 0, 0, 255])",
+    "tests": [
+      "test/render/el4_frame.test.js"
+    ]
+  }
+]

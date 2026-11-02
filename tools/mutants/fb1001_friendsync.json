@@ -1,0 +1,83 @@
+[
+  {
+    "name": "FRIENDS-SYNC-the-profile-id-still-the-key",
+    "file": "server/src/index.js",
+    "old": "    const me = this._attach(ws).sub || m.acct;",
+    "new": "    const me = m.acct;",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  },
+  {
+    "name": "FRIENDS-SYNC-the-merge-on-a-wrong-secret",
+    "file": "server/src/index.js",
+    "old": "    if (!held || held !== m.asecret) return;   // never minted here",
+    "new": "    if (!held) return;   // never minted here",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  },
+  {
+    "name": "FRIENDS-SYNC-last-device-wins",
+    "file": "server/src/index.js",
+    "old": "      const friends = ids([...mine.friends, ...legacy.friends], me).slice(0, FRIENDS_MAX);",
+    "new": "      const friends = ids([...legacy.friends], me).slice(0, FRIENDS_MAX);",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  },
+  {
+    "name": "FRIENDS-SYNC-a-friend-left-naming-the-dead-id",
+    "file": "server/src/index.js",
+    "old": "    const swap = (id) => (id === old ? me : id);",
+    "new": "    const swap = (id) => id;",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  },
+  {
+    "name": "FRIENDS-SYNC-the-profile-record-kept",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.delete([acctKey(old), acctSecretKey(old)]);\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  },
+  {
+    "name": "FRIENDS-SYNC-B19-refuses-the-players-id",
+    "file": "src/net/social.js",
+    "old": "        if (this.expect && !(Array.isArray(this.expect) ? this.expect.includes(f.acct) : f.acct === this.expect))",
+    "new": "        if (this.expect && !(Array.isArray(this.expect) ? this.expect.at(-1) === f.acct : f.acct === this.expect))",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  },
+  {
+    "name": "FRIENDS-SYNC-B19-dropped",
+    "file": "src/net/social.js",
+    "old": "        if (this.expect && !(Array.isArray(this.expect) ? this.expect.includes(f.acct) : f.acct === this.expect))\n          return null; // AUDIT SOC B19: not my picture   // FRIENDS-SYNC: mine is the signed-in player's id (a relay since FRIENDS-SYNC) or this profile's (one before it)",
+    "new": "        if (false && !(Array.isArray(this.expect) ? this.expect.includes(f.acct) : f.acct === this.expect)) return null; // AUDIT SOC B19: not my picture   // FRIENDS-SYNC: mine is the signed-in player's id (a relay since FRIENDS-SYNC) or this profile's (one before it)",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  },
+  {
+    "name": "FRIENDS-SYNC-the-host-expects-the-profile-alone",
+    "file": "src/scenes/world.js",
+    "old": "social = new SocialState({ acct: [storedSession(appStorage())?.id, link.acct].filter(Boolean) });",
+    "new": "social = new SocialState({ acct: link.acct });",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  },
+  {
+    "name": "FRIENDS-SYNC-the-rest-cancel-by-the-profile-id",
+    "file": "src/scenes/world.js",
+    "old": "    const me = social?.acct;   // FRIENDS-SYNC",
+    "new": "    const me = accountId();   // FRIENDS-SYNC",
+    "tests": [
+      "test/net/fb1001_friendsync.test.js"
+    ]
+  }
+]

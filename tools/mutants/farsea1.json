@@ -1,0 +1,128 @@
+[
+  {
+    "name": "FAR-SEA1-the-haze-scales-the-ramp-again",
+    "file": "src/render/horizonHaze.js",
+    "old": "  return min(min(ramp, hold) + (1.0 - hold) * smoothstep(rimStart, rimEnd, d), 1.0);",
+    "new": "  return min(hold * ramp + (1.0 - hold) * smoothstep(rimStart, rimEnd, d), 1.0);",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-sea-fresnel-cap-drifts",
+    "file": "src/render/horizonHaze.js",
+    "old": "float seaFresnel(float ndv, float f0) { return f0 + (0.85 - f0) * pow(1.0 - clamp(ndv, 0.0, 1.0), 5.0); }",
+    "new": "float seaFresnel(float ndv, float f0) { return f0 + (0.8 - f0) * pow(1.0 - clamp(ndv, 0.0, 1.0), 5.0); }",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-fill-ignores-the-swimmer",
+    "file": "src/render/farRing.js",
+    "old": "  if (!(h > 0) || !(far > 0)) return 0;",
+    "new": "  if (!(far > 0)) return 0;",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-a-coast-cell-fills",
+    "file": "src/render/farRing.js",
+    "old": "      if (!(sea[i0] && sea[i0 + 1] && sea[i0 + side] && sea[i0 + side + 1])) continue;",
+    "new": "      if (!(sea[i0] || sea[i0 + 1] || sea[i0 + side] || sea[i0 + side + 1])) continue;",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-fill-spills-past-the-hole",
+    "file": "src/render/farRing.js",
+    "old": "  if (px < holeX - holeRadius || px > holeX + holeRadius - 1 || py < holeY - holeRadius || py > holeY + holeRadius - 1) return false;",
+    "new": "  if (px < holeX - holeRadius || px > holeX + holeRadius || py < holeY - holeRadius || py > holeY + holeRadius - 1) return false;",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-an-ocean-climate-hill-is-sea",
+    "file": "src/render/farRing.js",
+    "old": "Math.abs(positions[o + 1] - RING_SEA_Y) < 1e-3",
+    "new": "true",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-haze-outlives-its-frame",
+    "file": "src/render/renderer.js",
+    "old": "    this._seaHaze[0] = 0;   // FAR-SEA1: and so is the far ring's haze on the sea",
+    "new": "    // this._seaHaze[0] = 0;   // FAR-SEA1: and so is the far ring's haze on the sea",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-sea-holds-under-exp-fog",
+    "file": "src/render/waterSurface.js",
+    "old": "  if (uSeaHaze.x > 0.0 && uFogMode == 1) {",
+    "new": "  if (uSeaHaze.x > 0.0) {",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-lane-ring-sea-loses-its-sky",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor, sun), sea);",
+    "new": "  if (sea > 0.0) shown = mix(shown, shown + 0.0 * ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor, sun), sea);",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-classic-ring-sea-loses-its-sky",
+    "file": "src/render/farRing.js",
+    "old": "  if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);",
+    "new": "  if (sea > 0.0) lit = mix(lit, lit + 0.0 * ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-ring-sea-takes-another-fresnel",
+    "file": "src/render/farRing.js",
+    "old": "    gl.uniform1f(this.u.uSeaF0, WATER_F0);",
+    "new": "    gl.uniform1f(this.u.uSeaF0, 0.04);",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-haze-set-outside-the-ring-gate",
+    "file": "src/scenes/world.js",
+    "old": "      if (waterSkyNow) renderer.setSeaHaze(RING_HAZE_HOLD, seaYNow);\n    }\n",
+    "new": "    }\n      if (waterSkyNow) renderer.setSeaHaze(RING_HAZE_HOLD, seaYNow);\n",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-the-haze-without-a-sky",
+    "file": "src/scenes/world.js",
+    "old": "      if (waterSkyNow) renderer.setSeaHaze(",
+    "new": "      renderer.setSeaHaze(",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  },
+  {
+    "name": "FAR-SEA1-a-day-sky-at-night",
+    "file": "src/render/farRing.js",
+    "old": "    gl.uniform1f(this.u.uSeaLook, look ? 1 : 0);",
+    "new": "    gl.uniform1f(this.u.uSeaLook, 1);",
+    "tests": [
+      "test/render/farsea1.test.js"
+    ]
+  }
+]

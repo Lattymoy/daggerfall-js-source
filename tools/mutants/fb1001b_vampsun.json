@@ -1,0 +1,92 @@
+[
+  {
+    "name": "FB1001b-the-day-is-the-hours-again-the-defect",
+    "file": "src/systems/vampirism.js",
+    "old": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
+    "new": "(isDayFromMinutes(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-no-sun-reaches-the-street",
+    "file": "src/systems/vampirism.js",
+    "old": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
+    "new": "(playerInSunlight(clockMinutes) ? (sunAverse ? VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-out-of-the-sun-is-merely-plain",
+    "file": "src/systems/vampirism.js",
+    "old": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
+    "new": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : 0)",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-the-round-always-weak",
+    "file": "src/systems/vampirism.js",
+    "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
+    "new": "  const mod = -VAMPIRE_STAT_MOD;",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-the-seam-forgets-the-roof",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "  return isDayFromMinutes(now) && !(_host?.isInside?.() ?? false) && !(_host?.inPrison?.() ?? false);",
+    "new": "  return isDayFromMinutes(now) && !(_host?.inPrison?.() ?? false);",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-the-seam-forgets-the-cell",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "  return isDayFromMinutes(now) && !(_host?.isInside?.() ?? false) && !(_host?.inPrison?.() ?? false);",
+    "new": "  return isDayFromMinutes(now) && !(_host?.isInside?.() ?? false);",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-a-building-is-the-street",
+    "file": "src/scenes/worldModes.js",
+    "old": "    isInside: () => mode !== 'exterior',",
+    "new": "    isInside: () => mode === 'dungeon',",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-the-cell-is-the-street",
+    "file": "src/scenes/worldModes.js",
+    "old": "    inPrison: () => !!playerEntity.inPrison,",
+    "new": "    inPrison: () => false,",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-the-crypt-is-open-sky",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    isInside: () => true,",
+    "new": "    isInside: () => false,",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  },
+  {
+    "name": "FB1001b-the-crypt-keeps-the-seam",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      setPassiveSpecialsHost(_prevPassiveHost);",
+    "new": "      void _prevPassiveHost;",
+    "tests": [
+      "test/systems/fb1001b_vampsun.test.js"
+    ]
+  }
+]

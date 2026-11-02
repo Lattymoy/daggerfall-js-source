@@ -1,0 +1,56 @@
+[
+  {
+    "name": "VEIN-WASH-a-two-washes-the-same",
+    "file": "src/scenes/mineHost.js",
+    "old": "  'ore:ebony': Object.freeze([0.32, 0.28, 0.42]),",
+    "new": "  'ore:ebony': Object.freeze([0.7, 1.7, 0.5]),",
+    "tests": [
+      "test/scenes/fb1011_veinwash.test.js"
+    ]
+  },
+  {
+    "name": "VEIN-WASH-b-a-wash-dropped",
+    "file": "src/scenes/mineHost.js",
+    "old": "  'metal:copper': Object.freeze([1.9, 1.0, 0.45]),\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1011_veinwash.test.js"
+    ]
+  },
+  {
+    "name": "VEIN-WASH-c-the-flats-unwashed",
+    "file": "src/scenes/mineHost.js",
+    "old": "centers: mineFlats(n), tint: mineWash(n), dye: mineWash(n) ? ORE_DYE : 0 }],",
+    "new": "centers: mineFlats(n), dye: mineWash(n) ? ORE_DYE : 0 }],",
+    "tests": [
+      "test/scenes/fb1011_veinwash.test.js"
+    ]
+  },
+  {
+    "name": "VEIN-WASH-d-the-batch-unwashed",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        if (tint) batch.tint = tint;",
+    "new": "        void tint;",
+    "tests": [
+      "test/scenes/fb1011_veinwash.test.js"
+    ]
+  },
+  {
+    "name": "VEIN-WASH-e-the-wash-off-the-key",
+    "file": "src/scenes/gatherHost.js",
+    "old": "const gk = `${f.record}:${f.scale}:${f.tint ?? ''}:${f.dye ?? 0}${lone ? `#${n.key}` : ''}`;",
+    "new": "const gk = `${f.record}:${f.scale}:${f.dye ?? 0}${lone ? `#${n.key}` : ''}`;",
+    "tests": [
+      "test/scenes/fb1011_veinwash.test.js"
+    ]
+  },
+  {
+    "name": "VEIN-WASH-f-the-deep-vein-unwashed",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        if (b && f.tint) b.tint = f.tint;",
+    "new": "        void b;",
+    "tests": [
+      "test/scenes/fb1011_veinwash.test.js"
+    ]
+  }
+]

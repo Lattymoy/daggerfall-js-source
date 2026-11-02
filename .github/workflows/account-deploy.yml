@@ -1,0 +1,1607 @@
+# ACC1-CI (2026-09-21): THE ACCOUNT SERVICE STANDS ITSELF UP.
+#
+# Mac: "The token provided allows you to take this on yourself. I am
+# not needed at all."
+#
+# ACC1b shipped `server-account/` with a four-step list headed "WHAT A
+# PERSON HAS TO DO ONCE, BY HAND", on the reasoning that CI cannot
+# create resources - only deploy code to them. That reasoning was
+# wrong: the same API token that deploys the relay can create a D1
+# database and set a Worker secret, and every one of the four steps has
+# an idempotent spelling. So there is no by-hand list any more.
+#
+# ═══ WHY A PATH FILTER IS ALLOWED HERE, AND IS NOT ON THE RELAY ════
+#
+# `relay-deploy.yml` refuses a path filter and triggers on a VERSION
+# instead, because a relay deploy drops every connected player and
+# `src/net/wire.js` changes several times a day for reasons the running
+# Worker does not care about.
+#
+# THIS WORKER HOLDS NO SOCKETS. A deploy here restarts nothing a player
+# is attached to, so the worst a spurious run costs is a minute of
+# Actions time. That is the entire point of ACC1b's two-Worker split,
+# and it is what buys this file the simpler trigger.
+#
+# ═══ EVERY STEP IS IDEMPOTENT ══════════════════════════════════════
+#
+# Re-running the whole job must be safe, because that is how a failed
+# deploy gets retried - by the next push, not by somebody remembering.
+# So: the database is created only if absent, migrations are applied
+# through wrangler's own `d1_migrations` ledger, and THE SIGNING PAIR IS
+# MINTED ONLY IF THERE IS NOT ONE ALREADY. That last one is not a
+# nicety: re-minting would invalidate every token in flight and sign
+# out everybody who is online.
+name: Deploy account service (drops nobody)
+
+on:
+  push:
+    branches: [main]
+    # EVERY FILE OUTSIDE server-account/ THAT THE WORKER BUNDLES is
+    # listed, and test/server/accountdeploy.test.js walks the Worker's import
+    # graph and holds this list to it. Only identityToken.js was listed
+    # until ACC4 - a change to the name filter or the handle shape was
+    # bundled into this Worker and did not deploy it.
+    # INT1 (bible/06-Systems/Integrity-Arc.md): the judge reads every
+    # realm checkpoint through src/systems/item/itemLaw.js - the loot's own
+    # records, spoils and Broker, one law at both ends - so that graph
+    # is listed too (the block after src/systems/wind/wind.js).
+    # DISCORD-CODE: and the deploy's last step runs tools/discordModCommands.mjs, so its own graph is listed (after this
+    # workflow's own line) - test/server/discord_setup.test.js holds it, and the commands it writes live under
+    # server-account/. No comment inside the list: the pins read it as one run of lines.
+    paths:
+      - "server-account/**"
+      - "src/net/identityToken.js"
+      - "src/net/sessionPassLaw.js"
+      - "src/net/staffTeleport.js"
+      - "src/net/gate/gateCourts.js"
+      - "src/net/relayCfg.js"
+      - "src/net/staffCommands.js"
+      - "src/net/hubShards.js"
+      - "src/net/privateInterior.js"
+      - "src/net/instanceRoom.js"
+      - "src/net/boatIdentity.js"
+      - "src/net/handleShape.js"
+      - "src/net/letterLaw.js"
+      - "src/net/nameFilter.js"
+      - "src/net/houseLaw.js"
+      - "src/net/moderation.js"
+      - "src/net/safety/chatStamp.js"
+      - "src/net/safety/chatFeed.js"
+      - "src/net/grantMeasure.js"
+      - "src/net/grantLaw.js"
+      - "src/net/cellTree.js"
+      - "src/net/safety/safetyLaw.js"
+      - "src/net/safety/conduct.js"
+      - "src/net/playClock.js"
+      - "src/net/renown.js"
+      - "src/net/npcChapterLaw.js"
+      - "src/systems/gems.js"
+      - "src/systems/guild/guildFactions.js"
+      - "src/net/homeLaw.js"
+      - "src/net/homeScene.js"
+      - "src/net/decorLaw.js"
+      - "src/net/yardCellLaw.js"
+      - "src/world/npcFlatArchives.js"
+      - "src/world/natureArchives.js"
+      - "src/net/homeVoteLaw.js"
+      - "src/net/guild/guildLaw.js"
+      - "src/net/repairLaw.js"
+      - "src/systems/crimeGuilds.js"
+      - "src/net/hallLaw.js"
+      - "src/net/castleLaw.js"
+      - "src/net/domainLaw.js"
+      - "src/net/heraldryLaw.js"
+      - "src/net/townSeatLaw.js"
+      - "src/net/townEconLaw.js"
+      - "src/net/regionClockLaw.js"
+      - "src/net/homeListingLaw.js"
+      - "src/net/homeListings.json"
+      - "src/net/tideLaw.js"
+      - "src/net/fortLaw.js"
+      - "src/net/seatGiftLaw.js"
+      - "src/net/watchReceipt.js"
+      - "src/net/marksLaw.js"
+      - "src/net/motherlodeLaw.js"
+      - "src/net/boardLaw.js"
+      - "src/net/professionLaw.js"
+      - "src/net/firmament/firmamentLaw.js"
+      - "src/net/firmament/firmamentTree.js"
+      - "src/net/questlineClaims.js"
+      - "src/net/huntLaw.js"
+      - "src/systems/bounty/bountyBoard.js"
+      - "src/net/trophyLaw.js"
+      - "src/net/nodeLaw.js"
+      - "src/net/witnessTileLaw.js"
+      - "src/net/provinceNodes.js"
+      - "src/world/ethericSea.js"
+      - "src/world/jungle/banthaArea.js"
+      - "src/net/skyLaw.js"
+      - "src/net/kingdomLaw.js"
+      - "src/net/busyLaw.js"
+      - "src/net/recipeLaw.js"
+      - "src/net/productRecord.js"
+      - "src/net/masterLaw.js"
+      - "src/net/kitMight.js"
+      - "src/net/mightLaw.js"
+      - "src/net/marketLaw.js"
+      - "src/net/vendorLaw.js"
+      - "src/net/patronLaw.js"
+      - "src/net/writLaw.js"
+      - "src/net/craftWritLaw.js"
+      - "src/net/gate/gateLaw.js"
+      - "src/formats/mapsTables.js"
+      - "src/systems/foraging/foragingCore.js"
+      - "src/systems/gameDate.js"
+      - "src/systems/textManager.js"
+      - "src/net/festivalLaw.js"
+      - "src/net/frontLaw.js"
+      - "src/systems/festival/festivalRows.js"
+      - "src/systems/holidayTables.js"
+      - "src/systems/localizedBook.js"
+      - "src/systems/translationPacks.js"
+      - "src/systems/quest/tables.js"
+      - "src/systems/quest/table.js"
+      - "src/systems/quest/parseUtils.js"
+      - "src/systems/quest/questPatches.js"
+      - "src/systems/item/itemTemplatesData.js"
+      - "src/net/raid/raidLaw.js"
+      - "src/net/staffEvent/staffEventLaw.js"
+      - "src/net/gate/gateReceipt.js"
+      - "src/net/bossBody.js"
+      - "src/net/legalLaw.js"
+      - "src/net/raid/raidReceipt.js"
+      - "src/net/serpent/serpentReceipt.js"
+      - "src/net/starfall/starReceipt.js"
+      - "src/net/starfall/starfallLaw.js"
+      - "src/net/serpent/serpentHoardLaw.js"
+      - "src/net/dragon/dragonReceipt.js"
+      - "src/net/dragon/dragonLaw.js"
+      - "src/systems/dragon/dragonMount.js"
+      - "src/characters/dwarvenDragonId.js"
+      - "src/net/arena/arenaReceipt.js"
+      - "src/net/arena/arenaLaw.js"
+      - "src/net/wire.js"
+      - "src/net/eliteGates/egShape.js"
+      - "src/net/siege/siegeRef.js"
+      - "src/net/siege/refereeHealthShare.js"
+      - "src/net/wild/pvpVitals.js"
+      - "src/net/siege/siegeReceipt.js"
+      - "src/net/duel/duelReceipt.js"
+      - "src/net/wild/wildReceipt.js"
+      - "src/net/wild/wildLaw.js"
+      - "src/net/sea/seaBountyLaw.js"
+      - "src/net/sea/seaSeasonLaw.js"
+      - "src/net/sea/seaPrizeLaw.js"
+      - "src/net/crewSignLaw.js"
+      - "src/systems/wild/wildDropLaw.js"
+      - "src/systems/wild/wildInsureLaw.js"
+      - "src/systems/wild/pvpReward.js"
+      - "src/systems/wild/wildStoreLock.js"
+      - "src/systems/wild/wildLeaf.js"
+      - "src/systems/wild/villainLaw.js"
+      - "src/systems/item/itemKinds.js"
+      - "src/net/gate/gateMods.js"
+      - "src/net/insignia.js"
+      - "src/net/dice.js"
+      - "src/net/holdemTable.js"
+      - "src/net/card/cardLaw.js"
+      - "src/net/card/cardReceipt.js"
+      - "src/net/iliac/iliacTable.js"
+      - "src/net/iliac/iliacHand.js"
+      - "src/net/iliac/iliacCards.js"
+      - "src/net/iliac/iliacReceipt.js"
+      - "src/net/gambit/gambitTable.js"
+      - "src/net/gambit/gambitStakes.js"
+      - "src/net/gambit/gambitReceipt.js"
+      - "src/net/kingsGambit.js"
+      - "src/systems/mathf.js"
+      - "src/net/card/cardWorthLaw.js"
+      - "src/net/realm/realmTradeLaw.js"
+      - "src/net/appearanceLaw.js"
+      - "src/net/bagLaw.js"
+      - "src/net/guild/guildVaultLaw.js"
+      - "src/net/guild/guildShopLaw.js"
+      - "src/net/guild/guildLogoLaw.js"
+      - "src/net/canon.js"
+      - "src/net/realm/realmGoldLaw.js"
+      - "src/net/realm/realmSaveCodec.js"
+      - "src/world/mat4.js"
+      - "src/characters/handWrapsIds.js"
+      - "src/characters/nameGen.json"
+      - "src/characters/dyes.js"
+      - "src/net/alchemyLaw.js"
+      - "src/net/temperLaw.js"
+      - "src/systems/potionRecipes.js"
+      - "src/characters/itemTemplates.json"
+      - "src/net/superDungeon/sdReceipt.js"
+      - "src/net/ketch/ketchReceipt.js"
+      - "src/net/ketch/ketchLaw.js"
+      - "src/net/eliteGates/egReceipt.js"
+      - "src/net/eliteGates/egFeats.js"
+      - "src/net/eliteGates/egLaw.js"
+      - "src/net/eliteGates/egRoute.js"
+      - "src/net/eliteGates/egRouteProof.js"
+      - "src/net/eliteGates/egAscent.js"
+      - "src/net/eliteGates/egRoomLaw.js"
+      - "src/net/eliteGates/egWalkGraph.js"
+      - "src/net/superDungeon/sdBrain.js"
+      - "src/net/eliteGates/egSpanLaw.js"
+      - "src/net/eliteGates/egFragLaw.js"
+      - "src/net/eliteGates/egHeroFrags.js"
+      - "src/assets/egfrags/egRefFrag.law.json"
+      - "src/assets/egfrags/egheroOssuary.law.json"
+      - "src/assets/egfrags/egheroMistStair.law.json"
+      - "src/assets/egfrags/egheroGloam.law.json"
+      - "src/assets/egfrags/egheroEclipse.law.json"
+      - "src/assets/egfrags/egheroCaverns.law.json"
+      - "src/assets/egfrags/egheroStacks.law.json"
+      - "src/assets/egfrags/egheroColonnade.law.json"
+      - "src/assets/egfrags/egheroForgeGut.law.json"
+      - "src/assets/egfrags/egheroClanPit.law.json"
+      - "src/assets/egfrags/egheroDeepCaverns.law.json"
+      - "src/net/eliteGates/egPay.js"
+      - "src/net/eliteGates/egStartLaw.js"
+      - "src/net/superDungeon/sdMarks.js"
+      - "src/net/postLaw.js"
+      - "src/net/shopLaw.js"
+      - "src/net/armoryLaw.js"
+      - "src/net/effectLaw.js"
+      - "src/net/battlePassLaw.js"
+      - "src/net/aurumLaw.js"
+      - "src/net/aurumCacheLaw.js"
+      - "src/net/giftLaw.js"
+      - "src/net/cacheProof.js"
+      - "src/net/lostLaw.js"
+      - "src/systems/superDungeon/sdSpoils.js"
+      - "src/systems/eliteGates/egSpoils.js"
+      - "src/systems/eliteGates/egLordArms.js"
+      - "src/net/reportLaw.js"
+      - "src/net/hiddenSeen.js"
+      - "src/systems/wind/wind.js"
+      - "src/ai/blowShapes.js"
+      - "src/ai/cover.js"
+      - "src/ai/foeBlows.js"
+      - "src/ai/tactics.js"
+      - "src/ai/tacticsClock.js"
+      - "src/ai/tells.js"
+      - "src/characters/enemy/customEnemies.js"
+      - "src/characters/enemy/enemyBasics.js"
+      - "src/characters/enemy/enemyMotor.js"
+      - "src/characters/equipRules.js"
+      - "src/characters/equipTable.js"
+      - "src/characters/mobile/mobileTypes.js"
+      - "src/characters/nameHelper.js"
+      - "src/characters/paperdoll/paperdoll.js"
+      - "src/characters/paperdoll/paperdollArt.js"
+      - "src/characters/personNames.js"
+      - "src/characters/regionNames.js"
+      - "src/characters/thunderlockIds.js"
+      - "src/characters/weaponStates.js"
+      - "src/characters/weapons.js"
+      - "src/combat/clawMetal.js"
+      - "src/combat/enemyEquipment.js"
+      - "src/combat/enemyGroups.js"
+      - "src/combat/formulas.js"
+      - "src/combat/gun/gunFeel.js"
+      - "src/formats/blocksFile.js"
+      - "src/formats/bsaFile.js"
+      - "src/formats/characterRecord.js"
+      - "src/formats/classFile.js"
+      - "src/formats/color32Order.js"
+      - "src/formats/dfRandom.js"
+      - "src/formats/factionFile.js"
+      - "src/formats/fileProxy.js"
+      - "src/formats/magicDef.js"
+      - "src/formats/mapsFile.js"
+      - "src/formats/pakFile.js"
+      - "src/formats/save/saveTreeFile.js"
+      - "src/formats/spellsStd.js"
+      - "src/formats/umRandom.js"
+      - "src/formats/woodsFile.js"
+      - "src/formats/worldData/worldDataDoor.js"
+      - "src/net/duel/duelSession.js"
+      - "src/net/iliac/iliacCards.js"
+      - "src/player/bodyClamp.js"
+      - "src/player/classSkins.js"
+      - "src/player/climbing.js"
+      - "src/player/exteriorSurface.js"
+      - "src/player/groundRay.js"
+      - "src/player/motor.js"
+      - "src/player/moveScanner.js"
+      - "src/player/parkour.js"
+      - "src/systems/absorption.js"
+      - "src/systems/aetheric.js"
+      - "src/systems/appRoot.js"
+      - "src/systems/appStorage.js"
+      - "src/systems/arcanePaths.js"
+      - "src/systems/armorMaterials.js"
+      - "src/systems/artifactEffects.js"
+      - "src/systems/ayleidStones.js"
+      - "src/systems/blowTaken.js"
+      - "src/systems/clothingStanding.js"
+      - "src/systems/comeSailAway/comeSailAwayItems.js"
+      - "src/systems/comeSailAway/comeSailAwayHulls.js"
+      - "src/systems/concealment.js"
+      - "src/systems/conditionRepair.js"
+      - "src/systems/courtRules.js"
+      - "src/systems/createItemRows.js"
+      - "src/systems/deepWater/deepWatersFishRows.js"
+      - "src/systems/effectBroker.js"
+      - "src/systems/effects.js"
+      - "src/systems/eliteGates/weirKeyRow.js"
+      - "src/systems/enemyExpansion/dexIds.js"
+      - "src/systems/enemyExpansion/dexTableText.js"
+      - "src/systems/enemyExpansion/mudexTableText.js"
+      - "src/systems/enemyExpansion/dexCsv.js"
+      - "src/systems/enchanting.js"
+      - "src/systems/enchantmentCatalogue.js"
+      - "src/systems/enchantments.js"
+      - "src/systems/entityMods.js"
+      - "src/systems/equip.js"
+      - "src/systems/features.js"
+      - "src/systems/feudLedger.js"
+      - "src/systems/foraging/foragingLaw.js"
+      - "src/systems/gate/gateSpoils.js"
+      - "src/systems/gilded.js"
+      - "src/systems/harmMark.js"
+      - "src/systems/horse/horseCartLaw.js"
+      - "src/systems/iliac/iliacItems.js"
+      - "src/systems/iliac/iliacCardWords.js"
+      - "src/systems/inventory.js"
+      - "src/systems/inventorySession.js"
+      - "src/systems/item/itemDye.js"
+      - "src/systems/item/foundMark.js"
+      - "src/systems/item/itemFields.js"
+      - "src/systems/item/itemLaw.js"
+      - "src/systems/item/itemIds.js"
+      - "src/systems/item/possessedItems.js"
+      - "src/systems/bossCards.js"
+      - "src/systems/item/itemBound.js"
+      - "src/systems/item/itemLock.js"
+      - "src/systems/item/itemTemplates.js"
+      - "src/systems/legacy/heirloom.js"
+      - "src/systems/legacy/houseName.js"
+      - "src/systems/lockpick/lockpickRow.js"
+      - "src/systems/legacy/legacyLaw.js"
+      - "src/systems/legacy/unionKinLaw.js"
+      - "src/systems/livingWorld/keepsake.js"
+      - "src/systems/musicSheetRow.js"
+      - "src/systems/levelClimb.js"
+      - "src/systems/levelEven.js"
+      - "src/systems/levelCap.js"
+      - "src/systems/chargen.js"
+      - "src/systems/characterId.js"
+      - "src/systems/renownLayer.js"
+      - "src/systems/livingWorld/seed.js"
+      - "src/systems/loot/loot.js"
+      - "src/systems/loot/lootDataTables.js"
+      - "src/systems/loot/lootLevelGate.js"
+      - "src/systems/loot/lootRarity.js"
+      - "src/systems/loot/gemGrades.js"
+      - "src/combat/technique/techniqueRoster.js"
+      - "src/systems/masterSkills.js"
+      - "src/systems/martialPaths.js"
+      - "src/systems/mentorMode.js"
+      - "src/systems/modSaveData.js"
+      - "src/systems/modSettings.js"
+      - "src/systems/naval/navalStores.js"
+      - "src/systems/naval/tradeGoods.js"
+      - "src/systems/naval/treasureCharts.js"
+      - "src/systems/naval/harbourBoard.js"
+      - "src/systems/naval/navalShips.js"
+      - "src/combat/blood/bloodArt.js"
+      - "src/systems/nearbyObjects.js"
+      - "src/systems/online/onlineLane.js"
+      - "src/systems/pageQuery.js"
+      - "src/systems/powerCeiling.js"
+      - "src/systems/powerBlows.js"
+      - "src/systems/professions/profTemplates.js"
+      - "src/systems/races.js"
+      - "src/systems/racialLive.js"
+      - "src/systems/rarityTier.js"
+      - "src/systems/rest/restItemRows.js"
+      - "src/systems/roleplayRealismItems/rriIndex.js"
+      - "src/systems/roleplayRealismItems/rriItems.js"
+      - "src/systems/roleplayRealismItems/rriRealism.js"
+      - "src/systems/sceneCache.js"
+      - "src/systems/settings/settings.js"
+      - "src/systems/settings/settingsDefaults.js"
+      - "src/systems/shotTally.js"
+      - "src/systems/sigil/sigil.js"
+      - "src/systems/sigil/sigilBroker.js"
+      - "src/systems/sigil/sigilSets.js"
+      - "src/systems/sigil/setReach.js"
+      - "src/systems/skillSoftcap.js"
+      - "src/systems/skills.js"
+      - "src/systems/soundClips.js"
+      - "src/systems/specialAdvantages.js"
+      - "src/systems/spell/identifyRefund.js"
+      - "src/systems/spell/spellPower.js"
+      - "src/systems/spellcast.js"
+      - "src/systems/spellcost.js"
+      - "src/systems/starfall/starglassRow.js"
+      - "src/systems/statMods.js"
+      - "src/systems/stolenGoods.js"
+      - "src/systems/survival/difficulty.js"
+      - "src/systems/survival/food.js"
+      - "src/systems/survival/items.js"
+      - "src/systems/survival/needs.js"
+      - "src/systems/survival/switch.js"
+      - "src/systems/survival/temperature.js"
+      - "src/systems/handWraps.js"
+      - "src/systems/pistolet.js"
+      - "src/systems/textureReplacement.js"
+      - "src/systems/thunderlock.js"
+      - "src/systems/pass/resonantMaul.js"
+      - "src/systems/timeScale.js"
+      - "src/systems/transport.js"
+      - "src/systems/travel/travelPace.js"
+      - "src/systems/travel/travelPaths.js"
+      - "src/systems/uiPrefs.js"
+      - "src/systems/wagon/wagonKinds.js"
+      - "src/systems/walletItem.js"
+      - "src/systems/upkeep/upkeepItemRows.js"
+      - "src/systems/upkeep/upkeepTiers.js"
+      - "src/world/blockHash.js"
+      - "src/world/buildingNames.js"
+      - "src/world/capitalLane.js"
+      - "src/world/meshReader.js"
+      - "src/world/perlin.js"
+      - "src/world/puddleDry.js"
+      - "src/world/puddleMask.js"
+      - "src/world/road/pathData.js"
+      - "src/world/road/roadNetwork.js"
+      - "src/world/spawnedDungeons.js"
+      - "src/world/terrain/terrainSampler.js"
+      - "src/world/terrain/terrainSurface.js"
+      - "src/world/terrain/terrainTiles.js"
+      - "src/world/townShape.js"
+      - "src/world/water/waterCorners.js"
+      - "src/world/weather.js"
+      - "src/systems/party/partyScale.js"
+      - "src/systems/books.js"
+      - "src/systems/booksData.js"
+      - "src/formats/bookFile.js"
+      - "src/formats/textRsc.js"
+      - "src/formats/rscTable.js"
+      - "src/systems/portBooks.js"
+      - "src/systems/potions.js"
+      - "src/systems/loot/lootThemes.js"
+      - "vendor/class-skins/skins.json"
+      - "vendor/foraging/ItemTemplates.json"
+      - "vendor/iliac-puddle-no-more/ItemTemplates.json"
+      - ".github/workflows/account-deploy.yml"
+      - "tools/discordModCommands.mjs"
+      - "tools/stripeMethods.mjs"
+      - "tools/lib/isMain.mjs"
+      - "src/systems/legacy/revived.js"
+      - "src/poi/poiLaw.js"
+      - "src/poi/poiMesh.js"
+      - "src/poi/poiImage.js"
+      - "server/src/staffFeedLaw.js"
+      - "src/ui/touch/touchDevice.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One at a time. Two runs racing on `d1 create` or `migrations apply`
+# is the one state this must not get into.
+concurrency:
+  group: account-deploy
+  cancel-in-progress: false
+
+jobs:
+  # SCALE1 (2026-09-30, the scaling audit): THE SUITE FIRST. This service
+  # deployed on every push that touched it whatever the check said - on
+  # 2026-09-30 the site's deploy stopped at a red "lint and types" while
+  # this job shipped the same commit's service to every player. The
+  # site's deploy waits up to thirty minutes for this service's version
+  # (deploy.yml), which the suite's few minutes fit inside.
+  verify:
+    uses: ./.github/workflows/verify.yml
+    with:
+      build: false
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      DB_NAME: daggerfall-accounts
+      WRANGLER: npx --yes wrangler@4
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # THE TOKEN IS THE ONE THING THIS JOB CANNOT DERIVE. Say so in one
+      # line rather than letting wrangler fail four steps later with an
+      # authentication error that reads like a wrangler bug.
+      - name: Refuse to start without a token
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            exit 1
+          fi
+
+      # ── 1. THE DATABASE, IF IT IS NOT THERE ALREADY ───────────────
+      #
+      # `d1 create` on an existing name is an error, not a no-op, so the
+      # list is asked first. The id is then read back out of Cloudflare
+      # in BOTH branches - never remembered from the create - because
+      # the authority on a database's id is Cloudflare and not this job.
+      - name: Create the database if it does not exist, and resolve its id
+        id: d1
+        run: |
+          set -euo pipefail
+          list=$($WRANGLER d1 list --json 2>/dev/null || echo '[]')
+          if echo "$list" | jq -e --arg n "$DB_NAME" 'any(.[]; .name == $n)' >/dev/null; then
+            echo "$DB_NAME already exists"
+          else
+            echo "creating $DB_NAME"
+            $WRANGLER d1 create "$DB_NAME"
+            list=$($WRANGLER d1 list --json)
+          fi
+          id=$(echo "$list" | jq -r --arg n "$DB_NAME" 'map(select(.name == $n)) | .[0].uuid // .[0].id // empty')
+          if [ -z "$id" ]; then
+            echo "::error::$DB_NAME exists but Cloudflare did not report an id for it"
+            exit 1
+          fi
+          # A D1 id is not a secret, but it is also nobody's business in
+          # a public log, and printing it buys nothing - the steps below
+          # read it from the output, not from a human.
+          echo "::add-mask::$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "resolved the id for $DB_NAME"
+
+      # THE SENTINEL IS THE SEAM. `server-account/wrangler.toml` carries
+      # `database_id = "resolved-by-account-deploy-workflow"`, and this
+      # is the only place that string is replaced. The substitution is
+      # CHECKED rather than assumed: a `sed` that matched nothing exits
+      # 0 and hands wrangler a config naming a database that cannot
+      # exist, which is a deploy failure three steps from its cause.
+      - name: Write the id into the runner's copy of the config
+        run: |
+          set -euo pipefail
+          toml=server-account/wrangler.toml
+          sentinel='resolved-by-account-deploy-workflow'
+          grep -q "$sentinel" "$toml" || {
+            echo "::error::$toml no longer carries the sentinel this workflow substitutes"
+            exit 1
+          }
+          sed -i "s|\"$sentinel\"|\"${{ steps.d1.outputs.id }}\"|" "$toml"
+          if grep -q "$sentinel" "$toml"; then
+            echo "::error::the sentinel survived the substitution"
+            exit 1
+          fi
+          echo "the config in this runner now names the real database"
+
+      # ── 1b. THE BUCKET, IF IT IS NOT THERE ALREADY ────────────────
+      #
+      # ACC2. Same shape as the database above and for the same reason
+      # (Mac: "The token provided allows you to take this on yourself"),
+      # with one difference that makes it simpler: A BUCKET NAME IS NOT
+      # AN ID. Cloudflare mints no identifier to resolve, so the name in
+      # `wrangler.toml` IS the reference and there is no sentinel here.
+      #
+      # `r2 bucket create` on an existing name is an error rather than a
+      # no-op, exactly like `d1 create`, so the list is asked first - and
+      # the listing must SUCCEED and parse, never fall back to "empty".
+      # AUDIT-ACC F1 was that fallback: `|| echo '[]'` turned "I could
+      # not read this" into "there is none of it", and the destructive
+      # default it reached was re-minting the signing pair on every
+      # deploy. Here the same fallback would try to create a bucket that
+      # exists, which merely fails - but the lesson is the shape, not the
+      # blast radius.
+      #
+      # AND IT RUNS BEFORE THE DEPLOY, because a Worker whose toml binds
+      # a bucket that does not exist does not start.
+      - name: Create the save bucket if it does not exist
+        run: |
+          set -euo pipefail
+          # DERIVED, NEVER TYPED TWICE: the name comes out of the config
+          # this deploy actually ships, so a rename in one place cannot
+          # leave the other creating the wrong bucket.
+          want=$(grep -oP '^bucket_name\s*=\s*"\K[^"]+' server-account/wrangler.toml)
+          if [ -z "$want" ]; then
+            echo "::error::server-account/wrangler.toml declares no r2 bucket_name"
+            exit 1
+          fi
+          # NO `|| echo` FALLBACK. AUDIT-ACC F1: a listing that fails must
+          # fail the step, because "I could not read this" turning into
+          # "there is none of it" is how the deploy came to re-mint the
+          # signing pair on every run.
+          #
+          # `r2 bucket list` has no --json (checked against wrangler 4's
+          # own bundle, not assumed): it prints wrangler's labelled-value
+          # table, one `name:  <bucket>` line per bucket. awk splits on
+          # whitespace and compares the value EXACTLY, so no part of the
+          # name is read as a pattern and a bucket whose name merely
+          # contains ours is not mistaken for it.
+          list=$($WRANGLER r2 bucket list | sed 's/\x1b\[[0-9;]*m//g')
+          if printf '%s\n' "$list" | awk -v w="$want" '$1 == "name:" && $2 == w { found = 1 } END { exit !found }'; then
+            echo "$want already exists"
+          else
+            echo "creating $want"
+            $WRANGLER r2 bucket create "$want"
+          fi
+
+      # ═══ AUDIT B1 (SHADOW-FANG, 2026-09-26): AND THE RELAY GOES FIRST ══
+      #
+      # THE SERVICE SIGNS WHAT THE RELAY VERIFIES. identityToken.js is in
+      # both Workers, and a claim the RUNNING relay does not know - a new
+      # title or glyph - was refused whole by its claimsValid (`token
+      # claims`), which on the presence socket is terminal until the
+      # player changes room or reloads. This job and relay-deploy.yml
+      # start on the same push with nothing ordering them, and the last
+      # three paired deploys landed either way round. So this step waits
+      # until the relay's /health serves the version wire.js names (or a
+      # later one) - the relay carrying this push's vocabulary - and the
+      # job deploys NOTHING if it never does: the old service keeps
+      # minting the old vocabulary, which every relay admits. A push that
+      # changed no relay behaviour finds it served already: one request.
+      # The relay's address is the client's own (online.js
+      # DEFAULT_SERVER), never typed here.
+      # AUDIT STOREFRONT lane 3 F1 (2026-10-31): AND BEFORE THE MIGRATIONS. A migration
+      # can write what players read (0202's letter: "500 Aurum and the
+      # Crystal Spurs are on your account now"), and this wait can last
+      # five and a half hours. Waited here, the old service shows that
+      # letter for the minute the migrations and the deploy take, never
+      # for the wait; a relay that never comes migrates nothing.
+      - name: Wait for the relay to serve this push's version
+        run: |
+          set -euo pipefail
+          want=$(grep -oP "^export const RELAY_VERSION = '\K[^']+" src/net/wire.js)
+          host=$(grep -oP "^export const DEFAULT_SERVER = 'wss://\K[^'/]+" src/net/online.js)
+          test -n "$want" || { echo "::error::could not read RELAY_VERSION from src/net/wire.js"; exit 1; }
+          test -n "$host" || { echo "::error::could not read DEFAULT_SERVER from src/net/online.js"; exit 1; }
+          n() { printf '%s' "$1" | grep -oE '[0-9]+$' || echo -1; }
+          # SEAT2a part three (Seats-Arc 17): the relay's deploy now waits out a siege's blackout, so this waits to
+          # outlast it - five and a half hours (GitHub's job ceiling is six)
+          for i in $(seq 1 1000); do
+            got=$(curl -fsS --max-time 15 "https://$host/health" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' || true)
+            if [ "$got" = "$want" ] || { [ -n "$got" ] && [ "$(n "$got")" -ge "$(n "$want")" ]; }; then
+              echo "the relay serves ${got} - the service may sign what it verifies"
+              exit 0
+            fi
+            echo "the relay serves '${got:-unreachable}', not $want yet - waiting (${i}/1000)"
+            sleep 20
+          done
+          echo "::error::the relay never came to serve $want in five and a half hours - not deploying a service that may sign what the live relay refuses (dispatch relay-deploy.yml, then re-run this)"
+          exit 1
+
+      # ── 2. THE MIGRATIONS ─────────────────────────────────────────
+      #
+      # `migrations apply` keeps a `d1_migrations` table in the database
+      # itself and runs only what is missing, in order. That is the
+      # whole reason it replaced two `d1 execute --file` lines: 0002 is
+      # NOT idempotent - `ALTER TABLE ADD COLUMN` has no IF NOT EXISTS -
+      # so "apply each one exactly once" has to be something a tool
+      # knows, not something a comment asks for.
+      # SCALE1 (2026-09-30, the scaling audit): THE DATABASE AS IT STOOD
+      # BEFORE THEM, written where a person will look. Some migrations are
+      # not idempotent and none can be undone by another; D1 Time Travel
+      # can put the whole database back to this bookmark (realm-restore.yml
+      # reads it the same way). A bookmark that cannot be read is a warning,
+      # not a stop - a restore by timestamp still works without it.
+      - name: Record the database's bookmark before the migrations
+        working-directory: server-account
+        run: |
+          set -uo pipefail
+          b=$($WRANGLER d1 time-travel info "$DB_NAME" --json | jq -r '.bookmark // empty' || true)
+          if [ -z "$b" ]; then
+            echo "::warning::could not read the database's Time Travel bookmark before the migrations"
+            exit 0
+          fi
+          echo "before the migrations: $b"
+          { echo "The database before this deploy's migrations, should it need putting back:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; echo "then redeploy the Worker (its isolates keep the weeks they read settled - server-account/src/weekKept.js)."; echo ""; } >> "$GITHUB_STEP_SUMMARY"
+
+      # SCALE4e (2026-10-10, PR #755's own deploy): AN OVERLOADED DATABASE
+      # IS WAITED OUT, NOTHING ELSE IS. A merge that touches the relay and
+      # this service deploys both at once; the relay's deploy drops every
+      # player, their reconnect wave mints a token each against the one D1
+      # primary, and this step's first query landed 23 s into that wave:
+      # "D1 DB is overloaded. Requests queued for too long. [code: 7429]".
+      # The deploy stopped there, so acct106 never shipped. An overload is
+      # D1 refusing to queue the query (it never ran), so asking again is
+      # safe; it is asked again on that answer alone, after 20, 40, 60, 90
+      # and 120 s (5.5 minutes, the 2026-10-06 storm's worst five). Any
+      # other failure - a migration that does not apply - stops the deploy
+      # at once, as it always has. AUDIT LEAN-READS D3 (2026-10-20): D1
+      # answers code 7429 for a reset too - "D1 DB exceeded its CPU time
+      # limit and was reset" - and a migration that ran past the limit,
+      # asked again, resets the live database again, five more times. The
+      # overload is known by its words, and a reset is never asked again.
+      - name: Apply migrations
+        working-directory: server-account
+        run: |
+          set -uo pipefail
+          log="${RUNNER_TEMP:-/tmp}/migrations.log"
+          for wait in 20 40 60 90 120 0; do
+            if $WRANGLER d1 migrations apply "$DB_NAME" --remote 2>&1 | tee "$log"; then exit 0; fi
+            if grep -qiE 'CPU time limit|was reset' "$log"; then
+              echo "::error::a migration ran past D1's CPU limit and the database was reset - never asked again; make the migration lighter"
+              exit 1
+            fi
+            if ! grep -qiE 'overloaded|queued for too long' "$log"; then
+              echo "::error::the migrations failed, and not on an overloaded database - not retried"
+              exit 1
+            fi
+            if [ "$wait" = 0 ]; then break; fi
+            echo "::warning::the database is overloaded - asking again in ${wait}s"
+            sleep "$wait"
+          done
+          echo "::error::the database stayed overloaded for 5.5 minutes - re-run this job once it settles"
+          exit 1
+
+      # ── 2b. THE READ REPLICAS (SCALE4d) ──────────────────────────
+      #
+      # The token's mint reads through D1's Sessions API
+      # (server-account/src/service.js replicaDb), and a replica serves
+      # a session only once the database replicates. Turned on here, on
+      # every deploy: a PUT of the mode it already has changes nothing.
+      # A refusal is a WARNING and never a stop - without replicas every
+      # statement is the primary's, exactly as before. The token needs
+      # D1:Edit, which `d1 create` and the migrations above need too.
+      - name: Turn on the database's read replicas
+        run: |
+          set -uo pipefail
+          acct=$(grep -oP '^account_id\s*=\s*"\K[^"]+' server-account/wrangler.toml)
+          # AUDIT SCALE4d A3: curl's own -w says 000 when it reaches nothing - `|| echo 000` printed it twice
+          code=$(curl -sS --max-time 20 -o /tmp/replicas.json -w '%{http_code}' -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/$acct/d1/database/${{ steps.d1.outputs.id }}" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' \
+            -d '{"read_replication":{"mode":"auto"}}') || true
+          code=${code:-000}
+          if [ "$code" = "200" ] && jq -e '.success == true' /tmp/replicas.json >/dev/null 2>&1; then
+            echo "read replication: $(jq -r '.result.read_replication.mode // "not said"' /tmp/replicas.json)"
+          else
+            echo "::warning::could not turn on the database's read replicas (HTTP $code) - every statement stays on the primary"
+            jq -c '.errors // empty' /tmp/replicas.json 2>/dev/null || true
+          fi
+
+      # ── 3. DEPLOY, AND IT COMES BEFORE THE KEY ───────────────────
+      #
+      # AUDIT-ACC F15: THE ORDER USED TO BE THE OTHER WAY AND THE FIRST
+      # RUN COULD NEVER HAVE SUCCEEDED. `wrangler secret list` asks
+      # Cloudflare for a Worker's secrets, and on a Worker that does not
+      # exist yet it fails outright:
+      #
+      #   Worker "daggerfall-accounts" not found.
+      #   If this is a new Worker, run `wrangler deploy` first to create it.
+      #
+      # On the very first deploy that is the EXPECTED state, so the
+      # minting step aborted the job before anything was ever deployed.
+      #
+      # F1 is what made it fatal rather than merely wrong. Before F1 the
+      # step swallowed the failure with `|| echo '[]'` and blundered on;
+      # F1 correctly made an unreadable listing stop the job - and in
+      # doing so turned a first-run certainty into a hard stop. Both
+      # halves were right on their own. The order is what was wrong.
+      #
+      # DEPLOYING FIRST IS SAFE BECAUSE THE SERVICE IS BUILT FOR IT: a
+      # Worker with no signing key still hands out accounts and answers
+      # `no-signing-key` on /v1/auth/token rather than minting something
+      # the relay would refuse. That arm is pinned in
+      # test/server/accountworker.test.js and this is the moment it is for.
+      # `secret put` redeploys the Worker with the binding, so the
+      # window is seconds long and nothing is using the service yet.
+      # (AUDIT B1's wait for the relay stands before the migrations, above.)
+      - name: Deploy
+        id: deploy
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          # AUDIT-ACC F16: THE URL IS READ OFF THE DEPLOY, NOT TYPED.
+          # The verify steps used to build the host from the worker name
+          # plus a hardcoded `mackcothran` subdomain - the name derived
+          # from the config, the account typed beside it. That is a
+          # second home for a fact, and it is the exact shape SLAM13
+          # burned the relay on: a check pointed at a stale fact keeps
+          # passing, or keeps failing, for reasons that have nothing to
+          # do with what it is checking. wrangler prints the URL it
+          # deployed to; that is the authority on where this Worker now
+          # lives, and it makes this workflow portable to any account.
+          $WRANGLER deploy | tee /tmp/deploy.log
+          url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/deploy.log | head -1)
+          if [ -z "$url" ]; then
+            echo "::error::wrangler did not print a workers.dev URL - cannot verify a deploy whose address is unknown"
+            exit 1
+          fi
+          echo "base=$url" >> "$GITHUB_OUTPUT"
+          echo "deployed to $url"
+
+      # ── 4. THE SIGNING PAIR, ONCE AND ONLY ONCE ───────────────────
+      #
+      # RE-MINTING IS THE DESTRUCTIVE CASE. Every token this service has
+      # ever signed verifies against the public half; replacing the pair
+      # makes all of them fail at once. So the secret list is asked
+      # first, and a pair that is already there is left completely
+      # alone.
+      #
+      # ═══ AUDIT-ACC F1: AND "I COULD NOT TELL" IS NOT "THERE IS NONE" ══
+      #
+      # The first cut of this step ran `secret list --json` and fell back
+      # to `[]` if that failed. Both halves of that were wrong, and
+      # together they were the destructive case arriving through the
+      # error path:
+      #
+      #   - THERE IS NO `--json` FLAG on `wrangler secret list`. It takes
+      #     `--format json|pretty` and already defaults to json. Given an
+      #     unknown flag wrangler printed its HELP TEXT and exited 0.
+      #   - `jq` then failed to parse that help text, the `if` went
+      #     false, and the step fell straight through to minting.
+      #
+      # So every deploy would have re-minted, signing out everybody
+      # online, while the guard sat right there looking correct. The
+      # fallback was the deeper fault: a DESTRUCTIVE default reached by
+      # not being able to read something. Now the listing must succeed
+      # AND parse as an array, or the step fails and mints nothing.
+      #
+      # Neither half is ever echoed, written to a file, or passed as an
+      # argument. One `node` run emits both (in that order, private
+      # first) and `read` takes them straight off the pipe into
+      # variables this step never prints. The public half - which is not
+      # a secret - goes into the job summary, because it is the thing
+      # ACC1d needs and /v1/pubkey will serve it anyway.
+      - name: Mint the signing pair if the service has none
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          # No `|| default`: a listing that fails must fail the step.
+          have=$($WRANGLER secret list --format json)
+          if ! echo "$have" | jq -e 'type == "array"' >/dev/null; then
+            echo "::error::secret list did not return a JSON array - refusing to decide whether a key exists"
+            exit 1
+          fi
+          if echo "$have" | jq -e 'any(.[]; .name == "IDENTITY_PRIVATE_KEY")' >/dev/null; then
+            echo "a signing key is already set - leaving it alone (re-minting would invalidate every token in flight)"
+            exit 0
+          fi
+          echo "no signing key yet - minting one"
+          { read -r priv; read -r pub; } < <(node ../tools/mintIdentityKeys.mjs --pipe)
+          if [ -z "$priv" ] || [ -z "$pub" ]; then
+            echo "::error::the key tool did not emit a pair"
+            exit 1
+          fi
+          printf '%s' "$priv" | $WRANGLER secret put IDENTITY_PRIVATE_KEY
+          printf '%s' "$pub" | $WRANGLER secret put IDENTITY_PUBLIC_KEY
+          unset priv
+          {
+            echo "### A new identity signing pair was minted"
+            echo ""
+            echo "The private half went straight into \`IDENTITY_PRIVATE_KEY\` and was never written down."
+            echo "The public half is **not a secret** - the service serves it at \`/v1/pubkey\`:"
+            echo ""
+            echo "    $pub"
+            echo ""
+            echo "This is the value ACC1d pins in the relay's config."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── 4b. THE GATE'S RECEIPT PAIR, ONCE AND ONLY ONCE ───────────
+      #
+      # GATE-KEYS (2026-09-26, DragynDance on the Discord: "I didn't get
+      # credit for closing the oblivion gate in my profile"; Mac, asked
+      # whether this job should set the pair: "Yes, add it"). WB5b's pair
+      # runs the other way from the identity pair: the RELAY signs an
+      # Oblivion Gate's kill receipts with GATE_SIGNING_KEY, a secret on
+      # ITS Worker, and this service verifies them with GATE_PUBLIC_KEY.
+      # WB5b left both halves to a person - a tool to mint them, a var
+      # left empty - and nobody set them, so every receipt went out
+      # unsigned, the device drops an unsigned one, and no gate anyone
+      # closed was ever counted. The token that stands this service up can
+      # set both, so it does, once.
+      #
+      # THE PUBLIC HALF IS A SECRET HERE, NOT A VAR. It hides nothing (it
+      # verifies and cannot sign), but a var is the deploy's to rewrite
+      # from wrangler.toml, this job cannot commit one, and Cloudflare
+      # refuses a secret the name of a var already bound (and the other
+      # way round). So the toml carries none, and the deploy above has
+      # already taken WB5b's empty one off the live Worker when this runs.
+      #
+      # ONE PAIR, BOTH WORKERS. Each half is asked about on its own
+      # Worker. Both there is left completely alone: re-minting would
+      # orphan every receipt in flight, which a device keeps for the week
+      # it carries. Anything else - neither, or one half whose partner no
+      # listing can read back - mints ONE pair and puts both, the relay's
+      # half first. `secret put` redeploys a Worker, and A RELAY REDEPLOY
+      # DROPS EVERY CONNECTED PLAYER - once, on the one run that mints;
+      # the summary says so.
+      #
+      # The identity pair's laws hold here too: a listing that fails or
+      # does not parse fails the step (AUDIT-ACC F1), and the private half
+      # goes from the tool to wrangler through one pipe - never printed,
+      # never written, never an argument.
+      - name: Mint the gate receipt pair if either Worker lacks its half
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          # No `|| default` on either listing: a listing that fails must fail the step.
+          mine=$($WRANGLER secret list --format json)
+          theirs=$(cd ../server && $WRANGLER secret list --format json)
+          for listing in "$mine" "$theirs"; do
+            if ! echo "$listing" | jq -e 'type == "array"' >/dev/null; then
+              echo "::error::secret list did not return a JSON array - refusing to decide whether a gate key exists"
+              exit 1
+            fi
+          done
+          service_has=$(echo "$mine" | jq 'any(.[]; .name == "GATE_PUBLIC_KEY")')
+          relay_has=$(echo "$theirs" | jq 'any(.[]; .name == "GATE_SIGNING_KEY")')
+          if [ "$service_has" = true ] && [ "$relay_has" = true ]; then
+            echo "the gate pair is set on both Workers - leaving it alone (re-minting would orphan every receipt in flight)"
+            exit 0
+          fi
+          echo "the gate pair is incomplete (the relay holds its half: $relay_has, this service holds its half: $service_has) - minting one pair"
+          { read -r priv; read -r pub; } < <(node ../tools/mintGateKeys.mjs --pipe)
+          if [ -z "$priv" ] || [ -z "$pub" ]; then
+            echo "::error::the gate key tool did not emit a pair"
+            exit 1
+          fi
+          (cd ../server && printf '%s' "$priv" | $WRANGLER secret put GATE_SIGNING_KEY)
+          unset priv
+          printf '%s' "$pub" | $WRANGLER secret put GATE_PUBLIC_KEY
+          {
+            echo "### A new gate receipt pair was minted"
+            echo ""
+            echo "The private half went straight into the relay's \`GATE_SIGNING_KEY\` and was never written down."
+            echo "Putting it redeployed the relay: every connected player was dropped once and reconnected."
+            echo "The public half is **not a secret** - it is this service's \`GATE_PUBLIC_KEY\`:"
+            echo ""
+            echo "    $pub"
+            echo ""
+            echo "A receipt signed by any earlier relay key is refused at the signature and expires with its week."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── 4c. PATREON-LINK'S TWO SECRETS, WHERE THE REPOSITORY HAS THEM ──
+      #
+      # PATREON-LINK (2026-10-01, Mac: "having to manually hand out titles
+      # ... its really hard to keep up with it"): a patron links their own
+      # Patreon, and the service needs the two things only Patreon and Mac
+      # hold - the API client's secret (to spend the code a player comes
+      # back with) and the webhook's (to believe Patreon's word on a
+      # member). Each is a REPOSITORY secret, PATREON_CLIENT_SECRET and
+      # PATREON_WEBHOOK_SECRET, put on the Worker here on EVERY deploy - so
+      # a secret changed in the repository reaches the service on the next
+      # push. An unset one is not an error: linking stays off (patreon.js
+      # patreonLinkOn) and the webhook answers `patreon-closed`.
+      #
+      # ONE PUT FOR BOTH (`secret bulk`, one redeploy), fed through a pipe:
+      # jq builds the JSON from the environment, so neither value is ever
+      # echoed, written to a file, or an argument. The summary names the two
+      # addresses the Patreon client and its webhook are registered with,
+      # read off this deploy - never typed (AUDIT-ACC F16).
+      - name: Put the Patreon secrets, where the repository has them
+        working-directory: server-account
+        env:
+          PATREON_CLIENT_SECRET: ${{ secrets.PATREON_CLIENT_SECRET }}
+          PATREON_WEBHOOK_SECRET: ${{ secrets.PATREON_WEBHOOK_SECRET }}
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          if [ -z "${PATREON_CLIENT_SECRET}" ] && [ -z "${PATREON_WEBHOOK_SECRET}" ]; then
+            echo "neither PATREON_CLIENT_SECRET nor PATREON_WEBHOOK_SECRET is set for this repository - Patreon linking stays off"
+          else
+            jq -n 'env | {PATREON_CLIENT_SECRET, PATREON_WEBHOOK_SECRET} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
+          fi
+          {
+            echo "### Patreon linking"
+            echo ""
+            echo "- client secret: $([ -n "${PATREON_CLIENT_SECRET}" ] && echo put || echo 'not set - linking is off')"
+            echo "- webhook secret: $([ -n "${PATREON_WEBHOOK_SECRET}" ] && echo put || echo 'not set - pledges are not followed')"
+            echo "- the Patreon client's redirect URI: \`$base/v1/patreon/callback\`"
+            echo "- the Patreon webhook's URL: \`$base/v1/patreon/webhook\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── 4d. THE SHOP'S TWO STRIPE SECRETS, WHERE THE REPOSITORY HAS THEM ──
+      #
+      # SHOP (bible/06-Systems/Shop.md): Stripe takes the money on its own page, and the service needs the two things only
+      # Stripe and the owner hold - the API's secret key (to open a checkout) and the webhook endpoint's signing secret
+      # (to believe Stripe's word on a payment). Put on EVERY deploy, Patreon's way, through one pipe so neither value is
+      # echoed. An unset one is not an error: the shop stays closed (shop.js shopOn). The summary names the webhook's URL.
+      - name: Put the Stripe secrets, where the repository has them
+        working-directory: server-account
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          if [ -z "${STRIPE_SECRET_KEY}" ] && [ -z "${STRIPE_WEBHOOK_SECRET}" ]; then
+            echo "neither STRIPE_SECRET_KEY nor STRIPE_WEBHOOK_SECRET is set for this repository - the shop stays closed"
+          else
+            jq -n 'env | {STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
+          fi
+          {
+            echo "### The shop"
+            echo ""
+            echo "- Stripe secret key: $([ -n "${STRIPE_SECRET_KEY}" ] && echo put || echo 'not set - the shop is closed')"
+            echo "- Stripe webhook secret: $([ -n "${STRIPE_WEBHOOK_SECRET}" ] && echo put || echo 'not set - the shop is closed')"
+            echo "- the Stripe webhook endpoint's URL: \`$base/v1/shop/webhook\` (events: checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created, charge.dispute.closed)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # SHOP-LOCAL (bible/06-Systems/Shop.md): THE SHOP'S WAYS TO PAY, SET BY THE DEPLOY - iDEAL, Wero, Bancontact, EPS,
+      # BLIK, Przelewy24, PayPal and Revolut Pay turned on in the Stripe account's default payment method configuration
+      # (tools/stripeMethods.mjs; the list is shop.js SHOP_PAY_METHODS), and the summary says which Stripe has active.
+      # Every deploy; a method already on is not asked again. Never red: cards are taken either way, so a refusal is a
+      # warning and its line. Skipped, said, with no key. The key is an env var, never an argument and never echoed.
+      - name: Turn on the shop's ways to pay, where the repository has the Stripe key
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          set -uo pipefail
+          if [ -z "${STRIPE_SECRET_KEY}" ]; then
+            echo "STRIPE_SECRET_KEY is not set - the ways to pay are left as they are"
+            exit 0
+          fi
+          err="$RUNNER_TEMP/stripe-methods.err"
+          # AUDIT SHOP-LOCAL 1: the job's shell is bash -e, so a bare out=$(...) that fails ends the step red, its reason
+          # unsaid - read the exit in an if, as Discord's step does
+          if out=$(node tools/stripeMethods.mjs 2> "$err"); then code=0; else code=$?; fi
+          echo "$out"
+          { echo ""; echo "#### The ways to pay"; echo ""; echo "$out"; } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -ne 0 ]; then
+            cat "$err"
+            { echo ""; echo "**Not set:** $(head -c 300 "$err")"; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::the shop's ways to pay were not set - $(head -c 300 "$err")"
+          fi
+
+      # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's
+      # ANTHROPIC_API_KEY (server-account/src/modAi.js) and the Discord bot's DISCORD_BOT_TOKEN (discord.js), each put
+      # on the Worker here on EVERY deploy from the repository's own secrets, so a key changed there reaches the service
+      # on the next push. An unset one is not an error: the reviewer reads nothing (MOD_AI is a switch over a key), and
+      # no card is posted - the cases still gather. One put for both, fed through jq as the Patreon pair is: neither
+      # value is ever echoed, written to a file, or an argument. The summary names the door Discord's application is
+      # given (its Interactions Endpoint URL), read off this deploy - never typed.
+      - name: Put the chat safety's secrets, where the repository has them
+        working-directory: server-account
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          if [ -z "${ANTHROPIC_API_KEY}" ] && [ -z "${DISCORD_BOT_TOKEN}" ]; then
+            echo "neither ANTHROPIC_API_KEY nor DISCORD_BOT_TOKEN is set for this repository - the reviewer and the Discord queue stay off"
+          else
+            jq -n 'env | {ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
+          fi
+          {
+            echo "### Chat safety"
+            echo ""
+            echo "- the reviewer's key: $([ -n "${ANTHROPIC_API_KEY}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any key put before (AUDIT SAFE DISCORD-12)')"
+            echo "- the Discord bot's token: $([ -n "${DISCORD_BOT_TOKEN}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any token put before')"
+            echo "- the Discord application's Interactions Endpoint URL: \`$base/v1/discord/interactions\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ...AND PROVE IT LANDED, BY CONTENT. The client's deploy has been
+      # verified this way since U60 and the relay's since SRV-N/CI, for
+      # the same reason both times: a wrangler exit code of 0 over an
+      # unchanged Worker is a green deploy that did not happen, and is
+      # indistinguishable from success without this.
+      #
+      # NEITHER THE VERSION NOR THE HOST IS TYPED HERE. The version is
+      # read from `wrangler.toml`, which owns it; the host comes from
+      # the deploy step, which is the only thing that actually knows
+      # where this Worker now lives (AUDIT-ACC F16 - it used to be the
+      # worker name from the config plus a hardcoded account subdomain,
+      # which is a second home for a fact and the exact shape SLAM13
+      # burned the relay on).
+      - name: Verify /v1/health names this deploy
+        run: |
+          set -euo pipefail
+          toml=server-account/wrangler.toml
+          want=$(grep -oP '^ACCOUNT_VERSION\s*=\s*"\K[^"]+' "$toml")
+          test -n "$want" || {
+            echo "::error::could not read ACCOUNT_VERSION out of $toml"
+            exit 1
+          }
+          url="${{ steps.deploy.outputs.base }}/v1/health"
+          for i in $(seq 1 24); do
+            got=$(curl -fsS --max-time 10 "$url" | sed -n 's/.*"v":"\([^"]*\)".*/\1/p' || true)
+            echo "attempt $i: live reports '${got:-unreachable}', want '$want'"
+            if [ "$got" = "$want" ]; then echo "VERIFIED: the account service serves $want"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::the account service never reported $want - the deploy did not take"
+          exit 1
+
+      # D1-NEAR (bible/11-Multiplayer/Scale-Arc.md; audited, 01-Overview/audits/Audit-D1-Near.md): WHERE THE
+      # WORKER ANSWERS FROM, WHAT A STATEMENT COSTS IT THERE, AND WHERE THE PRIMARY IS - SAID ON EVERY
+      # DEPLOY. SCALE1 left the Worker to Smart Placement on the word that it would run beside its
+      # database, and nothing said where it ran: on 2026-10-12 it ran in Sydney, a Pacific from the
+      # primary, and every statement on the primary paid the crossing.
+      #   - where it runs: Cloudflare's `cf-placement` on five health answers;
+      #   - what a statement costs it there: the median of five one-statement reads on the primary
+      #     (/v1/seats/sieges/live) less the median of five health answers, which ask the database
+      #     nothing - only answers that came (`-f`: an error answer is no statement), each bounded;
+      #   - where the primary is, by D1's own word: a `SELECT 1`'s answer names the data centre that
+      #     served it (`served_by_colo`) and whether that was the primary (`served_by_primary`).
+      # A REPORT AND NEVER A GATE (`continue-on-error`, and bounded by `timeout-minutes`): the header
+      # is Cloudflare's to rename and a runner's network is noisy. A primary not near the region
+      # wrangler.toml's [placement] names is the cue to change that line.
+      - name: Report where the account Worker runs
+        continue-on-error: true
+        timeout-minutes: 4
+        working-directory: server-account
+        run: |
+          set -uo pipefail
+          worker="${{ steps.deploy.outputs.base }}"
+          seen=""; health=(); read1=()
+          for i in 1 2 3 4 5; do
+            got=$(curl -fsS --max-time 10 -o /dev/null -D - -w 'took: %{time_total}\n' "$worker/v1/health" 2>/dev/null) || got=""
+            got=$(printf '%s\n' "$got" | tr -d '\r')
+            at=$(printf '%s\n' "$got" | sed -n 's/^cf-placement:[[:space:]]*//Ip')
+            at=${at%%$'\n'*}
+            seen="$seen ${at:-none}"
+            health+=("$(printf '%s\n' "$got" | sed -n 's/^took: //p')")
+            one=$(curl -fsS --max-time 10 -o /dev/null -w '%{time_total}' "$worker/v1/seats/sieges/live" 2>/dev/null) || one=""
+            read1+=("$one")
+          done
+          # the middle of the answers that came, in ms - nothing where none came; and how many came
+          mid() { printf '%s\n' "$@" | grep -E '^[0-9]+(\.[0-9]+)?$' | sort -n | awk '{ v[NR] = $1 } END { if (NR) printf "%d", v[int((NR + 1) / 2)] * 1000 + 0.5 }'; }
+          came() { printf '%s\n' "$@" | grep -cE '^[0-9]+(\.[0-9]+)?$'; }
+          h=$(mid "${health[@]}") || h=""
+          s=$(mid "${read1[@]}") || s=""
+          hn=$(came "${health[@]}") || hn=0
+          sn=$(came "${read1[@]}") || sn=0
+          if [ -n "$h" ] && [ -n "$s" ]; then
+            cost="one statement on the primary costs it ~$(( s > h ? s - h : 0 )) ms (medians: /v1/seats/sieges/live ${s} ms of ${sn} answers, /v1/health ${h} ms of ${hn})"
+          else
+            cost="one statement's cost unmeasured (of five, /v1/health answered ${hn} and /v1/seats/sieges/live ${sn})"
+          fi
+          d1=$(timeout 60 $WRANGLER d1 execute "$DB_NAME" --remote --command "SELECT 1" --json 2>/dev/null) || d1=""
+          colo=$(printf '%s' "$d1" | jq -r '.[0].meta.served_by_colo // empty' 2>/dev/null) || colo=""
+          region=$(printf '%s' "$d1" | jq -r '.[0].meta.served_by_region // empty' 2>/dev/null) || region=""
+          onprimary=$(printf '%s' "$d1" | jq -r '.[0].meta.served_by_primary' 2>/dev/null) || onprimary=""
+          if [ -n "$colo" ] && [ "$onprimary" = true ]; then
+            primary="D1's primary answered from ${colo} (${region:-its region unsaid})"
+          elif [ -n "$colo" ]; then
+            primary="a D1 replica answered from ${colo}, not the primary - where the primary is, unsaid"
+          else
+            primary="D1 did not say where its primary is"
+          fi
+          echo "cf-placement over five answers:$seen; $cost; $primary"
+          {
+            echo "### Where the account Worker runs"
+            echo ""
+            echo "\`cf-placement\` over five answers to /v1/health:$seen (wrangler.toml [placement] names the region; bible/11-Multiplayer/Scale-Arc.md D1-NEAR)"
+            echo ""
+            echo "From there, $cost - beside the primary it is D1's own time and a short hop, across an ocean 150 ms and more."
+            echo ""
+            echo "$primary - wrangler.toml [placement] should name the cloud region nearest it."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ═══ AUDIT PRE-MERGE 0929 T-CI: THE SMOKE AGREES AS A PLAYER DOES ══
+      #
+      # TERMS1 (acct20) refuses a guest row or a name without the Terms
+      # of Service and the Privacy Policy ticked - and the smoke below
+      # opened its guest, and named it, with `{"label":"deploy-smoke"}`
+      # alone: 400 `terms-unaccepted` under `curl -f`, every step after
+      # the Worker went live red, and the checks they are (the gate's
+      # half, a password route on the platform, the public key and the
+      # relay's copy of it) never run on this deploy or any after it.
+      # The versions are read off the one home both ends read
+      # (src/net/legalLaw.js), never typed here - a smoke with its own
+      # copy is the drift the file exists to refuse. The smoke's rows
+      # record an agreement: they are the deploy's own throwaways.
+      - name: Read the documents a new account agrees to
+        run: |
+          set -euo pipefail
+          terms=$(grep -oP "^export const TERMS_VERSION = '\K[^']+" src/net/legalLaw.js)
+          privacy=$(grep -oP "^export const PRIVACY_VERSION = '\K[^']+" src/net/legalLaw.js)
+          test -n "$terms" && test -n "$privacy" || { echo "::error::could not read TERMS_VERSION and PRIVACY_VERSION from src/net/legalLaw.js"; exit 1; }
+          { echo "LEGAL_TERMS=$terms"; echo "LEGAL_PRIVACY=$privacy"; } >> "$GITHUB_ENV"
+          echo "the smoke agrees to the Terms of Service $terms and the Privacy Policy $privacy"
+
+      # GATE-KEYS: AND THE SERVICE HOLDS THE GATE'S HALF. A claim is asked
+      # with a receipt no relay signed: a service holding the public half
+      # refuses it as not a receipt (400 `receipt`); one holding none
+      # answers 503 `no-gate-key`, which is every gate kill going
+      # uncounted with nothing to say so. The isolate a claim lands in may
+      # predate the secret (the key is read once per isolate), so it is
+      # asked again for a minute.
+      - name: Verify the service holds the gate's public half
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          # PATRON-LOAD: the guest mint asked again on a 5xx (the password route's step below, the same) - this step's one
+          # unasked call failed a deploy whose Worker had taken, D1 still working off an overload
+          guest=""
+          for i in $(seq 1 7); do
+            ans=$(curl -sS --max-time 15 -o /tmp/guest.json -w '%{http_code}' -X POST "$base/v1/auth/guest" \
+              -H 'content-type: application/json' -d "{\"label\":\"deploy-smoke\",\"terms\":\"$LEGAL_TERMS\",\"privacy\":\"$LEGAL_PRIVACY\"}") || ans=000
+            if [ "$ans" = "200" ]; then guest=$(cat /tmp/guest.json); break; fi
+            echo "  /v1/auth/guest -> $ans (attempt $i)" >&2
+            if [ "${ans#5}" = "$ans" ] && [ "$ans" != "000" ]; then cat /tmp/guest.json >&2 || true; break; fi
+            sleep 5
+          done
+          secret=$(echo "$guest" | sed -n 's/.*"secret":"\([^"]*\)".*/\1/p')
+          test -n "$secret" || { echo "::error::no guest session - /v1/auth/guest did not answer a secret"; echo "$guest"; exit 1; }
+          # AUDIT (the pre-merge audit, S3): one ask - a timeout or a reset is an answer to ask again (000), never the
+          # step's end under `set -e`; the loop below is this call's retry, as `post` is the smoke calls'
+          claim() {
+            curl -sS --max-time 15 -o /tmp/gate.json -w '%{http_code}' -X POST "$base/v1/gate/claim" \
+              -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"receipt\":\"r1.deploy.smoke\"}" || true
+          }
+          for i in $(seq 1 12); do
+            code=$(claim); code=${code:-000}
+            echo "attempt $i: a claim with a receipt no relay signed -> $code"
+            if [ "$code" = "400" ] && grep -q '"error":"receipt"' /tmp/gate.json; then
+              echo "VERIFIED: the service holds the gate's public half"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::the service never answered as a holder of the gate's public half - no gate kill can be counted"
+          cat /tmp/gate.json || true
+          exit 1
+
+      # ═══ AND A REAL PASSWORD ROUTE ACTUALLY RUNS ══════════════════
+      #
+      # /v1/health proves the Worker is up and serving this version. It
+      # does NOT prove the service works, and the difference cost a live
+      # outage: Cloudflare Workers refuses PBKDF2 above 100,000
+      # iterations, this arc shipped 210,000, and register, login and
+      # recover ALL answered 500 from the day they deployed while every
+      # gate stayed green.
+      #
+      # NOTHING LOCAL COULD HAVE CAUGHT IT. The suite runs in node,
+      # which has no cap. tools/accountProbe.mjs stands the service in
+      # real workerd - the probe that exists because AUDIT-ACC F2 found
+      # a Worker that could not boot behind a green suite - and workerd
+      # has no cap either. It even measured the cost and passed.
+      #
+      # So the deploy makes the one request no local runtime can fake: a
+      # REGISTRATION, against the deployed Worker, on Cloudflare. A
+      # throwaway handle, a guest row that costs nothing, and a 500 here
+      # fails the deploy instead of a player.
+      - name: Verify a password route really runs on the platform
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          # PATRON-LOAD (2026-10-10, the owner: "the newest update account service keeps failing"): THE GUEST MINT IS ASKED
+          # AGAIN ON A 5xx, as every call below is (DEPLOY-FLAKE) - it alone went out with curl -f, so the platform's first
+          # moments after a deploy, D1 refusing as overloaded under a reload's reads, failed three runs whose Workers had
+          # taken. A 5xx writes nothing (a batch that failed whole); one that still fails after half a minute is real.
+          guest=""
+          for i in $(seq 1 7); do
+            ans=$(curl -sS --max-time 15 -o /tmp/guest.json -w '%{http_code}' -X POST "$base/v1/auth/guest" \
+              -H 'content-type: application/json' -d "{\"label\":\"deploy-smoke\",\"terms\":\"$LEGAL_TERMS\",\"privacy\":\"$LEGAL_PRIVACY\"}") || ans=000
+            if [ "$ans" = "200" ]; then guest=$(cat /tmp/guest.json); break; fi
+            echo "  /v1/auth/guest -> $ans (attempt $i)" >&2
+            if [ "${ans#5}" = "$ans" ] && [ "$ans" != "000" ]; then cat /tmp/guest.json >&2 || true; break; fi
+            sleep 5
+          done
+          secret=$(echo "$guest" | sed -n 's/.*"secret":"\([^"]*\)".*/\1/p')
+          test -n "$secret" || { echo "::error::no guest session - /v1/auth/guest did not answer a secret"; echo "$guest"; exit 1; }
+
+          # A NEW ROUTE CAN 404 FOR A FEW SECONDS AFTER THE VERSION CHECK (2026-09-25). A deploy rolls out across
+          # the edge, and /v1/health naming this version on ONE request does not make every instance new: PR #387's
+          # run got renown/xp -> 404 from an old instance a second after health said acct10, and failed a deploy
+          # that had taken (the route answered minutes later). So a call below that 404s is asked again, for up to
+          # half a minute - an old instance wrote nothing for a path it does not know - and one that still 404s
+          # after that is a route that did not deploy. `post <out> <url> <json>` prints the status.
+          # DEPLOY-FLAKE (2026-10-04, the owner: "A test failed on deploy"): A 5xx IS ASKED AGAIN TOO. PR #592's run
+          # took its migration and its Worker, then read renown/xp -> 500 once, a few seconds after the gate's own probe
+          # above had read 500 and then 400 on its second try - the platform's first moments after a migration, not
+          # the route. A 5xx comes from a batch that failed whole and wrote nothing, so the call is safe to send again.
+          # One that still fails after half a minute is a route that is broken.
+          # SMOKE-HANG (2026-10-16, the owner's screenshot of PR #947's run): NO ANSWER (000) IS ASKED AGAIN TOO, as the
+          # guest mint's loops above already ask it. #950's run read homes/town and #947's homes/decor as 15 s with 0 bytes
+          # (curl 28) - the busiest reads on a database that sheds load (Scale-Arc PRIMARY-TRIPS) - and failed deploys
+          # whose Worker had taken and whose every other call answered. A hang that wrote is no false pass: a second
+          # first beat answers playedS above 0 and fails; a route that hangs every time still fails after seven asks.
+          # INT16: ONE RETRY FOR EVERY SMOKE CALL (`ask`, the call's own curl words after its file and URL): `post` the JSON
+          # calls', `put` the realm character's first save - a first save whose answer was lost (000) and landed answers its
+          # retry 409 `seq` 1, which the smoke reads as landed. One loop, so its law is pinned and mutated once.
+          # SMOKE-LOST (2026-10-18, the owner's screenshot of #1004's run: renown/xp -> 000, 503, then 200 `repeat`):
+          # A WRITE WHOSE ANSWER WAS LOST MAY HAVE LANDED. The first report hung 15 s and was credited; its retry was
+          # answered, rightly, as that report again - and the smoke, asking `credited` 1 of it, failed a deploy whose
+          # Worker had taken. So `ask` leaves `<out>.lost` when a try went unanswered (`lost <out>`), and the two calls
+          # that write before they are read - the first beat and the first report - take, after a lost try, the answer
+          # the landed write gives its retry. Never without one: an answer with no lost try before it is read whole.
+          ask() {
+            local out=$1 url=$2 got=404
+            shift 2
+            rm -f "$out.lost"
+            for i in $(seq 1 7); do
+              got=$(curl -sS --max-time 15 -o "$out" -w '%{http_code}' "$@" "$url") || got=000
+              if [ "$got" != "404" ] && [ "$got" != "000" ] && [ "${got#5}" = "$got" ]; then break; fi
+              if [ "$got" = "000" ]; then : > "$out.lost"; fi
+              echo "  $url -> $got (attempt $i, an old instance or the platform's first moments?)" >&2
+              sleep 5
+            done
+            echo "$got"
+          }
+          lost() { [ -e "$1.lost" ]; }
+          post() { ask "$1" "$2" -X POST -H 'content-type: application/json' -d "$3"; }
+          put() { ask "$1" "$2" -X PUT -H "authorization: Bearer $secret" -H "x-realm-lease: $4" -H 'x-realm-seq: 1' -d "$3"; }
+
+          # ACC4: THE BEAT IS ONE UPDATE ... RETURNING with numbered
+          # parameters. node:sqlite runs both; this asks D1 itself.
+          code=$(post /tmp/beat.json "$base/v1/account/played" "{\"secret\":\"$secret\"}")
+          echo "played -> $code"
+          cat /tmp/beat.json || true
+          echo
+          # SMOKE-LOST: a first beat that landed unanswered makes its retry the second beat, credited the seconds
+          # between them - no more than seven asks' 140
+          played=$(sed -n 's/.*"playedS":\([0-9]*\).*/\1/p' /tmp/beat.json)
+          if [ "$code" != "200" ] || ! { [ "$played" = "0" ] || { lost /tmp/beat.json && [ -n "$played" ] && [ "$played" -le 140 ]; }; }; then
+            echo "::error::the time-played beat failed on the deployed Worker ($code) - a first beat must answer playedS 0"
+            exit 1
+          fi
+
+          # MOD1: THE MODERATION ROUTE IS LIVE AND SHUT. A guest is nobody's
+          # moderator, so it must be refused 403 - a 404 is a route that did
+          # not deploy, a 500 a migration that did not apply.
+          code=$(post /tmp/mod.json "$base/v1/mod/mute" "{\"secret\":\"$secret\",\"target\":\"p_nobody\",\"minutes\":1}")
+          echo "mod/mute as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"not-moderator"' /tmp/mod.json; then
+            echo "::error::/v1/mod/mute did not refuse a guest as not-moderator ($code)"; cat /tmp/mod.json || true; exit 1
+          fi
+
+          # AUDIT RENOWN1 DATA-2: A RENOWN REPORT IS ONE D1 BATCH - an UPDATE
+          # ... RETURNING with subqueries, an UPDATE, an INSERT ... SELECT
+          # and a SELECT, run as one transaction. node:sqlite runs all four;
+          # this asks D1. A fresh guest's first report of 1 XP is credited
+          # whole, and the same report again (the same id) is answered as a
+          # repeat and credited nothing - a 404 is a route that did not
+          # deploy, a 500 a migration that did not apply or a statement D1
+          # will not run.
+          # INT16 (bible/06-Systems/Integrity-Arc.md section 7): AND A REPORT IS ITS SEAT'S - the account's realm character
+          # holding its lease, never a name the body makes up (a made-up one is refused 403 progress-seat before the batch
+          # runs). So the guest takes a realm character first, as a new player's tab does: made, and its first save at 1.
+          code=$(post /tmp/realm.json "$base/v1/realm/create" "{\"secret\":\"$secret\",\"name\":\"Deploy Smoke\"}")
+          rc=$(grep -o '"id":"r[0-9a-f]*"' /tmp/realm.json | head -1 | cut -d'"' -f4)
+          lease=$(grep -o '"lease":"[0-9a-f]*"' /tmp/realm.json | head -1 | cut -d'"' -f4)
+          echo "realm/create -> $code ($rc)"
+          if [ "$code" != "200" ] || [ -z "$rc" ] || [ -z "$lease" ]; then
+            echo "::error::the smoke's guest could not take a realm character ($code)"; cat /tmp/realm.json || true; exit 1
+          fi
+          # BIRTH-SKILL (#1484): a creation's skills, the least one gives (test/realmSeat.mjs freshSave) - else 'realm-birth'
+          code=$(put /tmp/realmsave.json "$base/v1/realm/$rc/data" '{"level":1,"goldPieces":100,"items":[],"career":{"primarySkills":[0,1,2],"majorSkills":[3,4,5],"minorSkills":[6,7,8,9,10,11]},"skills":[30,30,30,20,20,20,14,14,14,14,14,14,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"startingLevelUpSkillSum":144,"currentLevelUpSkillSum":144}' "$lease")
+          echo "realm first save -> $code"
+          if [ "$code" != "200" ] && ! { [ "$code" = "409" ] && grep -q '"seq":1' /tmp/realmsave.json; }; then
+            echo "::error::the smoke's realm character's first save was refused ($code)"; cat /tmp/realmsave.json || true; exit 1
+          fi
+          rid=$(printf '%016x' "$(date +%s)")
+          code=$(post /tmp/renown.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"$rc\",\"xp\":1,\"rid\":\"$rid\"}")
+          echo "renown/xp -> $code"
+          cat /tmp/renown.json || true
+          echo
+          # SMOKE-LOST: a first report that landed unanswered is its retry's repeat, the track holding its 1 XP
+          if [ "$code" != "200" ] || ! { grep -q '"credited":1' /tmp/renown.json || { lost /tmp/renown.json && grep -q '"repeat":true' /tmp/renown.json && grep -q '"xp":1,' /tmp/renown.json; }; }; then
+            echo "::error::a Renown report failed on the deployed Worker ($code) - a first report of 1 XP must be credited 1"
+            exit 1
+          fi
+          code=$(post /tmp/renown2.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"$rc\",\"xp\":1,\"rid\":\"$rid\"}")
+          echo "renown/xp again -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"credited":0' /tmp/renown2.json || ! grep -q '"repeat":true' /tmp/renown2.json; then
+            echo "::error::a repeated Renown report was not answered as a repeat ($code)"; cat /tmp/renown2.json || true; exit 1
+          fi
+
+          # HOME1: THE HOMES ARE LIVE. A town's homes are any session's to
+          # read - a guest's too - so an empty town answers 200 with a list
+          # (a 500 is the migration that did not apply); and a guest's claim
+          # is refused as homes-need-account, never taken (a 404 is a route
+          # that did not deploy). Nothing is claimed here: a smoke that
+          # bought a home would leave a building owned by nobody real.
+          # AUDIT LEAN-READS 2 D5: A DISPLAY READ SHED AS BUSY IS NO BROKEN DEPLOY. SLOW-SHED opens the shed on a slow
+          # D1 alone, and the shed answers every BUSY read (busyLaw.js) 503 with its Retry-After, asking no statement;
+          # `ask` waits seven tries through a short one, and a slow evening outlasts them - a deploy whose Worker had
+          # taken failed after it went live, its public key's check and Discord's step unrun. So a BUSY read's 503 after
+          # every try is said and passed; a route that did not deploy (404), a migration that did not apply (500) or a
+          # wrong answer still fails.
+          shed() { [ "$1" = "503" ] && echo "::warning::$2 was shed as busy through every try (a slow or overloaded D1: SLOW-SHED, BUSY-GATE) - the Worker answers; its answer was not read"; }
+          code=$(post /tmp/homes.json "$base/v1/homes/town" "{\"secret\":\"$secret\",\"mapId\":1}")
+          echo "homes/town -> $code"
+          if shed "$code" /v1/homes/town; then :
+          elif [ "$code" != "200" ] || ! grep -q '"homes":\[' /tmp/homes.json; then
+            echo "::error::/v1/homes/town did not answer a town's homes ($code)"; cat /tmp/homes.json || true; exit 1
+          fi
+          code=$(post /tmp/claim.json "$base/v1/homes/claim" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"region\":0,\"character\":\"deploy-smoke\",\"price\":1}")
+          echo "homes/claim as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/claim.json; then
+            echo "::error::/v1/homes/claim did not refuse a guest as homes-need-account ($code)"; cat /tmp/claim.json || true; exit 1
+          fi
+          # DECOR1: AN ONLINE HOME'S DECOR IS LIVE. A home's pieces are any
+          # session's to read, so a home nobody owns answers 200 with an empty
+          # list (a 500 is the migration that did not apply); and a guest's
+          # placement is refused as homes-need-account (a 404 is a route that
+          # did not deploy). Nothing is placed: a guest owns no home to place in.
+          code=$(post /tmp/decor.json "$base/v1/homes/decor" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1}")
+          echo "homes/decor -> $code"
+          if shed "$code" /v1/homes/decor; then :
+          elif [ "$code" != "200" ] || ! grep -q '"pieces":\[' /tmp/decor.json; then
+            echo "::error::/v1/homes/decor did not answer a home's pieces ($code)"; cat /tmp/decor.json || true; exit 1
+          fi
+          code=$(post /tmp/place.json "$base/v1/homes/decor/place" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"character\":\"deploy-smoke\",\"piece\":{}}")
+          echo "homes/decor/place as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/place.json; then
+            echo "::error::/v1/homes/decor/place did not refuse a guest as homes-need-account ($code)"; cat /tmp/place.json || true; exit 1
+          fi
+          # LEAN-READS (AUDIT LEAN-READS D7): THE KEPT BOARDS ARE LIVE, on D1
+          # itself - a town's yard cells (YARD-CELL: home_yard_cells and home_yard_cell_ver, read by anyone) and the
+          # arena's board (arena_board_ver and arena_boards: read and
+          # counted). A 500 is a migration that did not apply, or a read
+          # D1 refuses that node:sqlite ran. AND KEPT (audit two, C3): a
+          # board's keep is a guarded upsert D1 runs after the answer is
+          # made, and a refused keep is caught - the answer stands, alike
+          # whether it ran or not - so the kept rows are asked of D1 itself
+          # (`kept`): a board at its version, in a shape. A write landing
+          # between the read and the ask is asked again, three times.
+          kept() { timeout 60 $WRANGLER d1 execute "$DB_NAME" --remote --command "$1" --json 2>/dev/null | jq -r '.[0].results[0].n // 0' 2>/dev/null || echo 0; }
+          n=$(kept "SELECT (SELECT COUNT(*) FROM home_yard_cell_ver) = 0 OR EXISTS (SELECT 1 FROM home_yard_cells c JOIN home_yard_cell_ver v ON v.map_id = c.map_id AND v.cell = c.cell WHERE c.built = v.ver AND c.shape IS NOT NULL) AS n")
+          if [ "$n" != "1" ]; then
+            echo "::error::no town's yard cells stand built in a shape on D1 - migration 0190's build did not run there"; exit 1
+          fi
+          # AUDIT LEAN-READS 2 D5: a cell that stands yards, so the read answers off a row D1 itself built (a cell with
+          # none answers before it reads any)
+          map=$(kept "SELECT c.map_id AS n FROM home_yard_cells c JOIN home_yard_cell_ver v ON v.map_id = c.map_id AND v.cell = c.cell WHERE c.built = v.ver AND c.rows IS NOT NULL AND c.rows != '[]' LIMIT 1")
+          cell=$(kept "SELECT c.cell AS n FROM home_yard_cells c JOIN home_yard_cell_ver v ON v.map_id = c.map_id AND v.cell = c.cell WHERE c.map_id = ${map:-0} AND c.built = v.ver AND c.rows IS NOT NULL AND c.rows != '[]' LIMIT 1")
+          [ "$map" -gt 0 ] 2>/dev/null || map=1
+          [ "$cell" -ge 0 ] 2>/dev/null || cell=1
+          code=$(post /tmp/yards.json "$base/v1/homes/yards/cells" "{\"secret\":\"$secret\",\"mapId\":$map,\"cells\":[[$cell,0]]}")
+          echo "homes/yards/cells (town $map, cell $cell) -> $code"
+          if shed "$code" /v1/homes/yards/cells; then :
+          elif [ "$code" != "200" ] || ! grep -q '"cells":\[' /tmp/yards.json; then
+            echo "::error::/v1/homes/yards/cells did not answer a town's cells ($code)"; cat /tmp/yards.json || true; exit 1
+          elif [ "$map" != "1" ] && ! grep -q '"yards":\[{' /tmp/yards.json; then
+            echo "::warning::town $map cell $cell's built yards answered none - every piece the law's to hide?"
+          fi
+          # YARD-CELL: the whole town's old route is refused - a build from before the cells is told by the build notice.
+          # An instance of the deploy before still answers it mid-rollout (HOME2's reason for the retry), so it is asked
+          # again until this deploy's answer comes, as a 404 is
+          for i in $(seq 1 7); do
+            code=$(post /tmp/oldyards.json "$base/v1/homes/yards" "{\"secret\":\"$secret\",\"mapId\":$map}")
+            [ "$code" = "410" ] && break
+            sleep 5
+          done
+          echo "homes/yards (the old route) -> $code"
+          if [ "$code" != "410" ] || ! grep -q '"client-update"' /tmp/oldyards.json; then
+            echo "::error::/v1/homes/yards did not refuse the old whole-town read as client-update ($code)"; cat /tmp/oldyards.json || true; exit 1
+          fi
+          code=$(post /tmp/arena.json "$base/v1/arena/board" "{\"secret\":\"$secret\"}")
+          echo "arena/board -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"pvp":{' /tmp/arena.json; then
+            echo "::error::/v1/arena/board did not answer the arena's board ($code)"; cat /tmp/arena.json || true; exit 1
+          fi
+          for i in 1 2 3; do
+            n=$(kept "SELECT COUNT(*) AS n FROM arena_boards b JOIN arena_board_ver v ON v.id = 1 WHERE b.built = v.ver AND b.shape IS NOT NULL")
+            [ "$n" -ge 1 ] && break
+            [ "$i" = 3 ] || post /tmp/arena.json "$base/v1/arena/board" "{\"secret\":\"$secret\"}" >/dev/null
+          done
+          if [ "$n" -lt 1 ]; then
+            echo "::error::the arena's board was read but never kept on D1 - its keep (arena.js ARENA_BOARD_KEEP) is refused there"; exit 1
+          fi
+
+          # PATRON-LOAD II (2026-10-11, the owner's screenshot of #766's deploy: "register -> 500 {"error":"server"}"):
+          # A REGISTRATION'S 5xx IS ASKED AGAIN TOO, as every `post` above is. It was the one call here asked once, and
+          # D1 overloaded (the traders read, bible/06-Systems/Living-World-II.md 8.5) answered it 500 - read as the
+          # PBKDF2 cap, the deploy failed though its Worker was live. Each try a new handle, so a first try the database
+          # took is never a second's `handle-taken`; the cap's 500 is every try's, and still fails.
+          for i in $(seq 1 7); do
+            handle="smoke$(date +%s | tail -c 7)$i"
+            code=$(curl -sS --max-time 25 -o /tmp/reg.json -w '%{http_code}' -X POST "$base/v1/auth/register" \
+              -H 'content-type: application/json' \
+              -d "{\"secret\":\"$secret\",\"handle\":\"$handle\",\"password\":\"a-long-enough-password\",\"terms\":\"$LEGAL_TERMS\",\"privacy\":\"$LEGAL_PRIVACY\"}") || code=000
+            if [ "${code#5}" = "$code" ] && [ "$code" != "000" ]; then break; fi
+            echo "  register -> $code (attempt $i)" >&2
+            sleep 5
+          done
+          echo "register -> $code"
+          cat /tmp/reg.json || true
+          echo
+          if [ "$code" != "200" ]; then
+            echo "::error::a REGISTRATION failed on the deployed Worker ($code). /v1/health is green and the service does not work - this is the PBKDF2-cap class: node and workerd have no iteration cap and Cloudflare does."
+            exit 1
+          fi
+          echo "VERIFIED: a password route runs on the real platform"
+          # LEAN-READS (AUDIT LEAN-READS D7): AND THE REGION'S TRADERS, a
+          # registered account's read - market_vendor_ver and market_vendor_boards read and kept
+          # by its upsert on D1 itself. A closed market reads no board.
+          code=$(post /tmp/vendors.json "$base/v1/market/vendors" "{\"secret\":\"$secret\",\"region\":17}")
+          echo "market/vendors -> $code"
+          if [ "$code" = "403" ] && grep -q '"market-closed"' /tmp/vendors.json; then
+            echo "::notice::the market is closed - the traders' board was not read"
+          elif shed "$code" /v1/market/vendors; then :
+          elif [ "$code" != "200" ] || ! grep -q '"rows":\[' /tmp/vendors.json; then
+            echo "::error::/v1/market/vendors did not answer the region's traders ($code)"; cat /tmp/vendors.json || true; exit 1
+          fi
+          if [ "$code" = "200" ]; then
+            for i in 1 2 3; do
+              n=$(kept "SELECT COUNT(*) AS n FROM market_vendor_boards b JOIN market_vendor_ver v ON v.region = b.region WHERE b.region = 17 AND b.built = v.ver AND b.shape IS NOT NULL")
+              [ "$n" -ge 1 ] && break
+              [ "$i" = 3 ] || post /tmp/vendors.json "$base/v1/market/vendors" "{\"secret\":\"$secret\",\"region\":17}" >/dev/null
+            done
+            if [ "$n" -lt 1 ]; then
+              echo "::error::the region's traders were read but never kept on D1 - their keep (market.js VENDOR_BOARD_KEEP) is refused there"; exit 1
+            fi
+          fi
+
+      # AND THE PUBLIC KEY IS REACHABLE, which is what makes the minting
+      # step's "nobody ever sees it" safe. A pair minted into a Worker
+      # that cannot hand back its own public half is a pair that would
+      # have to be re-minted to be used.
+      - name: Verify the service can hand back its own public key
+        run: |
+          set -euo pipefail
+          body=$(curl -fsS --max-time 10 "${{ steps.deploy.outputs.base }}/v1/pubkey" || true)
+          key=$(echo "$body" | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
+          if [ -z "$key" ]; then
+            echo "::error::/v1/pubkey did not answer with a key - the signing pair is not usable by the relay"
+            exit 1
+          fi
+          echo "the service publishes a ${#key}-character public key"
+
+          # ═══ ACC1d D2: THE TWO COPIES ARE CHECKED AGAINST EACH OTHER
+          #
+          # The relay carries the public half as a plain var, because a
+          # key that can verify and cannot mint has nothing to hide, and
+          # fetching it at runtime would put this service in the relay's
+          # startup path - the coupling the two-Worker split exists to
+          # refuse. The price of that copy is drift, and drift here has
+          # the worst failure mode there is: EVERY verify fails, every
+          # hello is refused as `token bad signature`, and nothing says
+          # why. So it is caught at deploy, where it is free.
+          want=$(grep -oP '^IDENTITY_PUBLIC_KEY\s*=\s*"\K[^"]+' server/wrangler.toml || true)
+          if [ -z "$want" ]; then
+            echo "::error::server/wrangler.toml carries no IDENTITY_PUBLIC_KEY - the relay cannot verify anything"
+            exit 1
+          fi
+          if [ "$want" != "$key" ]; then
+            echo "::error::the relay's configured public key does not match the one this service publishes - every token would be refused"
+            {
+              echo "### The relay's identity key is stale"
+              echo ""
+              echo "\`server/wrangler.toml\` says \`IDENTITY_PUBLIC_KEY = \"$want\"\`,"
+              echo "but this service publishes:"
+              echo ""
+              echo "    $key"
+              echo ""
+              echo "Update the relay's config to that value and let the relay deploy."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "and the relay's configured copy matches it"
+
+      # DISCORD-SETUP (bible/11-Multiplayer/Chat-Safety-Arc.md section 9): THE DISCORD END, SET BY THE DEPLOY - the
+      # application's Interactions Endpoint URL pointed at this deploy's door, and /mod registered in the server the
+      # moderators' channel is in, from the bot's token alone (tools/discordModCommands.mjs --setup: the application's id
+      # and public key are Discord's answer, the server the channel's). Every deploy, because both are idempotent and a
+      # changed /mod or a moved Worker then reaches Discord on the next push. LAST, so a refusal hides no check above it;
+      # and red when Discord refuses, because a service that deployed but cannot be pressed is the failure the setup
+      # exists for. Skipped, said, when the token, the channel or the public key is not set. The token is an env var
+      # here and in the tool, never an argument and never echoed.
+      - name: Point Discord at the service, where the repository has the bot's token
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          toml=server-account/wrangler.toml
+          channel=$(grep -oP '^DISCORD_MOD_CHANNEL\s*=\s*"\K[^"]*' "$toml" || true)
+          key=$(grep -oP '^DISCORD_PUBLIC_KEY\s*=\s*"\K[^"]*' "$toml" || true)
+          if [ -z "${DISCORD_BOT_TOKEN}" ] || [ -z "$channel" ] || [ -z "$key" ]; then
+            echo "the bot's token, DISCORD_MOD_CHANNEL or DISCORD_PUBLIC_KEY is not set - Discord is left as it is"
+            exit 0
+          fi
+          # DISCORD-CODE: what was done is said either way; what stopped it (Discord's refusal, or the permissions the bot
+          # lacks in the moderators' channel) goes to the summary too - the tool's stderr, which never holds the token
+          err="$RUNNER_TEMP/discord-setup.err"
+          if out=$(DISCORD_MOD_CHANNEL="$channel" DISCORD_PUBLIC_KEY="$key" DISCORD_INTERACTIONS_URL="${{ steps.deploy.outputs.base }}/v1/discord/interactions" node tools/discordModCommands.mjs --setup 2> "$err"); then
+            echo "$out"
+            { echo ""; echo "### Discord"; echo ""; echo "$out"; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "$out"
+            cat "$err"
+            { echo ""; echo "### Discord"; echo ""; echo "$out"; echo ""; echo "**Not finished:** $(cat "$err")"; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Discord's setup did not finish - $(head -c 300 "$err")"
+            exit 1
+          fi

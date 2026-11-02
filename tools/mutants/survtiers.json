@@ -1,0 +1,1034 @@
+[
+  {
+    "name": "SURVTIERS-casual-has-no-floor",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "new": "    stamina: { floor: 0, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-charges-amber-heat",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 31, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-charges-amber-cold",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -11, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-taxes-bare-feet",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: true, duringRest: false, repaid: true, fireWarms: true },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-drains-attributes",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    attributes: false,   // starving",
+    "new": "    attributes: true,   // starving",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-wounds",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    health: false,       // dehydration",
+    "new": "    health: true,       // dehydration",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rusts",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    rust: false,         // wet metal",
+    "new": "    rust: true,         // wet metal",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-sickens",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    sickness: false,     // raw or spoiled",
+    "new": "    sickness: true,     // raw or spoiled",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rough-hour-halved",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,   // the sleep-debt",
+    "new": "    roughRest: { recovery: 0.5, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,   // the sleep-debt",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rough-asks-twice",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,   // the sleep-debt",
+    "new": "    roughRest: { recovery: 1, encounters: 2, stiffHours: 0 },\n    roughSleepFloor: null,   // the sleep-debt",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-stiff-morning",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },\n    roughSleepFloor: null,   // the sleep-debt",
+    "new": "    roughRest: { recovery: 1, encounters: 1, stiffHours: 4 },\n    roughSleepFloor: null,   // the sleep-debt",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-sleep-floor",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughSleepFloor: null,   // the sleep-debt",
+    "new": "    roughSleepFloor: 'tired',   // the sleep-debt",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rest-gate",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    restGate: false,     // too cold",
+    "new": "    restGate: true,     // too cold",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-blackout",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    blackout: false,     // drinking",
+    "new": "    blackout: true,     // drinking",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-grows-a-floor",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false, fireWarms: false },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false, fireWarms: false },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-default-is-hard",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "export const SURVIVAL_DEFAULT = 'boons';",
+    "new": "export const SURVIVAL_DEFAULT = 'hard';",
+    "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the default is Boons.",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-non-tier-reads-as-itself",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "export const tierOfStored = (v) => TIER_OF_STORED.get(v) ?? SURVIVAL_DEFAULT;",
+    "new": "export const tierOfStored = (v) => TIER_OF_STORED.get(v) ?? (typeof v === 'string' ? v : SURVIVAL_DEFAULT);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-switch-reads-the-raw-shelf",
+    "file": "src/systems/survival/switch.js",
+    "old": "export const survivalTier = () => tierOfStored(getPref(SURVIVAL_PREF));",
+    "new": "export const survivalTier = () => getPref(SURVIVAL_PREF);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-load-keeps-a-value-that-is-no-tier",
+    "file": "src/systems/uiPrefs.js",
+    "old": "        if (p.survival !== undefined && !isStoredTier(p.survival)) _prefs.survival = PREF_DEFAULTS.survival;",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-row-default-hard",
+    "file": "src/systems/features.js",
+    "old": "store: 'prefs', key: 'survival', initial: 'boons', online: 'player',",
+    "new": "store: 'prefs', key: 'survival', initial: 'hard', online: 'player',",
+    "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the row's default is Boons.",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-tire-ignores-the-floor",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (floorShare > 0) {\n      budget ??=",
+    "new": "    if (false) {\n      budget ??=",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-budget-read-per-charge",
+    "file": "src/systems/survival/needs.js",
+    "old": "    budget ??= Math.max(0, (entity.fatigue ?? 0) - Math.floor(maxFatigue(entity) * floorShare));",
+    "new": "    budget = Math.max(0, (entity.fatigue ?? 0) - Math.floor(maxFatigue(entity) * floorShare));",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-stiffness-survives-casual",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (!rules.attributes && s.stiffUntil) s.stiffUntil = 0;",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-heat-band-ignored",
+    "file": "src/systems/survival/needs.js",
+    "old": "  const tempRed = !warmed && (temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom);",
+    "new": "  const tempRed = !warmed && abs >= 20;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-rough-sleep-floor-fixed",
+    "file": "src/systems/survival/needs.js",
+    "old": "SLEEP_FLOOR_AT[rules.roughSleepFloor] ?? 0",
+    "new": "NEED.SLEEP_TIRED",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-stat-mods-ignore-the-tier",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if ((rules ?? HARD_RULES).attributes) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-restcost-ignores-the-tier",
+    "file": "src/systems/survival/rest.js",
+    "old": " : (rules ?? HARD_RULES).roughRest);",
+    "new": " : HARD_RULES.roughRest);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js",
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-asks-ignore-the-tier",
+    "file": "src/scenes/shared.js",
+    "old": "      entity.restAsks = b ? restCost(_kind, _rules).encounters : null;",
+    "new": "      entity.restAsks = b ? restCost(_kind).encounters : null;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js",
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-feed-drops-the-rules",
+    "file": "src/systems/survival/env.js",
+    "old": "ctx: survivalCtx(entity, full), rules };",
+    "new": "ctx: survivalCtx(entity, full) };",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-gate-on-with-the-arc",
+    "file": "src/systems/survival/env.js",
+    "old": "export const survivalGateOn = () => !!survivalRules()?.restGate;",
+    "new": "export const survivalGateOn = () => !!survivalRules();",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-rest-deps-stiffen-at-hard",
+    "file": "src/scenes/shared.js",
+    "old": "stiffen(entity, ownMinutes(), REST_KIND.Rough, _rules)",
+    "new": "stiffen(entity, ownMinutes(), REST_KIND.Rough)",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-rest-deps-hour-at-hard",
+    "file": "src/scenes/shared.js",
+    "old": "_roughCarry, _rules);",
+    "new": "_roughCarry);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-meal-rolls-anyway",
+    "file": "src/systems/survival/food.js",
+    "old": "  if ((f.raw || stage > 0) && (rules ?? HARD_RULES).sickness) {",
+    "new": "  if (f.raw || stage > 0) {",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-barkeep-always-pours",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if ((s?.drunk ?? 0) + (strength | 0) > endurance) return { ok: false, text: TAVERN_MENU_TEXT.cutOff };",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-barkeep-refuses-milk",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if ((rules ?? HARD_RULES).blackout || !((strength | 0) > 0)) return { ok: true };",
+    "new": "  if ((rules ?? HARD_RULES).blackout) return { ok: true };",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-drink-blacks-out",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if (s.drunk > endurance && (rules ?? HARD_RULES).blackout)\n    return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };",
+    "new": "  if (s.drunk > endurance) return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-window-serves-what-the-house-refused",
+    "file": "src/ui/tavernWindow.js",
+    "old": "        if (!order.ok) return [{ rows: line(order.text) }];",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-host-drops-the-asks",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      restAsks: playerEntity.restAsks,",
+    "new": "      restAsks: 1,",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rest-pays-the-cold",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: true, repaid: true, fireWarms: true },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-takes-for-good",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: false, fireWarms: true },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-wastes-the-meal",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    wastedMeal: false,   // a meal bought",
+    "new": "    wastedMeal: true,   // a meal bought",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-rest-sheltered-from-the-band",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false, fireWarms: false },",
+    "new": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: false, repaid: false, fireWarms: false },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-repays",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false, fireWarms: false },",
+    "new": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: true, fireWarms: false },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-stored-by-name",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "export const SURVIVAL_STORED = Object.freeze({ off: false,",
+    "new": "export const SURVIVAL_STORED = Object.freeze({ off: 'off',",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-row-stores-off-by-name",
+    "file": "src/systems/features.js",
+    "old": "tiers: Object.freeze([tier(false, OFF), tier('boons', () => t('features.mod.climatesCalories.boons',",
+    "new": "tiers: Object.freeze([tier('off', OFF), tier('boons', () => t('features.mod.climatesCalories.boons',",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-rest-charges-the-band",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (tempRed && (!resting || rules.stamina.duringRest)) tire(",
+    "new": "    if (tempRed) tire(",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-loan-is-never-written",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (repays) { const b = (s.borrowed ??= {}); b[need] = (b[need] ?? 0) + d; }",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-loan-is-never-repaid",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (repays && s.borrowed) {\n    const met",
+    "new": "  if (false) {\n    const met",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-rest-repays-the-hunger",
+    "file": "src/systems/survival/needs.js",
+    "old": "    const met = { hunger: hungerAfter !== 'starving',",
+    "new": "    const met = { hunger: hungerAfter !== 'starving' || resting,",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-repaid-past-the-pool",
+    "file": "src/systems/survival/needs.js",
+    "old": "    const give = Math.min(back, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));",
+    "new": "    const give = back;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-keeps-a-casual-loan",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (!repays && s.borrowed) { delete s.borrowed; delete s.loanPool; }",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-null-rules-crash-the-minute",
+    "file": "src/systems/survival/needs.js",
+    "old": "  const rules = deps.rules ?? HARD_RULES;",
+    "new": "  const rules = deps.rules === undefined ? HARD_RULES : deps.rules;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-cap-reads-the-permanent-stat",
+    "file": "src/systems/survival/needs.js",
+    "old": "    const floorAt = Math.min(perm, liveStat(entity, k, 'survival'));",
+    "new": "    const floorAt = perm;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-cap-counts-its-own-drain",
+    "file": "src/systems/survival/needs.js",
+    "old": "liveStat(entity, k, 'survival')",
+    "new": "liveStat(entity, k)",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-drink-reads-the-permanent-endurance",
+    "file": "src/systems/survival/needs.js",
+    "old": "survivalStatMods(s, temp, now, { endurance: liveStat(entity, 'endurance'), rules, vampire, beast })",
+    "new": "survivalStatMods(s, temp, now, { endurance, rules, vampire, beast })",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-half-hour-falls-to-night",
+    "file": "src/systems/survival/temperature.js",
+    "old": "export function hourTemperature(hour, climateIndex) {\n  const h = ((Math.floor(hour ?? 12) % 24) + 24) % 24;",
+    "new": "export function hourTemperature(hour, climateIndex) {\n  const h = (((hour ?? 12) % 24) + 24) % 24;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-stamps-a-bed",
+    "file": "src/scenes/shared.js",
+    "old": "      entity.restKind = b ? _place : null;",
+    "new": "      entity.restKind = b ? _kind : null;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js",
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-count-that-is-no-number-asks-nothing",
+    "file": "src/systems/encounters.js",
+    "old": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "new": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 0;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-rest-place-reads-the-shown-fire",
+    "file": "src/scenes/world.js",
+    "old": "restKind: () => (_restFromBed ? 'bed' : camps.fireNear(walkMode && playerSpawned",
+    "new": "restKind: () => (_restFromBed ? 'bed' : camps.byFire(walkMode && playerSpawned",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ],
+    "note": "AUDIT REST-PARTY (PIN MOVED): a pressed bed answers first now (A3)."
+  },
+  {
+    "name": "SURVTIERS-the-interiors-hearth-is-bare-ground",
+    "file": "src/systems/rest/restSession.js",
+    "old": "  return fireNear ? { kind: 'camp', where: 'fire' } : { kind: 'rough', where: null };",
+    "new": "  return { kind: 'rough', where: null };",
+    "tests": [
+      "test/systems/surv4_rest.test.js",
+      "test/systems/rest/rpt1026_misc_rest.test.js"
+    ],
+    "note": "PIN MOVED (RPT1026-MISC): re-aimed by content - BED-PRESS-INDOOR moved the interior's place law to restSession.js interiorRestSpot."
+  },
+  {
+    "name": "SURVTIERS-the-kitchen-sells-casual-a-waste",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) < (row.worth ?? 0))\n    return { ok: false, text: TAVERN_MENU_TEXT.fullForMeal };",
+    "new": "  if (false) return { ok: false, text: TAVERN_MENU_TEXT.fullForMeal };",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-kitchen-refuses-at-the-worth",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) < (row.worth ?? 0))",
+    "new": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) <= (row.worth ?? 0))",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-order-skips-the-pour",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if (row?.kind === 'drink') return tavernPour(s, row.strength, { endurance, rules });\n  if (row?.kind === 'water') return innWaterOrder(items);",
+    "new": "  if (row?.kind === 'water') return innWaterOrder(items);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-pour-refuses-at-the-endurance",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if ((s?.drunk ?? 0) + (strength | 0) > endurance) return { ok: false, text: TAVERN_MENU_TEXT.cutOff };",
+    "new": "  if ((s?.drunk ?? 0) + (strength | 0) >= endurance) return { ok: false, text: TAVERN_MENU_TEXT.cutOff };",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-window-asks-the-house-before-the-gold",
+    "file": "src/ui/tavernWindow.js",
+    "old": "        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];\n        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];",
+    "new": "        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];\n        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];",
+    "note": "INN-WATER (FIELD BUGS 2026-09-30, PIN MOVED): the order call names the pack now (items: h.entity.items) - the record re-aimed to the new line, the mutant (the house asked before the gold) unchanged",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-enhanced-serves-what-the-house-refused",
+    "file": "src/ui/enhanced/enhancedTavern.js",
+    "old": "  if (!order.ok) {\n    say(line(order.text));\n    return;\n  } // the menu stays up, as it does for the gold: a lighter drink still serves",
+    "new": "  // the menu stays up, as it does for the gold: a lighter drink still serves",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-enhanced-closes-the-menu-on-a-refusal",
+    "file": "src/ui/enhanced/enhancedTavern.js",
+    "old": "    say(line(order.text));",
+    "new": "    menu = null;\n    say(line(order.text));",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-eats-at-hard",
+    "file": "src/systems/useItem.js",
+    "old": "rules: survivalRules() ?? SURVIVAL_RULES.casual, offMeal: survivalRules() == null });",
+    "new": "rules: survivalRules() ?? undefined, offMeal: survivalRules() == null });",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ],
+    "equivalent": true,
+    "why": "ENDLESS PROVISIONS (2026-10-04): with the arc Off useItem hands offMeal, and eatFood's Off meal never reads the rules (it never sickens) - so the Off tier's Casual fallback is read by no Off meal. Kept for the arm the fallback still guards: a tier whose rules read null."
+  },
+  {
+    "name": "SURVTIERS-off-shows-the-camps-it-keeps",
+    "file": "src/scenes/camps.js",
+    "old": "  const shown = () => (usable() ? camps.filter(visible) : NO_CAMPS);",
+    "new": "  const shown = () => camps.filter(visible);",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-drops-a-peers-camps",
+    "file": "src/scenes/camps.js",
+    "old": "  function applyOwner(owner, records, toScene = (p) => p, nowMs = 0) {\n",
+    "new": "  function applyOwner(owner, records, toScene = (p) => p, nowMs = 0) {\n    if (!survivalOn()) return null;\n",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-off-refuses-a-camp-again",
+    "file": "src/scenes/camps.js",
+    "old": "    // ENDLESS PROVISIONS: no arc gate - a camp is stood in every tier (`seen`, above); the camp law's own checks below\n",
+    "new": "    if (!survivalOn()) { say('Turn Climates & Calories on to make camp.'); return false; }\n",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ],
+    "note": "REST6 (PIN MOVED): re-aimed by content. AUDIT C&C I10: the refusal's constant (CAMP_TEXT.arcOff) is deleted - the mutant says its words as a literal."
+  },
+  {
+    "name": "SURVTIERS-fireNear-is-the-tiers-again",
+    "file": "src/scenes/camps.js",
+    "old": "  const fireNear = (pos) => !!nearestFire(seen().map((c) => c.rec), pos, now())",
+    "new": "  const fireNear = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now())",
+    "note": "AUDIT C&C (lens I): re-aimed by content - the place reads the camps in sight in every tier (seen), so a deck camp hidden with her boat answers no reach; the tiers' shown() is still the mutant.",
+    "tests": [
+      "test/systems/survival/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-mirror-overrides-a-vital",
+    "file": "src/scenes/world.js",
+    "old": "    enemiesNearby: () => false,\n    // LIVED1: the mirrored night is the follower's own time too.",
+    "new": "    enemiesNearby: () => false,\n    fullyHealed: () => false,\n    // LIVED1: the mirrored night is the follower's own time too.",
+    "tests": [
+      "test/scenes/partyrest1.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-minutes-are-needs",
+    "file": "src/systems/worldTick.js",
+    "old": "    if (!survivalOn() && nowMinutes > lastMinutes) pauseSurvival(entity, lastMinutes, nowMinutes);",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-pause-runs-while-the-arc-is-on",
+    "file": "src/systems/worldTick.js",
+    "old": "if (!survivalOn() && nowMinutes > lastMinutes) pauseSurvival",
+    "new": "if (nowMinutes > lastMinutes) pauseSurvival",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-pause-forgets-the-meal",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (Number.isFinite(s.lastAte)) s.lastAte += span;",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-pause-forgets-the-waking",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (Number.isFinite(s.awakeSince)) s.awakeSince += span;",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-long-off-is-paused-whole",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (s.offFor > ALIGN_GRACE_MINUTES) { alignSurvival(entity, Math.floor(to), null); delete s.offFor; }",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-an-off-span-never-ends",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (s.offFor) delete s.offFor;   // AUDIT SURV-TIERS: the arc is on again - an Off span ends (pauseSurvival)",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-refilled-pool-still-owes",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (repays && s.borrowed && !((entity.fatigue ?? 0) <= (s.loanPool ?? -Infinity))) settleLoan(s, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));",
+    "new": "",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-loan-is-cut-unevenly",
+    "file": "src/systems/survival/needs.js",
+    "old": "  for (const k of Object.keys(b)) { b[k] = Math.floor((b[k] * room) / total); if (!(b[k] > 0)) delete b[k]; }",
+    "new": "  for (const k of Object.keys(b)) { b[k] = Math.min(b[k], room); if (!(b[k] > 0)) delete b[k]; }",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-budget-before-the-refund",
+    "file": "src/systems/survival/needs.js",
+    "old": "  let budget = null;\n  const tire",
+    "new": "  let budget = floorShare > 0 ? Math.max(0, (entity.fatigue ?? 0) - Math.floor(maxFatigue(entity) * floorShare)) : null;\n  const tire",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-cap-only-at-the-minute",
+    "file": "src/systems/statMods.js",
+    "old": "  if (survival < 0)\n    survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));\n  mod += survival;",
+    "new": "  mod += survival;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-fire-is-fifteen-degrees",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: false },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-fire-warms",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false, fireWarms: false },",
+    "new": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false, fireWarms: true },",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-fire-cools-the-heat-too",
+    "file": "src/systems/survival/needs.js",
+    "old": "export const warmedByFire = (rules, env, felt) => !!((rules ?? HARD_RULES).stamina.fireWarms && env?.byFire && felt < 0);",
+    "new": "export const warmedByFire = (rules, env, felt) => !!((rules ?? HARD_RULES).stamina.fireWarms && env?.byFire);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-jump-can-kill-with-the-heat",
+    "file": "src/systems/survival/needs.js",
+    "old": "const bite = Math.max(1, Math.trunc((abs - 40) / 10));\n      if (!replay && !landing) sinks.hurt?.(bite);\n      else if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(Math.min(bite, (entity.health ?? 0) - HEALTH_FLOOR));",
+    "new": "const bite = Math.max(1, Math.trunc((abs - 40) / 10));\n      sinks.hurt?.(bite);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-shut-kitchen-serves-nothing",
+    "file": "src/ui/enhanced/enhancedTavern.js",
+    "old": "    say(line(m.closedText));",
+    "new": "    menu = null;\n    say(line(m.closedText));",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-enhanced-asks-the-house-before-the-gold",
+    "file": "src/ui/enhanced/enhancedTavern.js",
+    "old": "  if (totalGoldAmount(h.entity) < row.price) {\n    say(rows(NOT_ENOUGH_GOLD_ID));\n    return;\n  }\n  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) {\n    say(line(order.text));",
+    "new": "  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) {\n    say(line(order.text));\n    return;\n  }\n  if (totalGoldAmount(h.entity) < row.price) {\n    say(rows(NOT_ENOUGH_GOLD_ID));",
+    "note": "INN-WATER (FIELD BUGS 2026-09-30, PIN MOVED): the order call names the pack now (items: h.entity.items) - the record re-aimed to the new line, the mutant (the house asked before the gold) unchanged",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-barkeep-says-another",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  cutOff: 'The barkeep shakes their head: that one would put you on the floor.',",
+    "new": "  cutOff: 'The barkeep takes one look at you and will not pour you another.',",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-kitchen-reads-null-rules",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) < (row.worth ?? 0))",
+    "new": "  if (row?.kind === 'food' && !rules.wastedMeal && mealHunger(s, now) < (row.worth ?? 0))",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-classic-window-forgets-the-wagon",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "    }), collection);\n  }",
+    "new": "    }));\n  }",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-enhanced-window-forgets-the-wagon",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    place(act.item, collection);",
+    "new": "    place(act.item);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-world-places-off-the-pack",
+    "file": "src/scenes/world.js",
+    "old": "placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),",
+    "new": "placeCamp: (item, list) => camps.placeItem(item, playerEntity.items ?? []),",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-mirrored-dungeon-night-pays-nothing",
+    "file": "src/scenes/world.js",
+    "old": "    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),",
+    "new": "    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-dungeon-keeps-its-reader",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    survivalEnvNow,   // AUDIT SURV-TIERS",
+    "new": "    // AUDIT SURV-TIERS",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-exterior-rests-by-the-shown-fire",
+    "file": "src/scenes/exterior.js",
+    "old": "restKind: () => (camps.fireNear(walkMode ? player.pos",
+    "new": "restKind: () => (camps.byFire(walkMode ? player.pos",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-dungeon-rests-by-the-shown-fire",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "'bed' : _fpFeet && camps.fireNear(_fpFeet) ? 'camp'",
+    "new": "'bed' : _fpFeet && camps.byFire(_fpFeet) ? 'camp'",
+    "tests": [
+      "test/systems/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-mirror-overrides-dead",
+    "file": "src/scenes/world.js",
+    "old": "    enemiesNearby: () => false,\n    // LIVED1: the mirrored night is the follower's own time too.",
+    "new": "    enemiesNearby: () => false,\n    dead: () => false,\n    // LIVED1: the mirrored night is the follower's own time too.",
+    "tests": [
+      "test/scenes/partyrest1.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-mirror-overrides-vitals",
+    "file": "src/scenes/world.js",
+    "old": "    enemiesNearby: () => false,\n    // LIVED1: the mirrored night is the follower's own time too.",
+    "new": "    enemiesNearby: () => false,\n    vitals: () => null,\n    // LIVED1: the mirrored night is the follower's own time too.",
+    "tests": [
+      "test/scenes/partyrest1.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-note-grows-a-third-sentence",
+    "file": "src/systems/features.js",
+    "old": "comes back once you’ve seen to them; on Hard",
+    "new": "comes back once you’ve seen to them. On Hard",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-an-infinite-count-asks-for-ever",
+    "file": "src/systems/encounters.js",
+    "old": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "new": "  const asks = Number.isFinite(ctx.restAsks) || ctx.restAsks === Infinity ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-potion-cite-falls-short",
+    "file": "src/systems/potions.js",
+    "old": "//    dungeonContext.js:\"drinkPotion: (key, potent)\", exterior.js:\"drinkPotion: (key, potent)\") and useItem.js:\"const drank = drinkPotion\"",
+    "new": "//    dungeonContext.js:\"drinkPotion: (key, potent)\", exterior.js:\"drinkPotion: (key, potent)\") and useItem.js:\"drinking and placing\"",
+    "tests": [
+      "test/scenes/citedrift.test.js"
+    ],
+    "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content to the cite citeMerge moved. AUDIT ARENA-LADDER 2's MERGE of main's #613 and #614 (PIN MOVED): re-aimed by content to the cite citeMerge moved. HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): toggleHood and its import moved useItem.js's drink line from 316 to 347; the cite and its short mutant move with it. FIELD BUGS 2026-09-30 (PIN MOVED): re-aimed by content to the cite the batch's cite shift moved. MEND-AIM (PIN MOVED): the use door's aim options moved the drink line to 351. THE SEATS ARC'S MERGE of main's #502-#509 and #504 (PIN MOVED): re-aimed by content to the cite citeMerge moved. FIELD BUGS 2026-10-01 part five (re-aimed by content): the merge of #504 moved the cites it names. MERGE OF MAIN (#538) INTO THE TACTICS ARC (PIN MOVED): re-aimed by content to the cite citeMerge moved. ARENA4b (PIN MOVED): re-aimed by content to the cite citeShift moved (exterior.js and world.js lost the Herald's old imports). AUDIT PRE-MERGE 1003 (PIN MOVED): re-aimed by content to the cite citeShift moved (exterior.js and world.js each gained the Watch guard's line). REST1+REST2 (PIN MOVED): re-aimed by content to the cite the slice's cite shift moved. THE REST ARC'S MERGE of main's #545 (PIN MOVED): re-aimed by content to the cite citeMerge moved. TOUGHER-SHIPS + HOLDINGS' merge of main's #554 (PIN MOVED): re-aimed by content to the cite citeMerge moved. FIELD BUGS 2026-10-04d (PIN MOVED): re-aimed by content to the cite citeShift moved (exterior.js gained CROPS's field solids; world.js KNIGHT-HOUSE's deed hold and CROPS's). MERGE OF MAIN INTO FIELD BUGS 2026-10-04d (PIN MOVED): re-aimed by content to the cite citeMerge moved. PORTAL1 (PIN MOVED): re-aimed by content to the cite citeShift moved. TELL6e (PIN MOVED): re-aimed by content to the cite the slice's cite shift moved (the hosts gained the blow frame's import). AUDIT 05b (PIN MOVED): re-aimed by content - the cite shift moved the cite (world.js and exterior.js lost lines to world/naturePicture.js, A12). THE MERGE OF MAIN (#408-#541) INTO L10N (PIN MOVED): re-aimed by content to the merged line."
+  },
+  {
+    "name": "ENDLESS-off-sees-no-camp",
+    "file": "src/scenes/camps.js",
+    "old": "  const seen = () => camps.filter(visible);",
+    "new": "  const seen = () => (usable() ? camps.filter(visible) : NO_CAMPS);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-off-sees-only-others-the-superseded-offsight",
+    "file": "src/scenes/camps.js",
+    "old": "  const seen = () => camps.filter(visible);",
+    "new": "  const seen = () => (usable() ? camps.filter(visible) : camps.filter((c) => !mine(c) && visible(c)));",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-off-sees-only-its-own",
+    "file": "src/scenes/camps.js",
+    "old": "  const seen = () => camps.filter(visible);",
+    "new": "  const seen = () => (usable() ? camps.filter(visible) : camps.filter((c) => mine(c) && visible(c)));",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-the-flame-hidden-off",
+    "file": "src/scenes/camps.js",
+    "old": "  const batches = () => seen().map((c) => c.batch).filter(Boolean);",
+    "new": "  const batches = () => shown().map((c) => c.batch).filter(Boolean);",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-the-light-hidden-off",
+    "file": "src/scenes/camps.js",
+    "old": "    const lit = seen().filter((c) => fireLit(c.rec, t));",
+    "new": "    const lit = shown().filter((c) => fireLit(c.rec, t));",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-the-tent-hidden-off",
+    "file": "src/scenes/camps.js",
+    "old": "    for (const c of seen()) if (c.rec.kind === CAMP_KIND.Tent) {",
+    "new": "    for (const c of shown()) if (c.rec.kind === CAMP_KIND.Tent) {",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-the-ray-passes-through-what-is-seen",
+    "file": "src/scenes/camps.js",
+    "old": "    for (const c of seen()) {   // AUDIT SURV-TIERS (the third pass): sight - a seen camp stops the ray",
+    "new": "    for (const c of shown()) {",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-what-is-seen-has-no-name-and-no-look",
+    "file": "src/scenes/camps.js",
+    "old": "  const forKey = (key) => seen().find(",
+    "new": "  const forKey = (key) => shown().find(",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-off-is-warmed-by-what-it-sees",
+    "file": "src/scenes/camps.js",
+    "old": "  const byFire = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now())",
+    "new": "  const byFire = (pos) => !!nearestFire(seen().map((c) => c.rec), pos, now())",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-off-opens-no-menu-again",
+    "file": "src/scenes/camps.js",
+    "old": "    if (lit && campMenu(c.rec, now(), mine(c), { online: sharedClockOn() }).some((r) => r.key === lit)) { act(c, lit); return true; }",
+    "new": "    if (!usable()) return true;\n    if (lit && campMenu(c.rec, now(), mine(c), { online: sharedClockOn() }).some((r) => r.key === lit)) { act(c, lit); return true; }",
+    "tests": [
+      "test/systems/survival/survtiers.test.js"
+    ]
+  }
+]

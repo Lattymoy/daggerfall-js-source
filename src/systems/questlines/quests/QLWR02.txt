@@ -1,0 +1,117 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE WEIR ROAD, step 2 of 4.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Corvane's words
+-- are in the journal at once (the last step ended at his table), and he names the tavern he moves on to - a fresh
+-- Place each step, and he keeps no room long (AUDIT QUESTLINES LINES-10). WITNESSED
+-- (net/questlineClaims.js, `redoubts3`): the step waits on three Redoubts taken (`ql act redoubt-taken 3`). A visit
+-- before is answered and cleared (M0B30Y04's `_clearclick_`). Lore: canon - Imago Storm led Dagon's legions in 3E 398,
+-- and later turned on his Prince; the Spire's council of masters. The port's own - the torn halls fell back along the
+-- road the legions came, and the Kyn who stayed Dagon's hold them (bible/11-Multiplayer/Elite-Gates.md section 3).
+Quest: QLWR02
+DisplayName: The Torn Halls
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       Corvane Tull has left _tavern_. No one saw which
+<ce>                      way he went.
+
+QuestComplete:  [1004]
+<ce>       "For three halls taken back," Corvane says, and
+<ce>             counts _gold_ gold onto the table.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Corvane Tull is moving on - he keeps no room long -
+ to _tavern_ in __tavern_. He wants more of the
+ torn halls taken back: three Redoubts of an Elite
+ Breach, from the Kyn who hold them for rank. He
+ will wait for me there.
+
+Message:  1013
+<ce>       "Three." Corvane writes it down - the date at the
+<ce>        top of the page is 3E 398 - and underlines it.
+<ce>
+<ce>       "Do you know what they were, those halls? Lecture
+<ce>        rooms. Practice yards. The long gallery where the
+<ce>        Armsmaster made us walk the span with our eyes
+<ce>        shut. When the links to Oblivion broke, they tore
+<ce>        away and fell back the road the legions came."
+<ce>
+<ce>       "Imago Storm turned on his Prince, after. The Kyn
+<ce>        in those halls are the ones who did not."
+
+Message:  1014
+The Battlemage? Still in the corner, still writing. He counts something every night.
+<--->
+Corvane Tull asked the landlord what year it was. Then he wrote down the wrong one.
+<--->
+They say the Battlemage goes somewhere at night that is not in the Bay at all.
+
+Message:  1015
+<ce>       "Three Redoubts, %pcf. I have counted every hall
+<ce>        of that place every night since the Spire fell.
+<ce>        I can wait for three more."
+
+Message:  1016
+%qdt:
+ I have taken three Redoubts in the torn halls.
+ Corvane Tull is waiting to hear of it at _tavern_
+ in __tavern_.
+
+Message:  1020
+<ce>       The third Redoubt is taken. For a moment the torn
+<ce>       hall is quiet, the way a school is quiet after the
+<ce>                last lesson of the day.
+
+-- Symbols used in the QRC file:
+--
+--               %pcf occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--           _tavern_ occurs 3 times.
+--          __tavern_ occurs 2 times.
+
+QBN:
+Item _gold_ gold range 500 to 900
+
+Person _corvane_ faction The_Mages_Guild male anyInfo 1014
+
+Place _tavern_ remote tavern
+
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _corvane_ Corvane_Tull
+	place npc _corvane_ at _tavern_
+	log 1010 step 0
+	start timer _wait_
+
+_taken_ task:
+	ql act redoubt-taken 3
+	say 1020
+	log 1016 step 1
+	stop timer _wait_
+	start timer _meet_
+
+_clicked_ task:
+	clicked npc _corvane_
+
+_notyet_ task:
+	when _clicked_ and not _taken_
+	say 1015
+	clear _clicked_ _notyet_
+
+_paid_ task:
+	when _clicked_ and _taken_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

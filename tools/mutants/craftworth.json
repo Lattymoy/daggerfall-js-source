@@ -1,0 +1,120 @@
+[
+  {
+    "name": "CRAFT-WORTH-sell-arm-reads-the-roll",
+    "file": "src/systems/tradeModes.js",
+    "old": "          calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) *\n          stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
+    "new": "          calculateCost(itemValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WORTH-sellmagic-reads-the-roll",
+    "file": "src/systems/tradeModes.js",
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, fenced); // CRAFT-WORTH: a fenced crafted piece at its plain worth",
+    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment, fenced); // CRAFT-WORTH: a fenced crafted piece at its plain worth",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WORTH-share-never-taken",
+    "file": "src/systems/tradeModes.js",
+    "old": "  return daedricSaleValue(item, rolled > 0 ? Math.max(1, v - rolled) : v);",
+    "new": "  return daedricSaleValue(item, v);",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WORTH-provenance-test-dropped",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if ((typeof item?.provenance !== 'string' && item?.imbued !== true) || !ROLLED_TIERS.includes(item.rarity)) return 0;",
+    "new": "  if (!ROLLED_TIERS.includes(item?.rarity)) return 0;",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WORTH-the-rare-flavour-left-in",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const rolled = affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
+    "new": "  const rolled = affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item);",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WORTH-patron-keeps-the-roll",
+    "file": "src/net/patronLaw.js",
+    "old": "  if (typeof item.provenance === 'string') for (const k of CRAFT_ROLLED) delete plain[k];",
+    "new": "",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WORTH-keyed-sale-off-the-walk",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const lot = tradeCost('Sell', [it], { quality: b.quality, priceAdjustment: shopAdjustment(b, 'Sell') });",
+    "new": "    const lot = { cost: calculateCost(itemValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1), pieces: 0 };",
+    "tests": [
+      "test/systems/craftworth.test.js",
+      "test/systems/fb0929_min_price.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WORTH-conjured-listed",
+    "file": "src/scenes/worldModes.js",
+    "old": " && !lockRefuses(it, 'sell') && !isSummoned(it));",
+    "new": " && !lockRefuses(it, 'sell'));",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WORTH-conjured-sold",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isSummoned(it)) return 0;",
+    "new": "",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WORTH-strip-on-any-marked-piece",
+    "file": "src/net/patronLaw.js",
+    "old": "  if (typeof item.provenance === 'string') for (const k of CRAFT_ROLLED) delete plain[k];",
+    "new": "  for (const k of CRAFT_ROLLED) delete plain[k];",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WORTH-roll-off-the-base",
+    "file": "src/systems/tradeModes.js",
+    "old": "  if (!Number.isFinite(item?.value)) return daedricSaleValue(item, v); // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off",
+    "new": "  // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WORTH-line-list-unguarded",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const rolled = affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
+    "new": "  const rolled = affixesWorth(item.affixes, item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WORTH-no-floor",
+    "file": "src/systems/tradeModes.js",
+    "old": "  return daedricSaleValue(item, rolled > 0 ? Math.max(1, v - rolled) : v);",
+    "new": "  return daedricSaleValue(item, rolled > 0 ? v - rolled : v);",
+    "tests": [
+      "test/systems/craftworth.test.js"
+    ]
+  }
+]

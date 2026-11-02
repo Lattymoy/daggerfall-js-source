@@ -1,0 +1,645 @@
+// @ts-check
+// NAME1 (2026-09-16, Mac: "Player names clip and cut off the top of the sprite head and additionally grow in size
+// the further away + are able to be seen through walls") and
+// BUBBLE1 (2026-09-16, Mac: "I want to introduce chat bubbles above the player when they chat"):
+// THE NAMES OVER THE OTHERS, AND WHAT THEY SAY - the enhanced skin's own DOM layer.
+//
+// WHY DOM AND NOT THE BITMAP PASS. Online forces the enhanced lane (OL1, systems/online/onlineLane.js), so a name over a
+// head is an ENHANCED-SKIN surface, and every other enhanced surface wears Pixelify Sans unsmoothed on bone
+// (ui/enhanced/enhancedStyle.js, ui/pixelifyFive.js PIXEL_STACK). A name drawn through the CLASSIC FNT atlas was the one
+// thing on that screen still speaking the other skin's face - and the bubbles Mac asked for want a box that wraps
+// text, which is a paragraph, which is a thing the 2D pass has no idea how to do. One element per visible peer,
+// MOVED each frame and never rebuilt, is the party HUD's own discipline (ui/partyPanel.js: "write only what
+// changed"), and it gives the bubble a home for free.
+//
+// THE LAW IS NOT HERE. Where a name sits, how big it is and whether a wall stands in the way are
+// net/remotePlayers.js namePoints' answers (NAME_GAP_PX, nameScaleFor, nameLensScale, sightBlockedBy) - this file
+// receives points and wears them. The classic bitmap pass reads the SAME points, so neither face can invent a
+// position, a depth law or a lens of its own. What the two faces do NOT share is the pixel they are measured in:
+// this one is CSS px (so it takes the viewport term and the player's HUD scale by value, AUDIT NAME1 F3) and the
+// bitmap pass is the drawing buffer's, where the host's own hudScale already is that term. One law, two rulers.
+//
+// THE BUBBLES, in one paragraph. A line a peer says stands over their name for BUBBLE_MS and fades out; the newest
+// line replaces the one before it; at most one a peer and at most BUBBLE_MAX at once. A bubble follows the NAME's
+// rules exactly - it is drawn only for a peer the name pass drew, so out of range, behind a wall or off the strip is
+// no bubble either. The game's own lines (`system`) and my own lines get none.
+//
+// CHAT-CHAN (2026-09-23): EVERY CHANNEL'S LINE, BUT NOT AN ASIDE. BUBBLE1 was the World tab's because the World tab was
+// the chat; it said "a later channel tab ... says nothing over a head until somebody decides it should". Mac's own
+// words decide it: "chat bubbles above the player when they chat" - a line on the World, the Region, the Party or the
+// Local tab is chatting, and a player I can see who said something to me has it over their head whichever tab it came
+// on (a bubble is drawn on the HEARER's screen alone, so a party's line stands only where the party heard it). The one
+// line that stands over no head is an aside marked out of character - `(( ))`, net/chat.js isOocText (Addison Knox:
+// "keeps immersion intact by separating in-character dialogue from coordination chatter"): what is said over a head
+// is what the character said.
+//
+// NO BUBBLE OF MY OWN, and that is a decision rather than an omission. I have no body in my own view to hang one
+// over, and a bubble at the bottom of my own screen would say my line a SECOND time: ChatLog.peek already draws the
+// last CHAT_PEEK lines over the world whenever the panel is closed, mine among them, and two copies of my own words
+// in my own view is the only thing on this surface a player could read as a bug.
+//
+// THE TEXT IS ALREADY CLEAN. net/online.js runs every inbound line through net/wire.js sanitizeChat before it
+// reaches onChat, and the relay refuses what that law refuses - so nothing here restates it. The one thing this
+// file does to a line is CUT it: a bubble is a glance, not a letter.
+//
+// Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
+import { skullSrc, skullGlow } from './pvpSkull.js'; // PVP-SKULL
+import { nameConeTarget, nameConeStep } from './nameCone.js'; // PVP-CONE
+import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js'; // the enhanced face, with FIX-D's five ahead of it
+import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js'; // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { setTitleFlame } from './titleFlame.js'; // SHOP: a flame title's plate
+import { graphemesOf } from '../systems/graphemes.js'; // EMOTE1's characters, which JOURNAL1's notebook break reads too
+import { renownText } from '../net/renown.js'; // RENOWN1: Renown, left of the name
+import { guildTagText } from '../net/guild/guildLaw.js'; // GUILD1c: the guild's tag, right of the name
+import { houseLine } from '../net/houseLaw.js'; // LEGACY7: the house, under the name
+import { ribbonColours, heraldryOf, heraldryColourOf, heraldryKey } from '../net/heraldryLaw.js'; // SEASON1 part two: a Season's banner ribbon, under the name; HERALDRY-SHOWN: the tag's frame
+import { heraldrySwatchSrc } from './heraldrySwatch.js'; // HERALDRY-SHOWN (Seats-Arc 8.1): the guild's shield, in its tag's frame
+
+export const NAME_STYLE_ID = 'dagger-names-style';
+
+/** How long a bubble stands, ms. Mac: "a few seconds". */
+export const BUBBLE_MS = 6000;
+/** The share of that window the bubble holds full opacity before it fades - ChatLog.peek's own curve (net/chat.js),
+ *  at this surface's own window, so a line over a head and the same line in the peek corner go out the same way. */
+export const BUBBLE_HOLD = 0.75;
+/** The most bubbles standing at once. It is ALSO the size of the store, which is the whole of the bound: one entry
+ *  a peer, the oldest dropped when a fifth arrives, so a crowd cannot grow this surface and an id nobody is drawing
+ *  cannot squat in it for the session. */
+export const BUBBLE_MAX = 4;
+/** The most characters a bubble shows. The wire already bounds a line at CHAT_MAX (240); this is the bubble's own,
+ *  smaller bound - 240 characters over somebody's head is a wall, not a remark. */
+export const BUBBLE_CHARS = 100;
+/** What marks a line that was cut. */
+export const BUBBLE_ELLIPSIS = '...';
+
+/** A peer's name colour for the DOM, from the picture's OWN answer (net/social.js colorOf -> PARTY_GREEN or null).
+ *  The green has one home and this is not a second one: `cssRgba(PARTY_GREEN)` IS PARTY_GREEN_CSS, which a pin
+ *  holds - so the party's green survives the move to the DOM without the colour being written down twice.
+ *
+ *  ACC3c MOVED THE FUNCTION AND KEPT THE DOOR. It lives in ui/playerBadge.js now, because the account card's own
+ *  SHEET needs it and a sheet may not import this layer - which would pull the whole remote-player pass in behind
+ *  it. Re-exported rather than relocated at every call site: this is where the party green has crossed into the DOM
+ *  since SOC4, and moving that import would be a change to SOC4's seam for a reason that is not SOC4's. */
+export { cssRgba };
+
+/** A line's own opacity at `age` ms: full through BUBBLE_HOLD of the window, then down to nothing at the end. */
+export function bubbleAlpha(age, life = BUBBLE_MS) {
+  if (!(age >= 0) || age >= life) return 0;
+  const hold = life * BUBBLE_HOLD;
+  return age < hold ? 1 : Math.max(0, 1 - (age - hold) / (life - hold));
+}
+
+/** The text a bubble shows: the line's own, cut at BUBBLE_CHARS with a mark that says it was cut. Nothing is
+ *  sanitized here - net/wire.js sanitizeChat already did it at the door (net/online.js) and a second spelling of
+ *  that law is how two spellings of a law begin. */
+export function bubbleText(text) {
+  const s = String(text ?? '');
+  if (s.length <= BUBBLE_CHARS) return s;
+  return graphemeCut(s, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;
+}
+
+/** EMOTE1: THE CUT FALLS BETWEEN CHARACTERS AS A READER COUNTS THEM. A bare `slice` counts UTF-16 units, so the cut
+ *  could halve a surrogate pair (a stray replacement box after a face) or a joined emoji (a family cut to a man and
+ *  a joiner). The longest run of whole graphemes within `max` units - the characters systems/graphemes.js counts,
+ *  which the notebook's line break reads too (JOURNAL1), so the two cuts agree on what a character is. */
+export function graphemeCut(s, max) {
+  const text = String(s ?? '');
+  if (text.length <= max) return text;
+  let out = '';
+  for (const g of graphemesOf(text)) {
+    if (out.length + g.length > max) break;
+    out += g;
+  }
+  return out;
+}
+
+/** AUDIT NAME1 F10: and is there anything LEFT? The wire's own law bounds a line and strips what it strips, but a
+ *  line of three spaces is a line with text in it by every test above and an EMPTY BORDERED BOX over somebody's
+ *  head by this surface's. The trim decides whether a bubble exists; it is not applied to what is drawn, because
+ *  the sheet centres the text and the line is the speaker's. */
+export function bubbleSaid(text) {
+  const said = bubbleText(text);
+  return said.trim() ? said : '';
+}
+
+/** Does this line earn a bubble? From somebody else, in character, with something to say - on any tab (CHAT-CHAN), and
+ *  never a roll (DICE1) or an action (EMOTE1): what stands over a head is what the character SAID. */
+export function bubbleLineOk(line) {
+  if (!line || typeof line !== 'object') return false;
+  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false; // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said
+  return typeof line.id === 'string' && !!line.id && typeof line.text === 'string' && !!line.text;
+}
+
+/**
+ * AUDIT NAME1 F7: WHO GETS THIS FACE - the CHAT panel's own gate (scenes/world.js chatStart), and it has to be,
+ * because this layer and that panel are two halves of one surface: the bubbles are the chat's lines standing over
+ * heads. F7 found the two gates disagreeing (the layer on a classic page with no chat beside it) and tied the layer to
+ * the enhanced skin the chat then needed.
+ *
+ * OVH3 (2026-09-24, Mac: "Online specific UI's will need to remain"): the chat mounts on EITHER skin now - the online
+ * panels keep their own face over whatever UI Overhaul is worn - so the one gate both halves share is a document.
+ * A page with none (a node host) keeps the classic bitmap names (the host's `if (!nameLayer)` fallback). A predicate
+ * rather than an expression in the host, because a host's `if` is a thing only a regex can read.
+ */
+export function nameLayerWanted(doc = globalThis.document) {
+  return !!doc;
+}
+
+/** The layer's sheet. The enhanced face, unsmoothed, on bone - ui/enhanced/enhancedStyle.js' own tokens where the skin's
+ *  sheet is loaded and the same literals where it is not (ui/partyPanel.js' shape). */
+export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
+/* AUDIT NAME1 F4: z-index 3, which is UNDER THE HUD - not level with it. At 4 this layer TIED with .hud (and with
+   every readout the enhanced skin adds beside it at that level, ui/enhanced/enhancedStyle.js), and a tie is decided by
+   document order: this layer is appended after them, so it won. A bubble stood over the mid-screen line and a low
+   name over the vitals bars. Everything the player ACTS on is higher still (the chat and the party HUD at 5, the
+   friends panel at 6, its confirm bar at 7, the FPS read-out at 9), because a label over somebody's head must
+   never cover a conversation. And no pointer: the world takes every click that lands on a name. */
+.dfnames { position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; -moz-osx-font-smoothing: grayscale;
+  -webkit-user-select: none; user-select: none; }
+/* The anchor is the head point; the stack grows UP from it, so translate(-50%, -100%) puts the label's BOTTOM edge
+   on the anchor and the host has already lifted the anchor NAME_GAP_PX clear of the skull. Nothing here can ever
+   sit over the head, at any distance - which is the whole of Mac's first sentence. */
+.dfname { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center;
+  transform: translate(-50%, -100%); contain: layout style; }
+/* PERF-NAMES1 (2026-10-10, Dudey: "big problems are caused by many players causing severe stutter"): A NAME IS MOVED
+   BY ITS TRANSFORM, NOT BY ITS BOX. The anchor was \`left\`/\`top\`, so every frame a crowd moved through the view laid
+   the layer out again - every label's flex column and its text, the browser's style and layout pass a frame
+   (tools/nameLayerBench.mjs: 60 names, 3.0 ms of style and 4.8 of layout a frame on the measuring machine). The
+   element stands at the origin and the render writes \`translate(x, y) translate(-50%, -100%)\` - the same point and
+   the same lift - so a frame that only moves names lays out nothing; and \`contain\` keeps a label whose size or
+   words changed from dirtying the rest. No \`will-change\`: a label on a layer of its own rasters its text and its
+   shadow apart from the page, and the pixels differ (measured: 324 of 400,000, by up to 26) - the picture is kept. */
+/* AUDIT NAME1 F12: the fallback is --bone's OWN value (ui/enhanced/enhancedStyle.js :root, #e9e4d9), the one the friends
+   and party panels fall back to. It read #d8cfae, which is a real colour but a different one - .hud's text - so a
+   page that reached this layer before the enhanced sheet loaded drew the names in the HUD's ivory and the panels
+   beside them in bone. One token, one fallback. */
+.dfname-tag { white-space: nowrap; line-height: 1; color: var(--bone, #e9e4d9);
+  text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 3px #000;
+  /* ACC3: the name and its glyphs are ONE row, centred together, so a
+     badged peer's label stays centred on their own skull. */
+  display: flex; align-items: center; gap: .3em; }
+/* ACC3 - THE TITLE, ABOVE THE NAME (Mac). Its own line in the column
+   the label already is, smaller than the name because it is a label ON
+   a name rather than a second name, and in ITS OWN COLOUR: gold IS the
+   Founder title, so the party green colorOf paints the name with does
+   not reach it. An EMPTY title takes no room at all - :empty drops the
+   element - so an untitled label is exactly what it was before this
+   existed, which is what every peer is today. */
+.dfname-title { white-space: nowrap; line-height: 1; font-size: .78em; margin-bottom: .18em;
+  letter-spacing: .04em; text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 3px #000; }
+.dfname-title:empty { display: none; }
+.dfname-skull { width: 1.6em; height: 1.6em; margin: 0 auto .15em; background: center / contain no-repeat; image-rendering: pixelated; }
+.dfname-skull.off { display: none; }
+/* PVP-BAR: a flagged player's health in red under the skull, a thin blue Shield strip on top. */
+.dfname-bar { width: 3.4em; margin: 0 auto .2em; border: 1px solid #000; background: #3a0d0a; }
+.dfname-bar.off { display: none; }
+.dfname-bar-s { height: .14em; background: #3d7be0; }
+.dfname-bar-h { height: .32em; background: #d42a1e; }
+/* PVP-HUD (the mockup): a flagged player's bar under 20% health flashes. */
+.dfname-bar.low { animation: dfname-low .5s steps(2) infinite; }
+@keyframes dfname-low { 50% { border-color: #ff9a8a; background: #7a1a12; } }
+@media (prefers-reduced-motion: reduce) { .dfname-bar.low { animation: none; border-color: #ff9a8a; } }
+/* ACC3 - THE GLYPHS, right of the name. Sized off the label's own em so
+   they shrink with distance exactly as the name does, and drawn in
+   currentColor so ui/playerBadge.js is the only place a colour is
+   decided. An empty run takes no room and no gap. */
+.dfname-glyphs { display: flex; align-items: center; gap: .18em; }
+.dfname-glyphs:empty { display: none; }
+/* GUILD1c - THE GUILD'S TAG, right of the name, before the glyphs: "<HND>"
+   in angle brackets, the tag's own mark (the Renown's box is square), a
+   little smaller than the name and in a cool steel so it reads as the
+   company a player keeps - never the party's green, a title's colour or
+   the Renown's amber. Empty takes no room: a peer in no guild wears
+   exactly the label it wore before. */
+.dfname-guild { font-size: .82em; letter-spacing: .04em; color: #a9c4dd; }
+.dfname-guild:empty { display: none; }
+/* LEGACY7 - THE HOUSE, a line under the name: "☠ Ysolde II of House Hlaalu" (net/houseLaw.js houseLine), smaller
+   than the name and in an old parchment's tone so it reads as lineage - never the guild's steel or a title's colour.
+   Empty takes no room: a character of no line wears exactly the label it wore before. */
+.dfname-house { font-size: .72em; letter-spacing: .03em; color: #d8c79a; font-style: italic; white-space: nowrap; }
+.dfname-house:empty { display: none; }
+/* HERALDRY-SHOWN (Seats-Arc 8.1: "the frame of the guild tag") - A TAG WHOSE GUILD'S HERALDRY THE CLIENT KNOWS, FRAMED: a
+   dark plate edged in the guild's border colour (written per peer), its shield (ui/heraldrySwatch.js) at the plate's left. */
+.dfname-guild.armed { padding: .06em .3em .04em 1.25em; border: 1px solid; border-radius: .12em;
+  background: rgba(14, 16, 19, .78) no-repeat .22em 50% / .82em auto; }
+/* RENOWN1 - THE RENOWN, LEFT OF THE NAME (Mac: "having their
+   level appear on the left side of character name"). A small plate in
+   the row the name and glyphs already are, so the whole run stays
+   centred on the skull; amber, so it reads as a number about the player
+   and never as a title's colour or the party's green. The number
+   alone, IN A BOX (Mac: "Just have it read 12 inside a box") - square
+   corners, a full border, at least as wide as it is tall so a 1 and a
+   50 are the same kind of box. Empty takes no room: a peer whose token
+   carried no level (an older build) wears exactly the label it wore
+   before. */
+.dfname-renown { font-size: .78em; line-height: 1; padding: .14em .3em .1em; border-radius: .12em;
+  min-width: 1.2em; text-align: center; font-variant-numeric: tabular-nums;
+  color: #f2c46b; background: rgba(14, 16, 19, .78); border: 1px solid rgba(242, 196, 107, .8); }
+.dfname-renown:empty { display: none; }
+.dfname-glyph { width: .95em; height: .95em; display: block;
+  filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 2px #000); }
+/* The bubble wraps at a bounded WIDTH (15em of its own size, so it stays a bubble at every distance) and the text
+   is cut at a bounded LENGTH before it ever gets here (bubbleText). */
+.dfname-bubble { position: relative; max-width: 15em; margin-bottom: .45em; padding: .3em .55em;
+  border-radius: .4em; background: rgba(14, 16, 19, .86); border: 1px solid var(--iron, #2b323b);
+  color: var(--bone, #e9e4d9); font-size: .92em; line-height: 1.3; text-align: center;
+  white-space: pre-wrap; overflow-wrap: break-word; text-shadow: 0 1px 2px #000; }
+/* the tail, toward the head: the bubble's own corner turned forty-five degrees under its bottom edge */
+.dfname-bubble::after { content: ''; position: absolute; left: 50%; bottom: -4px; width: 7px; height: 7px;
+  margin-left: -4px; background: rgba(14, 16, 19, .86);
+  border-right: 1px solid var(--iron, #2b323b); border-bottom: 1px solid var(--iron, #2b323b);
+  transform: rotate(45deg); }
+.dfname-bubble.off { display: none; }
+/* SEASON1 part two (Seats-Arc 9.1) - A SEASON'S BANNER RIBBON, UNDER THE NAME: a thin band the label's own width in the
+   guild's field colour, edged beneath in its border colour (the colours written per peer, only when they change). A
+   peer wearing none has it off and takes no room: the label is the one it wore before. */
+.dfname-ribbon { align-self: stretch; height: .2em; margin-top: .14em; border-bottom: .1em solid transparent;
+  box-shadow: 0 1px 0 #000; }
+.dfname-ribbon.off { display: none; }
+`;
+
+/** PVP-HUD: a bar flashes under PVP_BAR_LOW per cent of health, never at 0 (fallen). */
+export const PVP_BAR_LOW = 20;
+export const pvpBarLow = (/** @type {{ h: number } | null | undefined} */ b) => !!b && b.h > 0 && b.h < PVP_BAR_LOW;
+
+/** The sheet, once (ui/partyPanel.js injectPartyStyle's own shape). */
+export function injectNameStyle(doc = document) {
+  if (doc.getElementById?.(NAME_STYLE_ID)) return;
+  const el = doc.createElement('style');
+  el.id = NAME_STYLE_ID;
+  el.textContent = NAME_CSS;
+  (doc.head ?? doc.body).append(el);
+}
+
+/**
+ * The layer. `render({ points, log, covered, colorOf })` once a frame from the host:
+ *   - `points` is net/remotePlayers.js namePoints' output ({ id, name, x, y, scale }), in CSS pixels;
+ *   - `log` is the net/chat.js ChatLog, read forward from a watermark - a PULL, so the chat wiring is untouched and
+ *     a line can only become a bubble by having been written into the log the panel shows;
+ *   - `covered` is the host's word for a window over the HUD;
+ *   - `colorOf(id)` is net/social.js colorOf - an RGBA array for my party, null for everyone else.
+ */
+export function createNameLayer({ doc = document, now = () => Date.now(), armsOf = null } = {}) {
+  // HERALDRY-SHOWN: `armsOf(tag)`, a guild's heraldry by its tag
+  injectNameStyle(doc);
+  const root = doc.createElement('div');
+  root.className = 'dfnames';
+  root.setAttribute('aria-hidden', 'true'); // the names are a reading of the world, not a control: the reader has the chat's roster
+  doc.body.append(root);
+  root.style.display = 'none';
+
+  /** peer id -> the built nodes. THE MAP IS THE IDENTITY: a peer who stays in view keeps their element across every
+   *  frame, which is what lets a frame MOVE a name instead of building one. */
+  const tags = new Map();
+  /** peer id -> { text, at }. Insertion-ordered and capped at BUBBLE_MAX: one bubble a peer, the oldest out. */
+  const bubbles = new Map();
+  let seq = 0; // the last ChatLog line this layer has read
+  let lastLog = null; // AUDIT NAME1 F8: and WHOSE - the watermark belongs to one log, not to the layer
+  let visible = 0; // how many bubbles the last render actually drew
+  let shownRoot = false;
+  let alive = true;
+
+  const setText = (n, t) => {
+    if (n.textContent !== t) n.textContent = t;
+  };
+  const setCls = (n, c) => {
+    if (n.className !== c) n.className = c;
+  };
+  /** PERF-NAMES1: one tag's value, written when it differs from what THIS LAYER last wrote there (`tag[slot]`). */
+  const put = (tag, slot, v, write) => {
+    if (tag[slot] !== v) {
+      tag[slot] = v;
+      write(v);
+    }
+  };
+  /** PVP-BAR: the bar shown at its health and Shield (per cent), or hidden where the point carries none. */
+  const paintBar = (tag, b) => {
+    setCls(tag.bar, !b ? 'dfname-bar off' : pvpBarLow(b) ? 'dfname-bar low' : 'dfname-bar');
+    if (!b) return;
+    tag.barH.style.width = `${Math.max(0, Math.min(100, b.h))}%`;
+    tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;
+  };
+  const live = new Set(); // PERF-NAMES1: the frame's ids, one set refilled
+
+  const makeTag = () => {
+    const node = doc.createElement('div');
+    node.className = 'dfname';
+    const bubble = doc.createElement('div');
+    bubble.className = 'dfname-bubble off';
+    // ACC3: the title is a SIBLING above the name row rather than a
+    // span inside it, because Mac put it above the name and a flex row
+    // cannot stack. `.dfname` is already a column, so it costs an
+    // element and no layout.
+    const title = doc.createElement('div');
+    title.className = 'dfname-title';
+    const tag = doc.createElement('div');
+    tag.className = 'dfname-tag';
+    // RENOWN1: the level FIRST in the row - left of the name, as Mac put it
+    const lv = doc.createElement('span');
+    lv.className = 'dfname-renown';
+    const name = doc.createElement('span');
+    name.className = 'dfname-who';
+    const glyphs = doc.createElement('span');
+    glyphs.className = 'dfname-glyphs';
+    // GUILD1c: the guild's tag right of the name, before the glyphs
+    const guild = doc.createElement('span');
+    guild.className = 'dfname-guild';
+    tag.append(lv, name, guild, glyphs);
+    // SEASON1 part two: a Season's banner ribbon, a sibling under the name row
+    const ribbon = doc.createElement('div');
+    ribbon.className = 'dfname-ribbon off';
+    // LEGACY7: the house, a line under the name row ("☠ Ysolde II of House Hlaalu" - net/houseLaw.js houseLine)
+    const house = doc.createElement('div');
+    house.className = 'dfname-house';
+    const skull = doc.createElement('div'); // PVP-SKULL: over the title, the flagged player's mark (ui/pvpSkull.js)
+    skull.className = 'dfname-skull off';
+    const bar = doc.createElement('div'); // PVP-BAR: under the skull, above the name - its Shield strip and its health
+    bar.className = 'dfname-bar off';
+    const barS = doc.createElement('div');
+    barS.className = 'dfname-bar-s';
+    const barH = doc.createElement('div');
+    barH.className = 'dfname-bar-h';
+    bar.append(barS, barH);
+    node.append(bubble, skull, bar, title, tag, house, ribbon);
+    root.append(node);
+    return {
+      node,
+      bubble,
+      skull,
+      skullOf: '',
+      bar,
+      barS,
+      barH,
+      barOf: '',
+      title,
+      tag,
+      lv,
+      name,
+      guild,
+      glyphs,
+      house,
+      ribbon,
+      worn: null,
+      titled: null,
+      inked: undefined,
+      banded: '',
+      armed: '',
+      // PERF-NAMES1: what this tag's DOM was last told, kept here and compared here - a read of `style.x` or
+      // `textContent` asks the browser to serialise the value back, a cost a frame for every label
+      at: null,
+      size: null,
+      lvOf: undefined,
+      gtOf: undefined,
+      houseOf: undefined,
+      said: null,
+      nameText: null,
+      titleText: null,
+      bubbleOn: null,
+      bubbleText: null,
+      bubbleAlpha: null,
+      cone: NaN,
+      coneAt: NaN,
+      coneAlpha: null,
+    }; // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
+  };
+
+  /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
+   *  a fact about an account and changes about twice in a player's
+   *  life, while this runs every frame for every visible peer - so the
+   *  keys are compared and the SVGs are left alone, which is this
+   *  layer's own "write only what changed" discipline (ui/partyPanel).
+   */
+  const setGlyphs = (tag, peer) => {
+    const badges = glyphBadges(peer);
+    const key = badges.map((g) => g.key).join(',');
+    if (tag.worn === key) return;
+    tag.worn = key;
+    tag.glyphs.textContent = '';
+    for (const g of badges) {
+      const svg = glyphSvgNode(doc, g, 'dfname-glyph', 1.6); // INSPECT1: the one drawing (ui/playerBadge.js), at this face's stroke
+      if (!svg) return; // a document that cannot make one draws none, rather than throwing under a name
+      tag.glyphs.append(svg);
+    }
+  };
+
+  /** A line over a peer's head. The newest REPLACES the one before it (delete then set, so the entry is also the
+   *  newest in the store's order), and a fifth peer pushes the oldest out. */
+  const say = (id, text, at = now()) => {
+    const body = bubbleSaid(text); // AUDIT NAME1 F10: whitespace is not a remark
+    if (!id || !body || !Number.isFinite(at)) return false; // AUDIT NAME1 F11: a stamp that is not a number is not a time
+    bubbles.delete(id);
+    bubbles.set(id, { text: body, at });
+    while (bubbles.size > BUBBLE_MAX) bubbles.delete(bubbles.keys().next().value);
+    return true;
+  };
+
+  /** The log, forward from the watermark. Everything the bubble law refuses is still COUNTED, so a refused line can
+   *  never be read a second time. */
+  const pump = (log) => {
+    // AUDIT NAME1 F8: THE WATERMARK IS THE LOG'S. A ChatLog counts its own lines from 1, so a REPLACED log (a
+    // rejoin that builds a new one, a host that swaps it) arrives with line 1 under a watermark of 40 and every
+    // line below it is mute for the rest of the session. Keyed to the log's identity, a new log starts a new count.
+    if (log !== lastLog) {
+      lastLog = log;
+      seq = 0;
+    }
+    // CHAT-CHAN: EVERY TAB, IN THE ORDER THE LINES WERE HEARD - the log's one count runs across its tabs, so the newer
+    // lines of each are its tail, read back to the watermark (a line kept on every tab is one line: a Set)
+    const fresh = new Set();
+    for (const tab of log?.tabs ?? []) {
+      const msgs = tab.messages ?? [];
+      for (let i = msgs.length - 1; i >= 0 && msgs[i].seq > seq; i--) fresh.add(msgs[i]);
+    }
+    for (const line of [...fresh].sort((a, b) => a.seq - b.seq)) {
+      seq = line.seq;
+      // AUDIT NAME1 F6: THE LINE'S OWN STAMP, not this pump's clock. `t` is net/chat.js' local-clock stamp - the
+      // one ChatLog.peek fades by, so a line over a head and the same line in the peek corner go out together -
+      // and `at` is the relay's, kept only as the fallback for a line that never went through push(). A frame
+      // where the pass did not run (a window over the HUD, a mode transition, the death path) used to stamp every
+      // line it had missed with the moment it finally read them: minutes-old words, brand new over a head.
+      if (bubbleLineOk(line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);
+    }
+  };
+
+  return {
+    root,
+    /** For a host or a pin that wants the layer's state without walking the DOM. */
+    tagCount: () => tags.size,
+    tagFor: (id) => tags.get(id) ?? null,
+    bubbleCount: () => visible,
+    /** HERALDRY-SHOWN: where a guild's heraldry is found by its tag (the host's seats' list and own guild), or null. */
+    setArmsOf: (fn) => {
+      armsOf = typeof fn === 'function' ? fn : null;
+    },
+    /** How many lines the STORE holds - the bound itself (BUBBLE_MAX), which `bubbleCount` cannot show because it
+     *  counts what a frame DREW. A line past its window is dropped from here as well as from the screen. */
+    storedCount: () => bubbles.size,
+    /** Drive a line in directly (the host pulls from the log; this is the same door without one). */
+    say,
+    /** AUDIT NAME1 F3: `viewport` is the world viewport's HEIGHT in CSS px and `hudScale` the player's own HUD
+     *  scale (ui/enhanced/enhancedHud.js enhancedHudScale). Both are taken by VALUE rather than through
+     *  `scale(var(--hud-scale))`, because that variable is set on #enhanced-hud and this layer is a body sibling
+     *  of it - the damage numbers' own layer has the same problem and enhancedHud.js:"document.getElementById" solves it the same way,
+     *  by writing the number where it is needed. Neither is passed on a probe host, and there the law is exactly
+     *  the reference frame's: NAME_BASE_PX * the point's scale. */
+    render({ points = [], log = null, covered = false, colorOf = null, viewport = null, hudScale = 1 } = {}) {
+      if (!alive) return 0;
+      if (log) pump(log);
+      const t = now();
+      for (const [id, b] of [...bubbles]) if (t - b.at >= BUBBLE_MS) bubbles.delete(id);
+      const want = !covered && points.length > 0;
+      if (want !== shownRoot) {
+        shownRoot = want;
+        root.style.display = want ? '' : 'none';
+      }
+      // PERF-LEAK1 (2026-10-10): NOBODY TO LABEL, NO LABELS KEPT. The sweep below ran only on a frame that drew names, so
+      // the crowd's last frame left every one of its tags in the page, hidden - ten elements a name until the next
+      // person came into view (PERF-ON4's "240 DOM nodes more after sixty peers left", the peer lab's churn: 8 to 15
+      // names a wave). A frame with no point lets them go; a frame merely COVERED (a window over the HUD) keeps them,
+      // so the names under a window are moved again, never rebuilt, when it closes.
+      if (!want) {
+        visible = 0;
+        if (!covered && tags.size) {
+          for (const tag of tags.values()) tag.node.remove?.();
+          tags.clear();
+        }
+        return 0;
+      }
+      live.clear();
+      visible = 0;
+      const vp = nameViewportScale(viewport); // AUDIT NAME1 F3: the frame's own height, against the reference
+      for (const p of points) {
+        if (!p || typeof p.id !== 'string') continue;
+        // AUDIT NAME1 F11: a point that is not a number is not a place. `translate(NaNpx, ...)` is a declaration the
+        // browser DROPS, which leaves the element wherever the last frame put it - a name standing over the wrong head,
+        // which reads worse than no name at all. The surrounding code guards its numbers (nameScaleFor,
+        // projectToScreen's `front`); so does this one, and a peer whose point went bad loses their element with
+        // everybody else's the frame it happens.
+        if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+        live.add(p.id);
+        let tag = tags.get(p.id);
+        if (!tag) {
+          tag = makeTag();
+          tags.set(p.id, tag);
+        }
+        setCls(tag.node, 'dfname');
+        // NAME_GAP_PX is taken HERE and not inside namePoints because it is a screen-pixel clearance and the point
+        // is a projected head: the anchor stays the head for anything else that wants it, and the label's bottom
+        // edge lands the gap above it. PERF-NAMES1: the anchor rides the TRANSFORM (the sheet's own lift after it) -
+        // the same whole pixels `left`/`top` held, and no layout for a label that only moved.
+        put(
+          tag,
+          'at',
+          `translate(${Math.round(p.x)}px, ${Math.round(p.y - NAME_GAP_PX)}px) translate(-50%, -100%)`,
+          (v) => {
+            tag.node.style.transform = v;
+          },
+        );
+        // PVP-CONE (ui/nameCone.js): the whole tag - skull, bars and bubble with it - near the crosshair, eased; a new tag starts where it stands
+        tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt);
+        tag.coneAt = t;
+        put(tag, 'coneAlpha', tag.cone.toFixed(2), (v) => {
+          tag.node.style.opacity = v === '1.00' ? '' : v;
+          tag.node.style.visibility = v === '0.00' ? 'hidden' : '';
+        });
+        put(tag, 'size', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`, (v) => {
+          tag.node.style.fontSize = v;
+        });
+        // PERF-NAMES1: the words are worked out when the stamp they come from changes, not every frame
+        if (tag.lvOf !== p.lv) {
+          tag.lvOf = p.lv;
+          setText(tag.lv, renownText(p.lv) ?? '');
+        } // RENOWN1: "12" in its box, or nothing
+        put(tag, 'nameText', p.name ?? '', (v) => setText(tag.name, v));
+        if (tag.gtOf !== p.gt) {
+          tag.gtOf = p.gt;
+          setText(tag.guild, guildTagText(p.gt) ?? '');
+        } // GUILD1c: "<HND>", or nothing
+        if (tag.houseOf !== p.house) {
+          tag.houseOf = p.house;
+          setText(tag.house, houseLine(p.house) ?? '');
+        } // LEGACY7: "☠ Ysolde II of House Hlaalu", or nothing
+        // HERALDRY-SHOWN (Seats-Arc 8.1): the tag framed in its guild's heraldry where the client knows it - written when
+        // it CHANGES, as the ribbon is
+        const arms = guildTagText(p.gt) && armsOf ? heraldryOf(armsOf(p.gt)) : null;
+        const armed = arms ? heraldryKey(arms) : ''; // AUDIT GUILD2 G12: the whole arms, never GUILD1d's three alone
+        if (tag.armed !== armed) {
+          tag.armed = armed;
+          setCls(tag.guild, arms ? 'dfname-guild armed' : 'dfname-guild');
+          tag.guild.style.borderColor = arms ? (heraldryColourOf(arms.border)?.hex ?? '') : '';
+          tag.guild.style.backgroundImage = arms ? `url("${heraldrySwatchSrc(arms)}")` : '';
+        }
+        // AUDIT A10 (SHADOW-FANG's audit, the title's own bug on the name): a browser reads a hex colour back as rgb(),
+        // so the diffing door rewrote a party mate's green every frame - written when it CHANGES, as the title is
+        const ink = cssRgba(colorOf?.(p.id)) ?? '';
+        if (tag.inked !== ink) {
+          tag.inked = ink;
+          tag.name.style.color = ink;
+        }
+        // SEASON1 part two (Seats-Arc 9.1): a Season's banner ribbon under the name, in its guild's two colours - written
+        // when it CHANGES, as the name's ink is
+        const band = ribbonColours(p.rb);
+        const banded = band ? `${band.field}/${band.border}` : '';
+        if (tag.banded !== banded) {
+          tag.banded = banded;
+          setCls(tag.ribbon, band ? 'dfname-ribbon' : 'dfname-ribbon off');
+          tag.ribbon.style.background = band?.field ?? '';
+          tag.ribbon.style.borderBottomColor = band?.border ?? '';
+        }
+        // ACC3: the title above, in ITS colour, and the glyphs beside.
+        // `colorOf` is deliberately not asked for either: the party's
+        // green says "this is my party" about a NAME, and gold says
+        // "this is a Founder" - one erasing the other would take away
+        // the distinction Mac asked for.
+        const badge = titleBadge(p);
+        put(tag, 'titleText', badge?.text ?? '', (v) => setText(tag.title, v));
+        // SHADOW-FANG: the title's whole paint - its colour, or a gradient clipped to its letters - written when
+        // the TITLE changes and not every frame: a browser reads a colour back normalised (#d3193c comes back
+        // rgb(211, 25, 60)), so the diffing door would rewrite a gradient's keys on every frame for ever. Every
+        // key is written, so the next title on this tag clears what this one set.
+        const titleKey = badge?.key ?? '';
+        if (tag.titled !== titleKey) {
+          tag.titled = titleKey;
+          const paint = titlePaint(badge);
+          for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];
+          setTitleFlame(tag.title, badge?.flame ? badge.key : null); // SHOP: Genesis on its fire, written with its paint
+        }
+        put(tag, 'skullOf', p.skull ?? '', (k) => {
+          setCls(tag.skull, k ? 'dfname-skull' : 'dfname-skull off');
+          tag.skull.style.backgroundImage = k ? `url("${skullSrc(k)}")` : '';
+          tag.skull.style.filter = skullGlow(k);
+        }); // PVP-SKULL
+        put(tag, 'barOf', p.bar ? `${p.bar.h}/${p.bar.s ?? 0}` : '', () => paintBar(tag, p.bar)); // PVP-BAR
+        if (p.glyphs?.length || tag.worn !== '') setGlyphs(tag, p); // PERF-NAMES1: a peer with no glyph and none worn has nothing to compare
+        const b = bubbles.get(p.id);
+        // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a
+        // relay stamp from the future taken as `at` - is alpha 0, and an invisible box was still being counted by
+        // bubbleCount() and still had its text written into the DOM. Alpha decides both.
+        const alpha = b ? bubbleAlpha(t - b.at) : 0;
+        if (alpha > 0) {
+          put(tag, 'bubbleText', b.text, (v) => setText(tag.bubble, v));
+          put(tag, 'bubbleAlpha', alpha.toFixed(2), (v) => {
+            tag.bubble.style.opacity = v;
+          });
+          put(tag, 'bubbleOn', true, () => setCls(tag.bubble, 'dfname-bubble'));
+          visible++;
+        } else put(tag, 'bubbleOn', false, () => setCls(tag.bubble, 'dfname-bubble off'));
+      }
+      for (const [id, tag] of tags) {
+        if (live.has(id)) continue;
+        tag.node.remove?.();
+        tags.delete(id);
+      }
+      return visible;
+    },
+    destroy() {
+      if (!alive) return;
+      alive = false;
+      tags.clear();
+      bubbles.clear();
+      root.remove?.();
+    },
+  };
+}

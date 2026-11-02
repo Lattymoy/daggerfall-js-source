@@ -1,0 +1,62 @@
+[
+  {
+    "name": "PATRON-LOAD-II-newest-unnarrowed",
+    "file": "server-account/src/market.js",
+    "old": "AND l.vendor_id IS NOT NULL AND l.region = ?2 AND h.region = ?2",
+    "new": "AND l.vendor_id IS NOT NULL AND h.region = ?2",
+    "tests": [
+      "test/server/patronload2.test.js"
+    ],
+    "note": "the newest pieces walk every open listing in the market again"
+  },
+  {
+    "name": "PATRON-LOAD-II-houses-unnarrowed",
+    "file": "server-account/src/market.js",
+    "old": "AND l.expires_at > ?1 AND l.region = ?2 AND h.region = ?2) WHERE v_rank = 1",
+    "new": "AND l.expires_at > ?1 AND h.region = ?2) WHERE v_rank = 1",
+    "tests": [
+      "test/server/patronload2.test.js"
+    ],
+    "note": "each house's newest walks every open trader listing again"
+  },
+  {
+    "name": "PATRON-LOAD-II-piece-index-unwritten",
+    "file": "server-account/migrations/0107_trader_reads.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_home_decor_piece ON home_decor (map_id, id, yard);",
+    "new": "",
+    "tests": [
+      "test/server/patronload2.test.js"
+    ],
+    "note": "a trader found by its town alone - every piece in it"
+  },
+  {
+    "name": "PATRON-LOAD-II-piece-index-without-yard",
+    "file": "server-account/migrations/0107_trader_reads.sql",
+    "old": "ON home_decor (map_id, id, yard)",
+    "new": "ON home_decor (map_id, id)",
+    "tests": [
+      "test/server/patronload2.test.js"
+    ],
+    "note": "two columns tie with idx_home_decor_yard and the planner keeps the old index"
+  },
+  {
+    "name": "PATRON-LOAD-II-region-index-unwritten",
+    "file": "server-account/migrations/0107_trader_reads.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_vendor_region ON market_listings (region, at) WHERE state = 'open' AND vendor_id IS NOT NULL;",
+    "new": "",
+    "tests": [
+      "test/server/patronload2.test.js"
+    ],
+    "note": "the region asked with nothing to answer it"
+  },
+  {
+    "name": "PATRON-LOAD-II-region-index-ageless",
+    "file": "server-account/migrations/0107_trader_reads.sql",
+    "old": "ON market_listings (region, at) WHERE",
+    "new": "ON market_listings (region) WHERE",
+    "tests": [
+      "test/server/patronload2.test.js"
+    ],
+    "note": "the newest sorted after reading them all, never stopped at the board's count"
+  }
+]

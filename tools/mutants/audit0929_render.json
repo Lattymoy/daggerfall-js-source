@@ -1,0 +1,39 @@
+[
+  {
+    "name": "AUDIT0929-E1-an-origin-flat-in-place",
+    "file": "src/render/shadowPass.js",
+    "old": "      const anim = moving && !swaying && b._dyn !== true && b.selfCard !== true && o == null;",
+    "new": "      const anim = moving && !swaying && b._dyn !== true && b.selfCard !== true;",
+    "tests": [
+      "test/render/disc29_lamps.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-E2-the-card-unnoted",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (b.selfCard === true) this._selfCard = b;",
+    "new": "      /* the card unnoted */",
+    "tests": [
+      "test/render/disc29_lamps.test.js",
+      "test/render/disc24c_self_shadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-E3-the-card-lamps-unreserved",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (!self || !n) return casters;",
+    "new": "  return casters;",
+    "tests": [
+      "test/render/disc29_lamps.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT0929-E3-a-card-lamp-evicts-another",
+    "file": "src/render/shadowPass.js",
+    "old": "    for (let r = casters.length - 1; r >= 0; r--) if (!mine.includes(casters[r])) { casters[r] = i; break; }",
+    "new": "    casters[casters.length - 1] = i;",
+    "tests": [
+      "test/render/disc29_lamps.test.js"
+    ]
+  }
+]

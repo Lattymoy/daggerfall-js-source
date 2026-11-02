@@ -1,0 +1,1007 @@
+[
+  {
+    "name": "LPT1-cut-any-picture",
+    "file": "src/render/renderer.js",
+    "old": "const lc = b.lptProto ? this._lptFrameOf(b.lptProto) : null;",
+    "new": "const lc = b.lptProto ? (this._lptSlots.find((f) => f) ?? null) : null;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-frame-not-spent",
+    "file": "src/render/renderer.js",
+    "old": "    }\n    if (slots) slots.fill(null);",
+    "new": "    }",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-cut-never-gone",
+    "file": "src/render/renderer.js",
+    "old": "    gone = vFade <= 0.0;",
+    "new": "    gone = false;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-tree-unturned",
+    "file": "src/render/renderer.js",
+    "old": "float tc = cos(aInst.w), tsn = sin(aInst.w);",
+    "new": "float tc = 1.0, tsn = 0.0;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-tree-unscaled",
+    "file": "src/render/renderer.js",
+    "old": "vec3 p = aCenter * uMeshScale * aScale;",
+    "new": "vec3 p = aCenter * uMeshScale;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-corner-unscaled",
+    "file": "src/render/renderer.js",
+    "old": "verts[o + 3] = bbCornerX(corners[c][0], fs);",
+    "new": "verts[o + 3] = corners[c][0];",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-move-drops-scale",
+    "file": "src/render/renderer.js",
+    "old": "verts[o + 3] = bbCornerX(BB_CORNERS[k][0], fs);",
+    "new": "verts[o + 3] = BB_CORNERS[k][0];",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-flat-lean-unscaled",
+    "file": "src/render/renderer.js",
+    "old": "    push *= fs;   // LPT1: a smaller tree leans less",
+    "new": "    // LPT1: a smaller tree leans less",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-fall-by-the-corner-height",
+    "file": "src/render/renderer.js",
+    "old": "    float up = (cn.y + 0.5) * uSize.y;",
+    "new": "    float up = (aCorner.y + 0.5) * uSize.y;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-tree-shadow-at-its-vertex",
+    "file": "src/render/renderer.js",
+    "old": "    vBBBase = aInst.xyz;",
+    "new": "    vBBBase = world;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-whole-flat-discarded",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
+    "new": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-crossfade-overlaps",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
+    "new": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < vFade - 2.0)) discard;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A1-flash-kept",
+    "file": "src/render/renderer.js",
+    "old": "      if (lastFlash !== 0) { gl.uniform1f(this.bbUHitFlash, 0); lastFlash = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A1-glow-kept",
+    "file": "src/render/renderer.js",
+    "old": "      if (lastGlow !== 0) { gl.uniform1f(this.bbUEliteGlow, 0); lastGlow = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A1-pad-kept",
+    "file": "src/render/renderer.js",
+    "old": "      if (this._bbPadOn) { gl.uniform4f(this.bbUElitePad, 0, 0, 0, 0); this._bbPadOn = false; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A1-dissolve-kept",
+    "file": "src/render/renderer.js",
+    "old": "      if (this._bbDissolveOn) { gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0); this._bbDissolveOn = false; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A1-wash-kept",
+    "file": "src/render/renderer.js",
+    "old": "      if (this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, 1, 1, 1); gl.uniform1f(this.bbUBatchDye, 0); this._bbTintOn = false; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A2-the-sun-alone",
+    "file": "src/render/renderer.js",
+    "old": "vShade = uMeshColor * mix(faceSky, faceSun, uLptSun.w);",
+    "new": "vShade = uMeshColor * faceSun;",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the night's face light is the sky's (faceSky), no longer the eye's.",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A2-FLORA-GROUND-the-light-turned-to-the-eye-again",
+    "file": "src/render/renderer.js",
+    "old": "float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(${LPT_IMPOSTOR_LIGHT.map((v) => v.toFixed(4)).join(', ')})), 0.5, 1.0);",
+    "new": "vec2 fe = length(uLptCut.xz - aInst.xz) > 1e-4 ? normalize(uLptCut.xz - aInst.xz) * 0.8 : vec2(0.0, 0.8); float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(fe.x, 0.6, fe.y)), 0.5, 1.0);",
+    "note": "FLORA-GROUND (PIN MOVED): this record held the eye's turn (AUDIT LPT A2's 'the eye not turned to'); the light is the sky's now and no eye turns it, so the mutant is the eye's law put back - the reflective sheen the owner saw.",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A2-the-sun-whole-by-day",
+    "file": "src/render/renderer.js",
+    "old": "const sun = this._clockLit ? Math.min(1, Math.max(0, (this._sunScale ?? 0) / LPT_SUN_FULL)) : 0;",
+    "new": "const sun = this._clockLit ? 1 : 0;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A3-lean-by-the-prototype",
+    "file": "src/render/renderer.js",
+    "old": "float lean = clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0);",
+    "new": "float lean = clamp(p.y / max(uSize.y, 1e-3), 0.0, 1.0);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A4-material-alpha-dropped",
+    "file": "src/render/renderer.js",
+    "old": "    vAlpha = uMeshAlpha;",
+    "new": "    vAlpha = 1.0;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A4-material-colour-dropped",
+    "file": "src/render/renderer.js",
+    "old": "if (r !== lr || g !== lg || b !== lb) { gl.uniform3f(L.uMeshColor, r, g, b); lr = r; lg = g; lb = b; }",
+    "new": "if (r !== lr || g !== lg || b !== lb) { gl.uniform3f(L.uMeshColor, 1, 1, 1); lr = r; lg = g; lb = b; }",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A4-mips-blended",
+    "file": "src/render/renderer.js",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, this._retroMips",
+    "new": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, this._retroMips",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A4-alpha-off-the-cut",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "export const lptAlphaOf = (sub) => (sub.opaque ? 0 : 0.5 / Math.max(1e-3, sub.cutoff ?? 0.5));",
+    "new": "export const lptAlphaOf = (sub) => (sub.opaque ? 0 : 1);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A4-impostor-cut-at-half",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "    const cut = Math.round((sub.cutoff ?? 0.5) * 255),",
+    "new": "    const cut = 128,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A4-impostor-uncoloured",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "          data[i * 4] = Math.round(pic.data[s] * sh * cr);",
+    "new": "          data[i * 4] = Math.round(pic.data[s] * sh);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A5-made-with-its-chain",
+    "file": "src/render/renderer.js",
+    "old": "this._retroMips ? levels - 1 : 0);   // RETRO1: no chain read while retro mode says so",
+    "new": "levels - 1);   // RETRO1: no chain read while retro mode says so",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A5-retro-misses-the-atlases",
+    "file": "src/render/renderer.js",
+    "old": "...this.emissionTextures.values(), ...(this.lptAtlases ?? [])]",
+    "new": "...this.emissionTextures.values()]",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A6-backs-drawn",
+    "file": "src/render/renderer.js",
+    "old": "if (sub.cull !== lastCull) { if (sub.cull === 2) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE); lastCull = sub.cull; }",
+    "new": "lastCull = 0;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A6-impostor-backs-drawn",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "      if (sub.cull === 2 && area < 0) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-A7-texel-cleared",
+    "file": "src/render/lowPolyTreesGlsl.js",
+    "old": "  if (vFade > 1.5) tex = lptTexel;\n  tex.rgb *= vShade;",
+    "new": "  tex.rgb *= vShade;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B1-far-ring-on-the-picture",
+    "file": "src/scenes/world.js",
+    "old": "farFlatVisibleAt(ring, b.farH ?? b.size?.h ?? 0,",
+    "new": "farFlatVisibleAt(ring, b.size?.h ?? 0,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B1-no-flat-height",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        batch.farH = plain.h;",
+    "new": "        batch.farH = undefined;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B2-one-source-for-every-archive",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "  const sourceOf = (proto) => seasonal?.key?.(proto.archive) ?? '';",
+    "new": "  const sourceOf = (proto) => seasonal?.key?.(504) ?? '';",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B2-season-under-the-classic-key",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "    const sib = source && frame === 0 ? seasonal?.picture?.(archive, record) : null;",
+    "new": "    const sib = frame === 0 ? seasonal?.picture?.(archive, record) : null;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B3-overtaken-paint-kept",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "          if (source && generation() !== gen) return null; // a new install overtook the paint (AUDIT LPT B3): never kept",
+    "new": "          if (false) return null; // a new install overtook the paint (AUDIT LPT B3): never kept",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B3-mid-install-paint",
+    "file": "src/scenes/treesHost.js",
+    "old": "seasonsActive() && !seasons.installing && seasons.lookup(a, 1)",
+    "new": "seasonsActive() && seasons.lookup(a, 1)",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B3-installing-never-up",
+    "file": "src/systems/seasonsIliacBay.js",
+    "old": "    return !!this._applying;",
+    "new": "    return false;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B4-no-cull",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      const visible = cullNear(gathered, planes, vis);",
+    "new": "      const visible = cullNear(gathered, null, vis);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B4-cull-without-the-sphere",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "          if (planes[p] * x + planes[p + 1] * y + planes[p + 2] * z + planes[p + 3] < -rad) {",
+    "new": "          if (planes[p] * x + planes[p + 1] * y + planes[p + 2] * z + planes[p + 3] < 0) {",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B4-sphere-at-no-scale",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "          rad = k * s;",
+    "new": "          rad = k;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B4-the-host-culls-nothing",
+    "file": "src/scenes/world.js",
+    "old": "trees.frame(_pixelOrder, cam.pos, cullOn ? _planes : null);",
+    "new": "trees.frame(_pixelOrder, cam.pos, null);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-held-handle-freed",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      if (h && h.refs <= 0 && t - h.idleAt > LPT_IDLE_S * 1000) {",
+    "new": "      if (h && t - h.idleAt > LPT_IDLE_S * 1000) {",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-handle-never-freed",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "        freeHandle(key, entry);\n        continue;",
+    "new": "        continue;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-picture-kept",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "        if (entry.pic && !entry.painting && t - entry.picAt > LPT_PIC_IDLE_S * 1000) entry.pic = null;",
+    "new": "        if (false) entry.pic = null;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-atlas-never-freed",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      if (t - entry.lastLive > LPT_IDLE_S * 1000 && !entry.painting) freeAtlas(entry);",
+    "new": "      if (false) freeAtlas(entry);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-release-forgets-the-time",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "        handle.idleAt = now();\n      }",
+    "new": "      }",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-pixel-keeps-its-handles",
+    "file": "src/scenes/treesHost.js",
+    "old": "      if (p.lowPolyTrees) for (const h of p.lowPolyTrees.handles) lowPolyTrees?.release(h);",
+    "new": "      // gone",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-failed-build-keeps-its-handles",
+    "file": "src/scenes/treesHost.js",
+    "old": "      for (const h of m.lptHandles ?? []) lowPolyTrees?.release(h);",
+    "new": "      // gone",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-handles-never-held",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        lowPolyTrees.acquire(far); lptHandles.push(far);",
+    "new": "        lptHandles.push(far);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B5-overtaken-upload-kept",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "        if (atlases.get(key) !== e) return e; // given back while it painted: nothing uploaded",
+    "new": "        if (false) return e; // given back while it painted: nothing uploaded",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B6-untrimmed",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "  return trimImpostor({ width: W, height: H, data });",
+    "new": "  return { width: W, height: H, data, shareW: 1, shareH: 1 };",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B6-trim-off-centre",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "      side = Math.min(side, x, W - 1 - x);",
+    "new": "      side = Math.min(side, x);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B7-no-triangle-cap",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "      if (texels >= LPT_IMPOSTOR_TEXELS || tris >= LPT_IMPOSTOR_TRIS) {",
+    "new": "      if (texels >= LPT_IMPOSTOR_TEXELS) {",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B7-no-texel-cap",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "      if (texels >= LPT_IMPOSTOR_TEXELS || tris >= LPT_IMPOSTOR_TRIS) {",
+    "new": "      if (tris >= LPT_IMPOSTOR_TRIS) {",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B7-mip-rows-fixed",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "    const rows = Math.max(1, Math.floor(LPT_MIP_TEXELS / w));",
+    "new": "    const rows = 64;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B7-upload-whole",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "        const y1 = Math.min(h, y0 + LPT_ATLAS_BAND),",
+    "new": "        const y1 = h,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B7-band-not-flipped",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "        for (let y = y0; y < y1; y++) band.set(d.subarray(y * row, (y + 1) * row), (y1 - 1 - y) * row);",
+    "new": "        for (let y = y0; y < y1; y++) band.set(d.subarray(y * row, (y + 1) * row), (y - y0) * row);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B7-quarter-turns-swapped",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "        ? [0, 0, 1, h - 1, -1, 0]",
+    "new": "        ? [w - 1, 0, -1, 0, 1, 0]",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B9-missing-uncounted",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "    const src = recordRgba(a, r, f);\n    if (!src) {\n      missing++;\n      continue;\n    }",
+    "new": "    const src = recordRgba(a, r, f);\n    if (!src) {\n      continue;\n    }",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B9-missing-handle-kept",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "            if (a.missing || !a.tex) return null;",
+    "new": "            if (!a.tex && !a.missing) return null;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B10-set-never-let-go",
+    "file": "src/scenes/treesHost.js",
+    "old": "if (p._dist2 > 8) { drop(a); drop(b); }",
+    "new": "if (false) { drop(a); drop(b); }",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-B10-set-made-ignored",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      if (l[0] !== s || l[1] !== s.ox || l[2] !== s.oy || l[3] !== s.oz || l[4] !== s.trees) return false;",
+    "new": "      if (l[0] !== s || l[1] !== s.ox || l[2] !== s.oy || l[3] !== s.oz) return false;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-C1-scale-range-short",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "  return { scale: LPT_SCALE_MIN + (LPT_SCALE_MAX - LPT_SCALE_MIN) * unit(qx, qz, k, 2), yaw };",
+    "new": "  return { scale: LPT_SCALE_MIN + (1 - LPT_SCALE_MIN) * unit(qx, qz, k, 2), yaw };",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-C1-location-varied",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "  if (location) return { scale: 1, yaw };",
+    "new": "  if (location) return { scale: 1.2, yaw };",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-C2-season-never-painted",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "    if (img?.width) return nearestRgba(topDownOf(img), bm.width, bm.height);",
+    "new": "    if (img?.width && 0) return nearestRgba(topDownOf(img), bm.width, bm.height);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-C6-material-colour-lost",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "        color: mat?.color ?? [1, 1, 1],",
+    "new": "        color: [1, 1, 1],",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-C6-material-cut-lost",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "        cutoff: mat?.cutoff ?? 0.5,",
+    "new": "        cutoff: 0.5,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-C6-material-faces-lost",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "        cull: mat?.cull ?? 0,",
+    "new": "        cull: 0,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D1-impostor-upside-down",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "    toY = (y) => (1 - (y * sy) / h) * H;",
+    "new": "    toY = (y) => ((y * sy) / h) * H;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D1-impostor-off-centre",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "  const toX = (x) => ((x * sx) / w + 0.5) * W,",
+    "new": "  const toX = (x) => ((x * sx) / w + 0.4) * W,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D1-atlas-read-upside-down",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "          const ty = Math.min(pic.height - 1, Math.max(0, Math.floor((1 - (vv - Math.floor(vv))) * pic.height))); // uv's v=0 is the picture's bottom",
+    "new": "          const ty = Math.min(pic.height - 1, Math.max(0, Math.floor((vv - Math.floor(vv)) * pic.height))); // uv's v=0 is the picture's bottom",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D1-light-inverted",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "  return Math.min(1, Math.max(0.5, 0.72 + 0.28 * ((n0 * l[0] + n1 * l[1] + n2 * l[2]) / len)));",
+    "new": "  return Math.min(1, Math.max(0.5, 0.72 - 0.28 * ((n0 * l[0] + n1 * l[1] + n2 * l[2]) / len)));",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D1-no-depth-test",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "          if (z >= depth[i]) continue;",
+    "new": "          if (false) continue;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D1-root-scale-ignored",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "  const [sx, sy, sz] = proto.scale;",
+    "new": "  const [sx, sy, sz] = [1, 1, 1];",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D1-height-without-the-scale",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "      size: { w: reach * 2, h: Math.max(0.5, m.max[1] * sy) },",
+    "new": "      size: { w: reach * 2, h: Math.max(0.5, m.max[1]) },",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D1-impostor-uncut",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "          if (!sub.opaque && pic.data[s + 3] < cut) continue;",
+    "new": "          if (!sub.opaque && pic.data[s + 3] < 0) continue;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D5-run-unscaled",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "            scale: p.scale,",
+    "new": "            scale: [1, 1, 1],",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D5-run-unswayed",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "            sway: swayOf ? swayOf(p) : 0,",
+    "new": "            sway: 0,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D5-sub-without-its-material",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "            subs.push({ offset: at[0], count: at[1], tex, alpha: lptAlphaOf(s), color: s.color, cull: s.cull });",
+    "new": "            subs.push({ offset: at[0], count: at[1], tex, alpha: 1, color: [1, 1, 1], cull: 0 });",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D6-atlas-never-bound",
+    "file": "src/render/renderer.js",
+    "old": "        this._bindTex0(sub.tex);   // PERF-TEX3",
+    "new": "        // PERF-TEX3",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D6-instances-from-the-start",
+    "file": "src/render/renderer.js",
+    "old": "f.gpu.pointInstances(run.drawStart);",
+    "new": "f.gpu.pointInstances(0);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D6-origin-kept",
+    "file": "src/render/renderer.js",
+    "old": "    gl.uniform3f(this.bbUOrigin, 0, 0, 0);\n    if (this._bbTipOn)",
+    "new": "    if (this._bbTipOn)",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-D6-vao-unbound",
+    "file": "src/render/renderer.js",
+    "old": "    this._bindVao(f.gpu.vao);",
+    "new": "    // the trees' vertex array",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-gather-no-margin",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "        gathered = gatherNear(sets, ex, ez, LPT_NEAR_M, LPT_BAND_M + LPT_REGATHER_M, data, skip); // the band and the way the eye may go before the next gather: a tree it walks into the band toward is there",
+    "new": "        gathered = gatherNear(sets, ex, ez, LPT_NEAR_M, LPT_BAND_M, data, skip); // the band and the way the eye may go before the next gather: a tree it walks into the band toward is there",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-regather-every-frame",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      const moved = !lastEye || Math.hypot(ex - lastEye[0], ez - lastEye[2]) > LPT_REGATHER_M;",
+    "new": "      const moved = true;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-felling-ignored",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      if (moved || stamp !== lastStamp || !sameSets(sets) || !gathered) {",
+    "new": "      if (moved || !sameSets(sets) || !gathered) {",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-recentre-ignored",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      if (l[0] !== s || l[1] !== s.ox || l[2] !== s.oy || l[3] !== s.oz || l[4] !== s.trees) return false;",
+    "new": "      if (l[0] !== s || l[4] !== s.trees) return false;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-runs-every-frame",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      if (out.from !== gathered || out.readyGen !== readyGen) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-unpainted-drawn",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "            if (s.atlas && !tex) ok = false;",
+    "new": "            if (false) ok = false;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ],
+    "equivalent": true,
+    "why": "Unreachable today: a handle exists only once its atlases are uploaded, a set holds only handles a standing pixel holds, and a held handle's atlases are live - the sweep never frees them. The check is kept because a run whose atlas were gone would be CUT with no tree drawn: a hole at the player's feet, not a missing texture."
+  },
+  {
+    "name": "LPT1-B5-uploaded-into-a-freed-entry",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "        if (atlases.get(key) !== e) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-first-paint-overwritten",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "        if (data[d + 3] || erased[i]) continue;",
+    "new": "        if (erased[i]) continue;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-erase-ignored",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "    const erase = typeof blit[10] === 'number' ? decodeErase(eraseBytes, blit[10], blit[11], x0, y0) : blit[10];\n    if (erase)",
+    "new": "    const erase = typeof blit[10] === 'number' ? decodeErase(eraseBytes, blit[10], blit[11], x0, y0) : blit[10];\n    if (false)",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-fill-outside-cells",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "        if (cells && !cells[Math.floor(y / LPT_FILL_CELL) * cols + Math.floor(x / LPT_FILL_CELL)]) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-fit-unmirrored",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "      const s = (sy * src.width + x0 + (mirror ? bw - 1 - fx : fx)) * 4;",
+    "new": "      const s = (sy * src.width + x0 + fx) * 4;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-tile-unmirrored-down",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "    const sy = cy + (ty & 1 ? ch - 1 - my : my);",
+    "new": "    const sy = cy + my;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-mip-clear-darkens",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "          data[d] = Math.round((src[s0] * a0 + src[s1] * a1 + src[s2] * a2 + src[s3] * a3) / a);",
+    "new": "          data[d] = Math.round((src[s0] + src[s1] + src[s2] + src[s3]) / 4);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-gather-skips-none",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "      if (skip && skip(set, i / F)) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-forest-stamp-still",
+    "file": "src/scenes/treeHost.js",
+    "old": "    FOREST_STAMP.n++;   // LPT1",
+    "new": "    // LPT1",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-fall-at-full-size",
+    "file": "src/scenes/treeHost.js",
+    "old": "[c], g.scales ? { scales: [g.scales[n.flat.i]] } : undefined);",
+    "new": "[c]);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-felled-tree-stands",
+    "file": "src/scenes/treesHost.js",
+    "old": "skip: (set, i) => FELLED.has(set.centers[i]),",
+    "new": "skip: null,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-every-flat-wild",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "wild[i] = g.wild.has(`${k}#${i}`) ? 1 : 0;",
+    "new": "wild[i] = 0;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-flats-unscaled",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          const v = lptVariety(g.px, g.py, c[0], c[2], !wild[i]).scale;",
+    "new": "          const v = LPT_SCALE_MAX;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ],
+    "note": "LPT-FIT (2026-10-07, PIN MOVED): the variety is read into `v` and the far picture takes the lesser of it and the tree's fit; the mutant still drops DFU's variety."
+  },
+  {
+    "name": "LPT1-set-at-pixel-local",
+    "file": "src/scenes/treesHost.js",
+    "old": "set.ox = t[0]; set.oy = t[1]; set.oz = t[2];",
+    "new": "set.ox = 0; set.oy = 0; set.oz = 0;",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-stamp-not-handed",
+    "file": "src/scenes/treesHost.js",
+    "old": "      opts.stamp = FOREST_STAMP.n;",
+    "new": "      // the stamp",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-location-tree-too-big",
+    "file": "src/scenes/exterior.js",
+    "old": "{ scales: centers.map(() => 1 / LPT_SCALE_MAX) }",
+    "new": "{ scales: centers.map(() => 1) }",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-location-eye-on-the-floor",
+    "file": "src/scenes/exterior.js",
+    "old": "lowPolyTrees.frame(lptSets, cam.pos[0], cam.pos[1], cam.pos[2], lptOpts);",
+    "new": "lowPolyTrees.frame(lptSets, 0, cam.pos[1], 0, lptOpts);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-cover-at-the-tree",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain,",
+    "new": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, far.size,",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js",
+      "test/scenes/tact1.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-sway-of-the-tree",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        batch.sway = floraSwayOf(archive, g.natureSet, plain.h);\n        _lptSway",
+    "new": "        batch.sway = floraSwayOf(archive, g.natureSet, far.size.h);\n        _lptSway",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  },
+  {
+    "name": "LPT1-gpu-scale-two-wide",
+    "file": "src/render/lowPolyTreesRender.js",
+    "old": "    gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, at + 16);",
+    "new": "    gl.vertexAttribPointer(4, 2, gl.FLOAT, false, stride, at + 16);",
+    "tests": [
+      "test/systems/lpt1_lowpolytrees.test.js"
+    ]
+  }
+]

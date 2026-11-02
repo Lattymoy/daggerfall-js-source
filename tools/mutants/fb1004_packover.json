@@ -1,0 +1,92 @@
+[
+  {
+    "name": "PACKOVER-minted-through-mint",
+    "file": "src/net/profBook.js",
+    "old": "      try { got = (typeof carry?.give === 'function' ? carry.give(k, n) : carry?.mint(k, n)) ?? null; }",
+    "new": "      try { got = carry?.mint(k, n) ?? null; }",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-over-counted-as-left",
+    "file": "src/net/profBook.js",
+    "old": "      const left = got ? Math.max(0, n - (got.bag | 0) - (got.pack | 0) - (got.over | 0)) : n;",
+    "new": "      const left = got ? Math.max(0, n - (got.bag | 0) - (got.pack | 0)) : n;",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-over-unsummed",
+    "file": "src/net/profBook.js",
+    "old": "out.over += got.over | 0; }",
+    "new": "}",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-over-not-the-pack",
+    "file": "src/net/bagLaw.js",
+    "old": "  const p = { ...put, pack: (put.pack | 0) + (put.over | 0) };",
+    "new": "  const p = { ...put };",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-the-weight-unsaid",
+    "file": "src/net/bagLaw.js",
+    "old": "  const said = (put.over | 0) > 0 ? `${to} - your pack is over its weight` : to;",
+    "new": "  const said = to;",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-the-toast-unsaid",
+    "file": "src/scenes/gatherHost.js",
+    "old": "hud.toast(BAG_WORDS.overWeight); }",
+    "new": "}",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-the-overflows-rot-words-dropped",
+    "file": "src/systems/materialsBag.js",
+    "old": "  if (got.left > 0 && withdrawable(key))\n    over = withdrawIntoPack(entity, key, got.left, opts.cc, {\n      slowRot: opts.slowRot === true,\n      noRot: opts.noRot === true,\n    });",
+    "new": "  if (got.left > 0 && withdrawable(key)) over = withdrawIntoPack(entity, key, got.left, opts.cc, {});",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-the-overflows-cc-forced",
+    "file": "src/systems/materialsBag.js",
+    "old": "    over = withdrawIntoPack(entity, key, got.left, opts.cc, {",
+    "new": "    over = withdrawIntoPack(entity, key, got.left, false, {",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-over-uncounted-for-the-save",
+    "file": "src/scenes/world.js",
+    "old": "if (got.bag + got.pack + got.over > 0) saveSoon.changed(); return got; },",
+    "new": "if (got.bag + got.pack > 0) saveSoon.changed(); return got; },",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  },
+  {
+    "name": "PACKOVER-the-line-every-answer",
+    "file": "src/scenes/gatherHost.js",
+    "old": "(d.put?.over ?? 0) > 0 && deps.nowMs() - overSaidAt >= OVER_SAID_MS) {",
+    "new": "(d.put?.over ?? 0) > 0) {",
+    "tests": [
+      "test/net/fb1004_packover.test.js"
+    ]
+  }
+]

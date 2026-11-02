@@ -1,0 +1,29 @@
+[
+  {
+    "name": "MW-AXES-the-war-axe-crossed-back",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  War_Axe: MW_WEAPON_TYPE.AxeTwoHand,",
+    "new": "  War_Axe: MW_WEAPON_TYPE.AxeOneHand,",
+    "tests": [
+      "test/characters/fb1015c_mwaxes.test.js"
+    ]
+  },
+  {
+    "name": "MW-AXES-the-battle-axe-crossed-back",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  Battle_Axe: MW_WEAPON_TYPE.AxeOneHand,",
+    "new": "  Battle_Axe: MW_WEAPON_TYPE.AxeTwoHand,",
+    "tests": [
+      "test/characters/fb1015c_mwaxes.test.js"
+    ]
+  },
+  {
+    "name": "MW-AXES-the-shapes-uncrossed",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "const DF_TO_MW_SHAPE = Object.freeze({ wakazashi: 'wakizashi', battleaxe: 'waraxe', waraxe: 'battleaxe' });",
+    "new": "const DF_TO_MW_SHAPE = Object.freeze({ wakazashi: 'wakizashi' });",
+    "tests": [
+      "test/characters/fb1015c_mwaxes.test.js"
+    ]
+  }
+]

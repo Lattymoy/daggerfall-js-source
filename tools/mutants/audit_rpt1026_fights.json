@@ -1,0 +1,34 @@
+[
+  {
+    "name": "AUDIT-RPT1026-E1-dungeon-door-holds-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      blocked: dungeonPaused,\n",
+    "new": "",
+    "tests": ["test/scenes/audit_rpt1026_fights.test.js"],
+    "note": "the head as found: the dungeon's technique door has no `blocked`, and online the key fires a technique from under a window"
+  },
+  {
+    "name": "AUDIT-RPT1026-E1-dungeon-door-holds-by-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      blocked: dungeonPaused,\n",
+    "new": "      blocked: () => false,\n",
+    "tests": ["test/scenes/audit_rpt1026_fights.test.js"],
+    "note": "a door that answers, but never with the window's word"
+  },
+  {
+    "name": "AUDIT-RPT1026-E3-ketch-word-pose-never-ages",
+    "file": "server/src/index.js",
+    "old": "const pose = a.pose && now - (a.pAt ?? a.since ?? 0) <= KT_POSE_FRESH_MS ? this._ktPoseOf(a.pose) : null;",
+    "new": "const pose = a.pose ? this._ktPoseOf(a.pose) : null;",
+    "tests": ["test/net/ketch/audit_rpt1026_fights_ketch.test.js"],
+    "note": "RETIRED-BLOW's Ketch law undone: a crewmate gone quiet strikes from its last pose however old - driven at the real Room"
+  },
+  {
+    "name": "AUDIT-RPT1026-E3-ketch-word-pose-ages-by-the-hello",
+    "file": "server/src/index.js",
+    "old": "const pose = a.pose && now - (a.pAt ?? a.since ?? 0) <= KT_POSE_FRESH_MS ? this._ktPoseOf(a.pose) : null;",
+    "new": "const pose = a.pose && now - (a.since ?? 0) <= KT_POSE_FRESH_MS ? this._ktPoseOf(a.pose) : null;",
+    "tests": ["test/net/ketch/audit_rpt1026_fights_ketch.test.js"],
+    "note": "the age read off the hello, not the pose: every word refused 25 s after boarding"
+  }
+]

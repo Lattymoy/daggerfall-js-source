@@ -1,0 +1,82 @@
+[
+  {
+    "name": "SMOKE-LOST-the-loss-never-kept",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "if [ \"$got\" = \"000\" ]; then : > \"$out.lost\"; fi",
+    "new": "if [ \"$got\" = \"000\" ]; then :; fi",
+    "tests": [
+      "test/server/smoke_lost.test.js"
+    ],
+    "note": "#1004's deploy again: the first report landed unanswered and its retry's repeat fails the smoke."
+  },
+  {
+    "name": "SMOKE-LOST-a-5xx-kept-as-lost",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "if [ \"$got\" = \"000\" ]; then : > \"$out.lost\"; fi",
+    "new": "if [ \"$got\" != \"404\" ]; then : > \"$out.lost\"; fi",
+    "tests": [
+      "test/server/smoke_lost.test.js"
+    ],
+    "note": "A 5xx is a batch that failed whole and wrote nothing - a repeat after one is a report this run never landed."
+  },
+  {
+    "name": "SMOKE-LOST-the-marker-never-cleared",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "            rm -f \"$out.lost\"\n",
+    "new": "",
+    "tests": [
+      "test/server/smoke_lost.test.js"
+    ],
+    "note": "A marker left from before the first ask is read as a try this ask lost."
+  },
+  {
+    "name": "SMOKE-LOST-a-repeat-taken-without-a-lost-try",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "lost /tmp/renown.json && grep -q '\"repeat\":true'",
+    "new": "grep -q '\"repeat\":true'",
+    "tests": [
+      "test/server/smoke_lost.test.js"
+    ],
+    "note": "A first answer that says repeat is a report this run never sent - a broken route passing."
+  },
+  {
+    "name": "SMOKE-LOST-the-track-unread",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": " && grep -q '\"xp\":1,' /tmp/renown.json",
+    "new": "",
+    "tests": [
+      "test/server/smoke_lost.test.js"
+    ],
+    "note": "A repeat on a track holding more than the one report passes."
+  },
+  {
+    "name": "SMOKE-LOST-the-track-read-as-a-prefix",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "grep -q '\"xp\":1,' /tmp/renown.json",
+    "new": "grep -q '\"xp\":1' /tmp/renown.json",
+    "tests": [
+      "test/server/smoke_lost.test.js"
+    ],
+    "note": "A track of 12 reads as the report's 1."
+  },
+  {
+    "name": "SMOKE-LOST-the-beat's-loss-unread",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "lost /tmp/beat.json && [ -n \"$played\" ]",
+    "new": "[ -n \"$played\" ]",
+    "tests": [
+      "test/server/smoke_lost.test.js"
+    ],
+    "note": "A fresh guest's first beat answering time already played passes."
+  },
+  {
+    "name": "SMOKE-LOST-the-beat's-bound-unread",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "[ \"$played\" -le 140 ]",
+    "new": "[ \"$played\" -le 99999 ]",
+    "tests": [
+      "test/server/smoke_lost.test.js"
+    ],
+    "note": "A beat crediting more than the asks could have taken passes."
+  }
+]

@@ -1,0 +1,467 @@
+// Diseases (Systems S18). Verbatim from DFU DiseaseEffect.cs +
+// FormulaHelper.cs OnMonsterHit/InflictDisease/FatigueDamage (MIT,
+// Daggerfall Workshop).
+//
+// Shape: a disease is a PERMANENT activeEffects entry ({ kind:
+// 'disease' }) that manages its own lifecycle (DiseaseEffect presents
+// forcedRoundsRemaining = 1 until EndDisease zeroes it - our
+// entry.ended flag). Diseases operate on a DAILY tick layered over
+// the per-minute magic round: UpdateDisease runs every round but
+// no-ops until the classic day advances (the infection day itself is
+// incubation). Each elapsed day rolls Range(minDamage, maxDamage+1)
+// ONCE per day and applies the DiseaseData row as a multiplier matrix:
+// stat columns accumulate a negative statMod (consumed by liveStat,
+// healable by Heal{Attribute} - base HealAttributeDamage clamps at 0
+// and does NOT end the disease), HEA/FAT/SPL columns decrease
+// health/fatigue/magicka. NOTE the FAT column decreases RAW fatigue
+// units - DFU calls DecreaseFatigue WITHOUT assignMultiplier, so a
+// disease day costs points, not x64 (bug-for-bug).
+// daysOfSymptomsMin 0xff = permanent (falls until cured);
+// daysOfSymptomsLeft 0xfe = completed. A finite disease that runs its
+// course ends and its statMods lift with the entry (DFU: the expired
+// effect's mods vanish from the manager's totals).
+//
+// Player-only: DiseaseEffect.Start ends the disease unless the host
+// is the player at level >= 2, and InflictDisease additionally gates
+// on level != 1 ("keep new players from dying at the start") plus a
+// FULL saving-throw save (== 0) resisting outright. The player
+// cannot catch the same disease twice (AddState is a no-op).
+//
+// OnMonsterHit is the monster special-attack rider table, called
+// per-hit from CalculateAttackDamage's weaponless multi-attack loop
+// (FormulaHelper.cs:662) BEFORE the hit damage lands. Spider/
+// GiantScorpion free-cast classic spell 66 (Spider Touch - Paralyze,
+// S19) at a not-yet-paralyzed target; Werewolf/Wereboar (lycanthropy)
+// and the Vampire specialInfectionChance branch (vampirism) are
+// ROUTED to the vampirism/lycanthropy line - their rolls are consumed
+// verbatim so sequences match.
+
+import { savingThrow, EFFECT_FLAGS } from './spellcast.js';
+import { isEntityImmuneToDisease } from './effects.js'; // AUDIT 63 F15: AssignBundle's hard-immunity gate (EntityEffectManager.cs:495-499), beside its paralysis twin
+import { INFECTION, startInfection } from './infection.js'; // V1: the three special infections OnMonsterHit mints
+import { FATIGUE_MULTIPLIER } from './statMods.js';
+import { dice100, formulaOverride } from '../combat/formulas.js'; // DEX4b: OnMonsterHit's TryGetOverride
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
+import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { noteFirstUse } from './tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+
+// ---- MagicAndEffectsEnums.Diseases, verbatim ----
+export const DISEASES = Object.freeze({
+  None: -1,
+  WitchesPox: 0,
+  Plague: 1,
+  YellowFever: 2,
+  StomachRot: 3,
+  Consumption: 4,
+  BrainFever: 5,
+  SwampRot: 6,
+  CalironsCurse: 7,
+  Cholera: 8,
+  Leprosy: 9,
+  WoundRot: 10,
+  RedDeath: 11,
+  BloodRot: 12,
+  TyphoidFever: 13,
+  Dementia: 14,
+  Chrondiasis: 15,
+  WizardFever: 16,
+});
+
+export const PERMANENT_DISEASE_VALUE = 0xff;
+export const COMPLETED_DISEASE_VALUE = 0xfe;
+
+// ---- DiseaseEffect.GetClassicDiseaseData, verbatim (indexed by
+// Diseases id). Columns: 8 stat multipliers, HEA/FAT/SPL multipliers,
+// the daily damage roll span, days-of-symptoms span (0xFF = never
+// ending). Byte-exact from DiseaseEffect.cs:218-236. ----
+const D = (
+  STR,
+  INT,
+  WIL,
+  AGI,
+  END,
+  PER,
+  SPD,
+  LUC,
+  HEA,
+  FAT,
+  SPL,
+  minDamage,
+  maxDamage,
+  daysOfSymptomsMin,
+  daysOfSymptomsMax,
+) =>
+  Object.freeze({
+    STR,
+    INT,
+    WIL,
+    AGI,
+    END,
+    PER,
+    SPD,
+    LUC,
+    HEA,
+    FAT,
+    SPL,
+    minDamage,
+    maxDamage,
+    daysOfSymptomsMin,
+    daysOfSymptomsMax,
+  });
+export const DISEASE_DATA = Object.freeze([
+  //STR INT WIL AGI END PER SPD LUC HEA FAT SPL MIN MAX  DAYS
+  D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 10, 0xff, 0xff), // Witches' Pox
+  D(1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 30, 0xff, 0xff), // Plague
+  D(0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 5, 10, 0xff, 0xff), // Yellow Fever
+  D(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 5, 0xff, 0xff), // Stomach Rot
+  D(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0xff, 0xff), // Consumption
+  D(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 5, 0xff, 0xff), // Brain Fever
+  D(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0xff, 0xff), // Swamp Rot
+  D(1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 5, 10, 3, 18), // Caliron's Curse
+  D(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 30, 0xff, 0xff), // Cholera
+  D(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 5, 30, 0xff, 0xff), // Leprosy
+  D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 4, 0xff, 0xff), // Wound Rot
+  D(0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 2, 10, 0xff, 0xff), // Red Death
+  D(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 5, 10, 3, 18), // Blood Rot
+  D(0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 10, 0xff, 0xff), // Typhoid Fever
+  D(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 2, 10, 0xff, 0xff), // Dementia
+  D(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 10, 0xff, 0xff), // Chrondiasis
+  D(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4, 3, 18), // Wizard Fever
+]);
+
+/** IsDiseasePermanent, verbatim (min == 0xff means never-ending). */
+export const isDiseasePermanent = (data) => data.daysOfSymptomsMin === PERMANENT_DISEASE_VALUE;
+
+/** Classic contracted-message tokens live at TEXT.RSC record
+ *  100 + diseaseType (GetClassicContractedMessageTokens). Shown by
+ *  the health status box once incubation is over - that UI pends. */
+export const contractedMessageRecord = (diseaseType) => 100 + diseaseType;
+
+/** UI3: each disease's name, as its own contracted message says it (TEXT.RSC 100-116: "You have contracted Witches'
+ *  Pox.", "...the Plague, a very serious...") - the name the Status box tells a player once incubation is over, and so
+ *  the one the HUD's status widget may show from then (ui/hud/hudStatus.js). Indexed by Diseases id. */
+export const DISEASE_NAMES = Object.freeze([
+  "Witches' Pox",
+  'Plague',
+  'Yellow Fever',
+  'Stomach Rot',
+  'Consumption',
+  'Brain Fever',
+  'Swamp Rot',
+  "Caliron's Curse",
+  'Cholera',
+  'Leprosy',
+  'Wound Rot',
+  'Red Death',
+  'Blood Rot',
+  'Typhoid Fever',
+  'Dementia',
+  'Chrondiasis',
+  'Wizard Fever',
+]);
+
+/** TextManager "youFeelSomewhatBad" - the daily-tick HUD alert. */
+export const YOU_FEEL_SOMEWHAT_BAD = 'You feel somewhat bad.';
+/** L10N3d: the alert as the hosts show it (DiseaseEffect.cs:165, PoisonEffect.cs:289), in the player's language. */
+export const youFeelSomewhatBadText = () => localizedText('youFeelSomewhatBad', YOU_FEEL_SOMEWHAT_BAD);
+
+// ---- The OnMonsterHit disease lists (declared inside DFU's
+// OnMonsterHit; hoisted here for the tests). Source comments: rat =
+// classic listA but DF Chronicles' listB kept "since it has more
+// variety"; zombie's list matches mummy's "except missing cholera,
+// probably a mistake" - list C is shared verbatim anyway. ----
+export const DISEASE_LIST_A = Object.freeze([DISEASES.Plague]);
+export const DISEASE_LIST_B = Object.freeze([DISEASES.Plague, DISEASES.StomachRot, DISEASES.BrainFever]);
+export const DISEASE_LIST_C = Object.freeze([
+  DISEASES.Plague,
+  DISEASES.YellowFever,
+  DISEASES.StomachRot,
+  DISEASES.Consumption,
+  DISEASES.BrainFever,
+  DISEASES.SwampRot,
+  DISEASES.Cholera,
+  DISEASES.Leprosy,
+  DISEASES.RedDeath,
+  DISEASES.TyphoidFever,
+  DISEASES.Dementia,
+]);
+
+/** FormulaHelper.specialInfectionChance (percent on a 0..100 float
+ *  roll - vampirism/lycanthropy transmission). */
+export const SPECIAL_INFECTION_CHANCE = 0.6;
+
+/** The classic SPELLS.STD index spiders/scorpions cast on hit
+ *  (GetClassicSpellRecord(66) - "Spider Touch", Paralyze ByTouch). */
+export const SPIDER_TOUCH_SPELL_INDEX = 66;
+
+/**
+ * DiseaseEffect.Start + the AddState rule: create the live disease
+ * entry on the target, or null when refused (non-player / level < 2 /
+ * already carrying this disease - can't catch the same one twice).
+ * currentDay = classic minutes / 1440 at infection; the infection day
+ * itself is incubation (the first symptom day is the NEXT day).
+ */
+export function startDisease(target, diseaseType, currentDay, rolls = Math.random, { specialInfection = false } = {}) {
+  // AUDIT 63 F15: AssignBundle's FIRST per-effect gate
+  // (EntityEffectManager.cs:495-499) - a DiseaseEffect is dropped
+  // outright for a hard-immune entity, and BypassSavingThrows does NOT
+  // relax it (that block is later, at :561-579). This is the port's
+  // AssignBundle position: every producer reaches startDisease after
+  // its own rolls, so the gate sits here rather than in one caller.
+  // `specialInfection` is DFU's own exception on that line - the
+  // vampirism/lycanthropy infections ignore disease resistance - and no
+  // current caller needs it (infection.js mints its own entry), but the
+  // clause is the reference's and a future producer must be able to say so.
+  if (!specialInfection && isEntityImmuneToDisease(target)) return null;
+  if (!target.isPlayer || (target.level ?? 0) < 2) return null; // Start: EndDisease for non-player hosts
+  if (target.activeEffects?.some((a) => a.kind === 'disease' && a.disease === diseaseType && !a.ended)) return null; // AddState no-op
+  noteFirstUse('afflictions'); // TUT1: the player's first disease (or curse of the blood)
+  const data = DISEASE_DATA[diseaseType];
+  const entry = {
+    kind: 'disease',
+    disease: diseaseType,
+    permanent: true,
+    incubationOver: false,
+    lastDay: currentDay,
+    daysOfSymptomsLeft: 0,
+    statMods: {},
+  };
+  // If not permanent, set a range for how long stats will fall
+  if (!isDiseasePermanent(data)) {
+    entry.daysOfSymptomsLeft =
+      data.daysOfSymptomsMin + Math.floor(rolls() * (data.daysOfSymptomsMax + 1 - data.daysOfSymptomsMin)); // Range(min, max+1)
+  }
+  target.activeEffects = target.activeEffects || [];
+  target.activeEffects.push(entry);
+  return entry;
+}
+
+/** EntityEffectManager.GetDiseaseCount (:1489-1499): how many disease
+ *  bundles are live. `ended` entries are the port's completed marker
+ *  and are gone by the next tick, so they do not count - DFU's
+ *  instancedBundles no longer holds a removed bundle either.
+ *
+ *  The temple's cure-disease price is 250 PER DISEASE, so this number
+ *  is money and not decoration. */
+export const diseaseCount = (entity) =>
+  (entity?.activeEffects ?? []).filter((a) => a.kind === 'disease' && !a.ended).length;
+/** DISEASE-UNWELL (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Unnamed 'Unwell' tile"): a PLAIN disease still in
+ *  its incubation - caught, live, a classic type, its first symptom day (the day's turn on the character's own clock,
+ *  updateDiseases) not come. DFU says nothing of one (CreateHealthStatusBox reads IncubationOver; no disease shows a HUD
+ *  icon, ShowSpellIcon false) while its travel popup counts it; the port's HUD shows it unnamed - "Unwell" - and the
+ *  Status box says the character feels unwell (ui/hud/hudStatus.js afflictionRows, systems/healthStatus.js). A
+ *  vampirism or lycanthropy infection is never one (it carries no type - DFU's Diseases.None). */
+export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.ended && !a.incubationOver && a.disease != null;
+/** FIELD BUGS 29h (INFECTION-KEPT): the diseases the next cure ENDS - the plain ones while any runs, else the
+ *  lycanthropy or vampirism infections (GetDiseaseCount then) - so the temple prices and claims what it takes
+ *  (effects.js cureDiseasesInfectionsLast). */
+export const curableDiseaseCount = (entity) => {
+  const live = (entity?.activeEffects ?? []).filter((a) => a.kind === 'disease' && !a.ended);
+  return live.filter((a) => !a.infection).length || live.length;
+};
+
+/** EndDisease, verbatim: completed marker + expire (the tick pass
+ *  removes the entry, lifting its statMods with it). */
+export function endDisease(entry) {
+  entry.daysOfSymptomsLeft = COMPLETED_DISEASE_VALUE;
+  entry.ended = true; // forcedRoundsRemaining = 0
+}
+
+/** IncrementDailyDiseaseEffects, verbatim: ONE damage roll for the
+ *  day, DiseaseData as a multiplier matrix - stat columns accumulate
+ *  negative statMods (ChangeStatMod), HEA/FAT/SPL decrease pools
+ *  through the sinks (FAT in RAW units - no x64). */
+function incrementDailyDiseaseEffects(entry, sinks, rolls) {
+  const data = DISEASE_DATA[entry.disease];
+  const damageAmount = data.minDamage + Math.floor(rolls() * (data.maxDamage + 1 - data.minDamage)); // Range(min, max+1)
+  const mods = entry.statMods;
+  const change = (stat, mult) => {
+    if (mult) mods[stat] = (mods[stat] ?? 0) - mult * damageAmount;
+  };
+  change('strength', data.STR);
+  change('intelligence', data.INT);
+  change('willpower', data.WIL);
+  change('agility', data.AGI);
+  change('endurance', data.END);
+  change('personality', data.PER);
+  change('speed', data.SPD);
+  change('luck', data.LUC);
+  if (data.HEA && sinks.hurt) sinks.hurt(data.HEA * damageAmount);
+  if (data.FAT && sinks.drainFatigue) sinks.drainFatigue(data.FAT * damageAmount); // DecreaseFatigue WITHOUT the multiplier
+  if (data.SPL && sinks.drainMagicka) sinks.drainMagicka(data.SPL * damageAmount);
+}
+
+/**
+ * UpdateDisease, verbatim - runs every magic round, acts once per
+ * elapsed classic day (daysPast > 1 rolls each day - fast travel /
+ * rest catch up). Order preserved: increment days, update lastDay,
+ * count down / end, THEN the HUD alert (which fires on the ending
+ * day too).
+ */
+export function updateDiseaseEntry(entry, currentDay, sinks, rolls = Math.random, onAlert = null) {
+  // V1: the two infections OVERRIDE UpdateDisease and do not call
+  // base (VampirismInfection.cs:99-103) - their whole lifecycle is
+  // infection.js's, and classicDiseaseType is None, so there is no
+  // DiseaseData row here to walk. Without this arm the daily damage
+  // loop reads DISEASE_DATA[null] and throws on the first day of an
+  // infection, which is the four-hosts version of never shipping it.
+  if (entry.infection) return;
+  if (entry.ended) return; // do nothing if expiring out
+  const daysPast = currentDay - entry.lastDay;
+  // same day = incubation; 0xfe = disease has run its course
+  if (daysPast === 0 || entry.daysOfSymptomsLeft === COMPLETED_DISEASE_VALUE) return;
+  if (!entry.incubationOver) entry.incubationOver = true;
+  for (let i = 0; i < daysPast; i++) incrementDailyDiseaseEffects(entry, sinks, rolls);
+  entry.lastDay = currentDay;
+  const data = DISEASE_DATA[entry.disease];
+  if (!isDiseasePermanent(data) && (entry.daysOfSymptomsLeft -= daysPast) <= 0) {
+    entry.daysOfSymptomsLeft = 0;
+    endDisease(entry);
+  }
+  if (onAlert) onAlert(youFeelSomewhatBadText());
+}
+
+/** The per-round disease pass for one entity (each DiseaseEffect's
+ *  MagicRound). Call BEFORE tickActiveEffects so an ending disease's
+ *  final day lands and the same round's tick removes the entry
+ *  (DFU removes expired bundles at the end of the same DoMagicRound). */
+export function updateDiseases(entity, currentDay, sinks, rolls = Math.random, onAlert = null) {
+  for (const a of entity.activeEffects ?? []) {
+    if (a.kind === 'disease') updateDiseaseEntry(a, currentDay, sinks, rolls, onAlert);
+  }
+}
+
+/**
+ * FormulaHelper.InflictDisease, verbatim: player-only, the classic
+ * level-1 immunity, a FULL saving-throw save (== 0) resists outright,
+ * then a uniform pick from the list assigned with BypassSavingThrows
+ * (startDisease). Element 2 = DFCareer.Elements.DiseaseOrPoison.
+ */
+export function inflictDisease(target, diseaseList, { rolls = Math.random, currentDay = 0, onContract = null } = {}) {
+  if (!diseaseList || !diseaseList.length || !target.isPlayer) return null;
+  // AUDIT 63 F15: the immunity test that used to stand HERE has moved
+  // to startDisease, the port's AssignBundle position. DFU's
+  // InflictDisease (FormulaHelper.cs:1689-1712) carries NO immunity
+  // clause at all: it takes the level test, ROLLS the saving throw and
+  // ROLLS the disease pick, and only then does AssignBundle drop the
+  // effect (EntityEffectManager.cs:495-499). Returning early here
+  // consumed neither roll, which is a divergence of the RNG stream for
+  // every immune target - so the line is gone rather than moved.
+  if (target.level === 1) return null; // classic: no diseases at level 1
+  if (savingThrow(2, EFFECT_FLAGS.Disease, target, 0, rolls) === 0) return null; // resisted
+  const diseaseType = diseaseList[Math.floor(rolls() * diseaseList.length)]; // Range(0, length)
+  const entry = startDisease(target, diseaseType, currentDay, rolls);
+  if (entry && onContract) onContract(diseaseType, entry);
+  return entry;
+}
+
+/** FormulaHelper.FatigueDamage (nymph/lamia): "every 1 pt of health
+ *  damage = 2 pts of fatigue damage" - SetFatigue(current -
+ *  damage * 2 * 64), i.e. x64 STORED units unlike the disease FAT
+ *  column. The 14-day collapse TODO is DFU's own, not ported. */
+export function fatigueDamage(target, damage, sinks) {
+  if (sinks?.drainFatigue) sinks.drainFatigue(damage * 2 * FATIGUE_MULTIPLIER);
+}
+
+/**
+ * FormulaHelper.OnMonsterHit (FormulaHelper.cs:1263-1373), verbatim rider table - called per hit (hitDamage > 0) from
+ * the monster multi-attack loop. deps: rolls, currentDay, sinks (the TARGET's), onContract(diseaseType, entry),
+ * regionIndex, readySpell(index) (the scene's SetReadySpell(spell, noSpellPointCost: true) - the attacker casts the
+ * standard spell `index` free, S19).
+ * DEX4b: a mod's override replaces the whole, as DFU's TryGetOverride("OnMonsterHit") does (:1265-1270) - Daggerfall
+ * Enemy Expansion's (systems/enemyExpansion/dexCombat.js) reuses these arms by number.
+ */
+export function onMonsterHit(attacker, target, damage, deps = {}) {
+  const o = formulaOverride('onMonsterHit');
+  if (o) {
+    o(attacker, target, damage, deps);
+    return;
+  }
+  runMonsterHitArm(CLASSIC_HIT_ARM[attacker.careerIndex] ?? 0, attacker, target, damage, deps);
+}
+
+/** DFU's switch, career -> arm (:1279-1371). The arms are numbered as Daggerfall Enemy Expansion's OnHit column numbers
+ *  them - its chain tests them in this order (BestiaryMod.cs:1477-1561) - and the Nymph's and the Lamia's are one body. */
+export const CLASSIC_HIT_ARM = Object.freeze({
+  [MOBILE_TYPES.Rat]: 1,
+  [MOBILE_TYPES.GiantBat]: 2,
+  [MOBILE_TYPES.Spider]: 3,
+  [MOBILE_TYPES.GiantScorpion]: 3,
+  [MOBILE_TYPES.Werewolf]: 4,
+  [MOBILE_TYPES.Nymph]: 5,
+  [MOBILE_TYPES.Lamia]: 5,
+  [MOBILE_TYPES.Wereboar]: 6,
+  [MOBILE_TYPES.Zombie]: 7,
+  [MOBILE_TYPES.Mummy]: 8,
+  [MOBILE_TYPES.Vampire]: 9,
+  [MOBILE_TYPES.VampireAncient]: 9,
+});
+/** How many arms DFU's switch has. */
+export const MONSTER_HIT_ARMS = 9;
+
+/** One arm of OnMonsterHit's switch, its case body verbatim (0, or any other number: the default - nothing). */
+export function runMonsterHitArm(arm, attacker, target, damage, deps = {}) {
+  const { rolls = Math.random, currentDay = 0, sinks = null, onContract = null } = deps;
+  const inflict = (list) => inflictDisease(target, list, { rolls, currentDay, onContract });
+  switch (arm) {
+    case 1: // Rat
+      // classic = listA only; DF Chronicles' listB kept (DFU choice)
+      if (dice100(5, rolls())) inflict(DISEASE_LIST_B);
+      break;
+    case 2: // GiantBat
+      // classic 2% (DF Chronicles says 5%) - classic kept
+      if (dice100(2, rolls())) inflict(DISEASE_LIST_B);
+      break;
+    case 3: // Spider, GiantScorpion
+      // S19: the attacker readies classic spell 66 (Spider Touch - Paralyze) unless the target is already paralyzed
+      // (FindIncumbentEffect<Paralyze> == null gate). SetReadySpell noSpellPointCost=true - the scene's readySpell is a
+      // free cast through the enemy spell seam.
+      if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(SPIDER_TOUCH_SPELL_INDEX);
+      break;
+    case 4: {
+      // Werewolf
+      const random = rolls() * 100; // Random.Range(0f, 100f)
+      if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
+        startInfection(target, INFECTION.Werewolf, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
+      }
+      break;
+    }
+    case 5: // Nymph, and the Lamia (nothing in classic; DF Chronicles' fatigue rule kept) - one body in DFU's two cases
+      fatigueDamage(target, damage, sinks);
+      break;
+    // DFU puts the Nymph BETWEEN the two lycanthropes and gives each
+    // its own arm (:1307-1329) - they are not the shared case this
+    // port had while both were routed, because each mints its own
+    // strain and the two cancel each other.
+    case 6: {
+      // Wereboar
+      const random = rolls() * 100; // Random.Range(0f, 100f)
+      if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
+        startInfection(target, INFECTION.Wereboar, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
+      }
+      break;
+    }
+    case 7: // Zombie
+      // nothing in classic; DF Chronicles' 2% kept (DFU choice)
+      if (dice100(2, rolls())) inflict(DISEASE_LIST_C);
+      break;
+    case 8: // Mummy
+      if (dice100(5, rolls())) inflict(DISEASE_LIST_C);
+      break;
+    case 9: {
+      // Vampire, VampireAncient
+      const random = rolls() * 100; // Random.Range(0f, 100f)
+      if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
+        // Stage-one vampirism, which records WHERE it was caught: the
+        // clan is read from this region at deployment, not from
+        // wherever the player is standing when they turn.
+        startInfection(target, INFECTION.Vampirism, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
+      } else if (random <= 2.0) {
+        inflict(DISEASE_LIST_A);
+      }
+      break;
+    }
+    default:
+      break;
+  }
+}

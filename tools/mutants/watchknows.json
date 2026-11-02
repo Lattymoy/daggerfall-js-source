@@ -1,0 +1,252 @@
+[
+  {
+    "name": "WATCH-KNOWS-band-honoured",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "new": "  return rep > 50 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "Above 40 honoured: honored and up (legalBands.js)."
+  },
+  {
+    "name": "WATCH-KNOWS-band-respected",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "new": "  return rep > 40 ? 'honoured' : rep > 20 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "Above 10 respected: respected and admired."
+  },
+  {
+    "name": "WATCH-KNOWS-band-citizen",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "new": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep > 0 ? 'citizen' : 'watched';",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "0 a common citizen, not watched."
+  },
+  {
+    "name": "WATCH-KNOWS-known-ignored",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  if (known) return 'known';\n  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "new": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "A known criminal is known whatever the number says (banished)."
+  },
+  {
+    "name": "WATCH-KNOWS-off-duty-too",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "res.guard && this.entryOf(res, t)?.e.duty ?",
+    "new": "res.guard ?",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "Off duty, a townsman: the street's own word."
+  },
+  {
+    "name": "WATCH-KNOWS-grudge-ignored",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const law = !cold && res.guard",
+    "new": "const law = res.guard",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "A grudge of his own stays cold, whatever the law thinks."
+  },
+  {
+    "name": "WATCH-KNOWS-region",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "this.o.legalStanding?.(this.o.town.region)",
+    "new": "this.o.legalStanding?.(0)",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The town's own region's law."
+  },
+  {
+    "name": "WATCH-KNOWS-citizen-always",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " || pool === WATCH_GREETINGS.citizen;",
+    "new": ";",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "To a common citizen now and then, as a stranger speaks."
+  },
+  {
+    "name": "WATCH-KNOWS-town-unfilled",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": ", town: this.o.townName ?? ''",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The watched told the town's name."
+  },
+  {
+    "name": "WATCH-KNOWS-any-crime",
+    "file": "src/systems/standing.js",
+    "old": "  if (!WARNABLE_CRIMES.includes(crime)) return false;\n  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;",
+    "new": "  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "Only a minor offence is warned."
+  },
+  {
+    "name": "WATCH-KNOWS-theft-warned",
+    "file": "src/systems/standing.js",
+    "old": "  CRIMES.Pickpocketing,\n]);",
+    "new": "  CRIMES.Pickpocketing,\n  CRIMES.Theft,\n]);",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The four, no more."
+  },
+  {
+    "name": "WATCH-KNOWS-known-warned",
+    "file": "src/systems/standing.js",
+    "old": "  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;\n  return !Number.isFinite(standingOf(player).warned[regionIndex]);",
+    "new": "  return !Number.isFinite(standingOf(player).warned[regionIndex]);",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "A known criminal's face the watch knows: never warned."
+  },
+  {
+    "name": "WATCH-KNOWS-every-time",
+    "file": "src/systems/standing.js",
+    "old": "  return !Number.isFinite(standingOf(player).warned[regionIndex]);",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The first offence alone."
+  },
+  {
+    "name": "WATCH-KNOWS-unnoted",
+    "file": "src/systems/standing.js",
+    "old": "  standingOf(player).warned[regionIndex] = ownNow;",
+    "new": "  void player;\n  void regionIndex;\n  void ownNow;",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The warning noted."
+  },
+  {
+    "name": "WATCH-KNOWS-unsaved",
+    "file": "src/systems/standing.js",
+    "old": "    warned: { ...s.warned },\n  };",
+    "new": "  };",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The note saved."
+  },
+  {
+    "name": "WATCH-KNOWS-unrestored",
+    "file": "src/systems/standing.js",
+    "old": "  Object.assign(s.warned, num(snap?.warned));\n  return s;",
+    "new": "  return s;",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The note restored."
+  },
+  {
+    "name": "WATCH-KNOWS-lane-ignored",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "warnsFirst() && warningDue(",
+    "new": "warningDue(",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "DFU's watch (the classic lane) always the box."
+  },
+  {
+    "name": "WATCH-KNOWS-beast-warned",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "if (!beast && !playerEntity.haveShownSurrenderDialogue && warnsFirst()",
+    "new": "if (!playerEntity.haveShownSurrenderDialogue && warnsFirst()",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "A beast halted as a beast."
+  },
+  {
+    "name": "WATCH-KNOWS-asked-warned",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "if (!beast && !playerEntity.haveShownSurrenderDialogue && warnsFirst()",
+    "new": "if (!beast && warnsFirst()",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "A chase the box asked in is the box's."
+  },
+  {
+    "name": "WATCH-KNOWS-uncharged",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      chargeOnce();\n      noteWarning(",
+    "new": "      noteWarning(",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "Charged as the box would."
+  },
+  {
+    "name": "WATCH-KNOWS-not-noted",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      noteWarning(playerEntity, region(), ownMinutes());\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The warning noted where it is given."
+  },
+  {
+    "name": "WATCH-KNOWS-crime-kept",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      setCrimeCommitted(playerEntity, 0);\n      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(",
+    "new": "      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The crime let go - the watch walks off with it."
+  },
+  {
+    "name": "WATCH-KNOWS-blow-lands",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "lines: warningLines(crime, regionName(region())) }));\n      return true;",
+    "new": "lines: warningLines(crime, regionName(region())) }));\n      return false;",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The blow withheld."
+  },
+  {
+    "name": "WATCH-KNOWS-words",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "`Hold! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`",
+    "new": "`Halt! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "Hold!, the crime by name, the region's."
+  },
+  {
+    "name": "WATCH-KNOWS-host-lane",
+    "file": "src/scenes/world.js",
+    "old": "warnsFirst: () => livingWorldOn(),",
+    "new": "warnsFirst: () => true,",
+    "tests": [
+      "test/systems/livingWorld/watchknows_watch.test.js"
+    ],
+    "note": "The living world's watch alone."
+  }
+]

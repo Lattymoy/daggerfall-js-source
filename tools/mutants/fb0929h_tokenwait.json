@@ -1,0 +1,59 @@
+[
+  {
+    "name": "TOKEN-WAIT-the-2.5-s-budget",
+    "file": "src/net/online.js",
+    "old": "export const TOKEN_WAIT_MS = 8000;",
+    "new": "export const TOKEN_WAIT_MS = 2500;",
+    "tests": [
+      "test/net/fb0929h_tokenwait.test.js",
+      "test/net/acc1dclient.test.js"
+    ]
+  },
+  {
+    "name": "TOKEN-WAIT-past-the-relay's-own-wait",
+    "file": "src/net/online.js",
+    "old": "export const TOKEN_WAIT_MS = 8000;",
+    "new": "export const TOKEN_WAIT_MS = 10000;",
+    "tests": [
+      "test/net/fb0929h_tokenwait.test.js",
+      "test/net/acc1dclient.test.js"
+    ]
+  },
+  {
+    "name": "TOKEN-WAIT-the-late-hello-unsaid",
+    "file": "src/net/online.js",
+    "old": "      if (got === late) { console.warn(`[online] no identity token within ${TOKEN_WAIT_MS} ms - the hello goes without one, and the relay refuses it`); return { tok: null, why: 'late' }; }",
+    "new": "      if (got === late) return { tok: null, why: 'late' };",
+    "tests": [
+      "test/net/fb0929h_tokenwait.test.js"
+    ]
+  },
+  {
+    "name": "TOKEN-WAIT-the-late-symbol-sent-as-a-token",
+    "file": "src/net/online.js",
+    "old": "      if (got === late) { console.warn(`[online] no identity token within ${TOKEN_WAIT_MS} ms - the hello goes without one, and the relay refuses it`); return { tok: null, why: 'late' }; }\n",
+    "new": "",
+    "tests": [
+      "test/net/fb0929h_tokenwait.test.js",
+      "test/net/acc1dclient.test.js"
+    ]
+  },
+  {
+    "name": "TOKEN-WAIT-no-sign-in-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "    if (!session) { minter.lastWhy = 'no-session'; console.warn('[account] no identity token: no sign-in stored on this device'); return null; }   // TOKEN-WAIT",
+    "new": "    if (!session) { minter.lastWhy = 'no-session'; return null; }",
+    "tests": [
+      "test/net/fb0929h_tokenwait.test.js"
+    ]
+  },
+  {
+    "name": "TOKEN-WAIT-the-refusal-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "    console.warn(`[account] no identity token: ${answer.error ?? 'refused'}${answer.status ? ` (${answer.status})` : ''}`);\n",
+    "new": "",
+    "tests": [
+      "test/net/fb0929h_tokenwait.test.js"
+    ]
+  }
+]

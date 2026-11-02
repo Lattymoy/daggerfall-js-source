@@ -1,0 +1,62 @@
+[
+  {
+    "name": "SELL-AS-FOUND-a-pile-or-body-unmarked",
+    "file": "src/systems/roleplayRealismItems/rriRealism.js",
+    "old": "      const conditionMod = 0.2 + rolls() * (0.75 - 0.2);\n      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n      item.foundCondition = item.currentCondition; // SELL-AS-FOUND\n    }\n  }",
+    "new": "      const conditionMod = 0.2 + rolls() * (0.75 - 0.2);\n      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n    }\n  }",
+    "tests": [
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "SELL-AS-FOUND-a-shelf-unmarked",
+    "file": "src/systems/roleplayRealismItems/rriRealism.js",
+    "old": "      const conditionMod = low + rolls() * (1 - low);\n      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n      item.foundCondition = item.currentCondition; // SELL-AS-FOUND\n    }\n  }",
+    "new": "      const conditionMod = low + rolls() * (1 - low);\n      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n    }\n  }",
+    "tests": [
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "SELL-AS-FOUND-the-mark-never-read",
+    "file": "src/systems/tradeModes.js",
+    "old": "        const c =\n          calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) *\n          stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
+    "new": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, conditionPercentage(item)) * stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
+    "tests": [
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "SELL-AS-FOUND-read-past-the-mark",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  if (!Number.isInteger(found) || !(found < current)) return conditionPercentage(item);",
+    "new": "  if (!Number.isInteger(found)) return conditionPercentage(item);",
+    "tests": [
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "SELL-AS-FOUND-offline-too",
+    "file": "src/systems/tradeModes.js",
+    "old": "  if (!online) return conditionPercentage(item);\n  return foundSalePercentage(item);",
+    "new": "  return foundSalePercentage(item);",
+    "tests": [
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "SELL-AS-FOUND-undeclared",
+    "file": "src/systems/item/itemFields.js",
+    "old": "  foundCondition: int({ min: 0 }),\n  // MEND-THIRD (AUDIT MEND-THIRD, 2026-10-19): the points its owner's OWN mends - a Repair Kit, Repairs Objects, the Varla",
+    "new": "  // MEND-THIRD (AUDIT MEND-THIRD, 2026-10-19): the points its owner's OWN mends - a Repair Kit, Repairs Objects, the Varla",
+    "tests": [
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "SDCLEARS-the-first-broken-the-last",
+    "file": "tools/sdClears.mjs",
+    "old": "  const slot = slotRaw == null || String(slotRaw).trim() === '' ? '(SELECT MIN(slot) FROM sd_kills)' : sdSlot(slotRaw);",
+    "new": "  const slot = slotRaw == null || String(slotRaw).trim() === '' ? '(SELECT MAX(slot) FROM sd_kills)' : sdSlot(slotRaw);",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "The run left empty would name the latest Hollow broken, not the first - Mac's ask answered with the wrong group."
+  },
+  {
+    "name": "SDCLEARS-another-slots-names-mixed-in",
+    "file": "tools/sdClears.mjs",
+    "old": "  return `SELECT k.slot, p.handle AS name, k.earned, k.lv, k.title, k.aura, k.at FROM sd_kills k JOIN players p ON p.id = k.account WHERE k.slot = ${slot} ORDER BY k.at, p.handle_lc;`;",
+    "new": "  return `SELECT k.slot, p.handle AS name, k.earned, k.lv, k.title, k.aura, k.at FROM sd_kills k JOIN players p ON p.id = k.account ORDER BY k.at, p.handle_lc;`;",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "Every Hollow's breakers would be read as one group's."
+  },
+  {
+    "name": "SDCLEARS-the-claims-by-name-alone",
+    "file": "tools/sdClears.mjs",
+    "old": "  return `SELECT k.slot, p.handle AS name, k.earned, k.lv, k.title, k.aura, k.at FROM sd_kills k JOIN players p ON p.id = k.account WHERE k.slot = ${slot} ORDER BY k.at, p.handle_lc;`;",
+    "new": "  return `SELECT k.slot, p.handle AS name, k.earned, k.lv, k.title, k.aura, k.at FROM sd_kills k JOIN players p ON p.id = k.account WHERE k.slot = ${slot} ORDER BY p.handle_lc;`;",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "The names would no longer read in the order they claimed."
+  },
+  {
+    "name": "SDCLEARS-the-tie-by-case",
+    "file": "tools/sdClears.mjs",
+    "old": "  return `SELECT k.slot, p.handle AS name, k.earned, k.lv, k.title, k.aura, k.at FROM sd_kills k JOIN players p ON p.id = k.account WHERE k.slot = ${slot} ORDER BY k.at, p.handle_lc;`;",
+    "new": "  return `SELECT k.slot, p.handle AS name, k.earned, k.lv, k.title, k.aura, k.at FROM sd_kills k JOIN players p ON p.id = k.account WHERE k.slot = ${slot} ORDER BY k.at, p.handle;`;",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "Two claims in one second would sort every capital before every lower case letter - 'Vex' before 'ana'."
+  },
+  {
+    "name": "SDCLEARS-the-first-claim-the-last",
+    "file": "tools/sdClears.mjs",
+    "old": "  return 'SELECT slot, COUNT(*) AS fighters, MIN(at) AS first_at FROM sd_kills GROUP BY slot ORDER BY slot;';",
+    "new": "  return 'SELECT slot, COUNT(*) AS fighters, MAX(at) AS first_at FROM sd_kills GROUP BY slot ORDER BY slot;';",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "A late claim (a guest that registered a day on) would move when the Hollow reads as broken."
+  },
+  {
+    "name": "SDCLEARS-the-slot-unchecked",
+    "file": "tools/sdClears.mjs",
+    "old": "  const slot = /^[1-9][0-9]{0,8}$/.test(s) ? Number(s) : NaN;",
+    "new": "  const slot = Number(s);",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "'1e3' would read slot 1000 and '0x10' slot 16 - a slot nobody typed."
+  },
+  {
+    "name": "SDCLEARS-the-input-spliced-into-a-run-line",
+    "file": ".github/workflows/sd-clears.yml",
+    "old": "--names \"$SLOT\"",
+    "new": "--names \"${{ inputs.slot }}\"",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "Whatever is typed into the slot would be a shell command on the runner that holds the Cloudflare token."
+  },
+  {
+    "name": "SDCLEARS-no-clears-passing",
+    "file": ".github/workflows/sd-clears.yml",
+    "old": "no claim names one\"\n            exit 1",
+    "new": "no claim names one\"",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "A run that found nothing would end green with an empty summary."
+  },
+  {
+    "name": "SDCLEARS-no-names-passing",
+    "file": ".github/workflows/sd-clears.yml",
+    "old": "nobody has claimed it yet\"\n            exit 1",
+    "new": "nobody has claimed it yet\"",
+    "tests": [
+      "test/net/superDungeon/sdclears.test.js"
+    ],
+    "note": "A slot nobody claimed would end green, as if its group had no names."
+  }
+]

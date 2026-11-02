@@ -1,0 +1,541 @@
+[
+  {
+    "name": "SIGIL1-magic-band-wider",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  magic: Object.freeze([2, 5]),",
+    "new": "  magic: Object.freeze([2, 6]),",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-legendary-band-higher",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  legendary: Object.freeze([7, 12]),",
+    "new": "  legendary: Object.freeze([7, 15]),",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-chance-quarter",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "export const SIGIL_CHANCE_BASE = 200;",
+    "new": "export const SIGIL_CHANCE_BASE = 250;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-bigger-fights-no-odds",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "export const SIGIL_CHANCE_PER = 40;",
+    "new": "export const SIGIL_CHANCE_PER = 0;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-faint-share",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  Object.freeze({ xp: 0, renown: 1, name: 'Faint', share: 20 }),",
+    "new": "  Object.freeze({ xp: 0, renown: 1, name: 'Faint', share: 25 }),",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-kindled-sooner",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  Object.freeze({ xp: 5000, renown: 10, name: 'Kindled', share: 40 }),",
+    "new": "  Object.freeze({ xp: 4000, renown: 10, name: 'Kindled', share: 40 }),",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-ascendant-renown-sooner",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  Object.freeze({ xp: 37500, renown: 40, name: 'Ascendant', share: 100 }),",
+    "new": "  Object.freeze({ xp: 37500, renown: 35, name: 'Ascendant', share: 100 }),",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-renown-cap-dropped",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  return cap < 0 ? -1 : Math.min(sigilRank(sigil), cap);",
+    "new": "  return cap < 0 ? -1 : sigilRank(sigil);",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-floor-short-of-top",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  return Math.min(band[1], band[0] + Math.round(((band[1] - band[0]) * (partyOf(party) - 1)) / (PARTY_MAX - 1)));",
+    "new": "  return Math.min(band[1], band[0] + Math.round(((band[1] - band[0]) * (partyOf(party) - 1)) / PARTY_MAX));",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-chance-inclusive",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (rolls() * 1000 >= sigilChance(party)) return null;",
+    "new": "  if (rolls() * 1000 > sigilChance(party)) return null;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-band-top-unreachable",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  return { power: lo + Math.floor(rolls() * (hi + 1 - lo)), party: partyOf(party), xp: 0 };",
+    "new": "  return { power: lo + Math.floor(rolls() * (hi - lo)), party: partyOf(party), xp: 0 };",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-forged-power-taken",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "const validPower = (p) => Number.isInteger(p) && p >= 1 && p <= SIGIL_POWER_MAX;",
+    "new": "const validPower = (p) => Number.isInteger(p) && p >= 1;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-forged-rank-taken",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (!(Number.isInteger(s.xp) && s.xp >= 0 && s.xp <= SIGIL_XP_MAX)) return false;",
+    "new": "  if (!(Number.isInteger(s.xp) && s.xp >= 0)) return false;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-renown-taken-offline",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  _renown = _online && Number.isSafeInteger(level) && level >= 1 ? level : null;",
+    "new": "  _renown = Number.isSafeInteger(level) && level >= 1 ? level : null;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-offline-keeps-renown",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (!_online) _renown = null;\n}",
+    "new": "}",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-drinks-dormant",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (_renown == null || !item || !validSigil(item.sigil) || !(xp > 0)) return null;",
+    "new": "  if (!item || !validSigil(item.sigil) || !(xp > 0)) return null;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-drink-writes-in-place",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  item.sigil = { ...item.sigil, xp: Math.min(SIGIL_XP_MAX, item.sigil.xp + Math.floor(xp)) };",
+    "new": "  item.sigil.xp = Math.min(SIGIL_XP_MAX, item.sigil.xp + Math.floor(xp));",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-drink-uncapped",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  item.sigil = { ...item.sigil, xp: Math.min(SIGIL_XP_MAX, item.sigil.xp + Math.floor(xp)) };",
+    "new": "  item.sigil = { ...item.sigil, xp: item.sigil.xp + Math.floor(xp) };",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-rise-hold-unsaid",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (cap < 0 || cap >= rank) return line;",
+    "new": "  return line;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-duel-stub-taken",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling)\n    return damage;",
+    "new": "  if (!(damage > 0) || !held || !attacker?.isPlayer || !target || target.isPlayer || _dueling) return damage;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-player-target-taken",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling)\n    return damage;",
+    "new": "  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || _dueling) return damage;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-foe-blow-taken",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling)\n    return damage;",
+    "new": "  if (!(damage > 0) || !held || attacker?.peer || !target || target.isPlayer || _dueling) return damage;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-carry-dropped",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  const exact = (damage * pct) / 100 + (_carry.get(held) ?? 0);",
+    "new": "  const exact = (damage * pct) / 100;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-blow-rounded",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  const more = Math.floor(exact + 1e-9);",
+    "new": "  const more = Math.round(exact);",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-blow-unregistered",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "registerWeaponBlowMod('sigil', sigilBlow);",
+    "new": "void registerWeaponBlowMod;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-won-alone-said",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (s.party > 1) out.push(`Won in a fight of ${s.party}`);",
+    "new": "  if (s.party > 0) out.push(`Won in a fight of ${s.party}`);",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-held-at-its-own-rank",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (rank > st)",
+    "new": "  if (rank >= st)",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-dormant-shows-power",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  if (_renown == null) return [`Sigil (Dormant: works online only)${full}`];",
+    "new": "  if (_renown == null) return [];",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-blow-mods-ignored",
+    "file": "src/systems/entityMods.js",
+    "old": "        const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO);\n        if (Number.isFinite(next)) d = next;",
+    "new": "        void fn;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-formula-tail-dropped",
+    "file": "src/combat/formulas.js",
+    "old": "damage = weaponBlowMods(weapon, damage, attacker, target, info);",
+    "new": "void weaponBlowMods;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-stamp-offline",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "if (!sigilOnline() || !lootRarityOn() || !Array.isArray(items)) return 0;",
+    "new": "if (!lootRarityOn() || !Array.isArray(items)) return 0;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-stamp-ladder-off",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "if (!sigilOnline() || !lootRarityOn() || !Array.isArray(items)) return 0;",
+    "new": "if (!sigilOnline() || !Array.isArray(items)) return 0;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-stamp-armour",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "if (!it || it.group !== 'Weapons' || isAmmunition(it) || it.questItem || it.sigil) continue;",
+    "new": "if (!it || isAmmunition(it) || it.questItem || it.sigil) continue;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-stamp-arrows",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "it.group !== 'Weapons' || isAmmunition(it) || it.questItem",
+    "new": "it.group !== 'Weapons' || it.questItem",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-stamp-quest-item",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "isAmmunition(it) || it.questItem || it.sigil) continue;",
+    "new": "isAmmunition(it) || it.sigil) continue;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-stamp-twice",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "isAmmunition(it) || it.questItem || it.sigil) continue;",
+    "new": "isAmmunition(it) || it.questItem) continue;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-stamp-fight-unread",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "const s = rollSigil(tier, fighters, rolls);",
+    "new": "const s = rollSigil(tier, 1, rolls);",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-tooltip-lines-dropped",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "out.push(...setSigilLines(item));",
+    "new": "void setSigilLines;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-unidentified-hides-sigil",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "return [...out, ...(sigil ? setSigilLines(item) : []), ...(set ? setLines(item) : [])]; }",
+    "new": "return [...out, ...(set ? setLines(item) : [])]; }",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-field-undeclared",
+    "file": "src/systems/item/itemFields.js",
+    "old": "  sigil: rec(validSigil),\n  // LOCK1: the player's lock (systems/item/itemLock.js) - true, or absent",
+    "new": "  // LOCK1: the player's lock (systems/item/itemLock.js) - true, or absent",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js",
+      "test/systems/rf5_itemfields.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-outdoor-stamp-unwired",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "stampWonWeapons(f.entity.items, _sharedFoe(f) ? fightN(f) : 1, { rolls });",
+    "new": "void stampWonWeapons;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-outdoor-fight-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "stampWonWeapons(f.entity.items, _sharedFoe(f) ? fightN(f) : 1, { rolls });",
+    "new": "stampWonWeapons(f.entity.items, 1, { rolls });",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-outdoor-reader-reset-at-death",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (r.d !== 1) f._fightN = r.n ?? 1;",
+    "new": "f._fightN = r.n ?? 1;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js",
+      "test/systems/auditpscale1.test.js",
+      "test/systems/party/pscale1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-dungeon-kill-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "stampWonWeapons(foe.entity.items, _sharedFoe(foe) ? fightN(foe) : 1);",
+    "new": "void stampWonWeapons;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-dungeon-joiner-count-unread",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "new": "stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-dungeon-arrival-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "new": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-dungeon-piles-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    stampWonWeapons(items, 1, { rolls });   // SIGIL1: a pile found online",
+    "new": "    // SIGIL1: a pile found online",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-dungeon-reader-reset-at-death",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (r.d !== 1) f._fightN = r.n ?? 1;",
+    "new": "f._fightN = r.n ?? 1;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js",
+      "test/systems/auditpscale1.test.js",
+      "test/systems/party/pscale1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-watch-unwired",
+    "file": "src/scenes/cityGuards.js",
+    "old": "stampWonWeapons(g.entity.items, 1, { rolls: rand });",
+    "new": "void stampWonWeapons;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-tavern-unwired",
+    "file": "src/scenes/interiorContext.js",
+    "old": "    stampWonWeapons(items, 1);   // SIGIL1",
+    "new": "    // SIGIL1",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-wod-piles-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      stampWonWeapons(items, 1);   // SIGIL1",
+    "new": "      // SIGIL1",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-session-never-online",
+    "file": "src/scenes/world.js",
+    "old": "setSigilOnline(params.has('online'));",
+    "new": "setSigilOnline(false);",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-renown-never-taken",
+    "file": "src/scenes/world.js",
+    "old": "    setSigilRenown(level);   // SIGIL1",
+    "new": "    // SIGIL1",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-kill-feeds-nothing",
+    "file": "src/scenes/world.js",
+    "old": "renownTracker.earn(xp, villainMonsterLowers(playerEntity.level, renownFoeLevel(foe))); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
+    "new": "renownTracker.earn(xp, villainMonsterLowers(playerEntity.level, renownFoeLevel(foe))); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js",
+      "test/net/renown1.test.js",
+      "test/systems/auditpscale1.test.js"
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the kill's Bounty claim reads a lair's den past the Bay too."
+  },
+  {
+    "name": "SIGIL1-quest-feeds-nothing",
+    "file": "src/scenes/world.js",
+    "old": "      sigilDrinks(xp);   // SIGIL1\n",
+    "new": "",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-drinks-past-the-cap",
+    "file": "src/scenes/world.js",
+    "old": "    if (_renownCapHour === renownHour()) return;\n",
+    "new": "",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-rise-unsaid",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "  if (rank != null && !risen.some(([id]) => id === heldSet)) lines.push(sigilRiseLine(nameOf(held), rank));",
+    "new": "  if (rank != null && !risen.some(([id]) => id === heldSet)) void nameOf;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-the-drink-off-the-streets-rig",
+    "file": "src/scenes/world.js",
+    "old": "const held = (modes?.liveArm?.()?.rig ?? weaponRig).playerWeapon?.strikingWeapon ?? null;",
+    "new": "const held = weaponRig.playerWeapon?.strikingWeapon ?? null;",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "SIGIL1-the-hour-off-this-machines-clock",
+    "file": "src/scenes/world.js",
+    "old": "const renownHour = () => Math.floor((Date.now() + _sharedOffsetMs) / 3_600_000);",
+    "new": "const renownHour = () => Math.floor(Date.now() / 3_600_000);",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  }
+]

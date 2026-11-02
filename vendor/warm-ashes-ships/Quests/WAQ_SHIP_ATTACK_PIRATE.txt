@@ -1,0 +1,460 @@
+Quest: WAQ_SHIP_PIRATEATTACK
+DisplayName:
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce>
+
+RefuseQuest:  [1001]
+<ce>           
+
+AcceptQuest:  [1002]
+<ce>           
+
+QuestFail:  [1003]
+<ce>                     
+
+QuestComplete:  [1004]
+<ce> After scavenging the bodies, you take your earnings.       
+
+Message: 1013
+<ce> You've been attacked by pirates while on
+<ce> your way to ____KnightlyGuard_!
+<ce> Your crew quickly spring into action!
+
+QBN:
+
+Clock _cooldown_ 75:00
+Clock _reset_ 00:05
+Clock _second_ 0:01
+Clock _retreat_ 1:00
+Clock _findPC_ 24:00
+Clock _wave1check_ 00:01
+Clock _wave2check_ 00:01
+Clock _wave3check_ 00:01
+Clock _bosscheck_ 00:01
+Foe _archer_ is Thief
+Foe _warrior_ is Rogue
+Foe _healer_ is Healer
+-Foe _healerp_ is Healer
+-Foe _orc_ is Orc
+-Foe _orcs_ is Orc_sergeant
+-Foe _orcw_ is Orc_warlord
+-Foe _orcsm_ is Orc_shaman
+-Foe _knight_ is Knight
+-Foe _knightp_ is Knight
+-Foe _sorc_ is Sorceror
+Foe _tiger_ is Sabretooth_tiger
+Foe _spider_ is Spider
+Foe _dragon_ is Dragonling_souless
+Foe _ally_ is Warrior
+Foe _rogue_ is Rogue
+Foe _nblade_ is Nightblade
+Foe _assassin_ is Assassin
+-Foe _thief_ is Thief
+-Foe _burglar_ is Burglar
+Foe _spells_ is Spellsword
+
+-Person _db_ faction The_Dark_Brotherhood
+-Person _Court_ faction <insert court name>
+Person _KnightlyGuard_ faction Generic_Knightly_Order
+Person _Temple_ faction Generic_Temple
+
+Item _victory_ gold range 5000 to 10000
+
+
+--	Quest start-up:
+variable _winner_
+-variable _cooldown_
+variable _second_
+-variable _siegefalseh_
+variable _wave1check_
+variable _wave2check_
+variable _wave3check_
+variable _bosscheck_
+variable _magiccheck_
+variable _magiccheck2_
+variable _findPC_
+variable _leaderbuff_
+-variable _levelcheck2_
+-variable _levelcheck3_
+variable _levelcheck4_
+cast Levitate spell do _magiccheck_
+cast Fireball spell do _magiccheck2_
+
+_reset_ task:
+end quest
+
+_cooldown_ task:
+end quest
+
+---------*Change Teams/Infight**---
+_setFoeInfight_ task:
+	daily from 00:00 to 24:00
+	change foe _archer_ infighting true
+	change foe _warrior_ infighting true
+	change foe _healer_ infighting true
+	change foe _spells_ infighting true
+	change foe _tiger_ infighting true
+	change foe _spider_ infighting true
+	change foe _assassin_ infighting true
+	change foe _dragon_ infighting true
+	change foe _nblade_ infighting true
+	change foe _rogue_ infighting true
+	change foe _ally_ infighting true
+	change foe _ally_ team 1
+	restrain foe _ally_
+	change foe _tiger_ team 21
+	change foe _assassin_ team 21
+	change foe _dragon_ team 21
+	change foe _spider_ team 21
+	change foe _nblade_ team 21
+	change foe _rogue_ team 21
+	change foe _archer_ team 21
+	change foe _warrior_ team 21
+	change foe _healer_ team 21
+	change foe _spells_ team 21
+	change foe _assassin_ team 21
+	change foe _nblade_ team 21
+	cast Free_Action spell on _spells_
+	cast Shield spell on _spells_
+	cast Stamina spell on _spells_
+	cast Orc_Strength spell on _spells_
+	cast Resist_Shock spell on _spells_
+	setvar _second_
+	clear _setFoeInfight_
+
+
+----------**Sound**---
+
+_clearsound_ task:
+	clear _makesound_ 
+	
+_makesound_ task:
+	play sound levelup_tes1 every 0 minutes 1 times
+	play sound talking_loud every 0 minutes 1 times
+	clear _makesound_ 
+	
+_makesound2_ task:
+	-play sound talking_loud every 0 minutes 1 times
+	-play sound door_slam_remote every 0 minutes 1 times
+	-play sound levelup_gong every 0 minutes 1 times
+	play sound Ancient_vampire_1 every 0 minutes 1 times
+	clear _makesound2_ 
+	
+_makesound3_ task:
+	play sound levelup_gong every 0 minutes 1 times
+	clear _makesound3_ 
+	
+----------**Entering Keep**---
+
+-_entersKeep_ task:
+-	when pc enters anywhere
+-	say 2029
+-	end quest
+
+-_choose_ task:
+-	when _entersKeep_ and not _cooldown_
+-	-pick one of _random2_ _random1_ _random3_ _random4_
+-	-start timer _reset_
+-	start timer _second_
+-	start timer _cooldown_
+
+	
+	
+--------**First Wave**---
+_outcome1_ task:
+	when _second_ and not _wave1check_
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	create foe _ally_ every 0 minutes 1 times with 100% success
+	say 1013
+	start timer _wave1check_
+
+
+----------**Reinforcements**---
+_callformoreknights_ task:
+killed 5 _warrior_
+
+_callfriends_ task:
+killed 5 _ally_
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+
+_callfriends2_ task:
+killed 10 _ally_
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+
+_callfriends3_ task:
+killed 15 _ally_
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+create foe _ally_ every 0 minutes 1 times with 100% success
+
+_wave2_ task:
+	when _callformoreknights_ and not _retreat_ and not _wave2check_
+	say 1016
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _healer_ every 0 minutes 1 times with 100% success
+	setvar _makesound_
+	start timer _retreat_
+	stop timer _cooldown_
+	play song song_30
+	start timer _wave2check_
+
+
+----------**Reinforcements 2**---
+_callformoreknights2_ task:
+	killed 10 _warrior_
+
+_wave3_ task:
+	when _callformoreknights2_ and not _retreat_ and not _wave3check_
+	say 1016
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _healer_ every 0 minutes 1 times with 100% success
+	create foe _archer_ every 0 minutes 2 times with 25% success
+	setvar _makesound_
+	setvar _wave3spawn_
+	play song song_09
+	start timer _wave3check_
+
+
+----------**Bait Leader Out**---
+
+_finalknight_ task:
+	killed 15 _warrior_
+
+
+_boss_ task:
+	when _finalknight_ and not _retreat_ and not _bosscheck_
+	create foe _spells_ every 0 minutes 1 times with 100% success
+	say 1017
+	create foe _nblade_ every 0 minutes 1 times with 100% success
+	create foe _nblade_ every 0 minutes 1 times with 100% success
+	create foe _healer_ every 0 minutes 1 times with 100% success
+	create foe _healer_ every 0 minutes 1 times with 100% success
+	create foe _healer_ every 0 minutes 1 times with 100 success
+	setvar _makesound2_
+	-start timer _reset_
+	play song song_17
+	start timer _bosscheck_
+
+
+----------**Wave 3 Special**---
+
+_wave3spawn_ task:
+	-when _callformoreknights2_ and _levelcheck1_ and _entersKeep_
+	pick one of _random2_ _random1_ _random3_ _random4_ _dud_ _dud_ _dud_ 
+
+_dud_ task:
+	--do nothing
+
+_random1_ task:
+	create foe _tiger_ every 0 minutes 1 times with 100% success
+	create foe _tiger_ every 0 minutes 1 times with 100% success
+	create foe _tiger_ every 0 minutes 1 times with 100% success
+	say 2026
+
+_random2_ task:
+	create foe _spider_ every 0 minutes 1 times with 100% success
+	create foe _spider_ every 0 minutes 1 times with 100% success
+	create foe _spider_ every 0 minutes 1 times with 100% success
+	say 2026
+
+_random3_ task:
+	create foe _dragon_ every 0 minutes 1 times with 100% success
+	create foe _dragon_ every 0 minutes 1 times with 100% success
+	create foe _dragon_ every 0 minutes 1 times with 100% success
+	say 2026
+
+_random4_ task:
+	create foe _rogue_ every 0 minutes 1 times with 100% success
+	create foe _nblade_ every 0 minutes 1 times with 100% success
+	create foe _rogue_ every 0 minutes 1 times with 100% success
+	cast Spell_Reflection spell on _nblade_
+
+
+----------**Kill Leader**---
+
+_killcommanderknights_ task:
+	killed 1 _spells_
+	say 1022
+	give pc _victory_
+	setvar _makesound3_
+	setvar _winner_
+	clear _soilders1_
+	start timer _reset_
+	-change repute with _Court_ by +1
+	change repute with _KnightlyGuard_ by +3
+	change repute with _Temple_ by +1
+	legal repute +3
+	remove foe _healer_
+	remove foe _rogue_
+	remove foe _nblade_
+	remove foe _archer_
+	remove foe _warrior_
+	remove foe _tiger_
+	remove foe _spider_
+	remove foe _assassin_
+	remove foe _dragon_
+
+----------**Leader Buff**---
+
+_finalhealer_ task:
+	killed 4 _healer_
+
+_leaderbuffcheck_ task:
+	injured _spells_
+
+	
+_leaderheal_ task:
+	when _leaderbuffcheck_ and not _finalhealer_
+	pick one of _noBuff_ _noBuff_ _noBuff_ _noBuff_ _noBuff_ _Heal_ _Shield_ _Shield_ _Specail_
+	setvar _leaderbuff_
+	clear _leaderheal_
+	
+
+_noBuff_ task:
+	clear _noBuff_
+	
+_Heal_ task:
+	cast Heal spell on _spells_
+	clear _Heal_
+
+_Shield_ task:
+	cast Shield spell on _spells_
+	clear _Shield_
+	
+_Specail_ task:
+	cast Invisibility spell on _spells_
+	cast Iron_Will spell on _spells_
+	clear _Specail_
+
+_buff1_ task:
+	when _Levelcheck2_ and _leaderbuff_
+    cast Spell_Reflection spell on _spells_
+
+_buff2_ task:
+	when _Levelcheck3_ and _leaderbuff_
+	cast Orc_Strength spell on _spells_
+
+_buff3_ task:
+	when _Levelcheck3_ and _leaderbuff_
+	cast Shield spell on _spells_
+	
+_buff4_ task:
+	when _Levelcheck4_ and _leaderbuff_
+	cast Jack_of_Trades spell on _spells_
+	cast Nimbleness spell on _spells_ 
+
+
+----------** Pressure Spawns**---
+
+-_soilders1_ task:
+-	when _callformoreknights_ and _Levelcheck1_ and _entersKeep_ and not _winner_
+-	create foe _archer_ every 3 minutes 5 times with 100% success
+-	create foe _warrior_ every 8 minutes 10 times with 100% success
+
+-_soilders2_ task:
+-	when _callformoreknights_ and _Levelcheck2_ and _entersKeep_ and not _winner_-
+-	create foe _archer_ every 3 minutes 5 times with 100% success
+-	create foe _warrior_ every 8 minutes 10 times with 100% success
+
+_MagicCounterPick1_ task:
+	when _wave2_ and _magiccheck_ and not _winner_
+	pick one of _antiair1_ _antiair2_
+
+_MagicCounterPick2_ task:
+	when _wave2_ and _magiccheck2_ and not _winner_
+	cast Shield spell on _warrior_
+
+
+_antiair1_ task:
+	say 2027
+	create foe _archer_ every 0 minutes 1 times with 100% success
+	create foe _archer_ every 0 minutes 1 times with 100% success
+	create foe _archer_ every 0 minutes 1 times with 100% success
+	create foe _archer_ every 0 minutes 1 times with 100% success
+	create foe _archer_ every 0 minutes 1 times with 100% success
+	create foe _archer_ every 3 minutes 10 times with 100% success
+
+_antiair2_ task:
+	say 2028
+	create foe _dragon_ every 0 minutes 1 times with 100% success
+	create foe _dragon_ every 0 minutes 1 times with 100% success
+	create foe _dragon_ every 0 minutes 1 times with 100% success
+	create foe _dragon_ every 0 minutes 1 times with 100% success
+	create foe _archer_ every 3 minutes 10 times with 100% success
+
+
+----------** Retreating**---
+
+_retreat_ task:
+	say 2029
+	start timer _findPC_
+	clear _callformoreknights_
+	clear _callformoreknights2_
+
+_retreatenemies_ task:
+	when _findPC__ and not _winner_
+	pick one of _noBuff_ _noBuff_ _noBuff_ _noBuff_ _gotYou_ _gotYou_ 
+	
+_gotYou_ task:
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _warrior_ every 0 minutes 1 times with 100% success
+	create foe _assassin_ every 0 minutes 1 times with 5% success
+	create foe _nblade_ every 0 minutes 1 times with 5% success
+	create foe _assassin_ every 0 minutes 2 times with 25% success
+	cast Orc_Strength spell on _nblade_
+	start timer _reset_
+	say 2025
+
+
+----------**Level Buff**---
+
+_Levelcheck1_ task:
+	level 5 completed 
+
+_Levelcheck2_ task:
+	level 10 completed
+
+_Levelcheck3_ task:
+	level 15 completed
+
+_Levelcheck4_ task:
+	level 20 completed
+
+_Levelcheck5_ task:
+	level 25 completed
+
+_Levelcheck6_ task:
+	level 30 completed
+
+
+-Add Retreat Timer
+-Bandits find you over time 

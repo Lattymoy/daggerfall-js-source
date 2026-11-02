@@ -1,0 +1,422 @@
+[
+  {
+    "name": "AUDIT-SCALE-II-A1-mint-from-bookmark",
+    "file": "server-account/src/service.js",
+    "old": "  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) {",
+    "new": "  if (bookmark) {",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the mint started from the bookmark the tab carries - SCALE4g as it stood"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A1-list-emptied",
+    "file": "server-account/src/service.js",
+    "old": "export const PRIMARY_FIRST_ROUTES = new Set(['/v1/auth/token']);",
+    "new": "export const PRIMARY_FIRST_ROUTES = new Set([]);",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "no route starts at the primary whatever it carries"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-forget-before-send",
+    "file": "src/net/accountClient.js",
+    "old": "  if (!read) forgetD1Bookmark();\n  const era = _d1Era;",
+    "new": "  const era = _d1Era;",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a write sent carrying the bookmark, and the page holding it while the write is on the wire"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-forget-after-answer",
+    "file": "src/net/accountClient.js",
+    "old": "  if (!read) forgetD1Bookmark();\n  else if (era === _d1Era) {",
+    "new": "  if (read && era === _d1Era) {",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a read answered while a write was on the wire kept past the write's answer"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-era-unread",
+    "file": "src/net/accountClient.js",
+    "old": "  else if (era === _d1Era) {",
+    "new": "  else {",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a read sent before a forget keeps the answer it hears after it"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-forget-no-era",
+    "file": "src/net/accountClient.js",
+    "old": "_d1Mark = { secret: null, mark: null }; _d1Era += 1; }",
+    "new": "_d1Mark = { secret: null, mark: null }; }",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a forget that leaves the reads already on the wire their answers"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-list-drift",
+    "file": "src/net/accountClient.js",
+    "old": "  ['/v1/account', 'GET'],\n",
+    "new": "",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the client's bookmark reads drift from the service's"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-realm-before",
+    "file": "src/systems/realmSaves.js",
+    "old": "  if (writes) forgetD1Bookmark();\n  let res;",
+    "new": "  let res;",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a realm write sent with the page still holding its bookmark"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-realm-after",
+    "file": "src/systems/realmSaves.js",
+    "old": "  }\n  if (writes) forgetD1Bookmark();\n  noteSessionPass(io.secret, res);\n  const type",
+    "new": "  }\n  noteSessionPass(io.secret, res);\n  const type",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a read answered while a realm write was on the wire kept past it"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-cloud-before",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (writes) forgetD1Bookmark();\n  let res;",
+    "new": "  let res;",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a cloud save's write sent with the page still holding its bookmark"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A2-cloud-after",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (writes) forgetD1Bookmark();\n  const type = res.headers?.get?.('content-type') ?? '';",
+    "new": "  const type = res.headers?.get?.('content-type') ?? '';",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a read answered while a cloud save's write was on the wire kept past it"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A6-offline-keeps",
+    "file": "src/net/accountClient.js",
+    "old": "    if (!read || !passKeptThrough(e)) forgetD1Bookmark();\n",
+    "new": "",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a call that could not be made keeps the bookmark - every call after it refused by acct111's preflight"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A6-cut-keeps",
+    "file": "src/net/accountClient.js",
+    "old": "{ forgetD1Bookmark(); return { ok: false, error: 'offline', unknown: true",
+    "new": "{ return { ok: false, error: 'offline', unknown: true",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a 2xx whose body never came keeps the bookmark"
+  },
+  {
+    "name": "AUDIT-SCALE-II-C7-none-keeps",
+    "file": "src/net/accountClient.js",
+    "old": "    if (said == null) { if (_d1Mark.secret === secret) forgetD1Bookmark(); } else noteD1Bookmark(secret, said);",
+    "new": "    noteD1Bookmark(secret, said);",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a read answered with no bookmark keeps the old one"
+  },
+  {
+    "name": "AUDIT-SCALE-II-C7-other-secret",
+    "file": "src/net/accountClient.js",
+    "old": "if (_d1Mark.secret === secret) forgetD1Bookmark(); }",
+    "new": "forgetD1Bookmark(); }",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "another session's bookmark let go by this one's answer"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A3-copy-read",
+    "file": "server-account/src/metrics.js",
+    "old": "  const res = await serve(request, counted, said, exec);",
+    "new": "  await request\n    .clone()\n    .text()\n    .catch(() => '');\n  const res = await serve(request, counted, said, exec);",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the body read whole off a copy before the service - SCALE4h as it stood"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A3-word-dropped",
+    "file": "server-account/src/index.js",
+    "old": "        held.said.parts = heartbeatPartsOf(body);   // AUDIT SCALE II A-3: the parts of the body read above - capped, and behind the session\n",
+    "new": "",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the heartbeat's parts never said"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A3-before-session",
+    "file": "server-account/src/index.js",
+    "old": "      if (!body) return no('body', 400, origin);\n      // YARD-SHED",
+    "new": "      if (!body) return no('body', 400, origin);\n      held.said.parts = heartbeatPartsOf(body);\n      // YARD-SHED",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the parts said of a stranger's body, before the session"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A5-pick-on-session",
+    "file": "server-account/src/motherlodes.js",
+    "old": "  const db = primary;",
+    "new": "  const db = read;",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the day picked off the request's session - SCALE4g as it stood"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A5-answer-off-session",
+    "file": "server-account/src/motherlodes.js",
+    "old": "  return keptOf(db);",
+    "new": "  return keptOf(read);",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the pick answered off the session that could not see it"
+  },
+  {
+    "name": "AUDIT-SCALE-II-A5-primary-mark-unasked",
+    "file": "server-account/src/motherlodes.js",
+    "old": "  if (db !== read && (await marked(db))) return keptOf(db);\n  // LODE-HERD (2026-10-29, bible/11-Multiplayer/Scale-Arc.md): A READ PICKS ONLY UNDER THE DAY'S CLAIM. Every read before",
+    "new": "  // LODE-HERD (2026-10-29, bible/11-Multiplayer/Scale-Arc.md): A READ PICKS ONLY UNDER THE DAY'S CLAIM. Every read before",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a day kept on the primary picked again for a replica that has not heard its mark"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L4a-queue-as-failure",
+    "file": "src/net/accountClient.js",
+    "old": "} else if (minter.lastWhy === 'queue') {",
+    "new": "} else if (minter.lastWhy === 'queued') {",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a place in the line held as a failure: STORM-SHED's doubling"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L4a-queue-counted",
+    "file": "src/net/accountClient.js",
+    "old": "fails: cool.secret === session.secret ? cool.fails : 0,",
+    "new": "fails: cool.secret === session.secret ? cool.fails + 1 : 1,",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a place in the line counted a failure in a row"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L4a-wait-unpassed",
+    "file": "src/net/accountClient.js",
+    "old": "...(Number.isSafeInteger(data?.wait) ? { wait: data.wait } : {}),",
+    "new": "",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the call drops the line's wait"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L4a-upper-bound",
+    "file": "src/net/accountClient.js",
+    "old": "  return Math.min(MINT_LINE_WAIT_MAX_MS, Math.round(told * (1 + MINT_LINE_JITTER * rand())));",
+    "new": "  return Math.round(told * (1 + MINT_LINE_JITTER * rand()));",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the jitter carries the hold past the line's longest wait"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L4a-lower-bound",
+    "file": "src/net/accountClient.js",
+    "old": "Math.max(MINT_LINE_WAIT_MIN_MS, typeof wait === 'number'",
+    "new": "(typeof wait === 'number'",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a wait under the line's shortest held as told"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L4a-jitter-sign",
+    "file": "src/net/accountClient.js",
+    "old": "Math.round(told * (1 + MINT_LINE_JITTER * rand()))",
+    "new": "Math.round(told * (1 - MINT_LINE_JITTER * rand()))",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the hold shorter than the wait told"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L4a-twin-drift",
+    "file": "src/net/accountClient.js",
+    "old": "export const MINT_LINE_WAIT_MAX_MS = 30_000;",
+    "new": "export const MINT_LINE_WAIT_MAX_MS = 60_000;",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the client's bound drifted from the line's"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L2-classes-unexported",
+    "file": "tools/loadAccountEntry.mjs",
+    "old": "export * from '../server-account/src/index.js';\n",
+    "new": "",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the harness's entry exports no Durable Object class - wrangler dev refuses it"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L3-asked-once",
+    "file": "tools/loadHarness.mjs",
+    "old": "    if (body?.error !== 'queue' || n >= asks) return body;",
+    "new": "    return body;",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a bot asks the line once"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L3-wait-unread",
+    "file": "tools/loadHarness.mjs",
+    "old": "    await wait(lineHoldMs(body.wait));",
+    "new": "    await wait(lineHoldMs(undefined));",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the told wait unread"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L3-setup-past-line",
+    "file": "tools/loadHarness.mjs",
+    "old": "  const made = await quietly(() => guestThroughLine(bot.fetch));",
+    "new": "  const made = await quietly(() =>\n    bot\n      .fetch(`${LOAD_SERVICE}/v1/auth/guest`, {\n        method: 'POST',\n        headers: { 'content-type': 'application/json' },\n        body: JSON.stringify({ label: 'load', ...ACCEPTED }),\n      })\n      .then((r) => r.json()),\n  );",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "setUp asks once - the harness as it stood"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L5-wave-a-session",
+    "file": "tools/loadHarness.mjs",
+    "old": "  const page = { wave: reconnectWave(), wire2: o.wire !== 1 }; // AUDIT SCALE II L5: the bot's page - one wave, its wire",
+    "new": "  const page = { wire2: o.wire !== 1 }; // AUDIT SCALE II L5: the bot's page - one wave, its wire",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "each session its own wave, as the harness stood"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L5-first-wire",
+    "file": "tools/loadHarness.mjs",
+    "old": "  const page = { wave: reconnectWave(), wire2: o.wire !== 1 }; // AUDIT SCALE II L5: the bot's page - one wave, its wire",
+    "new": "  const page = { wave: reconnectWave(), wire2: false }; // AUDIT SCALE II L5: the bot's page - one wave, its wire",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the first wire, as the harness stood"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L5-entries-uncounted",
+    "file": "tools/loadHarness.mjs",
+    "old": "    for (const e of Array.isArray(m.l) ? m.l : [])\n      if (Array.isArray(e)) tallySaid(tally, { t: 'pose', id: e[0], p: e[1] }, now, ws, room);\n    return;",
+    "new": "    return;",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a poses batch's entries uncounted and unaged"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L5-batch-frames-uncounted",
+    "file": "tools/loadHarness.mjs",
+    "old": "    for (const x of Array.isArray(m.f) ? m.f : []) if (x?.t !== 'fb') tallySaid(tally, x, now, ws, room);\n    return;",
+    "new": "    return;",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a frame batch's frames uncounted"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L5-batches-unparsed",
+    "file": "tools/loadHarness.mjs",
+    "old": "        if (t === 'poses' || t === 'fb') {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a batch counted as one frame, as the harness stood"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L5-sum-dropped",
+    "file": "tools/loadHarness.mjs",
+    "old": "    for (const k of ['inByType', 'saidByType', 'outByType', 'closes', 'refusals'])",
+    "new": "    for (const k of ['inByType', 'outByType', 'closes', 'refusals'])",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the fleets' sums drop what was said"
+  },
+  {
+    "name": "AUDIT-SCALE-II-L5-knob-unchecked",
+    "file": "tools/loadHarness.mjs",
+    "old": "  if (out.wire !== 1 && out.wire !== 2) throw new Error(`--wire is 1 or 2, not ${out.wire}`); // AUDIT SCALE II L5\n  for (const k of ['ramp', 'chat-every', 'save-kb']) if (!(out[k] >= 0)) throw new Error(`--${k} cannot be negative`);",
+    "new": "  for (const k of ['ramp', 'chat-every', 'save-kb']) if (!(out[k] >= 0)) throw new Error(`--${k} cannot be negative`);",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a wire that does not exist taken"
+  },
+  {
+    "name": "AUDIT-SCALE-II-N1-docblock-gone",
+    "file": "server-account/src/service.js",
+    "old": "/** SCALE4d: the binding as one D1 session (`withSession`) - every statement counted where the binding's are\n *  (metrics.js countedDb opens the session through itself), and DB_ROOT the binding the session came from, so what an\n *  isolate keeps beside its database stays one store for every request. A binding with no sessions (an older runtime, a\n *  harness's fake) is answered as it stands: the primary, as before. A write in a session goes to the primary - a\n *  replica takes none - and the session's later reads see it. Until the database's read replication is turned on\n *  (account-deploy.yml) every statement of a session is the primary's anyway. */\nexport function replicaDb(/** @type {any} */ db, constraint = REPLICA_CONSTRAINT) {",
+    "new": "export function replicaDb(/** @type {any} */ db, constraint = REPLICA_CONSTRAINT) {",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "SCALE4d's docblock gone from replicaDb"
+  },
+  {
+    "name": "AUDIT-SCALE-II-N2-dead-name",
+    "file": "src/net/identityToken.js",
+    "old": " *      realm keeps it (server-account/src/realm.js realmMintFacts - INT7:",
+    "new": " *      realm keeps it (server-account/src/realm.js realmLevelOf - INT7:",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "a comment names a function SCALE4f deleted"
+  },
+  {
+    "name": "AUDIT-SCALE-II-N3-history-renamed",
+    "file": "test/server/renown_char.test.js",
+    "old": "PIN MOVED: acct112, SCALE4f + SCALE4g + SCALE4h (acct111 on its branch, renumbered past HOME-VOTE at the merge); PIN MOVED: acct111, HOME-VOTE (a town\\'s",
+    "new": "PIN MOVED: acct112, HOME-VOTE (a town\\'s",
+    "tests": [
+      "test/server/auditscale2_acct.test.js"
+    ],
+    "note": "the version pin's history renamed as the merge left it. GUILD-SEEN (re-aimed by content, PIN MOVED): acct113 heads the history now. BR5 (re-aimed, PIN MOVED): acct115 heads it, GUILD3's acct114 and GUILD-SEEN's acct113 after it - the text this renames is unmoved."
+  }
+]

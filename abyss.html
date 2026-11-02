@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Abyss lab</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; color: #e9e4d9; font: 13px system-ui, sans-serif; overflow: hidden; }
+    #c { display: block; width: 100vw; height: 100vh; touch-action: none; }
+    #panel { position: fixed; left: 10px; top: 10px; background: rgba(14,16,19,0.85); padding: 10px 12px; border: 1px solid #2b323b; display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; align-items: center; max-width: calc(100vw - 44px); }
+    #panel input[type=range] { width: 180px; max-width: 40vw; }
+    #panel .v { min-width: 4ch; text-align: right; color: #c08a3e; }
+    #help { grid-column: 1 / -1; color: #9aa3ad; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="panel">
+    <label for="view">View</label><select id="view"></select><span></span>
+    <label for="t">Hour's clock</label><input id="t" type="range" min="0" max="600" step="0.1" value="40" /><span class="v" id="tV"></span>
+    <label for="lane">Enhanced lighting</label><input id="lane" type="checkbox" checked /><span></span>
+    <label for="still">Still</label><input id="still" type="checkbox" /><span></span>
+    <div id="help">Drag to look, WASD / QE to move (shift: faster). No game data: everything here is made in code.</div>
+  </div>
+  <script type="module" src="/src/tools/abyssLab.js"></script>
+</body>
+</html>

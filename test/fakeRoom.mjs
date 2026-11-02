@@ -1,0 +1,240 @@
+// The relay pins' fake Durable Object - ONE home (AUDIT WORLD D10: three copies had to grow list() and the batched
+// put() in lockstep, and a fake that lies makes a pin pass that production would fail). A state with sockets and
+// storage (get/put/delete/deleteAll/list, the batched put, the alarm), a socket with a bounded attachment (the
+// runtime's 2 KiB - AUDIT SOC: this said 16 KiB, and the runtime's serializeAttachment() takes 2048 bytes; a fake
+// with a wider wall than production's makes a pin pass that production would fail), and the Room's doors as helpers;
+// wake() is what a hibernation wakes into - a fresh Room over the same state, every attachment re-read.
+import { Room } from '../server/src/index.js';
+import { mintToken, MAX_TTL_S, _b64url } from '../src/net/identityToken.js';
+
+// ═══ ACC1g: EVERY HELLO CARRIES A REAL, SIGNED TOKEN ═══════════════
+//
+// Mac: "You shouldnt be able to just type a name and enter anymore....
+// this is what the account system is for."
+//
+// The relay refuses a hello it cannot verify, so a harness that sent a
+// bare `{ t: 'hello', name }` would now be testing the refusal and
+// nothing else - 89 relay pins went red on the change, which is the
+// gate telling the truth about what every one of them had been
+// assuming. THE FIX IS NOT A BACK DOOR IN THE ROOM: the harness mints
+// a real Ed25519 token against a real key and the room really verifies
+// it, so these pins run through the door a player runs through rather
+// than around it.
+//
+// ONE KEYPAIR PER ROOM, made lazily because `fakeRoom()` is sync and
+// WebCrypto is not; `env` is a live object the room holds, and the
+// relay imports the key on its first hello, so filling it in before
+// that hello is in time.
+//
+// AND EVERY TOKEN IS UNIQUE, because the room SPENDS a signature once
+// (ACC1d F8) and Ed25519 is deterministic: the same claims signed twice
+// are the same bytes, so a reconnect would be refused as a replay. The
+// claims differ by their issued-at, walked one second further into the
+// past per mint - which stays inside MAX_TTL_S, and a harness that
+// mints more than that many helloes into one room will say so out loud
+// rather than fail as something else.
+
+/**
+ * The signing half, for ANY relay harness - `fakeRoom` below and the
+ * hand-rolled `strictRoom` in slam5 both take it, so there is one place
+ * a room's key and its tokens are made rather than one per harness.
+ *
+ * @param env  the live object the Room was constructed with; the public
+ *             key is written into it on the first mint, which is in
+ *             time because the relay imports it lazily on its first
+ *             hello.
+ * @param now  the harness's clock, so a test that fakes Date.now mints
+ *             on the same clock the room verifies on.
+ */
+export function roomSigner(env, now = () => Date.now()) {
+  let signing = null;
+  // ONE ISSUED-AT PER CLAIM SET, not one counter per room. What has to
+  // be unique is the SIGNATURE, and two different peers already sign
+  // different claims - so only a repeat of the SAME identity needs a
+  // new `i`, and a room may hold as many peers as it likes.
+  //
+  // AND IT IS TRACKED AS A VALUE, NOT A COUNT, which is the bug this
+  // walked into first: counting mints and subtracting from the CURRENT
+  // clock cancels out the moment the clock moves. A harness ticking its
+  // fake clock past a second boundary between two helloes for one id
+  // minted `nowS - 1` and then `(nowS + 1) - 2` - the same instant, the
+  // same claims, the same Ed25519 bytes, and the room refused the
+  // second as a replay. So each identity's `i` is kept and only ever
+  // goes DOWN - a token minted again a moment later is a moment OLDER,
+  // which pins lean on (GUILD1c: "a token minted a moment before the
+  // removal") - and only when that walk would leave MAX_TTL_S behind a
+  // clock that has moved does it start again from the clock, at the
+  // newest second it has not signed (FRIENDS-SYNC, below).
+  const lastI = new Map();
+  const signer = async () => {
+    if (!signing) {
+      signing = (async () => {
+        const kp = await globalThis.crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+        const raw = new Uint8Array(await globalThis.crypto.subtle.exportKey('raw', kp.publicKey));
+        env.IDENTITY_PUBLIC_KEY = _b64url.encode(raw);
+        return kp;
+      })();
+    }
+    return signing;
+  };
+  /** A token for `id`, signed by this room's own key and NEVER THE SAME
+   *  BYTES TWICE - the room spends a signature once (ACC1d F8) and
+   *  Ed25519 is deterministic, so the same claims signed twice would be
+   *  refused as a replay. The issued-at walks one second further into
+   *  the past per mint, which stays inside MAX_TTL_S; a clock that has
+   *  moved far enough starts it again from the clock, and only past
+   *  that the harness says so out loud rather than failing as
+   *  something else. */
+  const token = async (id, who = {}) => {
+    const kp = await signer();
+    const claims = { s: who.s ?? `acct-${id}`, n: who.n ?? String(id), k: who.k ?? 'guest' };
+    // ACC3: the badge, when the caller asked for one. Signed like the
+    // name and for the same reason - the relay reads a title OUT of
+    // the token and never off the frame - so a harness that wants a
+    // titled peer has to mint one, which is exactly the point.
+    if (who.t !== undefined) claims.t = who.t;
+    if (who.ts !== undefined) claims.ts = who.ts;   // SEAT1c: a seat title's claim
+    if (who.g !== undefined) claims.g = who.g;
+    if (who.mu !== undefined) claims.mu = who.mu;   // MOD1: a muted player's token
+    if (who.fz !== undefined) claims.fz = who.fz;   // STAFF-PANEL5-FREEZE: a frozen player's token
+    if (who.lv !== undefined) claims.lv = who.lv;   // RENOWN1: the Renown level the service signed in
+    if (who.gi !== undefined || who.gt !== undefined || who.gm !== undefined) Object.assign(claims, { gi: who.gi, gt: who.gt, gm: who.gm });   // GUILD1c: the character's guild the service signed in
+    if (who.rc !== undefined) claims.rc = who.rc;   // REALM-DOOR: whether the service found the named character the realm's
+    if (who.ci !== undefined) claims.ci = who.ci;   // AUDIT LEGACY III O1: and which realm character it is
+    if (who.au !== undefined) claims.au = who.au;   // WB9g: the aura worn
+    if (who.ak !== undefined) claims.ak = who.ak;   // ARMORY: the Aura Armory's kit worn
+    if (who.fx !== undefined) claims.fx = who.fx;   // STOREFRONT (the wire audit): the effects kit worn
+    if (who.pi !== undefined) claims.pi = who.pi;   // WITCH1 (the wire audit): the profile icon worn
+    if (who.gx !== undefined) claims.gx = who.gx;   // GLYPH-WEAR (the wire audit): the glyphs taken off
+    if (who.rb !== undefined) claims.rb = who.rb;   // SEASON1 part two: a Season's banner ribbon
+    if (who.ar !== undefined) claims.ar = who.ar;   // ARENA4: the season's arena rating the service signed in
+    if (who.cl !== undefined) claims.cl = who.cl;   // ARENA4b: the named character's level the service signed in
+    if (who.wa !== undefined) claims.wa = who.wa;   // INT7: the realm character's arms the service signed in (beside `rc` 1)
+    if (who.vl !== undefined) claims.vl = who.vl;   // PVP-VILLAIN-KEEP: the realm character's villain meter (beside `rc` 1)
+    if (who.mg !== undefined) claims.mg = who.mg;   // EG-MIGHT: the realm character's kit's might (beside `rc` 1) - AUDIT POTION-MIGHT B6
+    for (const k of ['hn', 'hc', 'hb', 'hg']) if (who[k] !== undefined) claims[k] = who[k];   // LEGACY7: the realm character's house the service signed in
+    if (who.hd !== undefined) claims.hd = who.hd;   // STAFF-PANEL5-HIDDEN: a hidden staff spectator's mark
+    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.ts ?? []).join('/')}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.fz ?? ''}|${claims.lv ?? ''}|${claims.gi ?? ''}|${claims.gm ?? ''}|${claims.rc ?? ''}|${claims.ci ?? ''}|${claims.au ?? ''}|${claims.ak ?? ''}|${claims.fx ?? ''}|${claims.pi ?? ''}|${(claims.gx ?? []).join('+')}|${(claims.rb ?? []).join('/')}|${claims.ar ?? ''}|${claims.cl ?? ''}|${claims.hn ?? ''}|${claims.hc ?? ''}|${claims.hb ?? ''}|${claims.hg ?? ''}|${claims.hd ?? ''}|${claims.vl ?? ''}|${claims.mg ?? ''}`;
+    const nowS = Math.floor(now() / 1000);
+    const kept = lastI.get(key) ?? { last: undefined, used: new Set() };
+    let i = nowS - 1;
+    if (kept.last !== undefined && i >= kept.last) i = kept.last - 1;
+    // FRIENDS-SYNC (FIELD BUGS 2026-10-01 part five): a social hello's token now names the hub account itself
+    // (`s: over.acct`), so one account's hellos either side of a PARTY_OFFLINE_MS wait walked out of MAX_TTL_S here.
+    // The walk down stands while it fits; past the window it starts again from the clock, never on a second it signed.
+    if (i <= nowS - MAX_TTL_S) i = nowS - 1;
+    while (kept.used.has(i)) i--;
+    kept.last = i; kept.used.add(i);
+    lastI.set(key, kept);
+    if (i <= nowS - MAX_TTL_S) throw new Error(`roomSigner: ${key} has run out of issued-at room inside MAX_TTL_S - this harness has minted for one identity too many times on one clock`);
+    return mintToken(claims, kp.privateKey, { subtle: globalThis.crypto.subtle, nowS: i });
+  };
+  return { token, signer };
+}
+
+export function fakeRoom(key, { now = () => Date.now(), ROOMS = null, poll = 'driven', vars = {} } = {}) {
+  const sockets = [];
+  const store = new Map();
+  const alarm = { at: null };
+  const state = {
+    id: key,   // COST-2 part two: the object's id, as fakeRooms' idFromName names it (server/src/cellMoves.js isCellDirectory)
+    getWebSockets: () => sockets.slice(),
+    acceptWebSocket: (ws) => sockets.push(ws),
+    storage: {
+      // AUDIT SOC (2026-09-16): THE RUNTIME'S BATCH LIMIT IS A LAW HERE TOO. A Durable Object's batched get takes 128 keys
+      // and its batched put 128 pairs; SLAM5 found the 130th player's hello throwing on exactly this wall, and the fake
+      // let it pass - a fake that lies makes a pin pass that production would fail (this file's own header).
+      // AUDIT WB12d (lens T, F8): A VALUE IS COPIED IN AND OUT, as the runtime's structured clone copies it - a fake that
+      // handed back the very object it was given let a write that never happened pass (a ledger mutated after its first
+      // put read back changed, with no second put to carry it)
+      async get(k) { if (Array.isArray(k) && k.length > 128) throw new Error(`storage.get(): ${k.length} keys, the runtime takes 128 at most`); return Array.isArray(k) ? new Map(k.filter((x) => store.has(x)).map((x) => [x, structuredClone(store.get(x))])) : structuredClone(store.get(k)); },
+      async put(k, v) { if (k && typeof k === 'object') { const e = Object.entries(k); if (e.length > 128) throw new Error(`storage.put(): ${e.length} pairs, the runtime takes 128 at most`); for (const [kk, vv] of e) store.set(kk, structuredClone(vv)); } else store.set(k, structuredClone(v)); },
+      async delete(k) { if (Array.isArray(k) && k.length > 128) throw new Error(`storage.delete(): ${k.length} keys, the runtime takes 128 at most`); for (const x of Array.isArray(k) ? k : [k]) store.delete(x); },
+      async deleteAll() { store.clear(); },
+      // AUDIT SOC A4: list() pages as the runtime's does - `limit` keys at most, sorted, after `startAfter` - or a paged
+      // sweep over this fake never ends (a page that is always full is always followed)
+      async list({ prefix = '', limit = Infinity, startAfter = null } = {}) {
+        const keys = [...store.keys()].filter((k) => k.startsWith(prefix) && (startAfter == null || k > startAfter)).sort();
+        return new Map(keys.slice(0, limit).map((k) => [k, structuredClone(store.get(k))]));
+      },
+      async setAlarm(at) { alarm.at = at; },
+      async getAlarm() { return alarm.at; },
+      async deleteAlarm() { alarm.at = null; },
+    },
+  };
+  // ACC1g: the room's config, filled in by `signer()` before the first
+  // hello reaches it. The object identity is what matters - the Room
+  // captures it at construction and reads the key lazily.
+  // HCC-PARK: a shared binding, so one object can reach another (fakeRooms below). HUB-PULL: a shard's poll is the
+  // harness's to ask (`_hubPoll`, in each world's settle) unless a pin asks for the loop the runtime runs (`poll: 'held'`)
+  // COST-1: and the relay's [vars] a pin names (`vars`: REGION_SHARDS, a region's channel split as SCALE5c part two split it)
+  const env = ROOMS ? { ROOMS, ...(poll === 'driven' ? { HUB_POLL: 'driven' } : {}), ...vars } : { ...vars };
+  let room = new Room(state, env);
+  const wake = () => { room = new Room(state, env); };
+  const { token, signer } = roomSigner(env, now);
+  const connect = () => {
+    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null },
+      // AUDIT ATTACH: the socket's meters are the Room INSTANCE's, not its attachment's - read off the object awake now,
+      // so a wake() forgets them as a hibernation does
+      get meters() { return room._meters.get(ws) ?? {}; },
+      send(s) { if (this.closed) throw new Error('closed'); this.sent.push(JSON.parse(s)); },
+      // the runtime drops a socket the object closed from getWebSockets() and calls no webSocketClose for it
+      close(code, reason) { this.closed = { code, reason }; const i = sockets.indexOf(ws); if (i >= 0) sockets.splice(i, 1); },
+      serializeAttachment(a) { if (JSON.stringify(a).length > 2048) throw new Error('attachment too large'); this.att = JSON.parse(JSON.stringify(a)); }, deserializeAttachment() { return this.att; } };
+    state.acceptWebSocket(ws);
+    room._adopt?.(ws, ws.att);   // SCALE2b: a socket comes in by the object's door (Room.fetch adopts it), as the runtime's do
+    return ws;
+  };
+  const look = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
+  /** A hello; the fourth argument is a secret (a string) or extra fields (an object) laid over the frame. */
+  const hello = async (ws, id, pose = null, extra = {}) => {
+    const over = typeof extra === 'string' ? { secret: extra } : extra;
+    // ACC1g: a caller that wants to drive the gate itself says so -
+    // `tok: null` is a hello with NO token (the refusal), and any other
+    // value is that caller's own token. Everything else gets a real one.
+    // ACC1g: THE TOKEN'S NAME IS THE FRAME'S, because the relay takes
+    // the name OUT of the token and ignores the frame's entirely - a
+    // harness that signed one name and typed another would be testing
+    // that the frame is ignored, over and over, in every pin that ever
+    // names a peer.
+    // ACC3: a `title`/`glyphs` on the frame is minted INTO the token,
+    // never laid on the frame - the relay ignores what a client says
+    // about its own badge, and a harness that could set one on the
+    // frame would be testing the wrong half forever.
+    const tok = 'tok' in over ? over.tok : await token(id, { s: over.tokenSub ?? over.acct, n: over.name ?? String(id), k: over.kind, t: over.title, ts: over.ts, g: over.glyphs, mu: over.mu, fz: over.fz, lv: over.lv, gi: over.gi, gt: over.gt, gm: over.gm, rc: over.rc, ci: over.ci, au: over.au, ak: over.ak, fx: over.fx, pi: over.pi, gx: over.gx, rb: over.rb, ar: over.ar, cl: over.charLevel, wa: over.wa, hd: over.hd, vl: over.vl, mg: over.mg });   // STOREFRONT (the wire audit): the kits, the icon and the hidden glyphs the token signs   // PVP-VILLAIN-KEEP: `vl` the villain meter the token signs   // INT7: `wa` the arms the token signs   // ARENA4b: `charLevel` the character's level the token signs as `cl` (never the frame's own `cl`, ONE-SEAT's claim of the seat)   // ARENA4: `kind` 'linked' for a registered account, `ar` its season's rating   // AUDIT HCC-PARK: `tokenSub` names the verified account the token carries (default acct-<id>; never a frame field - a social hello's own `acct` is the hub's) - one player in a second tab is one account under two ids
+    // AUDIT FRIENDS-SYNC F5: a hello with an account is a current build's - it says `ps` - unless the pin asks for an old one (`ps: undefined`)
+    const frame = { t: 'hello', id, secret: 'secret-of-' + id, name: id, look, pose, ...(over.acct && !('ps' in over) ? { ps: 1 } : {}), ...over };
+    delete frame.title; delete frame.ts; delete frame.glyphs; delete frame.mu; delete frame.fz; delete frame.lv; delete frame.tokenSub; delete frame.gi; delete frame.gt; delete frame.gm; delete frame.rc; delete frame.ci; delete frame.au; delete frame.ak; delete frame.fx; delete frame.pi; delete frame.gx; delete frame.rb; delete frame.kind; delete frame.ar; delete frame.charLevel; delete frame.wa; delete frame.hd; delete frame.vl; delete frame.mg;   // ACC3/MOD1/RENOWN1/GUILD1c/REALM-DOOR/WB9g/SEASON1/ARENA4/ARENA4b/INT7: they went into the token above; the wire has no such hello field
+    if (tok == null) delete frame.tok; else frame.tok = tok;
+    return room.webSocketMessage(ws, JSON.stringify(frame));
+  };
+  const pose = (ws, p) => room.webSocketMessage(ws, JSON.stringify({ t: 'pose', p }));
+  const chat = (ws, text) => room.webSocketMessage(ws, JSON.stringify({ t: 'chat', text }));
+  const ping = (ws) => room.webSocketMessage(ws, '{"t":"ping","x":1}');   // not the byte-exact one the runtime answers in its sleep: this one wakes the object
+  const world = (ws, data, extra = {}) => room.webSocketMessage(ws, JSON.stringify({ t: 'world', data, ...extra }));
+  const raw = (ws, text) => room.webSocketMessage(ws, text);
+  const drop = (ws) => { const i = sockets.indexOf(ws); if (i >= 0) sockets.splice(i, 1); return room.webSocketClose(ws, 1005, ''); };
+  // AUDIT WB12d (lens R): the runtime's alarm is SPENT as its handler begins - getAlarm() answers null inside it, so a
+  // re-arm there is never mistaken for a sooner one already set
+  const fire = () => { alarm.at = null; return room.alarm(); };
+  return { get room() { return room; }, state, store, sockets, alarm, connect, hello, token, signer, env, pose, chat, ping, world, raw, drop, wake, fire, now, look };
+}
+
+/**
+ * HCC-PARK: A WORLD OF ROOMS - the worker's `ROOMS` binding over fake objects, so a Room that calls another (the
+ * park registry, a cell's drop) reaches a real Room over its own fake state. Each named object is made on its first
+ * use and kept, as the runtime keeps a Durable Object's storage; `room(name)` is the harness of that one.
+ */
+export function fakeRooms({ now = () => Date.now(), poll = 'driven', vars = {} } = {}) {
+  const made = new Map();
+  const ROOMS = {
+    idFromName: (name) => name,
+    get: (id) => ({ fetch: (request) => room(id).room.fetch(request) }),
+  };
+  function room(name) {
+    let r = made.get(name);
+    if (!r) { r = fakeRoom(name, { now, ROOMS, poll, vars }); made.set(name, r); }
+    return r;
+  }
+  return { room, ROOMS, made };
+}

@@ -1,0 +1,221 @@
+[
+  {
+    "name": "GUIDE2-note-on-an-unasked-map",
+    "file": "src/ui/quest/questLens.js",
+    "old": "      target.locationName && target.onMap === false && !target.here",
+    "new": "      target.locationName && !target.onMap && !target.here",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS U5): the note past the Bay, and none where here."
+  },
+  {
+    "name": "GUIDE2-building-dropped",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  const where = [target.buildingName, place].filter(Boolean).join(', ');",
+    "new": "  const where = [place].filter(Boolean).join(', ');",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-here-unsaid",
+    "file": "src/ui/quest/questLens.js",
+    "old": "    where: target.here ? `${where} (${WHERE_TEXT.here})` : where,",
+    "new": "    where,",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-phrase-drifted",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName); // L10N3d: in the player's language",
+    "new": "  formatText(localizedText('locationInRegionProvince', '{0}, {1}'), locationName, regionName); // L10N3d: in the player's language",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js",
+      "test/systems/audit26_systems2.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-unasked-map-is-a-no",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : null; // START3: the site, for its pixel past the Bay",
+    "new": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : false; // START3: the site, for its pixel past the Bay",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-a-token-array-is-read-as-a-message",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  if (typeof message?.getTextTokens !== 'function') return null;\n  let place = lastPlaceMentionedInMessage(message, QUIET_ROLL);",
+    "new": "  let place = lastPlaceMentionedInMessage(message, QUIET_ROLL);",
+    "tests": [
+      "test/ui/enhanced/enhancedChronicle.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-pause-button-without-a-door",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (said.find && door) {\n    const go = el('button', 'act', WHERE_TEXT.show);",
+    "new": "  if (said.find) {\n    const go = el('button', 'act', WHERE_TEXT.show);",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-pause-door-before-the-handoff",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    go.onclick = () => { handoff(() => door(find)); };",
+    "new": "    go.onclick = () => { if (door(find) === false) onAction('resume'); onAction('handoff'); };",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-pause-no-resume-on-a-refusal",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    go.onclick = () => { handoff(() => door(find)); };",
+    "new": "    go.onclick = () => { handoff(() => door(find), () => true); };",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-pause-the-first-entry-for-the-latest",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      const where = questWhere(sel.written?.at(-1)?.message, 'px-qwhere');",
+    "new": "      const where = questWhere(sel.written?.[0]?.message, 'px-qwhere');",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-pause-trail-without-a-door",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (!said || (wayOnly && !(said.find && door)) || (skip &&",
+    "new": "  if (!said || (wayOnly && !said.find) || (skip &&",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-pause-the-place-offered-twice",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": " || (skip && said.find?.locationName === skip.locationName && said.find?.regionName === skip.regionName)) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-chronicle-door-read-after-the-close",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        door(find);",
+    "new": "        deps.showQuestPlace?.(find);",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-chronicle-map-before-the-close",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        onExit();\n        door(find);",
+    "new": "        door(find);\n        onExit();",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-chronicle-line-hidden-when-shut",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        if (section === 'quests' && e.uid != null) {",
+    "new": "        if (section === 'quests' && e.uid != null && !isFolded(folded, section, i)) {",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-chronicle-button-without-a-door",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "    if (e.find && typeof door === 'function') {",
+    "new": "    if (e.find) {",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-chronicle-timer-never-armed",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  armClocks(); // GUIDE2: after the spans exist\n}",
+    "new": "}",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-chronicle-interval-outlives-the-window",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "      disarmClocks();\n      unlistenKeys();",
+    "new": "      unlistenKeys();",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-chronicle-stopped-clock-left-standing",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "      if (!Number.isFinite(left)) {\n        render();\n        return;\n      }",
+    "new": "      if (!Number.isFinite(left)) continue;",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-chronicle-words-drifted",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "      span.textContent = t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(left) });",
+    "new": "      span.textContent = `${remainWords(left)}`;",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-street-journal-door-indoors",
+    "file": "src/scenes/world.js",
+    "old": "      showQuestPlace: (modes?.mode ?? 'exterior') === 'exterior' ? (find) => showQuestPlace(find) : undefined,",
+    "new": "      showQuestPlace: (find) => showQuestPlace(find),",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-street-refusal-answers-nothing",
+    "file": "src/scenes/world.js",
+    "old": "    if (giveOffer()) return false;",
+    "new": "    if (giveOffer()) return;",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js",
+      "test/systems/audit58_magic.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-street-success-answers-nothing",
+    "file": "src/scenes/world.js",
+    "old": "    townTalk.showOverlay(_travelMap);\n    return true;\n",
+    "new": "    townTalk.showOverlay(_travelMap);\n",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  },
+  {
+    "name": "GUIDE2-building-hands-a-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "    canFindPlace: host.questCanFindPlace,\n    currentLocationName: host.questLocationName,\n  });\n",
+    "new": "    canFindPlace: host.questCanFindPlace,\n    currentLocationName: host.questLocationName,\n    showQuestPlace: host.showQuestPlace,\n  });\n",
+    "tests": [
+      "test/ui/enhanced/guide2_wayThere.test.js"
+    ]
+  }
+]

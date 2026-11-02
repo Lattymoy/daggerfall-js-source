@@ -1,0 +1,245 @@
+[
+  {
+    "name": "EVENT-TIP-a-raid-marked-before-or-after-it-runs",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "    if (!r || !raidActive(r, nowMinutes) || !Number.isInteger(r.px) || !Number.isInteger(r.py)) continue;",
+    "new": "    if (!r || !Number.isInteger(r.px) || !Number.isInteger(r.py)) continue;",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-no-deaths-said-as-none",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "    if (killed > 0 && target > 0) lines.push(`${Math.min(killed, target)} of ${target} driven off`);",
+    "new": "    if (target > 0) lines.push(`${Math.min(killed, target)} of ${target} driven off`);",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-deaths-past-the-target",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "    if (killed > 0 && target > 0) lines.push(`${Math.min(killed, target)} of ${target} driven off`);",
+    "new": "    if (killed > 0 && target > 0) lines.push(`${killed} of ${target} driven off`);",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-withdraws-at-its-start",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "    lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.endMinute)}`);",
+    "new": "    lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.startMinute)}`);",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-clock-past-midnight-unwrapped",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "  const m = ((Math.floor(minute) % 1440) + 1440) % 1440;",
+    "new": "  const m = Math.floor(minute);",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-a-raid-off-the-bay-read",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "    if (\n      !Number.isInteger(px) ||\n      !Number.isInteger(py) ||\n      px < box.x0 ||\n      py < box.y0 ||\n      px >= box.x0 + box.w ||\n      py >= box.y0 + box.h\n    )\n      continue;",
+    "new": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0) continue;",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-a-card-without-bounds",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "    .slice(0, linesMax)\n    .map((l) => String(l ?? '').slice(0, textMax))",
+    "new": "    .map((l) => String(l ?? '').slice(0, textMax))",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-card-cut-at-the-right-edge",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "  if (left + w > vw - edge) left = x - gap - w;\n  if (top + h > vh - edge) top = y - gap - h;",
+    "new": "  if (top + h > vh - edge) top = y - gap - h;",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-card-off-the-screen",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "  return { left: Math.max(edge, Math.min(left, vw - edge - w)), top: Math.max(edge, Math.min(top, vh - edge - h)) };",
+    "new": "  return { left, top };",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-a-death-never-repaints",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "export const raidMarksKey = (marks) =>\n  marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}|${tipKey(m.tip)}`).join(';');",
+    "new": "export const raidMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}`).join(';');",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-a-raided-town-answers-as-the-town",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };\n",
+    "new": "",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-ring-answers-with-no-card",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (g) return { label: g.label, cursor: '', tip: g.tip };\n",
+    "new": "",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-a-still-pointer's-card-never-refreshed",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (gateMoved) this._refreshTip();\n",
+    "new": "",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-raids-never-polled",
+    "file": "src/ui/heldMap.js",
+    "old": "    const raids = readRaidMarksIn(this.deps.raids, sheet);",
+    "new": "    const raids = [];",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-legend-forgets-the-raids",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._raids.length) {   // EVENT-TIP: and a raided town",
+    "new": "    if (false) {   // EVENT-TIP: and a raided town",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-card-rides-the-sheet-down",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._hoverAt = null; this._showTip(null);   // EVENT-TIP: no card rides the sheet down\n",
+    "new": "",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-sheet-draws-no-raids",
+    "file": "src/ui/heldMap.js",
+    "old": "          raids: this._raids,   // EVENT-TIP: the towns under attack\n",
+    "new": "",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-blades-are-not-the-raid's",
+    "file": "src/ui/heldMap.js",
+    "old": "      const d = Math.min((x - sx) ** 2 + (y - sy) ** 2, (x - sx) ** 2 + (y - 18 - sy) ** 2);",
+    "new": "      const d = (x - sx) ** 2 + (y - sy) ** 2;",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-a-square-ring",
+    "file": "src/ui/heldMap.js",
+    "old": "if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;",
+    "new": "if (g && Math.max(Math.abs(mx - g.cx), Math.abs(my - g.cy)) <= Math.max(g.r, least)) return g;",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-fall-never-said",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "      ...(Number.isFinite(fell)\n        ? [`${boss.name} has fallen`]\n        : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])]),",
+    "new": "      ...[`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])],",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-sealed-hours-said-as-open",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "        : `Sealed. Collapses in ${countdownText(cd.ms)}`",
+    "new": "        : `Open - seals in ${countdownText(cd.ms)}`",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-omen's-mark-carries-no-card",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "      return {\n        day: c.t.day,\n        cx: c.site.ring.cx,\n        cy: c.site.ring.cy,\n        r: c.site.ring.r,\n        label,\n        phase: c.phase,\n        tip: gateTip(c, cd, fellAt(c.t.day)),\n      }; // EVENT-TIP: and its card",
+    "new": "      return { day: c.t.day, cx: c.site.ring.cx, cy: c.site.ring.cy, r: c.site.ring.r, label, phase: c.phase }; // EVENT-TIP: and its card",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-map-drops-the-ring's-card",
+    "file": "src/ui/gate/gateMapMark.js",
+    "old": "    tip: readTip(m.tip),\n  };",
+    "new": "  };",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-overlay-paints-no-raids",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  for (const m of opts.raids ?? []) if (visible(m.x, m.y)) paintRaidMark(ctx, view, m, pulse);\n  // STAR6: the night's fallen stars, beside the raids - none ever falls in a town",
+    "new": "  // STAR6: the night's fallen stars, beside the raids - none ever falls in a town",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-blades-on-the-town",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  const cy = y - 18,",
+    "new": "  const cy = y,",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-the-host-hands-no-raids",
+    "file": "src/scenes/world.js",
+    "old": "      raids: () => (raidingPartiesOn() ? raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState }) : []),   // TIME1: online the withdrawal in local time\n",
+    "new": "",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-TIP-raids-with-the-mod-off",
+    "file": "src/scenes/world.js",
+    "old": "raids: () => (raidingPartiesOn() ? raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState }) : []),",
+    "new": "raids: () => raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState }),",
+    "tests": [
+      "test/ui/eventtip.test.js"
+    ]
+  }
+]

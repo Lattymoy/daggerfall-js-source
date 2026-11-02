@@ -1,0 +1,582 @@
+// V2a - THE LYCANTHROPY CURSE: LycanthropyEffect.cs + MorphSelf.cs
+// (MIT, Daggerfall Workshop), the racial override V1's infection ramp
+// deploys into. V1 ends at `entity.racialOverridePending`; this module
+// consumes it, and from that moment the character IS a lycanthrope:
+// the +40/+30 advantages (BAL6: the beast's alone), silver-to-be-hit, the once-a-day change, the
+// full-moon forced change, the monthly urge to kill an innocent and
+// the shrinking health ceiling that enforces it, the free tagged
+// Lycanthropy spell the spellbook has been ready for since U42, and
+// the cure that takes it all away.
+//
+// SHAPE. DFU's curse is an incumbent effect with forcedRounds = 1 for
+// ever; the port's is an activeEffects ENTRY (kind 'racialOverride') -
+// the same shape V1 gave the infection - so the save envelope carries
+// it for free and liveStat/skillValue read its mods through one added
+// arm each (SetStatMod/SetSkillMod, re-applied every magic round
+// exactly as RacialOverrideEffect's constant pass does). The entry IS
+// the CustomSaveData_v1 struct: infectionType, lastKilledInnocent,
+// lastCastMorphSelf, wearingHircineRing, isTransformed, with the
+// compound race reduced to the name override (the port's race is a
+// string, not a template - the one flag the template carried,
+// disease immunity, rides infectionAccepted's racial-override refusal
+// and diseases' own gate).
+//
+// CLOCKS. DFU mixes classic minutes (the kill period, the once-a-day
+// gate) with REAL seconds (the 120s urge nag, the 4-20s move sound).
+// The port folds the real-time pair to the round clock and records
+// it: the nag repeats every NOTIFY_ROUNDS game minutes, the move
+// sound is V2b's host concern (it needs the audio frame anyway).
+//
+// THE $CUREWER QUEST went live in V2d (racialQuests.js: StartQuest's
+// 30% roll on the 84-day cadence with the no-second-instance check,
+// and CureLycanthropy's tombstone sweep); vampirism itself shipped in
+// V2b (vampirism.js consumes the pending marker).
+//
+// THE BEAST-FORM HOST LAWS went live in V4: the inventory and talk
+// refusals at every door (the two Internal_Strings lines verbatim),
+// SuppressCrime through court.js's one setter, the population
+// promote-arm hold, the wereclaws rig (WEAPON11.CIF, silent draw,
+// high-pitch swing) and the strain-keyed attack voices at all three
+// player-hit sites.
+//
+// THE TRANSFORMED PAPERDOLL AND HEADS went live in V5 (the art laws
+// ride vampirism.js's one switch: WOLF00I0/BOAR00I0 backgrounds with
+// the whole-body suppression, WERE01I0/WERE00I0 heads).
+//
+// LM1 SHIPPED THE LAST MEMBER: the 4-20s real-time move-sound loop
+// while transformed (lycanthropeMoveSound below). LycanthropyEffect is
+// ported whole.
+
+import { LYCANTHROPY_TYPES, INFECTION } from './infection.js';
+import { MINUTES_PER_DAY, DAYS_PER_MONTH, isFullMoonFromMinutes, isFullMoonNightFromMinutes } from './gameDate.js';
+import { EQUIP_SLOTS, equipTableOf, unequipSlot } from './equip.js';
+import { isHandWraps } from '../characters/handWrapsIds.js'; // WERE-WRAPS
+import { spellRecordOfIndex } from './loot/loot.js';
+import { SKILLS } from './skills.js';
+import { WEAPON_MATERIALS } from '../characters/weapons.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+
+/** InitMoveSoundTimer (LycanthropyEffect.cs:586-589): Random.Range(4,
+ *  20), the FLOAT overload, so any real value in the band and not an
+ *  integer count of seconds. */
+export const MOVE_SOUND_MIN_SECONDS = 4;
+export const MOVE_SOUND_MAX_SECONDS = 20;
+const initMoveSoundTimer = (rolls) =>
+  MOVE_SOUND_MIN_SECONDS + rolls() * (MOVE_SOUND_MAX_SECONDS - MOVE_SOUND_MIN_SECONDS);
+import { ENCHANTMENT_TYPES } from './enchantments.js';
+import { cureAllDiseases, cureAllPoisons } from './effects.js';
+import { cureAllAttributes } from './guild/guildServiceFlow.js'; // CURE-ALL: CureAllAttributes' one home (the guild's stat reset)
+import { fillVitalSigns } from './statMods.js'; // CURE-ALL: FillVitalSigns' one home
+import { SOUND } from './soundClips.js'; // V4: the transformed attack voices
+import { renownHpOf } from './renownLayer.js'; // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter
+import { endLycanthropyQuests } from './racialQuests.js'; // V2d: the cure's $CUREWER tombstone sweep
+import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+
+/** LycanthropyEffect.LycanthropyCurseKey (:33). */
+export const LYCANTHROPY_CURSE_KEY = 'Lycanthropy-Curse';
+/** PlayerEntity.cs:41-42 - the tags the free curse spells carry. The
+ *  spellbook's free-cast and delete-refusal laws have read these
+ *  since U42; V2a moves their HOME to the systems layer (the UI file
+ *  re-exports) because the PRODUCER lives here now. */
+export const LYCANTHROPY_SPELL_TAG = 'lycanthrope';
+export const VAMPIRE_SPELL_TAG = 'vampire';
+
+// LycanthropyEffect.cs:36-40, verbatim.
+export const NEED_TO_KILL_HEALTH_LIMIT_MINIMUM = 4;
+export const NEED_TO_KILL_PERIOD = MINUTES_PER_DAY * DAYS_PER_MONTH; // one classic month
+export const NEED_TO_KILL_HEALTH_LOSS_PER_MINUTE = 24.0 / MINUTES_PER_DAY;
+/** The 120-REAL-second nag (:37), folded to the round clock - see the
+ *  header's CLOCKS note. */
+export const NEED_TO_KILL_NOTIFY_ROUNDS = 30;
+/** ApplyLycanthropeAdvantages (:520-537), verbatim - BAL6: the beast's alone (lycanthropeAdvantages below). */
+export const LYCANTHROPE_STAT_MOD = 40;
+export const LYCANTHROPE_SKILL_MOD = 30;
+export const LYCANTHROPE_STATS = Object.freeze(['strength', 'agility', 'endurance', 'speed']);
+export const LYCANTHROPE_SKILLS = Object.freeze([
+  SKILLS.Swimming,
+  SKILLS.Running,
+  SKILLS.Stealth,
+  SKILLS.CriticalStrike,
+  SKILLS.Climbing,
+  SKILLS.HandToHand,
+  SKILLS.Jumping,
+]);
+/** AssignPlayerLycanthropySpell (PlayerEntity.cs:1143-1170): classic
+ *  SPELLS.STD record 92, the leading '!' stripped from its name. */
+export const LYCANTHROPY_SPELL_ID = 92;
+/** ArtifactsSubTypes.Hircine_Ring (ItemEnums.cs:244) under the
+ *  SpecialArtifactEffect enchantment type. */
+export const HIRCINE_RING_SUBTYPE = 3;
+/** The HUD strings (localized keys youDreamOfTheMoon,
+ *  youNeedToHuntTheInnocent, canOnlyCastOncePerDay) - literal en
+ *  values, the port's standing no-localization departure. */
+export const YOU_DREAM_OF_THE_MOON = 'You dream of the moon.';
+export const YOU_NEED_TO_HUNT = 'You need to hunt the innocent.';
+export const ONCE_PER_DAY = 'You may only cast this spell once per day.';
+
+/** PlayerEffectManager.CureAll at a racial override's Start (:120 /
+ *  VampirismEffect.cs:81, "cure everything on player"), whole
+ *  (EntityEffectManager.cs:1598-1608): the three pools full
+ *  (FillVitalSigns), every poison and every disease ended by their own
+ *  laws (the infection that brought us here among them), every drained
+ *  attribute healed (CureAllAttributes; no effect of the port holds a
+ *  skill down, so CureAllSkills has nothing to cure). ONE home for
+ *  both curses.
+ *  CURE-ALL (FIELD BUGS 2026-10-01, Skaadi: "Regen spell stopped
+ *  providing healing after vampire transformation"): THE BUFFS RUNNING
+ *  NOW ARE THIS LIFE'S. This ended every other live entry - a
+ *  Regenerate, a Fortify, a Shield - and a timed entry ticks on with
+ *  `ended` set: gone from the HUD, the party cards and the dispel list
+ *  (mysticism.js liveBundles), and every recast of the same spell
+ *  merged into the hidden entry (effects.js findInc), so the buff was
+ *  never seen again while it was kept up. CureAll leaves them; it
+ *  never cured the poisons it said it did, nor filled a pool.
+ *  CURE-FILL (AUDIT 2026-10-01 part four): THE POOLS ARE FILLED LAST,
+ *  to the maximums the cures give back - DFU fills them first, so a
+ *  turn with Endurance, Strength or Intelligence drained or diseased
+ *  left fatigue and magicka short of the full the turn promises. */
+export function endOldLifeEffects(entity) {
+  cureAllPoisons(entity);
+  cureAllDiseases(entity);
+  cureAllAttributes(entity);
+  fillVitalSigns(entity);
+}
+
+/** The live curse entry, or null. DISC10-E V9: a hole in the list is
+ *  not a curse - liveVampirism's AUDIT WORLD5 guard, which the online
+ *  shift now reaches this reader through too. */
+export const liveLycanthropy = (entity) =>
+  (entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride' && a.racial === 'lycanthropy' && !a.ended) ??
+  null;
+
+/** IsWearingHircineRing (:585-597): either ring slot, an artifact
+ *  carrying SpecialArtifactEffect param Hircine_Ring. The port's
+ *  artifact items carry their MAGIC.DEF enchantment pairs (S1), so
+ *  the test is the enchantment array's. */
+export function isWearingHircineRing(entity) {
+  const table = equipTableOf(entity);
+  for (const slot of [EQUIP_SLOTS.Ring0, EQUIP_SLOTS.Ring1]) {
+    const item = table?.[slot];
+    if (
+      item?.enchantments?.some(
+        (e) => e.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === HIRCINE_RING_SUBTYPE,
+      )
+    )
+      return true;
+  }
+  return false;
+}
+
+/**
+ * DeployFullBlownLycanthropy (WerewolfInfection.cs:34-42 /
+ * WereboarInfection.cs:34-42) + LycanthropyEffect.Start (:112-125):
+ * assign the curse, carry the infection type over, cure everything
+ * else (PlayerEffectManager.CureAll - the new life starts clean), and
+ * grant the free spell. Returns the entry, or null if the entity
+ * already carries an override.
+ */
+export function createLycanthropyCurse(entity, infectionType, { now = 0, rolls = Math.random, restore = false } = {}) {
+  if (!entity || liveLycanthropy(entity) || entity.racialOverride) return null;
+  const entry = {
+    kind: 'racialOverride',
+    permanent: true, // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)
+    racial: 'lycanthropy',
+    key: LYCANTHROPY_CURSE_KEY,
+    infectionType,
+    isTransformed: false,
+    lastKilledInnocent: now, // UpdateSatiation runs in Start
+    lastCastMorphSelf: 0,
+    lastMorphHeal: null, // BAL6: the last change that healed (morphHeals) - none yet
+    wearingHircineRing: false,
+    urgeToKillRising: false,
+    lastUrgeNotify: 0,
+    raceNameOverride: null,
+    statMods: {},
+    skillMods: {},
+    // LM1: InitMoveSoundTimer runs in Start (:67) - at the CURSE, and
+    // no frame is burned arming it. AUDIT 39: it runs at the MORPH
+    // too (:521, inside MorphSelf's transform-into-beast branch), so
+    // every change into beast form starts a fresh 4-20s wait - the
+    // note that stood here said the opposite about the reference.
+    moveSoundTimer: initMoveSoundTimer(rolls),
+  };
+  // CURSE-REPAIR1: `restore` gives back a curse the player already had (systems/curseRepair.js) - its Start ran when
+  // it was caught, so the old life is not ended a second time: the buffs and drains running now are this life's.
+  if (!restore) endOldLifeEffects(entity);
+  entity.activeEffects = entity.activeEffects || [];
+  entity.activeEffects.push(entry);
+  // the marker infectionAccepted and the disease gate read - REBUILT
+  // from activeEffects on restore (save.js), never persisted itself
+  entity.racialOverride = entry;
+  delete entity.racialOverridePending;
+  grantLycanthropySpell(entity);
+  return entry;
+}
+
+/** AssignPlayerLycanthropySpell (PlayerEntity.cs:1143-1170): record
+ *  92, name stripped of its '!', tagged - the tag is what the
+ *  spellbook's free-cast and delete-refusal laws key on, and what the
+ *  cure deletes by. A headless run with no SPELLS.STD registry skips
+ *  LOUDLY (the spell is missing, not silently different). */
+export function grantLycanthropySpell(entity) {
+  if ((entity.spells ?? []).some((s) => s.tag === LYCANTHROPY_SPELL_TAG)) return true;
+  const record = spellRecordOfIndex(LYCANTHROPY_SPELL_ID);
+  if (!record) {
+    console.warn('[lycanthropy] SPELLS.STD 92 unavailable - the free spell is not granted');
+    return false;
+  }
+  const name = String(record.name ?? record.spellName ?? 'Lycanthropy').replace(/^!/, '');
+  entity.spells = entity.spells || [];
+  // AUDIT 39: MinimumCastingCost (PlayerEntity.cs:1162) - the morph is
+  // a flat 5 spell points, not the 48-84 its MorphSelf effect prices
+  // out at through the no-active-components fudge.
+  entity.spells.push({ ...record, name, tag: LYCANTHROPY_SPELL_TAG, custom: true, minimumCastingCost: true });
+  return true;
+}
+
+/**
+ * The V1 hand-off: consume a pending racial override. Lycanthropy
+ * deploys here; a VAMPIRISM pending is left standing - V2b's, and a
+ * standing marker is louder than a half-built vampire.
+ */
+export function consumeRacialOverridePending(entity, { now = 0 } = {}) {
+  const pending = entity?.racialOverridePending;
+  if (!pending) return null;
+  if (pending.lycanthropy && pending.lycanthropy !== LYCANTHROPY_TYPES.None) {
+    return createLycanthropyCurse(entity, pending.lycanthropy, { now });
+  }
+  return null;
+}
+
+/**
+ * ConstantEffect + MagicRound (:127-158), folded to the round clock:
+ * the ring read, the advantages re-applied, silver-to-be-hit, the
+ * full-moon forced change, the urge and its health ceiling. `say` is
+ * the HUD line seam; `refreshHead` the portrait's (both optional -
+ * the headless charter).
+ */
+export function lycanthropyMagicRound(
+  entity,
+  {
+    nowMinutes = 0,
+    clockMinutes = nowMinutes,
+    skyMinutes = clockMinutes,
+    moonNight = false,
+    say = null,
+    refreshHead = null,
+  } = {},
+) {
+  const entry = liveLycanthropy(entity);
+  if (!entry) return;
+  // DISC10-E V1: `clockMinutes` is WorldTime.Now, the clock every catch-up
+  // round of one broker Update reads (EntityEffectBroker.cs:210-232): the
+  // moon (:565-575) and the kill clock (TimeSinceLastInnocentKilled) are
+  // its. `nowMinutes`, the round's number, keeps the nag's real-time fold.
+  // LIVED1: online the kill clock is the character's own time and the moon
+  // the world's - `skyMinutes`, which offline is the same clock.
+  entry.wearingHircineRing = isWearingHircineRing(entity);
+
+  // ForceTransformDuringFullMoon (:565-575): either moon full, no
+  // Hircine ring, not already changed. BEFORE the constant reads
+  // below - DFU's ConstantEffect runs every frame so the frame after
+  // a forced change already reads the beast; the port's fold is
+  // per-round, so the order inside the round is what keeps silver
+  // from lagging the change by a round.
+  // TIME2 (Mac, 2026-10-01: "werewolf forms last insanely long"; bible/06-Systems/Online-Time-Arc.md 6.1): ONLINE THE
+  // FULL MOON IS A NIGHT. The change is forced while the full moon is UP - from the dusk of a full-moon date to the next
+  // dawn, on the sky (`moonNight`, which the round runner raises when a host hands the sky: the online lane) - thirty
+  // real minutes at the sky's TimeScale 24, not a whole day no rest can shorten. At dawn the lock ends; changing back
+  // is the power, ungated, as DFU has it. Offline DFU's rule stands: the whole calendar day of either moon's full phase.
+  const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);
+  if (!entry.wearingHircineRing && moonForces && !entry.isTransformed) {
+    say?.(YOU_DREAM_OF_THE_MOON);
+    morphSelf(entity, { force: true, nowMinutes: clockMinutes, refreshHead });
+  }
+
+  // ApplyLycanthropeAdvantages (:520-537) - re-applied every round, DFU's cleared-then-set mod arrays as the entry's own
+  // maps. BAL6: the beast's alone, so after the moon's change above.
+  lycanthropeAdvantages(entry);
+
+  // ConstantEffect (:139-144): transformed needs silver to be hit,
+  // untransformed iron - and either way immune to disease (the gate
+  // reads entity.racialOverride)
+  entity.minMetalToHit = entry.isTransformed ? WEAPON_MATERIALS.Silver : WEAPON_MATERIALS.Iron;
+  entity.isInBeastForm = entry.isTransformed;
+
+  // GetNeedToKill (:577-580) + the urge arm of ConstantEffect
+  // (:146-160): a month without an innocent's blood shrinks the
+  // health ceiling by 24/day down to the floor of 4
+  const sinceKill = clockMinutes - (entry.lastKilledInnocent ?? 0);
+  entry.urgeToKillRising = !entry.wearingHircineRing && sinceKill > NEED_TO_KILL_PERIOD;
+  if (entry.urgeToKillRising) {
+    if (nowMinutes - (entry.lastUrgeNotify ?? 0) >= NEED_TO_KILL_NOTIFY_ROUNDS) {
+      entry.lastUrgeNotify = nowMinutes;
+      say?.(YOU_NEED_TO_HUNT);
+    }
+    const urgeMinutes = sinceKill - NEED_TO_KILL_PERIOD;
+    // DISC10-E L4: `PlayerEntity.RawMaxHealth - reduction` (:234) - off the
+    // RAW maximum. MaxHealth is the LIMITED value now (chargen.js
+    // defineLiveMaxHealth), and a limit computed off itself would ratchet.
+    let limit =
+      (entity.rawMaxHealth ?? entity.maxHealth ?? 0) - Math.round(urgeMinutes * NEED_TO_KILL_HEALTH_LOSS_PER_MINUTE);
+    if (limit < NEED_TO_KILL_HEALTH_LIMIT_MINIMUM) limit = NEED_TO_KILL_HEALTH_LIMIT_MINIMUM;
+    entity.maxHealthLimiter = limit;
+    // DFU clamps through the CurrentMaxHealth property continuously;
+    // the port clamps at the fold's own cadence (recorded).
+    // AUDIT RENOWN1 GAME-4: to the limit AND the online layer above it (renownLayer.js - 0 offline)
+    const ceiling = limit + renownHpOf(entity);
+    if ((entity.health ?? 0) > ceiling) entity.health = ceiling;
+  } else {
+    entity.maxHealthLimiter = null;
+  }
+}
+
+/** SetMaxHealthLimiter's read side: the ceiling every full heal
+ *  should respect while the urge is rising. DISC10-E L4: on an entity
+ *  with the live accessor this IS `maxHealth` (DaggerfallEntity.MaxHealth
+ *  applies the limiter itself); the min stays for a plain entity. */
+export const currentMaxHealth = (entity) =>
+  Math.min(entity?.maxHealth ?? 0, (entity?.maxHealthLimiter ?? Infinity) + renownHpOf(entity)); // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter
+
+/** BAL6 (bible/05-Combat/Balance-Arc.md section 12; asked, "Beast-only bonuses"): A DEPARTURE - THE ADVANTAGES ARE THE
+ *  BEAST'S. DFU's ConstantEffect writes the +40 on four stats and +30 on seven skills every frame in BOTH forms, so a
+ *  lycanthrope with a sword in hand, a shield, potions and talk struck at x1.8-2.9 a plain character's damage a second
+ *  (the claws added x1.1-1.5 on top) and changing was never the trade it reads as. In beast form they stand whole; in
+ *  human form the character is its own. Written on every round and at every change (morphSelf), so neither form ever
+ *  reads the other's. */
+export function lycanthropeAdvantages(entry) {
+  entry.statMods = {};
+  entry.skillMods = {};
+  if (!entry.isTransformed) return;
+  for (const stat of LYCANTHROPE_STATS) entry.statMods[stat] = LYCANTHROPE_STAT_MOD;
+  for (const skill of LYCANTHROPE_SKILLS) entry.skillMods[skill] = LYCANTHROPE_SKILL_MOD;
+}
+
+/** BAL6: ONE CHANGE A DAY HEALS. DFU's MorphSelf heals to the full maximum both ways, so a day's two changes were two
+ *  full heals, and Hircine's Ring (which lifts the once-a-day gate) made them as many as the player liked, free. The
+ *  heal now keeps the gate's own day, on its own stamp: a change heals when a whole day has passed since the last
+ *  change that healed, whichever way it goes and whatever forced it - the Ring frees the change, never the heal. */
+export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) > MINUTES_PER_DAY;
+
+/**
+ * MorphSelf (:432-470), verbatim: the once-a-day gate (the Hircine
+ * ring bypasses it, and a forced change ignores it), both hands
+ * unequipped on the way IN, the compound race's name swap, a full
+ * heal to the LIMITED max either way - BAL6: once a day (morphHeals) -
+ * and the cast stamp. Answers { ok } or { refused } with the classic line.
+ */
+export function morphSelf(
+  entity,
+  { force = false, nowMinutes = 0, refreshHead = null, say = null, rolls = Math.random } = {},
+) {
+  const entry = liveLycanthropy(entity);
+  if (!entry) return { ok: false, refused: 'not a lycanthrope' };
+  if (!entry.isTransformed) {
+    const canCast = entry.wearingHircineRing || nowMinutes - (entry.lastCastMorphSelf ?? 0) > MINUTES_PER_DAY;
+    if (!canCast && !force) {
+      say?.(ONCE_PER_DAY);
+      return { ok: false, refused: ONCE_PER_DAY };
+    }
+    entry.isTransformed = true;
+    // WERE-WRAPS (2026-10-30): Hand Wraps stay on the claws
+    for (const slot of [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand])
+      if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot(entity, slot);
+    entry.raceNameOverride = entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? 'Wereboar' : 'Werewolf';
+    // "// Initialise move sound timer" (:519-521), the third call site
+    // - the wait restarts at every change INTO beast form, never
+    // resumes where the last form left it.
+    entry.moveSoundTimer = initMoveSoundTimer(rolls);
+  } else {
+    entry.isTransformed = false;
+    entry.raceNameOverride = null;
+  }
+  entity.isInBeastForm = entry.isTransformed;
+  lycanthropeAdvantages(entry); // BAL6: the form's own advantages from the change's instant, not the next round's
+  if (morphHeals(entry, nowMinutes)) {
+    entity.health = currentMaxHealth(entity);
+    entry.lastMorphHeal = nowMinutes;
+  }
+  entry.lastCastMorphSelf = nowMinutes;
+  refreshHead?.();
+  return { ok: true };
+}
+
+/** UpdateSatiation (:407-412): the innocent's blood resets the clock
+ *  and the urge. */
+export function updateSatiation(entity, nowMinutes = 0) {
+  const entry = liveLycanthropy(entity);
+  if (!entry) return;
+  entry.lastKilledInnocent = nowMinutes;
+  entry.lastUrgeNotify = 0;
+  entry.urgeToKillRising = false;
+  entity.maxHealthLimiter = null;
+}
+
+/** KilledInnocent (:249-267): a CIVILIAN, or the city watch
+ *  (Knight_CityWatch), dead at the hit. `target` is the port's foe or
+ *  person shape; the caller says which family it came from. */
+export function killedInnocent(target, { isCivilian = false, mobileType = null } = {}) {
+  if (!target) return false;
+  const innocent = isCivilian || mobileType === KNIGHT_CITY_WATCH;
+  return innocent && (target.health ?? target.hp ?? 0) <= 0;
+}
+
+/** OnWeaponHitEntity's satiation half (:229-247) - the VOICE half is
+ *  lycanthropeAttackVoice below (V4), played by the host that owns
+ *  the audio frame. Call from the player's landed-hit site. */
+export function onLycanthropeHit(entity, target, { nowMinutes = 0, isCivilian = false, mobileType = null } = {}) {
+  if (!liveLycanthropy(entity)) return;
+  if (killedInnocent(target, { isCivilian, mobileType })) updateSatiation(entity, nowMinutes);
+}
+
+// ── V4 - THE TRANSFORMED LAWS (the beast-form host slice) ────────
+
+/** The live entry's isTransformed, the gate every law below shares. */
+const isTransformedNow = (entity) => !!liveLycanthropy(entity)?.isTransformed;
+/** HT1: EntityEffectManager.IsTransformedLycanthrope, the mods' read of it (Handheld Torches stows the light on a transformed player). */
+export const isTransformedLycanthrope = (entity) => isTransformedNow(entity);
+
+/** GetSuppressInventory / GetSuppressTalk (:409-437): while
+ *  transformed the inventory and every conversation refuse with DFU's
+ *  own two lines (Internal_Strings inventoryWhileShapechanged /
+ *  youGetNoResponse - read verbatim from the widened sparse clone).
+ *  Answers { text }, or null for every mortal and untransformed
+ *  lycanthrope - the racialRestBlock shape, so the hosts consume all
+ *  three gates one way. */
+export const INVENTORY_WHILE_SHAPECHANGED_TEXT = 'You cannot access the inventory while shapechanged...';
+export const NO_RESPONSE_TEXT = 'You get no response.';
+export function racialSuppressInventory(entity) {
+  return isTransformedNow(entity)
+    ? { text: localizedText('inventoryWhileShapechanged', INVENTORY_WHILE_SHAPECHANGED_TEXT) }
+    : null; // :413
+}
+export function racialSuppressTalk(entity) {
+  return isTransformedNow(entity) ? { text: localizedText('youGetNoResponse', NO_RESPONSE_TEXT) } : null; // :427
+}
+/** SuppressCrime (:121-124): a transformed lycanthrope is never
+ *  tagged with a crime - the crime-write sites gate on this. */
+export const racialSuppressCrime = (entity) => isTransformedNow(entity);
+/** SuppressPopulationSpawns (:129-132): PopulationManager's promote
+ *  arm holds while transformed (the streets empty out around the
+ *  beast; walkers already out keep walking, DFU's own shape). */
+export const racialSuppressPopulationSpawns = (entity) => isTransformedNow(entity);
+
+/**
+ * WERE-FRIGHT (2026-09-29, Mac: "being a werewolf has a different interaction with guards ... you cannot surrender,
+ * but instead a chance to frighten"): THE BEAST'S ANSWER TO THE WATCH. The port's own - neither classic nor DFU has a
+ * beast that frightens the guards off, and there a transformed lycanthrope with a crime on record is asked to
+ * surrender like anyone. Here it cannot surrender; it roars (scenes/arrestFlow.js carries the box). The chance is
+ * Mac's pick of the three offered: the beast's level against the level of the guard who halted it - 50%, five points
+ * a level either way, never under 10 nor over 90. The city watch is minted three to six levels above the player
+ * (DFU's Range(3, 7) on Knight_CityWatch, characters/enemy/enemyEntity.js makeEnemyEntity), so against the watch the roar
+ * runs 20-35%: an even guard is the formula's middle, not the street's.
+ */
+export const FRIGHTEN_BASE_CHANCE = 50;
+export const FRIGHTEN_CHANCE_PER_LEVEL = 5;
+export const FRIGHTEN_MIN_CHANCE = 10;
+export const FRIGHTEN_MAX_CHANCE = 90;
+/** The percent chance the watch flees; a guard of unknown level is taken at the beast's own. */
+export function frightenChance(playerLevel, guardLevel = playerLevel) {
+  const p = Number.isFinite(playerLevel) ? playerLevel : 1;
+  const g = Number.isFinite(guardLevel) ? guardLevel : p;
+  return Math.min(
+    FRIGHTEN_MAX_CHANCE,
+    Math.max(FRIGHTEN_MIN_CHANCE, FRIGHTEN_BASE_CHANCE + FRIGHTEN_CHANCE_PER_LEVEL * (p - g)),
+  );
+}
+/** The roar the frighten is made with: the strain's own bark (the clip its landed blows roll 20% for), or null for
+ *  anyone not in beast form. */
+export function frightenRoar(entity) {
+  const entry = liveLycanthropy(entity);
+  if (!entry?.isTransformed) return null;
+  return entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? SOUND.EnemyWereboarBark : SOUND.EnemyWerewolfBark;
+}
+
+/** OnWeaponHitEntity's voice half (:349-372): a transformed
+ *  lycanthrope's landed hit rolls 10% for the attack cry, ELSE 20%
+ *  for the bark - two separate Dice100 rolls, strain-keyed clips.
+ *  Answers a DAGGER.SND clip id or null; the host that resolved the
+ *  hit plays it (it owns the audio frame). */
+export function lycanthropeAttackVoice(entity, rolls = Math.random) {
+  const entry = liveLycanthropy(entity);
+  if (!entry?.isTransformed) return null;
+  const boar = entry.infectionType === LYCANTHROPY_TYPES.Wereboar;
+  if (Math.floor(rolls() * 100) < 10) return boar ? SOUND.EnemyWereboarAttack : SOUND.EnemyWerewolfAttack;
+  if (Math.floor(rolls() * 100) < 20) return boar ? SOUND.EnemyWereboarBark : SOUND.EnemyWerewolfBark;
+  return null;
+}
+
+/**
+ * LM1 - THE TRANSFORMED MOVE SOUND (LycanthropyEffect.cs:201-211,
+ * :586-604), the last member of that effect the port had not carried.
+ *
+ * While transformed - and ONLY while transformed - a real-time timer
+ * counts down, and on expiry the beast makes its move noise and the
+ * timer re-arms to a fresh `Random.Range(4, 20)` seconds. It is what
+ * makes walking around as a werewolf sound like anything at all; the
+ * port had the attack voices and the claws and nothing between them.
+ *
+ * REAL time, not game time: DFU decrements by Time.deltaTime inside
+ * ConstantEffect, so a rested night does not queue up howls, and
+ * time-scaled travel does not either.
+ *
+ * The clip goes out through the SCREEN WEAPON's PlayAttackVoice, the
+ * same sink the attack voices use - hosts route it to their own
+ * one-shot.
+ *
+ * @param dt seconds since the last frame
+ * @returns the clip id to play this frame, or null
+ */
+export function lycanthropeMoveSound(entity, dt, rolls = Math.random) {
+  const entry = liveLycanthropy(entity);
+  // The whole block sits inside `if (isTransformed)`: an untransformed
+  // lycanthrope does not tick the timer down. Morphing back mid-wait
+  // does not resume it either - MorphSelf re-arms on the way IN
+  // (:521), so a partial wait is only ever the curse's own first one.
+  if (!entry?.isTransformed) return null;
+  // A curse restored from a save written before LM1 carries no timer.
+  // Arm it and take this frame as the arming one - the alternative is
+  // a NaN countdown that never fires again for that character.
+  if (entry.moveSoundTimer == null) {
+    entry.moveSoundTimer = initMoveSoundTimer(rolls);
+    return null;
+  }
+  entry.moveSoundTimer -= dt;
+  if (entry.moveSoundTimer >= 0) return null;
+  entry.moveSoundTimer = initMoveSoundTimer(rolls);
+  return entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? SOUND.EnemyWereboarMove : SOUND.EnemyWerewolfMove;
+}
+/** SetFPSWeapon (:332-345): while transformed the screen weapon IS
+ *  the wereclaws - WeaponTypes.Werecreature (the port's WEAPON11.CIF
+ *  rig, type 16), metal None, NO draw sound, SwingHighPitch swing,
+ *  default reach. The rig consults this every worn-weapon sync; the
+ *  marker item is what weaponTypeForItem keys the claws animation
+ *  set on. */
+export const WERECLAWS_ITEM = Object.freeze({ werecreatureClaws: true, material: 0 });
+export function racialFpsWeapon(entity) {
+  return isTransformedNow(entity) ? WERECLAWS_ITEM : null;
+}
+
+/**
+ * CureLycanthropy (:475-490): morph back first, a full RAW heal, the
+ * curse ends, one minute passes, the tagged spells go, and every
+ * $CUREWER instance is tombstoned (V2d - EndLycanthropyQuests, the
+ * cure's last line, through the racialQuests host).
+ */
+export function cureLycanthropy(entity, { nowMinutes = 0, advanceMinutes = null, refreshHead = null } = {}) {
+  const entry = liveLycanthropy(entity);
+  if (!entry) return false;
+  if (entry.isTransformed) morphSelf(entity, { force: true, nowMinutes, refreshHead });
+  entry.ended = true;
+  entity.racialOverride = null;
+  entity.isInBeastForm = false;
+  entity.maxHealthLimiter = null;
+  entity.minMetalToHit = undefined;
+  entity.health = (entity.rawMaxHealth ?? entity.maxHealth ?? entity.health) + renownHpOf(entity); // `CurrentHealth = RawMaxHealth` (:482). AUDIT RENOWN1 GAME-4: a full heal - and online the full maximum is raw plus the Renown layer (0 offline); the cure left a Renown 50 character at 100 of 247
+  // RaiseTime(60) is SIXTY SECONDS - one classic minute, not an hour;
+  // a port that read the 60 as minutes would jump the clock 60x
+  advanceMinutes?.(1);
+  if (entity.spells) entity.spells = entity.spells.filter((s) => s.tag !== LYCANTHROPY_SPELL_TAG);
+  endLycanthropyQuests();
+  return true;
+}

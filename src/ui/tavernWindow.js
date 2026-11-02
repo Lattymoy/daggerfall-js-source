@@ -1,0 +1,501 @@
+// U39 - THE TAVERN WINDOW: DFU's DaggerfallTavernWindow (MIT,
+// Daggerfall Workshop / Hazelnut) on real ARENA2 art. The four-button
+// panel every innkeeper puts in front of you: rent a room, talk, eat,
+// leave.
+//
+// THE NATIVE-WINDOW RULE, element by element:
+// - the panel is TVRN00I0.IMG (:47), which ships 130x44 - exactly
+//   mainPanel.Size (:100). Read with the port's own ImgFile rather
+//   than assumed, because I3 learned that lesson on OPTN00I0.
+// - mainPanel is HorizontalAlignment.Center + VerticalAlignment.Middle
+//   (:96-97), so BaseScreenComponent :1217/:1234 make both alignments
+//   ignore the declared `Position = new Vector2(0, 50)` (:99) exactly
+//   as they do for the guild popup. The panel sits at
+//   ((320-130)/2, (200-44)/2) = (95, 78).
+// - the four buttons are panel-CHILD rects (:23-26), all 120 wide and
+//   7 tall, stacked on a 9-pixel stride: room (5,5), talk (5,14),
+//   food (5,23), exit (5,32). Unlike the guild popup's, the exit
+//   button is a full-width row, not a small centred one.
+// - the window draws NO TEXT of its own. Every word is in the art.
+//
+// The LAW is systems/tavern.js's (the rental ladder, the room cost's
+// Heart's Day span, the menu prices and their two holiday arms); this
+// file owns the panel, the hit rects and the box CHAIN, and it borrows
+// U24's ServiceFlowWindow for that chain rather than growing a second
+// one - the room flow is field -> YesNo -> message and the food flow
+// is picker -> message, which is exactly what that window already is.
+//
+// THE ORDER-OF-CLOSING QUIRKS, which are the reason the chain is not
+// just "open a box":
+// - DoFoodAndDrink (:283) calls CloseWindow FIRST and only THEN tests
+//   the hunger gate, so "You are not hungry." appears with the tavern
+//   panel already gone. Verbatim.
+// - ConfirmRenting_OnButtonClick (:212) likewise closes the tavern
+//   window before it looks at the button, so declining the price
+//   closes the tavern too rather than returning to the panel.
+// - the gold test happens at the YES, not at the offer: DFU shows you
+//   a price you cannot afford and tells you so only after you agree
+//   to it (:214-222).
+//
+// The three clauses that stood here are all closed (D1):
+// - the TALK button routes to TalkManager.TalkToStaticNPC (:263):
+//   worldModes.js:"endurance: () =>".."onTalk: () => openStaticNpc(pn, { forceTalk: true })," supplies `onTalk: () => openStaticNpc(pn,
+//   { forceTalk: true })`, which this file consumes at :256 and :265.
+// - AddPermanentScene (:246) shipped at P1 - systems/tavern.js:"?? room?.mapId, buildingKey"
+//   addPermanentScene / :93 removePermanentScene, with this window
+//   handing rentRoom its sceneCache at :261. A rented room's CONTENTS
+//   survive now, not just the rental.
+// - the HOTKEYS: DaggerfallShortcut is indeed a SECOND binding table
+//   next to I1's input registry, but it is a text database and not a
+//   player keybind file (DaggerfallShortcut.cs:307-326 reads
+//   StreamingAssets/Text/DialogShortcuts.txt), and A8 ported it to
+//   systems/dialogShortcuts.js. The four bindings (:106, :111, :117,
+//   :123) are the table's answers now. The correction the flag hid:
+//   its "-- Taverns menu" block (:175-179) puts EXIT on G, not on the
+//   E the port had assumed.
+
+import { loadImg, nativeMetrics, drawImg } from './native/nativePanel.js';
+import { drawMenuBackdrop } from './chargenArt.js';
+import { ServiceFlowWindow, macroRows } from './guildServiceWindows.js';
+import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';
+import { dayOfYearFromMinutes } from '../systems/gameDate.js';
+import { raceDisplayName, honorificOf } from '../systems/talk/talkSession.js';
+import { audio } from '../systems/audio.js'; // F145: the ButtonClick roster
+import { SOUND } from '../systems/soundClips.js';
+import { firstHotkey } from '../systems/dialogShortcuts.js'; // A8: the DaggerfallShortcut table
+import { survivalOn, survivalRules } from '../systems/survival/switch.js'; // SURV5: the mod's menu stands in for DFU's while the arc is on; SURV-TIERS: the tier prices the drink
+import {
+  tavernMenu,
+  tavernEat,
+  tavernDrink,
+  tavernOrder,
+  tavernWater,
+  tavernRefresh,
+  blackout,
+  blackoutWaking,
+  TAVERN_MENU_TEXT,
+} from '../systems/survival/tavernMenu.js'; // INN-WATER: tavernWater, the fountain's law at the bar; AUDIT C&C I6: tavernRefresh, the drink's fatigue and magicka; I4: blackoutWaking, the line under the sky
+import { survivalOf } from '../systems/survival/needs.js';
+import { stiffen, REST_KIND } from '../systems/survival/rest.js';
+import {
+  TOO_MANY_DAYS_ID,
+  OFFER_PRICE_ID,
+  NOT_ENOUGH_GOLD_ID,
+  HOW_MANY_DAYS_ID,
+  HOW_MANY_ADDITIONAL_DAYS_ID,
+  roomFreeForKnightText,
+  roomFreeHeartsDayText,
+  youAreNotHungryText, // L10N3d: the lines in the player's language
+  tavernMenuLabels,
+  removeExpiredRooms,
+  findRentedRoom,
+  roomRemainingHours,
+  rentalDecision,
+  rentRoom,
+  canEat,
+  eatOrDrink,
+} from '../systems/tavern.js';
+
+/** mainPanel.Size (:100) - and the size TVRN00I0.IMG actually ships. */
+export const TAVERN_PANEL_W = 130,
+  TAVERN_PANEL_H = 44;
+/** Center/Middle on the 320x200 native panel (:96-97). */
+export const TAVERN_PANEL_X = Math.round((320 - TAVERN_PANEL_W) / 2); // 95
+export const TAVERN_PANEL_Y = Math.round((200 - TAVERN_PANEL_H) / 2); // 78
+
+/** #region UI Rects (:23-26), panel-relative. */
+export const TAVERN_RECTS = Object.freeze({
+  room: [5, 5, 120, 7],
+  talk: [5, 14, 120, 7],
+  food: [5, 23, 120, 7],
+  exit: [5, 32, 120, 7],
+});
+
+/** D1: the window's DaggerfallShortcut.Buttons in ctor ADD order
+ *  (:103-124) - the order Panel.ProcessHotkeySequences asks them in.
+ *  DialogShortcuts.txt:175-179 binds R / T / F / G. */
+export const TAVERN_BUTTONS = Object.freeze(['TavernRoom', 'TavernTalk', 'TavernFood', 'TavernExit']);
+
+/** TextBox.Numeric, MaxCharacters 3, Text "1" (:166-168). Three
+ *  characters is not an accident: the ceiling is 350 days, so the
+ *  field cannot even be typed past four digits. */
+export const DAYS_FIELD = Object.freeze({ numeric: true, maxCharacters: 3, initial: '1' });
+
+let _art = null;
+export async function preloadTavernArt(deps) {
+  if (_art) return;
+  try {
+    _art = await loadImg(deps, 'TVRN00I0.IMG');
+  } catch {
+    console.warn('[tavern] TVRN00I0 unavailable; the tavern popup stays text');
+  }
+}
+export const tavernArtLoaded = () => !!_art;
+
+const inRect = ([rx, ry, rw, rh], x, y) =>
+  x >= rx + TAVERN_PANEL_X && y >= ry + TAVERN_PANEL_Y && x < rx + TAVERN_PANEL_X + rw && y < ry + TAVERN_PANEL_Y + rh;
+
+/** A plain string as one centred row - the chain's own idiom. */
+const line = (text) => [{ text, center: true }];
+/** OL3's row under the offer, online. LIVED1: the room runs on the character's own clock - resting in it spends its
+ *  days and time away does not - so the row says it in their time and in play (worldTick.js ownTimeLeftText).
+ *  AUDIT LIVED1b U8: "logging off" - a tab left hidden still runs the character's clock (Audit-Lived1's For Mac 5),
+ *  so "time away" promised what only a logout keeps; the note measures what the old one did on the parchment. */
+export const OWN_TIME_ROOM = 'The room is yours for';
+export const OWN_TIME_ROOM_NOTE = '. Resting uses it; logging off does not.';
+
+/**
+ * hooks:
+ *   entity            the player (gold, health, the rooms and the clock live on it)
+ *   rows(textId)      -> [{text,center}]   the host's TEXT.RSC reader
+ *   now()             -> classic minutes (the ONE clock offline; LIVED1:
+ *                        the character's own online - the room, the
+ *                        meal's stamp, the needs)
+ *   mapId(), buildingKey(), buildingName(), quality(), bedCount()
+ *   freeRooms()       -> KnightlyOrder.FreeTavernRooms
+ *   skills()          -> { mercantile, personality } for CalculateTradePrice
+ *   heal(amount)      the host's SetHealth (clamped by the entity's law)
+ *   onTalk(), onClose()
+ *   rolls()           the bed-marker roll
+ *   ownTimeOf(minutes) -> LIVED1 (OL3's row): the time left until a
+ *                        minute on the character's own clock, as words,
+ *                        or null offline - the offer says how long the
+ *                        room is theirs; a host that answers nothing
+ *                        offers as DFU does
+ *   worldNow()        -> LIVED1: the WORLD's clock, for the calendar
+ *                        (Heart's Day, a meal's holiday) and the
+ *                        kitchen's hours; defaults to now(), the one
+ *                        clock offline. AUDIT C&C: and the survival
+ *                        menu's free drinks (I8) and the blackout's
+ *                        dawn (I4), read where the sky stands
+ *   regionIndex()     -> AUDIT C&C I8: PlayerGPS.CurrentRegionIndex,
+ *                        the survival menu's first key (regionMenuDay)
+ *                        - handed as climateIndex() is; none (-1) is
+ *                        the climate's to key
+ */
+export class TavernWindow {
+  constructor(hooks) {
+    this.hooks = hooks;
+    this.done = false;
+    this.isChoiceWindow = true; // raw codes through the overlay seam
+    this.flow = null; // the box chain, when one is up
+  }
+
+  _close() {
+    this.done = true;
+    this.hooks.onClose?.();
+  }
+
+  /** TavernMacroDataSource (:369-386): Amount() is the trade price and
+   *  RoomHoursLeft() is GetRemainingHours on THIS inn's room. Both go
+   *  through the shared expander so the tavern's TEXT.RSC reads the
+   *  same way every other service window's does. */
+  _rows(id, { amount = null, room = null, now = 0 } = {}) {
+    return macroRows(this.hooks.rows, id, {
+      amount,
+      roomHours: room ? roomRemainingHours(room, now) : null,
+      gold: goldAmount(this.hooks.entity),
+      playerName: this.hooks.entity?.name ?? '',
+      race: raceDisplayName(this.hooks.entity?.race),
+      honorific: honorificOf(this.hooks.entity?.gender),
+    });
+  }
+
+  /** Every chain the two buttons raise runs in ONE ServiceFlowWindow.
+   *  AUDIT 26 F143: only FOOD closes the tavern with its chain -
+   *  DoFoodAndDrink calls CloseWindow FIRST (:286). The ROOM button
+   *  never does: its input box closes ITSELF before the handler runs
+   *  (DaggerfallInputMessageBox.cs:298-304), invalid input and the
+   *  350-day refusal just return (:176-178, :188-191), and
+   *  ConfirmRenting's CloseWindow (:212) pops the just-pushed price
+   *  box - UserInterfaceWindow.CloseWindow pops the stack's TOP
+   *  (:127-132) - so every ending of the rental chain lands back on
+   *  the four-button panel. The old header claimed both buttons
+   *  close-before-chain, and every rental ending tore the tavern down. */
+  _chain(boxes, { closesTavern = false } = {}) {
+    if (!boxes?.length) {
+      this.flow = null;
+      if (closesTavern) this._close();
+      return;
+    }
+    this.flow = new ServiceFlowWindow(boxes, {
+      onClose: () => {
+        this.flow = null;
+        if (closesTavern) this._close();
+      },
+    });
+  }
+
+  /** RoomButton_OnMouseClick (:153-171). The expiry sweep runs FIRST,
+   *  so a room that ran out reads as a fresh rental (a different
+   *  prompt: 5102 "how many days" rather than 5100 "how many
+   *  additional days") instead of silently extending nothing. */
+  _room() {
+    const h = this.hooks;
+    const now = h.now();
+    h.entity.rentedRooms = removeExpiredRooms(h.entity.rentedRooms ?? [], now, h.sceneCache?.());
+    const room = findRentedRoom(h.entity.rentedRooms, h.mapId(), h.buildingKey());
+    this._chain([
+      {
+        // 5100 quotes the hours left (%dwr); 5102 has no room to quote.
+        rows: this._rows(room ? HOW_MANY_ADDITIONAL_DAYS_ID : HOW_MANY_DAYS_ID, { room, now }),
+        field: DAYS_FIELD,
+        onInput: (text) => this._decide(text, room, now),
+      },
+    ]);
+  }
+
+  /** InputMessageBox_OnGotUserInput (:173-208), through the law. */
+  _decide(text, room, now) {
+    const h = this.hooks;
+    // The day of year comes off ONE counter for every holiday here -
+    // DFU reads one WorldTime, and two calendars is how a room's Heart's
+    // Day and a meal's holiday end up disagreeing. LIVED1: that one is
+    // the WORLD's (worldNow; now() offline), the room's own time the
+    // character's.
+    const d = rentalDecision(text, {
+      room,
+      nowMinutes: now,
+      date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },
+      quality: h.quality?.() ?? 0,
+      free: !!h.freeRooms?.(),
+      skills: h.skills?.(),
+    });
+    if (d.kind === 'ignore') return null; // int.TryParse: nothing at all
+    if (d.kind === 'tooMany') return [{ rows: this._rows(TOO_MANY_DAYS_ID, { room, now }) }];
+    if (d.kind === 'free') {
+      this._rent(room, d.days);
+      return [{ rows: line(roomFreeForKnightText()) }];
+    }
+    // The Heart's Day free room is a box DFU pops from INSIDE
+    // CalculateRoomCost (:1871), i.e. BEFORE the price offer - so the
+    // player sees it and is then still asked to confirm a 0-gold room.
+    const offer = {
+      rows: [...this._rows(OFFER_PRICE_ID, { amount: d.price, room, now }), ...this._ownTimeRows(room, d.days, now)],
+      buttons: 'YesNo',
+      onYes: () => this._confirm(room, d),
+      onNo: () => null, // the chain empties, which closes the tavern (:212)
+    };
+    return d.heartsDay ? [{ rows: line(roomFreeHeartsDayText()) }, offer] : [offer];
+  }
+
+  /** OL3's row under the offer: RentRoom's own expiry (a renewal EXTENDS
+   *  the standing expiry, a fresh rental runs from now, tavern.js
+   *  rentRoom) through the host's ownTimeOf - LIVED1: said in the
+   *  character's own time and in play; no rows when the host answers
+   *  nothing (offline). AUDIT LIVED1 N (U2): TWO rows, split at the
+   *  play's bracket - the box lays its rows out unwrapped, and the one
+   *  row (a renewal's "... 2 days 20 hours of your time (5h 43m of
+   *  play) - resting spends it ...") ran 550 native px, off both edges
+   *  of the screen. */
+  _ownTimeRows(room, days, now) {
+    const expiry = (room ? room.expiryMinutes : now) + 24 * 60 * days;
+    const t = this.hooks.ownTimeOf?.(expiry);
+    if (!t) return [];
+    const c = t.indexOf(' (');
+    if (c < 0) return [{ text: `${OWN_TIME_ROOM} ${t}${OWN_TIME_ROOM_NOTE}`, center: true }];
+    return [
+      { text: `${OWN_TIME_ROOM} ${t.slice(0, c)}`, center: true },
+      { text: `${t.slice(c + 1)}${OWN_TIME_ROOM_NOTE}`, center: true },
+    ];
+  }
+
+  /** ConfirmRenting_OnButtonClick's Yes arm (:213-223). */
+  _confirm(room, d) {
+    const h = this.hooks;
+    // AUDIT 26 F103: both tavern gates read GetGoldAmount - coins plus
+    // letters (DaggerfallTavernWindow.cs:218, :324); the payment
+    // spends letters through deductGold either way.
+    if (totalGoldAmount(h.entity) < d.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID, { amount: d.price }) }];
+    deductGold(h.entity, d.price);
+    this._rent(room, d.days);
+    return null;
+  }
+
+  _rent(room, days) {
+    const h = this.hooks;
+    h.entity.rentedRooms = h.entity.rentedRooms ?? [];
+    rentRoom(h.entity.rentedRooms, {
+      room,
+      days,
+      nowMinutes: h.now(),
+      mapId: h.mapId(),
+      buildingKey: h.buildingKey(),
+      name: h.buildingName?.() ?? '',
+      bedCount: h.bedCount?.() ?? 1,
+      rolls: h.rolls ?? Math.random,
+      sceneCache: h.sceneCache?.() ?? null, // P1: the room's interior is HELD while rented
+    });
+  }
+
+  /** DoFoodAndDrink (:283-300) - note the window is already closing. */
+  /** SURV5: Climates & Calories' regional menu in the one picker - the
+   *  food (breakfast in the morning), a header, the drinks - through
+   *  survival/tavernMenu.js. A meal or a drink takes its minutes off the
+   *  host's clock; a blackout takes the night and leaves a rough morning. */
+  _survivalFood() {
+    const h = this.hooks;
+    const now = h.now();
+    // AUDIT C&C I8: the region keys the menu first (regionMenuDay), and the world's calendar pours the holidays' drinks
+    const menu = tavernMenu({
+      climateIndex: h.climateIndex(),
+      regionIndex: h.regionIndex?.() ?? -1,
+      quality: h.quality?.() ?? 5,
+      minutes: h.worldNow?.() ?? now,
+      hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),
+    }); // LIVED1: the kitchen keeps the sky's hours
+    // AUDIT SURV C/D: before six the kitchen refuses in the mod's two words and the drinks still pour (the picker
+    // follows the refusal); the Drinks divider is not a door out - a header pick keeps the picker up
+    const box = {
+      picker: menu.rows.map((r) => r.text),
+      onPick: (i) => {
+        const row = menu.rows[i];
+        if (!row || row.kind === 'header') return [box];
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        const s = survivalOf(h.entity, now);
+        const endurance = h.endurance?.() ?? 50;
+        const rules = survivalRules();
+        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
+        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste
+        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after
+        if (!order.ok) return [{ rows: line(order.text) }];
+        deductGold(h.entity, row.price);
+        // INN-WATER: the water row is the fountain's law (a skin filled at the bar), paid as every row is paid
+        const r =
+          row.kind === 'food'
+            ? tavernEat(s, now, row.worth)
+            : row.kind === 'water'
+              ? tavernWater(h.entity, now)
+              : tavernDrink(s, row.strength, { endurance, rules });
+        h.advanceMinutes?.(r.minutes);
+        h.entity.lastTimePlayerAteOrDrankAtTavern = now;
+        tavernRefresh(h.entity, r); // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour
+        let b = null;
+        if (r.blackout) {
+          // AUDIT C&C I4: the night runs to the SKY's six from where it stands after the drink - offline the one clock,
+          // online the world's, which the character's own minutes never move (LIVED1) - and the waking says dawn only
+          // under a dawn sky
+          b = blackout(s, h.worldNow?.() ?? now + r.minutes, { endurance });
+          stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules); // the night on the boards is a rough one (SURV4), at the tier's price
+          h.advanceMinutes?.(b.minutes);
+          b.text = blackoutWaking(h.worldNow?.() ?? now + r.minutes + b.minutes);
+        }
+        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }]; // AUDIT SURV-TIERS (the third pass): and the waking
+      },
+      onCancel: () => null,
+    };
+    this._chain(menu.closed ? [{ rows: line(menu.closedText) }, box] : [box], { closesTavern: true });
+  }
+
+  _food() {
+    const h = this.hooks;
+    if (survivalOn() && typeof h.climateIndex === 'function') {
+      this._survivalFood();
+      return;
+    } // SURV5
+    const now = h.now();
+    if (!canEat(h.entity.lastTimePlayerAteOrDrankAtTavern, now)) {
+      this._chain([{ rows: line(youAreNotHungryText()) }], { closesTavern: true }); // F143: food closes (:286)
+      return;
+    }
+    this._chain(
+      [
+        {
+          picker: tavernMenuLabels(), // ESSENTIALS-HALF: online, the row's gold is the half it costs; L10N3d: the language's lines
+          onPick: (i) => {
+            audio.playOneShot(SOUND.ButtonClick, 1); // F145: FoodAndDrink_OnItemPicked (:307)
+            const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now }); // F103: GetGoldAmount (:324); LIVED1: the meal's holiday is the world's calendar
+            if (r.kind === 'ignore') return null;
+            if (r.kind === 'poor') return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
+            if (r.spend) deductGold(h.entity, r.spend);
+            h.heal?.(r.heal);
+            h.entity.lastTimePlayerAteOrDrankAtTavern = now;
+            return null; // DFU shows nothing at all on a meal
+          },
+          onCancel: () => null,
+        },
+      ],
+      { closesTavern: true },
+    ); // F143: DoFoodAndDrink's CloseWindow-first (:286)
+  }
+
+  input(code, e = null) {
+    if (this.flow) {
+      this.flow.input(code, e);
+      return;
+    }
+    // Escape/Enter are the port host's close keys, not DFU buttons.
+    if (code === 'Escape' || code === 'Enter') {
+      this._close();
+      return;
+    }
+    // D1: the four Hotkeys, from the table, in DFU's button ADD order.
+    const hit = firstHotkey(TAVERN_BUTTONS, code, e);
+    if (hit === null) return;
+    // F145 on the KEYBOARD side: Talk/Food/Exit play ButtonClick in
+    // their OnKeyboardEvent KeyDown arm, and Room - the one button
+    // with no OnKeyboardEvent handler - reaches its OnMouseClick
+    // through the faked click (Button.cs:85-90), sound included.
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    switch (hit) {
+      case 'TavernRoom':
+        this._room();
+        return;
+      case 'TavernTalk':
+        this.hooks.onTalk?.();
+        this._close();
+        return;
+      case 'TavernFood':
+        this._food();
+        return;
+      default:
+        this._close(); // TavernExit
+    }
+  }
+
+  click(vx, vy) {
+    if (this.flow) return this.flow.click(vx, vy);
+    // F145: PlayOneShot(SoundClips.ButtonClick) heads all four handlers
+    // (Exit :135, Room :155, Talk :264, Food :339).
+    if (inRect(TAVERN_RECTS.room, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._room();
+      return true;
+    }
+    if (inRect(TAVERN_RECTS.talk, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this.hooks.onTalk?.();
+      this._close();
+      return true;
+    }
+    if (inRect(TAVERN_RECTS.food, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._food();
+      return true;
+    }
+    if (inRect(TAVERN_RECTS.exit, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      return true;
+    }
+    return false;
+  }
+
+  draw(renderer, canvas, font) {
+    if (!_art) {
+      this._close();
+      return;
+    }
+    const m = nativeMetrics(canvas);
+    // AUDIT 19 F2: DaggerfallBaseWindow's parentPanel is opaque BLACK.
+    drawMenuBackdrop(renderer, canvas);
+    // Both buttons close the tavern before their chain runs, so the
+    // panel is NOT drawn under a live box - DFU's CloseWindow has
+    // already taken it off the stack.
+    if (this.flow) {
+      this.flow.draw(renderer, canvas, font);
+      return;
+    }
+    drawImg(renderer, _art, m, TAVERN_PANEL_X, TAVERN_PANEL_Y);
+  }
+}

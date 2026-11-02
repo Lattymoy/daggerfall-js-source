@@ -1,0 +1,84 @@
+[
+  {
+    "name": "REP5-a-band-edge-moved",
+    "file": "src/systems/legalBands.js",
+    "old": "  if (rep < -10) return localizedText('aScoundrel', 'a scoundrel');",
+    "new": "  if (rep <= -10) return localizedText('aScoundrel', 'a scoundrel');",
+    "tests": [
+      "test/systems/rep5_notices.test.js"
+    ]
+  },
+  {
+    "name": "REP5-every-entity-said",
+    "file": "src/scenes/standingHost.js",
+    "old": "    if (player !== playerEntity) return;\n    say(legalNoticeLine({ name: regionName(regionIndex), after, delta, cause }));",
+    "new": "    say(legalNoticeLine({ name: regionName(regionIndex), after, delta, cause }));",
+    "tests": [
+      "test/systems/rep5_notices.test.js"
+    ]
+  },
+  {
+    "name": "REP5-the-drift-said",
+    "file": "src/systems/court.js",
+    "old": "    if (v < 0) player.legalRep[key] = v + 1;",
+    "new": "    if (v < 0) changeLegalRep(player, key, 1, { kind: 'drift' });",
+    "tests": [
+      "test/systems/rep5_notices.test.js"
+    ]
+  },
+  {
+    "name": "REP5-no-change-a-line",
+    "file": "src/systems/court.js",
+    "old": "  if (delta && _legalRepNotifier) {",
+    "new": "  if (_legalRepNotifier) {",
+    "tests": [
+      "test/systems/rep5_notices.test.js"
+    ]
+  },
+  {
+    "name": "REP5-the-zero-row-drawn",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (rep === 0 && left === 0) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/rep5_notices.test.js"
+    ]
+  },
+  {
+    "name": "REP5-the-order",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  return out.sort((a, b) => a.rep - b.rep);",
+    "new": "  return out;",
+    "tests": [
+      "test/systems/rep5_notices.test.js"
+    ]
+  },
+  {
+    "name": "REP5-the-law-not-drawn",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  statsLaw(detail, playerEntity);\n  statsGuilds(detail, playerEntity);",
+    "new": "  statsGuilds(detail, playerEntity);",
+    "tests": [
+      "test/systems/rep5_notices.test.js",
+      "test/systems/guild/guildrep.test.js"
+    ]
+  },
+  {
+    "name": "REP5-the-stop's-price-not-said",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "t('pause.law.known', 'known to the watch (a stop: {gold} gold)', { gold: challengeFine(entity, i, { worldNow }) })",
+    "new": "'known to the watch'",
+    "tests": [
+      "test/systems/rep5_notices.test.js"
+    ]
+  },
+  {
+    "name": "REP5-the-pardon's-price-not-said",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "t('pause.law.banishedDays', 'banished, {days, plural, one {# day} other {# days}} left (a pardon: {gold} gold)', { days, gold: pardonPrice(entity, i) })",
+    "new": "t('pause.law.banishedDays', 'banished, {days, plural, one {# day} other {# days}} left', { days })",
+    "tests": [
+      "test/systems/rep5_notices.test.js"
+    ]
+  }
+]

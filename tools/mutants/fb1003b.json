@@ -1,0 +1,30 @@
+[
+  {
+    "name": "AETHERICMAKER-filter-out",
+    "file": "src/ui/item/itemMakerWindow.js",
+    "old": "  if (itemMakerRefuses(item)) return false; // AETHERIC-MAKER: an Aetheric piece is out of every tab\n  if (item.potionRecipe !== undefined && item.potionRecipe !== null) return false;",
+    "new": "  if (item.potionRecipe !== undefined && item.potionRecipe !== null) return false;",
+    "tests": [
+      "test/systems/fb1003b_aethericmaker.test.js"
+    ]
+  },
+  {
+    "name": "AETHERICMAKER-decision-out",
+    "file": "src/systems/enchanting.js",
+    "old": "  if (itemMakerRefuses(item)) return { kind: 'refused', text: AETHERIC_TAKES_NO_ENCHANTMENT }; // AETHERIC-MAKER\n  if (powers.length === 0 && sideEffects.length === 0) {",
+    "new": "  if (powers.length === 0 && sideEffects.length === 0) {",
+    "tests": [
+      "test/systems/fb1003b_aethericmaker.test.js"
+    ]
+  },
+  {
+    "name": "AETHERICMAKER-predicate-false",
+    "file": "src/systems/enchanting.js",
+    "old": "export const itemMakerRefuses = (item) => isAetheric(item);",
+    "new": "export const itemMakerRefuses = (item) => false && isAetheric(item);",
+    "note": "Re-aimed by content (GILDED-MAKER): the Gilded arm left the predicate; the mutant still opens the maker to an Aetheric piece.",
+    "tests": [
+      "test/systems/fb1003b_aethericmaker.test.js"
+    ]
+  }
+]

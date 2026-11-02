@@ -1,0 +1,302 @@
+[
+  {
+    "name": "STAFF-BANNED-players-default-all",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'not-banned';",
+    "new": "const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'all';",
+    "why": "the banned stay in the Players list unless filtered out",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-filter-ignored",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'not-banned';",
+    "new": "const ban = 'not-banned';",
+    "why": "the filter's Banned and All never answered",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-never-banned-hidden",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "`AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) `",
+    "new": "`AND (banned_until <= ?${args.push(nowS)}) `",
+    "why": "an account never banned falls out of the default list",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-lapsed-hidden",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "OR banned_until <= ?${args.push(nowS)}) `",
+    "new": "OR banned_until <= ?${args.push(nowS)} - 1000) `",
+    "why": "an account whose ban lapsed is left out as if banned",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-lapsed-banned",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "WHERE banned_until > ?${args.push(nowS)}) `",
+    "new": "WHERE banned_until > ?${args.push(nowS)} - 1000) `",
+    "why": "a lapsed ban listed under Banned",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-banned-unindexed",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "`AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `",
+    "new": "`AND banned_until > ?${args.push(nowS)} `",
+    "why": "the Banned filter beside the handle's range: every handle walked for the few banned",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-clock-order",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "    const banSql = ban === 'banned' ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `\n      : ban === 'not-banned' ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) ` : '';\n    if (online) args.push(nowS - PLAY_GRACE_S);\n",
+    "new": "    if (online) args.push(nowS - PLAY_GRACE_S);\n    const banSql = ban === 'banned' ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `\n      : ban === 'not-banned' ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) ` : '';\n",
+    "why": "the online filter's clock bound before the ban's: the online clause reads the ban's clock",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-status-lapsed",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "bannedUntil: isBanned(r, nowS) ? r.banned_until : 0,",
+    "new": "bannedUntil: r.banned_until ?? 0,",
+    "why": "a lapsed ban shown as a ban",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-forever",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "isBanned(r, nowS) && r.banned_until >= BAN_FOREVER,",
+    "new": "isBanned(r, nowS) && r.banned_until > BAN_FOREVER,",
+    "why": "a ban for good not said to be",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-players-view",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "{ q, online, ban }, { onceIn: READ_ONCE_S }",
+    "new": "{ q, online }, { onceIn: READ_ONCE_S }",
+    "why": "the Banned view of the list unwritten within ten minutes of the default one",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-listed",
+    "file": "server-account/src/staffCases.js",
+    "old": "'/v1/staff/dismiss', '/v1/staff/banned']);",
+    "new": "'/v1/staff/dismiss']);",
+    "why": "the Banned tab has no door",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-lapsed",
+    "file": "server-account/src/staffCases.js",
+    "old": "WHERE p.banned_until > ?1) x",
+    "new": "WHERE p.banned_until > ?1 - 1000) x",
+    "why": "a lapsed ban listed on the Banned tab",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-sort-default",
+    "file": "server-account/src/staffCases.js",
+    "old": "const sort = body.sort === 'newest' ? 'newest' : 'urgent';\n    const at =",
+    "new": "const sort = body.sort === 'newest' ? 'newest' : 'newest';\n    const at =",
+    "why": "the tab opens on the newest ban, not the most urgent",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-newest-key",
+    "file": "server-account/src/staffCases.js",
+    "old": "const key = sort === 'newest' ? 'banned_at' : 'banned_until';",
+    "new": "const key = 'banned_until';",
+    "why": "the switch back is no newest order",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-urgent-reversed",
+    "file": "server-account/src/staffCases.js",
+    "old": "${sort === 'newest' ? 'DESC' : 'ASC'}, x.id",
+    "new": "${sort === 'newest' ? 'DESC' : 'DESC'}, x.id",
+    "why": "the bans for good first, the soonest back last",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-tie",
+    "file": "server-account/src/staffCases.js",
+    "old": "x.id ${sort === 'newest' ? 'DESC' : 'ASC'} LIMIT",
+    "new": "x.id LIMIT",
+    "why": "a tie sorted against the cursor's side: a newest page repeats and skips",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-cursor-side",
+    "file": "server-account/src/staffCases.js",
+    "old": "${sort === 'newest' ? '<' : '>'} (?3, ?4)",
+    "new": "${sort === 'newest' ? '<' : '>='} (?3, ?4)",
+    "why": "the last row of a page read again on the next",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-cursor-ignored",
+    "file": "server-account/src/staffCases.js",
+    "old": "const at = typeof body.from === 'string' ?",
+    "new": "const at = false && typeof body.from === 'string' ?",
+    "why": "every page the first",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-next",
+    "file": "server-account/src/staffCases.js",
+    "old": "next: rows.length > CASES_PAGE ? `${last[key]}:${last.id}` : null, sort,",
+    "new": "next: null, sort,",
+    "why": "no page past the first: the scroll loads no more",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-page-cut",
+    "file": "server-account/src/staffCases.js",
+    "old": "const page = rows.slice(0, CASES_PAGE);\n    const last",
+    "new": "const page = rows;\n    const last",
+    "why": "the row read to know there is more shown, and shown again on the next page",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-forever",
+    "file": "server-account/src/staffCases.js",
+    "old": "banForever: r.banned_until >= BAN_FOREVER, banReason",
+    "new": "banForever: false, banReason",
+    "why": "a ban for good not said to be",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-reason",
+    "file": "server-account/src/staffCases.js",
+    "old": "banReason: r.ban_reason ?? null,\n",
+    "new": "banReason: null,\n",
+    "why": "the reason unsaid",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-by",
+    "file": "server-account/src/staffCases.js",
+    "old": "bannedBy: r.banned_by ? { id: r.banned_by, name: displayName({ handle: r.by_handle, guest_name: r.by_guest }) || null } : null,",
+    "new": "bannedBy: null,",
+    "why": "who banned them unsaid",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-admin",
+    "file": "server-account/src/staffCases.js",
+    "old": "banAdmin: r.ban_admin === 1,",
+    "new": "banAdmin: false,",
+    "why": "an Admin's ban, which a Moderator's Unban is refused, not said to be one",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-at-oldest",
+    "file": "server-account/src/staffCases.js",
+    "old": "COALESCE((SELECT MAX(a.at) FROM",
+    "new": "COALESCE((SELECT MIN(a.at) FROM",
+    "why": "a ban laid again sorts as its first",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-at-any-act",
+    "file": "server-account/src/staffCases.js",
+    "old": "WHERE a.target = p.id AND a.kind = 'ban'), 0) AS banned_at",
+    "new": "WHERE a.target = p.id), 0) AS banned_at",
+    "why": "a later mute counts as the ban's time",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-unaudited",
+    "file": "server-account/src/staffCases.js",
+    "old": ", audit('banned-read', null, { sort }, { onceIn: 10 * 60 })]);",
+    "new": "]);",
+    "why": "the Banned tab read unwritten",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-audit-every-page",
+    "file": "server-account/src/staffCases.js",
+    "old": "{ sort }, { onceIn: 10 * 60 })]);\n    const rows",
+    "new": "{ sort }, {})]);\n    const rows",
+    "why": "the Banned tab written every page",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-tab-audit-trip-after",
+    "file": "server-account/src/staffCases.js",
+    "old": ", audit('banned-read', null, { sort }, { onceIn: 10 * 60 })]);",
+    "new": "]); await audit('banned-read', null, { sort }, { onceIn: 10 * 60 }).run();",
+    "why": "the read's audit row a trip after its page",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-BANNED-index",
+    "file": "server-account/migrations/0164_staff_banned.sql",
+    "old": "CREATE INDEX IF NOT EXISTS players_banned ON players (banned_until, id) WHERE banned_until IS NOT NULL;",
+    "new": "SELECT 1;",
+    "why": "every account walked for the few banned",
+    "tests": [
+      "test/server/staffbanned.test.js"
+    ]
+  }
+]

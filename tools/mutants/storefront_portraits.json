@@ -1,0 +1,92 @@
+[
+  {
+    "name": "AUDIT-STOREFRONT-a-portrait-unclipped",
+    "file": "src/ui/profileIcons.js",
+    "old": "  const pic = node('g', { 'clip-path': `url(#${id}-clip)` });",
+    "new": "  const pic = node('g', {});",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-paint-never-laid",
+    "file": "src/ui/profileIcons.js",
+    "old": "      const g = node(mat[0], { id: `${id}-${m}`, ...mat[1] });",
+    "new": "      const g = node(mat[0], { id: m, ...mat[1] });",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-portrait-unbezelled",
+    "file": "src/ui/profileIcons.js",
+    "old": "  const rim = art.bezel ? BEZEL[/** @type {keyof typeof BEZEL} */ (art.bezel)] : [];",
+    "new": "  const rim = /** @type {any[]} */ ([]);",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-two-portraits-one-id",
+    "file": "src/ui/profileIcons.js",
+    "old": "  const id = `${key.replace(/[^\\w-]/g, '-')}-${++_gradientId}`;",
+    "new": "  const id = `${key.replace(/[^\\w-]/g, '-')}`;",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-an-effect-unpictured",
+    "file": "src/ui/wareArt.js",
+    "old": "  else if (kind === 'kill' || kind === 'portal' || kind === 'mount') art = effectEmblemNode(doc, kind, key, cls, size);\n",
+    "new": "",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-glyph-bare",
+    "file": "src/ui/wareArt.js",
+    "old": "    art = mark ? medallion(doc, mark, cssRgba(g.rgba) ?? '#c9a55a', size, cls) : null;",
+    "new": "    art = mark;",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-a-title-unpictured",
+    "file": "src/ui/wareArt.js",
+    "old": "    art = typeof doc?.createElementNS === 'function' ? medallion(doc, ribbon(doc, key), cssRgba(paint) ?? '#c9a55a', size, cls, [8, 8, 48, 48]) : null;",
+    "new": "    art = null;",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-body-never-handed-on",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "        (c) => effectPreview(c, w.kind, w.key, cueOf(w.id), bodyOf),",
+    "new": "        (c) => effectPreview(c, w.kind, w.key, cueOf(w.id), null),",
+    "tests": [
+      "test/ui/storefront_audit_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-body-asked-a-stage",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "        (bodyAsked ??= Promise.resolve()\n          .then(wearer)\n          .catch(() => null))",
+    "new": "        Promise.resolve()\n          .then(wearer)\n          .catch(() => null)",
+    "tests": [
+      "test/ui/storefront_audit_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-an-aura-on-the-stand-in",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "        (c) => preview(c, armory ? null : w.key, armory ? armoryKitOf(armoryWarePieces(w.key)) : null, bodyOf),",
+    "new": "        (c) => preview(c, armory ? null : w.key, armory ? armoryKitOf(armoryWarePieces(w.key)) : null, null),",
+    "tests": [
+      "test/ui/storefront_audit_window.test.js"
+    ]
+  }
+]

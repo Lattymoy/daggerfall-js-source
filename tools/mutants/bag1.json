@@ -1,0 +1,806 @@
+[
+  {
+    "name": "BAG1-clamp-own-first",
+    "file": "src/net/bagLaw.js",
+    "old": "export const CLAMP_ORDER = Object.freeze(['gold', 'bought', 'own']);",
+    "new": "export const CLAMP_ORDER = Object.freeze(['own', 'bought', 'gold']);",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-gold-spent-at-a-station",
+    "file": "src/net/bagLaw.js",
+    "old": "export const carriedSpendable = (c) => (c?.own | 0) + (c?.bought | 0);",
+    "new": "export const carriedSpendable = (c) => (c?.own | 0) + (c?.bought | 0) + (c?.gold | 0);",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-clamp-raises",
+    "file": "server-account/src/professions.js",
+    "old": "SET qty = qty - MIN(qty, MAX(0, ${total} - ?4))",
+    "new": "SET qty = qty - MIN(qty, ${total} - ?4)",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-harvest-into-the-stores",
+    "file": "server-account/src/professions.js",
+    "old": "  const T = carry ? 'prof_carried' : 'prof_stores';",
+    "new": "  const T = 'prof_stores';",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-deposit-past-the-count",
+    "file": "server-account/src/professions.js",
+    "old": "      WHERE ${movable} >= ?5\n",
+    "new": "      WHERE 1\n",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-the-pack-first",
+    "file": "src/systems/materialsBag.js",
+    "old": "    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT, bagWeight(entity)) >= 1) {\n      addItem(bagItemsOf(entity), item, 'back');\n      out.bag++;\n      continue;\n    }\n    if (canHoldAmount(1, kg, entityMaxEncumbrance(entity), carriedWeight(entity)) >= 1) {",
+    "new": "    if (canHoldAmount(1, kg, entityMaxEncumbrance(entity), carriedWeight(entity)) >= 1) {",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-the-bag-past-its-limit",
+    "file": "src/systems/materialsBag.js",
+    "old": "    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT, bagWeight(entity)) >= 1) {",
+    "new": "    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT * 2, bagWeight(entity)) >= 1) {",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-a-deposit-takes-the-pack-first",
+    "file": "src/systems/materialsBag.js",
+    "old": "      ['bag', bagItemsOf(entity)],\n      ['items', entity?.items ?? []],",
+    "new": "      ['items', entity?.items ?? []],\n      ['bag', bagItemsOf(entity)],",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ],
+    "note": "AUDIT BAG1 + GUILD2 (PIN MOVED): re-aimed by content - the take reads the wagon last (B6)."
+  },
+  {
+    "name": "BAG1-a-quest-item-a-material",
+    "file": "src/systems/materialsBag.js",
+    "old": "  if (\n    !item ||\n    item.questItem ||\n    isSummoned(item) ||\n    item.equipSlot != null ||\n    isEnchanted(item) ||\n    (item.foodStage ?? 0) > 0\n  )",
+    "new": "  if (!item || isSummoned(item) || item.equipSlot != null || isEnchanted(item) || (item.foodStage ?? 0) > 0)",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-the-bag-a-floor",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
+    "new": "  if (state.usingWagon || state.chooseOne) return null;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-a-loaded-bag-dropped",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded };",
+    "new": "  void bagLoaded;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-a-loaded-bag-sold",
+    "file": "src/systems/tradeModes.js",
+    "old": "      if (isBagItem(item) && bagLoaded) return { kind: 'refuse', refusal: 'bagLoaded' };",
+    "new": "      if (isBagItem(item) && false) return { kind: 'refuse', refusal: 'bagLoaded' };",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-the-bag-traded",
+    "file": "src/systems/tradePack.js",
+    "old": "  if (isBagItem(item)) return BAG_TRADE_TEXT; // BAG1: the bag is its owner's",
+    "new": "  void BAG_TRADE_TEXT; // BAG1: the bag is its owner's",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-shelved-offline",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "new": "    add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG-SHELF-none-to-a-bag-owner",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "new": "    if (isOnlinePage() && !(playerEntity.items ?? []).some((it) => it?.templateIndex === BAG_TEMPLATE))\n      add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-the-list-unsaved",
+    "file": "src/systems/save/save.js",
+    "old": "  snap.bagItems = (entity.bagItems ?? []).map((it) => ({ ...it }));",
+    "new": "  snap.bagItems = [];",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-the-realm-blind-to-it",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  ...lists(snap?.bagItems),\n  ...lists(snap?.items),",
+    "new": "  ...lists(snap?.items),",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-minted-by-both-tabs",
+    "file": "src/net/profBook.js",
+    "old": "        if (had && carry) r.data.put = mintHarvest(r.data);",
+    "new": "        if (carry) r.data.put = mintHarvest(r.data);",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-a-refused-deposit-kept",
+    "file": "src/net/profBook.js",
+    "old": "        if (back) back();",
+    "new": "        if (back) void back;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ],
+    "note": "AUDIT BAG1 + GUILD2 (PIN MOVED): re-aimed by content - the give-back is this page's undo, or a reload's mint (B17)."
+  },
+  {
+    "name": "BAG1-a-shortfall-moved-in-part",
+    "file": "src/net/profBook.js",
+    "old": "      for (const [k, n] of need) if (n - inStores(k) > carriedFor(k)) return { ok: false, error: 'materials-short', material: k };\n",
+    "new": "",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-a-shortfall-spends-gold",
+    "file": "src/net/profBook.js",
+    "old": "order: work === true ? 'work' : 'spend', counter: work === true }",
+    "new": "order: work === true ? 'work' : 'all', counter: work === true }",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG1-full-read-off-the-stores",
+    "file": "src/net/professionLaw.js",
+    "old": "  if (book.carrying?.() === true) return book.carryFull(material);\n  const s = book.store?.(material) ?? { own: book.held(material) };",
+    "new": "  const s = book.store?.(material) ?? { own: book.held(material) };",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B2-held-read-against-any-count",
+    "file": "server-account/src/professions.js",
+    "old": "AND (?6 IS NULL OR ${total} = ?6)`",
+    "new": "AND (?6 IS NULL OR 1 OR ${total} = ?6)`",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B2-the-cut-ungated",
+    "file": "server-account/src/professions.js",
+    "old": "origin = '${o}' AND ${open}`",
+    "new": "origin = '${o}' AND (1 OR ${open})`",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B2-the-gate-kept",
+    "file": "server-account/src/professions.js",
+    "old": "    db.prepare('DELETE FROM prof_carried_gate WHERE player = ?1 AND rid = ?2').bind(player, rid),\n",
+    "new": "",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B3-a-twin-cuts",
+    "file": "server-account/src/professions.js",
+    "old": "twin: 'NOT EXISTS (SELECT 1 FROM node_harvests WHERE player = ?1 AND rid = ?5)'",
+    "new": "twin: '(1 OR NOT EXISTS (SELECT 1 FROM node_harvests WHERE player = ?1 AND rid = ?5))'",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B2-any-material-held",
+    "file": "server-account/src/professions.js",
+    "old": "heldNow != null && body?.heldKey === key2 ?",
+    "new": "heldNow != null ?",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B1-lapsed-unasked",
+    "file": "src/net/profBook.js",
+    "old": "            if (h.carry === true) {\n              const r = await send(h, key);",
+    "new": "            if (false) {\n              const r = await send(h, key);",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B1-dropped-on-a-switch",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.ok && !here && h.carry === true) return { ok: false, error: 'elsewhere', kept: true, elsewhere: true };\n",
+    "new": "",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B2-a-deposit-out-uncounted",
+    "file": "src/net/profBook.js",
+    "old": "(carry ? (counter ? heldAll(m) : carry.held(m)) : 0) + depositsOut().reduce",
+    "new": "(carry ? (counter ? heldAll(m) : carry.held(m)) : 0) + 0 * depositsOut().reduce",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B2-seen-unsent",
+    "file": "src/net/profBook.js",
+    "old": "    return { held: heldNow(h.material, h.rid), heldKey: h.material, seen: seenNow(h.material) };",
+    "new": "    return { held: heldNow(h.material, h.rid), heldKey: h.material };",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B8-kept-said-as-offline",
+    "file": "src/net/profBook.js",
+    "old": "error: r?.kept === true ? 'deposit-kept' : (r?.error ?? 'offline')",
+    "new": "error: r?.error ?? 'offline'",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B9-the-card-unread",
+    "file": "src/net/profBook.js",
+    "old": "          ?? (card && typeof card.material === 'string' && Number.isSafeInteger(card.qty) && card.qty > 0 ? card : null);",
+    "new": "          ?? null;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B9-a-gem-left-as-the-harvest",
+    "file": "src/net/profBook.js",
+    "old": "      if (left > 0) { out.left += left; out.lost.push({ key: k, n: left }); }",
+    "new": "      if (left > 0) { out.left += left; out.lost.push({ key: d.material, n: left }); }",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B6-the-wagon-unread",
+    "file": "src/systems/materialsBag.js",
+    "old": "  let n = 0;\n  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {",
+    "new": "  let n = 0;\n  for (const list of [entity?.items ?? [], entity?.bagItems ?? []]) {",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B6-the-wagon-first",
+    "file": "src/systems/materialsBag.js",
+    "old": "      ['bag', bagItemsOf(entity)],\n      ['items', entity?.items ?? []],\n      ['wagon', entity?.wagonItems ?? []],",
+    "new": "      ['wagon', entity?.wagonItems ?? []],\n      ['bag', bagItemsOf(entity)],\n      ['items', entity?.items ?? []],",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B7-a-rotting-haunch-counted",
+    "file": "src/systems/materialsBag.js",
+    "old": "  if (\n    !item ||\n    item.questItem ||\n    isSummoned(item) ||\n    item.equipSlot != null ||\n    isEnchanted(item) ||\n    (item.foodStage ?? 0) > 0\n  )\n    return null;",
+    "new": "  if (!item || item.questItem || isSummoned(item) || item.equipSlot != null || isEnchanted(item)) return null;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B7-the-bag-a-larder",
+    "file": "src/systems/survival/needs.js",
+    "old": "entity.otherItems, entity.bagItems], s.rotDays",
+    "new": "entity.otherItems], s.rotDays",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-B4-no-kind-names-one",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      ...(actMaterial(a) ? { material: actMaterial(a) } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-H2-no-door-on-a-plain-pack",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (bagDoorShown() && remote?.kind === 'ground' && !(remote.count > 0)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-H1-the-door-over-a-tray",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const bagDoorShown = () => hasMaterialsBag(deps.items?.() ?? []) && !(session.chooseOne && !session.usingBag);",
+    "new": "const bagDoorShown = () => hasMaterialsBag(deps.items?.() ?? []);",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-a-dagger-offered-the-bag",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (bagRefuses(item)) return false;   // AUDIT BAG1: no",
+    "new": "  if (false) return false;   // AUDIT BAG1: no",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-H1-the-toggle-over-a-tray",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (state.chooseOne && !state.usingBag) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BAG1-put-everything-in-stops-at-a-refusal",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      else if (res?.kept) stop ??= res.text ?? null;",
+    "new": "      else if (true) stop ??= res?.text ?? null;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K3-a-stamped-refusal-given-nothing-after-a-reload",
+    "file": "src/net/profBook.js",
+    "old": "        else if (typeof carry?.give === 'function') carry.give(d.material, d.qty);",
+    "new": "        else if (false) carry.give(d.material, d.qty);",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K7-an-unstamped-deposit-asked",
+    "file": "src/net/profBook.js",
+    "old": "    if (tracked() && !carry.stamped(d.id)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H2-asked-before-the-checkpoint",
+    "file": "src/net/profBook.js",
+    "old": "    if (tracked() && typeof carry.flush === 'function') {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H2-a-first-ask-unsaved-kept",
+    "file": "src/net/profBook.js",
+    "old": "          if (!saved) {\n            const k0 = keptOf(key);",
+    "new": "          if (false) {\n            const k0 = keptOf(key);",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-a-stray-stamp-swept",
+    "file": "src/net/profBook.js",
+    "old": "    for (const t of strayStamps(key)) {",
+    "new": "    for (const t of [].concat()) {",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-D1-given-back-twice",
+    "file": "src/net/profBook.js",
+    "old": "    const mine = tracked() ? carry.stamped(d.id) : had;",
+    "new": "    const mine = true;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-the-stamp-unsaved",
+    "file": "src/systems/save/save.js",
+    "old": "  snap.bagTakes = bagTakesSaved(entity.bagTakes);",
+    "new": "  snap.bagTakes = {};",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-the-stamp-dropped-on-load",
+    "file": "src/systems/save/save.js",
+    "old": "  entity.bagTakes = bagTakesSaved(snap.bagTakes);",
+    "new": "  entity.bagTakes = {};",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K2-held-the-packs-alone",
+    "file": "src/net/profBook.js",
+    "old": "    return pending ? Math.max(held, seenNow(m)) : held;",
+    "new": "    return held;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K2-pending-for-itself",
+    "file": "src/net/profBook.js",
+    "old": "k.harvests.some((h) => h.carry === true && h.rid !== self)",
+    "new": "k.harvests.some((h) => h.carry === true)",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K9-carried-full-unlearned",
+    "file": "src/net/profBook.js",
+    "old": "if (r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;",
+    "new": "if (r?.error === 'stores-full') state.reread = true;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): `prof-cap` is no longer among the refusals that read the state again."
+  },
+  {
+    "name": "AUDIT2-BAG1-K4-the-overflow-lost",
+    "file": "src/systems/materialsBag.js",
+    "old": "  if (got.left > 0 && withdrawable(key))",
+    "new": "  if (false)",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K10-one-withdrawal",
+    "file": "src/net/profBook.js",
+    "old": "    while (left > 0) {\n      const fit = Math.min(left,",
+    "new": "    for (let once = 0; once < 1 && left > 0; once++) {\n      const fit = Math.min(left,",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K10-busy-said-as-no-room",
+    "file": "src/net/profBook.js",
+    "old": "        out.why = r?.busy ? 'busy' : 'refused';",
+    "new": "        out.why = 'room';",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K10-unanswered-said-as-no-room",
+    "file": "src/net/profBook.js",
+    "old": "      if (r?.kept) { out.coming += fit; out.stored -= fit; out.why = 'kept'; break; }",
+    "new": "      if (r?.kept) { out.why = 'room'; break; }",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K13-the-id-held-by-a-throw",
+    "file": "src/net/profBook.js",
+    "old": "      const p = m.promise;\n      p.catch(() => { if (m.promise === p) m.promise = null; });",
+    "new": "      const p = m.promise;\n      p.catch(() => {});",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K6-a-second-put-in",
+    "file": "src/net/profBook.js",
+    "old": "        if (depositsOut().some((d) => d.material === k) && inStores(k) < need.get(k)) return",
+    "new": "        if (false) return",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K5-kept-passed-to-the-craft",
+    "file": "src/net/profBook.js",
+    "old": "material: ready.material, moved: ready.moved ?? 0, ...(refined.length ? { refined } : {}) };\n        // MASTER-ART: a Master's work's catalysts",
+    "new": "material: ready.material, moved: ready.moved ?? 0, kept: ready.kept, ...(refined.length ? { refined } : {}) };\n        // MASTER-ART: a Master's work's catalysts",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K12-said-as-a-craft",
+    "file": "src/net/profBook.js",
+    "old": "qtyOk(a?.qty) ? 'deposit-busy' : 'bad-qty'",
+    "new": "qtyOk(a?.qty) ? 'prof-busy' : 'bad-qty'",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K11-none-carried-said-as-the-bag",
+    "file": "src/net/bagLaw.js",
+    "old": "  if (!(p.bag > 0) && !(p.pack > 0) && p.left > 0) return `- all ${left}: no room in your bag or pack`;",
+    "new": "  if (false) return `- all ${left}: no room in your bag or pack`;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-K8-moved-unsaid",
+    "file": "src/net/bagLaw.js",
+    "old": "  return n > 0 ? ` ${n} of the materials went into your Stores first. Your next try uses them from there.` : '';",
+    "new": "  return false ? ` ${n} of the materials went into your Stores first. Your next try uses them from there.` : '';",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H3-the-undo-onto-the-stale-record",
+    "file": "src/systems/materialsBag.js",
+    "old": "      else if (list.includes(m.item)) m.item.stackCount = (m.item.stackCount ?? 1) + m.count;",
+    "new": "      else if (true) m.item.stackCount = (m.item.stackCount ?? 1) + m.count;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H3-into-a-bag-that-left",
+    "file": "src/systems/materialsBag.js",
+    "old": "  if (role === 'bag') return hasBag(entity?.items) ? bagItemsOf(entity) : (entity.items ??= []);",
+    "new": "  if (role === 'bag') return bagItemsOf(entity);",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H12-arcane-essence-minted",
+    "file": "src/systems/materialsBag.js",
+    "old": "  if (!withdrawable(key)) {\n    out.left = n;\n    return out;\n  }\n  if (!Array.isArray(entity.items)) entity.items = [];",
+    "new": "  if (!Array.isArray(entity.items)) entity.items = [];",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H1-no-way-out-of-the-bag",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if ((bag.count ?? 0) > 0 && p.emptyBag) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H1-the-pack-past-its-weight",
+    "file": "src/systems/materialsBag.js",
+    "old": "    const fit =\n      kg > 0\n        ? Math.max(0, Math.min(count, canHoldAmount(count, kg, entityMaxEncumbrance(entity), carriedWeight(entity))))\n        : count;",
+    "new": "    const fit = count;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H1-the-jam-left-behind",
+    "file": "src/systems/materialsBag.js",
+    "old": "  const order = [...bag].sort((a, b) => (isMaterialItem(a) ? 1 : 0) - (isMaterialItem(b) ? 1 : 0));",
+    "new": "  const order = [...bag];",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-U1-the-stores-room-unread",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    const inMost = Math.min(DEPOSIT_MAX, pick.carried + (pick.uncounted | 0), storesRoomOf(book, pick));",
+    "new": "    const inMost = Math.min(DEPOSIT_MAX, pick.carried + (pick.uncounted | 0));",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-U1-put-everything-asks-a-full-store",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      let room = storesRoomOf(book, r);",
+    "new": "      let room = Infinity;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-U14-the-reason-a-title-alone",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (why.length) detail.append(el('p', 'px-note prof-why', why.join(' ')));",
+    "new": "      if (false) detail.append(el('p', 'px-note prof-why', why.join(' ')));",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-U14-the-qty-unlabelled",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    qty.setAttribute('aria-label', 'How many');",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "BAG-SHELF-the-first-shelf-alone",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "new": "    if (isOnlinePage() && shelfIndex === 0) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-U3-the-bag-button-an-act",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".pack-shell .packbar .bagbtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;\n  font-size: 12px; }",
+    "new": "",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-U8-the-field-back",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  // amount came back over the list it was never meant for when the bag closed\n  goldEntry = null;",
+    "new": "  // amount came back over the list it was never meant for when the bag closed",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-U6-the-services-count-on-the-card",
+    "file": "src/ui/haulCards.js",
+    "old": "  const main = storesHaul(d.material, mainCame > 0 ? mainCame : d.qty,",
+    "new": "  const main = storesHaul(d.material, d.qty,",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-S1-swept-at-two-days",
+    "file": "server-account/src/professions.js",
+    "old": ".bind(day - CARRIED_ROW_DAYS, limit),",
+    "new": ".bind(day - 1, limit),",
+    "tests": [
+      "test/net/bag1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-S8-the-ore-into-the-stores",
+    "file": "server-account/src/motherlodes.js",
+    "old": "  const T = carry ? 'prof_carried' : 'prof_stores';",
+    "new": "  const T = 'prof_stores';",
+    "tests": [
+      "test/net/prof2b_motherlode.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-S8-the-twin-cutting",
+    "file": "server-account/src/motherlodes.js",
+    "old": "          twin: 'NOT EXISTS (SELECT 1 FROM motherlode_strikes WHERE player = ?1 AND rid = ?5)',",
+    "new": "          twin: '(1 OR ?1 OR ?5)',",
+    "tests": [
+      "test/net/prof2b_motherlode.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-S8-cut-against-a-stale-count",
+    "file": "server-account/src/motherlodes.js",
+    "old": "          seen: seenOk(body?.seen) ? body.seen : null,",
+    "new": "          seen: null,",
+    "tests": [
+      "test/net/prof2b_motherlode.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-D4-the-bag-unswept",
+    "file": "src/systems/save/save.js",
+    "old": "  count += removeOrphanedItems(entity, entity.bagItems ?? [], getQuest);   // BAG1: the port's own list, beside DFU's three\n",
+    "new": "",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-H10-an-enchanted-herb-counted",
+    "file": "src/systems/materialsBag.js",
+    "old": "  if (\n    !item ||\n    item.questItem ||\n    isSummoned(item) ||\n    item.equipSlot != null ||\n    isEnchanted(item) ||\n    (item.foodStage ?? 0) > 0\n  )\n    return null;",
+    "new": "  if (!item || item.questItem || isSummoned(item) || item.equipSlot != null || (item.foodStage ?? 0) > 0) return null;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-D3-a-refusal-ends-the-run",
+    "file": "src/net/profBook.js",
+    "old": "            if (r?.kept === true) silent = true;",
+    "new": "            if (!r?.ok) silent = true;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-D3-the-material-line-a-comment",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      ...(actMaterial(a) ? { material: actMaterial(a) } : {}),\n",
+    "new": "      // ...(actMaterial(a) ? { material: actMaterial(a) } : {}),\n",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-D3-the-potion-maker-blind-to-the-bag",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "    wagonItems: () => [...(player.wagonItems ??= []), ...(player.bagItems ?? [])],",
+    "new": "    wagonItems: () => (player.wagonItems ??= []),",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT2-BAG1-D3-the-potion-maker-never-spends-the-bag",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      return where !== 'pack' && removeOne(player.bagItems ?? [], templateIndex, { group, allowEnchantedItem: false });",
+    "new": "      return false;",
+    "tests": [
+      "test/systems/bag1_client.test.js"
+    ]
+  }
+]

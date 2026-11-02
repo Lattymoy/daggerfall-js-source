@@ -1,0 +1,560 @@
+[
+  {
+    "name": "NAV1-the-old-wind-curve",
+    "file": "src/systems/helmWay.js",
+    "old": "export const windShare = (windLen) => clamp(windLen / WIND_RATED, WIND_SHARE[0], WIND_SHARE[1]);",
+    "new": "export const windShare = (windLen) => clamp(0.55 + 0.3 * windLen, 0.4, 1.3);",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-brig-at-half-the-players-way",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "    speed: 7.6,",
+    "new": "    speed: 3.7,",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-radius-unread",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return Math.min(ship.cls.turn * DEG, Math.max(floor, (HULL_HELM[ship.hull] ?? 1) * steerage(v) * DEG));",
+    "new": "  return ship.cls.turn * DEG;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-floor-a-galleys",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const floor = (ship.hull === HULL.LargeGalley ? OARS_TURN : TURN_FLOOR) * DEG;",
+    "new": "  const floor = OARS_TURN * DEG;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-helm-snaps",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (dt > 0) ship.yawRate += (cmd - ship.yawRate) * (1 - Math.exp(-dt / tau));",
+    "new": "  if (dt > 0) ship.yawRate = cmd;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-turn-costs-nothing",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const sailed = best * ship.sails * (1 - TURN_SPEED_LOSS * helmShare);",
+    "new": "    const sailed = best * ship.sails;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-heel-snaps",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    ship.heel += ship.heelVel * h;",
+    "new": "    ship.heel = want2;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-winds-heel-dropped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    -HEEL_TURN * ship.speed * (ship.yawRate / DEG) + HEEL_WIND * (cross / WIND_RATED) * ship.sails,",
+    "new": "    -HEEL_TURN * ship.speed * (ship.yawRate / DEG) + 0 * (cross / WIND_RATED) * ship.sails,",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-tack-skipped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  let want = plan.sailable ? plan.want : tackCourse(ship, plan.want, plan.goal, world.wind);",
+    "new": "  let want = plan.want;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-never-put-about",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    ship.tack = { side: -ship.tack.side, since: ship.clock };",
+    "new": "    ship.tack = { side: ship.tack.side, since: ship.clock };",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-a-galley-beats",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (ship.hull === HULL.LargeGalley || wl < 1e-6 || offRunOf(want, wind) <= CLOSE_HAULED * DEG) {",
+    "new": "  if (wl < 1e-6 || offRunOf(want, wind) <= CLOSE_HAULED * DEG) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-wear-never-taken",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      ship.turnWay =\n        ship.speed >= WEAR_BELOW * paceOf(ship, wind) && off >= TACK_FROM * DEG\n          ? { kind: 'tack', rate: maxRate }\n          : { kind: 'wear' };",
+    "new": "      ship.turnWay = { kind: 'tack', rate: maxRate };",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-tacks-carry-dropped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (ship.turnWay?.kind === 'tack')\n      maxRate = Math.max(maxRate, Math.min(ship.cls.turn * DEG, TACK_CARRY * ship.turnWay.rate));",
+    "new": "    if (ship.turnWay?.kind === 'tack') maxRate = Math.max(maxRate, 0);",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-no-pay-off",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (Math.abs(toEye) < IRONS_DEG * DEG && ship.speed < IRONS_WAY) maxRate = Math.max(maxRate, PAYOFF_TURN * DEG);",
+    "new": "    if (Math.abs(toEye) < IRONS_DEG * DEG && ship.speed < IRONS_WAY) maxRate = Math.max(maxRate, 0);",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-no-room-given",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    bend += dir * urgency * AVOID_SHIP_SWING * DEG;",
+    "new": "    bend += 0 * dir * urgency;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-rule-of-the-road",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const dir = Math.abs(brg) < AVOID_HEAD_ON * DEG ? 1 : side > 0 ? -1 : 1;",
+    "new": "    const dir = side > 0 ? -1 : 1;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-her-berth-avoided",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (c.id === ship.id || c.id === except || c.gone || c.hull == null) continue;",
+    "new": "    if (c.id === ship.id || c.gone || c.hull == null) continue;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-soundings-too-far-apart",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    s = Math.min(dist, s + (s < near ? step : step * 2));",
+    "new": "    s = Math.min(dist, s + step * 8);",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-keel-line-alone",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half) || !isWater(x - r[0] * half, z - r[2] * half))\n      return false;",
+    "new": "    if (!isWater(x, z)) return false;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-swing-never-held",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (a.clearFor >= AVOID_HOLD_S) {",
+    "new": "    if (a.clearFor >= 0) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-course-not-retried",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (wantClear) {\n      a.swing = 0;\n      a.heading = null;\n      a.clearFor = 0;\n      return want;\n    } // the swing is foul and the course clear again",
+    "new": "    // (the course never retried)",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-about-always-to-starboard",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const side = r.right >= r.left ? 1 : -1;",
+    "new": "  const side = 1;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-onto-the-land",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (!clear) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-never-warped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (ship.avoid.heading != null || ship.aground > 0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-lead-uncapped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (t == null) t = Math.min(PURSUIT_LEAD_S, Math.sqrt(c) / s);",
+    "new": "  if (t == null) t = Math.sqrt(c) / s;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-intercept-unsolved",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const disc = b * b - 4 * a * c;",
+    "new": "    const disc = b * b + 4 * a * c;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-bent-while-loaded",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (\n      ship.guns.ready(side) &&\n      d <= reach * PRESENT_WITHIN &&\n      d >= Math.max(range * POINT_BLANK, deadZone) &&\n      holdsLead(side)\n    )\n      return 0;\n    if (d < deadZone) return -2 * RANGE_BEND * DEG;",
+    "new": "    if (d < deadZone) return -2 * RANGE_BEND * DEG;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-a-side-onto-the-land",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      const foul = courseClear(ship.pos, h, l.near, isWater, { half: l.half, from: l.from }) ? 0 : 1e4; // her turning circle's reach",
+    "new": "      const foul = 0;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-side-never-held",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    for (const side of sides)\n      if (\n        cost[side] + (side === held ? 0 : held ? SIDE_HOLD_S : 0) <\n        cost[best] + (best === held ? 0 : held ? SIDE_HOLD_S : 0)\n      )\n        best = side;",
+    "new": "    for (const side of sides) if (cost[side] < cost[best]) best = side;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-into-the-winds-eye",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const want = sailable(ship, ideal, world.wind);",
+    "new": "  const want = ideal;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-never-given-up",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (ship.clock - ship.chase.since > CHASE_GIVE_UP_S && d > ship.cls.range * CLOSE_FROM) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-fights-refresh",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (d < far * (1 - CHASE_GAIN) || d <= ship.cls.range * CLOSE_FROM) c.since = ship.clock; // closing, or in the fight",
+    "new": "  if (d < far * (1 - CHASE_GAIN)) c.since = ship.clock;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-no-disengage-hysteresis",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (\n      dist < (held ? see * DISENGAGE : see) &&\n      hostile(ship, c, world) &&\n      !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)\n    ) {",
+    "new": "    if (dist < see && hostile(ship, c, world) && !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-stillness-only-at-the-rail",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    ship.stillFor.set(c.id, (c.speed ?? 0) < GRAPPLE_STILL ? (ship.stillFor.get(c.id) ?? 0) + dt : 0);",
+    "new": "    ship.stillFor.set(\n      c.id,\n      (c.speed ?? 0) < GRAPPLE_STILL && bearingTo(ship, c.pos).dist <= GRAPPLE_RANGE\n        ? (ship.stillFor.get(c.id) ?? 0) + dt\n        : 0,\n    );",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-berth-across-the-boat",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (!ship.berthSide)\n    ship.berthSide = (ship.pos[0] - enemy.pos[0]) * r[0] + (ship.pos[2] - enemy.pos[2]) * r[2] >= 0 ? 1 : -1;",
+    "new": "  if (!ship.berthSide) ship.berthSide = 1;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-broadsides-alongside",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "export const boarderBroadsides = (ship) => ship.mode !== 'board' || ship.guns.load('starboard') === 'grape';",
+    "new": "export const boarderBroadsides = (ship) => true;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-gap-unread",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const close =\n      q.hull != null && Number.isFinite(q.yaw)\n        ? hullGap(ship.pos, ship.yaw, ship.hull, q.pos, q.yaw, q.hull) <= GRAPPLE_GAP\n        : bearingTo(ship, q.pos).dist <= GRAPPLE_RANGE;",
+    "new": "    const close = bearingTo(ship, q.pos).dist <= GRAPPLE_RANGE;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-wreck-fired-on",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (!ship.guns.braced && !(enemy?.crippled && enemy.kind === 'player')) {",
+    "new": "  if (!ship.guns.braced) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-wreck-never-left",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (ship.clock - ship.wreck.since < WRECK_SPARE_S) return enemy;",
+    "new": "  return enemy;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-an-upwind-waypoint",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      if (ship.hull !== HULL.LargeGalley && offRunOf(a, wind) > CLOSE_HAULED * DEG) continue; // a galley rows to windward",
+    "new": "      // (any quarter)",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-leg-unsounded",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      for (let s = WAYPOINT_SOUND; s < dist && clear; s += WAYPOINT_SOUND)",
+    "new": "      for (let s = WAYPOINT_SOUND; s < 0 && clear; s += WAYPOINT_SOUND)",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-no-way-back",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (!ship.waypoint) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-no-drift",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (ship.adrift && st === SHIP_STATES.prize) drift(ship, dt, world.wind, isWater);",
+    "new": "    // (no drift)",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-adrift-onto-the-land",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (isWater(x, z)) {",
+    "new": "  {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-every-ship-a-berth",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      const alive = (ctx.ships ?? []).filter(\n        (s) => !out.despawn.includes(s.id) && s.afloat !== false && !s.berthed,\n      ).length;",
+    "new": "      const alive = (ctx.ships ?? []).filter((s) => !out.despawn.includes(s.id) && !s.berthed).length;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-the-boarded-mark-kept",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    entry.ship.boarded = false;   // AUDIT NAV1 (B1): the fight is over - a prize is let go like any hulk once out of sight",
+    "new": "    // (the mark kept)",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-a-prize-engaged",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "engaged: (afloat && (e.ship.mode === 'engage' || e.ship.mode === 'board')) || boarding?.shipId === e.id || !!e.raider || !!e.liner || !!e.takenBy",
+    "new": "engaged: (afloat && (e.ship.mode === 'engage' || e.ship.mode === 'board')) || boarding?.shipId === e.id || !!e.raider || !!e.liner || e.ship.damage.state === SHIP_STATES.prize || !!e.takenBy",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-hulls-through-each-other",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        if (A.movable && B.movable) { shove(A, [push[0] / 2, push[1] / 2]); shove(B, [-push[0] / 2, -push[1] / 2]); }",
+    "new": "        if (A.movable && B.movable) { /* passed through */ }",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-her-way-kept",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (into > 0) x.ship.speed *= clamp(1 - into, 0, 1);",
+    "new": "      // (her way kept)",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-my-boat-shoved",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    for (const b of myBoats()) list.push({ ship: null, movable: false,",
+    "new": "    for (const b of myBoats()) list.push({ ship: null, movable: true,",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-one-clamped-step",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "FRAME_STEP_S * FRAME_STEPS_MAX);   // TIME-DILATION",
+    "new": "FRAME_STEP_S);   // TIME-DILATION",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1-a-boarder-not-chasing",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const chasesMe = (e) => (e.ship.mode === 'engage' || e.ship.mode === 'board') && e.ship.target === myId();",
+    "new": "  const chasesMe = (e) => e.ship.mode === 'engage' && e.ship.target === myId();",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-never",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const sweeps = still && d <= SWEEP_RANGE ? Math.min(SWEEP_WAY, pace) : 0;",
+    "new": "  const sweeps = 0;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-past-range",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const sweeps = still && d <= SWEEP_RANGE ? Math.min(SWEEP_WAY, pace) : 0;",
+    "new": "  const sweeps = still ? Math.min(SWEEP_WAY, pace) : 0;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-under-way",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const sweeps = still && d <= SWEEP_RANGE ? Math.min(SWEEP_WAY, pace) : 0;",
+    "new": "  const sweeps = d <= SWEEP_RANGE ? Math.min(SWEEP_WAY, pace) : 0;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-unpaced",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const sweeps = still && d <= SWEEP_RANGE ? Math.min(SWEEP_WAY, pace) : 0;",
+    "new": "  const sweeps = still && d <= SWEEP_RANGE ? SWEEP_WAY : 0;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-never-shipped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  ship.sweeps = plan.sweeps ?? 0; // AUDIT NAV1 (online #10): her sweeps out, or in",
+    "new": "  ship.sweeps = Math.max(ship.sweeps, plan.sweeps ?? 0); // AUDIT NAV1 (online #10): her sweeps out, or in",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-eye-worn-round",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (power > 0 && ship.hull !== HULL.LargeGalley && !ship.sweeps && wl0 > 1e-6) {",
+    "new": "  if (power > 0 && ship.hull !== HULL.LargeGalley && wl0 > 1e-6) {",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-no-turn",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (power > 0 && ship.sweeps > 0) maxRate = Math.max(maxRate, SWEEP_TURN * DEG); // AUDIT NAV1 (online #10): pulled round on her sweeps",
+    "new": "  if (false) maxRate = Math.max(maxRate, SWEEP_TURN * DEG); // AUDIT NAV1 (online #10): pulled round on her sweeps",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-no-way",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const target = Math.max(sailed, ship.sweeps) * (ship.aground > 0 ? AGROUND_WAY : 1); // AUDIT NAV1 (online #10): her sweeps' way where the wind gives less",
+    "new": "    const target = sailed * (ship.aground > 0 ? AGROUND_WAY : 1); // AUDIT NAV1 (online #10): her sweeps' way where the wind gives less",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-still-met-from-astern",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const lead = still ? 0 : Math.min(60, d) * 0.8,",
+    "new": "  const lead = Math.min(60, d) * 0.8,",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  },
+  {
+    "name": "NAV1C-sweeps-unsailable",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return { want: headingTo(ship.pos, aim), goal: aim, sails, sweeps, sailable: sweeps > 0, berthing };",
+    "new": "  return { want: headingTo(ship.pos, aim), goal: aim, sails, sweeps, berthing };",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  }
+]

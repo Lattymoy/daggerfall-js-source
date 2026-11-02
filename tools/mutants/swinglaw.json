@@ -1,0 +1,221 @@
+[
+  {
+    "name": "SWING-LAW-the-tempo-ignores-speed",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return 1 + ((50 - s) / 100) * (SWING_TEMPO_AT_0 - SWING_TEMPO_AT_100); // pivoted on 50, so the middle is DFU's frame exactly",
+    "new": "  return 1 + 0 * ((50 - s) / 100) * (SWING_TEMPO_AT_0 - SWING_TEMPO_AT_100); // pivoted on 50, so the middle is DFU's frame exactly",
+    "tests": [
+      "test/systems/swinglaw.test.js",
+      "test/systems/disc29_swing.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-tempo-runs-backwards",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return 1 + ((50 - s) / 100) * (SWING_TEMPO_AT_0 - SWING_TEMPO_AT_100); // pivoted on 50, so the middle is DFU's frame exactly",
+    "new": "  return 1 - ((50 - s) / 100) * (SWING_TEMPO_AT_0 - SWING_TEMPO_AT_100); // pivoted on 50, so the middle is DFU's frame exactly",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-tempo-unheld-past-100",
+    "file": "src/characters/weaponStates.js",
+    "old": "  const s = Math.max(0, Math.min(100, Number.isFinite(speed) ? speed : 50));",
+    "new": "  const s = Math.max(0, Number.isFinite(speed) ? speed : 50);",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-slope-is-DFUs-steepness",
+    "file": "src/characters/weaponStates.js",
+    "old": "export const SWING_TEMPO_AT_100 = 0.6;",
+    "new": "export const SWING_TEMPO_AT_100 = 0.23;",
+    "tests": [
+      "test/systems/swinglaw.test.js",
+      "test/systems/disc29_swing.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-heft-ignores-strength",
+    "file": "src/characters/weaponStates.js",
+    "old": "  const load = (w * (150 - str)) / 100;",
+    "new": "  const load = (w * (150 - 50)) / 100;",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-no-free-weight",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return 1 + Math.min(SWING_HEFT_MAX, Math.max(0, (load - SWING_HEFT_FREE_KG) * SWING_HEFT_PER_KG));",
+    "new": "  return 1 + Math.min(SWING_HEFT_MAX, Math.max(0, load * SWING_HEFT_PER_KG));",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-heft-uncapped",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return 1 + Math.min(SWING_HEFT_MAX, Math.max(0, (load - SWING_HEFT_FREE_KG) * SWING_HEFT_PER_KG));",
+    "new": "  return 1 + Math.max(0, (load - SWING_HEFT_FREE_KG) * SWING_HEFT_PER_KG);",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-a-dagger-handles-as-a-sword",
+    "file": "src/characters/weaponStates.js",
+    "old": "  4: 0.9,\n  5: 0.9, // Dagger",
+    "new": "  4: 1,\n  5: 1, // Dagger",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-both-hands-cost-nothing",
+    "file": "src/characters/weaponStates.js",
+    "old": "  (shortBlade ? SWING_SHORT_BLADE : (SWING_HANDLING[weaponType] ?? 1)) * (twoHanded ? SWING_TWO_HANDED : 1);",
+    "new": "  (shortBlade ? SWING_SHORT_BLADE : (SWING_HANDLING[weaponType] ?? 1)) * (twoHanded ? 1 : 1);",
+    "tests": [
+      "test/systems/swinglaw.test.js",
+      "test/systems/rr1_realism.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-no-floor",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return Math.max(SWING_FRAME_MIN, Math.min(SWING_FRAME_MAX, SWING_BASE_FRAME * swingTempo(speed) * heft * handling));",
+    "new": "  return Math.max(0.001, Math.min(SWING_FRAME_MAX, SWING_BASE_FRAME * swingTempo(speed) * heft * handling));",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-no-ceiling",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return Math.max(SWING_FRAME_MIN, Math.min(SWING_FRAME_MAX, SWING_BASE_FRAME * swingTempo(speed) * heft * handling));",
+    "new": "  return Math.max(SWING_FRAME_MIN, Math.min(9, SWING_BASE_FRAME * swingTempo(speed) * heft * handling));",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-player-keeps-DFUs-line",
+    "file": "src/characters/weaponStates.js",
+    "old": "  if (ctx?.entity) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/swinglaw.test.js",
+      "test/systems/disc29_swing.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-a-wielderless-ctx-swings-on-the-law",
+    "file": "src/characters/weaponStates.js",
+    "old": "  if (ctx?.entity) {",
+    "new": "  if (ctx) {",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-law-reads-no-heft",
+    "file": "src/characters/weaponStates.js",
+    "old": "        heft: w ? swingHeft(w.weight, w.strength) : 1,",
+    "new": "        heft: 1,",
+    "tests": [
+      "test/systems/swinglaw.test.js",
+      "test/systems/rr1_realism.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-reader-reads-the-right-hand-always",
+    "file": "src/combat/swingLaw.js",
+    "old": "const handItem = (entity, ctx) =>\n  entity.equip?.slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
+    "new": "const handItem = (entity, ctx) => entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null;",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-claws-weigh-the-held-blade",
+    "file": "src/combat/swingLaw.js",
+    "old": "  const bare = !item || weaponType === WEAPON_TYPES.Melee || weaponType === WEAPON_TYPES.Werecreature;",
+    "new": "  const bare = !item || weaponType === WEAPON_TYPES.Melee;",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-reader-blind-to-hands",
+    "file": "src/combat/swingLaw.js",
+    "old": "    twoHanded: !bare && getItemHands(item) === ITEM_HANDS.Both,",
+    "new": "    twoHanded: false,",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-the-reader-never-installed",
+    "file": "src/combat/swingLaw.js",
+    "old": "export function installSwingLaw() {\n  registerSwingReader(readSwing);\n}",
+    "new": "export function installSwingLaw() {}",
+    "tests": [
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-RR-blend-blind-to-hands",
+    "file": "src/systems/roleplayRealism/rrRealism.js",
+    "old": "    handling: swingHandling(weaponType, hands === 'Both', shortBlade),",
+    "new": "    handling: swingHandling(weaponType, false, shortBlade),",
+    "tests": [
+      "test/systems/rr1_realism.test.js",
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-RR-keeps-its-hyperbola",
+    "file": "src/systems/roleplayRealism/rrRealism.js",
+    "old": "  return swingFrameSeconds(blend, {\n    heft: swingHeft(weight, liveStrength),\n    handling: swingHandling(weaponType, hands === 'Both', shortBlade),\n  });",
+    "new": "  return (3 * (115 - blend)) / 980;",
+    "tests": [
+      "test/systems/rr1_realism.test.js",
+      "test/systems/swinglaw.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-RRI-keeps-its-hyperbola",
+    "file": "src/systems/roleplayRealismItems/rriRealism.js",
+    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) }); // BAL10: `shortBlade` - the dagger's handling for every short blade",
+    "new": "  return (3 * (115 - adjustedSpeed)) / 980; // BAL10: `shortBlade` - the dagger's handling for every short blade",
+    "tests": [
+      "test/systems/rri2_realism.test.js",
+      "test/systems/swinglaw.test.js",
+      "test/systems/disc29_swing.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-RRI-blind-to-the-kind",
+    "file": "src/systems/roleplayRealismItems/rriRealism.js",
+    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) }); // BAL10: `shortBlade` - the dagger's handling for every short blade",
+    "new": "  return swingFrameSeconds(adjustedSpeed, { handling: 1 }); // BAL10: `shortBlade` - the dagger's handling for every short blade",
+    "tests": [
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "SWING-LAW-RRI-override-hands-no-hands",
+    "file": "src/systems/roleplayRealismItems/rriKits.js",
+    "old": "    twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both, // SWING-LAW: the handling the port's law reads",
+    "new": "    twoHanded: false, // SWING-LAW: the handling the port's law reads",
+    "tests": [
+      "test/systems/swinglaw.test.js",
+      "test/systems/rri2_realism.test.js"
+    ]
+  }
+]

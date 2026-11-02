@@ -1,0 +1,34 @@
+[
+  {
+    "name": "RATIONS-HUNGRY-1-left-to-starve",
+    "file": "src/systems/survival/needs.js",
+    "old": "export const AUTO_EAT_STAGES = Object.freeze(['hungry', 'starving']);",
+    "new": "export const AUTO_EAT_STAGES = Object.freeze(['starving']);",
+    "tests": ["test/systems/survival/rationshungry.test.js", "test/systems/survival/surv1_model.test.js"],
+    "note": "The sack would sit in the pack through twelve hours of Hungry, as before."
+  },
+  {
+    "name": "RATIONS-HUNGRY-2-eaten-at-a-rumble",
+    "file": "src/systems/survival/needs.js",
+    "old": "export const AUTO_EAT_STAGES = Object.freeze(['hungry', 'starving']);",
+    "new": "export const AUTO_EAT_STAGES = Object.freeze(['peckish', 'hungry', 'starving']);",
+    "tests": ["test/systems/survival/rationshungry.test.js"],
+    "note": "A full meal would go down at Peckish, three times as many sacks a day."
+  },
+  {
+    "name": "RATIONS-HUNGRY-3-starving-forgotten",
+    "file": "src/systems/survival/needs.js",
+    "old": "export const AUTO_EAT_STAGES = Object.freeze(['hungry', 'starving']);",
+    "new": "export const AUTO_EAT_STAGES = Object.freeze(['hungry']);",
+    "tests": ["test/systems/survival/rationshungry.test.js", "test/systems/survival/surv1_model.test.js"],
+    "note": "A player already starving when a sack came into the pack would never eat it."
+  },
+  {
+    "name": "RATIONS-HUNGRY-4-the-host-switch-ignored",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (AUTO_EAT_STAGES.includes(hungerNow) && autoEat) {",
+    "new": "  if (AUTO_EAT_STAGES.includes(hungerNow)) {",
+    "tests": ["test/systems/survival/rationshungry.test.js"],
+    "note": "A host that turned auto-eating off would have its rations eaten anyway."
+  }
+]

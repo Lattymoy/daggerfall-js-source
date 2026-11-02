@@ -1,0 +1,26 @@
+[
+  {
+    "name": "FLAIL-LINK-no-lead",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const lead = Number.isFinite(near) ? Math.max(0, near - 0.5) : 0;",
+    "new": "  const lead = 0;",
+    "tests": ["test/player/eyeOfTheBeholder/layered_weapons.test.js"],
+    "why": "the chain hangs a gap below the cap"
+  },
+  {
+    "name": "FLAIL-LINK-lead-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "/ ka + (C.lead ?? 0), v =",
+    "new": "/ ka, v =",
+    "tests": ["test/player/eyeOfTheBeholder/layered_weapons.test.js"],
+    "why": "the lead measured, the chain drawn from the anchor still"
+  },
+  {
+    "name": "FLAIL-LINK-cap-px-left-to-chain",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (a < 0) { chain[j + 3] = 0; handle[j + 3] = img.colors[j + 3]; continue; }",
+    "new": "",
+    "tests": ["test/player/eyeOfTheBeholder/layered_weapons.test.js"],
+    "why": "the cap's px off the axis drawn as a speck by the chain"
+  }
+]

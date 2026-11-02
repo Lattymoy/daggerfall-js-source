@@ -1,0 +1,419 @@
+// ═══════════════════════════════════════════════════════════════════
+// ENHANCED AI 4 — the motor reads the switch.
+//
+// Decision #1 of the arc, honoured to the letter: `characters/
+// enemyMotor.js` is NOT edited. EnemyAI resolves `this._getDestination`
+// by dynamic dispatch from `_classicTick`, and EVERYTHING downstream of
+// the classic tick keys off `this.destination` - the 5.625° turn gate,
+// AttemptMove's obstacle probe, the fall check, gravity, speed. So the
+// enhanced motor is a subclass that answers one question differently:
+// where is this foe walking TO right now. The answer is the next
+// waypoint of a navmesh path to the target; when there is no bake, no
+// path, or the classic detour is running, the answer is the classic
+// one. Senses, decisions, attacks, sounds, knockback, water, flight:
+// classic, untouched, by construction.
+//
+// ── THE LAWS ARE PROJECT-FINAL'S ────────────────────────────────
+//
+// The follow laws are Mac's, from project-final's src/game/
+// enemyShared.js (repathToward, stuckWatch, the constants) and
+// enemyMelee.js htClose (the waypoint advance), at project-final
+// 8ba9100. The constants are his numbers with his comments; the two
+// functions are his bodies, re-homed on `this` instead of `e` because
+// the port's foe IS its motor. navWalkable is main.js:236 verbatim.
+// Where the port's shape forced a change it is named below; there are
+// exactly two, and neither touches how a route is chosen or held.
+//
+// ── ADAPTATION 1: THE STOP CHECK, AND THE PROJECTED DESTINATION ──
+//
+// His chase measures its stop against the PLAYER (`distP > MELEE_RANGE`)
+// and steers at the waypoint; the two are separate. The classic tick
+// has ONE destination doing both jobs, and when the target is out of
+// sight it measures the stop against the DESTINATION - DFU's own law,
+// because classic's out-of-sight destination is a last-known position
+// the foe walks to and stops at. With a route, out of sight is the
+// COMMON case (that is what a navmesh is for), and the destination is
+// an intermediate corner: a foe would halt at every corner inside 2.25
+// m of it and stutter down the corridor.
+//
+// The fix keeps his advance law exactly and changes only what the stop
+// check can see: the destination is the waypoint's DIRECTION, extended
+// to at least stopDistance - the yaw gate reads direction alone, so the
+// steering is byte-identical to steering at the waypoint, and the stop
+// check can no longer fire on a corner. The FINAL point is never
+// extended, so the foe stops at the goal exactly as classic stops at
+// its LKP. Pinned both ways.
+//
+// ── ADAPTATION 2: THE NUDGE GOES THROUGH THE COLLIDER ───────────
+//
+// His stuckWatch writes e.x/e.z directly after a walkable check. The
+// port's feet move only through `collider.move` - a direct write would
+// put a foe inside geometry the nav's erosion happened to disagree
+// with. The nudge is his vector, his side choice, his walkable gate,
+// resolved by the collider; a blocked nudge is a nudge of zero, and
+// the route is dropped either way, exactly as his does when both sides
+// are walls.
+//
+// ── ADAPTATION 3: THE ROUTE SUPPLIES X AND Z; THE Y IS CLASSIC'S ──
+//
+// findPath's waypoints carry y = surfH(chf.colliders, ...) when the chf
+// has colliders, and y = 0 otherwise. AUDIT 59 F4 corrected the premise
+// this adaptation was written on: the live chf DOES carry colliders -
+// navClient hydrates over the boxes the bake was cut into (the worker
+// ships them back; a cache hit asks it for them) and hands them to
+// hydrateBakedNav, and the 3b pin reads the hydrated floor through
+// them - so a waypoint's y is surfH's answer: the real floor where a
+// box top exists, and the PHANTOM floor (minY - 10) wherever none
+// does, a doorway's threshold or a cell the erosion trimmed. That is
+// still a y the motor must not steer at: a flyer or swimmer moves
+// along _dir3(destination), and a heading pitched at a floor ten
+// metres down, or at a corner's box top under a flyer, dives or climbs
+// and never comes inside stopDistance on hypot(dx, dy, dz). Mac's
+// report on 4b-pre: foes that disappear, and one in a ceiling.
+//
+// So the route's vertical is not asked for. A corner takes the FOE'S OWN y
+// (level along the corridor, which for a walker is a no-op and for a
+// flyer is the only honest guess) and the goal takes the y CLASSIC'S OWN
+// LAW builds from the predicted target position - EnemyAI._aimY, the
+// clear-path arm's vertical (EnemyMotor.cs:541-544, :559-564): the
+// target's transform lift, the flyer/levitator/slaughterfish face bump,
+// the grounded foe's own-height delta, converted back to feet once.
+// AUDIT 62 F1: this leg took the predicted position's RAW FEET, which is
+// classic's answer only when a foe's capsule equals its idle sprite -
+// a bat (capsule halved and floored at 1.6 under a 1.8 sprite) aimed
+// 0.9 m low and, at floor level, never climbed at all, because the
+// flyer's floor-lift clause only arms on a NEGATIVE heading.
+// The route bends x and z; nothing else changes. Its ENDPOINTS go in
+// with their real heights (the foe's feet, the predicted position) -
+// AUDIT 68: findPath's locate picks each end's level from them, and a
+// flat y = 0 routed a foe on a stacked floor along the wrong level.
+//
+// ── ADAPTATION 4: THE NUDGE RUNS THE FALL CHECK ─────────────────
+//
+// His nudge gates on walkable(). The nav's cell is walkable if it has a
+// floor span; it says nothing about the DROP to the next cell, and at
+// 0.5 m cells a ledge is a rounding error. Every classic move runs
+// _fallCheck first (AttemptMove :978); a nudge that skipped it could
+// side-step a foe off an edge classic would never step off. The nudge
+// asks the port's own fall check on its own direction and takes the
+// other side, or none.
+//
+// ── NEVER TRAPS ─────────────────────────────────────────────────
+//
+// The bake lands asynchronously (3b) and may never land. `nav()` is a
+// thunk read every step; null at any moment means the classic answer
+// this step, no state carried over but the timers. A throw inside the
+// route logic is caught, logged once, and the foe is classic from then
+// on - a broken navmesh costs a feature, never a dungeon.
+// ═══════════════════════════════════════════════════════════════════
+
+import { EnemyAI } from '../characters/enemy/enemyMotor.js';
+import { findPath } from './nav/navmesh.js';
+
+// ── project-final enemyShared.js:7-12, verbatim ────────────────────
+export const REPATH_INT = 0.4; // s between findPath refreshes toward the (moving) player
+export const REPATH_FAIL = 0.5; // s: back-off before retrying findPath after it returned null (unreachable goal). Without it a never-reachable goal (player off-mesh / on an island) re-paths every frame - bounded by the budget but a constant drain. The boss crawler already backs off the same way
+export const STUCK_T = 0.6; // s of no forward progress while path-following before the unstick fires
+export const STUCK_EPS2 = 0.02 * 0.02; // (m)^2: squared per-tick movement at/below which counts as no progress (~1/3 of a normal step)
+export const STUCK_NUDGE = 0.35; // m: the perpendicular side-step the unstick takes
+export const WP_REACH = 0.45; // m: a waypoint counts as reached within this
+// ── project-final enemy.js:402, verbatim ───────────────────────────
+export const PATH_BUDGET_PER_FRAME = 3; // cap findPath (poly A* + funnel) calls per frame. A wave spawns all its enemies at once with repathT 0 and path null, so without this every enemy paths on the same first tick - N heavy pathfinds in one frame = the spawn lag spike. Enemies past the cap keep path null (stand a frame) and retry next frame; the burst spreads over a few frames instead of one. Tunable
+
+/** How far past stopDistance the projected destination sits, so the
+ *  classic stop check's `<=` cannot land on it. Adaptation 1's one
+ *  number; the port's, not his. */
+export const PROJECT_MARGIN = 0.05;
+
+/** project-final main.js:236, verbatim: a cell is walkable iff it holds
+ *  a walkable, regioned span (or its bit is set in a hydrated map's
+ *  walkmask). */
+export function navWalkable(chf, x, z) {
+  const ix = Math.floor((x - chf.xmin) / chf.cs),
+    iz = Math.floor((z - chf.zmin) / chf.cs);
+  if (ix < 0 || iz < 0 || ix >= chf.nx || iz >= chf.nz) return false;
+  const i = ix + iz * chf.nx;
+  if (chf.walkmask) return (chf.walkmask[i >> 3] & (1 << (i & 7))) !== 0;
+  for (const s of chf.spans[i]) if (s.walkable && s.reg) return true;
+  return false;
+}
+
+/** The host's per-frame world for the routes: the findPath budget,
+ *  refilled every frame by the host (his enemy.js:404), and the nav
+ *  epoch that invalidates every held route when an obstacle changes
+ *  (his Slice 9). One object per host, shared by every foe in it. */
+export function makeNavWorld() {
+  // budgetPerFrame rides the object so the host's frame loop - which
+  // is outside the scope that imported this module - refills from
+  // what it already holds rather than reaching for a second literal.
+  return { pathBudget: PATH_BUDGET_PER_FRAME, budgetPerFrame: PATH_BUDGET_PER_FRAME, navEpoch: 0 };
+}
+
+export class EnhancedEnemyAI extends EnemyAI {
+  /**
+   * `nav`      () => chf | null   - the bake, read every step; null = classic
+   * `navWorld` { pathBudget, navEpoch } from makeNavWorld(), host-owned
+   * `navSeed`  an integer; his maulSeed's role - the nudge side comes
+   *            off it so twin runs nudge the same way
+   */
+  constructor(collider, feet, yawRad, opts = {}) {
+    super(collider, feet, yawRad, opts);
+    this.nav = opts.nav ?? (() => null);
+    this.navWorld = opts.navWorld ?? makeNavWorld();
+    this.navSeed = (opts.navSeed ?? 0) >>> 0;
+    this.navGoal = opts.navGoal ?? null; // (feet) => the mesh's point a route to an off-mesh goal ends at, or null (_routeOffMesh)
+    // his movement scratch (enemy.js:64), re-homed
+    this.path = null;
+    this.pathI = 1;
+    this.repathT = 0;
+    this.pathEpoch = undefined;
+    this.stuckT = 0;
+    this.lastX = feet[0];
+    this.lastZ = feet[2];
+    this.navBroken = false;
+    this._wasFollowing = false; // The route's goal - the leader's or the foe's
+    /** observational, his stuckStats pattern - probes and tests only */
+    this.navStats = { repaths: 0, fails: 0, stuckFires: 0, offMesh: 0 };
+  }
+
+  /** project-final enemyShared.js:158-166 repathToward, on `this`.
+   *  Returns true if a findPath was attempted this frame (budget
+   *  consumed). Deliberately no `|| !this.path` catch: the timer alone
+   *  gates retries, so the fail back-off actually sticks. `goal` is
+   *  feet-space [x, y, z], like this.feet. */
+  _repathToward(chf, goal, dt) {
+    const world = this.navWorld;
+    if (this.path && world.navEpoch !== undefined && this.pathEpoch !== world.navEpoch) {
+      this.path = null;
+      this.repathT = 0;
+    }
+    if ((this.repathT -= dt) > 0) return false;
+    if (world.pathBudget-- <= 0) return false;
+    const np = findPath(chf, this.feet, goal) ?? this._routeOffMesh(chf, goal); // AUDIT 68 S02-motor-flat-y-locate: the real heights pick each endpoint's level (AUDIT 62 F1's locate); y = 0 routed a stacked floor's foe on the level nearest 0
+    this.navStats.repaths++;
+    if (np) {
+      this.path = np;
+      this.pathI = 1;
+      this.repathT = REPATH_INT;
+      this.pathEpoch = world.navEpoch;
+    } else {
+      this.path = null;
+      this.repathT = REPATH_FAIL;
+      this.navStats.fails++;
+    }
+    return true;
+  }
+
+  /** A goal findPath cannot place - off the mesh past its locate's
+   *  half-metre snap (navmesh.js:"return bestD <= 2"), a player between two shelves 0.8 m deep or in a
+   *  closet the erosion kept no floor of. The host's `navGoal` names the mesh's point a route there ends at (the room's
+   *  meshPointNear, never through a wall); the route runs to it and its last leg is the straight walk in. No hook, or
+   *  no point, or no route to it: null, the classic line. Departure from his repathToward, named: it answered null. */
+  _routeOffMesh(chf, goal) {
+    const on = this.navGoal?.(goal);
+    const p = on ? findPath(chf, this.feet, on) : null;
+    if (!p) return null;
+    this.navStats.offMesh++;
+    p.push([goal[0], goal[1], goal[2]]);
+    return p;
+  }
+
+  /** project-final enemyShared.js:177-187 stuckWatch, on `this`, with
+   *  the nudge resolved by the collider (adaptation 2). (hx, hz) is the
+   *  heading the foe was walking. Call once per step, AFTER the move. */
+  _stuckWatch(chf, hx, hz, dt) {
+    const dx = this.feet[0] - this.lastX,
+      dz = this.feet[2] - this.lastZ;
+    this.lastX = this.feet[0];
+    this.lastZ = this.feet[2];
+    if (dx * dx + dz * dz > STUCK_EPS2) {
+      this.stuckT = 0;
+      return false;
+    }
+    if ((this.stuckT += dt) < STUCK_T) return false;
+    this.stuckT = 0;
+    const hl = Math.hypot(hx, hz) || 1,
+      side = (this.navSeed >>> 7) & 1 ? 1 : -1;
+    for (const s of [side, -side]) {
+      const ox = (-hz / hl) * s,
+        oz = (hx / hl) * s;
+      const nx = this.feet[0] + ox * STUCK_NUDGE,
+        nz = this.feet[2] + oz * STUCK_NUDGE;
+      if (!navWalkable(chf, nx, nz)) continue;
+      // adaptation 4: classic's own drop test, on the nudge's heading.
+      // WITH THE OBSTACLE FLAGS CLEARED FOR THE PROBE. _fallCheck returns
+      // "no fall" without casting when obstacleDetected, foundUpwardSlope
+      // or foundDoor is set - and a foe the watchdog fires on is stuck
+      // against something, so it has obstacleDetected set almost by
+      // definition. AUDIT 55 found the check answering false in exactly
+      // the case it was added for. The flags are the classic tick's to
+      // own; they are put back as they were.
+      const od = this.obstacleDetected,
+        us = this.foundUpwardSlope,
+        fd = this.foundDoor;
+      this.obstacleDetected = false;
+      this.foundUpwardSlope = false;
+      this.foundDoor = false;
+      this._fallCheck([ox, 0, oz]);
+      const drop = this.fallDetected;
+      this.obstacleDetected = od;
+      this.foundUpwardSlope = us;
+      this.foundDoor = fd;
+      this.fallDetected = false;
+      if (drop) continue;
+      const moveResult = this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2], this.controllerHeight); // a Move like any other: isGrounded is its (FIELD BUGS 2026-09-29 sea #2); DOOR-JAM: at the controller's own height
+      this.isGrounded = moveResult.grounded;
+      this.collidedSides = !!moveResult.sides; // And its CollidedSides, for HeightAdjust
+      break;
+    }
+    this.path = null;
+    this.repathT = 0;
+    this.navStats.stuckFires++;
+    return true;
+  }
+
+  _step(dt, playerFeet, senses = null, paralyzed = false, paused = false) {
+    super._step(dt, playerFeet, senses, paralyzed, paused);
+    if (this.navBroken) return;
+    const chf = this.nav();
+    if (!chf) {
+      this.path = null;
+      return;
+    }
+    try {
+      // The route lives only while the classic tick would be
+      // pursuing: CanAct, not given up, and a position to head for -
+      // the classic tick's own three gates, read after it ran. The goal
+      // is the classic destination's own target, the predicted position.
+      // CREW-COMPANIONS: a follower's route is _followGoal's (repathed there, toward the leader); only the watchdog here
+      // AUDIT CC-B5: a route is to one goal - the leader's or the foe's; turning from one to the other, it goes
+      if (this._following !== this._wasFollowing) {
+        this._wasFollowing = this._following;
+        this.path = null;
+        this.repathT = 0;
+      }
+      if (this._following) {
+        if (this.path && this.moving) this._stuckWatch(chf, Math.sin(this.yaw), Math.cos(this.yaw), dt);
+        else {
+          this.stuckT = 0;
+          this.lastX = this.feet[0];
+          this.lastZ = this.feet[2];
+        }
+        return;
+      }
+      const pursuing = this.canAct && this.giveUpTimer > 0 && this.predictedTargetPos !== null;
+      if (!pursuing) {
+        this.path = null;
+        this.stuckT = 0;
+        this.lastX = this.feet[0];
+        this.lastZ = this.feet[2];
+        return;
+      }
+      this._repathToward(chf, this.predictedTargetPos, dt);
+      if (this.path && this.moving) {
+        this._stuckWatch(chf, Math.sin(this.yaw), Math.cos(this.yaw), dt);
+      } else {
+        this.stuckT = 0;
+        this.lastX = this.feet[0];
+        this.lastZ = this.feet[2];
+      }
+    } catch (e) {
+      this.navBroken = true;
+      this.path = null;
+      console.warn('[enhanced-ai] motor fell back to classic:', e?.message ?? e);
+    }
+  }
+
+  /** The seam. The classic tick calls this; when a route is held and
+   *  no detour is running, the destination is the route's next corner
+   *  (his advance law, enemyMelee.js:110-112), projected past the stop
+   *  distance unless it is the goal (adaptation 1). */
+  _getDestination(targetFeet) {
+    if (this.avoidObstaclesTimer > 0 || !this.path || this.pathI >= this.path.length || this.nav() == null) {
+      return super._getDestination(targetFeet);
+    }
+    let wp = this.path[this.pathI];
+    while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH)
+      wp = this.path[++this.pathI];
+    const last = this.pathI === this.path.length - 1;
+    // Adaptation 1's other half: in sight, the classic stop is measured to the TARGET
+    // (EnemyMotor.cs:479-482), and a foe it stops turns to its destination - so one stopped within reach of the target
+    // with a corner still ahead (the mouth of the aisle it was walked in by) faced the corner, and the swing's 22.5
+    // degree gate (enemyAttack.js ATTACK_YAW_DEG) never opened. Stopped on the target, it faces the target.
+    const p = this.predictedTargetPos;
+    if (!last && p && this.inSight && this._dist <= this.stopDistance) {
+      this.destination = [p[0], this._aimY(p[1]), p[2]];
+      return;
+    }
+    // adaptation 3: the goal's y is classic's own aim at the goal
+    // (EnemyAI._aimY, the clear-path arm's vertical), a corner's is the foe's
+    const y = last ? this._aimY(this.predictedTargetPos[1]) : this.feet[1];
+    const dx = wp[0] - this.feet[0],
+      dz = wp[2] - this.feet[2];
+    const d = Math.hypot(dx, dz);
+    const reach = this.stopDistance + PROJECT_MARGIN;
+    if (last || d <= 1e-6 || d >= reach) {
+      this.destination = [wp[0], y, wp[2]];
+      return;
+    }
+    const k = reach / d;
+    this.destination = [this.feet[0] + dx * k, y, this.feet[2] + dz * k];
+  }
+
+  /** A follower walks the navmesh route to its leader - the route's next corner (the pursuit's own
+   *  corner walk), the leader's live feet on the last leg, and the straight line when there is no mesh or a detour
+   *  is running. COMPANION-TRAIL: the leader in sight, or a crumb of the leader's own trail
+   *  in sight, comes first (enemyMotor.js _trailGoal) - the walked way through a doorway, where the bake's erosion
+   *  trims the threshold - and the route only when the trail has nothing; no route, the nearest crumb. */
+  _followGoal(leader, dt) {
+    const trail = this._trailGoal(leader, dt);
+    if (trail) return trail;
+    if (this.navBroken || this.avoidObstaclesTimer > 0) return leader;
+    const chf = this.nav();
+    if (!chf) {
+      this.path = null;
+      return this._nearestCrumb() ?? leader;
+    }
+    try {
+      this._repathToward(chf, leader, dt);
+      if (!this.path) return this._nearestCrumb() ?? leader;
+      if (this.pathI >= this.path.length - 1) return leader;
+      let wp = this.path[this.pathI];
+      while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH)
+        wp = this.path[++this.pathI];
+      return this.pathI === this.path.length - 1 ? leader : wp;
+    } catch (e) {
+      this.navBroken = true;
+      this.path = null;
+      console.warn('[enhanced-ai] follow fell back to classic:', e?.message ?? e);
+      return leader;
+    }
+  }
+
+  /** Stood at `feet` by the host, on the island
+   *  the route could not reach. The pursuit stands - its target, its give-up timer, its belief of where the player is;
+   *  what the motor held of where it stood goes - EnemyAI._standAfresh, resumeLive's own list (AUDIT W4: this kept a
+   *  shorter one, and a watchman crouched at the wall that stopped him was stood crouched) - and the route and the
+   *  stuck clocks with it. */
+  standAt(feet) {
+    this.feet[0] = feet[0];
+    this.feet[1] = feet[1];
+    this.feet[2] = feet[2];
+    this._standAfresh();
+    this.path = null;
+    this.pathI = 1;
+    this.repathT = 0;
+    this.stuckT = 0;
+    this.lastX = feet[0];
+    this.lastZ = feet[2];
+  }
+
+  /** The base resume, and the cached path with it - the next pursuit paths from where the puppet stood. */
+  resumeLive() {
+    super.resumeLive();
+    this.path = null;
+    this.pathI = 1;
+    this.repathT = 0;
+    this.pathEpoch = undefined;
+  }
+}

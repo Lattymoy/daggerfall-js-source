@@ -1,0 +1,157 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE COVENS' HOARD, step 3 of 3 - the line's end.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Ysolde's letter,
+-- then her table, and one `ask`: keep the Weir Key, or give it to the Order of the Hour to be sealed. The outcome ids are
+-- the service's words (net/questlineClaims.js `key`: the choice `keep` is paid a real Weir Key, once an account). Both
+-- paths pay the Guild's fee in gold; the seal path a rung up besides (the sheet's `greater`). AUDIT QUESTLINES LINES-4:
+-- the keep path paid nothing of its own (`ql paid`) and said "Ysolde slides the key across the table to you" - but the
+-- key is the ACCOUNT's, once (server-account/src/questlines.js: only while `ql_key` is 0), so a second character of the
+-- house who kept it was paid nothing at all and told the key was theirs. Now the fee is paid either way, and 1030 says
+-- before the choice, and 1040 after it, that a house has the key once (the port's family is the account's characters -
+-- tutorialCatalogue.js `legacy`).
+-- Lore: canon - the Spire's portal keys and the Weir Gate; the Empire sealed the Spire. The port's own - the torn halls
+-- the key's road reaches now (bible/11-Multiplayer/Elite-Gates.md section 3).
+Quest: QLCH03
+DisplayName: What the Key Opens
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        Ysolde Marnhel has stopped waiting for your
+<ce>        answer. The key stays in the Guild's vault.
+
+QuestComplete:  [1004]
+<ce>        Ysolde counts out _gold_ gold: the Guild's fee
+<ce>         for a key brought up out of the deep places.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Ysolde Marnhel has written: the Order of the Hour
+ has asked for the Weir Key, to seal it away. She
+ says the key is mine to give or to keep, and
+ wants my answer at _hall_ in __hall_.
+
+Message:  1011
+%pcn,
+
+     Word travels. The Order of the Hour has heard
+ what you took from the lieutenant, and a priest of
+ Akatosh has sat in my hall for two days, asking
+ for it politely.
+
+     The Order would seal the key away, where no
+ coven and no Kyn will turn it again. Or you may
+ keep it - you took it, and a key is meant to be
+ turned. The choice is yours, not the Guild's and
+ not the Order's. Come to _hall_ in __hall_.
+
+<ce>                              Ysolde Marnhel
+
+Message:  1012
+<ce>        The Guild's courier, and behind the courier, a
+<ce>       priest in the gold of the Order of the Hour, who
+<ce>             watches you read and says nothing.
+
+Message:  1013
+<ce>       Ysolde sets the key on the table between you.
+<ce>       Beside her a priest in the Order of the Hour's
+<ce>                gold watches it, and says nothing.
+<ce>
+<ce>       "It opens the Weir Gate's road from this side,"
+<ce>        Ysolde says. "Not to the Spire - the Empire
+<ce>        sealed that - but to what tore away from it.
+<ce>        The torn halls, where the Kyn still hold what
+<ce>        was left of the Battlemages' school."
+
+Message:  1014
+Ysolde Marnhel? There has been a priest of the Hour waiting in her hall for days.
+<--->
+The Master Conjurer has something in her vault the temple wants very badly.
+<--->
+They say Marnhel found one of the Battlespire's keys. They say a lot of things.
+
+Message:  1030
+<ce>       "Mind - the Guild gives a Spire key to a house
+<ce>        once, %pcf. If one of your blood has taken one
+<ce>        from us before you, there is none for you now.
+<ce>        Well? Keep it, or let the Order seal it?"
+
+Message:  1031
+Keep it. A key is meant to be turned.
+
+Message:  1032
+Give it to the Order of the Hour, to be sealed away.
+
+Message:  1040
+<ce>       The priest of the Hour says nothing at all, and
+<ce>                          leaves.
+<ce>
+<ce>       "Kept, then," Ysolde says. "It goes to your
+<ce>        house - unless one of your blood took the
+<ce>        Guild's key before you. A house has it once.
+<ce>        Turn it when you are ready, and not before.
+<ce>        There is a man who knows what waits on the
+<ce>        other side better than I do. He will find you."
+
+Message:  1041
+<ce>       The priest of the Hour wraps the key in white
+<ce>       linen and gold thread, and bows to you - the deep
+<ce>       bow the Order keeps for its own.
+<ce>
+<ce>       "Akatosh keeps what is given to him," the priest
+<ce>        says. "The Order will remember who gave it."
+
+-- Symbols used in the QRC file:
+--
+--               %pcf occurs 1 time.
+--               %pcn occurs 1 time.
+--               %qdt occurs 1 time.
+--             _gold_ occurs 1 time.
+--             _hall_ occurs 2 times.
+--            __hall_ occurs 2 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 300 to 600
+
+Person _ysolde_ faction The_Mages_Guild female anyInfo 1014
+
+Place _hall_ remote magery
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _ysolde_ Ysolde_Marnhel
+	place npc _ysolde_ at _hall_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_met_ task:
+	clicked npc _ysolde_
+	say 1013
+	ask 1030 choices 1031 _tokeep_ 1032 _toseal_
+
+variable _tokeep_
+variable _toseal_
+
+_keepway_ task:
+	when _tokeep_
+	say 1040
+	outcome _keep_
+	give pc _gold_
+	end quest
+
+_sealway_ task:
+	when _toseal_
+	say 1041
+	outcome _seal_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

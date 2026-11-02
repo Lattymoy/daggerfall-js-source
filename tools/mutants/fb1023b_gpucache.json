@@ -1,0 +1,47 @@
+[
+ {
+  "name": "GPUC1-the-switch-dropped",
+  "file": "app/main.cjs",
+  "old": "app.commandLine.appendSwitch('gpu-disk-cache-size-kb', String(GPU_CACHE_KB));",
+  "new": "void GPU_CACHE_KB;",
+  "tests": [
+   "test/tooling/fb1023b_gpucache.test.js"
+  ]
+ },
+ {
+  "name": "GPUC1-the-size-chromium-s-own-6-MiB",
+  "file": "app/main.cjs",
+  "old": "const GPU_CACHE_KB = 128 * 1024;",
+  "new": "const GPU_CACHE_KB = 6 * 1024;",
+  "tests": [
+   "test/tooling/fb1023b_gpucache.test.js"
+  ]
+ },
+ {
+  "name": "GPUC1-the-switch-misspelt",
+  "file": "app/main.cjs",
+  "old": "app.commandLine.appendSwitch('gpu-disk-cache-size-kb', String(GPU_CACHE_KB));",
+  "new": "app.commandLine.appendSwitch('gpu-disk-cache-size', String(GPU_CACHE_KB));",
+  "tests": [
+   "test/tooling/fb1023b_gpucache.test.js"
+  ]
+ },
+ {
+  "name": "GPUC1-set-after-ready",
+  "file": "app/main.cjs",
+  "old": "app.commandLine.appendSwitch('gpu-disk-cache-size-kb', String(GPU_CACHE_KB));",
+  "new": "app.whenReady().then(() => app.commandLine.appendSwitch('gpu-disk-cache-size-kb', String(GPU_CACHE_KB)));",
+  "tests": [
+   "test/tooling/fb1023b_gpucache.test.js"
+  ]
+ },
+ {
+  "name": "GPUC2-the-cache-turned-off",
+  "file": "app/main.cjs",
+  "old": "app.commandLine.appendSwitch('force_high_performance_gpu');",
+  "new": "app.commandLine.appendSwitch('force_high_performance_gpu'); app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');",
+  "tests": [
+   "test/tooling/fb1023b_gpucache.test.js"
+  ]
+ }
+]

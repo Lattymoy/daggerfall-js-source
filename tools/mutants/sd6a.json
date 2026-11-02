@@ -1,0 +1,218 @@
+[
+  {
+    "name": "SD6A-a-stone-turning-itself-two",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  const gear = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)));",
+    "new": "  const gear = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 2 : 0)));",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-partner-after-it",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "    const partners = sdShuffle(r, order.slice(0, p)).slice(0, p === 1 ? 1 : 1 + sdPick(r, 2));",
+    "new": "    const partners = sdShuffle(\n      r,\n      order.filter((x) => x !== order[p]),\n    ).slice(0, p === 1 ? 1 : 1 + sdPick(r, 2));",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-partner-by-nothing",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "    for (const j of partners) gear[order[p]][j] = [-2, -1, 1, 2][sdPick(r, 4)];",
+    "new": "    for (const j of partners) gear[order[p]][j] = [-2, -1, 0, 2][sdPick(r, 4)];",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-lone-stone-among-the-later",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "    const partners = sdShuffle(r, order.slice(0, p)).slice(0, p === 1 ? 1 : 1 + sdPick(r, 2));",
+    "new": "    const partners = sdShuffle(r, order.slice(0, p)).slice(0, p === 1 ? 1 : sdPick(r, 3));",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-false-opposite",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "      truth[a] = sdHour(truth[b] + 6);",
+    "new": "      truth[a] = sdHour(truth[b] + 5);",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-false-mirror",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "      truth[a] = sdHour(-truth[b]);",
+    "new": "      truth[a] = sdHour(1 - truth[b]);",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-an-offset-of-six",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "      const k = sdPick(r, 11) - 5;",
+    "new": "      const k = sdPick(r, 13) - 6;",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-three-plain",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "    if (q < 2) {",
+    "new": "    if (q < 3) {",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-start-a-few-turns-off",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  } while (sdWayTurns(way) < tMin || sdWayTurns(way) > tMax);",
+    "new": "  } while (sdWayTurns(way) > tMax);",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-start-past-the-fray",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  } while (sdWayTurns(way) < tMin || sdWayTurns(way) > tMax);",
+    "new": "  } while (sdWayTurns(way) < tMin);",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-solve-reading-the-gear-transposed",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "    for (let q = p + 1; q < order.length; q++) have += t[order[q]] * gear[order[q]][j];",
+    "new": "    for (let q = p + 1; q < order.length; q++) have += t[order[q]] * gear[j][order[q]];",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-fray-shortened",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "export const SD_FRAY_MAX = 48;",
+    "new": "export const SD_FRAY_MAX = 30;",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-snap-on-the-Concord",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) {",
+    "new": "  if (f >= (o.fray ?? SD_FRAY_MAX)) {",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-snap-keeps-the-fray",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "    f = 0;\n    x = true;",
+    "new": "    x = true;",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-Concord-not-kept",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (state.ok) return null;\n  let st = orreryTurn(o, state.st, i, a),",
+    "new": "  let st = orreryTurn(o, state.st, i, a),",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-back-turn-turned-forward",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "export const orreryTurn = (o, st, i, a) => st.map((h, j) => sdHour(h + a * o.gear[i][j]));",
+    "new": "export const orreryTurn = (o, st, i, a) => st.map((h, j) => sdHour(h + Math.abs(a) * o.gear[i][j]));",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-dial-counting-wrong",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "export const orreryLit = (o, st) => st.reduce((m, h, j) => m + (sdHour(h) === o.truth[j] ? 1 : 0), 0);",
+    "new": "export const orreryLit = (o, st) => st.reduce((m, h, j) => m + (sdHour(h) === o.truth[j] ? 1 : 0), 1);",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-reach-widened",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  Math.hypot(x - SD_STONE_POS[i].x, z - SD_STONE_POS[i].z) <= SD_STONE_REACH + slack;",
+    "new": "  Math.hypot(x - SD_STONE_POS[i].x, z - SD_STONE_POS[i].z) <= SD_STONE_REACH + slack + 0.5;",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-the-hall's-edge-moved",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "export const inOrreryHall = (x, z) => Math.hypot(x - SD_ORRERY.x, z - SD_ORRERY.z) <= SD_ORRERY.r;",
+    "new": "export const inOrreryHall = (x, z) => Math.hypot(x - SD_ORRERY.x, z - SD_ORRERY.z) <= SD_ORRERY.r + 1;",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-mirror-read-forwards",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (c.kind === 'mirror') return sdHour(a + b) === 0;",
+    "new": "  if (c.kind === 'mirror') return sdHour(a - b) === 0;",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-an-opposite-read-as-the-same",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (c.kind === 'opposite') return a === sdHour(b + 6);",
+    "new": "  if (c.kind === 'opposite') return a === sdHour(b);",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-more-and-fewer-swapped",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  return `${sdCap(A)} keeps the hour ${B} keeps, and ${SD_COUNT_WORDS[Math.abs(c.k)]} ${c.k > 0 ? 'more' : 'fewer'}.`;",
+    "new": "  return `${sdCap(A)} keeps the hour ${B} keeps, and ${SD_COUNT_WORDS[Math.abs(c.k)]} ${c.k > 0 ? 'fewer' : 'more'}.`;",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-a-stone-on-the-walk",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "export const SD_STONE_BEARINGS = Object.freeze([30, 90, 150, 210, 270, 330].map((d) => (d * Math.PI) / 180));",
+    "new": "export const SD_STONE_BEARINGS = Object.freeze([0, 60, 120, 180, 240, 300].map((d) => (d * Math.PI) / 180));",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  },
+  {
+    "name": "SD6A-twelve-shown-as-nothing",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "export const sdHourShown = (h) => sdHour(h) || SD_HOURS;",
+    "new": "export const sdHourShown = (h) => sdHour(h);",
+    "tests": [
+      "test/net/superDungeon/sd6a_orrery.test.js"
+    ]
+  }
+]

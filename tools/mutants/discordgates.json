@@ -1,0 +1,408 @@
+[
+  {
+    "name": "DISCORD-GATES-any-https-a-webhook",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "const WEBHOOK_RE =\n  /^https:\\/\\/(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com\\/api(?:\\/v\\d{1,2})?\\/webhooks\\/\\d{1,20}\\/[A-Za-z0-9_-]{1,128}$/;",
+    "new": "const WEBHOOK_RE = /^https:\\/\\/\\S+$/;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-role-taken-unread",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "export const heraldRole = (raw) => {\n  const s = String(raw ?? '').trim();\n  return SNOWFLAKE_RE.test(s) ? s : null;\n};",
+    "new": "export const heraldRole = (raw) => {\n  const s = String(raw ?? '').trim();\n  return s || null;\n};",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-omen-pings-nobody",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    role,\n    title: `The sky burns ${place ? `near ${place}` : 'over the wilds'}`,",
+    "new": "    title: `The sky burns ${place ? `near ${place}` : 'over the wilds'}`,",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-every-mention-allowed",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "  const body = { embeds: [embed], allowed_mentions: r ? { roles: [r] } : { parse: [] } };",
+    "new": "  const body = { embeds: [embed], allowed_mentions: { parse: ['everyone', 'roles', 'users'] } };",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-open-said-as-the-seal",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "      ['Opens', heraldWhen(t.openAt)],",
+    "new": "      ['Opens', heraldWhen(t.sealAt)],",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-kill-pings",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`, // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)",
+    "new": "    role: '1555589839825670258',\n    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`, // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-others-miscounted",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "  const others = Number.isSafeInteger(n) ? Math.max(0, n - shown.length) : 0;",
+    "new": "  const others = Number.isSafeInteger(n) ? Math.max(0, n) : 0;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-name-posted-raw",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "    .replace(/[^A-Za-z0-9 '-]/g, '')\n    .replace(/\\s+/g, ' ')",
+    "new": "    .replace(/\\s+/g, ' ')",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-posted-after-the-open",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    if (t.openAt <= nowMs) continue;",
+    "new": "    if (t.wrathAt <= nowMs) continue;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-omen-posted-again",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    if (!isGateDay(n) || d <= posted) continue;",
+    "new": "    if (!isGateDay(n)) continue;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-omen-instant-ignored",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    return { day: n, at: Math.max(nowMs, t.omenAt) };",
+    "new": "    return { day: n, at: nowMs };",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-day-not-come-trusted",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "  const posted = was <= today ? was : -1; // a day not yet come is no post made",
+    "new": "  const posted = was; // a day not yet come is no post made",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-kill-news-for-ever",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "export const heraldFellLive = (day, nowMs) =>\n  isGateDay(day) && nowMs < gateTimes(day).wrathAt + GATE_COLLAPSE_MS + HERALD_FELL_KEEP_MS;",
+    "new": "export const heraldFellLive = (day, nowMs) => isGateDay(day) && nowMs < Infinity;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-site-for-any-day",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "export const gateSiteDayOk = (day, nowMs) =>\n  isGateDay(day) &&\n  (day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day);",
+    "new": "export const gateSiteDayOk = (day, nowMs) => isGateDay(day) && day >= 0;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-one-account-names-the-place",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "  for (const e of rec.c) if (e[3].length >= GATE_SITE_AGREE && (!best || e[3].length > best[3].length)) best = e;",
+    "new": "  for (const e of rec.c) if (e[3].length >= 1 && (!best || e[3].length > best[3].length)) best = e;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-second-word-counted",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "  if (c.some((e) => e[3].includes(sub))) return rec;\n  const i = c.findIndex((e) => e[0] === px && e[1] === py && e[2] === pl);",
+    "new": "  const i = c.findIndex((e) => e[0] === px && e[1] === py && e[2] === pl);",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-last-said-wins-a-tie",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "  for (const e of rec.c) if (e[3].length >= GATE_SITE_AGREE && (!best || e[3].length > best[3].length)) best = e;",
+    "new": "  for (const e of rec.c) if (e[3].length >= GATE_SITE_AGREE && (!best || e[3].length >= best[3].length)) best = e;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-places-unbounded",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    if (c.length >= GATE_SITE_CANDIDATES_MAX) return rec;\n    c.push([px, py, pl, [sub]]);",
+    "new": "    c.push([px, py, pl, [sub]]);",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-votes-unbounded",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    if (c[i][3].length >= GATE_SITE_VOTES_MAX) return rec;\n    c[i] = [px, py, pl, [...c[i][3], sub]];",
+    "new": "    c[i] = [px, py, pl, [...c[i][3], sub]];",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-an-older-day-restarts",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "  if (cur && cur.d > day) return rec;\n  const c = cur && cur.d === day ? cur.c.slice() : [];",
+    "new": "  const c = cur && cur.d === day ? cur.c.slice() : [];",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-raw-place-taken",
+    "file": "src/net/wire.js",
+    "old": "return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, px:",
+    "new": "return /^[A-Za-z]/.test(m.pl) ? { k: 'site', d: m.d, px:",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-pixel-unbounded",
+    "file": "src/net/wire.js",
+    "old": "!gatePixelOk(m.d, m.px, m.py) || typeof m.pl !== 'string'",
+    "new": "typeof m.pl !== 'string'",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-version-floor-off",
+    "file": "src/net/wire.js",
+    "old": "export const GATE_SITE_RELAY_MIN = 123;",
+    "new": "export const GATE_SITE_RELAY_MIN = 116;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-place-law-loose",
+    "file": "src/net/wire.js",
+    "old": "replace(/[^A-Za-z0-9 ',-]/g, '')",
+    "new": "replace(/[\\u0000-\\u001f]/g, '')",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-herald-ignores-its-door",
+    "file": "server/src/index.js",
+    "old": "this._herald = hook ? { hook, threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')), ktRole: ketchHeraldRole(role('ktRole'), role('gateRole')) } : null;",
+    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')), ktRole: ketchHeraldRole(role('ktRole'), role('gateRole')) };",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ],
+    "note": "SCALE5b (re-aimed by content): the roles through relayCfgValue."
+  },
+  {
+    "name": "DISCORD-GATES-a-refusal-marked-posted",
+    "file": "server/src/index.js",
+    "old": "      if (res.ok) return true;\n",
+    "new": "      return true;\n",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-alarm-left-at-the-sweeps",
+    "file": "server/src/index.js",
+    "old": "      await this._heraldArm(now);   // DISCORD-GATES",
+    "new": "      // DISCORD-GATES",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-kill-never-owed",
+    "file": "server/src/index.js",
+    "old": "try { await this._heraldOwe(fell, now); }",
+    "new": "try { /* nothing */ }",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-told-kill-owed-again",
+    "file": "server/src/index.js",
+    "old": "if (st.fell >= fell.d || st.owe?.d === fell.d) return;",
+    "new": "if (st.owe?.d === fell.d) return;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-owe-lost-on-a-refusal",
+    "file": "server/src/index.js",
+    "old": "        else retry = now + HERALD_RETRY_MS;\n      }\n      const due = heraldOmenDue(now, st.omen, lane);",
+    "new": "        else { retry = now + HERALD_RETRY_MS; st.owe = null; }\n      }\n      const due = heraldOmenDue(now, st.omen, lane);",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-stale-kill-owed",
+    "file": "server/src/index.js",
+    "old": "if (!this._heraldOf() || !heraldFellLive(fell.d, now)) return;",
+    "new": "if (!this._heraldOf()) return;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-record-kept-only-with-a-herald",
+    "file": "server/src/index.js",
+    "old": "if (!gateSiteDayOk(m.d, now)) return;   // AUDIT WB12d (R1): kept with no herald too - the rite stands by the agreed site",
+    "new": "if (!this._heraldOf() || !gateSiteDayOk(m.d, now)) return;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-relay-takes-any-day",
+    "file": "server/src/index.js",
+    "old": "if (!gateSiteDayOk(m.d, now)) return;   // AUDIT WB12d (R1): kept with no herald too - the rite stands by the agreed site",
+    "new": "if (false) return;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-site-outside-the-hub-heard",
+    "file": "server/src/index.js",
+    "old": "if (m.k === 'site') {\n        if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._gateSite(",
+    "new": "if (m.k === 'site') {\n        if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._gateSite(",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-omen-missed-at-its-instant",
+    "file": "server/src/index.js",
+    "old": "      if (due && due.at <= now && (!lane || dueSite)) {",
+    "new": "      if (due && due.at < now && (!lane || dueSite)) {",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-next-omen-never-armed",
+    "file": "server/src/index.js",
+    "old": "      if (next.length) await this._hubArm(Math.min(...next));\n    } catch (e) { console.warn('[herald] beat failed'",
+    "new": "    } catch (e) { console.warn('[herald] beat failed'",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-refusal-never-retried",
+    "file": "server/src/index.js",
+    "old": "      const next = [retry, owed != null && owed > now ? owed : null].filter((x) => x != null);",
+    "new": "      const next = [owed != null && owed > now ? owed : null].filter((x) => x != null);",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-said-every-frame",
+    "file": "src/net/online.js",
+    "old": "    if (said.has(day)) return true;\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-said-to-world122",
+    "file": "src/net/online.js",
+    "old": "if (primary) { this.gateSiteOk = relaySupportsGateSite(relayV); this.gateLanesOk = relaySupportsGateLanes(relayV); }",
+    "new": "if (primary) { this.gateSiteOk = true; this.gateLanesOk = relaySupportsGateLanes(relayV); }",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-the-place-sent-raw",
+    "file": "src/net/online.js",
+    "old": "px, py, pl: gatePlaceWire(place) });",
+    "new": "px, py, pl: place });",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-said-without-an-account",
+    "file": "src/net/online.js",
+    "old": "if (!this.acct || !this.gateSiteOk",
+    "new": "if (!this.gateSiteOk",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-never-said",
+    "file": "src/scenes/world.js",
+    "old": "    if (gateOmen) reportGateSite();   // DISCORD-GATES: where the gate stands, to the hub\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-dead-webhook-posted-for-ever",
+    "file": "server/src/index.js",
+    "old": "      return forGood(res.status);\n",
+    "new": "      return false;\n",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-429-given-up",
+    "file": "server/src/index.js",
+    "old": "status < 500 && status !== 429;",
+    "new": "status < 500;",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  },
+  {
+    "name": "DISCORD-GATES-a-kill-owed-meanwhile-lost",
+    "file": "server/src/index.js",
+    "old": "        if (cur.owe && cur.owe.d !== read?.d && cur.owe.d > st.fell) st.owe = cur.owe;\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/discordgates.test.js"
+    ]
+  }
+]

@@ -1,0 +1,146 @@
+[
+  {
+    "name": "LEGIBLE5-the-allowed-list-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "  return {\n    allowed: new Set(listedIn(text, 'Short names code may use')),\n    retired: new Set(listedIn(text, 'Abbreviations to retire')),\n  };",
+    "new": "  return { allowed: new Set(), retired: new Set(listedIn(text, 'Abbreviations to retire')) };",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-the-retired-list-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "  return {\n    allowed: new Set(listedIn(text, 'Short names code may use')),\n    retired: new Set(listedIn(text, 'Abbreviations to retire')),\n  };",
+    "new": "  return { allowed: new Set(listedIn(text, 'Short names code may use')), retired: new Set() };",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-variable-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "    if (node.type === 'VariableDeclarator') bound(node.id, out);",
+    "new": "    if (false) bound(node.id, out);",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-parameter-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "      for (const p of node.params) bound(p, out);\n    } else if ((node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id) out.push(node.id);",
+    "new": "    } else if ((node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id) out.push(node.id);",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-function-name-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "      if (node.id) out.push(node.id);\n      for (const p of node.params) bound(p, out);",
+    "new": "      for (const p of node.params) bound(p, out);",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-class-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "    } else if ((node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id) out.push(node.id);\n    else if (node.type === 'CatchClause') bound(node.param, out);",
+    "new": "    } else if (node.type === 'CatchClause') bound(node.param, out);",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-catch-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "    else if (node.type === 'CatchClause') bound(node.param, out);\n    for (const key of Object.keys(node)) {",
+    "new": "    for (const key of Object.keys(node)) {",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-destructured-name-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "  else if (pattern.type === 'ObjectPattern')\n    for (const p of pattern.properties) bound(p.type === 'RestElement' ? p.argument : p.value, out);\n  else if (pattern.type === 'ArrayPattern') for (const p of pattern.elements) bound(p, out);",
+    "new": "  else if (pattern.type === 'ArrayPattern') for (const p of pattern.elements) bound(p, out);",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-longer-name-counted",
+    "file": "tools/shortNames.mjs",
+    "old": "  return bindingsIn(source).filter(({ name }) => (name.length <= 2 && !allowed.has(name)) || retired.has(name));",
+    "new": "  return bindingsIn(source).filter(\n    ({ name }) => (name.length <= 2 && !allowed.has(name)) || [...retired].some((r) => name.startsWith(r)),\n  );",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-an-unlisted-file-let-through",
+    "file": "tools/shortNames.mjs",
+    "old": "    .filter(([f, n]) => n > (base[f] ?? 0))",
+    "new": "    .filter(([f, n]) => f in base && n > base[f])",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-the-stale-side-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "    .filter(([f, n]) => (now[f] ?? 0) < n)",
+    "new": "    .filter(() => false)",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-lowered-entry-raised",
+    "file": "tools/shortNames.mjs",
+    "old": "  for (const [f, n] of Object.entries(base)) if (Math.min(n, now[f] ?? 0) > 0) out[f] = Math.min(n, now[f] ?? 0);",
+    "new": "  for (const [f, n] of Object.entries(base)) if (Math.min(n, now[f] ?? 0) > 0) out[f] = now[f] ?? 0;",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-the-host-left-high",
+    "file": "tools/shortNames.mjs",
+    "old": "  const out = { ...base, [hostFile]: counts[hostFile] ?? 0, [toFile]: counts[toFile] ?? 0 };",
+    "new": "  const out = { ...base, [toFile]: counts[toFile] ?? 0 };",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-grown-pair-admitted",
+    "file": "tools/shortNames.mjs",
+    "old": "  if ((counts[hostFile] ?? 0) + (counts[toFile] ?? 0) - rebound > before) return base;\n  const out = { ...base, [hostFile]: counts[hostFile] ?? 0, [toFile]: counts[toFile] ?? 0 };",
+    "new": "  const out = { ...base, [hostFile]: counts[hostFile] ?? 0, [toFile]: counts[toFile] ?? 0 };",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-class-expression-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "(node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id",
+    "new": "node.type === 'ClassDeclaration' && node.id",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-the-rebound-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "(counts[toFile] ?? 0) - rebound > before",
+    "new": "(counts[toFile] ?? 0) > before",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  }
+]

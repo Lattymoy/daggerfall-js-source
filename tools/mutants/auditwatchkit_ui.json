@@ -1,0 +1,389 @@
+[
+  {
+    "name": "WK-U1-cover-lift-no-repaint",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (!covered) compPainted = null;\n    applyVisible();",
+    "new": "    applyVisible();",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U2-new-whole-measured",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (pose && card.hmH != null && pose.hm !== card.hmH) card.hpH = null;\n    card.hmH = pose ? pose.hm : null;",
+    "new": "    card.hmH = pose ? pose.hm : null;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U2-whole-never-kept",
+    "file": "src/ui/partyPanel.js",
+    "old": "    card.hmH = pose ? pose.hm : null;\n    if (pose && card.hpH != null && pose.h < card.hpH) {",
+    "new": "    if (pose && card.hpH != null && pose.h < card.hpH) {",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U2-every-change-a-baseline",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (pose && card.hmH != null && pose.hm !== card.hmH) card.hpH = null;",
+    "new": "    if (pose && card.hmH != null && pose.h !== card.hpH) card.hpH = null;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U4-letter-dim",
+    "file": "src/ui/partyPanel.js",
+    "old": ".dfparty-card.mate .dfparty-facemark { opacity: 1; color: var(--bone, #e9e4d9); }\n.dfparty-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 3px; }",
+    "new": ".dfparty-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 3px; }",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U4-letter-read",
+    "file": "src/ui/partyPanel.js",
+    "old": "    facemark.setAttribute('aria-hidden', 'true'); // AUDIT WK-U4: the plate's mark, never a word - a reader said \"B Hilda Moyle\"",
+    "new": "    void 0; // AUDIT WK-U4: the plate's mark, never a word - a reader said \"B Hilda Moyle\"",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U4-role-dimmed",
+    "file": "src/ui/partyPanel.js",
+    "old": ".dfparty-face { flex: none; box-sizing: content-box; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden;   /* AUDIT PARTY8: the sheet's border-box took the 1px border out of the plate and squashed a 31-wide head */",
+    "new": ".dfparty-card.mate .dfparty-where { opacity: .8; }\n.dfparty-face { flex: none; box-sizing: content-box; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden;   /* AUDIT PARTY8: the sheet's border-box took the 1px border out of the plate and squashed a 31-wide head */",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U6-mates-among-seats",
+    "file": "src/ui/partyPanel.js",
+    "old": "      mateOrder.push(card.node);",
+    "new": "      order.push(card.node);",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U6-lists-turned",
+    "file": "src/ui/partyPanel.js",
+    "old": "  root.append(title, list, mateList);",
+    "new": "  root.append(title, mateList, list);",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U6-mates-shrink",
+    "file": "src/ui/partyPanel.js",
+    "old": ".dfparty-mates { display: flex; flex-direction: column; gap: 3px; flex: none; }",
+    "new": ".dfparty-mates { display: flex; flex-direction: column; gap: 3px; }",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U6-seats-uncut",
+    "file": "src/ui/partyPanel.js",
+    "old": ".dfparty-list { display: flex; flex-direction: column; gap: 3px; min-height: 0; overflow: hidden; padding-top: 14px; margin-top: -14px; }",
+    "new": ".dfparty-list { display: flex; flex-direction: column; gap: 3px; padding-top: 14px; margin-top: -14px; }",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U6-rise-cut",
+    "file": "src/ui/partyPanel.js",
+    "old": ".dfparty-list { display: flex; flex-direction: column; gap: 3px; min-height: 0; overflow: hidden; padding-top: 14px; margin-top: -14px; }",
+    "new": ".dfparty-list { display: flex; flex-direction: column; gap: 3px; min-height: 0; overflow: hidden; }",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U6-empty-gap",
+    "file": "src/ui/partyPanel.js",
+    "old": ".dfparty-list:empty, .dfparty-mates:empty { display: none; }\n/* PARTY8-B: QUIET ROWS - no plate behind a card (no border, no fill, no blur: seven boxed cards were fourteen edges",
+    "new": "/* PARTY8-B: QUIET ROWS - no plate behind a card (no border, no fill, no blur: seven boxed cards were fourteen edges",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U6-mates-never-placed",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (!same(mateList, mateOrder)) mateList.replaceChildren(...mateOrder);\n    applyVisible();",
+    "new": "    applyVisible();",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U8-scale-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const dpr = clampDpr(screenDpr() * scale);",
+    "new": "  const dpr = clampDpr(screenDpr());",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U8-dpr-dropped",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "        return iconOf(e.i, { box: MATE_FX_BOX, dpr });",
+    "new": "        return iconOf(e.i, { box: MATE_FX_BOX });",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U8-picture-unsized",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "          tile.append(showFitted(img, pics[k]));",
+    "new": "          img.src = pics[k].src;\n          tile.append(img);",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U8-tile-12",
+    "file": "src/ui/naval/navalHud.js",
+    "old": ".dfnaval-crew-fxe { position: relative; width: ${MATE_FX_BOX}px; height: ${MATE_FX_BOX}px; box-shadow: 0 0 0 1px #050608; background: #1b2618; overflow: hidden;",
+    "new": ".dfnaval-crew-fxe { position: relative; width: 12px; height: 12px; box-shadow: 0 0 0 1px #050608; background: #1b2618; overflow: hidden;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U8-img-forced",
+    "file": "src/ui/naval/navalHud.js",
+    "old": ".dfnaval-crew-fxe > img { image-rendering: pixelated; display: block; }",
+    "new": ".dfnaval-crew-fxe > img { width: 12px; height: 12px; image-rendering: pixelated; display: block; }",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U8-never-refitted",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    set('fx', `${partyFxKey(fx)}#${pics.map((u) => (u ? 1 : 0)).join('')}@${dpr}`, () => {",
+    "new": "    set('fx', `${partyFxKey(fx)}#${pics.map((u) => (u ? 1 : 0)).join('')}`, () => {",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U8-box-not-the-icons",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "export const MATE_FX_BOX = 16;",
+    "new": "export const MATE_FX_BOX = 12;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-U9-debuff-dark",
+    "file": "src/ui/naval/navalHud.js",
+    "old": ".dfnaval-crew-fxe.debuff { box-shadow: 0 0 0 1px #e2554c; }",
+    "new": ".dfnaval-crew-fxe.debuff { box-shadow: 0 0 0 1px #6b1d14; }",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P1-packs-unread",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  for (const c of Array.isArray(party) ? party : []) out.push(...lists(c?.items));\n  const feud = snap?.modData?.[REVENANT_VENDOR]?.list; // ITEM-WALK C",
+    "new": "  const feud = snap?.modData?.[REVENANT_VENDOR]?.list; // ITEM-WALK C",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P1-vendor-misspelt",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "export const NAVAL_VENDOR = 'NavalCombat';",
+    "new": "export const NAVAL_VENDOR = 'naval-combat';",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P1-resting-read",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  const party = snap?.modData?.[NAVAL_VENDOR]?.party?.party; // AUDIT WK-P1",
+    "new": "  const party = snap?.modData?.[NAVAL_VENDOR]?.party?.resting; // AUDIT WK-P1",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P1-malformed-thrown-on",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  for (const c of Array.isArray(party) ? party : []) out.push(...lists(c?.items));",
+    "new": "  for (const c of party ?? []) out.push(...lists(c?.items));",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P2-building-locks-him",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorFoePool().filter((f) => f.companion == null), interiorCtx.collider",
+    "new": "interiorFoePool(), interiorCtx.collider",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P2-dungeon-locks-him",
+    "file": "src/scenes/worldModes.js",
+    "old": "dungeonCtx.foes.filter((f) => f.companion == null), dungeonCtx.collider",
+    "new": "dungeonCtx.foes, dungeonCtx.collider",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P6-reach-unbounded",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      midScreen?.(tooFarAwayText());\n      return true;\n    }\n    if (openCompanion(foe)) return true;",
+    "new": "    if (openCompanion(foe)) return true;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P6-refusal-unsaid",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      midScreen?.(tooFarAwayText());\n      return true;",
+    "new": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      return true;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P6-refusal-not-spent",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      midScreen?.(tooFarAwayText());\n      return true;\n    }",
+    "new": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {\n      midScreen?.(tooFarAwayText());\n      return false;\n    }",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "WK-P6-boundary-refused",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) {",
+    "new": "    if (distance >= TREASURE_ACTIVATION_DISTANCE) {",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-PP-seats-offline",
+    "file": "src/ui/partyPanel.js",
+    "old": "    setText(count, social?.party ? `${social?.party?.members?.length ?? rows.length + 1}/${PARTY_MAX}` : ''); // PARTY8: the seats filled, me included - COMPANION-KIT: no seats with no party",
+    "new": "    setText(count, `${social?.party?.members?.length ?? rows.length + 1}/${PARTY_MAX}`); // PARTY8: the seats filled, me included - COMPANION-KIT: no seats with no party",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-PP-role-as-place",
+    "file": "src/ui/partyPanel.js",
+    "old": "        if (card.away || acct.startsWith('companion:')) continue; // COMPANION-KIT: a companion's line is his role, not a place",
+    "new": "        if (card.away) continue; // COMPANION-KIT: a companion's line is his role, not a place",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-PP-no-heal-float",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (gained > 0) floatHeal(card, gained);\n    card.hpH = pose ? pose.h : null;",
+    "new": "    card.hpH = pose ? pose.h : null;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-PP-no-flare",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (pose && card.hpH != null && pose.h < card.hpH) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-PP-online-never-repainted",
+    "file": "src/ui/partyPanel.js",
+    "old": "      if (ck !== compPainted) {\n        painted = social.version;\n        paintedPose = social.poseVersion ?? 0;\n        paint();\n        return;\n      }\n      if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) {",
+    "new": "      if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) {",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-PP-key-without-fx",
+    "file": "src/ui/partyPanel.js",
+    "old": "  `${c?.key}|${c?.name}|${c?.role}|${Math.round(Number(c?.h) || 0)}/${Math.round(Number(c?.hm) || 0)}|${partyFxKey(c?.fx)}`;",
+    "new": "  `${c?.key}|${c?.name}|${c?.role}|${Math.round(Number(c?.h) || 0)}/${Math.round(Number(c?.hm) || 0)}`;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-PP-mate-thin-shown",
+    "file": "src/ui/partyPanel.js",
+    "old": ".dfparty-card.mate .dfparty-thin { display: none; }   /* COMPANION-KIT: the crew carry no stamina or magicka */",
+    "new": ".dfparty-card.mate .dfparty-thin { }   /* COMPANION-KIT: the crew carry no stamina or magicka */",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-NH-art-landing-ignored",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    set('fx', `${partyFxKey(fx)}#${pics.map((u) => (u ? 1 : 0)).join('')}@${dpr}`, () => {",
+    "new": "    set('fx', `${partyFxKey(fx)}@${dpr}`, () => {",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-NH-debuff-unmarked",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "        const tile = el(doc, 'span', `dfnaval-crew-fxe${e.d ? ' debuff' : ''}`);",
+    "new": "        const tile = el(doc, 'span', 'dfnaval-crew-fxe');",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-NH-mate-bar-narrow",
+    "file": "src/ui/naval/navalHud.js",
+    "old": ".dfnaval-crew.mate { width: ${MATE_BAR_W}px; height: 5px; }",
+    "new": ".dfnaval-crew.mate { height: 5px; }",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  },
+  {
+    "name": "LD-MEA-failed-open-consumed",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (openCompanion(foe)) return true;",
+    "new": "    openCompanion(foe);\n    return true;",
+    "tests": [
+      "test/systems/auditwatchkit_ui.test.js"
+    ]
+  }
+]

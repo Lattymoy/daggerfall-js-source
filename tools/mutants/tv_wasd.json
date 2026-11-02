@@ -1,0 +1,111 @@
+[
+  {
+    "name": "TV-WASD-keys-walk-at-x1",
+    "file": "src/scenes/world.js",
+    "old": "    const want = journey ? travelAsked : walk;",
+    "new": "    const want = journey ? travelAsked : 1;",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-let-go-keeps-the-speed",
+    "file": "src/scenes/world.js",
+    "old": "      if (tvWalking) { tvWalking = 0; if (!travelControlUI?.isShowing && !csaHoldsTimeScale() && worldTimeScale() !== 1) resetTimeScale(); }",
+    "new": "      if (tvWalking) { tvWalking = 0; }",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-spared-without-the-view",
+    "file": "src/scenes/world.js",
+    "old": "  const tvWalkHoldsTimeScale = () => tvWalking > 0 && !!travelView?.active;",
+    "new": "  const tvWalkHoldsTimeScale = () => tvWalking > 0;",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-net-one-resets-the-keys",
+    "file": "src/scenes/world.js",
+    "old": "    if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale() && !tvWalkHoldsTimeScale()) resetTimeScale();   // CSA-G",
+    "new": "    if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale()) resetTimeScale();   // CSA-G",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-net-two-resets-the-keys",
+    "file": "src/scenes/world.js",
+    "old": "          if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale() && !tvWalkHoldsTimeScale()) resetTimeScale();   // the panel gone",
+    "new": "          if (!travelControlUI?.isShowing && worldTimeScale() !== 1 && !csaHoldsTimeScale()) resetTimeScale();   // the panel gone",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-swimming-travels",
+    "file": "src/scenes/world.js",
+    "old": "      onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),",
+    "new": "      onFoot: walkMode && playerSpawned && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-rising-and-falling-travel",
+    "file": "src/scenes/world.js",
+    "old": "      viewUp: travelView?.state === 'up', journey,",
+    "new": "      viewUp: !!travelView?.active, journey,",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-gate-looks-ahead-only",
+    "file": "src/scenes/world.js",
+    "old": "          const way = cam.yaw + Math.atan2(axes.strafe, axes.forward);",
+    "new": "          const way = cam.yaw;",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-journey-gate-gone",
+    "file": "src/scenes/travelView.js",
+    "old": "  if (!viewUp || journey || !moving || !onFoot || paused || !travels) return 0;",
+    "new": "  if (!viewUp || !moving || !onFoot || paused || !travels) return 0;",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-no-hold-in-the-words",
+    "file": "src/scenes/travelView.js",
+    "old": "  travelling: (rate, held = null) =>\n    held != null && held < rate ? `Traveling at ×${held} of ×${rate}` : `Traveling at ×${rate}`, // the travel strip's own sign",
+    "new": "  travelling: (rate, held = null) => (false ? `Traveling at ×${held} of ×${rate}` : `Traveling at ×${rate}`), // the travel strip's own sign",
+    "tests": [
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-K2-journey-zeroes-the-strafe",
+    "file": "src/scenes/world.js",
+    "old": "            forward: _travelDrive.forward,\n          });",
+    "new": "            forward: _travelDrive.forward,\n          }); axes.strafe = 0;",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "TV-WASD-K2-gate-under-a-journey",
+    "file": "src/scenes/world.js",
+    "old": "        if (tvWalking && !_travelDrive && (axes.forward || axes.strafe)) {",
+    "new": "        if (tvWalking && (axes.forward || axes.strafe)) {",
+    "tests": [
+      "test/systems/travel/to1_travelOptions.test.js",
+      "test/systems/travel/tv_wasd.test.js"
+    ]
+  }
+]

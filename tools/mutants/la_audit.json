@@ -1,0 +1,383 @@
+[
+  {
+    "name": "LA-AUDIT-A1-1-the-cells-never-built",
+    "file": "src/render/staticBatch.js",
+    "old": "    if (this.shadowCell > 0) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-2-the-sort-unstable",
+    "file": "src/render/staticBatch.js",
+    "old": "  const out = new Uint32Array(indices.length);\n  for (let t = 0; t < tris; t++) {",
+    "new": "  const out = new Uint32Array(indices.length);\n  for (let t = tris - 1; t >= 0; t--) {",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-3-the-cell-by-a-corner-not-the-centroid",
+    "file": "src/render/staticBatch.js",
+    "old": "    const x = Math.floor((positions[a] + positions[b] + positions[c]) / (3 * size));",
+    "new": "    const x = Math.floor(positions[a] / size);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-4-the-replay-by-sub-mesh",
+    "file": "src/render/shadowPass.js",
+    "old": "        const glassCut = this._glassCut && mesh._evAnyGlass;   // WL1: a building's sun map cuts its windows' panes\n        const cells = r.bounded && !mesh._evAnyCut && !glassCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures",
+    "new": "        const cells = null;",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-5-the-cells-VAO-not-bound",
+    "file": "src/render/shadowPass.js",
+    "old": "        const vao = cells ? mesh.shadowVao : mesh.vao;",
+    "new": "        const vao = mesh.vao;",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-6-a-cell-never-culled",
+    "file": "src/render/shadowPass.js",
+    "old": "if (cells ? !sphereInPlanes(planes, r.cellSpheres[k * 4], r.cellSpheres[k * 4 + 1], r.cellSpheres[k * 4 + 2], r.cellSpheres[k * 4 + 3]) : !subMeshVisible(planes, r, k))",
+    "new": "if (cells ? false : !subMeshVisible(planes, r, k))",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-7-the-spheres-left-behind",
+    "file": "src/render/shadowPass.js",
+    "old": "      for (let j = 0; j + 3 < r.cellSpheres.length; j += 4) { r.cellSpheres[j] += offset[0]; r.cellSpheres[j + 1] += offset[1]; r.cellSpheres[j + 2] += offset[2]; }   // LA-AUDIT A1\n",
+    "new": "",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-8-the-dungeon-asks-for-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const staticBuilder = new StaticBatchBuilder({ shadowCell: SHADOW_CELL_SIZE });",
+    "new": "const staticBuilder = new StaticBatchBuilder();",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-9-the-second-VAO-in-another-layout",
+    "file": "src/render/renderer.js",
+    "old": "        gl.vertexAttribPointer(a, a === 2 ? 2 : 3, gl.FLOAT, false, 0, 0);",
+    "new": "        gl.vertexAttribPointer(a, 3, gl.FLOAT, false, 0, 0);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A1-10-the-cells-VAO-never-freed",
+    "file": "src/render/renderer.js",
+    "old": "    if (mesh.shadowVao) gl.deleteVertexArray(mesh.shadowVao);   // LA-AUDIT A1: its index buffer is one of mesh.buffers\n",
+    "new": "",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A5-1-the-pairs-own-colours-dropped",
+    "file": "src/world/city/cityLights.js",
+    "old": "    const c = i * stride;",
+    "new": "    const c = 0;",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A5-2-the-world-dungeon-takes-no-extra-light",
+    "file": "src/scenes/worldModes.js",
+    "old": "renderer.maxPointLights + (_dgFade ? 1 : 0)",
+    "new": "renderer.maxPointLights",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A5-3-the-world-dungeon-hands-over-no-fade",
+    "file": "src/scenes/worldModes.js",
+    "old": "renderer.setPointLights(_dgLit.data, null, (_dgFade && capFadePairs(_dgLit.data, _dgLit.data.length / 4 - _dgNear.data.length / 4, cam.pos, renderer.maxPointLights, _dgLit.colors)) || _dgLit.colors);",
+    "new": "renderer.setPointLights(_dgLit.data, null, _dgLit.colors);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A5-4-the-dungeon-host-hands-over-no-fade",
+    "file": "src/scenes/dungeon.js",
+    "old": "renderer.lightingLane ? capFadeColors(_lit, _lit.length / 4 - _near.length / 4, cam.pos, renderer.maxPointLights, DUNGEON_LANTERN_F32) : null",
+    "new": "null",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-A5-5-the-mods-town-hands-over-no-fade",
+    "file": "src/scenes/world.js",
+    "old": "renderer.setPointLights(data, CITY_LIGHT_COLOR_F32, (renderer.lightingLane && capFadePairs(data, lead, cam.pos, renderer.maxPointLights, colors)) || colors);",
+    "new": "renderer.setPointLights(data, CITY_LIGHT_COLOR_F32, colors);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F2-1-the-pool-never-grows",
+    "file": "src/world/city/cityLights.js",
+    "old": "    ranges = rangesFor(ranges, n + p.lights.length + m);\n",
+    "new": "",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F2-2-the-mods-pool-never-grows",
+    "file": "src/scenes/world.js",
+    "old": "    _litRanges = rangesFor(_litRanges, total);   // LA-LIGHTS1",
+    "new": "    // LA-LIGHTS1",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B1-the-lift-left-out",
+    "file": "src/render/airPass.js",
+    "old": "  float tol = ${glslFloat(AIR_CONTACT_SELF)} + ${glslFloat(AIR_CONTACT_LIFT)} / ct + c0.w * texelTan * sqrt(1.0 - ct * ct) / ct;",
+    "new": "  float tol = ${glslFloat(AIR_CONTACT_SELF)} + c0.w * texelTan * sqrt(1.0 - ct * ct) / ct;",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B2-the-hold-dropped",
+    "file": "src/render/airPass.js",
+    "old": "  outColor = vec4(min(c, vec3(1.0)), 1.0);",
+    "new": "  outColor = vec4(c, 1.0);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B3-1-the-grid-not-centred",
+    "file": "src/render/airPass.js",
+    "old": "  vec2 grid = floor((uRect.zw - 4.0 * uBloomSize) * 0.5 + 0.5);",
+    "new": "  vec2 grid = vec2(0.0);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B3-2-the-edge-blocks-not-held-in",
+    "file": "src/render/airPass.js",
+    "old": "  vec2 uv = min(max(uRect.xy + grid + 4.0 * floor(gl_FragCoord.xy) + 2.0, uRect.xy + 2.0), uRect.xy + uRect.zw - 2.0) / uCanvas;",
+    "new": "  vec2 uv = (uRect.xy + grid + 4.0 * floor(gl_FragCoord.xy) + 2.0) / uCanvas;",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B3-3-the-centre-by-the-image-map-again",
+    "file": "src/render/airPass.js",
+    "old": "  vec2 uv = min(max(uRect.xy + grid + 4.0 * floor(gl_FragCoord.xy) + 2.0, uRect.xy + 2.0), uRect.xy + uRect.zw - 2.0) / uCanvas;",
+    "new": "  vec2 uv = (uRect.xy + vUV * uRect.zw) / uCanvas;",
+    "tests": [
+      "test/render/la_audit.test.js",
+      "test/render/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B5-1-the-low-byte-unrounded",
+    "file": "src/render/airPass.js",
+    "old": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
+    "new": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + t.g * 255.0) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
+    "tests": [
+      "test/render/la_audit.test.js",
+      "test/render/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B5-2-the-eye-sampler-lowp-again",
+    "file": "src/render/airPass.js",
+    "old": "uniform highp sampler2D uAdapt;   // LA-AUDIT B5: sixteen bits, at a precision that holds them",
+    "new": "uniform sampler2D uAdapt;   // LA-AUDIT B5: sixteen bits, at a precision that holds them",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B6-1-the-one-surface-test-loosened",
+    "file": "src/render/airPass.js",
+    "old": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2((a + b) * 0.5, (b - a) * 0.5);",
+    "new": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange) return vec2((a + b) * 0.5, (b - a) * 0.5);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B6-2-the-steeper-side-taken",
+    "file": "src/render/airPass.js",
+    "old": "  if (abs(a) <= 0.5 * abs(b)) return vec2(a, 0.0);\n  if (abs(b) <= 0.5 * abs(a)) return vec2(b, 0.0);",
+    "new": "  if (abs(a) <= 0.5 * abs(b)) return vec2(b, 0.0);\n  if (abs(b) <= 0.5 * abs(a)) return vec2(a, 0.0);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-B6-3-the-parabola-dropped",
+    "file": "src/render/airPass.js",
+    "old": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2((a + b) * 0.5, (b - a) * 0.5);",
+    "new": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2(0.0);",
+    "tests": [
+      "test/render/la_audit.test.js",
+      "test/render/la_post.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-C1-the-shift-moves-no-stamp",
+    "file": "src/render/renderer.js",
+    "old": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }",
+    "new": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); }",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F1-1-black-is-still",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "    if (x.frames && x.lumMax < LUM_BLACK) bad.push(`${x.scene}: black (brightest frame's mean luma ${x.lumMax})`);",
+    "new": "    if (false) bad.push(`${x.scene}: black (brightest frame's mean luma ${x.lumMax})`);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F1-2-walks-unjudged",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "    if (kind === 'walk' && !(x.moved >= WALK_MIN && x.c4Max > 0))\n      bad.push(`${x.scene}: the eye did not walk (moved ${x.moved}, the picture ${x.c4Max}%)`);",
+    "new": "    if (false) bad.push(`${x.scene}: the eye did not walk (moved ${x.moved}, the picture ${x.c4Max}%)`);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F1-3-turns-unjudged",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "    if (kind === 'turn' && !(x.turned >= TURN_MIN && x.c4Max > 0))\n      bad.push(`${x.scene}: the eye did not turn (turned ${x.turned}, the picture ${x.c4Max}%)`);",
+    "new": "    if (false) bad.push(`${x.scene}: the eye did not turn (turned ${x.turned}, the picture ${x.c4Max}%)`);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F1-4-the-mode-unchecked",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "    if (mode && x.modes.some((m) => m !== mode)) bad.push(`${x.scene}: in ${x.modes.join('/')}, not ${mode}`);",
+    "new": "    if (false) bad.push(`${x.scene}: in ${x.modes.join('/')}, not ${mode}`);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F1-5-the-plans-exception-unread",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "    if (x.err) bad.push(`${x.scene}: the plan threw - ${x.err}`);",
+    "new": "    if (false) bad.push(`${x.scene}: the plan threw - ${x.err}`);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F1-6-the-boot-unjudged",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "  if (!booted) bad.push('the world never booted');",
+    "new": "",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F1-7-the-churn-unweighed",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "    churnW: +rows.reduce((a, r) => a + (r.lInW ?? 0) + (r.lOutW ?? 0), 0).toFixed(2), // weighted by each light's share: a faded join is no switch",
+    "new": "    churnW: +rows.reduce((a, r) => a + (r.lIn ?? 0) + (r.lOut ?? 0), 0).toFixed(2), // weighted by each light's share: a faded join is no switch",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F1-8-the-street-reached-anywhere",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "  if (scenes.includes('street') && !streetTavern) bad.push('street: no tavern in reach to stand before');",
+    "new": "",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F6-1-the-lo-compare-at-the-live-range",
+    "file": "src/render/shadowPass.js",
+    "old": "  float ref = cubeDepthOfM(m - max(${SHADOW_POINT_BIAS}, texel), far);",
+    "new": "  float ref = cubeDepthOfM(m - max(${SHADOW_POINT_BIAS}, texel), ceil(L.w / 4.0) * 4.0);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F6-2-the-lo-compare-in-the-air-at-the-live-range",
+    "file": "src/render/shadowPass.js",
+    "old": "cubeDepthOfM(m - max(${SHADOW_POINT_BIAS}, texel), far)));",
+    "new": "cubeDepthOfM(m - max(${SHADOW_POINT_BIAS}, texel), ceil(L.w / 4.0) * 4.0)));",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-F6-3-the-handover-hard",
+    "file": "src/render/shadowPass.js",
+    "old": "return t > 0.0 ? mix(lit, sunCascadeTap(c + 1, wp, n, soft, h), t) : lit;",
+    "new": "return lit;",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-D-1-the-flash-unjudged",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "    if (x.flashMax > 0)\n      bad.push(`${x.scene}: the HUD flashed red (${x.flashMax}) - a blow or a bleed, not the lighting`);",
+    "new": "    if (false) bad.push(`${x.scene}: the HUD flashed red (${x.flashMax}) - a blow or a bleed, not the lighting`);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-D-2-the-health-unjudged",
+    "file": "tools/lightFlickerVerdict.mjs",
+    "old": "    if (x.hpLost > 0) bad.push(`${x.scene}: the player lost ${x.hpLost} health during the pass`);",
+    "new": "    if (false) bad.push(`${x.scene}: the player lost ${x.hpLost} health during the pass`);",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  },
+  {
+    "name": "LA-AUDIT-D-3-the-pass-starts-hurt",
+    "file": "tools/lightFlickerProbe.mjs",
+    "old": "  await ev(() => {\n    const e = window.__playerEntity;\n    if (e && e.maxHealth > 0) e.health = e.maxHealth;\n  });\n  await ev(",
+    "new": "  await ev(",
+    "tests": [
+      "test/render/la_audit.test.js"
+    ]
+  }
+]

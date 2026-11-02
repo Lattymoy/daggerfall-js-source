@@ -1,0 +1,489 @@
+[
+  {
+    "name": "AUDIT-SD-C1-the-hubs-hand-unheard",
+    "file": "src/scenes/world.js",
+    "old": "if (tab.room === SOCIAL_ROOM) link.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };",
+    "new": "void 0;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C1-kept-for-a-week",
+    "file": "src/scenes/world.js",
+    "old": "    if (!inRealm && _sdReceipts.size) sdReceiptsLeft();",
+    "new": "    if (false && _sdReceipts.size) sdReceiptsLeft();",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C1-granted-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "if (c) grantSdSpoils(c); }\n    _sdReceipts.clear();",
+    "new": "if (c) grantSdSpoils(c); }",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C2-the-marks-kept",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "        marks.clear();\n        pools = [];",
+    "new": "        pools = [];",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C2-the-brass-kept",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "        pools = [];\n        inFire = false;",
+    "new": "        inFire = false;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C3-the-falls-number-kept",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "      fellFi = 0;\n      endSaid = 0; // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again",
+    "new": "      endSaid = 0; // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C3-the-ends-number-kept",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "      fellFi = 0;\n      endSaid = 0; // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again",
+    "new": "      fellFi = 0; // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C3-home-by-the-fights-number",
+    "file": "src/scenes/world.js",
+    "old": "if (_sdHome?.fell !== s.fell.at) {\n      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);\n      _sdHome = { fell: s.fell.at,",
+    "new": "if (_sdHome?.fell !== s.fi) {\n      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);\n      _sdHome = { fell: s.fi,",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-home-in-a-pillar",
+    "file": "src/scenes/world.js",
+    "old": "const [x, z] = clearOfPillars(s.rem.x, s.rem.z);",
+    "new": "const [x, z] = [s.rem.x, s.rem.z];",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C4-entered-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "const seen = { entered: _sdEntered.has(s), fallen",
+    "new": "const seen = { fallen",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C4-the-step-unremembered",
+    "file": "src/scenes/world.js",
+    "old": "if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { _sdEntered.add(s); return true; }",
+    "new": "if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { return true; }",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C4-remembered-unbuilt",
+    "file": "src/scenes/world.js",
+    "old": "if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { _sdEntered.add(s); return true; }",
+    "new": "_sdEntered.add(s); if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { return true; }",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-the-long-way-out",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
+    "old": "    if (half - Math.abs(dx) < half - Math.abs(dz)) x = px",
+    "new": "    if (half - Math.abs(dx) > half - Math.abs(dz)) x = px",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-the-margin-lost",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
+    "old": "  const half = SD_PILLAR_W / 2 + margin;",
+    "new": "  const half = SD_PILLAR_W / 2;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-the-spew-from-inside",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
+    "old": "const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3);",
+    "new": "const [px, pz] = [pose.x, pose.z];",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-a-body-s-width",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
+    "old": "export const SD_PILLAR_CLEAR_M = 1.2;",
+    "new": "export const SD_PILLAR_CLEAR_M = 0.4;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-portal-stood-unlisted",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "    draws?.push(d);\n    return d;",
+    "new": "    return d;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-the-way-home-unlisted",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "      draws = dynamicDraws ?? draws ?? [];\n      const ago = Number.isFinite(age) ? Math.max(0, age) : Infinity;",
+    "new": "      const ago = Number.isFinite(age) ? Math.max(0, age) : Infinity;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-gone-one-listed",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "      dropMesh(ret.arch);\n      dropMesh(ret.hand);\n      dropMesh(ret.plate);\n      for (const d of ret.parts ?? NONE) dropMesh(d);\n      ret = null;",
+    "new": "      ret = null;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-the-list-past-the-clear",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "      for (const d of [...mine]) dropMesh(d);\n      rift = null;",
+    "new": "      rift = null;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-hand-drawn-at-its-start",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "        if (hands[i]) handMatrix(i, shown[i], hands[i].object.matrix);\n      } // where the stones ARE, not a turn to them (AUDIT SD: drawn there now - a hand at rest is never drawn again)",
+    "new": "      } // where the stones ARE, not a turn to them (AUDIT SD: drawn there now - a hand at rest is never drawn again)",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-matrix-every-frame",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "        if (d === 0) continue; // AUDIT SD: a hand at rest keeps its matrix - none made a frame for nothing",
+    "new": "        // AUDIT SD: a hand at rest keeps its matrix - none made a frame for nothing",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-steps-place-every-frame",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "    stepAt(s, t, _at);",
+    "new": "    const _at = stepAt(s, t);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-the-scratch-unused",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export function stepAt(s, t, out = [0, 0, 0]) {",
+    "new": "export function stepAt(s, t, out) {\n  out = [0, 0, 0];",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-boss-unanswered",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  const gear = d > 0 && (_pending || _pendingBoss) ? tierOf(entity, 'numidium', 1) : null; // AUDIT SD: and a world boss's blow",
+    "new": "  const gear = d > 0 && _pending ? tierOf(entity, 'numidium', 1) : null; // AUDIT SD: and a world boss's blow",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-mark-unmade",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    if (blow) setBossStruck();\n    const dmg = strikeDamage(pct, e.maxHealth, base);",
+    "new": "    const dmg = strikeDamage(pct, e.maxHealth, base);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-mark-lying",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  _bossBlowAt = -Infinity;\n  _pendingSpire = _now() - _spireBlowAt <= BLOW_WINDOW_S;",
+    "new": "  _pendingSpire = _now() - _spireBlowAt <= BLOW_WINDOW_S;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-window-unread",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;",
+    "new": "  _pendingBoss = _bossBlowAt > -Infinity;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-a-reach-power-hears-the-boss",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  _pending = landedBlow();",
+    "new": "  _pending = landedBlow() ?? (_now() - _bossBlowAt <= BLOW_WINDOW_S ? { attacker: null } : null);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-hours-magic-marked",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "export const bodysBlow = (A) => !!A && A.shape !== 'all';",
+    "new": "export const bodysBlow = (A) => !!A;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-reset-marked-as-the-bodys",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
+    "new": "    for (const h of v.hits) land(A.name, h.pct, h.base, b !== SD_BODY.hour, h.el ?? null);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-brass-marked",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, false, p.el ?? null);",
+    "new": "    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, true, p.el ?? null);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-an-echos-unmarked",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
+    "new": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A) && b === SD_BODY.remnant, h.el ?? null);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C8-nothing-spends-the-gear",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "      if (cut > 0) {",
+    "new": "      if (cut >= 0) {",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C9-the-hollow-re-laid",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (dungeonTier(dfLocation) === 'super') return 'full';\n  // AUDIT WORLD34 B2: ONLINE, ONE LAYOUT. The room's stream, its acts and its memory address foes, doors and piles by",
+    "new": "  // AUDIT WORLD34 B2: ONLINE, ONE LAYOUT. The room's stream, its acts and its memory address foes, doors and piles by",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C9-the-tier-unread",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (dungeonTier(dfLocation) === 'super') return 'full';",
+    "new": "  if (dfLocation.superTier) return 'full';",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R1-an-ended-fight-never-lost",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
+    "new": "  if (f.emptySince != null && now - f.emptySince >= SD_LOST_MS) {",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R1-lost-a-beat-late",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
+    "new": "  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at > SD_LOST_MS)) {",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R2-never-freed",
+    "file": "server/src/index.js",
+    "old": "realm.in.length >= SD_FIGHTERS_MAX && !free(() => true)) return SD_NO_FULL;",
+    "new": "realm.in.length >= SD_FIGHTERS_MAX) return SD_NO_FULL;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
+  },
+  {
+    "name": "AUDIT-SD-R2-a-present-accounts-freed",
+    "file": "server/src/index.js",
+    "old": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x) && !living?.players?.[x]);",
+    "new": "      const i = realm.in.findIndex((x) => pick(x) && !living?.players?.[x]);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R2-a-fighters-freed",
+    "file": "server/src/index.js",
+    "old": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x) && !living?.players?.[x]);",
+    "new": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x));",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-a-busy-hub-read-as-none",
+    "file": "server/src/index.js",
+    "old": "    if (!res?.ok) return undefined;",
+    "new": "    if (!res?.ok) return null;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-no-answer-read-as-closed",
+    "file": "server/src/index.js",
+    "old": "    if (rec === undefined) return SD_NO_BUSY;",
+    "new": "    if (rec === undefined) return SD_NO_CLOSED;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-busy-closed-for-good",
+    "file": "server/src/index.js",
+    "old": "if (no === SD_NO_BUSY) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }",
+    "new": "if (no === SD_NO_BUSY) { this._refuse(ws, 'busy'); return; }",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-the-non-answer-kept",
+    "file": "server/src/index.js",
+    "old": "now - had.missAt < SD_LIVE_MISS_MS) return kept;",
+    "new": "now - had.missAt < SD_LIVE_FRESH_MS) return kept;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-the-in-refused",
+    "file": "server/src/index.js",
+    "old": "      if (rec === undefined) return;   // AUDIT SD: the hub did not answer",
+    "new": "      // AUDIT SD: the hub did not answer",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-the-blow-stopped",
+    "file": "server/src/index.js",
+    "old": "    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;",
+    "new": "    if (!(live && live.s === s && sdHolds(live, now))) return;",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R6-the-fall-at-the-hearing",
+    "file": "server/src/index.js",
+    "old": "const fell = sdFell(was, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
+    "new": "const fell = sdFell(was, Date.now(), { top: c.top, n: c.n });",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R6-the-fall-ahead",
+    "file": "server/src/index.js",
+    "old": "const fell = sdFell(was, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
+    "new": "const fell = sdFell(was, c.at, { top: c.top, n: c.n });",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R4-the-director-unarmed",
+    "file": "server/src/index.js",
+    "old": "if (fell) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }",
+    "new": "if (fell) { await this._sdSave(fell); this._sdFan(fell); }",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R6-blows-past-the-hour",
+    "file": "server/src/index.js",
+    "old": "    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R5-every-in-written",
+    "file": "server/src/index.js",
+    "old": "await this._sdFightSave(f, now, fresh || !known);",
+    "new": "await this._sdFightSave(f, now, true);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R5-a-newcomer-unwritten",
+    "file": "server/src/index.js",
+    "old": "await this._sdFightSave(f, now, fresh || !known);",
+    "new": "await this._sdFightSave(f, now, fresh);",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R8-the-concord-unasked",
+    "file": "server/src/index.js",
+    "old": "      if (!(await this._sdHallOf(s)).ok) return;",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  }
+]

@@ -1,0 +1,173 @@
+[
+  {
+    "name": "MOUNTAINS-WALKABLE-peaks-refused",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  return false; // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "new": "  return climateAt(bx, by) === TV_MOUNTAIN_CLIMATE;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "MOUNTAINS WALKABLE undone (the owner removed the on-foot restriction in the Wrothgarian zone's merge): an open step into the Mountain climate is refused again."
+  },
+  {
+    "name": "MOUNTAINS-WALKABLE-cliffs-refused",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  return false; // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "new": "  return Math.abs(heightAt(bx, by) - heightAt(ax, ay)) > TV_STEEP_RISE;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "MOUNTAINS WALKABLE undone: a step up or down a steep rise is refused again."
+  },
+  {
+    "name": "MOUNTAINS-WALKABLE-cliffs-down-refused",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  return false; // MOUNTAINS WALKABLE: no peak and no steep rise refuses a step on foot",
+    "new": "  return heightAt(ax, ay) - heightAt(bx, by) > TV_STEEP_RISE;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "MOUNTAINS WALKABLE half undone: a step down a cliff edge is refused again."
+  },
+  {
+    "name": "OW-MOUNTAINS-never-asked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (kind === 2 && goal !== 2 && openBlocked && openBlocked(ax, ay, bx, by, leaving)) return -1;\n  return kind;",
+    "new": "  return kind;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The planner never asks the land's law."
+  },
+  {
+    "name": "OW-MOUNTAINS-passes-closed",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (kind === 2 && goal !== 2 && openBlocked && openBlocked(ax, ay, bx, by, leaving)) return -1;",
+    "new": "  if (goal !== 2 && openBlocked && openBlocked(ax, ay, bx, by, leaving)) return -1;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A road over a mountain pass is refused."
+  },
+  {
+    "name": "OW-ROADSIDE-no-clamp",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const t = Math.max(0, Math.min(1, ((me.x - a.x) * dx + (me.z - a.z) * dz) / L));",
+    "new": "  const t = ((me.x - a.x) * dx + (me.z - a.z) * dz) / L;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The join lies off the run's ends - behind the traveller or past the bend."
+  },
+  {
+    "name": "OW-ROADSIDE-join-ignored",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": ": leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "new": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The join is walked to the start pixel's middle, not the road."
+  },
+  {
+    "name": "OW-ROADSIDE-join-dropped",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "'open', ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}), ...(l.ring",
+    "new": "'open', ...(l.ring",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The journey forgets where the road is joined."
+  },
+  {
+    "name": "OW-ROADSIDE-alongside",
+    "file": "src/scenes/world.js",
+    "old": "    if (!legs.length || (legs[0].ring && legs[0].x === from.x && legs[0].y === from.y) || (plan.kinds[0] !== 'road' && plan.kinds[0] !== 'track')) return legs;",
+    "new": "    return legs;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The first leg runs beside the road to its bend."
+  },
+  {
+    "name": "OW-ROADSIDE-drawn-beside",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    ...legs\n      .slice(0, -1)\n      .map((l) => (l.at ? [l.at.x, l.at.z] : onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))),",
+    "new": "    ...legs.slice(0, -1).map((l) => onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l))),",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The drawn route runs beside the road where the walk joins it."
+  },
+  {
+    "name": "OW-ONLY-ground-travel",
+    "file": "src/scenes/world.js",
+    "old": "    if (tvRoutesJourneys()) {\n      const why = travelViewAllowed();",
+    "new": "    if (false) {\n      const why = travelViewAllowed();",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A map's pick is still a ground journey, the Overworld never rising."
+  },
+  {
+    "name": "OW-ONLY-never-rises",
+    "file": "src/scenes/world.js",
+    "old": "    travelView.enter();\n  }\n  // OWS2 (2026-09-28",
+    "new": "  }\n  // OWS2 (2026-09-28",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A journey runs on the ground, the view never raised."
+  },
+  {
+    "name": "OW-ONLY-rises-over-a-window",
+    "file": "src/scenes/world.js",
+    "old": "    if (gamePaused() || (modes?.modalWindowUp?.() ?? false) || duelEnemyNear()",
+    "new": "    if (duelEnemyNear()",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The view rises over the map before it has closed, and falls again."
+  },
+  {
+    "name": "OW-ONLY-down-and-on",
+    "file": "src/scenes/world.js",
+    "old": "&& travelOptions?.isTravelActive && tvOwnsJourneys()) travelOptions.messages.pauseTravel(); },",
+    "new": "&& false) travelOptions.messages.pauseTravel(); },",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "Brought down, the journey walks on on the ground."
+  },
+  {
+    "name": "OW-MOUNTAINS-spot-in-the-peaks",
+    "file": "src/scenes/world.js",
+    "old": "    if (!door && !water && !dragonMounted() && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON6): the line the dragon's flight joins. A spot among the peaks is walked to."
+  },
+  {
+    "name": "OW-ONLY-lower-unheard",
+    "file": "src/scenes/travelView.js",
+    "old": "    if (!cut) deps.onLower?.(why); // OW-ONLY: the host hears a view brought down - a journey stops with it",
+    "new": "    // (unheard)   // OW-ONLY: the host hears a view brought down - a journey stops with it",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The host never hears the view brought down."
+  },
+  {
+    "name": "OW-ONLY-cut-heard",
+    "file": "src/scenes/travelView.js",
+    "old": "    if (!cut) deps.onLower?.(why); // OW-ONLY: the host hears a view brought down - a journey stops with it",
+    "new": "    deps.onLower?.(why); // OW-ONLY: the host hears a view brought down - a journey stops with it",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A door or a death is taken for the player's choice."
+  }
+]

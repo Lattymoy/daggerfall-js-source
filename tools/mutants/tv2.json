@@ -1,0 +1,472 @@
+[
+  {
+    "name": "TV2-bisection-backwards",
+    "file": "src/player/travelPick.js",
+    "old": "        if (under(m)) hi = m;\n        else lo = m;",
+    "new": "        if (under(m)) lo = m;\n        else hi = m;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The bracket closes on its far end: a click lands a stride beyond where it was aimed."
+  },
+  {
+    "name": "TV2-stride-steps-over-a-ridge",
+    "file": "src/player/travelPick.js",
+    "old": "  { maxDist = TV_PICK_MAX, stepMin = TV_PICK_STEP_MIN, stepShare = TV_PICK_STEP_SHARE, refine = TV_PICK_REFINE } = {},",
+    "new": "  { maxDist = TV_PICK_MAX, stepMin = 40, stepShare = TV_PICK_STEP_SHARE, refine = TV_PICK_REFINE } = {},",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A 40 m stride walks through a hedge-row ridge and lands the walk on the far side of it."
+  },
+  {
+    "name": "TV2-unbuilt-not-said",
+    "file": "src/player/travelPick.js",
+    "old": "    if (!Number.isFinite(h)) unbuilt = true;\n    else if (p[1] <= h) {",
+    "new": "    if (!Number.isFinite(h)) {\n      /* skipped */\n    } else if (p[1] <= h) {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A click past the built grid reads as a click on the sky - nothing said."
+  },
+  {
+    "name": "TV2-harbour-town-is-water",
+    "file": "src/player/travelPick.js",
+    "old": "  if (place) return { kind: 'place', place };\n  if (water) return { kind: 'water' };",
+    "new": "  if (water) return { kind: 'water' };\n  if (place) return { kind: 'place', place };",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A town on a water pixel (every harbour) is refused as the sea."
+  },
+  {
+    "name": "TV2-half-an-edge-is-a-road",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (roads && roads[a] & bit && roads[b] & back) return 0;",
+    "new": "  if (roads && roads[a] & bit) return 0;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A road that ends at a pixel's edge, or runs beside another, is walked as if it went through."
+  },
+  {
+    "name": "TV2-route-swims",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n  // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own",
+    "new": "  // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The planner walks the traveller into the bay (and Travel Options stops them at the ocean)."
+  },
+  {
+    "name": "TV2-legs-ignore-the-ground",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      next.y - pixels[i].y === dy &&\n      (kinds[i] ?? 'open') === kind;",
+    "new": "      next.y - pixels[i].y === dy;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A leg that leaves the road keeps the road's reckless speed across the field."
+  },
+  {
+    "name": "TV2-governor-no-floor",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "export const stepDown = (n) => Math.max(TV_GOV_FLOOR, Math.floor(n / TV_GOV_STEP) * TV_GOV_STEP);",
+    "new": "export const stepDown = (n) => Math.floor(n / TV_GOV_STEP) * TV_GOV_STEP;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The ceiling halves to nothing and the journey stands still under a sky of holes."
+  },
+  {
+    "name": "TV2-governor-no-hold",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) {",
+    "new": "        {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "One frame's pop-in halves the clock - and at 60 fps it is at walking pace in a tenth of a second."
+  },
+  {
+    "name": "TV2-governor-past-the-spinner",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "      return Math.min(want, ceiling);",
+    "new": "      return ceiling;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The clock runs at the governor's ceiling, faster than the player asked."
+  },
+  {
+    "name": "TV2-governor-hole-keeps-the-clean-clock",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "        clear = 0;\n        dirty += dt;",
+    "new": "        dirty += dt;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A hole in the middle of a clean stretch still counts toward the climb."
+  },
+  {
+    "name": "TV2-quiet-arrival-boxed",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (typeof quiet === 'function' ? quiet() : quiet) say(T.MsgArrived);\n    else messageBox(T.MsgArrived);",
+    "new": "    messageBox(T.MsgArrived);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "Every click's arrival opens a box, and the box brings the view down."
+  },
+  {
+    "name": "TV2-a-new-autopilot-each-leg",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), line);\n    else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind), line);",
+    "new": "    st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), line);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The yaw latch is zeroed at every leg (AUDIT-TO1 K1's bug) - an interrupt mid-route snaps the look north."
+  },
+  {
+    "name": "TV2-resume-from-the-start",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    r.i = best;\n    r.join = rejoinPoint(r);",
+    "new": "    r.join = rejoinPoint(r);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A resumed route walks back to the first leg it began with."
+  },
+  {
+    "name": "TV2-mod-journey-keeps-the-route",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    st.route = null;   // TV2: a journey of the mod's replaces the view's\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The map's resume prompt later resumes a route the player already replaced."
+  },
+  {
+    "name": "TV2-plate-while-rising",
+    "file": "src/scenes/travelView.js",
+    "old": "    if (p && p.id === e.pointerId && !p.moved && p.button === 0 && state === 'up' && e.type !== 'pointercancel') {",
+    "new": "    if (p && p.id === e.pointerId && !p.moved && p.button === 0 && e.type !== 'pointercancel') {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A plate under the finger as the camera rises starts a journey the player never aimed (PERF-TV: the plate's click and the ground's share the one gate)."
+  },
+  {
+    "name": "TV2-route-line-through-the-camera",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "    if (!p?.front || !Number.isFinite(p.x) || !Number.isFinite(p.y)) { pen = false; continue; }",
+    "new": "    if (!p?.front || !Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The line joins a point in front to one after a point behind the eye - a stroke across the whole screen."
+  },
+  {
+    "name": "TV2-undiscovered-named",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    if (!row || !travelCheckDiscovered(row)) return null;   // DFU's own law: an undiscovered place has no name to go to",
+    "new": "    if (!row) return null;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "Every town in the view is named and routed to before the player has heard of it."
+  },
+  {
+    "name": "TV2-ray-from-the-head",
+    "file": "src/scenes/world.js",
+    "old": "    if (!travelViewCanGo()) return;\n    const [sx, sy] = canvasPoint(clientX, clientY, canvas.getBoundingClientRect());\n    const dir = rayDirFromScreen(sx, sy, canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, travelView.eye, worldViewportRect(canvas.clientWidth, canvas.clientHeight));\n    if (!dir) return;\n    const hit",
+    "new": "    if (!travelViewCanGo()) return;\n    const [sx, sy] = canvasPoint(clientX, clientY, canvas.getBoundingClientRect());\n    const dir = rayDirFromScreen(sx, sy, canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, worldViewportRect(canvas.clientWidth, canvas.clientHeight));\n    if (!dir) return;\n    const hit",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The ray from the head through a matrix built at the raised eye lands the click hundreds of metres off."
+  },
+  {
+    "name": "TV2-no-cap",
+    "file": "src/scenes/world.js",
+    "old": "        travelViewGovern(dt);   // TV2: under the travel view the clock runs no faster than the land loads\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The view shows holes at x100: Mac's \"cap it to what loads cleanly\" never runs."
+  },
+  {
+    "name": "AUDIT-TV-A1-line-by-pixel",
+    "file": "src/scenes/world.js",
+    "old": "    tvTrip.natives = routeDrawPoints(state.worldCoords(player.pos), legs, { x: rect.cx, z: rect.cz }, tvLegMid);",
+    "new": "    tvTrip.natives = routeDrawPoints(state.worldCoords(player.pos), plan.pixels.slice(1), { x: rect.cx, z: rect.cz }, tvLegMid);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The leg index cuts a per-pixel list: the line doubles back over ground already walked."
+  },
+  {
+    "name": "AUDIT-TV-A2-the-spinner-past-the-cap",
+    "file": "src/scenes/world.js",
+    "old": "    const want = journey ? travelAsked : walk;",
+    "new": "    const want = journey ? travelControlUI.timeAcceleration : walk;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A ring walk capped at x15 by the mod is run at the spinner's x30 under the view."
+  },
+  {
+    "name": "AUDIT-TV-A3-the-ring-watch-kept",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    // AUDIT TV A3: not a ring walk - its path-crossing watch would stop this journey at the first pixel middle\n    st.circumnavigatePathsDataPt = 0;\n    st.lastCrossed = 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A click during a ring walk starts a journey the ring's crossing watch stops at the first pixel middle, silently."
+  },
+  {
+    "name": "AUDIT-TV-A4-a-stopped-spot-lingers",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (st.route && !st.route.summary) st.route = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A camped spot trip's mark, line and words stay on the view for good with nothing driving."
+  },
+  {
+    "name": "AUDIT-TV-A5-the-margin-next-door",
+    "file": "src/scenes/world.js",
+    "old": "          const summary = tvPlaceSummary(pix.x + dx, pix.y + dy);",
+    "new": "          const summary = dx || dy ? null : tvPlaceSummary(pix.x, pix.y);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A click at a walled city's gate - its margin is in the neighbouring pixel - walks to a spot outside instead."
+  },
+  {
+    "name": "AUDIT-DEEP-X7-quiet-fixed-at-begin",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "if (typeof quiet === 'function' ? quiet() : quiet) say(T.MsgArrived);",
+    "new": "if (quiet) say(T.MsgArrived);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "Come down from the view, the arrival is still a line."
+  },
+  {
+    "name": "AUDIT-DEEP-X7-host-always-quiet",
+    "file": "src/scenes/world.js",
+    "old": "const tvQuiet = () => !!travelView?.active;",
+    "new": "const tvQuiet = true;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The host says quiet whether the view is up or not."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-3-always-reckless",
+    "file": "src/scenes/world.js",
+    "old": "const tvCautious = () => !!travelMapPopUpState().speedCautious;",
+    "new": "const tvCautious = () => false;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A view journey never stops at low health."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-1-resume-over-the-sea",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "if (d < bestD && dryLine(mp, r.legs[k])) { bestD = d; best = k; }",
+    "new": "if (d < bestD) { bestD = d; best = k; }",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The resume aims straight across the bay into the mod's ocean stop."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-1-host-no-sea",
+    "file": "src/scenes/world.js",
+    "old": "    isWater: (x, y) => tvWater(x, y),   // AUDIT DEEP T2-1",
+    "new": "    // AUDIT DEEP T2-1",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The host hands Travel Options no sea to ask."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-2-walking-teaches-x1",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "          if (want > TV_GOV_FLOOR) {",
+    "new": "          {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "Streaming lag at x1 teaches a ceiling of 1."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-8-climb-by-odd-steps",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "            ceiling = Math.min(max, Math.floor(ceiling / TV_GOV_STEP) * TV_GOV_STEP + TV_GOV_STEP);",
+    "new": "            ceiling = Math.min(max, ceiling + TV_GOV_STEP);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The climb goes 1, 6, 11 - not the spinner's steps."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-2-the-outer-ring-counted",
+    "file": "src/scenes/world.js",
+    "old": "    const radius = Math.max(1, grid - 1);",
+    "new": "    const radius = Math.max(1, grid);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A view to the horizon holds every journey to x1 after each crossing."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-8-old-ceiling-kept",
+    "file": "src/scenes/world.js",
+    "old": "    partyWalkBegin({ pixel: summary.pixel });   // TV8: the party walks with me, if I lead one gathered\n    travelGovernor.reset();",
+    "new": "    partyWalkBegin({ pixel: summary.pixel });   // TV8: the party walks with me, if I lead one gathered",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A new click's road journey inherits the last one's ceiling."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-5-swim-the-corner",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (\n    ax !== bx &&\n    ay !== by &&\n    isWater(bx, ay) &&\n    isWater(ax, by) &&\n    !pavedStep(ax, ay, bx, by, bit, width, height, roads)\n  )\n    return -1;\n  const kind = pathKind(ax, ay, bx, by, bit, width, height, roads, tracks, beyond);",
+    "new": "  const kind = pathKind(ax, ay, bx, by, bit, width, height, roads, tracks, beyond);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The planner cuts a diagonal between two water pixels."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-4-plates-outlive-the-load",
+    "file": "src/scenes/world.js",
+    "old": "    tvPlates = { at: null, list: [] };   // AUDIT DEEP T2-4",
+    "new": "    // AUDIT DEEP T2-4",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The loaded character sees plates of places they never found."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-6-distance-to-the-bend",
+    "file": "src/scenes/world.js",
+    "old": "to: travelOptions?.route?.summary?.pixel ?? travelOptions?.route?.point?.pixel ?? travelOptions?.state?.autopilot?.destinationMapPixel ?? null,",
+    "new": "to: travelOptions?.state?.autopilot?.destinationMapPixel ?? null,",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The panel says arriving at every bend."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-7-the-generated-roads",
+    "file": "src/scenes/world.js",
+    "old": "let net = (roads || travelPathUsesRoads()) ? roadNet : null;",
+    "new": "let net = (roads || travelPathUsesRoads()) ? raw : null;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The planner walks the port's generated network with Basic Roads off."
+  },
+  {
+    "name": "AUDIT-DEEP-T2-8-coordinates-forbidden",
+    "file": "src/scenes/world.js",
+    "old": "if (travelOptions?.settings?.targetCoordsAllowed === false) tvSay(TRAVEL_VIEW_TEXT.placesOnly); else travelViewWalkTo(hit.point, pix, { outside: !middle && !fineMoveHeld(e) });",
+    "new": "travelViewWalkTo(hit.point, pix, { outside: !middle && !fineMoveHeld(e) });",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A spot journey where the mod forbids coordinates."
+  },
+  {
+    "name": "AUDIT-DEEP-X6-the-reason-unshown",
+    "file": "src/ui/enhanced/enhancedTravelControl.js",
+    "old": "    parts.accel.title = why;",
+    "new": "    parts.accel.title = '';",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The held rate never says why."
+  },
+  {
+    "name": "AUDIT-DEEP2-B6-first-box-wins",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;",
+    "new": "    if (best) return best;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A road just past the first search box loses to open ground inside it - 6.6% of real 24-pixel trips cost more than they should."
+  },
+  {
+    "name": "AUDIT-DEEP2-B6-always-the-widest",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "Every route is searched in every box, the short hop on a road included - three searches where one proves the best."
+  },
+  {
+    "name": "AUDIT-DEEP2-B2-no-settle",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) {",
+    "new": "        if (dirty >= TV_GOV_HOLD_S) {",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "One pixel building takes x40 to x1 inside a second - the rate just cut never had time to show."
+  },
+  {
+    "name": "AUDIT-DEEP2-B2-settle-forever",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "            settling = false;\n          }",
+    "new": "          }",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "After one cut every later hole waits the long settle - holes stand on the screen for two seconds each."
+  },
+  {
+    "name": "AUDIT-DEEP2-B2-the-reach-again",
+    "file": "src/scenes/world.js",
+    "old": "    const radius = Math.max(1, grid - 1);",
+    "new": "    const radius = 1;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "Only the ring the top edge's middle reaches is counted - the picture's corners show unbuilt ground the cap never saw."
+  },
+  {
+    "name": "AUDIT-DEEP2-B5-water-by-the-byte",
+    "file": "src/scenes/world.js",
+    "old": "      water = !place && hit.point[1] <= tvSeaY() + TV_SEA_EPS_M;",
+    "new": "      water = !place && tvWater(pix.x, pix.y);",
+    "tests": [
+      "test/render/tv4_weather_above.test.js"
+    ],
+    "note": "A click on the sea in a land pixel walks the traveller into it; one on the sand in a sea pixel is refused."
+  },
+  {
+    "name": "AUDIT-DEEP2-B4-out-of-a-duel-by-click",
+    "file": "src/scenes/world.js",
+    "old": "    if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool()) || navalHostileNear()) { tvSay(",
+    "new": "    if (areEnemiesNearby(exteriorFoePool()) || navalHostileNear()) { tvSay(",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "A click in the view starts a journey out of a live duel that the map refuses."
+  }
+]

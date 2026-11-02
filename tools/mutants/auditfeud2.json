@@ -1,0 +1,264 @@
+[
+  {
+    "name": "AF2-B1-out-unread",
+    "file": "src/ai/tactics.js",
+    "old": "    beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe);",
+    "new": "    beginOverreach(ai, s, b, now, b.lateIn === true, atMe);",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-R1-restore-bumped",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "if (s?.sworn && s.companion?.items?.length && !r.sworn) { _state.list[i] = { ...s }; continue; }",
+    "new": "if (s?.sworn && s.companion?.items?.length && !r.sworn) { _state.list[i] = { ...s, rev: (r.rev | 0) + 1 }; continue; }",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-R2-history-read",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "if (s?.sworn && s.companion?.items?.length && !r.sworn) {",
+    "new": "if (s?.sworn && s.companion?.items?.length && !r.sworn && (r.gone || r.fate === 'released' || (r.history ?? []).some((h) => h.deed === 'deserted' || h.deed === 'betrayed'))) {",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-R3-tombstone-first",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "!s.defeated && !s.sworn && (r.gone || r.defeated || r.sworn)) {",
+    "new": "!s.defeated && !s.sworn && (r.defeated || r.sworn)) {",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-R4-p2-dropped",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (p2) entity.revenant.p2 = p2;\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-R5-spare-article",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "      ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: \"It's yours. It always was.\"`",
+    "new": "      ? ` It hands back your ${back.map((it) => `The ${takenName(it)}`).join(' and ')}: \"It's yours. It always was.\"`",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-R5-anchor",
+    "file": "src/systems/revenant/revenant.js",
+    "old": ".replace(/^the\\s+/i, '')",
+    "new": ".replace(/the\\s+/ig, '')",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-R6-rout-wipes",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "} else if (deedName === 'fled') { r.escapes++; r.notice = null; }",
+    "new": "} else if (deedName !== 'felled') { if (deedName === 'fled') r.escapes++; r.notice = null; }",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W1-miss-classed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "!round && damage > 0 && feudWeakBlow(f.entity",
+    "new": "!round && feudWeakBlow(f.entity",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W1-deep-miss-classed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "!round && damage > 0 && feudWeakBlow(foe.entity",
+    "new": "!round && feudWeakBlow(foe.entity",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W3-peer-tagged",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (!peer) Promise.resolve().then(() => { try { tagHit(entity, HIT_TAGS.weakness);",
+    "new": "  if (true) Promise.resolve().then(() => { try { tagHit(entity, HIT_TAGS.weakness);",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W3-peer-unflagged",
+    "file": "src/systems/feudLedger.js",
+    "old": "    _onWeak(entity, { peer: true });",
+    "new": "    _onWeak(entity);",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W4-word-unread",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "if (door?.isPuppet?.(f) || !revenantRoutable(f, { now: wall })) continue;",
+    "new": "if (!revenantRoutable(f, { now: wall })) continue;",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W4-deep-unhanded",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    isPuppet: (f) => isPuppetFoe(f),",
+    "new": "    isPuppet: () => false,",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W4-door-host-unread",
+    "file": "src/scenes/hostMagic.js",
+    "old": "isPuppet: (f) => !!f?.puppet || (typeof isPuppet === 'function' && !!isPuppet(f)),",
+    "new": "isPuppet: (f) => !!f?.puppet,",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W5-abyss-lairable",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " || isAbyssMapId(dfLocation?.mapTableData?.mapId)); }",
+    "new": "); }",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ],
+    "note": "PITS-WORLD re-aimed by content: the abyss is known by world/oceanHoles.js isAbyssMapId."
+  },
+  {
+    "name": "AF2-W5-street-bow-dropped",
+    "file": "src/scenes/world.js",
+    "old": "exteriorFoes.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow', weapon: m.weapon ?? null })",
+    "new": "exteriorFoes.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow' })",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-W5-deep-bow-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "damageFoe(t, d, lastPlayerFeet, m.dir, { kind: 'arrow', weapon: m.weapon ?? null })",
+    "new": "damageFoe(t, d, lastPlayerFeet, m.dir, { kind: 'arrow' })",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S1-knockdown-undamaged",
+    "file": "tools/tellDuel.mjs",
+    "old": "  if (dmg > 0 && blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
+    "new": "  if (blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S1-guard-unread",
+    "file": "tools/tellDuel.mjs",
+    "old": "  if (dmg > 0 && blowEffectOf(w.kind, w.iron).knockdown && T >= down.guardUntil)",
+    "new": "  if (dmg > 0 && blowEffectOf(w.kind, w.iron).knockdown)",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S1-hold-shoves",
+    "file": "tools/tellDuel.mjs",
+    "old": "  if (word === 'hold' || !weaponKnockbackApplies(ai.knockbackSpeed, false, ENEMY_BASICS[type]?.weight ?? 0)) return;",
+    "new": "  if (!weaponKnockbackApplies(ai.knockbackSpeed, false, ENEMY_BASICS[type]?.weight ?? 0)) return;",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S1-stagger-plain",
+    "file": "tools/tellDuel.mjs",
+    "old": "  ai.knockbackSpeed = weaponKnockbackSpeed(dmg, weight) * (word === 'stagger' ? TELL.STAGGER_KNOCK : 1);",
+    "new": "  ai.knockbackSpeed = weaponKnockbackSpeed(dmg, weight) * 1;",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S1-swing-on-the-floor",
+    "file": "tools/tellDuel.mjs",
+    "old": "      }\n      if (T >= down.downUntil) swingT += DT; // AUDIT FEUD 2: knocked down, the swing stands (the rig's `paralyzed`)",
+    "new": "      }\n      swingT += DT; // AUDIT FEUD 2: knocked down, the swing stands (the rig's `paralyzed`)",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S1-dodger-early",
+    "file": "tools/tellDuel.mjs",
+    "old": "        !(mode === 'dodge' && blows.some((lb) => T < lb.land + CLASSIC_UPDATE_INTERVAL))",
+    "new": "        !(mode === 'dodge' && blows.some((lb) => T < lb.land))",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S2-seed-dropped",
+    "file": "tools/tellDuel.mjs",
+    "old": "  setSeed(seed); // DFU's stream, the fight's own\n  setPref('lootRarity', true); // the revenants' switch - for this fight alone (TELL's cells stand as they were measured)",
+    "new": "  setPref('lootRarity', true); // the revenants' switch - for this fight alone (TELL's cells stand as they were measured)",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S2-tell-seed-dropped",
+    "file": "tools/tellDuel.mjs",
+    "old": "  setSeed(seed); // AUDIT FEUD: DFU's stream too - a fight was the order it ran in, not its seed\n  let T = 0;",
+    "new": "  let T = 0;",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S2-id-unseeded",
+    "file": "tools/tellDuel.mjs",
+    "old": "        _voiceId: `duel-${seed}`,\n      },",
+    "new": "      },",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S2-sig-undrawn",
+    "file": "tools/tellDuel.mjs",
+    "old": "    if (rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType); // AUDIT FEUD 2: its signature, as a deed that ranks it to 2 draws it",
+    "new": "    // AUDIT FEUD 2: its signature, as a deed that ranks it to 2 draws it",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  },
+  {
+    "name": "AF2-S2-hits-uncounted",
+    "file": "tools/tellDuel.mjs",
+    "old": "        out.hitsOnMe++;\n        down = landOnMe(ai, ent, type, player, T, down);",
+    "new": "        down = landOnMe(ai, ent, type, player, T, down);",
+    "tests": [
+      "test/systems/auditfeud2.test.js"
+    ]
+  }
+]

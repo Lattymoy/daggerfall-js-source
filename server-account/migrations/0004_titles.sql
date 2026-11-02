@@ -1,0 +1,34 @@
+-- ACC3 (2026-09-22) - THE TITLE A PLAYER WEARS, and nothing else.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). SQLite has no ADD COLUMN IF NOT EXISTS, so a
+-- second run errors harmlessly and the ledger is what stops it.
+--
+-- ═══ ONE COLUMN, AND NO WALK OVER THE TABLE ════════════════════════
+--
+-- Mac: "All current players should be granted the founder title." The
+-- obvious migration is an UPDATE over every row. There is none here,
+-- and that is the design rather than an omission:
+--
+--   FOUNDER IS DERIVED from `registered_at` against a cutoff in
+--   `server-account/src/titles.js`, so the set is the same today and
+--   is still right tomorrow - a row added by hand afterwards, or
+--   restored from a backup, answers the question correctly without
+--   anybody remembering to grant it. A walk records a fact ONCE, at a
+--   moment nobody can re-derive.
+--
+--   The SPROUT glyph is derived from `created_at` for the same reason
+--   with more force: a stored glyph that expires after two weeks needs
+--   a cron to remove it, and a cron is a thing that can stop running
+--   while everything looks fine (AUDIT-ACC F9, one system over).
+--
+--   DEVELOPER is a list in the service's own config, because granting
+--   one is a thing a person does by editing a reviewed, deployed file
+--   - not by reaching into a live database.
+--
+-- So the only thing stored is the only thing that is a CHOICE: which
+-- of the titles a player holds they are wearing. Null is "none", which
+-- is what every existing row gets and is a perfectly good answer.
+ALTER TABLE players ADD COLUMN title TEXT;

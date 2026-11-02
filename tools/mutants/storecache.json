@@ -1,0 +1,44 @@
+[
+  {
+    "name": "SC-never-kept",
+    "file": "app/lib/fileStorage.cjs",
+    "old": "      if (kept && now >= kept.at && now - kept.at < readTtlMs) return kept.value;\n",
+    "new": "",
+    "tests": ["test/tooling/storecache.test.js"]
+  },
+  {
+    "name": "SC-never-read-again",
+    "file": "app/lib/fileStorage.cjs",
+    "old": "      if (kept && now >= kept.at && now - kept.at < readTtlMs) return kept.value;",
+    "new": "      if (kept && now >= kept.at) return kept.value;",
+    "tests": ["test/tooling/storecache.test.js"]
+  },
+  {
+    "name": "SC-write-not-kept",
+    "file": "app/lib/fileStorage.cjs",
+    "old": "        read.set(key, { value, at: Date.now() });\n",
+    "new": "",
+    "tests": ["test/tooling/storecache.test.js"]
+  },
+  {
+    "name": "SC-sweep-keeps",
+    "file": "app/lib/fileStorage.cjs",
+    "old": "    read.clear();\n",
+    "new": "",
+    "tests": ["test/tooling/storecache.test.js"]
+  },
+  {
+    "name": "SC-thrown-write-stale",
+    "file": "app/lib/fileStorage.cjs",
+    "old": "        read.delete(key);   // a write that throws may still have moved the file: read it again\n",
+    "new": "",
+    "tests": ["test/tooling/storecache.test.js"]
+  },
+  {
+    "name": "SC-remove-stale",
+    "file": "app/lib/fileStorage.cjs",
+    "old": "      read.delete(key);   // not null: a remove that fails leaves the file, and the next read says so\n",
+    "new": "",
+    "tests": ["test/tooling/storecache.test.js"]
+  }
+]

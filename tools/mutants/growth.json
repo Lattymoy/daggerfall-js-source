@@ -1,0 +1,422 @@
+[
+  {
+    "name": "GROWTH1-tab-left-out",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "['stats', 'Stats'], ['growth', 'Growth'], ['holdings', 'Holdings']",
+    "new": "['stats', 'Stats'], ['holdings', 'Holdings']",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The tab is one entry of the window's one list; left out, every door into Growth lands nowhere."
+  },
+  {
+    "name": "GROWTH1-family-landing-unread",
+    "file": "src/ui/growth/growthTab.js",
+    "old": "const fam = Object.hasOwn(SPEC_LANDINGS, at ?? '') ? SPEC_LANDINGS[at] : null;",
+    "new": "const fam = null;",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The classic sheet's S and W rows land on the Level page instead of their family's guide."
+  },
+  {
+    "name": "GROWTH1-leaf-drifts",
+    "file": "src/ui/growth/growthPages.js",
+    "old": "export const SPEC_LANDINGS = Object.freeze({ 'specs:arcane': 'arcane', 'specs:martial': 'martial' });",
+    "new": "export const SPEC_LANDINGS = Object.freeze({ 'specs:arcane': 'arcane', 'specs:martial': 'arcane' });",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The leaf the boot doors read names a family landing the tab does not open."
+  },
+  {
+    "name": "GROWTH1-captain-for-any-host",
+    "file": "src/ui/growth/growthTab.js",
+    "old": "return GROWTH_PAGE_SECTIONS.filter(([id]) => id !== 'captain' || typeof ctx?.captain?.stars === 'function');",
+    "new": "return GROWTH_PAGE_SECTIONS.filter(() => true);",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A host with no ships draws a Captain's Stars page that can only say it has nothing."
+  },
+  {
+    "name": "GROWTH1-due-off-the-points",
+    "file": "src/ui/growth/growthTab.js",
+    "old": "if (s) due.captain = Math.max(0, (s.points ?? 0) - (s.set ?? 0));",
+    "new": "if (s) due.captain = s.points ?? 0;",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The rail's mark counts stars already set as waiting."
+  },
+  {
+    "name": "GROWTH2-ready-misread",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "return on && st.every((s) => s === 'mastered' || s === 'ready') ? 'ready' : 'reach';",
+    "new": "return 'reach';",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A path one Master Skills press away reads as far off - the guide hides the next step."
+  },
+  {
+    "name": "GROWTH2-never-misread",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "if (st.includes('misc')) return 'never';",
+    "new": "if (false) return 'never';",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A path whose skill's group masteries are spent reads as within reach - the guide promises what cannot open."
+  },
+  {
+    "name": "GROWTH2-order-the-tables",
+    "file": "src/ui/growth/specGuide.js",
+    "old": ".sort((a, b) => SPEC_STATES.indexOf(a.state) - SPEC_STATES.indexOf(b.state) || owed(a) - owed(b) || a.order - b.order);",
+    "new": ".sort((a, b) => a.order - b.order);",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The open path drowned in the table's order among twenty-nine others."
+  },
+  {
+    "name": "GROWTH2-nearest-last",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "|| owed(a) - owed(b) ||",
+    "new": "|| owed(b) - owed(a) ||",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "Within reach, the farthest path first."
+  },
+  {
+    "name": "GROWTH2-ready-at-99",
+    "file": "src/ui/growth/specGuide.js",
+    "old": ": value >= 100 ? 'ready' : 'climb';",
+    "new": ": value > 100 ? 'ready' : 'climb';",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A skill at exactly 100 - the masterable value - read as still climbing."
+  },
+  {
+    "name": "GROWTH2-words-swapped",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "case 'mastered': return t('growth.spec.skill.mastered', '{skill}: mastered ({value})', { skill: s.name, value: s.value });",
+    "new": "case 'mastered': return t('growth.spec.skill.mastered', '{skill}: {value} - ready to master in Master Skills', { skill: s.name, value: s.value });",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A mastered skill told to be mastered again."
+  },
+  {
+    "name": "GROWTH2-empty-slot-read",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "if (!e || e.type < 0) continue;   // an empty slot of the maker's three",
+    "new": "if (!e) continue;   // an empty slot of the maker's three",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The maker's empty slots read as effects."
+  },
+  {
+    "name": "GROWTH2-forms-numbers",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "seconds: f.cooldown, fatigue: f.fatigue",
+    "new": "seconds: f.cooldown, fatigue: f.cooldown",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The technique's fatigue read off its cooldown."
+  },
+  {
+    "name": "GROWTH2-ask-the-other-family",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "pairText: pathSchoolsText, ask: (e, id) => pathChoiceRows(e, id), choose: choosePath,",
+    "new": "pairText: pathSchoolsText, ask: (e, id) => martialChoiceRows(e, id), choose: choosePath,",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "An arcane path's Choose asks in the martial law's box."
+  },
+  {
+    "name": "GROWTH2-choice-not-the-law",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "pairText: pathSchoolsText, ask: (e, id) => pathChoiceRows(e, id), choose: choosePath,",
+    "new": "pairText: pathSchoolsText, ask: (e, id) => pathChoiceRows(e, id), choose: (e, id) => { e.arcanePath = id; return { ok: true, text: '' }; },",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The page writes the path itself, past the law's checks (a second path, a skill unmastered)."
+  },
+  {
+    "name": "GROWTH3-mount-per-draw",
+    "file": "src/ui/growth/growthStage.js",
+    "old": "if (live && live.key !== key) dropStage();",
+    "new": "if (live) dropStage();",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "Every press redraws the window: a mount per draw throws away the sky's view and its pending stars on each."
+  },
+  {
+    "name": "GROWTH3-face-left-up",
+    "file": "src/ui/growth/growthStage.js",
+    "old": "try { me.face?.destroy?.(); } catch { /* already gone */ }",
+    "new": "",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A page left keeps its face's listeners and frame loop alive."
+  },
+  {
+    "name": "GROWTH3-escape-past-the-face",
+    "file": "src/ui/growth/growthStage.js",
+    "old": "  if (asked(me)) return true;\n  if (me.full)",
+    "new": "  if (me.full)",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "Escape resumes the game over a confirm or unaccepted stars."
+  },
+  {
+    "name": "GROWTH3-no-phone-door",
+    "file": "src/ui/growth/growthStage.js",
+    "old": "if (door || narrow()) {",
+    "new": "if (door) {",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A phone draws the sky in a pane its bar alone fills."
+  },
+  {
+    "name": "GROWTH3-embedded-firmament-own-escape",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "        if (embed) { used = false; break; }   // GROWTH3: the window's back stack asks back() - one Escape, one owner",
+    "new": "",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "Two owners of one Escape: the sky's and the window's."
+  },
+  {
+    "name": "GROWTH3-embedded-firmament-overlay",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "let unregister = embed ? () => {} : registerOverlay(overlayClose);",
+    "new": "let unregister = registerOverlay(overlayClose);",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "In the tab the sky registers as a second overlay over the pause window."
+  },
+  {
+    "name": "GROWTH3-embedded-firmament-hears-detached",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "if (dead || (embed && !root.isConnected)) return;",
+    "new": "if (dead) return;",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A sky between two draws of its page (or on a phone's page before its door) answers keys meant for the window."
+  },
+  {
+    "name": "GROWTH3-unaccepted-not-asked",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "if (unaccepted() && !armedClose) { arm(); say(unacceptedLeave(), true); return true; }",
+    "new": "",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "GROWTH5 (PIN MOVED): re-aimed by content - its words now fit any press that leaves; AUDIT GROWTH LANE5-1 re-aimed it again at LANE3-8's arm(). Unaccepted stars dropped on the first Escape without a word."
+  },
+  {
+    "name": "GROWTH3-embedded-captain-own-escape",
+    "file": "src/ui/skyWindow.js",
+    "old": "case 'Escape': if (embed) { used = false; break; } tryClose(); break;",
+    "new": "case 'Escape': tryClose(); break;",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "GROWTH5 (PIN MOVED, bible/10-UI/Growth.md section 6): re-aimed by content - the captain's window draws through the one sky window (RVN-STARS' skyWindow.js), embedded there. The captain's sky closes itself under the window."
+  },
+  {
+    "name": "GROWTH3-embedded-level-own-escape",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "if (embed || overlayAction(e) !== 'back') return;",
+    "new": "if (overlayAction(e) !== 'back') return;",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The Ascension's own Escape under the window's."
+  },
+  {
+    "name": "GROWTH3-embedded-level-overlay",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "if (!embed) unregister = registerOverlay(closeArm);",
+    "new": "unregister = registerOverlay(closeArm);",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The Ascension registered as a second overlay in the tab."
+  },
+  {
+    "name": "GROWTH3-window-back-not-asked",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "() => { if (!growthBack()) onAction('resume'); }",
+    "new": "() => { onAction('resume'); }",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The window's Escape resumes past a face's confirm."
+  },
+  {
+    "name": "GROWTH-BOOK-window-size-not-fixed",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (pauseTab === 'growth') win.classList.add('px-win-growth');",
+    "new": "",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The window jumps between sizes as the Growth rail is pressed."
+  },
+  {
+    "name": "GROWTH4-rows-only-while-open",
+    "file": "src/ui/charsheet.js",
+    "old": ": guide && pathPossible(e) ? t('schools.sheet.guide', 'Arcane paths  (S)') : null;",
+    "new": ": guide && pathChoices(e).length ? t('schools.sheet.guide', 'Arcane paths  (S)') : null;",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The guide's row only once a path is open - the player guessing again until then."
+  },
+  {
+    "name": "GROWTH4-family-landing-swapped",
+    "file": "src/ui/charsheet.js",
+    "old": "if (this._growth('specs:arcane')) return;",
+    "new": "if (this._growth('specs:martial')) return;",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The S row opens the martial guide."
+  },
+  {
+    "name": "GROWTH4-guide-on-the-host-slot",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "hooks.growth = (at) => openPauseFlow(() => {}, { ...(deps.pause?.() ?? {}), at, onResume: () => {}, relock: () => {} });",
+    "new": "hooks.growth = (at) => openPauseFlow(deps.show, { ...(deps.pause?.() ?? {}), at });",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The guide's pause takes the host's slot: its Resume drops the sheet under it."
+  },
+  {
+    "name": "GROWTH4-words-swapped",
+    "file": "src/scenes/shared.js",
+    "old": "() => say(isEnhanced() ? pathDeclinedGrowthText() : pathDeclinedText()));",
+    "new": "() => say(isEnhanced() ? pathDeclinedText() : pathDeclinedGrowthText()));",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The enhanced skin's No names the classic skill screen."
+  },
+  {
+    "name": "GROWTH-door-uncounted",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "n ? t('pause.door.growthCount', 'Growth ({n})', { n }) : t('pause.door.growth', 'Growth')",
+    "new": "t('pause.door.growth', 'Growth')",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The Stats page's door says nothing waits."
+  },
+  {
+    "name": "GROWTH-detail-what-opens-it",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "box.append(el('div', 'gr-sub', t('growth.spec.opens', 'Requirements')));",
+    "new": "",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The detail without its checklist header."
+  },
+  {
+    "name": "GROWTH-detail-how-used",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "'Once chosen, press your Weapon Technique key while fighting with one of its two skills.')",
+    "new": "'Once chosen, use it.')",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The detail no longer says how a technique is used."
+  },
+  {
+    "name": "GROWTH-master-link-gone",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "onClick: () => { setGrowthSection('specs'); pauseTab = 'growth'; render(); }",
+    "new": "onClick: () => { render(); }",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "Master Skills' link into the guide leads nowhere."
+  },
+  {
+    "name": "GROWTH-captain-door-moved-back",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "growth: () => { setGrowthSection('captain'); pauseTab = 'growth'; render(); } }),",
+    "new": "growth: null }),",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The Captain page's stars open over the world again, not on the tab."
+  },
+  {
+    "name": "GROWTH5-sheet-key-unasked",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "    if (view?.asksFirst?.() || rvnStars.asks()) return;      // GROWTH5",
+    "new": "    // GROWTH5",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The sheet's key closes a sky with unaccepted stars unasked."
+  },
+  {
+    "name": "GROWTH5-menu-never-asks",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "asksFirst: () => mode === 'pause' && pauseTab === 'growth' && growthAsks(),",
+    "new": "asksFirst: () => false,",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "The doors ask a menu that never asks its stage."
+  },
+  {
+    "name": "GROWTH5-tab-unasked",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (pauseTab === 'growth' && id !== 'growth' && growthAsks()) return; ",
+    "new": "",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "Another tab throws a sky's unaccepted stars away unasked."
+  },
+  {
+    "name": "GROWTH5-rail-unasked",
+    "file": "src/ui/growth/growthTab.js",
+    "old": "if (sec !== id && stageAsks()) return; ",
+    "new": "",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "Another page throws a sky's unaccepted stars away unasked."
+  },
+  {
+    "name": "GROWTH5-asks-full-screen",
+    "file": "src/ui/growth/growthStage.js",
+    "old": "  return me ? asked(me) : false;",
+    "new": "  return me ? (asked(me) || me.full) : false;",
+    "tests": [
+      "test/ui/growth/growth1_tab.test.js"
+    ],
+    "note": "A dial or sheet key that leaves full screen instead of putting the window away."
+  }
+]

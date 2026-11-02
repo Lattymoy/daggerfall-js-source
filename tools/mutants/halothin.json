@@ -1,0 +1,292 @@
+[
+  {
+    "name": "HALOTHIN-step-other",
+    "file": "src/net/online.js",
+    "old": "export const HALO_STEP_M = 8;",
+    "new": "export const HALO_STEP_M = 16;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-units-dropped",
+    "file": "src/net/online.js",
+    "old": "export const HALO_STEP_UNITS = HALO_STEP_M * (PIXEL_UNITS / PIXEL_M);",
+    "new": "export const HALO_STEP_UNITS = HALO_STEP_M;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-first-unheard",
+    "file": "src/net/online.js",
+    "old": "  if (!last) return true;\n  if (now - last.at >= HEARTBEAT_MS) return true;",
+    "new": "  if (!last) return false;\n  if (now - last.at >= HEARTBEAT_MS) return true;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-no-heartbeat",
+    "file": "src/net/online.js",
+    "old": "if (now - last.at >= HEARTBEAT_MS) return true;",
+    "new": "if (now - last.at >= Infinity) return true;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-no-stop",
+    "file": "src/net/online.js",
+    "old": "if (!(pose.mv | 0) && ((last.mv | 0) !== 0 || pose.x !== last.x || pose.z !== last.z)) return true;",
+    "new": "if (!(pose.mv | 0) && (pose.x !== last.x || pose.z !== last.z)) return true;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-standing-place-unread",
+    "file": "src/net/online.js",
+    "old": "if (!(pose.mv | 0) && ((last.mv | 0) !== 0 || pose.x !== last.x || pose.z !== last.z)) return true;",
+    "new": "if (!(pose.mv | 0) && ((last.mv | 0) !== 0)) return true;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-standing-z-unread",
+    "file": "src/net/online.js",
+    "old": "if (!(pose.mv | 0) && ((last.mv | 0) !== 0 || pose.x !== last.x || pose.z !== last.z)) return true;",
+    "new": "if (!(pose.mv | 0) && ((last.mv | 0) !== 0 || pose.x !== last.x)) return true;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-start-counted",
+    "file": "src/net/online.js",
+    "old": "if (!(pose.mv | 0) && ((last.mv | 0) !== 0 || pose.x !== last.x || pose.z !== last.z)) return true;",
+    "new": "if (((last.mv | 0) !== 0 || pose.x !== last.x || pose.z !== last.z) && (pose.mv | 0) !== (last.mv | 0)) return true;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-pixel-x-unread",
+    "file": "src/net/online.js",
+    "old": "if (Math.floor(pose.x / PIXEL_UNITS) !== Math.floor(last.x / PIXEL_UNITS) || Math.floor(pose.z / PIXEL_UNITS)",
+    "new": "if (Math.floor(pose.z / PIXEL_UNITS)",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-pixel-z-unread",
+    "file": "src/net/online.js",
+    "old": "|| Math.floor(pose.z / PIXEL_UNITS) !== Math.floor(last.z / PIXEL_UNITS)) return true;",
+    "new": ") return true;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-step-strict",
+    "file": "src/net/online.js",
+    "old": "return dx * dx + dz * dz >= HALO_STEP_UNITS * HALO_STEP_UNITS;",
+    "new": "return dx * dx + dz * dz > HALO_STEP_UNITS * HALO_STEP_UNITS;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-height-counted",
+    "file": "src/net/online.js",
+    "old": "const dx = pose.x - last.x, dz = pose.z - last.z;\n  return dx * dx + dz * dz >= HALO_STEP_UNITS",
+    "new": "const dx = pose.x - last.x, dz = pose.z - last.z;\n  return dx * dx + dz * dz + (pose.y ?? 0) ** 2 >= HALO_STEP_UNITS",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-halos-every-pose",
+    "file": "src/net/online.js",
+    "old": "      if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h.ws), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }",
+    "new": "      if (false) { this.stats.haloThinned++; continue; }",
+    "tests": [
+      "test/net/halothin.test.js"
+    ],
+    "note": "SCALE5b (re-aimed by content at the merge): the relay's referee word (`rf`) is one more reason a halo goes whole."
+  },
+  {
+    "name": "HALOTHIN-last-not-kept",
+    "file": "src/net/online.js",
+    "old": "went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); this._earOf(h.ws).posed = now; }",
+    "new": "went = true; this._earOf(h.ws).posed = now; }",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-last-recorded-moving",
+    "file": "src/net/online.js",
+    "old": "this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now })",
+    "new": "this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: 1, at: now })",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-last-per-room",
+    "file": "src/net/online.js",
+    "old": "      if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h.ws), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }\n      try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); this._earOf(h.ws).posed = now; } catch { /* the close will say */ }",
+    "new": "      if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }\n      try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); this._earOf(h.ws).posed = now; } catch { /* the close will say */ }",
+    "tests": [
+      "test/net/halothin.test.js"
+    ],
+    "note": "SCALE5b (re-aimed by content at the merge): the relay's referee word (`rf`) is one more reason a halo goes whole."
+  },
+  {
+    "name": "HALOTHIN-whole-unread",
+    "file": "src/net/online.js",
+    "old": "const whole = !went || this.haloWhole;",
+    "new": "const whole = !went;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-primary-refusal-unread",
+    "file": "src/net/online.js",
+    "old": "const whole = !went || this.haloWhole;",
+    "new": "const whole = this.haloWhole;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-welcome-unasked",
+    "file": "src/net/online.js",
+    "old": "      if (h.status !== 'open' || !h.ws || !this._welcomed.has(h.ws) || this._poseHeld(h.ws, now)) continue;",
+    "new": "      if (h.status !== 'open' || !h.ws || this._poseHeld(h.ws, now)) continue;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-alone-never",
+    "file": "src/net/online.js",
+    "old": "&& !this._haloAlone(room, out)) {",
+    "new": ") {",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-alone-own-room-unread",
+    "file": "src/net/online.js",
+    "old": "      if (mine?.has(id)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-alone-range-unread",
+    "file": "src/net/online.js",
+    "old": "if (at && inRange(room, pose, at)) return true;",
+    "new": "if (at) return true;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-ping-none",
+    "file": "src/net/online.js",
+    "old": "      try { this._askedOn(h.ws, now); h.ws.send('{\"t\":\"ping\"}'); this._haloPinged.set(h.ws, now); } catch",
+    "new": "      try { this._askedOn(h.ws, now); this._haloPinged.set(h.ws, now); } catch",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-ping-clock-unkept",
+    "file": "src/net/online.js",
+    "old": "h.ws.send('{\"t\":\"ping\"}'); this._haloPinged.set(h.ws, now); }",
+    "new": "h.ws.send('{\"t\":\"ping\"}'); }",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-current-never",
+    "file": "src/net/online.js",
+    "old": "    if (!pose || !ws || ws === this._ws || !this._welcomed.has(ws)) return;",
+    "new": "    return;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-current-always",
+    "file": "src/net/online.js",
+    "old": "    if (last && last.x === pose.x && last.z === pose.z && (last.mv | 0) === (pose.mv | 0)) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-current-duel-dropped",
+    "file": "src/net/online.js",
+    "old": "    this._haloCurrent(ws);   // HALO-THIN (AUDIT D3): a halo's judge reads where I am\n",
+    "new": "",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-current-rite-dropped",
+    "file": "src/net/online.js",
+    "old": "    this._haloCurrent(ws);   // HALO-THIN (AUDIT D3): riteNear reads the pose this socket last brought\n",
+    "new": "",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-host-duel-unasked",
+    "file": "src/scenes/world.js",
+    "old": "online.haloWhole = !!duelMgr.duel || _serpentFight;",
+    "new": "online.haloWhole = _serpentFight;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-host-serpent-unasked",
+    "file": "src/scenes/world.js",
+    "old": "online.haloWhole = !!duelMgr.duel || _serpentFight;",
+    "new": "online.haloWhole = !!duelMgr.duel;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-host-fight-never-down",
+    "file": "src/scenes/world.js",
+    "old": "    _serpentFight = false;\n    if (!serpentHost) return;",
+    "new": "    if (!serpentHost) return;",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  },
+  {
+    "name": "HALOTHIN-host-fight-unread",
+    "file": "src/scenes/world.js",
+    "old": "    _serpentFight = !!fight;\n",
+    "new": "    _serpentFight = false;\n",
+    "tests": [
+      "test/net/halothin.test.js"
+    ]
+  }
+]

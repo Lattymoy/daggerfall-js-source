@@ -1,0 +1,29 @@
+[
+  {
+    "name": "FB0929-lock-kept-under-a-freed-cursor",
+    "file": "src/player/pointerLock.js",
+    "old": "    document.addEventListener(\n      'pointerlockchange',\n      () => {\n        if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();\n      },\n      false,\n    );\n    _errBound = true;",
+    "new": "    _errBound = true;",
+    "tests": [
+      "test/scenes/fb0929_overworld_mouse.test.js"
+    ]
+  },
+  {
+    "name": "FB0929-lock-let-go-whatever-the-cursor",
+    "file": "src/player/pointerLock.js",
+    "old": "        if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();",
+    "new": "        if (document.pointerLockElement) releaseLook();",
+    "tests": [
+      "test/scenes/fb0929_overworld_mouse.test.js"
+    ]
+  },
+  {
+    "name": "FB0929-lock-let-go-when-lost",
+    "file": "src/player/pointerLock.js",
+    "old": "        if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();",
+    "new": "        if ((_cursorActive || _cursorHolds.size) && !document.pointerLockElement) releaseLook();",
+    "tests": [
+      "test/scenes/fb0929_overworld_mouse.test.js"
+    ]
+  }
+]

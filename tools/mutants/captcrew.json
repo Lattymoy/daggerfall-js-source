@@ -1,0 +1,310 @@
+[
+  {
+    "name": "CC-boardings-weight",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Math.max(0, (h?.fights ?? 0) | 0) + 2 * Math.max(0, (h?.boardings ?? 0) | 0) + Math.max(0, (h?.prior ?? 0) | 0);",
+    "new": "  Math.max(0, (h?.fights ?? 0) | 0) + 1 * Math.max(0, (h?.boardings ?? 0) | 0) + Math.max(0, (h?.prior ?? 0) | 0);",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ],
+    "note": "a boarding no harder school than a fight"
+  },
+  {
+    "name": "CC-seasoned-at",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Object.freeze({ tier: 1, at: 4, key: 'seasoned', label: 'Seasoned' }),",
+    "new": "  Object.freeze({ tier: 1, at: 5, key: 'seasoned', label: 'Seasoned' }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-veteran-at",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Object.freeze({ tier: 2, at: 12, key: 'veteran', label: 'Veteran' }),",
+    "new": "  Object.freeze({ tier: 2, at: 10, key: 'veteran', label: 'Veteran' }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-oldsalt-at",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Object.freeze({ tier: 3, at: 30, key: 'oldsalt', label: 'Old Salt' }),",
+    "new": "  Object.freeze({ tier: 3, at: 25, key: 'oldsalt', label: 'Old Salt' }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-rank-strict",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  for (const r of VETERANCY) if (s >= r.at) v = r;",
+    "new": "  for (const r of VETERANCY) if (s > r.at) v = r;",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-gunner-base",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Gunner: Object.freeze({ kind: 'reload', base: 0.04, per: 0.03 }),",
+    "new": "  Gunner: Object.freeze({ kind: 'reload', base: 0.05, per: 0.03 }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-gunner-step",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Gunner: Object.freeze({ kind: 'reload', base: 0.04, per: 0.03 }),",
+    "new": "  Gunner: Object.freeze({ kind: 'reload', base: 0.04, per: 0.02 }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-carpenter-base",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Carpenter: Object.freeze({ kind: 'mend', base: 0.15, per: 0.1 }),",
+    "new": "  Carpenter: Object.freeze({ kind: 'mend', base: 0.1, per: 0.1 }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-lookout-step",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Lookout: Object.freeze({ kind: 'sight', base: 0.1, per: 0.1 }),",
+    "new": "  Lookout: Object.freeze({ kind: 'sight', base: 0.1, per: 0.05 }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-cook-base",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Cook: Object.freeze({ kind: 'wear', base: 0.25, per: 0.25 }),",
+    "new": "  Cook: Object.freeze({ kind: 'wear', base: 0, per: 0.25 }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-bosun-step",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  Bosun: Object.freeze({ kind: 'way', base: 0.01, per: 0.01 }),",
+    "new": "  Bosun: Object.freeze({ kind: 'way', base: 0.01, per: 0.02 }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-mate-hands",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  'First Mate': Object.freeze({ kind: 'hands', hands: Object.freeze([0, 0, 1, 2]) }),",
+    "new": "  'First Mate': Object.freeze({ kind: 'hands', hands: Object.freeze([0, 1, 1, 2]) }),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-best-holder",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    if (!out[h.role] || v.tier > out[h.role].tier) out[h.role] = { name: h.name, tier: v.tier, label: v.label };",
+    "new": "    if (!out[h.role] || v.tier >= out[h.role].tier) out[h.role] = { name: h.name, tier: v.tier, label: v.label };",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ],
+    "note": "a later hand of the same rank takes the post"
+  },
+  {
+    "name": "CC-ashore-works",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    if (!h || !POST_WORTH[h.role] || away?.has(h.name)) continue;",
+    "new": "    if (!h || !POST_WORTH[h.role]) continue;",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-reload-sign",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    reload: 1 - w('Gunner'),",
+    "new": "    reload: 1 + w('Gunner'),",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-mend-unread",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    mend: 1 + w('Carpenter'),",
+    "new": "    mend: 1,",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-sight-unread",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    sight: 1 + w('Lookout'),",
+    "new": "    sight: 1,",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-way-unread",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "    way: 1 + w('Bosun'),",
+    "new": "    way: 1,",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-wear-unread",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "        seaT += dt / (Number(wear) > 1 ? Number(wear) : 1);",
+    "new": "        seaT += dt;",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-wear-floor",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "        seaT += dt / (Number(wear) > 1 ? Number(wear) : 1);",
+    "new": "        seaT += dt / (Number(wear) > 0 ? Number(wear) : 1);",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-hire-service",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "          prior: start,",
+    "new": "          prior: 0,",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-hire-cap",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "      const start = Math.max(0, Math.min(VETERANCY[VETERANCY.length - 1].at, service | 0));",
+    "new": "      const start = Math.max(0, service | 0);",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-card-rank",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "      `${h.name}, ${h.role}${deeds ? ` - ${deeds}` : ''}${v.tier > 0 ? ` - ${v.label}` : ''}${ashore?.has(h.name) ? ' - ashore with you' : ''}`,",
+    "new": "      `${h.name}, ${h.role}${deeds ? ` - ${deeds}` : ''}${''}${ashore?.has(h.name) ? ' - ashore with you' : ''}`,",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-words-gunner",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "  if (role === 'Gunner') return `the guns reload ${pc(w)} quicker`;",
+    "new": "  if (role === 'Gunner') return `the guns reload quicker`;",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-fleet-holds",
+    "file": "src/ui/fleetPage.js",
+    "old": "  const worth = holds ? postWords(h.role, v.tier) : '';",
+    "new": "  const worth = postWords(h.role, v.tier);",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-host-gunner",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "reloadScaleOf(st.crew.morale, st.crew.order) * st.worth.reload : 1) });",
+    "new": "reloadScaleOf(st.crew.morale, st.crew.order) : 1) });",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-host-posts-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "s.worth = captainWorth(b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH, deps.captain?.stats?.());",
+    "new": "s.worth = captainWorth(NO_WORTH, deps.captain?.stats?.());",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-host-cook",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "atSea: !inPortWaters(), wear: s.worth.wear });",
+    "new": "atSea: !inPortWaters() });",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-host-carpenter-repair",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "mendScaleOf(s.crew.morale) * (s.worth?.mend ?? 1) : 1) * (underFire",
+    "new": "mendScaleOf(s.crew.morale) : 1) * (underFire",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-host-carpenter-mend",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "scale: b.crewed ? mendScaleOf(s.crew.morale) * (s.worth?.mend ?? 1) : 1 });",
+    "new": "scale: b.crewed ? mendScaleOf(s.crew.morale) : 1 });",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-host-mate",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "return Math.max(1, Math.min(base + 1 + mate, base + handsBonusOf(st.crew.morale, st.crew.order) + mate, Math.max(base + 1, men)));",
+    "new": "return Math.max(1, Math.min(base + 1, base + handsBonusOf(st.crew.morale, st.crew.order), Math.max(base + 1, men)));",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-host-lookout",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "nightSight(SAIL_HO_RANGE * sight, { night, lit: showsLight(e) })",
+    "new": "nightSight(SAIL_HO_RANGE, { night, lit: showsLight(e) })",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-host-postsway-crewless",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (!enabled || !boat?.crewed) return 1;\n    const st = boat.uid",
+    "new": "if (!enabled) return 1;\n    const st = boat.uid",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  },
+  {
+    "name": "CC-world-bosun",
+    "file": "src/scenes/world.js",
+    "old": "speed: (Number(r?.speed) || 1) * k }; },",
+    "new": "speed: (Number(r?.speed) || 1) }; },",
+    "tests": [
+      "test/systems/naval/captcrew.test.js"
+    ]
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "name": "RENOWN-ACCOUNT-the-full-rate-kept",
+    "file": "src/net/renown.js",
+    "old": "export const RENOWN_RATE_PCT = 75;",
+    "new": "export const RENOWN_RATE_PCT = 100;",
+    "tests": [
+      "test/server/renown_account.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-ACCOUNT-the-rate-rounded-not-floored",
+    "file": "src/net/renown.js",
+    "old": "  Math.floor((Math.max(0, Math.trunc(Number(fullXp) || 0)) * RENOWN_RATE_PCT) / 100);",
+    "new": "  Math.round((Math.max(0, Math.trunc(Number(fullXp) || 0)) * RENOWN_RATE_PCT) / 100);",
+    "tests": [
+      "test/server/renown_account.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-ACCOUNT-a-kill-at-the-full-rate",
+    "file": "src/net/renown.js",
+    "old": "  renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
+    "new": "  RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown));",
+    "tests": [
+      "test/server/renown_account.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-ACCOUNT-a-quest-at-the-full-rate",
+    "file": "src/net/renown.js",
+    "old": "  renownRate(\n    RENOWN_QUEST_XP_BASE +\n      RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown)),\n  );",
+    "new": "  RENOWN_QUEST_XP_BASE +\n  RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown));",
+    "tests": [
+      "test/server/renown_account.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-ACCOUNT-the-hour-at-20000",
+    "file": "src/net/renown.js",
+    "old": "export const RENOWN_XP_HOUR_MAX = 15_000;",
+    "new": "export const RENOWN_XP_HOUR_MAX = 20_000;",
+    "tests": [
+      "test/server/renown_account.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-ACCOUNT-the-migration-sums-the-alts",
+    "file": "server-account/migrations/0021_renown_account.sql",
+    "old": "  SELECT t.player, MAX(t.xp),",
+    "new": "  SELECT t.player, SUM(t.xp),",
+    "tests": [
+      "test/server/renown_account.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-ACCOUNT-the-migration-rows-an-empty-account",
+    "file": "server-account/migrations/0021_renown_account.sql",
+    "old": "  HAVING MAX(t.xp) > 0;",
+    "new": "  HAVING MAX(t.xp) >= 0;",
+    "tests": [
+      "test/server/renown_account.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN-ACCOUNT-the-migration-reads-the-oldest-report",
+    "file": "server-account/migrations/0021_renown_account.sql",
+    "old": "ORDER BY r.updated_at DESC, r.char_id LIMIT 1),",
+    "new": "ORDER BY r.updated_at ASC, r.char_id LIMIT 1),",
+    "tests": [
+      "test/server/renown_account.test.js"
+    ]
+  }
+]

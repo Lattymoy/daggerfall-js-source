@@ -1,0 +1,382 @@
+[
+  {
+    "name": "OW4D1-door-refused-in-the-peaks",
+    "file": "src/scenes/world.js",
+    "old": "    if (!door && !water && !dragonMounted() && tvRouteGround().peakAt(pix.x, pix.y))",
+    "new": "    if (!water && !dragonMounted() && tvRouteGround().peakAt(pix.x, pix.y))",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON6): the line the dragon's flight joins. AUDIT OW4 D1: a spawn's door among the peaks is refused as a spot is - its plate walks nowhere."
+  },
+  {
+    "name": "OW4D1-door-goal-asked",
+    "file": "src/scenes/world.js",
+    "old": "let plan = (dragonMounted() ? dragonFlightPlan(from, pix) : null) ?? planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });",
+    "new": "let plan = (dragonMounted() ? dragonFlightPlan(from, pix) : null) ?? planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: false, sea: seaAsk });",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON6): the line the dragon's flight joins. AUDIT OW4 D1: a door's own pixel's step is asked - a spawn on a Mountain pixel or a plateau has no way in."
+  },
+  {
+    "name": "OW4D1-spawn-walked-as-a-spot",
+    "file": "src/scenes/world.js",
+    "old": "{ x: g.px, y: g.py }, { door: g.rect });",
+    "new": "{ x: g.px, y: g.py });",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D1/D6: the spawn's plate walks a spot to its middle again - refused in the peaks, and into its walls."
+  },
+  {
+    "name": "OW4D2-gone-listed",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "    if (spawnGone(s)) continue; // AUDIT OW4 D2: its time ran out - gone, whatever the index still holds\n    out.push({",
+    "new": "    out.push({",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D2: an expired spawn is listed - its plate and walk stand until its pixel rebuilds."
+  },
+  {
+    "name": "OW4D2-gone-by-default",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  spawnGone = () => false,",
+    "new": "  spawnGone = () => true,",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D2: with no clock handed in every spawn is gone."
+  },
+  {
+    "name": "OW4D2-host-gone-not-handed",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "      spawnFound: tvSpawnFound, spawnGone: (s) => tvSpawnGone(s.x, s.y) })",
+    "new": "      spawnFound: tvSpawnFound })",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D2: the host hands the list no clock - a rebuilt list keeps the expired spawn."
+  },
+  {
+    "name": "OW4D2-kept-list-never-asks-the-clock",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "    if (host.tvDng.list.some((g) => g.spawn && tvSpawnGone(g.px, g.py))) host.tvDng.at = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D2: the kept list never sees time pass - an expired spawn stands while the traveller does."
+  },
+  {
+    "name": "OW4D2-walk-no-clock",
+    "file": "src/scenes/world.js",
+    "old": " || tvSpawnGone(g.px, g.py) || !travelViewCanGo()) return false;",
+    "new": " || !travelViewCanGo()) return false;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D2: the click never asks the clocks - a plate drawn before the expiry still walks."
+  },
+  {
+    "name": "OW4D2-gone-while-inside",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "if (_insideSpawn(key)) return false; const b = host.built.get(key);",
+    "new": "const b = host.built.get(key);",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D2: the Overworld's test forgets TTL1's own exception (never while the player is in it)."
+  },
+  {
+    "name": "OW4D3-announced-outlive-load",
+    "file": "src/scenes/world.js",
+    "old": "    _announcedSpawnPixels.clear();\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D3: a load keeps the abandoned run's announced spawns - another character sees its \"?\" marks."
+  },
+  {
+    "name": "OW4D4-filed-dropped",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "isFound, spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)],",
+    "new": "isFound, spawns: [...spawnedPixels(locationIndex)],",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: after a reload a found spawn past the stream has no far plate."
+  },
+  {
+    "name": "OW4D4-unfiled-marked",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "      if (Math.hypot(x - at.x, y - at.y) > range || !rolls(x, y) || !filed(x, y) || indexed(x, y)) continue;",
+    "new": "      if (Math.hypot(x - at.x, y - at.y) > range || !rolls(x, y) || indexed(x, y)) continue;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: every spawn in the far range is marked, found or not."
+  },
+  {
+    "name": "OW4D4-unrolled-marked",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "      if (Math.hypot(x - at.x, y - at.y) > range || !rolls(x, y) || !filed(x, y) || indexed(x, y)) continue;",
+    "new": "      if (Math.hypot(x - at.x, y - at.y) > range || !filed(x, y) || indexed(x, y)) continue;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: a filed id on a pixel no spawn rolls on stands a spawn."
+  },
+  {
+    "name": "OW4D4-built-twice",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "      if (Math.hypot(x - at.x, y - at.y) > range || !rolls(x, y) || !filed(x, y) || indexed(x, y)) continue;",
+    "new": "      if (Math.hypot(x - at.x, y - at.y) > range || !rolls(x, y) || !filed(x, y)) continue;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: a spawn the index holds is listed twice."
+  },
+  {
+    "name": "OW4D4-a-square",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "      if (Math.hypot(x - at.x, y - at.y) > range || !rolls(x, y) || !filed(x, y) || indexed(x, y)) continue;",
+    "new": "      if (!rolls(x, y) || !filed(x, y) || indexed(x, y)) continue;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: the far found spawns are gathered from a square, past the far range's circle."
+  },
+  {
+    "name": "OW4D4-off-the-map-y",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  for (let y = Math.max(1 - WORLD_PIXEL_SPAN, at.y - r); y <= Math.min(WORLD_PIXEL_SPAN - 1, at.y + r); y++) {",
+    "new": "  for (let y = at.y - r; y <= at.y + r; y++) {",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: rows off the map are asked (spawnedMapId throws on them). TVD-WORLD re-aimed by content: the circle is the world's grid now - rows off it asked."
+  },
+  {
+    "name": "OW4D4-off-the-map-x",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "    for (let x = Math.max(1 - WORLD_PIXEL_SPAN, at.x - r); x <= Math.min(WORLD_PIXEL_SPAN - 1, at.x + r); x++) {",
+    "new": "    for (let x = at.x - r; x <= at.x + r; x++) {",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: columns off the map are asked. TVD-WORLD re-aimed by content: the circle is the world's grid now - columns off it asked."
+  },
+  {
+    "name": "OW4D4-nothing-stands-kept",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "      if (loc) out.push({ x, y, loc });",
+    "new": "      out.push({ x, y, loc });",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: a pixel on which nothing would stand is listed with no location."
+  },
+  {
+    "name": "OW4D4-host-offline",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "(params.has('online') ? filedSpawns(",
+    "new": "(true ? filedSpawns(",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: offline (no spawns) the filed pixel ids are asked for spawns anyway."
+  },
+  {
+    "name": "OW4D4-host-filed-any",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "filed: (x, y) => hasDiscoveredLocationId(spawnedMapId(_spawnSalt, x, y)),",
+    "new": "filed: () => true,",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: the host marks every rolled spawn in range, found or not."
+  },
+  {
+    "name": "OW4D4-host-indexed-never",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "indexed: (x, y) => locationIndex.has(`${x},${y}`),",
+    "new": "indexed: () => false,",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: a built spawn is listed again off the store."
+  },
+  {
+    "name": "OW4D4-host-rolls-any",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "rolls: (x, y) => spawnsDungeon(_spawnSalt, x, y),",
+    "new": "rolls: () => true,",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: any filed pixel id stands a spawn, rolled or not."
+  },
+  {
+    "name": "OW4D4-stand-at-sea",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;",
+    "new": "    if (!plateauDry(px, py)) return null;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: a far spawn is marked at sea, where the feature stands none."
+  },
+  {
+    "name": "OW4D4-stand-expired",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();",
+    "new": "    const roads = terrainGen.roads();",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: a far spawn whose clocks ran out is marked."
+  },
+  {
+    "name": "OW4D4-stand-on-a-road",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;",
+    "new": "    if (!inBay(px, py) && placeAt(px, py)) return null;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: a far spawn is marked on a pixel a path crosses (SPAWN-ROADS stands none)."
+  },
+  {
+    "name": "OW4D4-stand-before-roads",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (roads && !pathFreePixel(roads, px, py)) return null;",
+    "new": "    if (!roads || !pathFreePixel(roads, px, py)) return null;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D4: before the network lands no far spawn is marked, where the feature stands them provisionally."
+  },
+  {
+    "name": "OW4D5-size-again",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "const grid = Math.max(1, state.terrainDistance ?? 3), n = `${host._locIndexGen}:${tvDungeonRowsAt.gen()}`;",
+    "new": "const grid = Math.max(1, state.terrainDistance ?? 3), n = `${locationIndex.size}:${tvDungeonRowsAt.gen()}`;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D5: the kept list keys on the index's size - a spawn gone and another come in one window is never seen. TVD-WORLD re-aimed by content: the key carries the lairs' gen beside the index's generation."
+  },
+  {
+    "name": "OW4D5-stood-unbumped",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "      host._locIndexGen += 1;   // AUDIT OW4 D5\n      locationIndex.set(key, loc);",
+    "new": "      locationIndex.set(key, loc);",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D5: a spawn stood leaves the generation alone."
+  },
+  {
+    "name": "OW4D5-expired-unbumped",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "        host._locIndexGen += 1;   // AUDIT OW4 D5\n        locationIndex.delete(key);\n        return null;",
+    "new": "        locationIndex.delete(key);\n        return null;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D5: a spawn expired at its build leaves the generation alone."
+  },
+  {
+    "name": "OW4D5-sweep-unbumped",
+    "file": "src/scenes/world.js",
+    "old": "    if (_spawnUnroaded.size) _locIndexGen += 1;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D5: the roads sweep takes spawns back unseen."
+  },
+  {
+    "name": "OW4D5-sweep-always",
+    "file": "src/scenes/world.js",
+    "old": "    if (_spawnUnroaded.size) _locIndexGen += 1;",
+    "new": "    _locIndexGen += 1;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D5: every sweep rebuilds the list, nothing taken back or not."
+  },
+  {
+    "name": "OW4D6-feet-again",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  const prev = legs?.length > 1 ? legs[legs.length - 2] : null;",
+    "new": "  const prev = null;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D6: the last leg is taken to start at the feet - a bent route walks its last leg through the walls."
+  },
+  {
+    "name": "OW4D6-join-passed-over",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  if (prev.at) return { x: prev.at.x, z: prev.at.z };\n  const [x, z] = centre(prev);",
+    "new": "  const [x, z] = centre(prev);",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D6: a join before the last leg is read as its pixel's middle."
+  },
+  {
+    "name": "OW4D6-the-last-leg-itself",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  const prev = legs?.length > 1 ? legs[legs.length - 2] : null;",
+    "new": "  const prev = legs?.length > 1 ? legs[legs.length - 1] : null;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D6: the last leg's own pixel is taken for where it starts."
+  },
+  {
+    "name": "OW4D6-host-feet",
+    "file": "src/scenes/world.js",
+    "old": "lastLegStart(legs, state.worldCoords(player.pos), tvLegMid)",
+    "new": "state.worldCoords(player.pos)",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D6: the host faces the door to the feet again."
+  },
+  {
+    "name": "OW4D7-nearest-twelve",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  rest.sort((a, b) => (b.found ? 1 : 0) - (a.found ? 1 : 0) || nearer(a, b)); // AUDIT OW4 D7: the found first",
+    "new": "  rest.sort(nearer); // AUDIT OW4 D7: the found first",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D7: the twelve are the nearest twelve - found plates drop behind nearer \"?\"s."
+  },
+  {
+    "name": "OW4D7-found-last",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  rest.sort((a, b) => (b.found ? 1 : 0) - (a.found ? 1 : 0) || nearer(a, b)); // AUDIT OW4 D7: the found first",
+    "new": "  rest.sort((a, b) => (a.found ? 1 : 0) - (b.found ? 1 : 0) || nearer(a, b)); // AUDIT OW4 D7: the found first",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D7: the found ones are the first to go."
+  },
+  {
+    "name": "OW4D7-kept-found-first",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  return [...out.filter(inGrid), ...rest.slice(0, max)].sort(nearer);",
+    "new": "  return [...out.filter(inGrid), ...rest.slice(0, max)];",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "AUDIT OW4 D7: what is kept is handed back found-first, not nearest first."
+  }
+]

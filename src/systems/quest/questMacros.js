@@ -1,0 +1,1538 @@
+// THE MACRO ENGINE (Q4-i) - QuestMacroHelper.cs + QuestMCP.cs + the
+// MacroHelper.cs subset the quest path routes through. Resolves the
+// in-place text macros of quest messages: the SYMBOL macros
+// (_symbol_ name, __symbol_ town, ___symbol_ place, ____symbol_
+// region, =symbol_ details, ==symbol_ faction, =#symbol_ binding)
+// answered by the owning resource's expandMacro, and the %-CONTEXT
+// macros answered by the handler table over the quest's macro data
+// source (QuestMCP) with the machine's seams behind it.
+//
+// THE ERROR SHAPES ARE C#'s OWN (MacroHelper.GetValue): a token
+// missing from the table renders `%x[undefined]`; a null table entry
+// renders `%x[unhandled]`; a handler answering null renders `%x[nullMCP]`;
+// a NotImplemented source method falls to the SECOND context
+// provider (quest.externalMCP - the offer/talk window's NPC source,
+// Q4-ii) and renders `%x[srcDataUnknown]` when that misses too.
+// HEADLESS the world-backed handlers answer null and the error
+// shapes surface LOUDLY - the corpus gate's charter.
+//
+// KEPT QUIRKS: the macro regex's inner class [a-zA-Z0-9.]+ has no
+// underscore, so `_one_day_` truncates to `_one_` and misses its
+// resource - the raw text stands, verbatim DFU; %pct (GuildTitle)
+// with no external MCP falls through the null-mcp arm to the
+// PLAYER's name. (%di's NRE on an unreferenced place - C# reads
+// lastPlaceReferenced.scope BEFORE the null check - is retired:
+// QUEST-AUDIT III DI-UNREF, "...never mind...".) L10N3g: GrammarManager.ProcessGrammar runs over each
+// finished token (QuestMacroHelper.cs:158) - English's rules are the
+// identity, a language's resolve its pack's grammar tokens.
+//
+// Handlers the C# table carries but no corpus message reaches are
+// NOT ported: they answer the token unchanged with one warn
+// (PENDING_HANDLERS) - the coverage-ordered doctrine, the action
+// registry's guard precedent.
+
+import { srand, randomRangeInclusive } from '../../formats/dfRandom.js';
+import { liveStat } from '../statMods.js'; // M-X: %mad's MagicResist read
+import { permanentSkillValue, SKILL_NAMES } from '../skills.js'; // M-X: %ski
+import {
+  entityMaxEncumbrance,
+  damageModifier,
+  toHitModifier,
+  hitPointsModifier,
+  healingRateModifier,
+} from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength); ATTRMACRO1: and the four DERIVED modifiers
+import { surname, getRandomNameBank } from '../../characters/nameHelper.js'; // M-X: %ln (E-fix: GetRandomNameBank)
+import { GENDERS, getNameBankOfRegion, fullName, getNameBank } from '../../characters/nameHelper.js';
+import { personName, randomPersonName } from '../../characters/personNames.js'; // REGION-NAMES: %n %fn %mn, and AUDIT 58's GetRandomFullName draw
+
+// FactionRaces number -> race key (FactionFile.cs:609-624 through
+// RaceTemplate.GetRaceFromFactionRace; unmapped falls to Breton in
+// getNameBank's default arm, as C#'s None does).
+const FACTION_RACE_KEYS = Object.freeze({
+  0: 'Nord',
+  1: 'Khajiit',
+  2: 'Redguard',
+  3: 'Breton',
+  4: 'Argonian',
+  5: 'WoodElf',
+  6: 'HighElf',
+  7: 'DarkElf',
+});
+import {
+  dateFromSeconds,
+  dateString,
+  dayName,
+  monthName,
+  birthSignName,
+  seasonName,
+  CLASSIC_EPOCH_IN_SECONDS,
+} from '../gameDate.js';
+import { skySecondsOfEvent } from '../skyCalendar.js'; // TIME3: a journal date (the event clock's) on the sky's calendar
+import { REGION_TEMPLES, LOCATION_TYPES } from '../../formats/mapsFile.js';
+import { REGION_NAMES, isProvinceRegion } from '../../formats/mapsTables.js'; // BAY-LEFT-B: %lp past the Bay, the province's own name
+import { factionRaceFromRace } from '../../characters/staticNpc.js';
+import { rulerTitle } from '../../world/buildingNames.js'; // AUDIT 68 S30-ruler-divine-tables-dup: GetRulerTitle's one home
+import {
+  localizedStrings,
+  localizedTable,
+  localizedText,
+  getLocalizedLocationName,
+  getLocalizedRegionName,
+} from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
+import { getLocalizedFactionName, processGrammar } from '../textManager.js'; // L10N3e: the faction names shown; L10N3g: the language's grammar over a finished message
+import { legalStandingWord } from '../legalBands.js'; // %ltn's fourteen bands, one home
+
+export const MACRO_TYPES = Object.freeze({
+  None: 0,
+  NameMacro1: 1,
+  NameMacro2: 2,
+  NameMacro3: 3,
+  NameMacro4: 4,
+  DetailsMacro: 5,
+  FactionMacro: 6,
+  ContextMacro: 7,
+  BindingMacro: 8,
+});
+
+// Internal_Strings en values the handlers speak.
+const EN = localizedStrings({
+  pronounHe: 'he',
+  pronounShe: 'she',
+  pronounHim: 'him',
+  pronounHer: 'her',
+  pronounHimself: 'himself',
+  pronounHerself: 'herself',
+  pronounHis: 'his',
+  pronounHer2: 'her',
+  pronounHis2: 'his',
+  pronounHers: 'hers',
+  comma: ',  ', // Internal_Strings id 424 is a comma and TWO spaces (AUDIT 24)
+  // Internal_Strings id 425 - AUDIT 24: the en value is '...never mind...',
+  // NOT the key name. This is what DFU prints when a place will not
+  // resolve, and the port had been printing 'Resolving Error'.
+  resolvingError: '...never mind...',
+  letterPrefix: 'Letter: ',
+});
+
+// GetRandomDivine (QuestMCP.cs): Range(0,9) over the enum NAMES.
+const DIVINES = Object.freeze([
+  'Arkay',
+  'Zen',
+  'Mara',
+  'Ebonarm',
+  'Akatosh',
+  'Julianos',
+  'Dibella',
+  'Stendarr',
+  'Kynareth',
+]);
+
+// Temple.Divines (Temple.cs:49-59) - the enum's VALUE is the factionId,
+// and note the spelling: this arm says "Zenithar" where GetRandomDivine
+// above says "Zen", because one stringifies Temple.Divines and the
+// other FactionFile.FactionIDs. DFU's own inconsistency, kept. L10N3d:
+// this arm is `GetLocalizedText(divine.ToString())` (QuestMCP.cs:242),
+// so the name is DFU's key; the random arm is not localized in DFU.
+const DIVINE_BY_FACTION = localizedTable({
+  21: ['Arkay', 'Arkay'],
+  22: ['Zenithar', 'Zenithar'],
+  24: ['Mara', 'Mara'],
+  26: ['Akatosh', 'Akatosh'],
+  27: ['Julianos', 'Julianos'],
+  29: ['Dibella', 'Dibella'],
+  33: ['Stendarr', 'Stendarr'],
+  35: ['Kynareth', 'Kynareth'],
+});
+const THE_FIGHTERS_GUILD = 41; // FactionFile.FactionIDs (:90)
+
+/** Temple.GetDivine (Temple.cs:306-321): the temple hall answers by its
+ *  own factionId; a TEMPLAR ORDER answers by its faction record's
+ *  parent; anything else throws. */
+function templeDivine(w, factionId) {
+  if (DIVINE_BY_FACTION[factionId]) return DIVINE_BY_FACTION[factionId];
+  const rec = w?.getFactionData?.(factionId);
+  if (rec && DIVINE_BY_FACTION[rec.parent]) return DIVINE_BY_FACTION[rec.parent];
+  throw new Error(`There is no Divine that matches the factionId: ${factionId}`);
+}
+
+/** GetMacro (QuestMacroHelper.cs:285-377): the ordered alternation -
+ *  longest name-prefix first, then ==, =#, =, %. One macro per word;
+ *  the token is the exact matched substring (prefix..suffix), so
+ *  adjacent punctuation survives the replace. */
+const MACRO_PATTERN = new RegExp(
+  '(?<nm4>____[a-zA-Z0-9.]+_)' +
+    '|(?<nm3>___[a-zA-Z0-9.]+_)' +
+    '|(?<nm2>__[a-zA-Z0-9.]+_)' +
+    '|(?<nm1>_[a-zA-Z0-9.]+_)' +
+    '|(?<fac>==[a-zA-Z0-9.]+_)' +
+    '|(?<bind>=#[a-zA-Z0-9.]+_)' +
+    '|(?<det>=[a-zA-Z0-9.]+_)' +
+    '|(?<ctx>%\\w+)',
+);
+
+const GROUP_TYPES = [
+  ['nm4', MACRO_TYPES.NameMacro4, 4],
+  ['nm3', MACRO_TYPES.NameMacro3, 3],
+  ['nm2', MACRO_TYPES.NameMacro2, 2],
+  ['nm1', MACRO_TYPES.NameMacro1, 1],
+  ['fac', MACRO_TYPES.FactionMacro, 2],
+  ['bind', MACRO_TYPES.BindingMacro, 2],
+  ['det', MACRO_TYPES.DetailsMacro, 1],
+  ['ctx', MACRO_TYPES.ContextMacro, 1],
+];
+
+export function getMacro(word) {
+  const match = MACRO_PATTERN.exec(word);
+  if (!match) return { token: '', type: MACRO_TYPES.None, symbol: '' };
+  for (const [group, type, prefixLen] of GROUP_TYPES) {
+    const token = match.groups[group];
+    if (token == null) continue;
+    const symbol = type === MACRO_TYPES.ContextMacro ? token.slice(prefixLen) : token.slice(prefixLen, -1);
+    return { token, type, symbol };
+  }
+  return { token: '', type: MACRO_TYPES.None, symbol: '' };
+}
+
+/**
+ * MH1 - THE ONE WALK for window text outside the quest pipeline.
+ * MacroHelper is ONE file in DFU; the port had grown a third,
+ * lawless path beside its two real tables - replaceAll chains in
+ * talkSession, guildServiceActions and arrestFlow, each window
+ * rediscovering the two or three symbols it needed. This is the walk
+ * they all ride now.
+ *
+ * `values` is the CALLER's macro data source - its MCP, as a plain
+ * map of symbol (no '%') to value. The resolution per token:
+ *   1. the exact symbol in `values`: a non-null value expands (a
+ *      function is called - lazy, for values that cost something);
+ *      an explicitly NULL value leaves the token VERBATIM, which is
+ *      the `if (x != null)` guard the legacy chains carried;
+ *   2. absent from the map, the CONTEXT HANDLERS answer when a
+ *      questLike context (machine.macroContext()) rides in - the
+ *      same GetValue ladder the quest pipeline runs;
+ *   3. otherwise the token stays VERBATIM - these windows never
+ *      printed DFU's [undefined] shape and MH1 does not start.
+ *
+ * THE MATCH IS MAXIMAL-MUNCH WITH EXACT LOOKUP, GetMacro's own law
+ * (`%\w+`, then a dictionary hit on the whole symbol). That RETIRES
+ * a latent legacy bug: replaceAll('%a', ...) would also fire inside
+ * '%adj' or '%arm' and corrupt the longer symbol - the walk matches
+ * '%adj' whole, misses the map, and leaves it alone.
+ */
+export function expandMacroValues(text, values = {}, questLike = null) {
+  // MACRO-ONE: the context is the caller's, or else THE WORLD'S. DFU's
+  // MacroHelper never needs one handed to it for its global rows - they
+  // read GameManager.Instance - and the port's table reads the same facts
+  // off a quest machine's hooks. Only the callers that remembered to pass
+  // `questBridge.machine.macroContext()` got them, so every walk that
+  // passed a bare value map printed %ra, %crn, %cn raw. The bridge
+  // registers the world once (setMacroWorld) and every walk falls to it.
+  const ctx = questLike ?? macroWorld();
+  const vals = values ?? {};
+  return String(text ?? '').replace(/%\w+/g, (token) => {
+    const sym = token.slice(1);
+    if (sym in vals) {
+      const v = typeof vals[sym] === 'function' ? vals[sym]() : vals[sym];
+      // MACRO-ONE: a NULL is "this caller does not know", not "print the
+      // token" - it falls through to the context, and only a miss there
+      // leaves the token verbatim. The old guard made every map that
+      // listed a symbol it could not fill (a guild map's %ra, %pct, %hnr)
+      // a wall in front of the world that could.
+      if (v != null) return String(v);
+    }
+    const declared = sym in vals; // the caller named it and could not fill it
+    if (ctx && HANDLERS[token]) {
+      // ...and a caller's own context keeps DFU's throws (a %god with no
+      // Divine throws in MacroHelper too), but THE WORLD'S may not: it now
+      // reaches every window, and a handler that needs a subject the world
+      // does not have must cost the token, never the box.
+      //
+      // THE WORLD HAS NO SUBJECT. It answers only the rows MacroHelper
+      // reads off singletons (the player, the region, the date): no quest
+      // source, no NPC, no guild - so a subject-bound %n or %fon misses
+      // and stays for the caller who knows the speaker, rather than the
+      // world inventing a random name for it.
+      let v;
+      if (questLike) v = getContextValue(token, ctx, ctx.hooks);
+      else {
+        try {
+          v = getMacroValue(token, null, ctx.hooks, null);
+        } catch {
+          return token;
+        }
+      }
+      // MACRO-ONE: the WORLD'S fallback never prints an error shape. A
+      // row the world cannot answer (a subject-bound %god, %fon, %n with
+      // no provider) stays the token - the audit's gate names it - rather
+      // than trading "%fon" for "%fon[nullMCP]". A caller that passed its
+      // own context keeps the ladder's shapes exactly as before.
+      if ((!questLike || declared) && isErrorShape(v, token)) return token;
+      return v;
+    }
+    return token;
+  });
+}
+
+/** MACRO-ONE: THE ONE GAMEMANAGER. DFU resolves a global macro (the
+ *  player, the region, the date) off singletons, whoever is showing the
+ *  text; the port's equivalent is the live quest machine's macroContext().
+ *  createQuestBridge registers it here, once per host, so no window has
+ *  to remember to hand it over. A throwing or absent provider is no
+ *  context - a macro walk must never cost a frame. */
+let _macroWorld = null;
+export function setMacroWorld(fn) {
+  _macroWorld = typeof fn === 'function' ? fn : null;
+}
+export function macroWorld() {
+  try {
+    return _macroWorld?.() ?? null;
+  } catch {
+    return null;
+  }
+}
+const isErrorShape = (v, token) => typeof v !== 'string' || v.startsWith(token + '[');
+
+/** MACROS1 (2026-09-20, kurkku on Discord: "%map" and "%pcn / %fon" printed raw): TEXT.RSC ROWS through the value
+ *  expander. A record read through the host's `lines(id)` is `[{ text, center }]` (or bare strings), and the boxes
+ *  that show one - an item's use, a guild's join prompt - showed the record verbatim where DFU's MessageBox runs
+ *  MacroHelper over it with a context (the map's revealed location, the guild as %fon's provider). The values are the
+ *  caller's, as `expandMacroValues` takes them; a row keeps its shape and its `center`. Nothing to expand: the rows
+ *  come back as they were. */
+export function expandRowValues(rows, values = null, questLike = null) {
+  // DAEDRA1 (2026-09-21, Dracula/Valentin on Discord: "daedra summoning
+  // is fucked", with the coven's box reading "Today is %dat, the day of
+  // summoning for %dae ... %pcn"): THE CONTEXT RIDES HERE TOO.
+  //
+  // This walk took an explicit value map and nothing else, so a caller
+  // with no values of its own had no way to ask for the table every
+  // OTHER box in the port resolves through - %pcn, %dat, %cn and the
+  // rest of MacroHelper's global rows, which `expandMacroValues`
+  // already answers from a questLike context (ROAD-E E7's ONE
+  // GAMEMANAGER: the quest machine's hooks are the port's stand-in for
+  // GameManager.Instance, whichever window is expanding). It was
+  // reachable only by passing a hand-filled map, which is the same
+  // "filled for the symbols somebody expected" shape MACROS1 paid for.
+  //
+  // Either source alone is enough to walk: values with no context, a
+  // context with no values, or both - the value map still wins a
+  // symbol it carries, exactly as `expandMacroValues` orders them.
+  if (!Array.isArray(rows)) return rows;
+  const hasValues = !!values && !!Object.keys(values).length;
+  if (!hasValues && !questLike && !macroWorld()) return rows; // MACRO-ONE: the world's context is a source too
+  const one = (t) => expandMacroValues(t ?? '', values ?? {}, questLike);
+  return rows.map((row) =>
+    typeof row === 'string' ? one(row) : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row,
+  );
+}
+
+// ---- the quest's macro data source (QuestMCP.cs) ----
+
+// The NotImplemented sentinel: a source method C#'s MacroDataSource
+// base throws for. GetValue's ladder falls to the second provider.
+export const NOT_IMPLEMENTED = Symbol('NotImplementedException');
+
+const pronounOf = (quest, male, female) => {
+  const last = quest.lastResourceReferenced;
+  return last?.gender === GENDERS.Female ? female : male;
+};
+
+/** QuestMacroDataSource (QuestMCP.cs): the quest-context answers.
+ *  Every method mirrors its C# body; absent = the base's
+ *  NotImplementedException. */
+/** ATTRMACRO1: DaggerfallStatsMCP - the MACRO SOURCE THE PORT NEVER HAD. The eight attribute reads and the rating
+ *  word behind `%str..%luc` and `%ark` have been wired to `call(mcp, ...)` all along with nothing on the other end,
+ *  so the character sheet's eight description boxes printed their tokens raw.
+ *
+ *  IT IS STATEFUL BY DESIGN, and that is the whole subtlety: `AttributeRating()` takes no argument and reads the
+ *  LAST stat macro this same expansion evaluated ("Context is based off the last stat macro accessed"). It works
+ *  because every record says "%str ... %ark" in that order and the expander walks left to right. The defaults are
+ *  the reference's own - Strength and 0 - so a bare `%ark` with no stat before it answers the bottom rating rather
+ *  than throwing. One source per expansion; never share one between two boxes.
+ *
+ *  The thresholds are `{10,20,...,90,1000}` walked with `while (v >= t[i]) i++`, which for a stat capped at 100 is
+ *  `min(floor(v/10), 9)`. The eighty words are the reference's own list - NOT TEXT.RSC, which is why nothing in
+ *  ARENA2 supplies them and they are written down here. */
+export const STAT_RATINGS = Object.freeze({
+  strength: [
+    'pathetic',
+    'frail',
+    'weak',
+    'below average',
+    'about average',
+    'fairly strong',
+    'athletic',
+    'very strong',
+    'powerful',
+    'superhuman',
+  ],
+  intelligence: [
+    'vegetable-like',
+    'idiotic',
+    'half-witted',
+    'dim',
+    'about average',
+    'cunning',
+    'fairly clever',
+    'very intelligent',
+    'brilliant',
+    'genius',
+  ],
+  willpower: [
+    'inane',
+    'submissive',
+    'passive',
+    'distracted',
+    'unassertive',
+    'stable',
+    'confident',
+    'strong-willed',
+    'very focused',
+    'enlightened',
+  ],
+  agility: [
+    'oafish',
+    'bumbling',
+    'clumsy',
+    'awkward',
+    'about average',
+    'spry',
+    'nimble',
+    'dexterous',
+    'very agile',
+    'acrobatic',
+  ],
+  endurance: [
+    'sickly',
+    'pitiable',
+    'unsteady',
+    'erratic',
+    'about average',
+    'above average',
+    'very healthy',
+    'hardy',
+    'titanic',
+    'immortal',
+  ],
+  personality: [
+    'abhorrent',
+    'unpopular',
+    'anonymous',
+    'unassuming',
+    'unremarkable',
+    'interesting',
+    'charming',
+    'arresting',
+    'authoritative',
+    'charismatic',
+  ],
+  speed: [
+    'inactive',
+    'sluggish',
+    'very slow',
+    'slow',
+    'about average',
+    'above average',
+    'fast',
+    'fleet-footed',
+    'lightning-fast',
+    'meteoric',
+  ],
+  luck: [
+    'cursed',
+    'hopeless',
+    'ill-favored',
+    'unfortunate',
+    'about average',
+    'fairly lucky',
+    'lucky',
+    'fortunate',
+    'very auspicious',
+    'divinely favored',
+  ],
+});
+const STAT_RATING_THRESHOLDS = Object.freeze([10, 20, 30, 40, 50, 60, 70, 80, 90, 1000]);
+
+export function statsMacroSource(entity) {
+  let lastStat = 'strength',
+    lastStatValue = 0; // the reference's own defaults
+  const read = (key) => {
+    lastStat = key;
+    lastStatValue = liveStat(entity, key);
+    return String(lastStatValue);
+  };
+  return {
+    str: () => read('strength'),
+    int: () => read('intelligence'),
+    wil: () => read('willpower'),
+    agi: () => read('agility'),
+    end: () => read('endurance'),
+    per: () => read('personality'),
+    spd: () => read('speed'),
+    luck: () => read('luck'),
+    attributeRating() {
+      let i = 0;
+      while (i < STAT_RATING_THRESHOLDS.length && lastStatValue >= STAT_RATING_THRESHOLDS[i]) i++;
+      return STAT_RATINGS[lastStat][i];
+    },
+  };
+}
+
+export function questMacroSource(quest) {
+  const world = () => quest.hooks?.world ?? null;
+  return {
+    // %n %nam - seeded by the quest UID; gender by DFRandom's own coin
+    name() {
+      srand(quest.uid);
+      const w = world();
+      const bank = getNameBankOfRegion(w?.currentRegionIndex?.() ?? -1);
+      const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;
+      return personName(bank, gender);
+    },
+    // %fn - seed uid; %mn - seed uid + 3457
+    femaleName() {
+      srand(quest.uid);
+      return personName(getNameBankOfRegion(world()?.currentRegionIndex?.() ?? -1), GENDERS.Female);
+    },
+    maleName() {
+      srand(quest.uid + 3457);
+      return personName(getNameBankOfRegion(world()?.currentRegionIndex?.() ?? -1), GENDERS.Male);
+    },
+    // %kno - the quest faction's name, 'The ' trimmed for readability.
+    // L10N3e: GetFactionData hands the name back in the player's
+    // language (QuestMCP.cs:60, PersistentFactionData.cs:176), and the
+    // trim (:61) reads THAT name
+    factionOrderName() {
+      const record = world()?.getFactionData?.(quest.factionId);
+      if (!record) return null;
+      const name = getLocalizedFactionName(quest.factionId, record.name);
+      return name.startsWith('The ') ? name.slice(4) : name;
+    },
+    pronoun() {
+      return pronounOf(quest, EN.pronounHe, EN.pronounShe);
+    },
+    pronoun2() {
+      return pronounOf(quest, EN.pronounHim, EN.pronounHer);
+    },
+    pronoun2self() {
+      return pronounOf(quest, EN.pronounHimself, EN.pronounHerself);
+    },
+    pronoun3() {
+      return pronounOf(quest, EN.pronounHis, EN.pronounHer2);
+    },
+    pronoun4() {
+      return pronounOf(quest, EN.pronounHis2, EN.pronounHers);
+    },
+    // %vcn - the last-referenced Person's vampire clan by HOME region
+    vampireNpcClan() {
+      const person = quest.lastResourceReferenced;
+      if (!person?.isPerson) return null;
+      if (person.factionData?.type !== 6) return null; // FactionTypes.VampireClan
+      let regionIndex = person.homeRegionIndex ?? -1;
+      if (regionIndex === -1) regionIndex = world()?.currentRegionIndex?.() ?? -1;
+      // L10N3e: the person's faction record came off GetFactionData, its
+      // name in the player's language (QuestMCP.cs:162) - by its id
+      return (
+        world()?.regionVampireClanName?.(regionIndex) ??
+        getLocalizedFactionName(person.factionData.id, person.factionData.name)
+      );
+    },
+    // %qdt %qdat - the CURRENT log step's date (the journal sets
+    // currentLogMessageId while rendering; -1 falls to quest start)
+    questDate() {
+      // TIME3: the step's stamp is the event clock's (quest.js, worldSeconds) and the calendar the player reads is the
+      // sky's: the date is the sky's at the instant the step was logged - offline the one clock, the stamp itself
+      return dateString(dateFromSeconds(skySecondsOfEvent(quest.getCurrentLogMessageTime())));
+    },
+    // %oth - by the questor's race (DFU's fix over classic's region
+    // race); the seam speaks TEXT.RSC 201+oathId.
+    //
+    // AUDIT 24 (the seven-slice sweep): every branch here now carries a
+    // RACES value and ONE GetFactionRaceFromRace runs at the end,
+    // exactly as QuestMCP.Oath (:182-202) does it. It used to mix the
+    // two enums - the questor branch read a FactionRaces field, the
+    // clicked branch read a Races off NPCData, and the region fallback
+    // read whatever currentRegionRace() felt like - and then added all
+    // three to 201 as if they were one numbering.
+    oath() {
+      let race = -1; // Races (EntityEnums), -1 = None
+      const questors = [...(quest.questors?.keys() ?? [])];
+      if (questors.length > 0) race = quest.getPerson({ name: questors[0] })?.race ?? -1;
+      else {
+        // "%oth is used in some of the main quests before the questor
+        // is actually set. In this case try to use the data from the
+        // last clicked NPC, which should be the questor." (:191-193)
+        const clicked = quest.hooks?.lastNPCClicked?.();
+        if (clicked) race = clicked.race ?? -1;
+      }
+      if (race === -1) race = world()?.currentRegionRace?.() ?? -1;
+      return world()?.getRandomText?.(201 + factionRaceFromRace(race)) ?? null;
+    },
+    homeRegion() {
+      const last = quest.lastResourceReferenced;
+      return last?.isPerson ? (last.homeRegionName ?? '') : '';
+    },
+    // %god - the temple the player stands in, else a random divine
+    god() {
+      // QuestMCP.God (:217-243), whole. AUDIT 24 systems: the port had
+      // only the temple-building arm and rolled a random divine
+      // everywhere else, so %god named a different god on every
+      // expansion outside a temple. DFU falls back to the REGION's
+      // dominant temple - GetTempleOfCurrentRegion (PlayerGPS.cs:495-
+      // 498) is `MapsFile.RegionTemples[CurrentRegionIndex]` - and
+      // only rolls when that answers 0, or the Fighters Guild (whose
+      // halls "are considered temples in some areas").
+      const w = world();
+      const inside = w?.playerInside?.();
+      let factionId = 0;
+      if (inside?.building?.buildingType === 14) {
+        // Temple
+        factionId = inside.building.factionId ?? 0;
+      } else {
+        // C# indexes the table directly and would throw out of range;
+        // headless (no region) falls to the random arm instead.
+        factionId = REGION_TEMPLES[w?.currentRegionIndex?.()] ?? 0;
+      }
+      if (factionId === 0 || factionId === THE_FIGHTERS_GUILD) {
+        return DIVINES[Math.floor((quest.rolls ?? Math.random)() * 9)]; // Range(0,9) on the quest's rolls
+      }
+      return templeDivine(w, factionId);
+    },
+    // %di - C#'s LastPlaceReferenced.Scope is read BEFORE the null check, so an unreferenced place THREW (the NRE). QUEST-AUDIT
+    // III DI-UNREF: nothing referenced yet - a load or a share forgets it (no save state), and three messages a player
+    // reaches read %di before any person or place of theirs (V0C00Y00 1012 and Y0C00Y00 1012, the contact's answer after a
+    // load; P0B01L02's rumor 1010) - the talk answer or the quest's popup threw out to the host, which error-terminated the
+    // quest. Nothing referenced, it reads the Place a quest Person is to be found at - the last declared that has one, its
+    // dialog place (Person.getDialogPlace: where it stands, else its home - AUDIT QA3 C2: V0C00Y00's remote contact stands
+    // nowhere until the player walks into their home, and "If you go %di of here in __contact_" read "...never mind..."),
+    // never a questor's (they are where the player is) - else DFU's own "...never mind...", as every unresolvable
+    // direction answers
+    direction() {
+      let place = quest.lastPlaceReferenced;
+      if (!place) {
+        for (const r of quest.resources?.values?.() ?? []) {
+          const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;
+          if (at?.siteDetails) place = at;
+        }
+      }
+      const w = world();
+      if (!place) return EN.resolvingError;
+      if (place.scope === 'remote') {
+        return w?.locationCompassDirection?.(place) ?? EN.resolvingError;
+      } else if (place.scope === 'local') {
+        if (place.siteDetails?.locationName === w?.currentLocation?.()?.name) {
+          return w?.buildingCompassDirection?.(place.siteDetails.buildingKey) ?? EN.resolvingError;
+        }
+        return place.siteDetails?.locationName + EN.comma + (w?.locationCompassDirection?.(place) ?? EN.resolvingError);
+      }
+      return EN.resolvingError;
+    },
+  };
+}
+
+// ---- the %-macro handler table (MacroHelper.cs, the quest subset) ----
+
+const source = (mcp) => mcp?.source ?? null;
+const call = (mcp, method) => {
+  const src = source(mcp);
+  if (!src) return null; // C#: handler's mcp-null arm
+  if (typeof src[method] !== 'function') return NOT_IMPLEMENTED;
+  return src[method]();
+};
+const capFirst = (s) => s.substring(0, 1).toUpperCase() + s.substring(1);
+
+// %reg's static region override (MacroHelper.idRegion; talk windows
+// set it around expansions).
+let idRegion = -1;
+export const setIdRegion = (v) => {
+  idRegion = v;
+};
+// M-X: SetFactionIdsAndRegionID's other two outs - the news pair
+// %fx1/%fx2 (and the lord/title reads over them) speak these.
+let idFaction1 = -1,
+  idFaction2 = -1;
+export const setIdFactions = (f1, f2) => {
+  idFaction1 = f1;
+  idFaction2 = f2;
+};
+
+/** CapFirst over a source method's answer, leaving a null/non-string
+ *  miss alone - MacroHelper's *Cap handlers all read
+ *  `if (mcp == null) return null; return CapFirst(...)`. */
+const cap = (p) => (typeof p === 'string' ? capFirst(p) : p);
+
+/** L10N3e: a region's name as SHOWN - GetLocalizedRegionName by its
+ *  index, the world's canonical name the fallback (null with no world to
+ *  ask, the handlers' charter). */
+const shownRegionName = (w, i) => {
+  const canonical = (r) => w?.maps?.getRegion?.(r)?.name ?? null;
+  return Number.isInteger(i) ? getLocalizedRegionName(i, canonical) : canonical(i);
+};
+
+/** L10N3e: a faction's name as SHOWN - PersistentFactionData.
+ *  GetFactionData hands a record back with its name in the player's
+ *  language (PersistentFactionData.cs:176), by the id it was asked for;
+ *  null with no such record, or no world to ask (the charter's null). */
+const shownFactionName = (w, id) => {
+  const fd = w?.getFactionData?.(id);
+  return fd?.name != null ? getLocalizedFactionName(id, fd.name) : null;
+};
+
+const HANDLERS = {
+  '%pcn': (mcp, hooks) => hooks?.playerName?.() ?? null,
+  '%pcf': (mcp, hooks) => {
+    const name = hooks?.playerName?.();
+    if (name == null) return null;
+    const parts = name.split(' ');
+    return parts.length > 0 ? parts[0] : name;
+  },
+  // %pct: no QuestMCP override exists, so the quest source answers
+  // NOT_IMPLEMENTED, the ladder falls to externalMCP (Q4-ii's NPC
+  // source), and a NULL second provider lands on the handler's
+  // mcp-null arm: the PLAYER's name - the C# chain, kept whole
+  '%pct': (mcp, hooks) => {
+    if (!source(mcp)) return hooks?.playerName?.() ?? null;
+    return call(mcp, 'guildTitle');
+  },
+  '%ra': (mcp, hooks) => hooks?.playerRaceName?.() ?? null,
+  // L10N3e: RegionInContext's region in context (MacroHelper.cs:1053)
+  // and CurrentRegion's (:590, PlayerGPS.CurrentLocalizedRegionName)
+  // are SHOWN names
+  '%reg': (mcp, hooks) => {
+    if (idRegion !== -1) return shownRegionName(hooks?.world, idRegion);
+    const w = hooks?.world;
+    return w ? shownRegionName(w, w.currentRegionIndex?.()) : null;
+  },
+  '%crn': (mcp, hooks) => {
+    const w = hooks?.world;
+    return w ? shownRegionName(w, w.currentRegionIndex?.()) : null;
+  },
+  // %rn: the region Province faction's first Individual child is the
+  // ruler; no defined individual -> a random full name. L10N3e: the
+  // child's name is GetFactionData's, in the player's language
+  // (MacroHelper.cs:662-663) - by the child's id
+  '%rn': (mcp, hooks) => {
+    const w = hooks?.world;
+    const region = w?.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.()); // FactionTypes.Province
+    if (region?.children) {
+      for (const childID of region.children) {
+        const child = w.getFactionData?.(childID);
+        if (child?.type === 4) return getLocalizedFactionName(childID, child.name); // Individual
+      }
+    }
+    if (!w) return null;
+    // AUDIT 58: this arm IS MacroHelper.GetRandomFullName (:333-341),
+    // now through its one home rather than a second copy of the body.
+    return randomPersonName(getNameBankOfRegion(w.currentRegionIndex?.() ?? -1));
+  },
+  // %rt/%t: RegentTitle (MacroHelper.cs:644-650) DISCARDS
+  // FindFactionByTypeAndRegion's bool and reads the out struct
+  // regardless - and PersistentFactionData assigns
+  // `new FactionFile.FactionData()` BEFORE searching, so a miss hands
+  // back all zeros and GetRulerTitle(0) takes its `default:` arm and
+  // answers "Lord".
+  //
+  // AUDIT 24 (wave 26): the port gated its null on the LOOKUP
+  // (`if (!region) return null`), conflating two different nothings -
+  // "there is no world at all", which is the port's own headless
+  // charter, and "the world is here and the lookup missed", which in
+  // DFU is Lord. The sibling %rn above already separates them, gating
+  // on `!w`; these two did not. rulerTitle's own `?? 'Lord'` is
+  // already GetRulerTitle's default arm, so the zero struct falls
+  // through it exactly. %lt1 (TitleOfLordOfFaction1, below) is the
+  // THIRD row on this law and was carried through the same way.
+  '%rt': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w) return null;
+    const region = w.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.());
+    return rulerTitle(region?.ruler ?? 0);
+  },
+  '%t': (mcp, hooks) => HANDLERS['%rt'](mcp, hooks),
+  // %nrn: the faction's first Individual child, else the SEEDED lord
+  // name (rulerNameSeed & 0xffff; even rulers are female)
+  // %nrn: LordOfCurrentRegion -> GetLordNameForFaction
+  // (MacroHelper.cs:310-331), which drops GetFactionData's bool the
+  // same way and has NO null path at all. Wave 26: same conflation as
+  // %rt above. The zero struct gives ruler 0 -> gender (0+1)%2 = 1 =
+  // Female (Genders { Male, Female }), race 0 -> FactionRaces.Nord,
+  // and seed 0 & 0xffff = 0.
+  '%nrn': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w) return null;
+    const fd = w.getFactionData?.(w.currentRegionFaction?.());
+    if (fd?.children?.length > 0) {
+      const firstChild = w.getFactionData?.(fd.children[0]);
+      // L10N3e: GetFactionData's name, in the player's language (MacroHelper.cs:320-322)
+      if (firstChild?.type === 4) return getLocalizedFactionName(fd.children[0], firstChild.name);
+    }
+    const gender = ((fd?.ruler ?? 0) + 1) % 2; // C#: (Genders)((ruler+1)%2) - even rulers are female
+    srand((fd?.rulerNameSeed ?? 0) & 0xffff);
+    return fullName(getNameBank(FACTION_RACE_KEYS[fd?.race ?? 0]), gender);
+  },
+  '%vam': (mcp, hooks) => hooks?.world?.playerVampireClanName?.() ?? '%vam[ERROR: PC not a vampire]',
+  // QUEST-AUDIT III JOKE-MACROS: TEXT.RSC 200's jokes carry their own macros (%ra in 22 of the 23, %nt, %cn, %cn2), and the
+  // expansion never walks inserted text - K0C00Y05's child and thirteen quests' rumors told the player "%ra" raw. Each is
+  // read through this table (a miss, or an answer in an error's shape, keeps the token as it was). AUDIT QA3 C4: a name
+  // that brings its own article after the joke's own "the " drops it ("Over at the %nt" - every tavern name is "The ...")
+  '%jok': (mcp, hooks) => {
+    const joke = hooks?.world?.getRandomText?.(200) ?? null;
+    if (typeof joke !== 'string') return null;
+    return joke.replace(/%[a-zA-Z][a-zA-Z0-9]*/g, (tok, at) => {
+      if (tok === '%jok' || !HANDLERS[tok]) return tok;
+      const v = getMacroValue(tok, mcp, hooks);
+      if (typeof v !== 'string' || v.startsWith(`${tok}[`)) return tok;
+      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;
+    });
+  },
+  // L10N3e: CityName (MacroHelper.cs:567-574) shows the location by its
+  // map id (CurrentLocalizedLocationName, :571), else the region (:573)
+  '%cn': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w) return null;
+    const loc = w.currentLocation?.();
+    if (loc?.loaded) return getLocalizedLocationName(loc.mapTableData?.mapId, loc.name);
+    return shownRegionName(w, w.currentRegionIndex?.());
+  },
+  // E7: Date (MacroHelper.cs:764-767) is a GLOBAL -
+  // `WorldTime.Now.DateString()` - and the port read it off the QUEST's
+  // own clock, so every non-quest context (the talk MCP above all)
+  // answered [nullMCP] where DFU prints the date. It reads the same
+  // clock the rest of the date/time block does now.
+  '%dat': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? dateString(d) : null;
+  },
+  '%pg3': (mcp, hooks) => (hooks?.playerGender?.() === 'female' ? EN.pronounHer2 : EN.pronounHis),
+  // AUDIT 24 systems: MacroHelper.cs:240-245 registers ALL SIX
+  // capitalized forms, each CapFirst over the same source method as
+  // its lowercase twin (Pronoun3Cap :1355-1359 and friends). The port
+  // carried only %G, so the corpus's fourteen %G3 lines and one %G1
+  // line rendered the literal "%G3[undefined]" / "%G1[undefined]"
+  // through the getContextValue miss arm.
+  '%G': (mcp) => cap(call(mcp, 'pronoun')),
+  '%G1': (mcp) => cap(call(mcp, 'pronoun')),
+  '%G2': (mcp) => cap(call(mcp, 'pronoun2')),
+  '%G2self': (mcp) => cap(call(mcp, 'pronoun2self')),
+  '%G3': (mcp) => cap(call(mcp, 'pronoun3')),
+  '%G4': (mcp) => cap(call(mcp, 'pronoun4')),
+  '%g': (mcp) => call(mcp, 'pronoun'),
+  '%g1': (mcp) => call(mcp, 'pronoun'),
+  '%g2': (mcp) => call(mcp, 'pronoun2'),
+  '%g2self': (mcp) => call(mcp, 'pronoun2self'),
+  '%g3': (mcp) => call(mcp, 'pronoun3'),
+  '%g4': (mcp) => call(mcp, 'pronoun4'),
+  '%n': (mcp) => call(mcp, 'name'),
+  '%nam': (mcp) => call(mcp, 'name'),
+  '%fn': (mcp) => call(mcp, 'femaleName'),
+  '%mn': (mcp) => call(mcp, 'maleName'),
+  '%kno': (mcp) => call(mcp, 'factionOrderName'),
+  '%oth': (mcp) => call(mcp, 'oath'),
+  '%god': (mcp) => call(mcp, 'god'),
+  '%di': (mcp) => call(mcp, 'direction'),
+  '%qdt': (mcp) => call(mcp, 'questDate'),
+  '%qdat': (mcp) => call(mcp, 'questDate'),
+  '%vcn': (mcp) => call(mcp, 'vampireNpcClan'),
+  '%hrn': (mcp) => call(mcp, 'homeRegion'),
+
+  // ── M-X (2026-08-27): THE REST OF MacroHelper's TABLE ──────────
+  // Every remaining row, in the C# handler's own shape. Three kinds:
+  //  1. mcp CALL-THROUGHS - `mcp.GetMacroDataSource().X()` verbatim
+  //     as call(mcp, 'x'); a source without the override answers the
+  //     error ladder ([srcDataUnknown]), DFU's own behavior. The
+  //     SOURCES land with their arcs: the biography MCP (%q block,
+  //     %hpn/%hpw/%bn...), the spell-info MCP (%1am..%clm/%mpw), the
+  //     bank MCP (%ml/%r2-4).
+  //  2. PLAYER/WORLD GLOBALS off hooks - an absent hook answers null
+  //     -> [nullMCP], the headless charter; the world members the
+  //     talk arc has not mounted yet answer the same way.
+  //  3. C#-null rows join NULL_HANDLERS below ([unhandled]).
+
+  // the ATTRIBUTE block (Str..Luck, all mcp-sourced)
+  '%str': (mcp) => call(mcp, 'str'),
+  '%int': (mcp) => call(mcp, 'int'),
+  '%wil': (mcp) => call(mcp, 'wil'),
+  '%agi': (mcp) => call(mcp, 'agi'),
+  '%end': (mcp) => call(mcp, 'end'),
+  '%per': (mcp) => call(mcp, 'per'),
+  '%spd': (mcp) => call(mcp, 'spd'),
+  '%luc': (mcp) => call(mcp, 'luck'),
+  '%ark': (mcp) => call(mcp, 'attributeRating'),
+
+  // the PLAYER VITALS (globals off the entity hook)
+  '%spc': (mcp, hooks) => str(hooks?.playerEntity?.()?.magicka),
+  '%spt': (mcp, hooks) => str(hooks?.playerEntity?.()?.maxMagicka),
+  '%enc': (mcp, hooks) => {
+    const e = hooks?.playerEntity?.();
+    return e ? String(entityMaxEncumbrance(e)) : null;
+  },
+  '%mad': (mcp, hooks) => {
+    const e = hooks?.playerEntity?.();
+    return e ? String(Math.floor(liveStat(e, 'willpower') / 10)) : null; // PlayerEntity.MagicResist
+  },
+  // the four BIOGRAPHY-fed modifiers, in C#'s "+0;-0;0" signed format
+  '%thd': (mcp, hooks) => signedOff(hooks, 'toHitModifier'),
+  '%dam': (mcp, hooks) => signedOff(hooks, 'damageModifier'),
+  '%hea': (mcp, hooks) => signedOff(hooks, 'hitPointsModifier'),
+  '%hmd': (mcp, hooks) => signedOff(hooks, 'healingRateModifier'),
+  // %ski - the first PRIMARY skill at permanent 100, else "BLANK"
+  '%ski': (mcp, hooks) => {
+    const e = hooks?.playerEntity?.();
+    if (!e?.career?.primarySkills) return null;
+    for (const id of e.career.primarySkills) {
+      if (permanentSkillValue(e, id) === 100) return SKILL_NAMES[id] ?? String(id);
+    }
+    return 'BLANK';
+  },
+
+  // the DATE/TIME block (DaggerfallDateTime's own laws, off the
+  // machine's nowSeconds clock)
+  '%hour': (mcp, hooks) => str(nowDate(hooks)?.hour),
+  '%min': (mcp, hooks) => str(nowDate(hooks)?.minute),
+  '%tim': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? `${String(d.hour).padStart(2, '0')}:${String(d.minute).padStart(2, '0')}` : null; // MinTimeString
+  },
+  '%day': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).day + 1), // DayOfMonth is ONE-based (:626)
+  '%dayn': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? dayName(d) : null;
+  },
+  '%days': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? `${d.day + 1}${daySuffix(d.day + 1)}` : null; // DayOfMonthWithSuffix (:195-198)
+  },
+  '%mon': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).month + 1), // MonthOfYear, one-based
+  '%monn': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? monthName(d) : null;
+  },
+  '%year': (mcp, hooks) => str(nowDate(hooks)?.year),
+  '%sea': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? seasonName(d) : null;
+  },
+  '%sign': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? birthSignName(d) : null;
+  },
+
+  // the PLAYER IDENTITY block
+  '%pcl': (mcp, hooks) => {
+    // GetLastname: parts[1] or the whole name
+    const name = hooks?.playerName?.();
+    if (name == null) return null;
+    const parts = name.split(' ');
+    return parts.length > 1 ? parts[1] : name;
+  },
+  '%pg': (mcp, hooks) => (pgender(hooks) ? EN.pronounShe : EN.pronounHe), // %pg and %pg1 share PlayerPronoun
+  '%pg1': (mcp, hooks) => (pgender(hooks) ? EN.pronounShe : EN.pronounHe),
+  '%pg2': (mcp, hooks) => (pgender(hooks) ? EN.pronounHer : EN.pronounHim),
+  '%pg2self': (mcp, hooks) => (pgender(hooks) ? EN.pronounHerself : EN.pronounHimself),
+  '%pg4': (mcp, hooks) => (pgender(hooks) ? EN.pronounHers : EN.pronounHis2),
+
+  // RANDOM NAMES (the mcp-less %ln off a RANDOM race's bank; the
+  // mcp-sourced pairs ride the biography/talk sources)
+  //
+  // LastName (MacroHelper.cs:1102-1105) is `NameHelper.Surname(
+  // GetRandomNameBank())`, and GetRandomNameBank (:303-308) re-seeds
+  // and rolls Races 1..8 - it reads NO world state, so the row cannot
+  // be gated on `hooks.world` and cannot answer the [nullMCP]
+  // sentinel. The region-bank form is GetRandomFullName (:333-341),
+  // which is what questMacroSource's name/femaleName/maleName use.
+  '%ln': () => surname(getRandomNameBank()),
+  '%bn': (mcp) => call(mcp, 'name'),
+  '%fn2': (mcp) => call(mcp, 'femaleName'),
+  '%mn2': (mcp) => call(mcp, 'maleName'),
+  '%imp': (mcp) => call(mcp, 'imperialName'),
+
+  // REPUTATION AND MONEY (mcp-sourced except the legal-rep bands)
+  '%ml': (mcp) => call(mcp, 'maxLoan'),
+  '%r2': (mcp) => call(mcp, 'merchantsRep'),
+  '%r3': (mcp) => call(mcp, 'scholarsRep'),
+  '%r1': (mcp) => call(mcp, 'commonersRep'),
+  '%r4': (mcp) => call(mcp, 'nobilityRep'),
+  '%r5': (mcp) => call(mcp, 'underworldRep'),
+  // %ltn - LegalReputation's fourteen bands, the exact C# chain
+  // (:the > ladder then the < ladder; "unknown" is unreachable and
+  // kept as the C# tail)
+  '%ltn': (mcp, hooks) => {
+    const rep = hooks?.world?.legalRepNow?.();
+    if (rep == null) return null;
+    return legalStandingWord(rep); // REP5: the ladder's one home (systems/legalBands.js), which the notices read too; L10N3d: in the player's language there
+  },
+
+  // PLACE (globals over the world hook)
+  '%lp': (mcp, hooks) => {
+    // LocalProvince: Breton region -> High Rock, else Hammerfell
+    // BAY-LEFT-B (B7): a province's region past the Bay (WW-R, 62..70) is its own province - Skyrim, Morrowind, Cyrodiil -
+    // as shown (GetLocalizedRegionName, %reg's), where DFU's two answers said "Hammerfell" (or "High Rock") everywhere
+    const r = hooks?.world?.currentRegionIndex?.();
+    if (isProvinceRegion(r)) return getLocalizedRegionName(r, () => REGION_NAMES[r]);
+    const race = hooks?.world?.currentRegionRace?.();
+    if (race == null) return null;
+    return race === LOCAL_PROVINCE_BRETON
+      ? localizedText('highRock', 'High Rock')
+      : localizedText('hammerfell', 'Hammerfell');
+  },
+  '%ct': (mcp, hooks) => {
+    // CityType's switch, verbatim strings
+    const t = hooks?.world?.currentLocationType?.();
+    if (t == null) return null;
+    return CITY_TYPES[t] ?? LOCATION_TYPE_NAMES[t] ?? String(t);
+  },
+  '%cn2': (mcp, hooks) => {
+    // the region's first OTHER TownCity
+    const w = hooks?.world;
+    const region = w?.maps?.getRegion?.(w.currentRegionIndex?.());
+    if (!region?.mapTable) return null; // headless: no region was read at all
+    const here = w.currentLocationIndex?.() ?? -1;
+    for (let i = 0; i < region.mapTable.length; i++) {
+      // GetLocalizedLocationName(MapId, MapNames[i]) (:583) always
+      // yields a string, so a found-but-unnamed row is not a miss either.
+      if (i !== here && region.mapTable[i].locationType === TOWN_CITY_TYPE) {
+        return getLocalizedLocationName(
+          region.mapTable[i].mapId,
+          region.mapNames?.[i] ?? localizedText('daggerfall', CITY_NAME2_FALLBACK),
+        );
+      }
+    }
+    // MacroHelper.cs:585 `return GetLocalizedText("daggerfall")` -
+    // C#'s own "Localizaed fallback in case of error". A region whose
+    // only TownCity is the one the player stands in takes this arm,
+    // and it must not render the [nullMCP] sentinel.
+    return localizedText('daggerfall', CITY_NAME2_FALLBACK);
+  },
+  '%cbd': (mcp, hooks) => {
+    // CurrentBuilding: "[invalid]" outside
+    const w = hooks?.world;
+    if (!w) return null;
+    return w.currentBuildingName?.() ?? '[invalid]';
+  },
+  '%nt': (mcp, hooks) => hooks?.world?.randomTavernName?.() ?? null,
+
+  // THE TALK BLOCK (TalkManager's own getters; the talk arc mounts
+  // them on the world hook - absent answers the charter's null).
+  // C#'s OWN asymmetries kept: %fae reads GetFactionNPCEnemy exactly
+  // as %fe does, and %fea reads GetFactionNPCAlly exactly as %fa.
+  '%fa': (mcp, hooks) => hooks?.world?.factionNPCAlly?.() ?? null,
+  '%fae': (mcp, hooks) => hooks?.world?.factionNPCEnemy?.() ?? null,
+  '%fe': (mcp, hooks) => hooks?.world?.factionNPCEnemy?.() ?? null,
+  '%fea': (mcp, hooks) => hooks?.world?.factionNPCAlly?.() ?? null,
+  '%fnpc': (mcp, hooks) => hooks?.world?.factionNPC?.() ?? null,
+  '%fpa': (mcp, hooks) => hooks?.world?.factionName?.() ?? null,
+  '%fpc': (mcp, hooks) => hooks?.world?.factionPC?.() ?? null,
+  '%fon': (mcp) => call(mcp, 'factionOrderName'),
+  // the NEWS pair + their lords (SetFactionIdsAndRegionID's outs) - the
+  // pair's names as shown (L10N3e: MacroHelper.cs:1002-1003, :1010-1011)
+  '%fx1': (mcp, hooks) => (idFaction1 !== -1 ? shownFactionName(hooks?.world, idFaction1) : null),
+  '%fx2': (mcp, hooks) => (idFaction2 !== -1 ? shownFactionName(hooks?.world, idFaction2) : null),
+  '%fl1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1) ?? null,
+  '%fl2': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction2) ?? null,
+  // TitleOfLordOfFaction1 (MacroHelper.cs:1040-1047) DISCARDS
+  // GetFactionData's bool and reads the out struct regardless, and
+  // PersistentFactionData assigns `new FactionFile.FactionData()`
+  // before searching - so a MISS hands back all zeros and
+  // GetRulerTitle(0) takes its default: arm, "Lord". The third row on
+  // the law the %rt/%nrn block above records: gate on the WORLD (the
+  // port's headless charter), never on the lookup.
+  '%lt1': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w) return null;
+    return rulerTitle(w.getFactionData?.(idFaction1)?.ruler ?? 0);
+  },
+  '%ol1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1, true) ?? null,
+  // AUDIT 68 S30-olf-wrong-prng: OldLeaderFate (MacroHelper.cs:1014-1018) is UnityEngine.Random.Range(0, 5) - the
+  // engine PRNG, not the DFRandom stream %ol1 has just seeded with the faction's own rulerNameSeed
+  '%olf': (mcp, hooks) => hooks?.world?.oldLeaderFate?.(Math.floor((mcp?.quest?.rolls ?? Math.random)() * 5)) ?? null,
+
+  // the mcp-sourced singles
+  '%gdd': (mcp) => call(mcp, 'godDesc'),
+  '%dae': (mcp) => call(mcp, 'daedra'),
+  '%dng': (mcp) => call(mcp, 'dungeon'),
+  '%hpn': (mcp) => call(mcp, 'homeProvinceName'),
+  '%hpw': (mcp) => call(mcp, 'geographicalFeature'),
+  // E7: %lev and %pct are the SAME C# row (`{ "%lev", GuildTitle }`,
+  // `{ "%pct", GuildTitle }`), so %lev carries GuildTitle's mcp-null
+  // arm too - the PLAYER's name. The port had given it the bare
+  // call-through, which answered [srcDataUnknown] against any source
+  // without the override where DFU answers a name.
+  '%lev': (mcp, hooks) => HANDLERS['%pct'](mcp, hooks),
+
+  // the SPELL-INFO block (the spell bundle's MCP - the spellbook
+  // info arc mounts the source)
+  '%1am': (mcp) => call(mcp, 'magnitudePlusMin'),
+  '%1bm': (mcp) => call(mcp, 'magnitudeBaseMin'),
+  '%2am': (mcp) => call(mcp, 'magnitudePlusMax'),
+  '%2bm': (mcp) => call(mcp, 'magnitudeBaseMax'),
+  '%ach': (mcp) => call(mcp, 'chancePlus'),
+  '%adr': (mcp) => call(mcp, 'durationPlus'),
+  '%bch': (mcp) => call(mcp, 'chanceBase'),
+  '%bdr': (mcp) => call(mcp, 'durationBase'),
+  '%clc': (mcp) => call(mcp, 'chancePerLevel'),
+  '%cld': (mcp) => call(mcp, 'durationPerLevel'),
+  '%clm': (mcp) => call(mcp, 'magnitudePerLevel'),
+  '%mpw': (mcp) => call(mcp, 'magicPowers'), // token-level in C#; the string arm until the spell MCP lands (recorded)
+
+  // ── E7 (2026-09-02): THE TABLE'S LAST THIRTY-SIX ROWS ──────────
+  // M-X left thirty-seven of MacroHelper's rows RECORDED at their
+  // consumers rather than in the table (test/systems/quest/macrocoverage.test.js's
+  // ELSEWHERE map), with its own note: "Consolidating them into the
+  // one table is the recorded follow-up, not a gap." This is that
+  // consolidation. DFU has ONE macroHandlers dictionary and
+  // ExpandMacros runs the WHOLE of it over every token it is handed -
+  // so a talk record naming %it, a quest message naming %hnt, or a
+  // book naming %pp1 all reach the same row. The per-window VALUE
+  // MAPS (itemInfo, guildServiceActions, arrestFlow, talkSession)
+  // still answer first through expandMacroValues' `sym in values`
+  // arm; these rows are what a symbol resolves to when it reaches the
+  // LADDER instead, which before E7 was `%xx[undefined]` for all
+  // thirty-seven - the shape DFU reserves for a macro it has never
+  // heard of.
+  //
+  // The call-throughs are `mcp.GetMacroDataSource().X()` verbatim: a
+  // source without the override answers NOT_IMPLEMENTED and the
+  // ladder lands on [srcDataUnknown], which is exactly what DFU's
+  // MacroDataSource base throws its way.
+
+  // %, the 217th row - "Not really a macro, just print %"
+  // (MacroHelper.cs:243, Percent :843-846). The terminator scan finds
+  // it on its own: '%' is itself a MACRO_TERMINATOR, so `%%` and `%.`
+  // both name the one-character symbol and the second character
+  // survives.
+  '%': () => '%',
+
+  // the ITEM family (ItemHelper's MCP - MacroHelper.cs:1215-1268;
+  // note %it/%wep/%arm/%bt are ONE handler, ItemName)
+  '%it': (mcp) => call(mcp, 'itemName'),
+  '%wep': (mcp) => call(mcp, 'itemName'),
+  '%arm': (mcp) => call(mcp, 'itemName'),
+  '%bt': (mcp) => call(mcp, 'itemName'),
+  '%ba': (mcp) => call(mcp, 'bookAuthor'),
+  '%mat': (mcp) => call(mcp, 'material'),
+  '%qua': (mcp) => call(mcp, 'condition'),
+  '%kg': (mcp) => call(mcp, 'weight'),
+  '%wdm': (mcp) => call(mcp, 'weaponDamage'),
+  '%mod': (mcp) => call(mcp, 'armourMod'),
+  '%wth': (mcp) => call(mcp, 'worth'),
+  '%hs': (mcp) => call(mcp, 'heldSoul'),
+  '%po': (mcp) => call(mcp, 'potion'),
+
+  // the PAINTING family (MacroHelper.cs:1278-1300)
+  '%adj': (mcp) => call(mcp, 'paintingAdjective'),
+  '%an': (mcp) => call(mcp, 'artistName'),
+  '%pp1': (mcp) => call(mcp, 'paintingPrefix1'),
+  '%pp2': (mcp) => call(mcp, 'paintingPrefix2'),
+  '%sub': (mcp) => call(mcp, 'paintingSubject'),
+
+  // the SERVICE family (the guild/tavern windows' MCP)
+  '%a': (mcp) => call(mcp, 'amount'),
+  '%cpn': (mcp) => call(mcp, 'shopName'),
+  '%dwr': (mcp) => call(mcp, 'roomHoursLeft'),
+
+  // the TALK MCP family (TalkManagerMCP.cs's own overrides -
+  // MacroHelper.cs:1403-1432). %di, %n/%nam/%bn, %fn, %mn, %oth and
+  // the pronouns already stood above; these four are the rest.
+  '%hnt': (mcp) => call(mcp, 'dialogHint'),
+  '%hnt2': (mcp) => call(mcp, 'dialogHint2'),
+  '%pqn': (mcp) => call(mcp, 'potentialQuestorName'),
+  '%pqp': (mcp) => call(mcp, 'potentialQuestorLocation'),
+
+  // the PLAYER's purse (GoldCarried :946-949, PlayerEntity.GoldPieces -
+  // the machine's own Q5 door, not GetGoldAmount's letters-of-credit
+  // total)
+  '%gii': (mcp, hooks) => str(hooks?.getGoldPieces?.()),
+
+  // %map - LocationRevealedByMapItem (:1092-1095), PlayerGPS's field.
+  // (Not to be confused with the notebook note's literal
+  // `.Replace("%map", name)` in the exterior host, which is DFU's own
+  // string surgery on a localized note and never touches this table.)
+  '%map': (mcp, hooks) => hooks?.world?.locationRevealedByMapItem?.() ?? null,
+
+  // ── the TALK GLOBALS ────────────────────────────────────────────
+  // Four handlers that are NOT the talk MCP's - they are static rows
+  // reaching GameManager.Instance.TalkManager directly - but every
+  // talk record runs the whole table, so they resolve there. The
+  // port's TalkManager stand-in is the answer pipeline, and
+  // talkMacros.js's talkMacroHooks derives these seams from it; a
+  // context with no TalkManager at all answers null -> [nullMCP],
+  // the headless charter.
+  '%1com': (mcp, hooks) => hooks?.world?.talkPCGreetingOrFollowUpText?.() ?? null, // GreetingOrFollowUpText :957-960
+  '%hnr': (mcp, hooks) => hooks?.world?.talkHonoric?.() ?? null, // Honorific :890-893
+  '%fcn': (mcp, hooks) => hooks?.world?.talkLocationOfRegionalBuilding?.() ?? null, // LocationOfRegionalBuilding :1097-1100
+  /** DialogKeySubject (:1059-1083) - %key. The switch is on the
+   *  key-subject TYPE, and four of its six arms answer the same
+   *  field; Work goes through GetWorkString and QuestTopic prefers
+   *  the current list item's caption, falling back to the field when
+   *  there is no item. Unset (and C#'s shared `default:`) is ''. */
+  '%key': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w?.talkKeySubjectType) return null;
+    switch (w.talkKeySubjectType()) {
+      case 'Building':
+      case 'Person':
+      case 'Thing':
+      case 'Organization':
+        return w.talkKeySubject?.() ?? null;
+      case 'Work':
+        return w.talkWorkString?.() ?? null;
+      case 'QuestTopic': {
+        const item = w.talkCurrentQuestionListItem?.() ?? null;
+        return item != null ? item.caption : (w.talkKeySubject?.() ?? null);
+      }
+      default:
+        return '';
+    }
+  },
+  /** MarkLocationOnMap (:1085-1090) - %loc. THE SIDE EFFECT LIVES IN
+   *  THE MACRO: the map is revealed only when the answer being
+   *  expanded is the map-reveal record, which is what
+   *  GetKeySubjectBuildingOnMap's flag says, and the macro answers
+   *  the key subject either way. Nystul's own comment on the table
+   *  row says it: "it seems to return the name of the building and
+   *  reveal the map only if a 7332 dialog was chosen". */
+  '%loc': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w?.talkKeySubject) return null;
+    if (w.talkMarkLocationOnMap?.()) w.markKeySubjectLocationOnMap?.();
+    return w.talkKeySubject();
+  },
+
+  // ── the COURT GLOBALS (DaggerfallUI.Instance.DfCourtWindow) ─────
+  // The BODIES are already ported and stay in their one home:
+  // systems/court.js carries MacroHelper.Crime's verbatim name table
+  // (CRIME_NAMES) and MacroHelper.Penalty's three-way fork
+  // (penaltyText). These rows are the table's reach into the live
+  // court, through seams the arrest flow can mount; unmounted they
+  // answer [nullMCP], which is what a table row for a window that is
+  // not open should say. (scenes/arrestFlow.js still answers the
+  // court record's own %cri/%pen/%gtp/%dip through its VALUE MAP,
+  // which resolves before the ladder is ever reached.)
+  '%cri': (mcp, hooks) => hooks?.world?.courtCrimeName?.() ?? null, // Crime :665-704
+  '%pen': (mcp, hooks) => hooks?.world?.courtPenaltyText?.() ?? null, // Penalty :706-719
+  '%gtp': (mcp, hooks) => str(hooks?.world?.courtFine?.()), // GoldToPay :721-724
+  '%dip': (mcp, hooks) => str(hooks?.world?.courtDaysInPrison?.()), // DaysInPrison :726-729
+};
+
+// M-X: the BIOGRAPHY %q block - Q1..Q12 with the a/b arms (C# has
+// all thirty-six), every one `mcp.GetMacroDataSource().Qx()` (the
+// biography MCP is its arc's).
+for (let n = 1; n <= 12; n++) {
+  for (const suffix of ['', 'a', 'b']) HANDLERS[`%q${n}${suffix}`] = (mcp) => call(mcp, `q${n}${suffix}`);
+}
+
+// M-X helper laws
+const str = (v) => (v == null ? null : String(v));
+const signedFmt = (n) => (n > 0 ? `+${n}` : String(n)); // C#'s "+0;-0;0"
+/** ATTRMACRO1 (2026-09-18, Mac: "none of the attribute explanations show actual values"): THESE ARE COMPUTED, NOT
+ *  STORED. DaggerfallEntity declares all four as properties over the LIVE stat - DamageModifier is
+ *  FormulaHelper.DamageModifier(stats.LiveStrength), ToHitModifier the same over LiveAgility, HitPointsModifier and
+ *  HealingRateModifier over LiveEndurance - and this read took them for fields on the entity. Nothing in this port
+ *  has ever ASSIGNED those fields (grep: not one writer), so `e[field] ?? 0` answered 0 for every player, always,
+ *  and the "+0;-0;0" format dressed the nothing up as a real modifier. */
+const DERIVED_MODIFIER = {
+  damageModifier: (e) => damageModifier(liveStat(e, 'strength')),
+  toHitModifier: (e) => toHitModifier(liveStat(e, 'agility')),
+  hitPointsModifier: (e) => hitPointsModifier(liveStat(e, 'endurance')),
+  healingRateModifier: (e) => healingRateModifier(liveStat(e, 'endurance')),
+};
+const signedOff = (hooks, field) => {
+  const e = hooks?.playerEntity?.();
+  return e ? signedFmt(DERIVED_MODIFIER[field](e)) : null;
+};
+const pgender = (hooks) => hooks?.playerGender?.() === 'female';
+/** hooks.nowSeconds is EPOCH-RELATIVE (classic minutes x 60), so the
+ *  epoch goes back on before the date is read - otherwise %year answers
+ *  1 where DFU's WorldTime.Now.Year answers 405. The epoch is exactly
+ *  404 x 360-day years, so every other field is unmoved by this.
+ *  TIME3: the date and the time are the SKY's (hooks.skySeconds, the
+ *  same epoch) - the quest's own clock where a host gives none. */
+const nowDate = (hooks) => {
+  const sec = (hooks?.skySeconds ?? hooks?.nowSeconds)?.();
+  return sec == null ? null : dateFromSeconds(CLASSIC_EPOCH_IN_SECONDS + sec);
+};
+/** GetSuffix (DaggerfallDateTime.cs:641-651), on the ONE-based day. */
+const daySuffix = (day) =>
+  day === 1 || day === 21 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
+/** RaceTemplate ID 1 = Breton (the bridge's currentRegionRace answers
+ *  REGION_RACES + 1, RaceTemplate ids). */
+const LOCAL_PROVINCE_BRETON = 1;
+/** DFRegion.LocationTypes.TownCity (mapsFile.LOCATION_TYPES). */
+const TOWN_CITY_TYPE = 0;
+/** CityName2's error fallback (MacroHelper.cs:585,
+ *  `GetLocalizedText("daggerfall")` = Internal_Strings.csv:1275
+ *  `daggerfall,Daggerfall`). */
+const CITY_NAME2_FALLBACK = 'Daggerfall';
+/** CityType's switch (MacroHelper %ct), the Internal_Strings values
+ *  over mapsFile.LOCATION_TYPES' real ids: TownCity 0 city,
+ *  TownHamlet 1 hamlet, TownVillage 2 village, HomeFarms 3 farm,
+ *  HomePoor 11 shack, HomeWealthy 8 manor, Tavern 6 community,
+ *  ReligionTemple 5 temple, ReligionCult 9 shrine; everything else
+ *  falls to the default:, Enum.ToString() - the member NAME. */
+const CITY_TYPES = localizedTable({
+  0: ['city', 'city'],
+  1: ['hamlet', 'hamlet'],
+  2: ['village', 'village'],
+  3: ['farm', 'farm'],
+  11: ['shack', 'shack'],
+  8: ['manor', 'manor'],
+  6: ['community', 'community'],
+  5: ['temple', 'temple'],
+  9: ['shrine', 'shrine'],
+});
+/** The default: arm, `gps.CurrentLocationType.ToString()`
+ *  (MacroHelper.cs:617). On a DEFINED DFRegion.LocationTypes member
+ *  C# stringifies the MEMBER NAME - "Graveyard", "Coven",
+ *  "DungeonKeep" - not the number; only a value the enum does not
+ *  define stringifies as its digits, which is the String(t) tail. */
+const LOCATION_TYPE_NAMES = Object.freeze(
+  Object.fromEntries(Object.entries(LOCATION_TYPES).map(([name, id]) => [id, name])),
+);
+
+// C#'s table carries these with a NULL handler - '[unhandled]'.
+const NULL_HANDLERS = new Set([
+  '%1hn',
+  '%2hn',
+  '%3hn',
+  '%cbl',
+  '%dts',
+  '%ef',
+  // M-X: the rest of C#'s null rows - each renders [unhandled], verbatim
+  '%hol',
+  '%hrg',
+  '%htwn',
+  '%key2',
+  '%mit',
+  '%on',
+  '%pdg',
+  '%plq',
+  '%pnq',
+  '%ptm',
+  '%qot',
+  '%vn',
+  '%wpn',
+  // E7: %tcn joins them. C#'s row IS null (MacroHelper.cs:221), so
+  // the table's answer is [unhandled]; the travel window's own
+  // `Replace("%tcn", name)` (DaggerfallTravelMapWindow.cs:1694, and
+  // ui/travel/travelMapWindow.js:"const text = (typeof r === 'string' ? r : r.text ?? '')" after it) is string surgery on TEXT.RSC
+  // 31 that never reaches this ladder. M-X had recorded it as a port
+  // handler standing where C# has null, with a carve-out in the
+  // coverage gate; there was never a handler to carve out.
+  '%tcn',
+]);
+
+/** M-X: the coverage gate's surface - the table's whole membership,
+ *  so test/systems/quest/macrocoverage.test.js can diff it against MacroHelper.cs
+ *  itself and the count can never silently rot. */
+export const macroTableCoverage = () => ({ handled: Object.keys(HANDLERS), nulls: [...NULL_HANDLERS] });
+
+/** MacroHelper.GetValue (MacroHelper.cs:502-528): the error-shape
+ *  ladder, verbatim, over an ALREADY-BUILT macro context provider.
+ *  `mcp`/`mcp2` are {quest?, source} bundles or null - the quest's
+ *  (getContextValue below) or the talk MCP's (talkMacros.js). E7
+ *  split this out of getContextValue so the second MCP the port has
+ *  can ride the one ladder instead of growing a second.
+ *
+ *  The FOUR SENTINELS, in C#'s own order:
+ *    the table does not carry the symbol   -> symbolStr[undefined]
+ *    it carries it with a NULL handler     -> symbolStr[unhandled]
+ *    the handler answers null              -> symbolStr[nullMCP]
+ *    the source method is NotImplemented,
+ *      and the SECOND provider misses too  -> symbolStr[srcDataUnknown]
+ *  Note the try2 arm re-invokes the SAME handler with the second
+ *  provider, so a handler with an mcp-null fallback (GuildTitle's
+ *  player name) answers out of it rather than reaching the sentinel -
+ *  C#'s `svp.Invoke(mcp2)` with a null mcp2, exactly. */
+export function getMacroValue(symbolStr, mcp, hooks, mcp2 = null) {
+  if (NULL_HANDLERS.has(symbolStr)) return symbolStr + '[unhandled]';
+  const handler = HANDLERS[symbolStr];
+  if (!handler) return symbolStr + '[undefined]';
+  const try1 = handler(mcp, hooks);
+  if (try1 !== NOT_IMPLEMENTED) {
+    return try1 != null ? try1 : symbolStr + '[nullMCP]';
+  }
+  const try2 = handler(mcp2, hooks);
+  if (try2 !== NOT_IMPLEMENTED && try2 != null) return try2;
+  return symbolStr + '[srcDataUnknown]';
+}
+
+/** The QUEST context's entry into the ladder above. */
+export function getContextValue(symbolStr, quest, hooks) {
+  const mcp = quest ? { quest, source: questMacroSource(quest) } : null;
+  return getMacroValue(symbolStr, mcp, hooks, quest?.externalMCP ?? null);
+}
+
+/** MACRO-5: `SetTextTokens(tokens, mcp)` for a walk - the value map a
+ *  MacroDataSource answers, over the ONE table. DFU hands a box its
+ *  subject (an effect, an item) and MacroHelper asks that subject every
+ *  row; the port's walks take value maps, so this turns a source into
+ *  one: each row asks `source` through its own handler, lazily, and a
+ *  row the source cannot answer (NotImplemented, a null, a throw) is
+ *  null - "this caller does not know" - so the world still answers the
+ *  global rows, exactly as expandMacroValues orders them. The table
+ *  names the symbol once; nothing here repeats it. */
+export function sourceValues(source) {
+  const mcp = { source };
+  const out = {};
+  for (const token of Object.keys(HANDLERS)) {
+    out[token.slice(1)] = () => {
+      let v;
+      try {
+        v = getMacroValue(token, mcp, null, null);
+      } catch {
+        return null;
+      }
+      return isErrorShape(v, token) ? null : v;
+    };
+  }
+  return out;
+}
+
+// ---- ExpandQuestMessage (QuestMacroHelper.cs:91-160) ----
+
+/** C#'s string.Replace(oldValue, newValue): EVERY occurrence, LITERALLY, a null newValue removing it. AUDIT 68
+ *  S30-macro-replace-dollar: JS's replace(string, string) reads `$&`/`$'` in the value as patterns and stops at the
+ *  first match - a player named "Jo$'hn" spliced the rest of the word in, and "%pcn/%pcn" kept its second token. */
+const csReplace = (text, oldValue, newValue) => text.split(oldValue).join(newValue ?? '');
+
+/** Expands macros inside message tokens IN PLACE. revealDialogLinks
+ *  feeds the talk window's dialog table on NameMacro1 expansions
+ *  (true only for talk answers and quest popups, as C# documents).
+ *  L10N3g: each token's finished text then goes through the language's
+ *  grammar, as it is stored back (QuestMacroHelper.cs:158). */
+export function expandQuestMessage(parentQuest, tokens, revealDialogLinks = false) {
+  for (const token of tokens) {
+    if (!token.text) continue;
+    const words = token.text.split(' ');
+    for (let w = 0; w < words.length; w++) {
+      const macro = getMacro(words[w]);
+      if (macro.type === MACRO_TYPES.None) continue;
+      if (macro.type === MACRO_TYPES.ContextMacro) {
+        words[w] = csReplace(words[w], macro.token, getContextValue(macro.token, parentQuest, parentQuest?.hooks));
+        continue;
+      }
+      // the parentQuest-null bail (a DFU forum-bug fix, kept)
+      if (!parentQuest) return;
+      const resource = parentQuest.getResource({ name: macro.symbol });
+      if (!resource) continue;
+      const result = resource.expandMacro?.(macro.type);
+      // AUDIT 63 F0: QuestMacroHelper.cs:120-122 is
+      // `if (resource.ExpandMacro(macro.type, out result))
+      //    words[word] = words[word].Replace(macro.token, result);`
+      // - the guard is the BOOLEAN, and a resource may answer true
+      // with a NULL textOut (Place.cs:257 and Person.cs:315 both hand
+      // back siteDetails.buildingName, which the three unassigning
+      // site builders leave null). String.Replace treats a null
+      // newValue as String.Empty, so the token is REMOVED, not left
+      // standing. `false` alone is C#'s "did not expand".
+      if (typeof result === 'string' || result === null) words[w] = csReplace(words[w], macro.token, result);
+      if (revealDialogLinks && macro.type === MACRO_TYPES.NameMacro1) {
+        const hooks = parentQuest.hooks;
+        // AUDIT 24 systems: the reveal arms take the THREE-argument
+        // overload (QuestMacroHelper.cs:131/:135/:139 and :218/:222/
+        // :226), whose instantRebuildTopicLists defaults to TRUE
+        // (TalkManager.cs:2222) - so the open talk window's listbox
+        // refreshes on the spot. Only the AddDialog quest ACTION
+        // passes false (AddDialog.cs:73), and actions.js still does.
+        if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location');
+        else if (resource.isPerson) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Person');
+        else if (resource.isItem) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Thing');
+      }
+    }
+    // L10N3g: "Store result back into token" through the grammar
+    // processor (QuestMacroHelper.cs:158). English's is the identity; a
+    // language's resolves its pack's tokens - a faction's {.FS} name's
+    // article, {NPCGender?a#b} by the gender Person.expandMacro handed
+    // it - over the whole finished text, macros already in
+    token.text = processGrammar(words.join(' '));
+  }
+}
+
+/** ExpandLetterSignoff (QuestMacroHelper.cs:176-264): names a quest
+ *  LETTER item from its message - the inventory arc's parchment
+ *  label rides this (ItemHelper.ResolveItemLongName's quest-letter
+ *  arm feeds tokens from getTextTokens(-1, roll, false)). Walks the
+ *  tokens LAST to FIRST and keeps exactly ONE non-empty line (C#'s
+ *  own `lines >= 1` break - its caller's comment says two, the code
+ *  takes one, bug-for-bug). Name/details/faction/context/binding
+ *  macros expand as the message pass does - NameMacro1 ALWAYS
+ *  reveals the dialog link here (no revealDialogLinks gate) - but a
+ *  location macro (__x_/___x_/____x_) replaces its WHOLE word with
+ *  "...", swallowing any attached punctuation, verbatim. The
+ *  accumulated line lands as `'Letter: ' + line + ' '` - the
+ *  trailing space is C#'s `final.Trim() + " " + signoff` over the
+ *  empty seed. A null quest throws out, as C#'s NRE does. */
+export function expandLetterSignoff(parentQuest, tokens) {
+  let signoff = '';
+  let lines = 0;
+  for (let t = tokens.length - 1; t >= 0; t--) {
+    const words = (tokens[t].text ?? '').split(' ');
+    for (let w = 0; w < words.length; w++) {
+      const macro = getMacro(words[w]);
+      switch (macro.type) {
+        case MACRO_TYPES.NameMacro1:
+        case MACRO_TYPES.DetailsMacro:
+        case MACRO_TYPES.FactionMacro:
+        case MACRO_TYPES.ContextMacro:
+        case MACRO_TYPES.BindingMacro: {
+          if (macro.type === MACRO_TYPES.ContextMacro) {
+            words[w] = csReplace(words[w], macro.token, getContextValue(macro.token, parentQuest, parentQuest.hooks));
+          } else {
+            const resource = parentQuest.getResource({ name: macro.symbol });
+            if (resource) {
+              const result = resource.expandMacro?.(macro.type);
+              // AUDIT 63 F0: the sibling seam, QuestMacroHelper.cs
+              // :207-209 - a true/null pair removes the token too.
+              if (typeof result === 'string' || result === null) words[w] = csReplace(words[w], macro.token, result);
+              if (macro.type === MACRO_TYPES.NameMacro1) {
+                const hooks = parentQuest.hooks;
+                if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location');
+                else if (resource.isPerson) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Person');
+                else if (resource.isItem) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Thing');
+              }
+            }
+          }
+          break;
+        }
+        case MACRO_TYPES.NameMacro2:
+        case MACRO_TYPES.NameMacro3:
+        case MACRO_TYPES.NameMacro4:
+          words[w] = '...';
+          break;
+      }
+    }
+    const final = words.join(' ');
+    if (final.length > 0) {
+      signoff = final.trim() + ' ' + signoff;
+      lines++;
+    }
+    if (lines >= 1) break;
+  }
+  return EN.letterPrefix + signoff;
+}
+
+/** ExpandQuestString (QuestMacroHelper.cs:162-169): one context
+ *  macro in a bare string. */
+export function expandQuestString(parentQuest, questString) {
+  const macro = getMacro(questString);
+  if (macro.type !== MACRO_TYPES.ContextMacro) return questString;
+  return csReplace(questString, macro.token, getContextValue(macro.token, parentQuest, parentQuest?.hooks));
+}
+
+/** GetMessageResources (QuestMacroHelper.cs:61-83): every resource a
+ *  message's macros reference. The variant is drawn on `roll` - the
+ *  engine's (UnityEngine.Random, here Math.random) unless a caller hands
+ *  its own, the same seam Message.getTextTokens carries; GUIDE1's quest
+ *  lens hands one that draws nothing. */
+export function getMessageResources(message, roll = Math.random) {
+  if (!message) return null;
+  const resources = [];
+  const tokens = message.getTextTokens(-1, roll, false);
+  for (const token of tokens) {
+    if (!token.text) continue;
+    for (const word of token.text.split(' ')) {
+      const macro = getMacro(word);
+      const resource = message.parentQuest?.getResource({ name: macro.symbol });
+      if (resource) resources.push(resource);
+    }
+  }
+  return resources;
+}

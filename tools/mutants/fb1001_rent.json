@@ -1,0 +1,265 @@
+[
+  {
+    "name": "RENT-REST-the-tenant-bed-unasked",
+    "file": "src/systems/homeRent.js",
+    "old": "export const homeBedIsMine = (home, nowS) =>\n  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
+    "new": "export const homeBedIsMine = (home, nowS) => !!home && (home.own === true || !!(home.hall && home.member)); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ],
+    "note": "THE SEATS ARC'S MERGE (PIN MOVED): re-aimed by content - GUILD1d's hall member joined homeBedIsMine's rule (AUDIT GUILD1d A1's online bed, folded into RENT-REST's)."
+  },
+  {
+    "name": "RENT-REST-the-tenancy-end-unread",
+    "file": "src/systems/homeRent.js",
+    "old": "  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
+    "new": "  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) >= 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ],
+    "note": "THE SEATS ARC'S MERGE (PIN MOVED): re-aimed by content - GUILD1d's hall member joined homeBedIsMine's rule (AUDIT GUILD1d A1's online bed, folded into RENT-REST's)."
+  },
+  {
+    "name": "RENT-REST-the-bed-outside-the-permanent-scene",
+    "file": "src/systems/rest/restSession.js",
+    "old": "    permanentScene: permanentScene || homeBed, // RENT-REST",
+    "new": "    permanentScene, // RENT-REST",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-REST-the-bed-no-house",
+    "file": "src/systems/rest/restSession.js",
+    "old": "    houseOwned: houseOwned || homeBed, // RENT-REST",
+    "new": "    houseOwned, // RENT-REST",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-REST-the-host-hands-no-bed",
+    "file": "src/scenes/worldModes.js",
+    "old": "homeBed: homeBedIsMine(interiorHome, Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member || (!!interiorHome && decorMayRest(Number(homeTownOf(b)) >>> 0, b?.buildingKey)),   // REST-GUEST",
+    "new": "homeBed: false,   // REST-GUEST",
+    "tests": [
+      "test/systems/fb1001_rent.test.js",
+      "test/scenes/restlodging.test.js",
+      "test/server/homerent.test.js",
+      "test/systems/houses.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+  },
+  {
+    "name": "RENT-REST-the-host-asks-the-offline-bank-online",
+    "file": "src/scenes/worldModes.js",
+    "old": "houseOwned: !interiorHome && houseOwnedAt(b, b?.buildingKey ?? 0), homeBed:",
+    "new": "houseOwned: houseOwnedAt(b, b?.buildingKey ?? 0), homeBed:",
+    "tests": [
+      "test/systems/fb1001_rent.test.js",
+      "test/scenes/restlodging.test.js",
+      "test/systems/houses.test.js"
+    ]
+  },
+  {
+    "name": "RENT-RENEW-renewed-from-now",
+    "file": "src/systems/homeRent.js",
+    "old": "export const rentDayRows = (room, nowS) =>\n  RENT_DAYS.filter((d) => rentUntil(nowS, room?.yours ? room.until : 0, d) != null);",
+    "new": "export const rentDayRows = (room, nowS) => RENT_DAYS.filter((d) => rentUntil(nowS, 0, d) != null);",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-RENEW-every-day-offered",
+    "file": "src/systems/homeRent.js",
+    "old": "export const rentDayRows = (room, nowS) =>\n  RENT_DAYS.filter((d) => rentUntil(nowS, room?.yours ? room.until : 0, d) != null);",
+    "new": "export const rentDayRows = (room, nowS) => RENT_DAYS.filter((d) => rentUntil(nowS, 0, d) != null || d > 0);",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-RENEW-the-room-off-the-offer-said-none-free",
+    "file": "src/systems/homeRent.js",
+    "old": "  const mine = (rooms ?? []).find((r) => r.yours && !r.listed); // `yours` the service says only while the tenancy runs (rent.js roomsOf)",
+    "new": "  const mine = (rooms ?? []).find((r) => r.yours && r.listed); // `yours` the service says only while the tenancy runs (rent.js roomsOf)",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-RENEW-the-host-offers-every-day",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (days.length) openHomeRentDays(bd, r, days);",
+    "new": "if (days.length) openHomeRentDays(bd, r, RENT_DAYS);",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-RENEW-the-full-line-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (days.length) openHomeRentDays(bd, r, days); else townTalk?.say?.(RENT_FULL_LINE); },",
+    "new": "if (days.length) openHomeRentDays(bd, r, days); },",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-RENEW-the-host-says-none-free",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (!list.length) { townTalk?.say?.(rentNoneLine(got.rooms, nowS)); return; }",
+    "new": "if (!list.length) { townTalk?.say?.(RENT_NONE_FREE); return; }",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-RENEW-the-client-clock",
+    "file": "src/scenes/worldModes.js",
+    "old": "nowS = got.now || Math.floor(Date.now() / 1000);",
+    "new": "nowS = Math.floor(Date.now() / 1000);",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-FRESH-read-once-a-visit",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    else if (!rentState.busy && (!panel?.isOpen() || (panel.mode?.() === 'rent' && now() - rentState.at >= RENT_VIEW_FRESH_MS))) refreshRent(door);",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-FRESH-the-opening-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "(!panel?.isOpen() || (panel.mode?.() === 'rent' && now()",
+    "new": "((panel.mode?.() === 'rent' && now()",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-FRESH-the-view-never-read-again",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "(panel.mode?.() === 'rent' && now() - rentState.at >= RENT_VIEW_FRESH_MS)",
+    "new": "false",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-FRESH-read-every-frame",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "now() - rentState.at >= RENT_VIEW_FRESH_MS",
+    "new": "now() - rentState.at >= 0",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-FRESH-the-ask-unstamped",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    rentState.at = now();\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-FRESH-an-older-read-stands",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "if (rentState.visit !== visit || ask !== rentState.asked || !res?.ok) return false;",
+    "new": "if (rentState.visit !== visit || !res?.ok) return false;",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-FRESH-the-read-unsigned",
+    "file": "src/ui/decorPanel.js",
+    "old": "${view.rent.busy ? 1 : 0}${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}",
+    "new": "${view.rent.busy ? 1 : 0}${view.rent.finding ? 1 : 0}",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-ORPHANS-the-one-room-house-lists-none",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      rows: found ? rentRoomsView(list ?? [], rentState.list ?? []",
+    "new": "      rows: list ? rentRoomsView(list ?? [], rentState.list ?? []",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-ORPHANS-one-room-matched-as-a-room",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    const list = found && found.length > 1 ? found : null;",
+    "new": "    const list = found;",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-ORPHANS-finding-said-as-one-room",
+    "file": "src/ui/decorPanel.js",
+    "old": "view.rent.finding ? DECOR_RENT_FINDING : DECOR_RENT_ONE_ROOM",
+    "new": "view.rent.rooms ? DECOR_RENT_FINDING : DECOR_RENT_ONE_ROOM",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-ORPHANS-the-finding-unsigned",
+    "file": "src/ui/decorPanel.js",
+    "old": "${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}",
+    "new": "${view.rent.loaded ? 1 : 0}",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt-and-braces: the doorway finder runs on the rooms once found, and its count (view.doorways, in the same signature) moves from null at or after the frame `finding` flips, so the rooms view redraws either way; `finding` is signed so the rent's empty line does not lean on the doors' finder."
+  },
+  {
+    "name": "RENT-NUMBER-always-the-first-free",
+    "file": "src/systems/homeRent.js",
+    "old": "    const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
+    "new": "    const number = o ? o.room : next;",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-NUMBER-a-number-another-offer-holds",
+    "file": "src/systems/homeRent.js",
+    "old": "    const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
+    "new": "    const number = o ? o.room : rentRoomOk(f.id) ? f.id : next;",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "RENT-NUMBER-a-number-past-the-law",
+    "file": "src/systems/homeRent.js",
+    "old": "    const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
+    "new": "    const number = o ? o.room : !held.has(f.id) ? f.id : next;",
+    "tests": [
+      "test/systems/fb1001_rent.test.js"
+    ]
+  },
+  {
+    "name": "HOMES-FORCE-answered-by-the-flight",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
+    "new": "    if (flying) return flying;",
+    "tests": [
+      "test/net/fb1001_look.test.js",
+      "test/systems/fb1001_rent.test.js"
+    ]
+  }
+]

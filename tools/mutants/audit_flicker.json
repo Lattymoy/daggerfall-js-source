@@ -1,0 +1,260 @@
+[
+  {
+    "name": "AUDIT-FLICKER-S1-no-own-card-bias",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (soft && h > 0.0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S1-the-bias-uncapped",
+    "file": "src/render/shadowPass.js",
+    "old": "min(${SUN_FLAT_REACH_TEXELS} * texel * sinE / max(length(toSun.xz), 1e-3), max(h - 0.5, 0.0) * sinE)",
+    "new": "${SUN_FLAT_REACH_TEXELS} * texel * sinE / max(length(toSun.xz), 1e-3)",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S1-the-cap-in-height",
+    "file": "src/render/shadowPass.js",
+    "old": "max(h - 0.5, 0.0) * sinE)",
+    "new": "max(h - 0.5, 0.0))",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S1-the-far-cascade-drops-h",
+    "file": "src/render/shadowPass.js",
+    "old": "mix(sunCascadeTap(2, wp, n, soft, h), 1.0, t)",
+    "new": "mix(sunCascadeTap(2, wp, n, soft, 0.0), 1.0, t)",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S1-the-band-drops-h",
+    "file": "src/render/shadowPass.js",
+    "old": "mix(lit, sunCascadeTap(c + 1, wp, n, soft, h), t)",
+    "new": "mix(lit, sunCascadeTap(c + 1, wp, n, soft, 0.0), t)",
+    "tests": [
+      "test/render/audit_flicker.test.js",
+      "test/render/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S1-the-flat-hands-no-height",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
+    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), 0.0)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
+    "tests": [
+      "test/render/audit_flicker.test.js",
+      "test/render/perfsun_fragment.test.js",
+      "test/render/la_cost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S2-rounded-at-the-eye",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (lightDir && texel > 0 && Number.isFinite(dx)",
+    "new": "  if (false && lightDir && texel > 0 && Number.isFinite(dx)",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S2-no-snap-across",
+    "file": "src/render/shadowPass.js",
+    "old": "const ax = Math.round((dx * x0 + dy * x1 + dz * x2) / texel) * texel",
+    "new": "const ax = (dx * x0 + dy * x1 + dz * x2)",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S2-no-move-along",
+    "file": "src/render/shadowPass.js",
+    "old": "az = dx * z0 + dy * z1 + dz * z2;",
+    "new": "az = 0;",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-S2-a-near-texel",
+    "file": "src/render/shadowPass.js",
+    "old": "sunAnchorFor(f.eye, this._sunAnchor, sunDir, sunTexelWorld(SHADOW_CASCADES.length - 1, k));",
+    "new": "sunAnchorFor(f.eye, this._sunAnchor, sunDir, sunTexelWorld(0, k));",
+    "tests": [
+      "test/render/audit_flicker.test.js",
+      "test/render/la_shadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P1-no-lift",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    vec3 at = base + toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "new": "    vec3 at = base;   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P1-lift-away",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    vec3 at = base + toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "new": "    vec3 at = base - toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P1-no-half-way-cap",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    vec3 at = base + toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "new": "    vec3 at = base + toL * (${glslFloat(EL_FLAT_LAMP_LIFT)} / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P2-no-hold",
+    "file": "src/render/shadowPass.js",
+    "old": "nearestRank(casters, L, selfAt, rank, this._selfHeld, this._selfHeldN)",
+    "new": "nearestRank(casters, L, selfAt, rank)",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P2-the-pair-not-carried",
+    "file": "src/render/shadowPass.js",
+    "old": "    this._selfHeld.set(this._selfNext); this._selfHeldN = selfN;   // AUDIT FLICKER P2\n",
+    "new": "",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P2-held-at-full-distance",
+    "file": "src/render/shadowPass.js",
+    "old": "return held && heldAt(held, heldN, lights, i) ? d * keep : d;",
+    "new": "return d;",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P3-exact-hold",
+    "file": "src/render/shadowPass.js",
+    "old": "if (samePlace(held, k * 4, lights, i * 4)) return true;",
+    "new": "if (held[k * 4] === lights[i * 4] && held[k * 4 + 1] === lights[i * 4 + 1] && held[k * 4 + 2] === lights[i * 4 + 2]) return true;",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P3-exact-sticky-slots",
+    "file": "src/render/shadowPass.js",
+    "old": "if (!taken[k] && samePlace(sl, k * 4, L, i * 4)) { slotOf[rank] = k; taken[k] = 1; break; }   // AUDIT FLICKER P3: within the still epsilon",
+    "new": "if (!taken[k] && sl[k * 4] === L[i * 4] && sl[k * 4 + 1] === L[i * 4 + 1] && sl[k * 4 + 2] === L[i * 4 + 2]) { slotOf[rank] = k; taken[k] = 1; break; }",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P3-exact-change-test",
+    "file": "src/render/shadowPass.js",
+    "old": "const changed = !(samePlace(sl, o, pos, 0) && sl[o + 3] === far);",
+    "new": "const changed = !(sl[o] === pos[0] && sl[o + 1] === pos[1] && sl[o + 2] === pos[2] && sl[o + 3] === far);",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P3-the-hold-left-behind",
+    "file": "src/render/shadowPass.js",
+    "old": "    move(this._heldCasters, this._heldCasterN);\n",
+    "new": "",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P3-the-slots-left-behind",
+    "file": "src/render/shadowPass.js",
+    "old": "    move(this._slotLight, this._slotLight.length >> 2);\n",
+    "new": "",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-P3-no-epsilon",
+    "file": "src/render/shadowPass.js",
+    "old": "Math.abs(a[ai] - b[bi]) <= SHADOW_STILL_EPS && Math.abs(a[ai + 1] - b[bi + 1]) <= SHADOW_STILL_EPS && Math.abs(a[ai + 2] - b[bi + 2]) <= SHADOW_STILL_EPS",
+    "new": "a[ai] === b[bi] && a[ai + 1] === b[bi + 1] && a[ai + 2] === b[bi + 2]",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-R1-a-new-batch-each-frame",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "        r.batch.archive = s.archive; r.batch.record = s.rec; r.batch.size = size;\n",
+    "new": "        renderer?.destroyBillboardBatch?.(r.batch); r.batch = renderer.createBillboardBatch(s.archive, s.rec, size, [[0, 0, 0]]); r.batch.origin = [0, 0, 0]; r.batch.conceal = r.veil ?? null;\n",
+    "tests": [
+      "test/net/invislook.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-R2-pixels-left-behind",
+    "file": "src/scenes/world.js",
+    "old": "        if (p._t) state.pixelTranslation(p.px, p.py, p._t);\n",
+    "new": "",
+    "tests": [
+      "test/render/audit_flicker.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-R3-riders-drop-off-screen",
+    "file": "src/scenes/world.js",
+    "old": "    if (peerRiders) for (const b of peerRiders.batches()) { if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; } allBatches.push(b); }",
+    "new": "    if (peerRiders) for (const b of peerRiders.batches()) { if (cullOn && billboardOutside(b)) continue; allBatches.push(b); }",
+    "tests": [
+      "test/render/audit_flicker.test.js",
+      "test/net/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-R4-one-edge-only",
+    "file": "src/render/renderer.js",
+    "old": "    const cut = this._everyLightNow !== this._everyLightPrev;",
+    "new": "    const cut = this._everyLightNow && !this._everyLightPrev;",
+    "tests": [
+      "test/render/audit_flicker.test.js",
+      "test/render/la_post.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-F3-the-derivative-after-the-return",
+    "file": "src/render/airPass.js",
+    "old": "  vec3 pdx = dFdx(p), pdy = dFdy(p);\n  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }",
+    "new": "  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n  vec3 pdx = dFdx(p), pdy = dFdy(p);",
+    "tests": [
+      "test/render/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FLICKER-F4-the-offset-mediump",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  highp int at = int(cell.x) + j;",
+    "new": "  int at = int(cell.x) + j;",
+    "tests": [
+      "test/render/lc1_clusters.test.js"
+    ]
+  }
+]

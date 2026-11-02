@@ -1,0 +1,20 @@
+[
+  {
+    "name": "RESPAWN-HELD-the-latch-out-of-the-hold",
+    "file": "src/scenes/world.js",
+    "old": "const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null || _seasonStraightening;",
+    "new": "const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null;",
+    "tests": [
+      "test/player/fb0930b_respawnheld.test.js"
+    ]
+  },
+  {
+    "name": "RESPAWN-HELD-every-frame-held",
+    "file": "src/scenes/world.js",
+    "old": "const _seasonHeld = _partyArrivalPending || _seasonHoldKey !== null || _seasonStraightening;",
+    "new": "const _seasonHeld = true;",
+    "tests": [
+      "test/player/fb0930b_respawnheld.test.js"
+    ]
+  }
+]

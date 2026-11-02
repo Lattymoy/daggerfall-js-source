@@ -1,0 +1,192 @@
+[
+  {
+    "name": "GRANT1-elite-rate-moved",
+    "file": "src/net/grantLaw.js",
+    "old": "export const GRANT_ELITE_CHANCE = 0.05;",
+    "new": "export const GRANT_ELITE_CHANCE = 0.06;",
+    "why": "the relay rolls elites at a rate the street does not",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-champion-rate-moved",
+    "file": "src/net/grantLaw.js",
+    "old": "export const GRANT_CHAMPION_PER_MILLE = 70;",
+    "new": "export const GRANT_CHAMPION_PER_MILLE = 50;",
+    "why": "the relay rolls champions at the old rate",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-stream-salted-otherwise",
+    "file": "src/net/grantLaw.js",
+    "old": "let a = grantHash('grant', s >>> 0, salt);",
+    "new": "let a = grantHash('grants', s >>> 0, salt);",
+    "why": "the grant's stream is no longer eliteRng over eliteHash",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-kind-most-ignored",
+    "file": "src/net/grantLaw.js",
+    "old": "if (!intIn(v.n, 1, law.max) ||",
+    "new": "if (!intIn(v.n, 1, 8) ||",
+    "why": "an encounter of five read as a grant",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-elite-champion-believed",
+    "file": "src/net/grantLaw.js",
+    "old": "    if (((v.e >>> i) & 1) && v.c[i] !== -1) return null;   // an elite is never a champion\n",
+    "new": "",
+    "why": "a member both elite and champion read",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-guest-level-refused",
+    "file": "src/net/grantLaw.js",
+    "old": "if (!(v.l === 0 || characterLevelIssuable(v.l))",
+    "new": "if (!(characterLevelIssuable(v.l))",
+    "why": "a guest's grant (no signed level) refused",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-minute-unsigned",
+    "file": "src/net/grantLaw.js",
+    "old": "|${g.p[0]},${g.p[1]}|${g.m}|${g.l}|",
+    "new": "|${g.p[0]},${g.p[1]}|${g.l}|",
+    "why": "the world minute moved under a good signature",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-any-signature-taken",
+    "file": "src/net/grantLaw.js",
+    "old": "  try { return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(grantBytes(v))); } catch { return false; }",
+    "new": "  return true;",
+    "why": "every signature of the right shape believed",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-renown-gate-dropped",
+    "file": "src/net/grantLaw.js",
+    "old": "if (elite && r >= GRANT_ELITE_MIN_RENOWN) {",
+    "new": "if (elite) {",
+    "why": "an owner under Renown 5 is granted elites",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-elite-skips-draws",
+    "file": "src/net/grantLaw.js",
+    "old": "const elite = rng() < GRANT_ELITE_CHANCE, chance = rng(), trait = rng();",
+    "new": "const elite = rng() < GRANT_ELITE_CHANCE, chance = elite ? 0 : rng(), trait = elite ? 0 : rng();",
+    "why": "an elite's roll skips the champion's draws, so the members after it shift",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-dice-not-their-own",
+    "file": "src/net/grantLaw.js",
+    "old": "[d, grantRng(s, `${d}:${i}`)]",
+    "new": "[d, grantRng(s, `${i}`)]",
+    "why": "every die draws the same stream",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-ceiling-after-bucket",
+    "file": "src/net/grantLaw.js",
+    "old": "  if (law.hostile && live + n > GRANT_CELL_CEILING) return { bucket, refusal: 'ceiling' };\n  const gate = tokenGate(bucket, nowMs, law.rate, law.cap);\n",
+    "new": "  const gate = tokenGate(bucket, nowMs, law.rate, law.cap);\n  if (law.hostile && live + n > GRANT_CELL_CEILING) return { bucket: gate.bucket, refusal: 'ceiling' };\n",
+    "why": "a full cell spends the asker's bucket",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-ceiling-off-by-one",
+    "file": "src/net/grantLaw.js",
+    "old": "live + n > GRANT_CELL_CEILING",
+    "new": "live + n >= GRANT_CELL_CEILING",
+    "why": "the cell refuses the ask that fills it exactly",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-mint-size-bound",
+    "file": "src/net/grantLaw.js",
+    "old": "if (!intIn(n, 1, law.max)) return",
+    "new": "if (!intIn(n, 1, law.max + 1)) return",
+    "why": "an ask past its kind minted",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-sender-unchecked",
+    "file": "src/net/grantLaw.js",
+    "old": "  if (g.o !== from) return 'sender';\n",
+    "new": "",
+    "why": "another socket's grant stands a forger's foe",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-skew-doubled",
+    "file": "src/net/grantLaw.js",
+    "old": "nowMs <= g.x + GRANT_SKEW_MS",
+    "new": "nowMs <= g.x + 2 * GRANT_SKEW_MS",
+    "why": "an expired grant believed two minutes on",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-member-off-by-one",
+    "file": "src/net/grantLaw.js",
+    "old": "i >= g.n ||",
+    "new": "i > g.n ||",
+    "why": "a member past the grant stands",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT1-any-trait-believed",
+    "file": "src/net/grantLaw.js",
+    "old": "(cp == null || cp === g.c[i])",
+    "new": "(cp == null || cp >= 0)",
+    "why": "any champion trait believed on a granted member",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-star-off-its-home",
+    "file": "src/net/grantLaw.js",
+    "old": "  star: Object.freeze({ max: 24,",
+    "new": "  star: Object.freeze({ max: 9,",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ],
+    "note": "STAR-TUNE: the star's kind under its law's largest wave - a wave past it asks two grants"
+  }
+]

@@ -1,0 +1,190 @@
+// X7: IDENTIFY - the unidentified-item state, the guild service, and
+// the spell that opens the same window for free.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  itemIsIdentified, calculateItemIdentifyCost, identifySpellPass, identifiedTallyText,
+  tradeCost, localClickDecision,
+  DOESNT_NEED_IDENTIFY, NOT_ENOUGH_SPELL_POINTS_TEXT,
+} from '../../src/systems/tradeModes.js';
+import { expandItemInfo } from '../../src/systems/item/itemInfo.js';
+import { serviceDestination } from '../../src/systems/guild/guildServiceFlow.js';
+import { applySpell } from '../../src/systems/effects.js';
+import { buildCustomSpell, blankEffectSettings } from '../../src/systems/spell/spellMaker.js';
+import { effectByKey } from '../../src/systems/spell/spellEffects.js';
+import { calculateCastCost, registerSpellCostMod } from '../../src/systems/spellcost.js';
+import { HOLIDAYS } from '../../src/systems/holidays.js';
+
+const ench = () => [{ type: 0, param: 1 }];
+const BROADSWORD = 118;   // the real template index, not a guess
+const magic = (over = {}) => ({ group: 'Weapons', templateIndex: BROADSWORD, value: 1000, stackCount: 1, enchantments: ench(), ...over });
+const mundane = (over = {}) => ({ group: 'Weapons', templateIndex: BROADSWORD, value: 1000, stackCount: 1, ...over });
+
+test('X7: identified is DERIVED - an unenchanted item is ALWAYS identified', () => {
+  // GetIsIdentified (DaggerfallUnityItem.cs:1821-1827):
+  //   if (!IsEnchanted) return true;
+  //   return (flags & identifiedMask) > 0;
+  // The port read `item.isIdentified` raw, so a plain iron dagger came
+  // back undefined -> falsy -> UNIDENTIFIED, and the Identify service
+  // would have charged to identify it. Only the FLAGGED-null
+  // destination kept that off the screen.
+  assert.equal(itemIsIdentified(mundane()), true, 'no magic, nothing to learn');
+  assert.equal(itemIsIdentified(mundane({ isIdentified: false })), true,
+    'and the flag cannot make an unenchanted item unknown');
+  assert.equal(itemIsIdentified(magic()), false, 'an enchanted item starts unknown');
+  assert.equal(itemIsIdentified(magic({ isIdentified: true })), true);
+  assert.equal(itemIsIdentified(null), true);
+  // customEnchantments count too - inventory.isEnchanted reads both
+  assert.equal(itemIsIdentified({ customEnchantments: [{ id: 1 }] }), false);
+});
+
+test('X7: the mode charges for the unknown and refuses the known', () => {
+  const ctx = { quality: 10 };
+  // FB0929: the walk also counts the pieces a PURCHASE pays for (the floor's count); identifying counts none
+  assert.deepEqual(tradeCost('Identify', [mundane()], ctx), { cost: 0, modeActionEnabled: false, pieces: 0 },
+    'a mundane pack offers nothing to identify');
+  assert.deepEqual(tradeCost('Identify', [magic({ isIdentified: true })], ctx), { cost: 0, modeActionEnabled: false, pieces: 0 });
+  const live = tradeCost('Identify', [magic()], ctx);
+  assert.equal(live.cost, calculateItemIdentifyCost(1000));
+  assert.equal(live.modeActionEnabled, true);
+  // staging follows the same derivation
+  assert.equal(localClickDecision('Identify', magic(), {}).kind, 'stage');
+  assert.equal(localClickDecision('Identify', mundane(), {}).kind, 'refuse');
+  // in SPELL mode an already-known item can still be staged (:823)
+  assert.equal(localClickDecision('Identify', magic({ isIdentified: true }), { usingIdentifySpell: true }).kind, 'stage');
+});
+
+test('X7: the cost is (25 * value) >> 8, and the Witches Festival makes it free', () => {
+  assert.equal(calculateItemIdentifyCost(1000), (25 * 1000) >> 8);
+  assert.equal(calculateItemIdentifyCost(1000), 97);
+  assert.equal(calculateItemIdentifyCost(1000, { holidayId: HOLIDAYS.Witches_Festival }), 0);
+  // the guild hook applies AFTER the shift - though no DFU guild
+  // actually overrides ReducedIdentifyCost, so identity is the real
+  // behaviour and the hook is the seam for a mod
+  assert.equal(calculateItemIdentifyCost(1000, { reducedIdentifyCost: (c) => c >> 1 }), 48);
+});
+
+test('X7: an unidentified item hides its NAME and its MATERIAL', () => {
+  // ResolveItemName (:271-272) falls back to the template name, so an
+  // enchanted blade reads "Broadsword" rather than whatever it is
+  // really called; ResolveItemLongName (:301-303) then drops the
+  // material prefix too, so a Daedric one does not announce itself.
+  const named = magic({ name: 'Blade of Fire', material: 5 });
+  assert.equal(expandItemInfo('%it', named), 'Broadsword', 'the magic name is hidden');
+  assert.equal(expandItemInfo('%mat', named), '', 'and so is the material');
+  const known = { ...named, isIdentified: true };
+  assert.equal(expandItemInfo('%it', known), 'Blade of Fire');
+  assert.notEqual(expandItemInfo('%mat', known), '');
+  // a mundane item was never hidden in the first place
+  assert.equal(expandItemInfo('%mat', mundane({ material: 5 })), expandItemInfo('%mat', known));
+  // an ARTIFACT shares the material half (`!IsIdentified || IsArtifact`)
+  assert.equal(expandItemInfo('%mat', { ...known, artifact: true }), '');
+});
+
+test('X7 spell: the pass rolls PER ITEM, counts the already-known as successes, and spends once', () => {
+  const a = magic(), b = magic(), c = magic({ isIdentified: true });
+  // every roll succeeds
+  const all = identifySpellPass([a, b, c], 100, () => 0);
+  assert.equal(all.successCount, 3);
+  assert.equal(all.total, 3);
+  assert.equal(all.identified.length, 2, 'the already-known one needed no roll');
+  assert.equal(all.spendMagicka, true);
+  // every roll fails - the known one STILL counts (:970-975)
+  const none = identifySpellPass([magic(), magic(), magic({ isIdentified: true })], 50, () => 0.99);
+  assert.equal(none.successCount, 1, 'the tally is "how many do you now know"');
+  assert.equal(none.identified.length, 0, 'and a failed roll consumes nothing');
+  // an EMPTY list spends no magicka (:985-986)
+  assert.equal(identifySpellPass([], 100, () => 0).spendMagicka, false);
+  assert.equal(identifiedTallyText(1, 3), '1 out of 3 identified.');
+});
+
+test('X7 D1: Identify\'s two refusal strings are the Internal_Strings rows verbatim', () => {
+  // DaggerfallTradeWindow.cs:826 and :962 both go through
+  // TextManager.GetLocalizedText, so the row IS the string. From
+  // Assets/StreamingAssets/Text/Master Localization CSV Files/
+  // Internal_Strings.csv:
+  //   :821  doesntNeedIdentify,This does not need to be identified.
+  //   :1052 notEnoughSpellpointsLeft,You do not have enough spell points left.
+  // Neither carries the word "item", and the magicka refusal is a full
+  // sentence in the second person - both of which the port used to lose.
+  assert.equal(DOESNT_NEED_IDENTIFY, 'This does not need to be identified.');
+  assert.equal(NOT_ENOUGH_SPELL_POINTS_TEXT, 'You do not have enough spell points left.');
+  // ...and the tally row (:1053, `{0} out of {1} identified.`) is the
+  // same table, already exact.
+  assert.equal(identifiedTallyText(2, 5), '2 out of 5 identified.');
+});
+
+test('X7 spell: the cast REFUNDS its own cost, floored at 5, and lands on nobody', () => {
+  // Identify.cs:50-56. The effect does not attach to anything - it
+  // hands the host two numbers and gets out of the way.
+  const player = () => ({ stats: { luck: 50, willpower: 50 }, skills: [], activeEffects: [], level: 1, maxMagicka: 40 });
+  const cast = (chanceBase) => applySpell(
+    buildCustomSpell({ slots: [{ type: 40, subType: 255, settings: { ...blankEffectSettings(), chanceBase, chanceMod: 0 } }], rangeType: 0 }),
+    1, player(), {}, () => 0.5, null, {});
+  const out = cast(50);
+  assert.equal(out.skipped, 0, 'the library honours Identify now');
+  assert.ok(out.identify, 'and answers the window payload');
+  assert.equal(out.identify.chance, 50, 'ChanceFunction.Custom - the chance travels, it is not rolled here');
+  assert.ok(out.identify.refund >= 5, 'the refund never drops below 5');
+  assert.equal(out.buffs, undefined, 'nothing was applied to the caster');
+  // a FOE target takes nothing at all ("target must be player")
+  const foe = { ...player(), mobileType: 15 };
+  const onFoe = applySpell(
+    buildCustomSpell({ slots: [{ type: 40, subType: 255, settings: { ...blankEffectSettings() } }], rangeType: 1 }),
+    1, foe, {}, () => 0.5, null, {});
+  assert.equal(onFoe.identify, undefined);
+  assert.deepEqual(foe.activeEffects, []);
+  assert.equal(effectByKey('40,255').ported, true);
+});
+
+test('the refund, and so the window\'s charge, is what the cast spent on Identify - a cost discount included', () => {
+  // A player's cast is priced with the port's cost modifiers (an awake Wardwright pays 20% less for Thaumaturgy).
+  // The refund once ignored them: the cast spent 146, the window then charged 183, and a caster whose pool held
+  // less than 183 could cast Identify but never identify anything.
+  const player = () => ({
+    isPlayer: true, stats: { luck: 50, willpower: 50 }, skills: [], activeEffects: [], level: 17, maxMagicka: 160,
+  });
+  const identifySlot = { type: 40, subType: 255, settings: { ...blankEffectSettings(), chanceBase: 1, chanceMod: 6, chancePerLevel: 1 } };
+  const identifySpell = buildCustomSpell({ slots: [identifySlot], rangeType: 0 });
+  const cast = (spell, caster) => applySpell(spell, 17, caster, {}, () => 0.5, { entity: caster }, {});
+
+  const undiscounted = cast(identifySpell, player()).identify.refund;
+  assert.equal(undiscounted, calculateCastCost(identifySpell, player()).sp, 'with no modifier the two prices agree');
+
+  registerSpellCostMod('identify-refund-test', (_entity, sp) => sp * 0.8);
+  try {
+    const caster = player();
+    const castPrice = calculateCastCost(identifySpell, caster).sp;
+    assert.ok(castPrice < undiscounted, 'the modifier made the cast cheaper');
+    assert.ok(castPrice <= caster.maxMagicka && undiscounted > caster.maxMagicka,
+      'the fixture is the failing case: the cast fits the pool and the undiscounted price does not');
+    const identify = cast(identifySpell, caster).identify;
+    assert.equal(identify.refund, castPrice, 'the refund is the discounted price the cast spent');
+    assert.ok(identify.refund <= caster.maxMagicka, 'so the window charges no more than a full pool holds');
+
+    // A bundle refunds the Identify effect's share alone; the effect bundled with it stays paid (Identify.cs:50-56).
+    const bundled = buildCustomSpell({
+      slots: [identifySlot, { type: 39, subType: 0, settings: { ...blankEffectSettings() } }],
+      rangeType: 0,
+    });
+    assert.equal(cast(bundled, player()).identify.refund, castPrice);
+    assert.ok(calculateCastCost(bundled, player()).sp > castPrice, 'the bundle as a whole costs more');
+  } finally {
+    registerSpellCostMod('identify-refund-test', null);
+  }
+
+  // A modifier may take a cast under 5 points; the effect's price - the window's charge - still keeps Identify.cs:54-55's
+  // floor of 5. PIN NARROWED (RPT1026-PROGRESS): the magicka the cast engine gives back is capped at what the cast spent
+  // (scenes/hostMagic.js) - 1 here, never 5 (test/scenes/rpt1026_progress_magic.test.js).
+  registerSpellCostMod('identify-refund-test', () => 1);
+  try {
+    assert.equal(calculateCastCost(identifySpell, player()).sp, 1);
+    assert.equal(cast(identifySpell, player()).identify.refund, 5);
+  } finally {
+    registerSpellCostMod('identify-refund-test', null);
+  }
+});
+
+test('X7: the service destination is no longer a FLAGGED null', () => {
+  assert.equal(serviceDestination('Identify'), 'guildServiceIdentify');
+});

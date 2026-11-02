@@ -1,0 +1,222 @@
+-- STAR8 (2026-10-20; bible/11-Multiplayer/Starfall.md section 7): THE THIRTEENTH OF FROSTFALL, step 4 of 4 - the
+-- line's last, its way the line's outcome (the Starwarden is the three stars', its last witnessed step -
+-- net/questlineClaims.js `titleAt`). Morwen meets the player at the Glenmoril Coven's fire once, on arrival after her
+-- letter (the open-air coven has no quest marker - QLTF01 says why), and asks what the Bluff's spindle is worth (one
+-- `ask`, three choices): burned in Hircine's fire there and then (`burned`), or handed to the player (`get item`, never
+-- `give pc` - a give is a quest's pay, qlLayer.js reward) to sell to the Mages Guild (`guild`) or to take to a priest of
+-- Arkay (`temple`), each met in a town of the region's (`toting`) - the priest in a temple of Arkay's own (`templeArkay`,
+-- AUDIT STAR8 S4: the questlines' row, qlActions.js QL_PLACE_ROWS; quest/place.js holds a temple to its row's faction).
+-- The Witches' Festival is the day "the forces of sorcery and religion clash" (TEXT.RSC 8392): the coven's fire, the
+-- Guild's study and Arkay's temple are the three ways the holiday names. Lore: canon - Hircine the Huntsman, the
+-- Glenmoril Witches' Prince; Arkay, god of the cycle of life and death, and the Order of Arkay (FACTION.TXT 82, the
+-- god's own 21's). The port's own: Morwen, the spindle, the three ways.
+Quest: QLTF04
+DisplayName: What the Thread Is Worth
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>         Morwen of Glenmoril has settled the spindle's
+<ce>                 fate without you.
+
+QuestComplete:  [1004]
+<ce>         _gold_ gold, and the Bluff's spindle is out of
+<ce>                       your hands.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Morwen of Glenmoril has written. The covens' web
+ is torn, and she means to settle what becomes of
+ the Bluff's spindle. She wants my word on it at
+ __glenmoril_ in ____glenmoril_.
+
+Message:  1011
+%pcn,
+
+     The covens have stopped singing. Your stars
+ and the Bluff's spindle cost them their web, and
+ the Sisters are hunting whoever did it. Let them
+ hunt.
+
+     The spindle is still here, and it is still
+ full of starlight. You won it. Come and tell me
+ what it is worth.
+
+<ce>                   Morwen of Glenmoril
+
+Message:  1012
+<ce>         The raven, one last time. It stays a moment on
+<ce>          your shoulder after you take the letter.
+
+Message:  1013
+<ce>         Morwen is waiting by the coven's fire. She sets
+<ce>         the spindle on the stone between you. The thread
+<ce>              still glows where it crosses itself.
+<ce>
+<ce>         "Three ways. Burn it in the Huntsman's fire,
+<ce>          here, and the light goes back where it came
+<ce>          from. Sell it to the Mages Guild, who will pay
+<ce>          well and want to know how it was made. Or take
+<ce>          it to the priests of Arkay, who cut what holds
+<ce>          a thing past its time."
+
+Message:  1030
+<ce>                "It is yours to say. Which?"
+
+Message:  1031
+Burn it in Hircine's fire
+
+Message:  1032
+Sell it to the Mages Guild
+
+Message:  1033
+Take it to the priests of Arkay
+
+Message:  1034
+<ce>         Morwen drops the spindle into the coven's fire.
+<ce>         The thread burns white, and for a moment the
+<ce>         clearing is as bright as noon. Then it is only
+<ce>                         a fire.
+<ce>
+<ce>         "The Huntsman has seen what you did," Morwen
+<ce>          says. "Glenmoril will not forget it."
+
+Message:  1035
+<ce>         "The Guild, then." Morwen wraps the spindle in a
+<ce>          strip of hide and puts it in your hands. "_mage_
+<ce>          will buy it at _hall_ in __hall_. Do not let them
+<ce>                  unwind it in the hall."
+
+Message:  1036
+<ce>         "Arkay's, then." Morwen wraps the spindle in a
+<ce>          strip of hide and puts it in your hands. "_priest_
+<ce>          keeps vigil at _temple_ in __temple_. Let him see
+<ce>                     what it holds."
+
+Message:  1037
+<ce>         _mage_ turns the spindle over in both hands and
+<ce>          lets out a long breath. "Starlight. Spun." The
+<ce>          Guild's purse is heavier than you expected.
+
+Message:  1038
+<ce>         _priest_ draws a small knife and cuts the thread
+<ce>          through with one stroke. The light goes out of
+<ce>                       it slowly.
+<ce>
+<ce>         "Arkay keeps the door between the living and the
+<ce>          dead," the priest says. "Nothing should be tied
+<ce>          across it. Go with his blessing."
+
+Message:  1039
+_mage_ of the Mages Guild? Says a Glenmoril witch has something the Guild should study.
+<--->
+The Guild's people are asking about starlight. Starlight! As if you could bottle it.
+
+Message:  1040
+_priest_ of the Order of Arkay? Keeps vigil at _temple_ every night of the Festival.
+<--->
+The priests of Arkay say the Witches' Festival is no festival at all.
+
+Message:  1041
+%qdt:
+ I am to sell the Bluff's spindle to _mage_ of the
+ Mages Guild, at _hall_ in __hall_.
+
+Message:  1042
+%qdt:
+ I am to take the Bluff's spindle to _priest_, a
+ priest of Arkay, at _temple_ in __temple_.
+
+Message:  1043
+<ce>         A spindle of black thread, wrapped in a strip of
+<ce>          hide. Where the thread crosses itself, it glows.
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 1 time.
+--               %qdt occurs 3 times.
+--             _gold_ occurs 1 time.
+--             _hall_ occurs 2 times.
+--            __hall_ occurs 2 times.
+--             _mage_ occurs 4 times.
+--           _priest_ occurs 4 times.
+--           _temple_ occurs 3 times.
+--          __temple_ occurs 2 times.
+--       __glenmoril_ occurs 1 time.
+--     ____glenmoril_ occurs 1 time.
+
+QBN:
+Item _letter_ letter used 1011
+Item _spindle_ trinket used 1043
+Item _gold_ gold range 300 to 600
+
+Person _mage_ faction The_Mages_Guild anyInfo 1039
+Person _priest_ faction The_Order_of_Arkay male anyInfo 1040
+
+Place _glenmoril_ permanent GlenmorilCoven
+Place _hall_ remote magery
+Place _temple_ remote templeArkay
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	pc at _glenmoril_ set _atcoven_
+	start timer _courier_
+
+variable _atcoven_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	reveal _glenmoril_
+	log 1010 step 0
+	start timer _wait_
+
+_arrived_ task:
+	when _courier_ and _atcoven_
+	start task _met_
+
+_met_ task:
+	say 1013
+	ask 1030 choices 1031 _toburn_ 1032 _toguild_ 1033 _totemple_
+
+variable _toburn_
+variable _toguild_
+variable _totemple_
+
+_burnway_ task:
+	when _toburn_
+	say 1034
+	outcome _burned_
+	give pc _gold_
+	end quest
+
+_guildway_ task:
+	when _toguild_
+	place npc _mage_ at _hall_
+	get item _spindle_ saying 1035
+	log 1041 step 1
+
+_templeway_ task:
+	when _totemple_
+	place npc _priest_ at _temple_
+	get item _spindle_ saying 1036
+	log 1042 step 1
+
+_sold_ task:
+	toting _spindle_ and _mage_ clicked
+	say 1037
+	outcome _guild_
+	give pc _gold_
+	end quest
+
+_cut_ task:
+	toting _spindle_ and _priest_ clicked
+	say 1038
+	outcome _temple_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

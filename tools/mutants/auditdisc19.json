@@ -1,0 +1,624 @@
+[
+  {
+    "name": "AUDIT-DISC19-W1-fight-with-defender-is-quiet",
+    "file": "src/systems/town/townWatch.js",
+    "old": "    !(t?.defender === true && !t.dead) &&\n    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight",
+    "new": "    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W1-dead-defender-still-a-fight",
+    "file": "src/systems/town/townWatch.js",
+    "old": "    !(t?.defender === true && !t.dead) &&",
+    "new": "    !(t?.defender === true) &&",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W3-no-wave-cap",
+    "file": "src/systems/town/townWatch.js",
+    "old": "        if (waves >= TOWN_WATCH_MAX_WAVES) return null; // the town has sent all it will this incident\n        countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);",
+    "new": "        countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W3-waves-never-counted",
+    "file": "src/systems/town/townWatch.js",
+    "old": "          waves++;\n          return 'summon';",
+    "new": "          return 'summon';",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W3-incident-never-ends",
+    "file": "src/systems/town/townWatch.js",
+    "old": "      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0; // the incident is over",
+    "new": "      else quiet += dt;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W3-quiet-cumulative",
+    "file": "src/systems/town/townWatch.js",
+    "old": "      if (threats > 0) quiet = 0;\n      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0; // the incident is over",
+    "new": "      if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0; // the incident is over",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W3-cap-moved",
+    "file": "src/systems/town/townWatch.js",
+    "old": "export const TOWN_WATCH_MAX_WAVES = 3;",
+    "new": "export const TOWN_WATCH_MAX_WAVES = 4;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-span-seven",
+    "file": "src/systems/town/townWatch.js",
+    "old": "export const TOWN_WATCH_ARRIVAL_SPAN = 6;",
+    "new": "export const TOWN_WATCH_ARRIVAL_SPAN = 7;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-standing-squad-summoned-again",
+    "file": "src/systems/town/townWatch.js",
+    "old": "        if (defenders > 0) return null;\n        if (countdown > 0) {",
+    "new": "        if (countdown > 0) {",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-calm-cumulative",
+    "file": "src/systems/town/townWatch.js",
+    "old": "        calm = 0;\n        if (defenders > 0) return null;",
+    "new": "        if (defenders > 0) return null;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W6-threats-outside-town",
+    "file": "src/systems/town/townWatch.js",
+    "old": "  const threats = inTown ? foes.filter((f) => isTownThreat(f, { inTownRect })) : [];",
+    "new": "  const threats = foes.filter((f) => isTownThreat(f, { inTownRect }));",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W6-defenders-unread",
+    "file": "src/systems/town/townWatch.js",
+    "old": "    defenders: guards.defenderCount(),",
+    "new": "    defenders: 0,",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W6-summon-without-threats",
+    "file": "src/systems/town/townWatch.js",
+    "old": "    guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats }).catch((e) => console.error('[guards]', e));",
+    "new": "    guards\n      .summonDefenders({ playerFeet, playerFwd, pool: pool(), threats: [] })\n      .catch((e) => console.error('[guards]', e));",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W6-dismissal-dropped",
+    "file": "src/systems/town/townWatch.js",
+    "old": "  else if (act === 'dismiss') guards.dismissDefenders();\n  return act;",
+    "new": "  return act;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W6-pool-read-every-frame",
+    "file": "src/systems/town/townWatch.js",
+    "old": "  if (act === 'summon')\n    guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats }).catch((e) => console.error('[guards]', e));",
+    "new": "  const _p = pool();\n  if (act === 'summon')\n    guards.summonDefenders({ playerFeet, playerFwd, pool: _p, threats }).catch((e) => console.error('[guards]', e));",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W6-host-in-town-always",
+    "file": "src/scenes/world.js",
+    "old": "      inTown: _isPlayerInTownStrict(), crime:",
+    "new": "      inTown: true, crime:",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W6-host-location-null",
+    "file": "src/scenes/world.js",
+    "old": "locationKey: `${px.x},${px.y}`,\n      foes: exteriorFoes.foes",
+    "new": "locationKey: null,\n      foes: exteriorFoes.foes",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W6-host-rect-always",
+    "file": "src/scenes/world.js",
+    "old": "    if (!_musicLoc || !f?.ai?.feet) return false;\n    const px = playerTravelPixel();\n    const wc = state.worldCoords(f.ai.feet);",
+    "new": "    if (!_musicLoc || !f?.ai?.feet) return true;\n    const px = playerTravelPixel();\n    const wc = state.worldCoords(f.ai.feet);",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W2-blow-on-defender-no-crime",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (g.defender) {\n      if (!playerEntity.crimeCommitted)",
+    "new": "    if (false) {\n      if (!playerEntity.crimeCommitted)",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W2-held-crime-lowered",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (!playerEntity.crimeCommitted) setCrimeCommitted(playerEntity, CRIME_ASSAULT);   // V4: through the one setter (SuppressCrime)\n      for (const d of guards)",
+    "new": "      setCrimeCommitted(playerEntity, CRIME_ASSAULT);\n      for (const d of guards)",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W2-only-the-struck-one",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      for (const d of guards) if (!d.dead && d.defender) enlistDefender(d, playerFeet);\n    }",
+    "new": "      enlistDefender(g, playerFeet);\n    }",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W2-defender-counts-as-watch",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    return !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';",
+    "new": "    return !g.dead && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-enlist-not-hostile",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    g.ai.isHostile = true;\n    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
+    "new": "    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-enlist-no-pursuit",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    g.ai.isHostile = true;\n    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
+    "new": "    g.ai.isHostile = true;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W3-defender-kit-kept",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      else if (g.defender && !fromPlayer) g.entity.items = [];",
+    "new": "      else if (false) g.entity.items = [];",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W3-every-watch-kit-stripped",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      else if (g.defender && !fromPlayer) g.entity.items = [];",
+    "new": "      else if (!fromPlayer) g.entity.items = [];",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-in-flight-uncounted",
+    "file": "src/scenes/cityGuards.js",
+    "old": " + spawning.filter((p) => p.defender && !p.bearer).length + _summonsWaiting;",
+    "new": " + _summonsWaiting;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-pending-not-marked",
+    "file": "src/scenes/cityGuards.js",
+    "old": "pos[2]], defender: !!defender, bearer: !!bearer };",
+    "new": "pos[2]], defender: false, bearer: !!bearer };",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-summon-converts-townsfolk",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (!p.guard || room() <= 0) continue;",
+    "new": "      if (room() <= 0) continue;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-summon-no-range",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (Math.hypot(p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]) > GUARD_NPC_SPAWN_RANGE) continue;\n      const g = await turnNpc(p, null, { defender: true",
+    "new": "      const g = await turnNpc(p, null, { defender: true",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
+  },
+  {
+    "name": "AUDIT-DISC19-summon-band-three",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    const count = Math.min(room(), 2 + Math.floor(rand() * 4));   // Random.Range(2, 6)",
+    "new": "    const count = Math.min(room(), 3 + Math.floor(rand() * 4));   // Random.Range(2, 6)",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-summon-no-band",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (came > 0) return came;\n    const count = Math.min(room(), 2 +",
+    "new": "    return came;\n    const count = Math.min(room(), 2 +",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-spare-ignores-setting",
+    "file": "src/scenes/cityGuards.js",
+    "old": "(getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere())",
+    "new": "true",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-guards-grunt-every-pass",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (!swing?.voiced) {\n      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
+    "new": "    if (true) {\n      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-guards-token-unset",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
+    "new": "      const grunt = playerAttackGrunt(playerEntity, false, rand);",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-foes-grunt-every-pass",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (!swing?.voiced) {\n      if (swing) swing.voiced = true;",
+    "new": "    if (true) {\n      if (swing) swing.voiced = true;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-foes-token-unset",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (swing) swing.voiced = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-host-token-dropped",
+    "file": "src/scenes/world.js",
+    "old": "guardHitSound, { swing })) {\n          // X-slice: encounter foes resolve after the watch, before civilians",
+    "new": "guardHitSound, {})) {\n          // X-slice: encounter foes resolve after the watch, before civilians",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W5-carried-hit-new-swing",
+    "file": "src/scenes/cityGuards.js",
+    "old": "inViewFn ?? _lastInView, onHitSound, { swing });",
+    "new": "inViewFn ?? _lastInView, onHitSound);",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W4-shaft-strikes-defender",
+    "file": "src/combat/arrowFlight.js",
+    "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue;",
+    "new": "          if (m.fromPlayer && sparedByPlayer(t.ref) && t.ref?.defender !== true) continue;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W4-enemy-shaft-passes-too",
+    "file": "src/combat/arrowFlight.js",
+    "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue;",
+    "new": "          if (sparedByPlayer(t.ref)) continue;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W4-blast-strikes-defender",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (caster?.entity === playerEntity && sparedFromPlayer(t)) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W4-touch-meets-defender",
+    "file": "src/scenes/hostMagic.js",
+    "old": "marks.length ? [...playerTargets(), ...marks] : playerTargets()",
+    "new": "marks.length ? [...foes(), ...marks] : foes()",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W4-area-strikes-defender",
+    "file": "src/scenes/hostMagic.js",
+    "old": "sweepFoes(eye, EXPLOSION_RADIUS, playerTargets())",
+    "new": "sweepFoes(eye, EXPLOSION_RADIUS, foes())",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W4-missile-strikes-defender",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      for (const f of playerTargets()) {",
+    "new": "      for (const f of foes()) {",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W4-nobody-spared",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  const sparedFromPlayer = (t) => sparedByPlayer(t);",
+    "new": "  const sparedFromPlayer = (t) => t?.defender === 'never';",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-W4-torch-strikes-defender",
+    "file": "src/scenes/world.js",
+    "old": "foes: () => [...cityGuards.guards.filter((g) => !g.defender), ...exteriorFoes.foes.filter((f) => !sparedByPlayer(f))], foeSinks",
+    "new": "foes: () => [...cityGuards.guards, ...exteriorFoes.foes.filter((f) => !sparedByPlayer(f))], foeSinks",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-S2-death-video-stranded",
+    "file": "src/systems/save/save.js",
+    "old": "  for (const a of entity.activeEffects) if (a.infection && !a.deployed) a.deathScheduled = false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-old-infection-not-repaired",
+    "file": "src/systems/save/save.js",
+    "old": "if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;",
+    "new": "if ((a.kind === 'racialOverride') && !a.permanent) a.permanent = true;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-S3-namesake-slots",
+    "file": "src/systems/save/saveSlots.js",
+    "old": "(!id || info.characterId === id)",
+    "new": "true",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-S3-legacy-names-nothing",
+    "file": "src/systems/save/saveSlots.js",
+    "old": "(!id || info.characterId === id)",
+    "new": "(info.characterId === id)",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-S3-no-quicksave",
+    "file": "src/systems/save/saveSlots.js",
+    "old": "[...new Set([QUICK_SAVE_NAME, ...own.map((info) => info.saveName)])]",
+    "new": "[...new Set(own.map((info) => info.saveName))]",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-S4-fatigue-left-at-zero",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));\n  // DISC28-E: ...and the minutes spent dead are not the BODY's to pay (worldTick.js skipDeadMinutes). Online the shared",
+    "new": "  // DISC28-E: ...and the minutes spent dead are not the BODY's to pay (worldTick.js skipDeadMinutes). Online the shared",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-S4-living-rested",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "new": "  if (true) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-S4-respawn-not-rested",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "new": "  if (dead) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-S4-fatigue-overwritten",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "new": "  if (dead || force) entity.fatigue = respawnHealth(maxFatigue(entity));",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-E1-cast-cut-at-reach",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      first ??= collider.raycastHit(eye, lookDir, RAY_DISTANCE);",
+    "new": "      first ??= collider.raycastHit(eye, lookDir, WEAPON_REACH);",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-E2-press-skips-own-mesh",
+    "file": "src/player/activate.js",
+    "old": "      if (firstHit.key != null && firstHit.key !== target.key) {",
+    "new": "      if (firstHit.key != null) {",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-E2-swing-skips-own-mesh",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;",
+    "new": "      if (first.key != null && actions.objects.has(first.key)) continue;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-E2-special-door-a-box",
+    "file": "src/player/activate.js",
+    "old": "  !!o &&\n  (o.kind === 'action' ||\n    (o.kind === 'door' && o.special === true) ||\n    ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
+    "new": "  !!o && (o.kind === 'action' || ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-E2-flats-are-mesh",
+    "file": "src/player/activate.js",
+    "old": "  (o.kind === 'action' ||\n    (o.kind === 'door' && o.special === true) ||\n    ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
+    "new": "  (o.kind === 'action' || (o.kind === 'door' && o.special === true) || o.kind === 'relay' || o.kind === 'effect');",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-E2-movers-not-mesh",
+    "file": "src/player/activate.js",
+    "old": "  (o.kind === 'action' ||",
+    "new": "  (o.kind === 'mover' ||",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-E2-effects-not-mesh",
+    "file": "src/player/activate.js",
+    "old": "  (o.kind === 'action' ||\n    (o.kind === 'door' && o.special === true) ||\n    ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
+    "new": "  (o.kind === 'action' || (o.kind === 'door' && o.special === true) || (o.kind === 'relay' && o.modelIdNum != null));",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-D1-notice-never-raised",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "     if (isStaleChunk(err)) _staleChunkNotice = true;",
+    "new": "     if (isStaleChunk(err)) _staleChunkNotice = false;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-D1-notice-never-said",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_staleChunkNotice) { _staleChunkNotice = false; setMidScreenText(STALE_CHUNK_IN_PLAY_TEXT, STALE_CHUNK_IN_PLAY_SECONDS); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-D1-notice-short",
+    "file": "src/systems/staleChunk.js",
+    "old": "export const STALE_CHUNK_IN_PLAY_SECONDS = 12;",
+    "new": "export const STALE_CHUNK_IN_PLAY_SECONDS = 1.5;",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-D1-notice-long",
+    "file": "src/systems/staleChunk.js",
+    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'The game was updated. Reload to see the enemies.';",
+    "new": "export const STALE_CHUNK_IN_PLAY_TEXT =\n  'This page is from an older version of the game that has since been replaced, so the enemies here could not be built. Reload the page to fix it.';",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-B1-candle-tinted",
+    "file": "src/scenes/worldModes.js",
+    "old": "        abyssCandle(dungeonCtx.candleLight(), _abyss), _abyss?.torchOff",
+    "new": "        abyssCandle(_dgTint(dungeonCtx.candleLight()), _abyss), _abyss?.torchOff",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC19-B1-shared-colour-back",
+    "file": "src/scenes/worldModes.js",
+    "old": "renderer.setPointLights(_dgLit.data, null, (_dgFade && capFadePairs(_dgLit.data, _dgLit.data.length / 4 - _dgNear.data.length / 4, cam.pos, renderer.maxPointLights, _dgLit.colors)) || _dgLit.colors);",
+    "new": "renderer.setPointLights(_dgLit.data, _dgColor);",
+    "tests": [
+      "test/systems/auditdisc19.test.js"
+    ]
+  }
+]

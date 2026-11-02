@@ -1,0 +1,219 @@
+[
+  {
+    "name": "AUDWB-D2-the-sting-from-his-fall",
+    "file": "src/systems/gate/gateScore.js",
+    "old": "      if (stingAt !== null && s.fell) return now - stingAt < SCORE_STING_MS ? GATE_SONGS.fell : SCORE_SILENCE;",
+    "new": "",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D2-a-late-arrival-hears-the-fanfare",
+    "file": "src/systems/gate/gateScore.js",
+    "old": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS; // AUDIT WBX W3: from when it sounds",
+    "new": "      if (s.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS; // AUDIT WBX W3: from when it sounds",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D2-the-next-day-remembers-the-last",
+    "file": "src/systems/gate/gateScore.js",
+    "old": "        stingAt = null;\n      }",
+    "new": "      }",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D2-fadeout-a-cut",
+    "file": "src/systems/music.js",
+    "old": "    if (!this.playing || this._current === null) {",
+    "new": "    {",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D2-fadeout-never-stops",
+    "file": "src/systems/music.js",
+    "old": "      this.player?.stop();\n      this._audio?.stop();\n      if (sw.to && !this._start(sw.to) && this._current === sw.to) this._current = null;",
+    "new": "      if (sw.to && !this._start(sw.to) && this._current === sw.to) this._current = null;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D2-the-world-cuts-the-quiet",
+    "file": "src/scenes/world.js",
+    "old": "(want === SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); }",
+    "new": "(want === SCORE_SILENCE) { if (music.current !== null) music.stop(); }",
+    "tests": [
+      "test/systems/gate/wb7_boss_audio.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D3-a-grunt-a-word",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "{ gruntAt = t; hpHeard = s.hp; sound(BOSS_CUES.hurt, s, t, null); }",
+    "new": "{ gruntAt = t; hpHeard = s.hp; sound(BOSS_CUES.hurt, s, t, null); } hpHeard = s.hp;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D3-a-heal-counted-as-loss-kept",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (hpHeard === null || s.hp > hpHeard) hpHeard = s.hp;",
+    "new": "    if (hpHeard === null) hpHeard = s.hp;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D4-the-war-rings-a-second",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    const seamless = !!this.song.seamless && this.loop && durationTicks > 0;",
+    "new": "    const seamless = false;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D4-the-seam-a-tick-off",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      this._originTime += durationTicks * secondsPerTick;",
+    "new": "      this._originTime += (durationTicks + 1) * secondsPerTick;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D4-the-war-songs-classic",
+    "file": "src/systems/gate/gateScore.js",
+    "old": "    seamless: true,\n    level,",
+    "new": "    level,",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D5-the-veil-counts-its-ticks",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "      hostCounts = true;\n      drawnN++;",
+    "new": "      drawnN++;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D5-the-old-places-frames-counted",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "        drawnAt = drawnN;\n        kick();",
+    "new": "        kick();",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D5-never-warmed",
+    "file": "src/scenes/world.js",
+    "old": "    try { if (gatePool?.frame(dt)) warmGateVeil(); }",
+    "new": "    try { gatePool?.frame(dt); }",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js",
+      "test/world/gate/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D6-the-flash-a-frame-late",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "      draw(t); // AUDIT WB D6: the fire in this very call - the next tick is a frame late, and that frame showed what it covers",
+    "new": "      // AUDIT WB D6: the fire in this very call - the next tick is a frame late, and that frame showed what it covers",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D7-anchored-once",
+    "file": "src/render/deadlands.js",
+    "old": "    if (anchor === null || Math.abs(anchor + p - w) > slackMs) anchor = w - p;",
+    "new": "    if (anchor === null) anchor = w - p;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D7-the-wall-every-read",
+    "file": "src/render/deadlands.js",
+    "old": "    if (anchor === null || Math.abs(anchor + p - w) > slackMs) anchor = w - p;",
+    "new": "    anchor = w - p;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D8-the-grain-at-the-clocks-radians",
+    "file": "src/render/deadlands.js",
+    "old": "      float pour = 0.55 + 0.45 * fg;",
+    "new": "      float pour = 0.55 + 0.45 * dnoise(vec2(id * 3.1, e * 260.0 + t * ${w(FALL_TURNS)}));",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D8-a-layer-seen-as-it-wraps",
+    "file": "src/render/deadlands.js",
+    "old": "      float fk = 1.0 - abs(2.0 * fph - 1.0);",
+    "new": "      float fk = 0.5;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D9-ridges-at-the-zenith",
+    "file": "src/render/deadlands.js",
+    "old": "  if (e < ${RIDGES_TOP.toFixed(4)}) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D9-a-tower-cut",
+    "file": "src/render/deadlands.js",
+    "old": "export const RIDGES_TOP = 0.42;",
+    "new": "export const RIDGES_TOP = 0.3;",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D10-a-new-list-a-frame",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      _lights.length = 0;",
+    "new": "      const _lights = [];",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D10-an-empty-floor-made-again",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      if (!floor.length) return NONE;\n      const out = [];",
+    "new": "      const out = [];",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  },
+  {
+    "name": "AUDWB-D10-the-braziers-made-again",
+    "file": "src/world/gate/gateArena.js",
+    "old": "  if (!L) { L = Object.freeze(allCourtBraziers(plan).map(",
+    "new": "  if (true) { L = Object.freeze(allCourtBraziers(plan).map(",
+    "tests": [
+      "test/systems/gate/auditwb_sound.test.js"
+    ]
+  }
+]

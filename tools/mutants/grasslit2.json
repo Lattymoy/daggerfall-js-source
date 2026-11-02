@@ -1,0 +1,750 @@
+[
+  {
+    "name": "GRASSLIT2-classic-tones",
+    "file": "src/render/labGrass.js",
+    "old": "  Object.freeze([1.06, 1.10, 1.01]),",
+    "new": "  Object.freeze([1.15, 1.21, 1.06]),",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-tones-by-lane",
+    "file": "src/render/labGrass.js",
+    "old": "gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic);",
+    "new": "gl.uniform3fv(u.uGrassTone, this.tones);",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-twin-tones-by-lane",
+    "file": "src/render/labGrass.js",
+    "old": "(tones ?? (lane ? GRASS_TONES : GRASS_TONES_CLASSIC)).slice(0, 3)",
+    "new": "(tones ?? GRASS_TONES).slice(0, 3)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ],
+    "note": "AUDIT GRASS-LIT2 (PIN MOVED): re-aimed by content - the twin takes an optional tones override now (the probe's classic before-column)."
+  },
+  {
+    "name": "GRASSLIT2-slope-ignored",
+    "file": "src/render/labGrass.js",
+    "old": "vec3 gN = vec3(slope.x, sqrt(max(1.0 - dot(slope, slope), 0.0)), slope.y);",
+    "new": "vec3 gN = vec3(0.0, 1.0, 0.0);",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-slope-axes-swapped",
+    "file": "src/render/labGrass.js",
+    "old": "float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u), float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u)",
+    "new": "float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u), float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-height-bits",
+    "file": "src/render/labGrass.js",
+    "old": "export const GRASS_HEIGHT_BITS = 6;",
+    "new": "export const GRASS_HEIGHT_BITS = 7;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-pack-undithered",
+    "file": "src/render/labGrass.js",
+    "old": "GRASS_SLOPE_STEPS / GRASS_SLOPE_SPAN + r)))",
+    "new": "GRASS_SLOPE_STEPS / GRASS_SLOPE_SPAN)))",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-pack-unheld",
+    "file": "src/render/labGrass.js",
+    "old": "k = l > GRASS_SLOPE_SPAN ? GRASS_SLOPE_SPAN / l : 1;",
+    "new": "k = 1;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-points-every-vertex",
+    "file": "src/render/labGrass.js",
+    "old": "if (gl_VertexID % 3 == 2) for (int j = 0;",
+    "new": "if (gl_VertexID % 3 >= 0) for (int j = 0;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-points-classic-falloff",
+    "file": "src/render/labGrass.js",
+    "old": ": pc * pc;\\n'",
+    "new": ": pc;\\n'",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-points-lane-falloff",
+    "file": "src/render/labGrass.js",
+    "old": "float pa = uLane > 0.5 ? elAttenuation(",
+    "new": "float pa = uLane > 2.0 ? elAttenuation(",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-points-unshadowed",
+    "file": "src/render/labGrass.js",
+    "old": "    vPoint += pa * shadowOfLight(i, uPointLights[i], rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0)) * max(",
+    "new": "    vPoint += pa * max(",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-points-no-lambert",
+    "file": "src/render/labGrass.js",
+    "old": "* max(dot(nrm, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];",
+    "new": "* uPointColors[i];",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-points-not-added",
+    "file": "src/render/labGrass.js",
+    "old": "+ vNear + vPoint;   // GRASS-LIT; GRASS-LIT2",
+    "new": "+ vNear;   // GRASS-LIT; GRASS-LIT2",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-points-not-decoded",
+    "file": "src/render/labGrass.js",
+    "old": "lane ? lane.decodeN(pcs, this._dec.points, pn) :",
+    "new": "false ? lane.decodeN(pcs, this._dec.points, pn) :",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-points-uncapped",
+    "file": "src/render/labGrass.js",
+    "old": "Math.floor(pcs.length / 3), GRASS_MAX_LIGHTS) : 0;",
+    "new": "Math.floor(pcs.length / 3)) : 0;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-placer-slope-dropped",
+    "file": "src/render/labGrass.js",
+    "old": "st.slope[n * 2] = gn ? gn[0] : 0;",
+    "new": "st.slope[n * 2] = 0;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-writeslot-slope-dropped",
+    "file": "src/render/labGrass.js",
+    "old": "placed.slope ? placed.slope[i * 2] : 0,",
+    "new": "0,",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-mean-even-step",
+    "file": "src/render/labGrass.js",
+    "old": "Math.ceil(n / GRASS_MEAN_SAMPLES)) | 1;",
+    "new": "Math.ceil(n / GRASS_MEAN_SAMPLES));",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-mean-reads",
+    "file": "src/render/labGrass.js",
+    "old": "export const GRASS_MEAN_SAMPLES = 65536;",
+    "new": "export const GRASS_MEAN_SAMPLES = 4096;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-normal-diagonal",
+    "file": "src/world/terrain/terrainSurface.js",
+    "old": "    const v = az >= ax ? n00 + az * (n01 - n00) + ax * (n11 - n01) : n00 + ax * (n10 - n00) + az * (n11 - n10);",
+    "new": "    const v = ax >= az ? n00 + az * (n01 - n00) + ax * (n11 - n01) : n00 + ax * (n10 - n00) + az * (n11 - n10);",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-normal-unnormalised",
+    "file": "src/world/terrain/terrainSurface.js",
+    "old": "  out[0] /= l;\n  out[1] /= l;\n  out[2] /= l;\n  return out;",
+    "new": "  return out;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-host-points",
+    "file": "src/scenes/world.js",
+    "old": "points: renderer._pointLights, pointColors:",
+    "new": "points: null, pointColors:",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-host-mean-classic",
+    "file": "src/scenes/groundSets.js",
+    "old": "drawnMeans ?? layers.map(tileMeanColour)",
+    "new": "layers.map(tileMeanColour)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "GRASSLIT2-host-normals-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "groundNormals: labGrass && stride === 1 ? normals : null,",
+    "new": "groundNormals: null,",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-reach-ignored",
+    "file": "src/render/labGrass.js",
+    "old": "      if (!(d2 < r * r)) continue;",
+    "new": "      // reach ignored",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-reach-flat",
+    "file": "src/render/labGrass.js",
+    "old": "dy = Math.max(box[1] - y, 0, y - box[4])",
+    "new": "dy = 0",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-full-keeps-first",
+    "file": "src/render/labGrass.js",
+    "old": "if (n === cap && d2 >= dist[cap - 1]) continue;",
+    "new": "if (n === cap) continue;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-full-tie-replaces",
+    "file": "src/render/labGrass.js",
+    "old": "if (n === cap && d2 >= dist[cap - 1]) continue;",
+    "new": "if (n === cap && d2 > dist[cap - 1]) continue;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-unsorted",
+    "file": "src/render/labGrass.js",
+    "old": "while (k > 0 && dist[k - 1] > d2)",
+    "new": "while (false && dist[k - 1] > d2)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-tie-to-later",
+    "file": "src/render/labGrass.js",
+    "old": "while (k > 0 && dist[k - 1] > d2)",
+    "new": "while (k > 0 && dist[k - 1] >= d2)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-reupload-always",
+    "file": "src/render/labGrass.js",
+    "old": "    if (same) return;\n    this.gl.uniform1i(this.u.uPointCount, n);",
+    "new": "    this.gl.uniform1i(this.u.uPointCount, n);",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-frame-reset-dropped",
+    "file": "src/render/labGrass.js",
+    "old": "this._pts = pn > 0 ? pts : null; this._pn = pn; this._cellN = -1;",
+    "new": "this._pts = pn > 0 ? pts : null; this._pn = pn;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-cell-walk-dropped",
+    "file": "src/render/labGrass.js",
+    "old": "if (this._pn > 0) this._cellLights(box);",
+    "new": "if (false) this._cellLights(box);",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A1-stage-ignores-list",
+    "file": "src/render/labGrass.js",
+    "old": "'    int i = uPointIdx[j];\\n'",
+    "new": "'    int i = j;\\n'",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A2-no-caster-reset",
+    "file": "src/render/labGrass.js",
+    "old": "      gl.uniform1iv(L.casterOf, NO_CASTERS);\n      gl.uniform4fv(L.pointParams, NO_CASTER_PARAMS);\n",
+    "new": "\n",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A3-pack-unxored",
+    "file": "src/render/labGrass.js",
+    "old": "((q(nx, dx) ^ GRASS_SLOPE_STEPS) << 5) | (q(nz, dz) ^ GRASS_SLOPE_STEPS)",
+    "new": "(q(nx, dx) << 5) | q(nz, dz)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A3-stage-unxored",
+    "file": "src/render/labGrass.js",
+    "old": "float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u), float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u)",
+    "new": "float((hw >> 5u) & 31u), float(hw & 31u)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A4-nan-unguarded",
+    "file": "src/render/labGrass.js",
+    "old": "  if (!Number.isFinite(nx) || !Number.isFinite(nz)) nx = nz = 0;",
+    "new": "  // unguarded",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-A5-floor",
+    "file": "src/render/labGrass.js",
+    "old": "Math.max(1, Math.ceil(n / GRASS_MEAN_SAMPLES)) | 1",
+    "new": "Math.max(1, Math.floor(n / GRASS_MEAN_SAMPLES)) | 1",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-B1-normals-ungated",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "groundNormals: labGrass && stride === 1 ? normals : null,",
+    "new": "groundNormals: stride === 1 ? normals : null,",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-B1-promotion-ungated",
+    "file": "src/scenes/world.js",
+    "old": "p.groundNormals = labGrass && stride === 1 ? grid.normals : null;",
+    "new": "p.groundNormals = stride === 1 ? grid.normals : null;",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-B2-means-asked-again",
+    "file": "src/scenes/groundSets.js",
+    "old": "    else if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);",
+    "new": "    else if (labGrass) { /* means not kept */ }",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-B5-zero-step",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "      r = Math.max(1, r | 0); // AUDIT GRASS-LIT2 B5: a zero step never left the loop",
+    "new": "      r = r | 0; // AUDIT GRASS-LIT2 B5: a zero step never left the loop",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-B5-yaw-flat",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "            return {\n              feet: [x, heightAt(x, z), z],\n              yaw: n ? Math.atan2(n[0], n[2]) : 0,\n              pixel: [p.px, p.py],\n              archive: p.groundArchive,\n              normal: n,\n            }; // AUDIT B5: a hillside's yaw looks down it",
+    "new": "            return { feet: [x, heightAt(x, z), z], yaw: 0, pixel: [p.px, p.py], archive: p.groundArchive, normal: n }; // AUDIT B5: a hillside's yaw looks down it",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-B5-near-half",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "                ? surfaceNormalAt(p.groundNormals, (tx + 0.5) * 6.4, (tz + r * 2 + 0.5) * 6.4, [0, 1, 0])",
+    "new": "                ? surfaceNormalAt(p.groundNormals, (tx + 0.5) * 6.4, (tz + 0.5) * 6.4, [0, 1, 0])",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-r2-same-constant",
+    "file": "src/render/labGrass.js",
+    "old": "dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5",
+    "new": "dz = ((0.5 + i * 0.7548776662466927) % 1) - 0.5",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-r2-golden",
+    "file": "src/render/labGrass.js",
+    "old": "dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5",
+    "new": "dx = ((0.5 + i * 0.6180339887498949) % 1) - 0.5",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-r2-axes-swapped",
+    "file": "src/render/labGrass.js",
+    "old": "const dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5, dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5;",
+    "new": "const dx = ((0.5 + i * 0.5698402909980532) % 1) - 0.5, dz = ((0.5 + i * 0.7548776662466927) % 1) - 0.5;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-r2-phase-0",
+    "file": "src/render/labGrass.js",
+    "old": "const dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5, dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5;",
+    "new": "const dx = ((0.0 + i * 0.7548776662466927) % 1) - 0.5, dz = ((0.0 + i * 0.5698402909980532) % 1) - 0.5;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-pack-hold-strict",
+    "file": "src/render/labGrass.js",
+    "old": "k = l > GRASS_SLOPE_SPAN ? GRASS_SLOPE_SPAN / l : 1;",
+    "new": "k = l > GRASS_SLOPE_SPAN ? 0.95 * GRASS_SLOPE_SPAN / l : 1;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-decode-no-round",
+    "file": "src/render/labGrass.js",
+    "old": "'  uint hw = uint(aPA.w * 65535.0 + 0.5);\\n'",
+    "new": "'  uint hw = uint(aPA.w * 65535.0);\\n'",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-height-div-64",
+    "file": "src/render/labGrass.js",
+    "old": "/ ${(2 ** GRASS_HEIGHT_BITS - 1).toFixed(1)} * uBladeScale.y",
+    "new": "/ 64.0 * uBladeScale.y",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-height-div-62",
+    "file": "src/render/labGrass.js",
+    "old": "/ ${(2 ** GRASS_HEIGHT_BITS - 1).toFixed(1)} * uBladeScale.y",
+    "new": "/ 62.0 * uBladeScale.y",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-count-gate-dropped",
+    "file": "src/render/labGrass.js",
+    "old": "'    if (j >= uPointCount) break;\\n'",
+    "new": "''",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-vpoint-uninit",
+    "file": "src/render/labGrass.js",
+    "old": "'  vPoint = vec3(0.0);\\n'",
+    "new": "''",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-lane-compare-flipped",
+    "file": "src/render/labGrass.js",
+    "old": "float pa = uLane > 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;",
+    "new": "float pa = uLane >= 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ],
+    "equivalent": true,
+    "why": "uLane is uploaded as exactly 0 or 1 (gl.uniform1f(u.uLane, lane ? 1 : 0)), so > 0.5 and >= 0.5 pick the same branch on every draw. Recorded so the next reader knows the comparison carries no threshold."
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-lambert-up-not-nrm",
+    "file": "src/render/labGrass.js",
+    "old": "* max(dot(nrm, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];",
+    "new": "* max(dot(gN, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-count-ignores-colors",
+    "file": "src/render/labGrass.js",
+    "old": "Math.min(pts.length >> 2, Math.floor(pcs.length / 3), GRASS_MAX_LIGHTS)",
+    "new": "Math.min(pts.length >> 2, GRASS_MAX_LIGHTS)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-classic-colors-uncut",
+    "file": "src/render/labGrass.js",
+    "old": ": (pcs.subarray ? pcs.subarray(0, pn * 3) : pcs.slice(0, pn * 3)));",
+    "new": ": pcs);",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-twin-normal-ignored",
+    "file": "src/render/labGrass.js",
+    "old": "const n = light.normal ?? [0, 1, 0];",
+    "new": "const n = [0, 1, 0];",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-twin-lantern-undecoded",
+    "file": "src/render/labGrass.js",
+    "old": "pt[i] += k * dec(p.color[i]);",
+    "new": "pt[i] += k * p.color[i];",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-twin-moon-up",
+    "file": "src/render/labGrass.js",
+    "old": "const moonLam = light.moonDir ? lamOf(light.moonDir) : 0;",
+    "new": "const moonLam = light.moonDir ? Math.max(light.moonDir[1], 0) : 0;",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-ask-no-slope",
+    "file": "src/render/labGrass.js",
+    "old": "const ask = { keep: keepNow, ground: groundNow, slope: slopeNow, height };",
+    "new": "const ask = { keep: keepNow, ground: groundNow, height };",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-normal-no-lower-clamp",
+    "file": "src/world/terrain/terrainSurface.js",
+    "old": "  const last = g - 2;\n  const qx = Math.max(0, Math.min(last, Math.floor(lx / quad)));\n  const qz = Math.max(0, Math.min(last, Math.floor(lz / quad)));",
+    "new": "  const last = g - 2;\n  const qx = Math.min(last, Math.floor(lx / quad));\n  const qz = Math.min(last, Math.floor(lz / quad));",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-slope-guard-loosened",
+    "file": "src/scenes/world.js",
+    "old": "if (!hit?.p.groundNormals) return null;",
+    "new": "if (!hit) return null;",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-forest-grass-check-dropped",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "            if (!grass.has(p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2)) continue;\n            let w = 0,",
+    "new": "            let w = 0,",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-forest-min-not-max",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "            if (!best || w / k > best.wood) best = { p, tx, tz, wood: w / k };",
+    "new": "            if (!best || w / k < best.wood) best = { p, tx, tz, wood: w / k };",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-steep-ignored",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "            if (steep > 0 && !(n && Math.hypot(n[0], n[2]) >= steep)) continue;",
+    "new": "",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-nx-mask-63",
+    "file": "src/render/labGrass.js",
+    "old": "float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u)",
+    "new": "float(((hw >> 5u) & 63u) ^ ${GRASS_SLOPE_STEPS}u)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-terrain-falloff-linear",
+    "file": "src/render/renderer.js",
+    "old": "diff *= cloudShadowAt(vWorldPos);\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));\n  vec3 pointAcc = vec3(0.0);\n  for (int i = 0; i < 16; i++) {\n    if (i >= uPointCount) break;\n    vec3 L = uPointLights[i].xyz - vWorldPos;\n    float d = length(L);\n    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att * att *",
+    "new": "diff *= cloudShadowAt(vWorldPos);\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));\n  vec3 pointAcc = vec3(0.0);\n  for (int i = 0; i < 16; i++) {\n    if (i >= uPointCount) break;\n    vec3 L = uPointLights[i].xyz - vWorldPos;\n    float d = length(L);\n    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att *",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-lane-terrain-falloff-linear",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    float att = sh * elAttenuation(d, uPointLights[i].w);",
+    "new": "    float att = sh * clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-twin-tones-override-ignored",
+    "file": "src/render/labGrass.js",
+    "old": "(tones ?? (lane ? GRASS_TONES : GRASS_TONES_CLASSIC)).slice(0, 3)",
+    "new": "(lane ? GRASS_TONES : GRASS_TONES_CLASSIC).slice(0, 3)",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-light-probe-was-in-todays-tones",
+    "file": "tools/grassLightProbe.mjs",
+    "old": "      was = grassLit(mean, 0.5, night, lane, 1, GRASS_TONES),",
+    "new": "      was = grassLit(mean, 0.5, night, lane),",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-look-probe-default-lane-only",
+    "file": "tools/grassLookProbe.mjs",
+    "old": "        if (x.tones !== undefined) window.__grassTones?.(x.tones, x.classic);",
+    "new": "        if (x.tones !== undefined) window.__grassTones?.(x.tones);",
+    "tests": [
+      "test/render/grasslit2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRASSLIT2-C-height-bit-into-slope",
+    "file": "src/render/labGrass.js",
+    "old": "'  uint hw = uint(aPA.w * 65535.0 + 0.5);\\n'",
+    "new": "'  uint hw = uint(aPA.w * 65535.0 + 0.5); hw ^= ((hw >> 10u) & 1u) << 9u;\\n'",
+    "tests": [
+      "test/render/grasslit2.test.js",
+      "test/render/grasslit.test.js"
+    ]
+  }
+]

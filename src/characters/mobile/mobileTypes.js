@@ -1,0 +1,78 @@
+// MobileTypes (Characters C3).
+// Generated 1:1 from Daggerfall Unity's DaggerfallUnityEnums.cs
+// (MIT, Daggerfall Workshop) by tools-side extraction - do not
+// hand-edit; regenerate from the DFU source.
+export const MOBILE_TYPES = Object.freeze({
+  'Rat': 0,
+  'Imp': 1,
+  'Spriggan': 2,
+  'GiantBat': 3,
+  'GrizzlyBear': 4,
+  'SabertoothTiger': 5,
+  'Spider': 6,
+  'Orc': 7,
+  'Centaur': 8,
+  'Werewolf': 9,
+  'Nymph': 10,
+  'Slaughterfish': 11,
+  'OrcSergeant': 12,
+  'Harpy': 13,
+  'Wereboar': 14,
+  'SkeletalWarrior': 15,
+  'Giant': 16,
+  'Zombie': 17,
+  'Ghost': 18,
+  'Mummy': 19,
+  'GiantScorpion': 20,
+  'OrcShaman': 21,
+  'Gargoyle': 22,
+  'Wraith': 23,
+  'OrcWarlord': 24,
+  'FrostDaedra': 25,
+  'FireDaedra': 26,
+  'Daedroth': 27,
+  'Vampire': 28,
+  'DaedraSeducer': 29,
+  'VampireAncient': 30,
+  'DaedraLord': 31,
+  'Lich': 32,
+  'AncientLich': 33,
+  'Dragonling': 34,
+  'FireAtronach': 35,
+  'IronAtronach': 36,
+  'FleshAtronach': 37,
+  'IceAtronach': 38,
+  'Horse_Invalid': 39,
+  'Dragonling_Alternate': 40,
+  'Dreugh': 41,
+  'Lamia': 42,
+  'Mage': 128,
+  'Spellsword': 129,
+  'Battlemage': 130,
+  'Sorcerer': 131,
+  'Healer': 132,
+  'Nightblade': 133,
+  'Bard': 134,
+  'Burglar': 135,
+  'Rogue': 136,
+  'Acrobat': 137,
+  'Thief': 138,
+  'Assassin': 139,
+  'Monk': 140,
+  'Archer': 141,
+  'Ranger': 142,
+  'Barbarian': 143,
+  'Warrior': 144,
+  'Knight': 145,
+  'Knight_CityWatch': 146,
+  'None': 65535,
+});
+
+// AUDIT 24 (wave 41) / ONE DFU MEMBER, ONE EXPORT. This id is special-
+// cased by name in five places - the human-sound mute carves it out
+// (EnemySounds.cs:222), the combat voice forces it male
+// (WeaponManager.cs:600), the equipment roll caps it at iron/steel
+// (EnemyEntity.cs), the class level roll adds 3-7 to it, and the watch
+// pool IS it - and each of those had written 146 out for itself. The
+// number lives once, here, with the table it comes from.
+export const KNIGHT_CITY_WATCH = MOBILE_TYPES.Knight_CityWatch;

@@ -1,0 +1,29 @@
+[
+  {
+    "name": "OAR-RUNG-the-autorun-leaves-the-rung",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (deps.input?.toggleAutorun) state.oarThrottle = 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/fb1020c_oarrung.test.js"
+    ]
+  },
+  {
+    "name": "OAR-RUNG-the-rung-set-again",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (deps.input?.toggleAutorun) state.oarThrottle = 0;",
+    "new": "      if (deps.input?.toggleAutorun) state.oarThrottle = 1;",
+    "tests": [
+      "test/systems/comeSailAway/fb1020c_oarrung.test.js"
+    ]
+  },
+  {
+    "name": "OAR-RUNG-every-frame-ships-the-rung",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (deps.input?.toggleAutorun) state.oarThrottle = 0;",
+    "new": "      if (true) state.oarThrottle = 0;",
+    "tests": [
+      "test/systems/comeSailAway/fb1020c_oarrung.test.js"
+    ]
+  }
+]

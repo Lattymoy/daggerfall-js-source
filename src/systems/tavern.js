@@ -1,0 +1,265 @@
+// U39 - THE TAVERN LAW: DaggerfallTavernWindow's room rental and its
+// food-and-drink menu (MIT, Daggerfall Workshop), plus
+// FormulaHelper.CalculateRoomCost. The window half is ui/tavernWindow.js.
+//
+// The strings are Internal_Strings' own, recovered - the eleven menu
+// lines carry their prices IN the text ("Ale (1 gold)"), which is why
+// the price table beside them is a separate byte array in DFU and a
+// separate table here: the words and the numbers are two facts, and
+// only the numbers are arithmetic.
+import { HOLIDAYS, getHolidayId } from './holidays.js';
+import { calculateTradePrice, essentialPrice } from './shopStock.js'; // ESSENTIALS-HALF: online, a room and a meal cost half
+import { dayOfYear } from './gameDate.js';
+import { interiorSceneName, addPermanentScene, removePermanentScene } from './sceneCache.js'; // P1: the rented room's own scene
+import { localizedText, localizedStrings } from './textManager.js'; // L10N3d: the tavern's words
+import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js'; // WD3: a room keeps the layout its inn was rented in
+
+/** The TEXT.RSC records the window speaks (:37-41). */
+export const TOO_MANY_DAYS_ID = 16;
+export const OFFER_PRICE_ID = 262;
+export const HOW_MANY_ADDITIONAL_DAYS_ID = 5100;
+export const HOW_MANY_DAYS_ID = 5102;
+/** DFU declares `notEnoughGoldId = 454` a THIRD time here (:39), the
+ *  same record DaggerfallTradeWindow and the guild services borrow.
+ *  ONE DFU MEMBER, ONE EXPORT: the tavern re-exports the existing home
+ *  rather than writing 454 down again, so a correction lands once. */
+export { NOT_ENOUGH_GOLD_ID } from './guild/guildServiceActions.js';
+
+/** The recovered Internal_Strings lines. */
+export const ROOM_FREE_FOR_KNIGHT = 'The room is free for a knight such as you.';
+export const ROOM_FREE_HEARTS_DAY = "Room is free due to Heart's Day.";
+export const YOU_ARE_NOT_HUNGRY = 'You are not hungry.';
+/** L10N3d: ...as the boxes say them, in the player's language - both
+ *  skins read these. The Heart's Day line is CalculateRoomCost's
+ *  (FormulaHelper.cs:1872). */
+export const roomFreeForKnightText = () => localizedText('roomFreeForKnightSuchAsYou', ROOM_FREE_FOR_KNIGHT);
+export const roomFreeHeartsDayText = () => localizedText('roomFreeDueToHeartsDay', ROOM_FREE_HEARTS_DAY);
+export const youAreNotHungryText = () => localizedText('youAreNotHungry', YOU_ARE_NOT_HUNGRY);
+
+/** tavernMenu (:43-49) and tavernFoodAndDrinkPrices (:50), in DFU's
+ *  order - the price table is INDEXED by the picked row, so the two
+ *  must stay aligned. */
+const ALE = 'Ale (1 gold)',
+  BEER = 'Beer (1 gold)',
+  MEAD = 'Mead (2 gold)',
+  WINE = 'Wine (3 gold)',
+  BREAD = 'Bread (1 gold)',
+  BROTH = 'Broth (1 gold)',
+  CHEESE = 'Cheese (2 gold)',
+  FOWL = 'Fowl (3 gold)',
+  GRUEL = 'Gruel (2 gold)',
+  PIE = 'Pie (2 gold)',
+  STEW = 'Stew (3 gold)';
+export const TAVERN_MENU = Object.freeze([ALE, BEER, MEAD, WINE, BREAD, BROTH, CHEESE, FOWL, GRUEL, PIE, STEW]);
+export const TAVERN_PRICES = Object.freeze([1, 1, 2, 3, 1, 1, 2, 3, 2, 2, 3]);
+/** L10N3d: DFU fills tavernMenu with GetLocalizedText(key), a line a
+ *  key; the menu as the player reads it, in their language, each line
+ *  in TAVERN_MENU's place. */
+const TAVERN_MENU_LINES = localizedStrings({
+  tavernAle: ALE,
+  tavernBeer: BEER,
+  tavernMead: MEAD,
+  tavernWine: WINE,
+  tavernBread: BREAD,
+  tavernBroth: BROTH,
+  tavernCheese: CHEESE,
+  tavernFowl: FOWL,
+  tavernGruel: GRUEL,
+  tavernPie: PIE,
+  tavernStew: STEW,
+});
+export const tavernMenuLines = () => Object.values(TAVERN_MENU_LINES);
+
+/** ESSENTIALS-HALF: the menu's rows as the player reads them - DFU's own labels offline, each row's gold the half it
+ *  costs online (eatOrDrink's own essentialPrice). L10N3d: the lines are the language's (tavernMenuLines), so the
+ *  price is the last number before the line's closing bracket, whatever the language calls a gold piece. */
+export const tavernMenuPrice = (index, { online } = {}) => essentialPrice(TAVERN_PRICES[index], { online });
+export const tavernMenuLabels = ({ online } = {}) =>
+  tavernMenuLines().map((text, i) => text.replace(/\d+(?=\D*\)\s*$)/, String(tavernMenuPrice(i, { online }))));
+
+/** The rental ceiling (:188) - days ALREADY rented count toward it. */
+export const MAX_RENTAL_DAYS = 350;
+/** Heart's Day is day 46; a rental spanning it is one day cheaper. */
+export const HEARTS_DAY = 46;
+/** The nightly rate (:1869). */
+export const ROOM_COST_PER_DAY = 7;
+/** DoFoodAndDrink's hunger gate (:287) - four game hours. */
+export const EAT_INTERVAL_MINUTES = 240;
+
+/** CalculateRoomCost (:1858-1875). The Heart's Day arm is a SPAN test,
+ *  not a "today is": a stay that STARTS on or before day 46 and RUNS
+ *  PAST it loses one day's charge. A stay wholly after it pays full.
+ *  Answers { cost, freeForHeartsDay } - DFU pops the free-room box
+ *  from inside the formula, which a pure function cannot do. */
+export function calculateRoomCost(daysToRent, date) {
+  const doy = date?.dayOfYear ?? dayOfYear(date);
+  const cost =
+    doy <= HEARTS_DAY && doy + daysToRent > HEARTS_DAY
+      ? ROOM_COST_PER_DAY * (daysToRent - 1)
+      : ROOM_COST_PER_DAY * daysToRent;
+  return { cost, freeForHeartsDay: cost === 0 };
+}
+
+/** The room's price at this inn (:200-201). NOT CalculateCost -
+ *  DFU calls CalculateTradePrice(cost, quality, false), which reads
+ *  the player's MERCANTILE and PERSONALITY, so a silver-tongued
+ *  character sleeps cheaper. The first draft here reached for
+ *  calculateCost (the item-shop formula) and would have charged every
+ *  character the same. */
+export const roomPrice = (daysToRent, date, quality, skills, { online } = {}) =>
+  essentialPrice(calculateTradePrice(calculateRoomCost(daysToRent, date).cost, quality, skills, false), { online }); // ESSENTIALS-HALF
+
+/** PlayerEntity.GetRemainingHours (:268-275) - the `%dwr` macro's
+ *  source, and the sweep's own test. A null room answers -1, which is
+ *  DFU's own "no room" sentinel rather than 0. The CEILING is load
+ *  bearing: a room with one minute left still reads as ONE hour, so
+ *  the sweep below keeps it. */
+export const roomRemainingHours = (room, nowMinutes) => (room ? Math.ceil((room.expiryMinutes - nowMinutes) / 60) : -1);
+
+/** RemoveExpiredRentedRooms (:257-266) - the sweep that runs before
+ *  every rental so an expired room does not read as a renewal. DFU
+ *  drops a room whose `GetRemainingHours < 1`; because that hour count
+ *  is a CEILING, `< 1` is true exactly when no time at all is left, so
+ *  the plain `expiry > now` here is the same predicate and not a
+ *  loosening of it. */
+export function removeExpiredRooms(rooms, nowMinutes, sceneCache = null) {
+  return rooms.filter((r) => {
+    if (roomRemainingHours(r, nowMinutes) >= 1) return true;
+    // RemovePermanentScene (PlayerEntity.cs:261) - an expired room
+    // stops being held the moment the sweep drops it, so its contents
+    // go the next time the world moves on. The landlord clears the
+    // room; the port had nowhere to say so until P1.
+    if (sceneCache) removePermanentScene(sceneCache, interiorSceneName(r.mapId, r.buildingKey));
+    return false;
+  });
+}
+
+/** GetRentedRoom (:158): this inn's room, by map AND building. */
+export const findRentedRoom = (rooms, mapId, buildingKey, inn = true) =>
+  rooms.find((r) => r.mapId === mapId && r.buildingKey === buildingKey && recordStands(r)) ??
+  // WD3 (AUDIT WD3 S5): a room rented in another layout of this town - its inn's key names another building now - is
+  // honoured at an INN of the town (`inn`: the building asking is one), never lost and never a stranger's bed by the
+  // key alone
+  (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ??
+  null;
+
+/** The days a live rental still has to run (:180-185), floored at 0 -
+ *  DFU clamps a negative rather than letting an expired room CREDIT
+ *  days against the 350 ceiling. */
+export function daysAlreadyRented(room, nowMinutes) {
+  if (!room) return 0;
+  const days = Math.trunc((room.expiryMinutes - nowMinutes) / (24 * 60));
+  return days < 0 ? 0 : days;
+}
+
+/** InputMessageBox_OnGotUserInput (:172-207) as a decision. `free` is
+ *  KnightlyOrder.FreeTavernRooms. Answers one of:
+ *    { kind: 'ignore' }   - unparseable or < 1 day (:175-178)
+ *    { kind: 'tooMany' }  - past the 350-day ceiling
+ *    { kind: 'free' }     - the knight's room, rented outright
+ *    { kind: 'offer', price, heartsDay } - the Yes/No price box
+ *  The ORDER is DFU's and is load-bearing: the ceiling is tested
+ *  BEFORE the knightly exemption, so even a free room cannot be
+ *  booked past 350 days. */
+export function rentalDecision(
+  input,
+  { room = null, nowMinutes = 0, date, quality = 0, free = false, skills = undefined, online = undefined } = {},
+) {
+  const days = Number.parseInt(input, 10);
+  if (!Number.isFinite(days) || days < 1) return { kind: 'ignore' };
+  if (days + daysAlreadyRented(room, nowMinutes) > MAX_RENTAL_DAYS) return { kind: 'tooMany', days };
+  if (free) return { kind: 'free', days };
+  const { cost, freeForHeartsDay } = calculateRoomCost(days, date);
+  return {
+    kind: 'offer',
+    days,
+    // ESSENTIALS-HALF (2026-09-30, Discord: "things are way too expensive rn for money to be nerfed so heavily... cut the cost of most essential items by half"): online the room costs half (shopStock.js essentialPrice)
+    price: essentialPrice(calculateTradePrice(cost, quality, skills, false), { online }),
+    heartsDay: freeForHeartsDay,
+  };
+}
+
+/** RentRoom (:225-260): a FRESH rental mints a record with a random
+ *  bed marker; a renewal only EXTENDS the expiry. The bed index is
+ *  stored rather than a position because "building positions are not
+ *  stable" (DFU's own comment). */
+export function rentRoom(
+  rooms,
+  { room, days, nowMinutes, mapId, buildingKey, name, bedCount = 1, rolls = Math.random, sceneCache = null },
+) {
+  // AddPermanentScene (:246) - a rented room's interior is held across
+  // the world moving on, so the things left in it are still there when
+  // the tenant comes back. P1 built the set; this names the scene.
+  if (sceneCache) {
+    addPermanentScene(sceneCache, interiorSceneName(mapId ?? room?.mapId, buildingKey ?? room?.buildingKey));
+  }
+  // AUDIT REST II P6 (bible/06-Systems/Rest-Arc.md section 5, OPEN 10): online a room counts NIGHTS - the days rented,
+  // and an extension's days on top (restAct.js spendRoomNight spends them; the expiry is still the days lived, DFU's).
+  // Offline nothing reads the count: DFU's rest window counts the hours down, as it always has.
+  if (room) {
+    room.expiryMinutes += 24 * 60 * days;
+    if (Number.isFinite(room.nights)) room.nights += days; // an old save's room (no count) reads its nights off its hours at its next night
+    return room;
+  }
+  const fresh = {
+    name,
+    mapId,
+    buildingKey,
+    allocatedBedIndex: Math.floor(rolls() * Math.max(1, bedCount)),
+    expiryMinutes: nowMinutes + 24 * 60 * days,
+    nights: days,
+  };
+  stampLayout(fresh, layoutStampOfMapId(mapId)); // WD3: the inn's town's layout (systems/layoutPins.js)
+  rooms.push(fresh);
+  return fresh;
+}
+
+/** DoFoodAndDrink's gate (:287): four game hours since the last meal. */
+export const canEat = (lastAteMinutes, nowMinutes) => nowMinutes - (lastAteMinutes ?? 0) >= EAT_INTERVAL_MINUTES;
+
+/** FoodAndDrink_OnItemPicked (:305-334). The two HOLIDAY arms are the
+ *  whole reason this is a function, and DFU's own comment flags that
+ *  neither matches its in-game description: New Life makes everything
+ *  FREE (the gold test is skipped AND no gold is taken), while
+ *  Harvest's End halves the price with a floor of 1 - a `>>= 1` then
+ *  `if (price == 0) price = 1`, so a 1-gold ale still costs 1.
+ *  Health restored is 2 * the price PAID... except under New Life,
+ *  where `price` is still the halved-or-not menu price even though
+ *  nothing was spent, so the free meal heals as if bought. Verbatim.
+ *  Answers { kind: 'poor' } or { kind: 'ate', spend, heal }. */
+export function eatOrDrink(index, { gold = 0, gameMinutes = 0, online = undefined } = {}) {
+  let price = TAVERN_PRICES[index];
+  if (price === undefined) return { kind: 'ignore' };
+  // VERBATIM, and a quirk (Ledger B): DFU passes region 0 as a
+  // LITERAL - `GetHolidayId(gameMinutes, 0)` - not the player's own
+  // region. So the meal's holiday is judged as if the player were
+  // always in region index 0, which matters for the region-GATED
+  // rows: a Harvest's End half-price only lands where its table row
+  // says 0xFF (everywhere) or names region 1. The function takes no
+  // regionIndex on purpose - accepting one would invite a caller to
+  // "fix" the quirk by passing the real region.
+  const holiday = getHolidayId(gameMinutes, 0);
+  if (holiday === HOLIDAYS.Harvest_End) {
+    price >>= 1;
+    if (price === 0) price = 1;
+  }
+  const newLife = holiday === HOLIDAYS.New_Life;
+  // ESSENTIALS-HALF (2026-09-30, Discord: "things are way too expensive rn for money to be nerfed so heavily... cut the cost of most essential items by half"): online the meal costs half (shopStock.js essentialPrice) - and heals as the menu's price, never less
+  const cost = essentialPrice(price, { online });
+  if (!newLife && gold < cost) return { kind: 'poor' };
+  return { kind: 'ate', spend: newLife ? 0 : cost, heal: 2 * price };
+}
+
+// The three clauses that stood here are all closed:
+//  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:"if (inRect(TAVERN_RECTS.talk, vx, vy))", and the
+//    KeyT arm at :343, fire hooks.onTalk; worldModes.js:"SURV5: the mod's" supplies
+//    it as openStaticNpc(pn, { forceTalk: true }), which reaches
+//    npcSession.talkToStaticNPC at worldModes.js:"F016: the bank is" - TalkManager.
+//    TalkToStaticNPC (TalkManager.cs:752-770). The guild popup's TALK
+//    button shares that door at worldModes.js:"DaggerfallMerchantRepairPopupWindow.cs:146", popupTalkToStaticNpc.)
+//  - (RETIRED by P1: AddPermanentScene (:246) keeps a rented room's
+//    interior loaded across a save. The port now has a permanent-scene
+//    set, and rentRoom names the scene it should hold.)
+//  - (RETIRED by S40: the bed-marker arm. allocatedBedIndex is read
+//    by DaggerfallRestWindow.CanRest, which the port now has - the
+//    index rentRoom mints below is the index MoveToBed lands on.)

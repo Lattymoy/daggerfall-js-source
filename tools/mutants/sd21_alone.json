@@ -1,0 +1,124 @@
+[
+  {
+    "name": "SD21-the-Hour-admitted",
+    "file": "src/systems/madeLevel.js",
+    "old": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: 'out',\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
+    "new": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: null,\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-the-slot-by-its-truth",
+    "file": "src/systems/madeLevel.js",
+    "old": "  isGateArena(loc) ? 'court' : isSdRealm(loc) ? 'hour' : isEgHall(loc) ? 'spire' : isKetchShip(loc) ? 'ketch' : null;",
+    "new": "  isGateArena(loc)\n    ? 'court'\n    : isSdRealm(loc) && loc.sdRealm\n      ? 'hour'\n      : isEgHall(loc)\n        ? 'spire'\n        : isKetchShip(loc)\n          ? 'ketch'\n          : null;",
+    "tests": [
+      "test/scenes/sd21_alone.test.js",
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "SD21-every-dungeon-refused",
+    "file": "src/systems/madeLevel.js",
+    "old": "  isGateArena(loc) ? 'court' : isSdRealm(loc) ? 'hour' : isEgHall(loc) ? 'spire' : isKetchShip(loc) ? 'ketch' : null;",
+    "new": "  isGateArena(loc)\n    ? 'court'\n    : isSdRealm(loc) || loc?.dungeon\n      ? 'hour'\n      : isEgHall(loc)\n        ? 'spire'\n        : isKetchShip(loc)\n          ? 'ketch'\n          : null;",
+    "tests": [
+      "test/scenes/sd21_alone.test.js",
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "SD21-the-Hours-cards-drawn",
+    "file": "src/systems/madeLevel.js",
+    "old": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: 'out',\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
+    "new": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: 'in',\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-said-under-the-veil",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused() || !online?.welcomed) return;",
+    "new": "    if (_sdAloneSaid || modes?.transitioning || gamePaused() || !online?.welcomed) return;",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
+  },
+  {
+    "name": "SD21-said-through-the-door",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused() || !online?.welcomed) return;",
+    "new": "    if (_sdAloneSaid || gateVeil?.busy || gamePaused() || !online?.welcomed) return;",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
+  },
+  {
+    "name": "SD21-said-under-a-window",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused() || !online?.welcomed) return;",
+    "new": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || !online?.welcomed) return;",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
+  },
+  {
+    "name": "SD21-said-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    _sdAloneSaid = true;\n",
+    "new": "    _sdAloneSaid = false;\n",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-never-owed-again",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() == null) { _sdAloneSaid = false; return; }",
+    "new": "    if (modes?.sdRealmSlot?.() == null) { return; }",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-said-with-nobody",
+    "file": "src/scenes/world.js",
+    "old": "    if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);",
+    "new": "    if (companionsWithYou() >= 0) sdSay(SD_REALM_TEXT.noCompanions);",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-never-said",
+    "file": "src/scenes/world.js",
+    "old": "    if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);",
+    "new": "    if (companionsWithYou() > 0) void SD_REALM_TEXT.noCompanions;",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-other-words",
+    "file": "src/world/superDungeon/sdRealm.js",
+    "old": "  noCompanions: 'Your companions cannot follow you through the Rift.',",
+    "new": "  noCompanions: 'Your companions cannot follow you into the Deadlands.',",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ]
+  },
+  {
+    "name": "SD21-out-of-the-Hours-frame",
+    "file": "src/scenes/world.js",
+    "old": "sdRealmFrame(); sdAloneFrame(); sdFightFrame();",
+    "new": "sdRealmFrame(); sdFightFrame();",
+    "tests": [
+      "test/scenes/sd21_alone.test.js"
+    ]
+  }
+]

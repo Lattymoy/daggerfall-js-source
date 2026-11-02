@@ -1,0 +1,110 @@
+[
+  {
+    "name": "OW-WEATHER-the-eye-back-to-the-head",
+    "file": "src/scenes/world.js",
+    "old": "    const wxEye = mwv.eye;",
+    "new": "    const wxEye = cam.pos;",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-WEATHER-the-rain-left-on-the-head",
+    "file": "src/scenes/world.js",
+    "old": "precip.drawFall(precipShown, proj, view, wxEye32",
+    "new": "precip.drawFall(precipShown, proj, view, new Float32Array(cam.pos)",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-FACE-the-headings-sign",
+    "file": "src/player/travelCamera.js",
+    "old": "  return forward || strafe ? cameraYaw + Math.atan2(strafe, forward) : null;",
+    "new": "  return forward || strafe ? cameraYaw - Math.atan2(strafe, forward) : null;",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-FACE-the-axes-unturned",
+    "file": "src/player/travelCamera.js",
+    "old": "    d = way - yaw;",
+    "new": "    d = 0;",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-FACE-the-steer-on-the-view",
+    "file": "src/scenes/travelView.js",
+    "old": "      deps.setYaw(turnHeading(deps.yaw(), (ax && keysHeading(camera.yaw, ax.forward, ax.strafe)) ?? camera.yaw, dt));",
+    "new": "      deps.setYaw(turnHeading(deps.yaw(), camera.yaw, dt));",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-PEERS-a-walker-never-grown",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "      const g = grow ? grow(feet) : 1;   // OW-PEERS",
+    "new": "      const g = 1;   // OW-PEERS",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-PEERS-the-reach-left",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "        if (r.batch.bounds) r.batch.bounds[3] = quadHalfDiagonal(size);\n        r.batchKey = key;",
+    "new": "        r.batchKey = key;",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-PEERS-the-giants-shadow",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "      if (r.batch) r.batch.noShadow = g > 1;",
+    "new": "      if (r.batch) r.batch.noShadow = false;",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-PEERS-a-doll-never-grown",
+    "file": "src/net/remotePlayers.js",
+    "old": "  _growAt(f) { const g = this._grow ? this._grow(f) : 1; return g > 1 ? g : 1; }",
+    "new": "  _growAt(f) { return 1; }",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-PEERS-a-body-never-grown",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      const ow = this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1; // OW-PEERS",
+    "new": "      const ow = 1; // OW-PEERS",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-PEERS-a-body-unleaned",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "            up: this._cam?.up ?? null,",
+    "new": "            up: null,",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  },
+  {
+    "name": "OW-PEERS-the-host-grows-none",
+    "file": "src/scenes/world.js",
+    "old": "    const tvGrow = travelView?.active ? peerGrow : null;",
+    "new": "    const tvGrow = null;",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ]
+  }
+]

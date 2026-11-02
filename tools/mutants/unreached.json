@@ -1,0 +1,119 @@
+[
+  {
+    "name": "UNREACHED-dynamic-import-unread",
+    "file": "tools/unreached.mjs",
+    "old": "  /(?:import|export)\\s[^;'\"]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "new": "  /(?:import|export)\\s[^;'\"]*?from\\s*['\"]([^'\"]+)['\"]|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-query-kept",
+    "file": "tools/unreached.mjs",
+    "old": "    if (spec && (spec.startsWith('.') || spec.startsWith('/'))) plain.push(spec.split('?')[0]);",
+    "new": "    if (spec && (spec.startsWith('.') || spec.startsWith('/'))) plain.push(spec);",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-negated-glob-walked",
+    "file": "tools/unreached.mjs",
+    "old": "    for (const p of g[1].match(/['\"][^'\"]+['\"]/g) ?? [])\n      if (!p.startsWith(\"'!\") && !p.startsWith('\"!')) globs.push(p.slice(1, -1));",
+    "new": "    for (const p of g[1].match(/['\"][^'\"]+['\"]/g) ?? []) globs.push(p.slice(1, -1));",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-walk-stops-at-depth-one",
+    "file": "tools/unreached.mjs",
+    "old": "        stack.push(t);\n      }",
+    "new": "      }",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-tools-not-an-entry",
+    "file": "tools/unreached.mjs",
+    "old": "export const ENTRY_DIRS = Object.freeze(['server', 'server-account', 'app', 'scripts', 'tools', 'public']);",
+    "new": "export const ENTRY_DIRS = Object.freeze(['server', 'server-account', 'app', 'scripts', 'public']);",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-glob-not-followed",
+    "file": "tools/unreached.mjs",
+    "old": "      next.push(...src.filter((f) => pattern.test(f)));\n",
+    "new": "",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-dead-unread",
+    "file": "tools/unreached.mjs",
+    "old": "  return { dead: found.filter((f) => !(f in base)), stale: Object.keys(base).filter((f) => !found.includes(f)) };",
+    "new": "  return { dead: [], stale: Object.keys(base).filter((f) => !found.includes(f)) };",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-stale-unread",
+    "file": "tools/unreached.mjs",
+    "old": "  return { dead: found.filter((f) => !(f in base)), stale: Object.keys(base).filter((f) => !found.includes(f)) };",
+    "new": "  return { dead: found.filter((f) => !(f in base)), stale: [] };",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-page-script-unread",
+    "file": "tools/unreached.mjs",
+    "old": "  /(?:import|export)\\s[^;'\"]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "new": "  /(?:import|export)\\s[^;'\"]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-a-glob-read-by-its-prefix",
+    "file": "tools/unreached.mjs",
+    "old": "      next.push(...src.filter((f) => pattern.test(f)));",
+    "new": "      next.push(...src.filter((f) => f.startsWith(at.split('*')[0])));",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-a-root-glob-read-from-the-file",
+    "file": "tools/unreached.mjs",
+    "old": "      const at = g.startsWith('/')\n",
+    "new": "      const at = false\n",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-the-import-read-across-a-quote",
+    "file": "tools/unreached.mjs",
+    "old": "/(?:import|export)\\s[^;'\"]*?from",
+    "new": "/(?:import|export)\\s[^;]*?from",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-a-comma-read-outside-braces",
+    "file": "tools/unreached.mjs",
+    "old": "    } else if (c === ',' && braces) out += '|';",
+    "new": "    } else if (c === ',') out += '|';",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  }
+]

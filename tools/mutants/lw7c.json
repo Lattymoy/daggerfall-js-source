@@ -1,0 +1,272 @@
+[
+  {
+    "name": "LW7c-id-unanchored",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "export const RESIDENT_ID = /^L(\\d+)\\.([tw]?)(\\d+)(?:~(\\d+))?$/;",
+    "new": "export const RESIDENT_ID = /^L(\\d+)\\.([tw]?)(\\d+)/;",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-roll-lost",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  const roll = /** @type {'h'|'t'|'w'} */ (m[2] || 'h');",
+    "new": "  const roll = /** @type {'h'|'t'|'w'} */ ('h');",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-watch-job",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  return mintResident(town, roll, Number(m[3]), roll === 'w' ? 'guard' : 'resident', {\n    gen: m[4] != null ? Number(m[4]) : null,\n  });",
+    "new": "  return mintResident(town, roll, Number(m[3]), 'resident', { gen: m[4] != null ? Number(m[4]) : null });",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-gen-lost",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  return mintResident(town, roll, Number(m[3]), roll === 'w' ? 'guard' : 'resident', {\n    gen: m[4] != null ? Number(m[4]) : null,\n  });",
+    "new": "  return mintResident(town, roll, Number(m[3]), roll === 'w' ? 'guard' : 'resident', { gen: null });",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-town-unknown",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  if (!town) return null;\n  const roll = /** @type {'h'|'t'|'w'} */ (m[2] || 'h');",
+    "new": "  const roll = /** @type {'h'|'t'|'w'} */ (m[2] || 'h');",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-friends-order",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  const friends = rows.filter((p) => p.standing === 'friend').sort((a, b) => b.regard - a.regard || a.days - b.days);",
+    "new": "  const friends = rows.filter((p) => p.standing === 'friend').sort((a, b) => a.regard - b.regard || a.days - b.days);",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-enemies-order",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "    .sort((a, b) => a.regard - b.regard || a.days - b.days);",
+    "new": "    .sort((a, b) => b.regard - a.regard || a.days - b.days);",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-hostile-unlisted",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  const enemies = rows\n    .filter((p) => p.standing === 'enemy' || p.standing === 'hostile')\n    .sort((a, b) => a.regard - b.regard || a.days - b.days);",
+    "new": "  const enemies = rows.filter((p) => p.standing === 'enemy').sort((a, b) => a.regard - b.regard || a.days - b.days);",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-known-order",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "    .sort((a, b) => a.days - b.days || (a.name < b.name ? -1 : 1));",
+    "new": "    .sort((a, b) => b.days - a.days || (a.name < b.name ? -1 : 1));",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-days",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "      days: Math.max(0, day - e.seen),",
+    "new": "      days: 0,",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-fate-unread",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null,",
+    "new": "      fate: null,",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-died-unread",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  for (const kind of /** @type {const} */ (['died', 'slain'])) {",
+    "new": "  for (const kind of /** @type {const} */ (['slain'])) {",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-cap",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "    known: known.slice(0, PEOPLE_MAX),",
+    "new": "    known,",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-people-max",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "export const PEOPLE_MAX = 60;",
+    "new": "export const PEOPLE_MAX = 61;",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-words-row",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "    row.words = personWords(row);",
+    "new": "    void personWords;",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-words-fate",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  if (p.fate === 'slain') return 'Slain by your hand.';",
+    "new": "  if (p.fate === 'died') return 'Slain by your hand.';",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-words-today",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  const seen = p.days === 0 ? 'Seen today.' : p.days === 1 ? 'Last seen yesterday.' : `Last seen ${p.days} days ago.`;",
+    "new": "  const seen = p.days <= 1 ? 'Seen today.' : p.days === 1 ? 'Last seen yesterday.' : `Last seen ${p.days} days ago.`;",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-words-hostile",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "      : p.standing === 'hostile'",
+    "new": "      : p.standing === 'friend'",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-section-always",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "export const chronicleSections = (d) => (d?.people ? [...CHRONICLE_SECTIONS, PEOPLE_SECTION] : CHRONICLE_SECTIONS);",
+    "new": "export const chronicleSections = (d) => [...CHRONICLE_SECTIONS, PEOPLE_SECTION];",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-section-never",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "export const chronicleSections = (d) => (d?.people ? [...CHRONICLE_SECTIONS, PEOPLE_SECTION] : CHRONICLE_SECTIONS);",
+    "new": "export const chronicleSections = (d) => CHRONICLE_SECTIONS;",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-model-people",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  return {\n    quests,\n    notes,\n    messages,\n    history,\n    ...(d.people ? { people: d.people() ?? { friends: [], enemies: [], known: [] } } : {}),\n  };",
+    "new": "  return { quests, notes, messages, history, ...{} };",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-count",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "    people: model.people ? model.people.friends.length + model.people.enemies.length + model.people.known.length : 0,",
+    "new": "    people: 0,",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-rail-four",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  for (const [id, label] of sections) {",
+    "new": "  for (const [id, label] of CHRONICLE_SECTIONS) {",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-open-unknown",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  section = chronicleSections(d).some(([id]) => id === d.section) ? d.section : 'quests';",
+    "new": "  section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'quests';",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-empty-silent",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "    if (!counts.people) detail.append(el('p', 'px-note', 'No one knows you yet.'));",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-group-empty-drawn",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "      if (!rows.length) continue;",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-card-town",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        if (p.town) top.append(el('span', 'sb-chip', p.town));",
+    "new": "        top.append(el('span', 'sb-chip', p.town));",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-card-words",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        words.append(el('p', null, p.words ?? ''));",
+    "new": "        words.append(el('p', null, ''));",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-card-name",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        top.append(el('span', 'cr-when', p.name));",
+    "new": "        top.append(el('span', 'cr-when', ''));",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  },
+  {
+    "name": "LW7c-host-people",
+    "file": "src/scenes/world.js",
+    "old": "      people: livingWorldOn() ? () => peoplePage(",
+    "new": "      people: false ? () => peoplePage(",
+    "tests": [
+      "test/systems/livingWorld/lw7c_people.test.js"
+    ]
+  }
+]

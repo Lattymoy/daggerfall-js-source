@@ -1,0 +1,317 @@
+[
+  {
+    "name": "ECHO1-the-ways-turned",
+    "file": "src/systems/compassWords.js",
+    "old": "  COMPASS_WORDS[((Math.round((Math.atan2(dx, dz) * 180) / Math.PI / 45) % 8) + 8) % 8];",
+    "new": "  COMPASS_WORDS[((Math.round((Math.atan2(dz, dx) * 180) / Math.PI / 45) % 8) + 8) % 8];",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-up-is-down",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "  const up = dy > ECHO_VERT_M ? `above ${who}` : dy < -ECHO_VERT_M ? `below ${who}` : '';",
+    "new": "  const up = dy > ECHO_VERT_M ? `below ${who}` : dy < -ECHO_VERT_M ? `above ${who}` : '';",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-straight-down-has-a-way",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "  const way = Math.hypot(dx, dz) >= ECHO_FLAT_M ? `to the ${sceneCompassWord(dx, dz)}` : '';",
+    "new": "  const way = `to the ${sceneCompassWord(dx, dz)}`;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-vertical-loose",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "  const up = dy > ECHO_VERT_M ? `above ${who}` : dy < -ECHO_VERT_M ? `below ${who}` : '';",
+    "new": "  const up = dy >= ECHO_VERT_M ? `above ${who}` : dy < -ECHO_VERT_M ? `below ${who}` : '';",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-a-relay-moves",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "export const isEchoMover = (o) => !!o && (o.kind === 'action' || o.kind === 'moveFlat' || o.kind === 'door');",
+    "new": "export const isEchoMover = (o) => !!o && o.kind !== 'effect';",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-every-mover-grinds",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "  if (isActionDoorObject(o)) return 'A door swings';\n  if (o?.kind === 'moveFlat') return 'Something shifts';",
+    "new": "  if (o?.kind === 'moveFlat') return 'Something shifts';",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-loop-walks-on",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "  for (let i = 0; n && i < max && !seen.has(n); i++) {",
+    "new": "  for (let i = 0; n && i < max; i++) {",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-walk-unbounded",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "  for (let i = 0; n && i < max && !seen.has(n); i++) {",
+    "new": "  for (let i = 0; n && i < max * 2 && !seen.has(n); i++) {",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-pressed-is-a-mover",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "  const seen = new Set([o]);\n  let n = next(o);",
+    "new": "  const seen = new Set();\n  let n = o;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-close-is-a-way",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "    return d <= ECHO_NEAR_M",
+    "new": "    return false",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-examine-turned-round",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "    const a = boxMiddle(from),\n      b = boxMiddle(box);",
+    "new": "    const a = boxMiddle(box),\n      b = boxMiddle(from);",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-heard-again-kept-where-it-was",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "      list = list.filter((e) => e.key !== key);\n      list.push({ key, at: [at[0], at[1], at[2]] });",
+    "new": "      list.push({ key, at: [at[0], at[1], at[2]] });",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-book-unbounded",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "      if (list.length > max) list = list.slice(list.length - max);\n      return list.length;",
+    "new": "      return list.length;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-place-shared",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "      list.push({ key, at: [at[0], at[1], at[2]] });",
+    "new": "      list.push({ key, at });",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-found-kept",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "      list = keep;\n      return out;",
+    "new": "      return out;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-refused-heard",
+    "file": "src/world/actionSystem.js",
+    "old": "  receive(o, triggerType = 'ActionObject') {\n    if (this._isPlaying(o)) return;\n",
+    "new": "  receive(o, triggerType = 'ActionObject') {\n    if (this._isPlaying(o)) return;\n    this.onPlayed?.(o, triggerType);\n",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-nothing-heard",
+    "file": "src/world/actionSystem.js",
+    "old": "    this.onPlayed?.(o, triggerType);   // ECHO1: what this graph set going, and by which trigger (an observer - nothing reads back)\n",
+    "new": "",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-press-heard-as-its-echo",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (triggerType === 'ActionObject' && _echoPlayed.length < 64) _echoPlayed.push([o, echoState(o)]);",
+    "new": "if (_echoPlayed.length < 64) _echoPlayed.push([o, echoState(o)]);",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-a-line-a-mover",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          if (!said) { hudText.add(echoLine(o, eye, at)); said = true; }",
+    "new": "          hudText.add(echoLine(o, eye, at));",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-seen-echoed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          if (inPlainSight(collider, eye, box, { skip: o.key, noSurface: senseFlat(null, o) })) continue;   // AUDIT DELVE C3: a flat's box against a wall is the wall\n",
+    "new": "",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-found-anywhere",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "return !box || (boxDistance(box, eye) <= ECHO_FIND_M && inPlainSight(collider, eye, box, { skip: e.key, noSurface: senseFlat(null, o) }));",
+    "new": "return !box || inPlainSight(collider, eye, box, { skip: e.key, noSurface: senseFlat(null, o) });",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-examine-under-the-hide",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const why = named && !hide && getInteractionMode() === 'info'",
+    "new": "    const why = named && getInteractionMode() === 'info'",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-examine-in-any-mode",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const why = named && !hide && getInteractionMode() === 'info' && echoesOn()",
+    "new": "    const why = named && !hide && echoesOn()",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-on-the-classic-skin",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const echoesOn = () => isEnhanced() && getPref(ECHO_PREF) !== false;",
+    "new": "  const echoesOn = () => getPref(ECHO_PREF) !== false;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "ECHO1-the-map-left-blank",
+    "file": "src/ui/automap/automapDoor.js",
+    "old": "        echoes: deps.echoes ?? null, // ECHO1: where a chain moved something out of sight (the classic 3D arm ignores them)",
+    "new": "        echoes: null, // ECHO1: where a chain moved something out of sight (the classic 3D arm ignores them)",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B4-the-unmoved-echoed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          if (!isEchoMover(o) || !echoMoved(o, before)) continue;",
+    "new": "          if (!isEchoMover(o)) continue;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B4-everything-moved",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "export const echoMoved = (o, before) => echoState(o) !== before;",
+    "new": "export const echoMoved = (o, before) => true;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B4-the-door-record-unread",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "export const echoState = (o) => `${o?.state ?? ''}|${o?.moveState ?? ''}`;",
+    "new": "export const echoState = (o) => `${o?.state ?? ''}`;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-A7-a-secret-wall-swings",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "  if (isActionDoorObject(o)) return 'A door swings';",
+    "new": "  if (o?.kind === 'door') return 'A door swings';",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-D10-said-of-you",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "      : `Works something ${wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2], 'it')}`; // D10: from the lever",
+    "new": "      : `Works something ${wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2])}`; // D10: from the lever",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C6-a-boxless-mover-ends-it",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "    if (!box) continue;",
+    "new": "    if (!box) return null;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-C6-near-is-strict",
+    "file": "src/systems/dungeon/dungeonEcho.js",
+    "old": "    return d <= ECHO_NEAR_M",
+    "new": "    return d < ECHO_NEAR_M",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B7-found-while-off",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (!eye || !echoesOn() || !echoBook.size || t - _echoLookT < ECHO_LOOK_S) return;",
+    "new": "if (!eye || !echoBook.size || t - _echoLookT < ECHO_LOOK_S) return;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-B3-the-load-remembers",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      forgetDelveRun();   // AUDIT DELVE B3/E8: the delve's own state, for the same reason\n",
+    "new": "",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-A4-a-second-depth",
+    "file": "src/world/actionSystem.js",
+    "old": "    if (depth > PLAY_DEPTH_MAX) return false;",
+    "new": "    if (depth > 32) return false;",
+    "tests": [
+      "test/systems/echo1_dungeonecho.test.js"
+    ]
+  }
+]

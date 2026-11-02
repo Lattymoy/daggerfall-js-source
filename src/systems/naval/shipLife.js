@@ -1,0 +1,1308 @@
+// @ts-check
+// SHIP-LIFE (2026-09-30, Mac's item 1 of the six-part sea ask: ships that berth at ports, depart, voyage and keep
+// their own errands; `01-Overview/handoffs/Handoff-Naval-Crew-and-Ship-Life.md` slice E) - A SHIP GOING SOMEWHERE. The port's
+// own; pure - the host hands the water, a town's footprint and the ships' clocks, and gets back berths, paths and the
+// plan a captain sails by when no fight is hers.
+//
+// NO DOCK DATA EXISTS. A port town is a flag in its exterior data, so a HARBOUR is found from the terrain
+// (`findHarbour`): the town's rect grown HARBOUR_REACH, walked on a SHORE_STEP grid for water beside land; each such
+// shore point, stood off the land along the shore's normal by her half width and BERTH_MARGIN, is a berth lying
+// parallel to the shore - kept only where her whole footprint (bow to stern, beam to beam) is water (AUDIT GN2-GN1: deep
+// enough for the deepest keel that berths), and BERTH_SPACING of her length from every other. The harbour's MOUTH is the first point out from the berths along their mean normal
+// with MOUTH_CLEAR of open water all round it: where a ship leaves the harbour for the sea and meets it coming in.
+//
+// A WAY THROUGH THE WATER (`createWaterGrid`): WATER_CELL cells, a cell open when her hull floats at its centre and at
+// eight points WATER_CLEAR of a cell round it (a cell's clearance off the land), met lazily and kept; a bounded A*
+// (PATH_NODES expansions at most - a query's cost is fixed, and a way it cannot find in them is none), eight
+// neighbours with no corner cut past a closed cell, then the corners straightened wherever the line between stays in
+// the water (`clear`). AUDIT NAV2 F22's one detour round a spit is a boarding's; this is a voyage's.
+//
+// THE ERRANDS (`errandFor`, `stepErrand`) - drawn off her seed on ERRAND_SALT and where she is, so any client that
+// takes her over draws the same one again and nothing new rides the word:
+//   moored  - at her berth, sails stowed, for a DWELL_S draw; then she departs.
+//   depart  - berth to the harbour's mouth; then a voyage (a navy's patrol).
+//   voyage  - to another harbour's mouth, then she arrives; or out of the world on a bearing, VOYAGE_DIST away.
+//   arrive  - to a berth: through the mouth to her approach, along the shore into it, her sail shortened within
+//             ARRIVE_EASE_M; alongside within BERTH_SNAP_M she moors, eased onto her berth over MOOR_EASE_S.
+//   patrol  - a navy's loop of PATROL_POINTS round a harbour's approaches, PATROL_S of it, then out on a voyage.
+//   lurk    - a pirate off a harbour's approaches, LURK_R from the mouth, where merchantmen pass: a slow ring there.
+// A fight comes first (navalAI.js stepCaptain: an enemy, a threat, a prize, the guns heard) - a navy at her berth
+// answers a pirate, a merchantman flees one - and the errand is taken up again after it with a way planned anew.
+//
+// SHIP-WATCH (2026-10-01, Mac: "I also want to keep improving the AI") - THE NIGHT (`ctx.night`, the lanterns' hours):
+// a merchantman's dwell spent after dark keeps her at her berth till morning (no master puts out into a night sea
+// with a hold to lose), and a pirate's lurk closes on the harbour's mouth to NIGHT_LURK_K of its reach - under cover
+// of the dark, where the last ships in of the evening pass.
+//
+// PORT-SHIPS (2026-10-27, the owner's field report, item 8: "I went to solitude and the ships at works were inside town
+// walls"; the owner: "No band aids") - A BERTH STANDS WHERE A SHIP CAN (`berthStands`). A berth was kept on three lines
+// of her footprint, a station every eighth of her length, asked of the water alone - and the water says nothing of what
+// stands on it, nor of the ground under it:
+//   - THE TOWN (`keep`, systems/naval/harbourKeep.js): a town's walls, its piers, a sea stack stand in the water. A
+//     capital's walls stand in its own water (Solitude's west wall 7 m out in the Karth: every one of its six ships through
+//     it, her quay inside; Alinor's river through the middle of its city: its six inside), and a pier is narrower than a
+//     station (Torval's two, the Waterfront's one). Her ship and her quay (quayBox), her jetty's way to the shore
+//     (BERTH_JETTY_WALK, landward from the quay's back) and her approach's hull are all kept clear of it.
+//   - THE GROUND (`ground`, its height over the sea's top - the host's): a water tile is a picture of the ground
+//     (world/water/waterBed.js), and a town's flatten lifts the sea in its margin to the town's ground - a ship's side
+//     stood against the bank there, up to 20 m of it (Chestertower's on the Bay; Shimmerene's and Winterhold's past it).
+//     Her waterplane (her length, her beam drawn in to the stem over BOW_TAPER and to the stern over STERN_TAPER) stands
+//     only where the ground under it lies under the sea's top, BERTH_DRY_M at most over it.
+// Both every KEEP_STEP over her - finer than the narrowest pier.
+
+import { hash32 } from '../../world/spawnedDungeons.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
+import { hullBuild, MOD_CARRACK_BUILD } from './navalShips.js';
+import { stepFishing, fishingHeld } from './fishingBoats.js'; // FISH-BOATS: a fishing boat's day, an errand of her own
+
+/** How far past the town's rect a berth may lie (m), the shore scan's grid (m), the water kept between a berth's hull
+ *  and the shore (m), a berth's spacing (her lengths), and the most berths a harbour holds. */
+export const HARBOUR_REACH = 420;
+export const SHORE_STEP = 12;
+export const BERTH_MARGIN = 4;
+export const BERTH_SPACING = 1.25;
+export const HARBOUR_BERTHS = 6;
+/** The mouth: open water all round it this far (m), sought no farther than MOUTH_REACH out from the berths. */
+export const MOUTH_CLEAR = 60;
+export const MOUTH_REACH = 900;
+/** The hull a harbour's berths are sized for - the longest that berths (a galley rows in and out, never moors). */
+export const BERTH_HULL = 4;
+/** AUDIT GN2-GN1: the hulls that berth (every one but the galley). A berth is sounded deep enough for the deepest keel
+ *  of them (draftOf - Mac's galleon's 4.7 m, the mod's galleon's 3.41 fallen back, past the Carrack's 3.2): sounded for
+ *  BERTH_HULL's alone, every berth off a carved shelf was land to hull 2, and each galleon stood at one lay there frozen. */
+export const BERTH_HULLS = Object.freeze([0, 1, 2, 4]);
+/** A hull's water under her keel (m), rowboat to carrack - how shoal a sea she can sail (world.js navalIsWater). AUDIT
+ *  GN-G6: hull 2's is her keel's (the table's 2.2 sailed the new galleon's 4.64 m keel over a 2.3 m floor). AUDIT
+ *  GN2-PF6: read off hullBuild as she stands, DRAFT_SPARE under it - the mod's galleon's 3.41 while it stands in for the
+ *  new one (AUDIT GN-G4); a frozen 4.7 kept it out of water it sails. */
+export const HULL_DRAFT = Object.freeze([0.8, 1.4, null, 2.8, 3.2]);
+export const DRAFT_SPARE = 0.06;
+export const draftOf = (hull) => {
+  const h = Math.min(HULL_DRAFT.length - 1, Math.max(0, hull | 0));
+  // SHIPS-2: the new carrack's is her keel's too (4.65 m - the table's 3.2 sailed her 4.59 m keel over a 3.3 m floor),
+  // the table's while the mod's own carrack stands in for her; under the galleon's 4.7, so the deepest that berths is the
+  // galleon still and no harbour is sounded anew
+  if (h === 4 && hullBuild(4) !== MOD_CARRACK_BUILD) return DRAFT_SPARE - hullBuild(4).keel;
+  return h === 2 ? DRAFT_SPARE - hullBuild(2).keel : /** @type {number} */ (HULL_DRAFT[h]);
+};
+/** AUDIT GN2-GN1: the deepest keel of BERTH_HULLS as the hulls stand. */
+export const deepestBerther = () => BERTH_HULLS.reduce((a, h) => (draftOf(h) > draftOf(a) ? h : a));
+/** The water grid: its cell (m), the clearance round a cell's centre it asks water at (cells), and the most nodes one
+ *  way may expand. */
+export const WATER_CELL = 20;
+export const WATER_CLEAR = 0.6;
+export const PATH_NODES = 6000;
+/** a hull's grid asks water at least her half beam and the lookout's margin round a cell's centre
+ *  (navalAI.js lookout: halfWidth + SCAN_MARGIN), so it opens no gap her lookout then refuses (a galley circled one). */
+export const GRID_MARGIN = 4;
+export const gridClearOf = (hull, cell = WATER_CELL) =>
+  Math.max(cell * WATER_CLEAR, (hullBuild(hull)?.halfWidth ?? 0) + GRID_MARGIN);
+/** a cell sounds each of its eight spokes this often (m) out to its clearance - a tile's spit (6.4
+ *  m) fell between two cells' eight soundings and a step across it was taken; spoke to spoke, the line between two open
+ *  cells is sounded every 4.3 m at the most. */
+export const SPOKE_STEP_M = 3;
+/** a way the grid's own search spends PATH_NODES on is sought again over cells this many of its own
+ *  a side (a peninsula of 1.5 km spent them), and each of that way's steps found again in the grid's own cells. */
+export const COARSE_K = 4;
+/** one way's whole spend, in PATH_NODES - the grid's search, the coarse one, every step found again -
+ *  and how hard the coarse search leans on its goal (a weighted A*: its way at most this much dearer; straightened after). */
+export const PATH_BUDGET_K = 3;
+export const COARSE_GREED = 1.5;
+/** A straightened leg keeps this much water either side of it (m) - the captains' lookout swings off land nearer than
+ *  that - save within LEG_END_M of its own ends (a berth lies by the shore). */
+export const LEG_MARGIN = 45;
+export const LEG_END_M = 60;
+/** A way's point reached within this (m); a berth's approach this many of her lengths astern of it and APPROACH_OUT
+ *  (m) out from the shore - open water to come round in, the last leg a slant along the shore into the berth. */
+export const REACH_M = 35;
+/** a hull reaches a point within REACH_M or half her length, the longer - the galley's 93 m was
+ *  held to 35 m and circled a mark she lay across. */
+export const reachOf = (hull) => {
+  const b = hullBuild(hull);
+  return Math.max(REACH_M, (b.bowZ - b.aftZ) / 2);
+};
+export const APPROACH_LENGTHS = 1.2;
+export const APPROACH_OUT = 70;
+/** Alongside: within this of her berth (m) and under BERTH_WAY (m/s) she moors; her sail shortened from ARRIVE_EASE_M
+ *  out, to ARRIVE_SAILS at the least; eased onto the berth over MOOR_EASE_S. */
+export const BERTH_SNAP_M = 18;
+export const BERTH_WAY = 3;
+export const ARRIVE_EASE_M = 220;
+export const ARRIVE_SAILS = 0.18;
+export const MOOR_EASE_S = 4;
+/** Seconds moored (a draw in the range), a voyage out of the world's distance (m), a patrol's ring (m), points and
+ *  length (s), and a lurker's distance off the mouth (m), ring (m) and sail. */
+export const DWELL_S = Object.freeze([180, 540]);
+export const VOYAGE_DIST = 2600;
+export const PATROL_R = 450;
+export const PATROL_POINTS = 5;
+export const PATROL_S = 420;
+export const LURK_R = 650;
+export const LURK_RING = 140;
+export const LURK_SAILS = 0.5;
+/** SHIP-WATCH: by night a pirate's lurking place this share of the way out from the mouth to her day's. */
+export const NIGHT_LURK_K = 0.5;
+/** A ship making under STALL_WAY (m/s) for STALL_S under sail - a hull dead in her way, a struck sister alongside - takes a
+ *  DETOUR_M detour abeam, whichever side the water is open, and plans her way anew past it. */
+export const STALL_WAY = 0.5;
+export const STALL_S = 15;
+export const DETOUR_M = 70;
+/** under way and no nearer her mark by PROGRESS_M in PROGRESS_S is a stall too - a ship circling a
+ *  mark she cannot fetch never fell under STALL_WAY. Within REACH_M of it the clock waits. */
+export const PROGRESS_M = 20;
+export const PROGRESS_S = 60;
+/** A voyage makes for another harbour only this near (m); farther, she sails out of the world. */
+export const VOYAGE_REACH = 6000;
+/** the nearest harbours a departing ship asks the grid for a way to; none found, she sails out. */
+export const VOYAGE_TRIES = 2;
+/** The errands' own stream's salt on a ship's seed. */
+export const ERRAND_SALT = 0x5b1f;
+export const ERRANDS = Object.freeze(['moored', 'depart', 'voyage', 'arrive', 'patrol', 'lurk']);
+
+const TAU = Math.PI * 2;
+const wrap = (a) => {
+  a %= TAU;
+  if (a > Math.PI) a -= TAU;
+  else if (a < -Math.PI) a += TAU;
+  return a;
+};
+const heading = (from, to) => Math.atan2(to[0] - from[0], to[1] - from[1]);
+const dist2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+/** A ship's plan point [x, z] from her 3D position. */
+const flat = (p) => [p[0], p[2]];
+
+/** Her length (m) and half width (m), bow to stern. */
+export function hullSize(hull) {
+  const b = hullBuild(hull);
+  return { length: b.bowZ - b.aftZ, halfWidth: b.halfWidth, bowZ: b.bowZ, aftZ: b.aftZ };
+}
+/** SHIPS-2: THE SHIP A HARBOUR'S BERTHS ARE SIZED FOR - the mod's own Carrack's footprint (MOD_CARRACK_BUILD: 51.95 m by
+ *  8.43 a side), whatever stands as BERTH_HULL. Mac's carrack is 49.45 m by 6.70: sized off her, every port's berths
+ *  would stand anew and its quays with them. So a berth is sounded, spaced, approached and quayed for the template, and
+ *  a hull lies alongside it by her own half beam against the template's (`alongside`). Any other hull its own size. */
+export const BERTH_TEMPLATE = MOD_CARRACK_BUILD;
+export function berthSize(hull) {
+  if (hull !== BERTH_HULL) return hullSize(hull);
+  const b = BERTH_TEMPLATE;
+  return { length: b.bowZ - b.aftZ, halfWidth: b.halfWidth, bowZ: b.bowZ, aftZ: b.aftZ };
+}
+
+/** QUAYS (systems/naval/quays.js): where a hull lies alongside a berth's quay - the berth is sounded for `harbourHull`
+ *  (BERTH_HULL, the Carrack) and its quay stands off that hull's side, so a narrower one lies in toward it by the
+ *  difference and a wider one out from it: her side always the quay's gap off its face. `[x, z]`. */
+export function alongside(berth, hull, harbourHull = BERTH_HULL) {
+  const off = hullSize(hull).halfWidth - berthSize(harbourHull).halfWidth;
+  return [berth.pos[0] + berth.normal[0] * off, berth.pos[1] + berth.normal[1] * off];
+}
+
+/** Whether her whole footprint at `pos` ([x, z]) heading `yaw` floats: her centreline bow to stern and both sides - a
+ *  berth's (BERTH_HULL's) the berths' template's (SHIPS-2: berthSize). */
+export function footprintClear(pos, yaw, hull, isWater) {
+  const { halfWidth, bowZ, aftZ } = berthSize(hull);
+  const fx = Math.sin(yaw),
+    fz = Math.cos(yaw),
+    sx = fz,
+    sz = -fx;
+  for (let z = aftZ; z <= bowZ + 1e-6; z += Math.max(4, (bowZ - aftZ) / 8)) {
+    for (const s of [-halfWidth, 0, halfWidth]) {
+      if (!isWater(pos[0] + fx * z + sx * s, pos[1] + fz * z + sz * s, hull)) return false;
+    }
+  }
+  return true;
+}
+
+/** QUAY-CROSSING: how far a berth's quay stands in from her side (quays.js QUAY_GAP + QUAY_WIDTH) and past her ends
+ *  (quays.js QUAY_ENDS) (m) - `quayBox`'s. */
+export const BERTH_QUAY_IN = 5.3;
+export const BERTH_QUAY_ENDS = 3;
+/** QUAY-CROSSING: a berth's ship and her quay in the scene - four corners [x, z], in order round them: her seaward side
+ *  to the quay's back, its ends past her bow and her stern. */
+export function quayBox(pos, yaw, normal, hull = BERTH_HULL) {
+  const { halfWidth, bowZ, aftZ } = berthSize(hull);
+  const fx = Math.sin(yaw),
+    fz = Math.cos(yaw),
+    lx = -normal[0],
+    lz = -normal[1];
+  return [
+    [aftZ - BERTH_QUAY_ENDS, -halfWidth],
+    [bowZ + BERTH_QUAY_ENDS, -halfWidth],
+    [bowZ + BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN],
+    [aftZ - BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN],
+  ].map(([z, x]) => [pos[0] + fx * z + lx * x, pos[1] + fz * z + lz * x]);
+}
+/** PORT-SHIPS: a berth asked of her town and her ground this often over her (m) - under the narrowest pier a capital
+ *  stands (Alinor's and Torval's, 6 m). */
+export const KEEP_STEP = 2;
+/** PORT-SHIPS: her jetty's way walked landward from her quay's back for the town's keep, at most (m) - the land lies within
+ *  a SHORE_STEP of the shore point her berth was stood off, and a step past it. */
+export const BERTH_JETTY_WALK = 2 * SHORE_STEP;
+/** PORT-SHIPS: the most the ground under her waterplane stands over the sea's top (m) - a hand's breadth of the sea's own
+ *  floor's reading, never a bank. */
+export const BERTH_DRY_M = 0.1;
+/** PORT-SHIPS: her waterplane drawn in from her full beam to her stem over this share of her length, and to her stern
+ *  over this - her footprint's corners are no hull. */
+export const BOW_TAPER = 0.3;
+export const STERN_TAPER = 0.12;
+/** PORT-SHIPS: her waterplane's half beam `z` along her (berthSize's frame, bow +). */
+export function waterplaneHalf(z, hull = BERTH_HULL) {
+  const { halfWidth, bowZ, aftZ } = berthSize(hull),
+    L = bowZ - aftZ;
+  return halfWidth * Math.max(0, Math.min(1, (bowZ - z) / (BOW_TAPER * L), (z - aftZ) / (STERN_TAPER * L)));
+}
+/**
+ * PORT-SHIPS: WHETHER A BERTH STANDS (the header's) - every KEEP_STEP over her:
+ *   - `ground(x, z)` (the ground's height over the sea's top, m; or null): under her waterplane never over BERTH_DRY_M;
+ *   - `keep(x, z)` (her town's, systems/naval/harbourKeep.js; or null): never under her ship beam to beam and bow to
+ *     stern, her quay (quayBox's band past her landward side, and its ends) or her jetty's way, walked landward from the
+ *     quay's back at her waist until it meets ground no water (`water(x, z)`), BERTH_JETTY_WALK at most.
+ * `quay` false: her hull alone (her approach's).
+ * @param {number[]} pos @param {number} yaw @param {number[]} normal @param {number} hull
+ * @param {{ keep?: ?((x: number, z: number) => boolean), ground?: ?((x: number, z: number) => number), water: (x: number, z: number) => boolean }} o
+ */
+export function berthStands(pos, yaw, normal, hull, { keep = null, ground = null, water }, quay = true) {
+  const { halfWidth, bowZ, aftZ } = berthSize(hull);
+  const fx = Math.sin(yaw),
+    fz = Math.cos(yaw),
+    lx = -normal[0],
+    lz = -normal[1];
+  const at = (z, x) => [pos[0] + fx * z + lx * x, pos[1] + fz * z + lz * x];
+  if (ground) {
+    const n = Math.ceil((bowZ - aftZ) / KEEP_STEP);
+    for (let i = 0; i <= n; i++) {
+      const z = aftZ + ((bowZ - aftZ) * i) / n,
+        w = waterplaneHalf(z, hull),
+        m = Math.ceil((2 * w) / KEEP_STEP);
+      for (let j = 0; j <= m; j++) {
+        const p = at(z, -w + (m ? (2 * w * j) / m : 0));
+        if (ground(p[0], p[1]) > BERTH_DRY_M) return false;
+      }
+    }
+  }
+  if (!keep) return true;
+  const ends = quay ? BERTH_QUAY_ENDS : 0,
+    inn = halfWidth + (quay ? BERTH_QUAY_IN : 0);
+  const z0 = aftZ - ends,
+    z1 = bowZ + ends,
+    nz = Math.ceil((z1 - z0) / KEEP_STEP),
+    nx = Math.ceil((inn + halfWidth) / KEEP_STEP);
+  for (let i = 0; i <= nz; i++) {
+    for (let j = 0; j <= nx; j++) {
+      const p = at(z0 + ((z1 - z0) * i) / nz, -halfWidth + ((inn + halfWidth) * j) / nx);
+      if (keep(p[0], p[1])) return false;
+    }
+  }
+  if (!quay) return true;
+  for (let t = KEEP_STEP; t <= BERTH_JETTY_WALK; t += KEEP_STEP) {
+    const p = at((aftZ + bowZ) / 2, inn + t);
+    if (keep(p[0], p[1])) return false;
+    if (!water(p[0], p[1])) break;
+  }
+  return true;
+}
+/** Whether two convex quads overlap (separating axes; touching is apart). */
+export function boxesMeet(a, b) {
+  for (const box of [a, b]) {
+    for (let i = 0; i < 4; i++) {
+      const [px, pz] = box[i],
+        [qx, qz] = box[(i + 1) % 4],
+        ax = pz - qz,
+        az = qx - px;
+      const span = (q) => q.map(([x, z]) => x * ax + z * az);
+      const sa = span(a),
+        sb = span(b);
+      if (Math.max(...sa) <= Math.min(...sb) || Math.max(...sb) <= Math.min(...sa)) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * A port town's harbour off the terrain: `rect` the town's footprint in the scene ({ minX, maxX, minZ, maxZ }),
+ * `isWater(x, z, hull)`. Answers `{ berths: [{ pos: [x, z], yaw, normal: [x, z], approach: [x, z] }], mouth: [x, z],
+ * hull }`, the berths nearest the town first - or null where the town has no shore to berth at or no way out to sea.
+ * AUDIT GN2-GN1: sounded for `hull`'s footprint in `deep`'s water too - the deepest keel that berths (BERTH_HULLS).
+ * PORT-SHIPS: a berth kept only where it stands (berthStands) - out of its town (`keep(x, z)`, harbourKeep.js) and over
+ * ground under the sea (`ground(x, z)`, its height over the sea's top), her approach's hull too; either null asks nothing.
+ * ALDBRUGH-QUAY: `square` reads `reach` off the rect along each axis (a square), where it is read round by default.
+ */
+export function findHarbour({
+  rect,
+  isWater: own,
+  hull = BERTH_HULL,
+  deep = deepestBerther(),
+  max = HARBOUR_BERTHS,
+  reach = HARBOUR_REACH,
+  keep = null,
+  ground = null,
+  square = false,
+}) {
+  const { length, halfWidth } = berthSize(hull); // SHIPS-2: the berths' template's
+  const isWater = (x, z, h) => !!own(x, z, h) && (h === deep || !!own(x, z, deep));
+  const water = (x, z) => isWater(x, z, hull);
+  const stands = keep || ground ? { keep, ground, water } : null; // PORT-SHIPS
+  const cx = (rect.minX + rect.maxX) / 2,
+    cz = (rect.minZ + rect.maxZ) / 2;
+  const x0 = rect.minX - reach,
+    x1 = rect.maxX + reach,
+    z0 = rect.minZ - reach,
+    z1 = rect.maxZ + reach;
+  const cands = [];
+  for (let x = x0; x <= x1; x += SHORE_STEP) {
+    for (let z = z0; z <= z1; z += SHORE_STEP) {
+      if (!water(x, z)) continue;
+      // beside the land: a neighbour a step off is land
+      if (water(x + SHORE_STEP, z) && water(x - SHORE_STEP, z) && water(x, z + SHORE_STEP) && water(x, z - SHORE_STEP))
+        continue;
+      // the shore's normal: toward the water round her, away from the land
+      let nx = 0,
+        nz = 0;
+      for (let k = 0; k < 16; k++) {
+        const a = (k / 16) * TAU,
+          dx = Math.sin(a),
+          dz = Math.cos(a);
+        if (water(x + dx * SHORE_STEP * 2, z + dz * SHORE_STEP * 2)) {
+          nx += dx;
+          nz += dz;
+        }
+      }
+      const n = Math.hypot(nx, nz);
+      if (n < 1.5) continue; // a pool, or a sliver of water between two lands
+      nx /= n;
+      nz /= n;
+      const off = halfWidth + BERTH_MARGIN;
+      const pos = [x + nx * off, z + nz * off];
+      const dx = Math.max(rect.minX - pos[0], 0, pos[0] - rect.maxX),
+        dz = Math.max(rect.minZ - pos[1], 0, pos[1] - rect.maxZ);
+      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all
+      cands.push({ pos, normal: [nx, nz], d: Math.hypot(pos[0] - cx, pos[1] - cz) });
+    }
+  }
+  cands.sort((a, b) => a.d - b.d || a.pos[0] - b.pos[0] || a.pos[1] - b.pos[1]);
+  /** The berths off `from`, nearest the town first. */
+  const pick = (from) => {
+    const berths = [],
+      boxes = [];
+    for (const c of from) {
+      if (berths.length >= max) break;
+      if (berths.some((b) => dist2(b.pos, c.pos) < length * BERTH_SPACING)) continue;
+      const along = Math.atan2(c.normal[0], c.normal[1]) + Math.PI / 2;
+      // she lies along the shore, whichever way her approach astern of her is open water
+      for (const yaw of [wrap(along), wrap(along + Math.PI)]) {
+        if (!footprintClear(c.pos, yaw, hull, isWater)) continue;
+        if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue; // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town
+        const back = length * APPROACH_LENGTHS;
+        const approach = [
+          c.pos[0] - Math.sin(yaw) * back + c.normal[0] * APPROACH_OUT,
+          c.pos[1] - Math.cos(yaw) * back + c.normal[1] * APPROACH_OUT,
+        ];
+        if (!footprintClear(approach, yaw, hull, isWater)) continue;
+        if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue; // PORT-SHIPS: and her approach's hull
+        // QUAY-CROSSING: her quay never laid across another berth's - round a point of land two berths BERTH_SPACING
+        // apart turned to each other stood their quays' ends one over the other
+        const box = quayBox(c.pos, yaw, c.normal, hull);
+        if (boxes.some((o) => boxesMeet(o, box))) continue;
+        boxes.push(box);
+        berths.push({ pos: c.pos, yaw, normal: c.normal, approach });
+        break;
+      }
+    }
+    return berths;
+  };
+  /** Open water all round, out from (px, pz) along (mx, mz) within MOUTH_REACH - the first such point, or null; `wet`,
+   *  only while the line stays on the water (a berth's own way out, never across the land behind her inlet). */
+  const openOut = (px, pz, mx, mz, wet = false) => {
+    for (let d = 0; d <= MOUTH_REACH; d += SHORE_STEP) {
+      const p = [px + mx * d, pz + mz * d];
+      if (!water(p[0], p[1])) {
+        if (wet) return null;
+        continue;
+      }
+      let open = true;
+      for (let k = 0; k < 12 && open; k++) {
+        const a = (k / 12) * TAU;
+        open = water(p[0] + Math.sin(a) * MOUTH_CLEAR, p[1] + Math.cos(a) * MOUTH_CLEAR);
+      }
+      if (open) return p;
+    }
+    return null;
+  };
+  /** The mouth: out along the berths' mean normal to open water all round. AUDIT SHIP-LIFE A5: shores facing apart (a
+   *  town on an isthmus, a peninsula's tip) cancel that mean out - then the nearest berth's own normal, from her own
+   *  place; and a berth that cannot reach the mouth through the water is no berth of this harbour. */
+  const mouthOf = (berths) => {
+    let mx = 0,
+      mz = 0,
+      px = 0,
+      pz = 0;
+    for (const b of berths) {
+      mx += b.normal[0];
+      mz += b.normal[1];
+      px += b.pos[0];
+      pz += b.pos[1];
+    }
+    let m = Math.hypot(mx, mz);
+    if (m < berths.length * MOUTH_AGREE) {
+      [mx, mz] = berths[0].normal;
+      [px, pz] = berths[0].pos;
+      m = 1;
+    } else {
+      px /= berths.length;
+      pz /= berths.length;
+    }
+    return openOut(px, pz, mx / m, mz / m);
+  };
+  let berths = pick(cands);
+  if (!berths.length) return null;
+  let mouth = mouthOf(berths);
+  // SHIP AUDIT (2026-10-27, Lillandril on the freeware since RELIEF-PEAKS): the berths nearest the town lay in an inlet
+  // along its side with no way out, the open sea past its other side, and the whole harbour was none - taken again from
+  // the shores whose own way out meets open water
+  if (!mouth) {
+    berths = pick(cands.filter((c) => openOut(c.pos[0], c.pos[1], c.normal[0], c.normal[1], true)));
+    if (!berths.length) return null;
+    mouth = mouthOf(berths);
+  }
+  if (!mouth) return null;
+  const grid = createWaterGrid({ isWater, hull });
+  const reached = berths.filter((b) => grid.clear(b.approach, mouth) || grid.path(b.approach, mouth) != null);
+  return reached.length ? { berths: reached, mouth, hull } : null;
+}
+/** AUDIT SHIP-LIFE A3: a leg's water sampled every this many cells. */
+export const CLEAR_STEP = 0.25;
+/** AUDIT SHIP-LIFE A1: the detours a stalled errand is given before it is given up. */
+export const DETOUR_GIVEUP = 3;
+/** AUDIT SHIP-LIFE A5: the berths' normals must agree this much (the mean's length over their count) for the mouth to
+ *  lie along their mean. */
+export const MOUTH_AGREE = 0.35;
+
+/**
+ * The water's grid for one hull: `path(from, to)` - [x, z] points from `from` to `to` through open water, the corners
+ * straightened (a way's first point is `from`, its last `to`) - or null when there is none within PATH_NODES; and
+ * `clear(a, b)`, whether the line between floats her.
+ */
+export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap = PATH_NODES }) {
+  const cache = new Map();
+  const key = (i, k) => `${i},${k}`;
+  const centre = (i, k) => [(i + 0.5) * cell, (k + 0.5) * cell];
+  const water = (x, z) => !!isWater(x, z, hull);
+  const rc = gridClearOf(hull, cell);
+  let expansions = 0;
+  function open(i, k) {
+    const kk = key(i, k);
+    let v = cache.get(kk);
+    if (v !== undefined) return v;
+    const [x, z] = centre(i, k);
+    // a sounding of ground not yet built (null) closes the cell for now and is never kept - the
+    // grid lives until the origin moves, and kept it stood as land after the ground came in
+    let sure = true;
+    const at = (px, pz) => {
+      const w = isWater(px, pz, hull);
+      if (w == null) sure = false;
+      return !!w;
+    };
+    v = at(x, z);
+    for (let a = 0; v && a < 8; a++) {
+      const t = (a / 8) * TAU,
+        sx = Math.sin(t),
+        sz = Math.cos(t);
+      for (let r = Math.min(SPOKE_STEP_M, rc); v; r = Math.min(r + SPOKE_STEP_M, rc)) {
+        v = at(x + sx * r, z + sz * r);
+        if (r >= rc) break;
+      }
+    }
+    if (sure) cache.set(kk, v);
+    return v;
+  }
+  /** water at `p` and the grid's clearance round it - a point her lookout lets her come to. */
+  function room(p) {
+    if (!water(p[0], p[1])) return false;
+    for (let a = 0; a < 8; a++) {
+      const t = (a / 8) * TAU;
+      if (!water(p[0] + Math.sin(t) * rc, p[1] + Math.cos(t) * rc)) return false;
+    }
+    return true;
+  }
+  // the host's tiles where it has them (`isWater.tile()`: { size, x0, z0 }, the built ground's lattice -
+  // scenes/world.js navalIsWater) - a line is asked of every tile it crosses, so no leg clips a corner between soundings
+  const tileOf = typeof isWater.tile === 'function' ? isWater.tile : null;
+  /** Whether the water holds the line a-b: every tile of the host's lattice it crosses (its middle asked; through a corner
+   *  both tiles beside it), or with no lattice every `step` m. */
+  function holds(a, b, step) {
+    const t = tileOf?.();
+    if (!t || !(t.size > 0)) {
+      const d = dist2(a, b),
+        n = Math.max(1, Math.ceil(d / step));
+      for (let q = 0; q <= n; q++) {
+        const u = q / n;
+        if (!water(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u)) return false;
+      }
+      return true;
+    }
+    const S = t.size,
+      ax = (a[0] - t.x0) / S,
+      az = (a[1] - t.z0) / S,
+      bx = (b[0] - t.x0) / S,
+      bz = (b[1] - t.z0) / S;
+    const dx = bx - ax,
+      dz = bz - az,
+      sx = Math.sign(dx),
+      sz = Math.sign(dz),
+      ex = Math.floor(bx),
+      ez = Math.floor(bz);
+    let cx = Math.floor(ax),
+      cz = Math.floor(az);
+    const tdx = sx ? 1 / Math.abs(dx) : Infinity,
+      tdz = sz ? 1 / Math.abs(dz) : Infinity;
+    let tx = sx ? (sx > 0 ? cx + 1 - ax : ax - cx) * tdx : Infinity,
+      tz = sz ? (sz > 0 ? cz + 1 - az : az - cz) * tdz : Infinity;
+    const at = (/** @type {number} */ i, /** @type {number} */ k) => water(t.x0 + (i + 0.5) * S, t.z0 + (k + 0.5) * S);
+    if (!at(cx, cz)) return false;
+    for (let left = Math.abs(ex - cx) + Math.abs(ez - cz); left > 0; left--) {
+      if (Math.abs(tx - tz) < 1e-9) {
+        if (!at(cx + sx, cz) || !at(cx, cz + sz)) return false;
+        cx += sx;
+        cz += sz;
+        tx += tdx;
+        tz += tdz;
+        left--;
+      } else if (tx < tz) {
+        cx += sx;
+        tx += tdx;
+      } else {
+        cz += sz;
+        tz += tdz;
+      }
+      if (!at(cx, cz)) return false;
+    }
+    return true;
+  }
+  function clear(a, b) {
+    // AUDIT SHIP-LIFE A3: sampled every quarter cell - at 0.4 a straightened leg clipped a 10 m spit's corner
+    if (!holds(a, b, cell * CLEAR_STEP)) return false;
+    const d = dist2(a, b),
+      n = Math.max(1, Math.ceil(d / (cell * CLEAR_STEP)));
+    const sx = d > 0 ? (b[1] - a[1]) / d : 0,
+      sz = d > 0 ? -(b[0] - a[0]) / d : 0;
+    for (let s = 0; s <= n; s++) {
+      const t = s / n,
+        x = a[0] + (b[0] - a[0]) * t,
+        z = a[1] + (b[1] - a[1]) * t;
+      if (
+        Math.min(t, 1 - t) * d > LEG_END_M &&
+        !(water(x + sx * LEG_MARGIN, z + sz * LEG_MARGIN) && water(x - sx * LEG_MARGIN, z - sz * LEG_MARGIN))
+      )
+        return false;
+    }
+    return true;
+  }
+  /** The water straight between two points, no margin (a way's first and last legs, to and from the grid). */
+  const wet = (a, b) => holds(a, b, cell * 0.25);
+  /** a step between two cells' centres, asked of the host's tiles once (none: the spokes stand for it). */
+  const steps = new Map();
+  function stepOk(i, k, ni, nk) {
+    if (!tileOf) return true;
+    const sk = i < ni || (i === ni && k < nk) ? `${i},${k}>${ni},${nk}` : `${ni},${nk}>${i},${k}`;
+    let v = steps.get(sk);
+    if (v === undefined) {
+      v = holds(centre(i, k), centre(ni, nk), cell * 0.25);
+      steps.set(sk, v);
+    }
+    return v;
+  }
+  /** how far (m, `max` at most) the water carries her straight from `from` on bearing `a`, by the
+   *  law of `clear` (LEG_MARGIN abeam past LEG_END_M) - a voyage's mark is drawn where it ends, never past it. */
+  function run(from, a, max) {
+    const sx = Math.sin(a),
+      sz = Math.cos(a),
+      step = cell * CLEAR_STEP;
+    let ok = 0;
+    for (let d = step; d <= max + 1e-6; d += step) {
+      const x = from[0] + sx * d,
+        z = from[1] + sz * d;
+      if (!water(x, z)) break;
+      if (
+        d > LEG_END_M &&
+        !(water(x + sz * LEG_MARGIN, z - sx * LEG_MARGIN) && water(x - sz * LEG_MARGIN, z + sx * LEG_MARGIN))
+      )
+        break;
+      ok = d;
+    }
+    return ok;
+  }
+  /** The open cell nearest a point, within three rings, that the water joins to it (AUDIT SHIP-LIFE A3: never a cell
+   *  across a spit - the leg to and from the grid is sailed as it lies, and the berthing leg with no swing off the
+   *  shore) - null for none. */
+  function nearestOpen(p) {
+    const i0 = Math.floor(p[0] / cell),
+      k0 = Math.floor(p[1] / cell);
+    let best = null,
+      bestD = Infinity;
+    for (let r = 0; r <= 3 && !best; r++) {
+      for (let i = i0 - r; i <= i0 + r; i++)
+        for (let k = k0 - r; k <= k0 + r; k++) {
+          if (Math.max(Math.abs(i - i0), Math.abs(k - k0)) !== r || !open(i, k) || !wet(p, centre(i, k))) continue;
+          const d = dist2(centre(i, k), p);
+          if (d < bestD) {
+            bestD = d;
+            best = [i, k];
+          }
+        }
+    }
+    return best;
+  }
+  function path(from, to) {
+    expansions = 0;
+    if (clear(from, to))
+      return [
+        [from[0], from[1]],
+        [to[0], to[1]],
+      ];
+    const s = nearestOpen(from),
+      g = nearestOpen(to);
+    if (!s || !g) return null;
+    let cells = search(s, g, open, stepOk);
+    if (!cells && capped) cells = coarse(s, g);
+    return cells
+      ? straightened(
+          from,
+          to,
+          cells.map((c) => centre(c[0], c[1])),
+        )
+      : null;
+  }
+  let capped = false;
+  /** THE WAY SOUGHT OVER COARSE CELLS - COARSE_K of the grid's a side, a coarse cell stood for by the
+   *  grid's cell at its middle and a coarse step by the grid's cells along it - then each coarse step found again over
+   *  the grid's own cells (a short search each). The cells [i, k] in order, or null. */
+  function coarse(s, g) {
+    const K = COARSE_K,
+      S = [Math.floor(s[0] / K), Math.floor(s[1] / K)],
+      G = [Math.floor(g[0] / K), Math.floor(g[1] / K)];
+    const rep = (I, M) =>
+      I === S[0] && M === S[1] ? s : I === G[0] && M === G[1] ? g : [I * K + (K >> 1), M * K + (K >> 1)];
+    const cOpen = (I, M) => {
+      const r = rep(I, M);
+      return open(r[0], r[1]);
+    };
+    const cStep = (I, M, NI, NM) => {
+      const a = rep(I, M),
+        b = rep(NI, NM),
+        n = 2 * K;
+      for (let q = 1; q < n; q++) {
+        const u = q / n;
+        if (!open(Math.round(a[0] + (b[0] - a[0]) * u), Math.round(a[1] + (b[1] - a[1]) * u))) return false;
+      }
+      return holds(centre(a[0], a[1]), centre(b[0], b[1]), cell * 0.25);
+    };
+    const route = search(S, G, cOpen, cStep, K, COARSE_GREED);
+    if (!route) return null;
+    const out = [s];
+    for (let q = 1; q < route.length; q++) {
+      const leg = search(out[out.length - 1], rep(route[q][0], route[q][1]), open, stepOk);
+      if (!leg) return null;
+      out.push(...leg.slice(1));
+    }
+    return out;
+  }
+  /** A* from cell `s` to cell `g` over the cells `isOpen` opens, each step `stepOk` lets (`size` the grid's cells a cell):
+   *  the cells [i, k] in order, or null - `capped` when PATH_NODES ran out first. */
+  function search(s, g, isOpen, stepOk, size = 1, greed = 1) {
+    capped = false;
+    let spent = 0;
+    const gk = key(g[0], g[1]);
+    const cost = new Map([[key(s[0], s[1]), 0]]),
+      prev = new Map(),
+      shut = new Set();
+    const heap = [[dist2(centre(s[0], s[1]), centre(g[0], g[1])), s[0], s[1]]];
+    const push = (e) => {
+      heap.push(e);
+      let i = heap.length - 1;
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        if (heap[p][0] <= heap[i][0]) break;
+        [heap[p], heap[i]] = [heap[i], heap[p]];
+        i = p;
+      }
+    };
+    const pop = () => {
+      const top = heap[0],
+        last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        let i = 0;
+        for (;;) {
+          const l = i * 2 + 1,
+            r = l + 1;
+          let m = i;
+          if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+          if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+          if (m === i) break;
+          [heap[m], heap[i]] = [heap[i], heap[m]];
+          i = m;
+        }
+      }
+      return top;
+    };
+    let found = false;
+    while (heap.length) {
+      const [, i, k] = pop();
+      const kk = key(i, k);
+      if (shut.has(kk)) continue;
+      shut.add(kk);
+      if (kk === gk) {
+        found = true;
+        break;
+      }
+      if (++spent > nodeCap || ++expansions > nodeCap * PATH_BUDGET_K) {
+        capped = true;
+        return null;
+      }
+      const c0 = cost.get(kk);
+      for (let di = -1; di <= 1; di++)
+        for (let dk = -1; dk <= 1; dk++) {
+          if (!di && !dk) continue;
+          const ni = i + di,
+            nk = k + dk,
+            nkey = key(ni, nk);
+          if (shut.has(nkey) || (nkey !== gk && !isOpen(ni, nk))) continue;
+          if (di && dk && !(isOpen(i + di, k) && isOpen(i, k + dk))) continue; // no corner cut past a closed cell
+          if (!stepOk(i, k, ni, nk)) continue; // the host's tiles across the step
+          const c = c0 + (di && dk ? Math.SQRT2 : 1) * cell * size;
+          if (c < (cost.get(nkey) ?? Infinity)) {
+            cost.set(nkey, c);
+            prev.set(nkey, kk);
+            push([c + dist2(centre(ni, nk), centre(g[0], g[1])) * size * greed, ni, nk]);
+          }
+        }
+    }
+    if (!found) return null;
+    const cells = [];
+    for (let kk = gk; kk; kk = prev.get(kk)) cells.push(kk.split(',').map(Number));
+    return cells.reverse();
+  }
+  /** The way through the cells' centres, from `from` to `to`, its corners straightened. */
+  function straightened(from, to, cells) {
+    const raw = [[from[0], from[1]], ...cells, [to[0], to[1]]];
+    // the corners straightened: from each point, the farthest ahead the water between lets her sail straight to
+    // galloped out from each point and halved back (a way's points asked in their logarithm, where a
+    // look back from its end asked them all - 31,000 to 60,000 soundings a way down a channel)
+    const out = [raw[0]],
+      last = raw.length - 1;
+    let at = 0;
+    while (at < last) {
+      if (clear(raw[at], raw[last])) {
+        out.push(raw[last]);
+        break;
+      } // the end in view: no point between is wanted
+      let ok = at + 1,
+        step = 1;
+      while (ok + step < last && clear(raw[at], raw[ok + step])) {
+        ok += step;
+        step *= 2;
+      }
+      let hi = Math.min(ok + step, last);
+      if (hi > ok && clear(raw[at], raw[hi])) ok = hi;
+      else
+        while (hi - ok > 1) {
+          const mid = (ok + hi) >> 1;
+          if (clear(raw[at], raw[mid])) ok = mid;
+          else hi = mid;
+        }
+      out.push(raw[ok]);
+      at = ok;
+    }
+    return out;
+  }
+  return {
+    path,
+    clear,
+    open,
+    run,
+    room,
+    get expansions() {
+      return expansions;
+    },
+    cell,
+  };
+}
+
+/** A COURSE SAILED BY THE WATER'S WAY - a ship sailing for a point of her own (a packet's lane ahead, a
+ *  raider's seeded course) sails straight for it where the water carries her (`clear`), else by the grid's way to it,
+ *  kept while the point moves under VIA_KEEP_M and the grid is the one it was planned on (`ship.via`). Her lookout alone
+ *  took her at a bulge of land a lane's leg crossed, for good. The point she steers for, [x, z]. */
+export const VIA_KEEP_M = 150;
+export function courseVia(grid, ship, to) {
+  if (!grid || !to) return to;
+  const here = flat(ship.pos);
+  if (grid.clear(here, to)) {
+    ship.via = null;
+    return to;
+  }
+  let v = ship.via;
+  if (!v || v.grid !== grid || dist2(v.to, to) > VIA_KEEP_M) {
+    const way = grid.path(here, to);
+    v = ship.via = { grid, to: [to[0], to[1]], path: way ? way.map((q) => [q[0], q[1]]) : null, i: 1 };
+  }
+  return v.path ? follow(ship, v, grid.clear) : to;
+}
+
+/** a host's water reader asked afresh at each sounding (`get()` - a reader swapped later is the one
+ *  read), its tiles with it (`tile`). */
+export const waterOf = (get) => Object.assign((x, z, h) => get()(x, z, h), { tile: () => get()?.tile?.() ?? null });
+
+/** Her errand's own stream: off her seed, never her captain's. */
+export const errandRng = (seed) => mulberry32(hash32(seed >>> 0, ERRAND_SALT));
+
+/** A moored ship's dwell (s) - her stream's draw. */
+export const dwellOf = (r) => DWELL_S[0] + r() * (DWELL_S[1] - DWELL_S[0]);
+
+/**
+ * The errand a ship keeps - at launch, and drawn again by whoever takes her over (it never rides the word): `harbours`
+ * the known ones (`[{ key, harbour, free(i) }]`), `pos` where she is ([x, y, z]). A ship at a berth of a harbour (and
+ * lying still) is moored there; else by her trade - a merchantman makes for the nearest harbour with a free berth
+ * (else sails out of the world), a navy patrols the nearest harbour's approaches (else sails on), a pirate lurks off
+ * them (else keeps her own cruise: null).
+ */
+export function errandFor({
+  seed,
+  faction,
+  hull,
+  pos,
+  speed = 0,
+  clock = 0,
+  harbours = [],
+  clear = null,
+  grid = null,
+}) {
+  const r = errandRng(seed);
+  clear = grid?.clear ?? clear; // the hull's grid, whose `run` a voyage out is drawn by
+  const here = flat(pos);
+  if (hull !== 3 && speed < BERTH_WAY) {
+    for (const h of harbours) {
+      const i = h.harbour.berths.findIndex((b) => dist2(b.pos, here) <= BERTH_SNAP_M);
+      if (i >= 0) return { kind: 'moored', harbour: h.key, berth: i, until: clock + dwellOf(r), path: null, i: 0 };
+    }
+  }
+  const near = harbours
+    .map((h) => ({ h, d: dist2(h.harbour.mouth, here) }))
+    .filter((x) => x.d <= VOYAGE_REACH)
+    .sort((a, b) => a.d - b.d);
+  if (faction === 'merchant') {
+    for (const { h } of near) {
+      const berth = hull === 3 ? -1 : h.harbour.berths.findIndex((_, i) => h.free?.(i) ?? true);
+      if (berth >= 0) return { kind: 'arrive', harbour: h.key, berth, path: null, i: 0 };
+    }
+    return outbound(r, here, grid ?? clear);
+  }
+  if (faction === 'navy') {
+    if (near.length) return { kind: 'patrol', harbour: near[0].h.key, since: clock, path: null, i: 0, spin: r() };
+    return outbound(r, here, grid ?? clear);
+  }
+  if (faction === 'pirate' && near.length) {
+    // AUDIT SHIP-LIFE A4: off the mouth on open water - the first of OUTBOUND_TRIES bearings the water from the mouth
+    // reaches (`clear`), else the mouth itself
+    const m = near[0].h.harbour.mouth;
+    let at = null;
+    for (let k = 0; k < OUTBOUND_TRIES && !at; k++) {
+      const a = r() * TAU,
+        q = [m[0] + Math.sin(a) * LURK_R, m[1] + Math.cos(a) * LURK_R];
+      if (!clear || clear(m, q)) at = q;
+    }
+    return { kind: 'lurk', harbour: near[0].h.key, at: at ?? [m[0], m[1]], path: null, i: 0, spin: r() };
+  }
+  return null;
+}
+/** Out of the world on her stream's bearing - the first of OUTBOUND_TRIES draws the water carries
+ *  her VOYAGE_DIST along (the grid's `run`), else the draw it carries her farthest; her mark where that water ends, so
+ *  the straight leg she sails is water (a mark 2.6 km out was sounded for its first 800 m, and 531 of the real map's 5,680
+ *  departures lay on land). Water for under OUTBOUND_MIN on every draw: no voyage (null) - she keeps her own cruise.
+ *  `grid` the hull's water grid, or a bare `clear` (its run sounded a hundred metres at a time). */
+export const OUTBOUND_TRIES = 12;
+export const OUTBOUND_MIN = 300;
+function outbound(r, here, grid = null) {
+  const a = r() * TAU;
+  const end = (b, d) => [here[0] + Math.sin(b) * d, here[1] + Math.cos(b) * d];
+  if (!grid) return { kind: 'voyage', harbour: null, to: end(a, VOYAGE_DIST), path: null, i: 0 };
+  const clear = typeof grid === 'function' ? grid : grid.clear;
+  const run =
+    typeof grid === 'function' || !grid.run
+      ? (/** @type {number} */ b) => {
+          let ok = 0;
+          for (let d = 100; d <= VOYAGE_DIST && clear(here, end(b, d)); d += 100) ok = d;
+          return ok;
+        }
+      : (/** @type {number} */ b) => grid.run(here, b, VOYAGE_DIST);
+  let best = { a, d: -1 };
+  for (let k = 0; k < OUTBOUND_TRIES && best.d < VOYAGE_DIST; k++) {
+    const b = k ? r() * TAU : a,
+      d = run(b);
+    if (d > best.d) best = { a: b, d };
+  }
+  let d = best.d;
+  while (d >= OUTBOUND_MIN && !clear(here, end(best.a, d))) d -= WATER_CELL; // run's soundings and clear's lie apart
+  return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(best.a, d), path: null, i: 0 } : null;
+}
+
+/** how often (s) a ship abreast of a point asks whether the water carries her on to the next. */
+export const PASS_ASK_S = 1;
+/** Along a way: its next point unreached, advanced past every one within REACH_M - or passed (she
+ *  is abreast of it or beyond, along the leg that comes into it) with the next straight ahead on water (`clear`,
+ *  PASS_ASK_S apart): a point missed by more than REACH_M was turned back for and circled. A point made is way made -
+ *  her detours counted afresh. */
+function follow(ship, e, clear = null, dt = 0) {
+  const here = flat(ship.pos),
+    reach = reachOf(ship.hull);
+  e.passWait = (e.passWait ?? 0) - dt;
+  while (e.i < e.path.length - 1) {
+    const p = e.path[e.i],
+      q = e.path[e.i + 1],
+      o = e.path[e.i - 1];
+    let made = dist2(here, p) <= reach;
+    if (
+      !made &&
+      clear &&
+      o &&
+      e.passWait <= 0 &&
+      (here[0] - p[0]) * (p[0] - o[0]) + (here[1] - p[1]) * (p[1] - o[1]) > 0
+    ) {
+      made = clear(here, q);
+      if (!made) e.passWait = PASS_ASK_S;
+    }
+    if (!made) break;
+    if (e.i++ > 0) e.detours = 0; // a way's first point is where she stood when it was planned: no way made
+  }
+  return e.path[e.i];
+}
+/** her way toward her mark kept (`e.prog`: the mark, the nearest she has come, the seconds since
+ *  she came PROGRESS_M nearer) - a new mark begins it afresh. */
+function progress(e, here, dt, reach = REACH_M) {
+  const p = e.prog;
+  if (!p) return 0;
+  const d = dist2(here, p.at);
+  if (d < p.best - PROGRESS_M) {
+    p.best = d;
+    p.held = 0;
+  } else if (d > reach) p.held += dt;
+  return p.held;
+}
+function markOf(e, here, goal) {
+  if (e.prog && dist2(e.prog.at, goal) <= 1) return;
+  e.prog = { at: [goal[0], goal[1]], best: dist2(here, goal), held: 0 };
+}
+/** What remains of a way from here (m). */
+function remaining(ship, e) {
+  let d = dist2(flat(ship.pos), e.path[e.i]);
+  for (let q = e.i; q < e.path.length - 1; q++) d += dist2(e.path[q], e.path[q + 1]);
+  return d;
+}
+
+/**
+ * Her errand stepped: `ctx` - `{ harbour(key) -> harbour | null, grid(hull) -> water grid, free(key, i) -> bool,
+ * harbours() -> the known [{ key, harbour, free }] }`. Answers her plan - `{ want, goal: [x, 0, z], sails }`, or
+ * `{ hold: { pos: [x, z], yaw } }` while she lies moored - or null when the errand is done with and she keeps her own
+ * cruise. `ship.errand` moves on as she does: moored -> depart -> voyage | patrol -> arrive -> moored.
+ */
+export function stepErrand(ship, dt, ctx) {
+  const e = ship.errand;
+  if (!e) return null;
+  const hb = e.harbour != null ? ctx.harbour(e.harbour) : null;
+  const here = flat(ship.pos);
+  const plan = (goal, sails = 1) => {
+    if (goal !== e.detour) markOf(e, here, goal);
+    return { want: heading(here, goal), goal: [goal[0], 0, goal[1]], sails };
+  };
+  // a stall: no way under sail for STALL_S - a detour abeam into open water, then her way planned anew past what held her
+  if (e.kind !== 'moored' && !fishingHeld(e)) {
+    // FISH-BOATS: at anchor or working her ground, she is where she means to be
+    // AUDIT SHIP-LIFE A1: whatever sail she carries - the last of a berthing's way and a captain boxed in by the land
+    // both shorten it, and a hulk across either held her there for good
+    e.stall = ship.speed < STALL_WAY ? (e.stall ?? 0) + dt : 0;
+    const held = e.detour ? 0 : progress(e, here, dt, reachOf(ship.hull));
+    // under way and getting nowhere - on to the next point of her way where the water carries her
+    // straight to it, else a stall as any other
+    if (held >= PROGRESS_S && e.path && e.i < e.path.length - 1 && ctx.grid(ship.hull).clear(here, e.path[e.i + 1])) {
+      e.i++;
+      e.prog = null;
+    } else if (e.stall >= STALL_S || held >= PROGRESS_S) {
+      // held on a detour too: the other side (the first one's abeam lay across what held her)
+      e.stall = 0;
+      e.prog = null;
+      // AUDIT SHIP-LIFE A1: held past DETOUR_GIVEUP detours (a hulk across a berthing's last leg, which her way is
+      // planned through again each time) - the errand is given up: an arriving ship makes for another free berth,
+      // else out; any other keeps her own cruise
+      e.detours = (e.detours ?? 0) + 1;
+      if (e.detours > DETOUR_GIVEUP) {
+        const other =
+          e.kind === 'arrive' && hb && ship.hull !== 3
+            ? hb.berths.findIndex((_, i) => i !== e.berth && (ctx.free?.(e.harbour, i) ?? true))
+            : -1;
+        ship.errand =
+          other >= 0
+            ? { kind: 'arrive', harbour: e.harbour, berth: other, path: null, i: 0 }
+            : e.kind === 'arrive'
+              ? outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull))
+              : null;
+        return stepErrand(ship, dt, ctx);
+      }
+      const clear = ctx.grid(ship.hull).clear;
+      const sides = e.detour ? [-(e.side ?? 1), e.side ?? 1] : [1, -1];
+      e.detour = null;
+      for (const side of sides) {
+        const a = ship.yaw + (side * Math.PI) / 2,
+          q = [here[0] + Math.sin(a) * DETOUR_M, here[1] + Math.cos(a) * DETOUR_M];
+        if (clear(here, q)) {
+          e.detour = q;
+          e.side = side;
+          break;
+        }
+      }
+    }
+    if (e.detour) {
+      // a detour is PROGRESS_S of her time at most - one she could not fetch was chased for good
+      e.detourS = (e.detourS ?? 0) + dt;
+      if (dist2(here, e.detour) > reachOf(ship.hull) && e.detourS < PROGRESS_S) return plan(e.detour, 0.6);
+      e.detour = null;
+      e.path = null;
+      e.detourS = 0;
+    }
+  }
+  // AUDIT SHIP-LIFE A2: no way through the water (none within PATH_NODES - a headland too deep, a berth the water does
+  // not join) is null - never the straight line over the land it was, sailed at the shore for good; the caller gives
+  // the errand up and she keeps her own cruise
+  const way = (to, via = null) => {
+    if (!e.path) {
+      const grid = ctx.grid(ship.hull);
+      const a = grid.path(here, via ?? to),
+        b = via ? grid.path(via, to) : null;
+      if (!a || (via && !b)) return null;
+      e.path = [...a, ...(b ? b.slice(1) : [])].map((q) => [q[0], q[1]]);
+      e.i = 0; // her own points - never a harbour's, which the origin moves apart
+    }
+    return follow(ship, e, ctx.grid(ship.hull).clear, dt);
+  };
+  const giveUp = () => {
+    ship.errand = null;
+    return null;
+  };
+  switch (e.kind) {
+    case 'moored': {
+      const b = hb?.berths[e.berth];
+      if (!b) {
+        ship.errand = null;
+        return null;
+      }
+      if (dist2(here, b.pos) > BERTH_SNAP_M * 2) {
+        ship.errand = { kind: 'arrive', harbour: e.harbour, berth: e.berth, path: null, i: 0 };
+        return stepErrand(ship, dt, ctx);
+      } // moved off her berth (a fight): back to it
+      if (ship.clock >= e.until && !(ctx.night && ship.cls?.faction === 'merchant')) {
+        // SHIP-WATCH: a merchantman waits for the morning
+        ship.errand = { kind: 'depart', harbour: e.harbour, berth: e.berth, path: null, i: 0 };
+        return stepErrand(ship, dt, ctx);
+      }
+      return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } }; // QUAYS: her side to its quay
+    }
+    case 'depart': {
+      if (!hb) {
+        ship.errand = null;
+        return null;
+      }
+      const b = hb.berths[e.berth];
+      const p = way(
+        hb.mouth,
+        b
+          ? [
+              b.pos[0] + b.normal[0] * (hullSize(ship.hull).halfWidth * 3 + 20),
+              b.pos[1] + b.normal[1] * (hullSize(ship.hull).halfWidth * 3 + 20),
+            ]
+          : null,
+      );
+      if (!p) return giveUp();
+      if (dist2(here, hb.mouth) <= reachOf(ship.hull) * 1.5) {
+        const r = errandRng(ship.seed ^ Math.floor(ship.clock));
+        if (ship.cls?.faction === 'navy')
+          ship.errand = { kind: 'patrol', harbour: e.harbour, since: ship.clock, path: null, i: 0, spin: r() };
+        else {
+          // another harbour the grid finds her a way to (its way kept), of the VOYAGE_TRIES nearest -
+          // one picked by its distance alone, past the ground streamed or the grid's reach, was given up at the mouth
+          const grid = ctx.grid(ship.hull);
+          const others = (ctx.harbours?.() ?? [])
+            .filter((x) => x.key !== e.harbour && dist2(x.harbour.mouth, here) <= VOYAGE_REACH)
+            .sort((a, c) => dist2(a.harbour.mouth, here) - dist2(c.harbour.mouth, here));
+          let found = null;
+          for (const x of others.slice(0, VOYAGE_TRIES)) {
+            const w = grid.path(here, x.harbour.mouth);
+            if (w) {
+              found = { key: x.key, w };
+              break;
+            }
+          }
+          ship.errand = found
+            ? { kind: 'voyage', harbour: found.key, to: null, path: found.w.map((q) => [q[0], q[1]]), i: 0 }
+            : outbound(r, here, grid);
+        }
+        return stepErrand(ship, dt, ctx);
+      }
+      return plan(p, 0.8);
+    }
+    case 'voyage': {
+      const to = hb ? hb.mouth : e.to;
+      if (!to) {
+        ship.errand = null;
+        return null;
+      }
+      const p = hb ? way(to) : to; // out of the world: straight, her lookout's own land swing on the way
+      if (!p) return giveUp();
+      if (dist2(here, to) <= reachOf(ship.hull) * 1.5) {
+        if (hb) {
+          const berth = hb.berths.findIndex((_, i) => ctx.free?.(e.harbour, i) ?? true);
+          ship.errand =
+            berth >= 0 && ship.hull !== 3
+              ? { kind: 'arrive', harbour: e.harbour, berth, path: null, i: 0 }
+              : outbound(errandRng(ship.seed ^ 0x77), here, ctx.grid(ship.hull));
+        } else ship.errand = outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull));
+        return stepErrand(ship, dt, ctx);
+      }
+      return plan(p, 1);
+    }
+    case 'arrive': {
+      const b = hb?.berths[e.berth];
+      if (!b) {
+        ship.errand = null;
+        return null;
+      }
+      // AUDIT HOLDINGS Q5: her berth looked at again on the way in - taken since she chose it (a player's ship made fast
+      // there, here or on another player's screen, whose putOff never reaches the ship I stand) - another free berth,
+      // else out
+      if (ctx.free && !ctx.free(e.harbour, e.berth, ship)) {
+        const other = hb.berths.findIndex((_, i) => i !== e.berth && ctx.free(e.harbour, i, ship));
+        ship.errand =
+          other >= 0 && ship.hull !== 3
+            ? { kind: 'arrive', harbour: e.harbour, berth: other, path: null, i: 0 }
+            : outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull));
+        return stepErrand(ship, dt, ctx);
+      }
+      const p = way(b.pos, b.approach);
+      if (!p) return giveUp();
+      const left = remaining(ship, e);
+      if (dist2(here, b.pos) <= BERTH_SNAP_M && ship.speed <= BERTH_WAY) {
+        ship.errand = {
+          kind: 'moored',
+          harbour: e.harbour,
+          berth: e.berth,
+          until: ship.clock + dwellOf(errandRng(ship.seed ^ Math.floor(ship.clock))),
+          path: null,
+          i: 0,
+        };
+        return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } }; // QUAYS: eased in alongside its quay
+      }
+      const sails = left >= ARRIVE_EASE_M ? 1 : Math.max(ARRIVE_SAILS, left / ARRIVE_EASE_M);
+      // the last leg, into a berth the harbour sounded: no swing off the shore she lies along
+      return { ...plan(p, sails), berthing: e.i === e.path.length - 1 };
+    }
+    case 'patrol': {
+      if (!hb) {
+        ship.errand = null;
+        return null;
+      }
+      if (ship.clock - e.since >= PATROL_S) {
+        ship.errand = outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull));
+        return stepErrand(ship, dt, ctx);
+      }
+      if (!e.path) {
+        const grid = ctx.grid(ship.hull),
+          ring = [];
+        for (let k = 0; k < PATROL_POINTS; k++) {
+          const a = (e.spin ?? 0) * TAU + (k / PATROL_POINTS) * TAU;
+          const q = [hb.mouth[0] + Math.sin(a) * PATROL_R, hb.mouth[1] + Math.cos(a) * PATROL_R];
+          if (grid.clear(hb.mouth, q)) ring.push(q); // AUDIT SHIP-LIFE A4: a point the water from the mouth reaches
+        }
+        e.path = ringOver(ring, [hb.mouth[0], hb.mouth[1]], grid.clear);
+        e.i = 0;
+      }
+      if (dist2(here, e.path[e.i]) <= reachOf(ship.hull)) {
+        e.i = (e.i + 1) % e.path.length;
+        e.detours = 0;
+      }
+      return plan(e.path[e.i], 0.7);
+    }
+    case 'lurk': {
+      // SHIP-WATCH: by night her lurking place closer in on the mouth (NIGHT_LURK_K) - her ring laid afresh at the turn
+      const night = !!ctx.night && !!hb;
+      if (e.night !== night) {
+        e.night = night;
+        e.path = null;
+      }
+      const at = night
+        ? [hb.mouth[0] + (e.at[0] - hb.mouth[0]) * NIGHT_LURK_K, hb.mouth[1] + (e.at[1] - hb.mouth[1]) * NIGHT_LURK_K]
+        : e.at;
+      if (!e.path) {
+        const clear = ctx.grid(ship.hull).clear,
+          ring = [];
+        for (let k = 0; k < 4; k++) {
+          const a = (e.spin ?? 0) * TAU + (k / 4) * TAU,
+            q = [at[0] + Math.sin(a) * LURK_RING, at[1] + Math.cos(a) * LURK_RING];
+          if (clear(at, q)) ring.push(q); // AUDIT SHIP-LIFE A4: as the patrol's
+        }
+        e.path = ringOver(ring, [at[0], at[1]], clear);
+        e.i = 0;
+      }
+      if (dist2(here, e.path[e.i]) <= reachOf(ship.hull)) {
+        e.i = (e.i + 1) % e.path.length;
+        e.detours = 0;
+      }
+      return plan(e.path[e.i], dist2(here, at) > LURK_R * 0.5 ? 1 : LURK_SAILS);
+    }
+    case 'anchor':
+    case 'fish':
+    case 'home': // FISH-BOATS (fishingBoats.js): her anchorage, her ground and her way home
+      return stepFishing(ship, dt, ctx, { here, plan, way });
+    default:
+      ship.errand = null;
+      return null;
+  }
+}
+
+/**
+ * AUDIT SHIP-LIFE A4: a ring of points sailed round - each chord the water does not carry her along goes by the hub
+ * instead (the mouth, the lurking place), the closing chord too; no point at all is the hub alone.
+ */
+export function ringOver(ring, hub, clear) {
+  if (!ring.length) return [hub];
+  const out = [];
+  for (const q of ring) {
+    if (out.length && !clear(out[out.length - 1], q)) out.push([hub[0], hub[1]]);
+    out.push(q);
+  }
+  if (out.length > 1 && !clear(out[out.length - 1], out[0])) out.push([hub[0], hub[1]]);
+  return out;
+}
+
+/** Every point an errand keeps, moved with the world (the host's floating origin): `o` the shift [x, y, z]. */
+export function offsetErrand(e, o) {
+  if (!e) return;
+  const mv = (p) => {
+    if (p) {
+      p[0] += o[0];
+      p[1] += o[2];
+    }
+  };
+  mv(e.to);
+  mv(e.at);
+  mv(e.detour);
+  mv(e.prog?.at);
+  for (const p of e.path ?? []) mv(p);
+}
+/** A harbour moved with the world. */
+export function offsetHarbour(h, o) {
+  if (!h) return;
+  const mv = (p) => {
+    p[0] += o[0];
+    p[1] += o[2];
+  };
+  mv(h.mouth);
+  for (const b of h.berths) {
+    mv(b.pos);
+    mv(b.approach);
+  }
+}

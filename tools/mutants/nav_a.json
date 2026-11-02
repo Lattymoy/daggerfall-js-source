@@ -1,0 +1,119 @@
+[
+  {
+    "name": "NAV-A-the-half-dropped",
+    "file": "src/systems/naval/navalBallistics.js",
+    "old": "  out[1] = p0[1] + v0[1] * t - 0.5 * g * t * t;",
+    "new": "  out[1] = p0[1] + v0[1] * t - g * t * t;",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-the-undermanned-ignored",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "  return g.reload * (1 + RELOAD_UNDERMANNED * (1 - clamp(crewShare, 0, 1)));",
+    "new": "  return g.reload;",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-the-waterline-edge",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "  return pointOverSea <= WATERLINE_BAND ? 'holed' : 'hull';",
+    "new": "  return pointOverSea < WATERLINE_BAND ? 'holed' : 'hull';",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-the-struck-edge",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "        else if (s.state === SHIP_STATES.afloat && s.hull <= s.maxHull * STRUCK_AT) {",
+    "new": "        else if (s.state === SHIP_STATES.afloat && s.hull < s.maxHull * STRUCK_AT) {",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-a-fire-topping-up",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "    if (s.fires.length < FIRE_STACK) {",
+    "new": "    if (s.fires.length) {\n      s.fires[0].t = f.t;\n      return;\n    }\n    if (s.fires.length < FIRE_STACK) {",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-a-player-sinking",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "        if (s.hull <= 0 && s.state !== SHIP_STATES.wrecked) s.state = SHIP_STATES.wrecked;",
+    "new": "        if (s.hull <= 0) s.state = SHIP_STATES.sinking;",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-her-own-planking",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (t.alive === false || t.id === shooter || t.hitBy?.(shooter) === false) continue;",
+    "new": "      if (t.alive === false || t.hitBy?.(shooter) === false) continue;",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-the-barrel-armed-at-once",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (f.kind === 'barrel' && age >= BARREL_ARM) {",
+    "new": "      if (f.kind === 'barrel') {",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-the-far-ship-first",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (e && (!best || e.t < best.e.t)) best = { t, e };",
+    "new": "      if (e && (!best || e.t > best.e.t)) best = { t, e };",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-the-reach-ignored",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "        const c = (deps.collectors?.() ?? []).find((k) => insideGrown(k.box, f.pos, FLOTSAM_REACH));",
+    "new": "        const c = (deps.collectors?.() ?? []).find((k) => insideGrown(k.box, f.pos, 1e9));",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-resolve-dropped",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "        zone: hitZone(ship.e.point[1] - seaY),\n        dir,\n        resolve: b.resolve,\n      });",
+    "new": "        zone: hitZone(ship.e.point[1] - seaY),\n        dir,\n        resolve: true,\n      });",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-the-ripple-ignored",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "        born: clock - back + Math.max(0, l.delay ?? 0),",
+    "new": "        born: clock - back,",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV-A-the-launch-left-behind",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      for (const k of ['p0', 'prev', 'pos']) {",
+    "new": "      for (const k of ['prev', 'pos']) {",
+    "tests": [
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  }
+]

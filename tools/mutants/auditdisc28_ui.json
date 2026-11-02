@@ -1,0 +1,164 @@
+[
+  {
+    "name": "AUDIT-DISC28-UI1-chord-refused-before-the-pause-key",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (e.metaKey) return;\n",
+    "new": "  if (e.metaKey || e.ctrlKey || e.altKey) return;\n",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI1-every-chord-refused",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (!pauseKey && (e.ctrlKey || e.altKey)) return;",
+    "new": "if (e.ctrlKey || e.altKey) return;",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI1-no-chord-refused",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (!pauseKey && (e.ctrlKey || e.altKey)) return;",
+    "new": "",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI1-classic-bare-code-compare",
+    "file": "src/ui/pauseWindow.js",
+    "old": "    if (code !== 'Escape' && e?.code) return eventMeans(e, 'Escape');\n    return (",
+    "new": "    return (",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI1-classic-release-reads-no-event",
+    "file": "src/ui/pauseWindow.js",
+    "old": "    if (!this._isCloseKey(code, e)) return; // AUDIT DISC28 UI-1: the release's own event too - GetKeyUp's combo wants its modifier held",
+    "new": "    if (!this._isCloseKey(code)) return; // AUDIT DISC28 UI-1: the release's own event too - GetKeyUp's combo wants its modifier held",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI2-the-press-acts",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (mode === 'pause' && !release) {\n    if (!e.repeat) backArmed = e.code;\n    return;\n  }\n",
+    "new": "",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI2-a-repeat-arms",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (!e.repeat) backArmed = e.code;\n",
+    "new": "    backArmed = e.code;\n",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI2-the-release-rearms",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (mode === 'pause' && !release) {",
+    "new": "  if (mode === 'pause') {",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI2-the-boot-door-waits-too",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (mode === 'pause' && !release) {",
+    "new": "  if (!release) {",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI2-no-release-listener",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "types: ['keydown', 'keyup']",
+    "new": "types: ['keydown']",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI2-release-listener-outlives-the-screen",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      unlistenKeys?.();   // the press and the release both (AUDIT DISC28 UI-2)",
+    "new": "",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI2-the-arm-outlives-the-visit",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  backArmed = null;   // AUDIT DISC28 UI-2: a press is a visit's",
+    "new": "  // AUDIT DISC28 UI-2: a press is a visit's",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI2-classic-a-repeat-arms",
+    "file": "src/ui/pauseWindow.js",
+    "old": "    if (this._isCloseKey(code, e) && !e?.repeat) this.isCloseWindowDeferred = true;",
+    "new": "    if (this._isCloseKey(code, e)) this.isCloseWindowDeferred = true;",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DISC28-UI5-the-pause-key-is-its-owner-alone",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "const pauseKey = mode === 'pause' && eventMeans(e, 'Escape');",
+    "new": "const pauseKey = mode === 'pause' && bindings().primary.get(e.code) === 'Escape';",
+    "tests": [
+      "test/ui/enhanced/disc28_pause.test.js"
+    ]
+  },
+  {
+    "name": "UI7-world-ladder-repeats",
+    "file": "src/scenes/world.js",
+    "old": "        if (e.repeat && act && !POLLED_ACTIONS.has(act)) { e.preventDefault(); return true; }",
+    "new": "",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "UI7-exterior-ladder-repeats",
+    "file": "src/scenes/exterior.js",
+    "old": "        if (e.repeat && act && !POLLED_ACTIONS.has(act)) { e.preventDefault(); return true; }",
+    "new": "",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "UI7-guard-takes-the-polled",
+    "file": "src/scenes/world.js",
+    "old": "if (e.repeat && act && !POLLED_ACTIONS.has(act)) { e.preventDefault(); return true; }",
+    "new": "if (e.repeat && act) { e.preventDefault(); return true; }",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  },
+  {
+    "name": "UI7-f11-under-a-window-repeats",
+    "file": "src/scenes/world.js",
+    "old": "      if (e.repeat) return;   // AUDIT DISC28 UI-7",
+    "new": "      // AUDIT DISC28 UI-7",
+    "tests": [
+      "test/ui/auditdisc28_ui.test.js"
+    ]
+  }
+]

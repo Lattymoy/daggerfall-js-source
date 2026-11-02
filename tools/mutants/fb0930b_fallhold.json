@@ -1,0 +1,122 @@
+[
+  {
+    "name": "FALL-HOLD-the-pool-never-holds",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (groundStands && !groundStands(f.ai.feet[0], f.ai.feet[2])) f.ai.holdFrame();",
+    "new": "if (false) f.ai.holdFrame();",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "The bug: a foe over no built ground is stepped, falls for ever, and every frame of the fall costs more."
+  },
+  {
+    "name": "FALL-HOLD-a-held-foe-is-stepped-too",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "f.ai.holdFrame(); else f.ai.update(",
+    "new": "f.ai.holdFrame(); f.ai.update(",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "Held and stepped: the latches clear, but the foe still falls through the missing ground."
+  },
+  {
+    "name": "FALL-HOLD-held-with-its-senses-kept",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "f.ai.holdFrame(); else f.ai.update(",
+    "new": "{} else f.ai.update(",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "Not stepped, but a sight or detection latched before the hold outlives it: the cull spares it and the rest is refused."
+  },
+  {
+    "name": "FALL-HOLD-the-height-asked-not-the-column",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "groundStands(f.ai.feet[0], f.ai.feet[2])",
+    "new": "groundStands(f.ai.feet[0], f.ai.feet[1])",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "groundStands(x, y): a height passed for z - a swimmer under the forged sea reads a pixel that is not there and is held."
+  },
+  {
+    "name": "FALL-HOLD-flyers-exempted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (groundStands && !groundStands(f.ai.feet[0], f.ai.feet[2]))",
+    "new": "if (groundStands && !f.ai.flies && !groundStands(f.ai.feet[0], f.ai.feet[2]))",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "A flyer exempted by behaviour: a paralysed or knocked flyer (flyerFalls) over no ground falls for ever."
+  },
+  {
+    "name": "FALL-HOLD-the-watch-never-holds",
+    "file": "src/scenes/cityGuards.js",
+    "old": "if (groundStands && !groundStands(g.ai.feet[0], g.ai.feet[2])) g.ai.holdFrame();",
+    "new": "if (false) g.ai.holdFrame();",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "The watch has no distance cull at all: a watchman restored over a pixel not built falls for ever."
+  },
+  {
+    "name": "FALL-HOLD-a-held-watchman-is-stepped-too",
+    "file": "src/scenes/cityGuards.js",
+    "old": "g.ai.holdFrame(); else g.ai.update(",
+    "new": "g.ai.holdFrame(); g.ai.update(",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "Held and stepped: the watchman still falls."
+  },
+  {
+    "name": "FALL-HOLD-holdFrame-keeps-detected",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "this.inSight = false; this.detected = false; this.wouldBeSpawned = false;",
+    "new": "this.inSight = false; this.wouldBeSpawned = false;",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "A held foe keeps `detected`: the relevance cull spares it, and it holds the encounter cap for as long as its ground is down."
+  },
+  {
+    "name": "FALL-HOLD-holdFrame-keeps-inSight",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "this.inSight = false; this.detected = false; this.wouldBeSpawned = false;",
+    "new": "this.detected = false; this.wouldBeSpawned = false;",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "A held foe keeps `inSight`: it goes on deciding swings at the player off the world."
+  },
+  {
+    "name": "FALL-HOLD-holdFrame-keeps-wouldBeSpawned",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "this.inSight = false; this.detected = false; this.wouldBeSpawned = false;",
+    "new": "this.inSight = false; this.detected = false;",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "A held foe keeps `wouldBeSpawned`: it refuses the player's rest off the world."
+  },
+  {
+    "name": "FALL-HOLD-world-hands-the-encounters-no-ground",
+    "file": "src/scenes/world.js",
+    "old": "hitEffects, groundStands: (x, z) => Number.isFinite(heightAt(x, z)),   // FALL-HOLD: a foe over a pixel not built is held, not stepped",
+    "new": "hitEffects,",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "The world host mounts the encounter pool without the ground law - nothing is ever held."
+  },
+  {
+    "name": "FALL-HOLD-world-hands-the-watch-no-ground",
+    "file": "src/scenes/world.js",
+    "old": "hitEffects, groundStands: (x, z) => Number.isFinite(heightAt(x, z)),   // FALL-HOLD: a watchman over a pixel not built is held, not stepped",
+    "new": "hitEffects,",
+    "tests": [
+      "test/scenes/fb0930b_fallhold.test.js"
+    ],
+    "note": "The world host mounts the watch without the ground law - nothing is ever held."
+  }
+]

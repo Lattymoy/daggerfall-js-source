@@ -1,0 +1,56 @@
+[
+  {
+    "name": "PUDDLE-RAIN-the-swimmer-arm-back",
+    "file": "src/scenes/world.js",
+    "old": "    const _dwPrecipOff = _dwAirOff;",
+    "new": "    const _dwPrecipOff = _dwAirOff || (!!dwPlayer && walkMode && !!player.isPlayerSwimming && !player.waterWalking);",
+    "tests": [
+      "test/player/fb1001_puddlerain.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLE-RAIN-the-gate-off-under-water-too",
+    "file": "src/scenes/world.js",
+    "old": "    const _dwPrecipOff = _dwAirOff;",
+    "new": "    const _dwPrecipOff = false;",
+    "tests": [
+      "test/player/fb1001_puddlerain.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLE-RAIN-the-sand-reads-nothing",
+    "file": "src/scenes/world.js",
+    "old": "        if (dryFall && !_dwPrecipOff && (!_travelWeatherOff || tvf)) {",
+    "new": "        if (dryFall && (!_travelWeatherOff || tvf)) {",
+    "tests": [
+      "test/player/fb1001_puddlerain.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLE-RAIN-the-rain-reads-nothing",
+    "file": "src/scenes/world.js",
+    "old": "        if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {",
+    "new": "        if ((!_travelWeatherOff || tvf)) {",
+    "tests": [
+      "test/player/fb1001_puddlerain.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-OVER-GRASS-drawn-before-the-grass",
+    "file": "src/scenes/world.js",
+    "old": "    };\n    // RAIN-LEAK, FRAME-ALLOC: one eye array",
+    "new": "    };\n    drawFalling();\n    // RAIN-LEAK, FRAME-ALLOC: one eye array",
+    "tests": [
+      "test/player/fb1001_puddlerain.test.js"
+    ]
+  },
+  {
+    "name": "OW-RAIN-the-journeys-switch-unexcepted",
+    "file": "src/scenes/world.js",
+    "old": "        if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {",
+    "new": "        if (!_travelWeatherOff && !_dwPrecipOff) {",
+    "tests": [
+      "test/player/fb1001_puddlerain.test.js"
+    ]
+  }
+]

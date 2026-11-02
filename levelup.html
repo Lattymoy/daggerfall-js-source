@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Ascension - level-up lab</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #07080d; }
+    /* The lane strip is the LAB, not the window: it sits over the
+       window's own corner and says so. */
+    /* BOTTOM LEFT, out of the window's way: at the top right it sat on
+       the race cell, and on a phone it sat on the level itself. */
+    #lanes { position: fixed; left: 6px; bottom: 6px; z-index: 40; display: flex; gap: 4px; opacity: 0.75; }
+    #lanes button { font: 11px/1 system-ui, sans-serif; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #8b8578; background: rgba(10,12,17,0.8); border: 1px solid #2b323b; padding: 6px 10px; cursor: pointer; }
+    #lanes button:hover { color: #e9e4d9; border-color: #c08a3e; }
+  </style>
+</head>
+<body>
+  <div id="lab"></div>
+  <div id="lanes"></div>
+  <script type="module" src="/src/tools/levelUpLab.js"></script>
+</body>
+</html>

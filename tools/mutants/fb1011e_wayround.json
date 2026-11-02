@@ -1,0 +1,83 @@
+[
+  {
+    "name": "WAY-ROUND-the-way-round-the-building",
+    "file": "src/world/placedCardTable.js",
+    "old": "    const m = PLACE_ROUND_CELLS;",
+    "new": "    const m = side;",
+    "tests": [
+      "test/world/fb1011e_wayround.test.js",
+      "test/world/fb1009c_walkwhole.test.js"
+    ]
+  },
+  {
+    "name": "WAY-ROUND-round-a-cell",
+    "file": "src/world/placedCardTable.js",
+    "old": "export const PLACE_ROUND_CELLS = 2;",
+    "new": "export const PLACE_ROUND_CELLS = 1;",
+    "tests": [
+      "test/world/fb1011e_wayround.test.js"
+    ]
+  },
+  {
+    "name": "WAY-ROUND-the-pieces-unasked",
+    "file": "src/world/placedCardTable.js",
+    "old": "    pieces(after, i0, i1, k0, k1, out);",
+    "new": "    pieces(after, i0, i1, k0, k1, () => false);",
+    "tests": [
+      "test/world/fb1011e_wayround.test.js",
+      "test/world/fb1009c_walkwhole.test.js"
+    ]
+  },
+  {
+    "name": "WAY-ROUND-blind-to-the-stood",
+    "file": "src/world/placedCardTable.js",
+    "old": "    for (const [a0, a1, b0, b1] of stood) {",
+    "new": "    for (const [a0, a1, b0, b1] of []) {",
+    "tests": [
+      "test/world/fb1011e_wayround.test.js",
+      "test/systems/card/taverntables.test.js"
+    ]
+  },
+  {
+    "name": "WAY-ROUND-the-stood-met-nearer",
+    "file": "src/world/placedCardTable.js",
+    "old": "      if (a0 > i1 + m || a1 < i0 - m || b0 > k1 + m || b1 < k0 - m) continue; // short of the window",
+    "new": "      if (a0 > i1 || a1 < i0 || b0 > k1 || b1 < k0) continue; // short of the window",
+    "tests": [
+      "test/world/fb1011e_wayround.test.js",
+      "test/systems/card/taverntables.test.js"
+    ]
+  },
+  {
+    "name": "WAY-ROUND-the-stood-laneless",
+    "file": "src/world/placedCardTable.js",
+    "old": "      const ri = Math.max(0, Math.ceil((rx - PLACE_BODY_R) / PLACE_CELL)) + PLACE_LANE_CELLS,",
+    "new": "      const ri = Math.max(0, Math.ceil((rx - PLACE_BODY_R) / PLACE_CELL)),",
+    "tests": [
+      "test/world/fb1011e_wayround.test.js",
+      "test/systems/card/taverntables.test.js"
+    ]
+  },
+  {
+    "name": "WAY-ROUND-the-entrance-under-it",
+    "file": "src/world/placedCardTable.js",
+    "old": "    if (out(fi, (first - fi) / side)) return true;\n    const m = PLACE_ROUND_CELLS;",
+    "new": "    const m = PLACE_ROUND_CELLS;",
+    "tests": [
+      "test/world/fb1011e_wayround.test.js",
+      "test/world/fb1009c_walkwhole.test.js",
+      "test/world/card/taverntable.test.js",
+      "test/systems/card/taverntables.test.js"
+    ]
+  },
+  {
+    "name": "WAY-ROUND-a-piece-joined-twice",
+    "file": "src/world/placedCardTable.js",
+    "old": "        if (was === undefined) joined.set(before[c], after[c]);",
+    "new": "        if (was === undefined || true) joined.set(before[c], after[c]);",
+    "tests": [
+      "test/world/fb1011e_wayround.test.js",
+      "test/world/fb1009c_walkwhole.test.js"
+    ]
+  }
+]

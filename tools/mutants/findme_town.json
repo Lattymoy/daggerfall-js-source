@@ -1,0 +1,219 @@
+[
+  {
+    "name": "FINDME-TOWN-the-bays-path-on-every-sheet",
+    "file": "src/ui/heldMap.js",
+    "old": "    const at = this._sheet?.findMe?.(this._limits(), this._view) ?? null;\n",
+    "new": "    const at = this._sheets.get('world')?.findMe?.(this._limits(), this._view) ?? null;\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-a-null-view-asks-for-a-cross",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (!at) return;\n    this._findMeT = 3;\n",
+    "new": "    if (!at) { this._findMeT = 3; return; }\n    this._findMeT = 3;\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-pixel-the-poll-last-read",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (p) this._player = { x: p.x, y: p.y };\n    const at = this._sheet?.findMe?.(",
+    "new": "    const at = this._sheet?.findMe?.(",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-bays-middle-stood-in",
+    "file": "src/ui/heldMap.js",
+    "old": "    const p = deps.getPlayerPixel?.() ?? null;\n",
+    "new": "    const p = deps.getPlayerPixel?.() ?? { x: this._size.width >> 1, y: this._size.height >> 1 };\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-cross-the-bays-alone",
+    "file": "src/ui/heldMap.js",
+    "old": "% 2 === 0 ? sheet.me?.() : null;",
+    "new": "% 2 === 0 ? this._sheets.get('world')?.me?.() : null;",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-cross-never-blinks",
+    "file": "src/ui/heldMap.js",
+    "old": "% 2 === 0 ? sheet.me?.() : null;",
+    "new": "% 2 >= 0 ? sheet.me?.() : null;",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-cross-outlives-its-three-seconds",
+    "file": "src/ui/heldMap.js",
+    "old": "    const me = this._findMeT > 0 && Math.floor(",
+    "new": "    const me = this._findMeT > -9 && Math.floor(",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-cross-off-the-paper-lines",
+    "file": "src/ui/heldMap.js",
+    "old": "      const [fx, fy] = toPaper(this._view, me.x, me.y);\n",
+    "new": "      const [fx, fy] = toPaper(this._view, me.y, me.x);\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-bays-pixel-corner",
+    "file": "src/ui/heldMap.js",
+    "old": "{ x: this._player.x + 0.5, y: this._player.y + 0.5 } : null);   // FINDME-TOWN: my pixel's middle",
+    "new": "{ x: this._player.x, y: this._player.y } : null);   // FINDME-TOWN: my pixel's middle",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-bays-find-zoom-dropped",
+    "file": "src/ui/heldMap.js",
+    "old": "this._zoneMap ? view.scale : Math.max(view.scale, FOCUS_SCALE), lim)",
+    "new": "this._zoneMap ? view.scale : view.scale, lim)",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js",
+      "test/systems/fb1010_findfirst.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-streets-y-unflipped",
+    "file": "src/ui/town/townSheet.js",
+    "old": "      const me = playerOnSheet();\n      if (!me) return null;\n",
+    "new": "      const me = deps.player?.() ?? null;\n      if (!me) return null;\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-cross-off-the-caret",
+    "file": "src/ui/town/townSheet.js",
+    "old": "    me: playerOnSheet,\n",
+    "new": "    me: () => deps.player?.() ?? null,\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-street-zoom-three-blocks",
+    "file": "src/ui/town/townSheet.js",
+    "old": "export const FIND_ME_BLOCKS = 2;\n",
+    "new": "export const FIND_ME_BLOCKS = 3;\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-street-zoom-by-the-long-side",
+    "file": "src/ui/town/townSheet.js",
+    "old": "      const street = Math.min(limits.paperW, limits.paperH) / (FIND_ME_BLOCKS * BLOCK_PX);\n",
+    "new": "      const street = Math.max(limits.paperW, limits.paperH) / (FIND_ME_BLOCKS * BLOCK_PX);\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-a-zoom-thrown-back-to-the-street",
+    "file": "src/ui/town/townSheet.js",
+    "old": "Math.min(SCALE_MAX, Math.max(street, view?.scale ?? 0))",
+    "new": "Math.min(SCALE_MAX, street)",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-dungeon-left-on-the-floor-in-view",
+    "file": "src/ui/automap/automapSheet.js",
+    "old": "      backToMe();\n      return mePoint() ? this.meView(limits, view) : null;\n",
+    "new": "      return mePoint() ? this.meView(limits, view) : null;\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-the-dungeon-says-no-player",
+    "file": "src/ui/automap/automapSheet.js",
+    "old": "    me() { const m = mePoint(); return m ? { x: m[0], y: m[1] } : null; },\n",
+    "new": "    me() { return null; },\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-home-key-no-longer-back-to-you",
+    "file": "src/ui/automap/automapSheet.js",
+    "old": "      if (code === 'Home') { backToMe(); return 'home'; }\n",
+    "new": "      if (code === 'Home') return 'home';\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js",
+      "test/ui/disc22g_automap.test.js",
+      "test/ui/ink/em3_3d_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-me-button-no-longer-back-to-you",
+    "file": "src/ui/automap/automapSheet.js",
+    "old": "    else if (id === 'home') backToMe();\n",
+    "new": "",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js",
+      "test/ui/ink/em3_3d_dungeon.test.js",
+      "test/ui/disc22g_automap.test.js"
+    ]
+  },
+  {
+    "name": "FINDME-TOWN-back-to-you-not-to-your-floor",
+    "file": "src/ui/automap/automapSheet.js",
+    "old": "    if (feet && f.sheets.length) setFloor(sheetAt(f, feet[1]));\n    if (solidOn) { wantHome = false; wantMe = true; meLock = true; }\n",
+    "new": "    if (solidOn) { wantHome = false; wantMe = true; meLock = true; }\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js",
+      "test/ui/disc22g_automap.test.js",
+      "test/ui/ink/em3_3d_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1019f-E4-the-cross-off-the-paper",
+    "file": "src/ui/heldMap.js",
+    "old": "      const cx = clamp(fx, edge, paperW - edge), cy = clamp(fy, edge, paperH - edge);\n",
+    "new": "      const cx = fx, cy = fy;\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ],
+    "why": "the finding: outside the town's blocks the cross is drawn through a caret off the paper - one line of it or both"
+  },
+  {
+    "name": "AUDIT-FB1019f-E4-the-cross-half-off-the-edge",
+    "file": "src/ui/heldMap.js",
+    "old": "      const edge = FINDME_STROKE / 2;\n",
+    "new": "      const edge = 0;\n",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ],
+    "why": "a cross held at the paper's edge with half its stroke off it"
+  },
+  {
+    "name": "AUDIT-FB1019f-E4-the-edges-crossed",
+    "file": "src/ui/heldMap.js",
+    "old": "clamp(fx, edge, paperW - edge)",
+    "new": "clamp(fx, edge, paperH - edge)",
+    "tests": [
+      "test/ui/town/fb1019f_findme_town.test.js"
+    ],
+    "why": "a player east of the paper crossed at its height, not its width"
+  }
+]

@@ -1,0 +1,644 @@
+[
+  {
+    "name": "SD11D-a-line-its-1.5s",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "    show(text, seconds(text));\n    standing = { text, rank, until: t + seconds(text) * 1000, key };",
+    "new": "    show(text, 1.5);\n    standing = { text, rank, until: t + 1500, key };",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-each-line-replacing-the-last",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "      if (coveredAt === null && (!standing || r < standing.rank || (k !== null && standing.key === k))) {",
+    "new": "      if (coveredAt === null) {",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-waiting-in-the-order-said",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "      while (i > 0 && waiting[i - 1].rank > r) i--;\n      waiting.splice(i, 0, { text, rank: r, at: t, key: k });",
+    "new": "      waiting.splice(i, 0, { text, rank: r, at: t, key: k });",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-never-let-go",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "      if (t - w.at <= SD_VOICE_WAIT_MS[w.rank]) {\n        put(w.text, w.rank, t, w.key);\n        return;\n      }",
+    "new": "      put(w.text, w.rank, t, w.key);\n      return;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-same-line-twice",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "      if (waiting.some((w) => w.text === text)) return;\n      let i = waiting.length;",
+    "new": "      let i = waiting.length;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-leave-keeping-what-waits",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "    clear() {\n      waiting.length = 0;\n    },",
+    "new": "    clear() {},",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-thread-queued",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "      if (coveredAt === null && (!standing || r < standing.rank || (k !== null && standing.key === k))) {",
+    "new": "      if (coveredAt === null && (!standing || r < standing.rank)) {",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-waiting-thread-kept",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "        if (j >= 0 && waiting[j].rank === r) {\n          waiting[j] = { text, rank: r, at: t, key: k };\n          return;\n        } // its place, the newer word\n        if (j >= 0) waiting.splice(j, 1);",
+    "new": "        if (j >= 0) waiting.splice(j, 1);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-an-unknown-rank-kept",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "      const r = Number.isInteger(rank) && rank >= 0 && rank < SD_VOICE_WAIT_MS.length ? rank : SD_VOICE_RANK.turn;",
+    "new": "      const r = rank;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-line-cutting-its-betters",
+    "file": "src/scenes/superDungeon/sdVoice.js",
+    "old": "      if (coveredAt === null && (!standing || r < standing.rank || (k !== null && standing.key === k))) {",
+    "new": "      if (coveredAt === null && (!standing || r <= standing.rank + 1 || (k !== null && standing.key === k))) {",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-readouts-a-turn",
+    "file": "src/scenes/world.js",
+    "old": "warn: (text) => sdSay(text, SD_VOICE_RANK.readout),",
+    "new": "warn: (text) => sdSay(text),",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-voice-unframed",
+    "file": "src/scenes/world.js",
+    "old": "sdFightFrame(); sdBodyFrame(); sdVoiceFrame(); };   // INT15: and my body, said",
+    "new": "sdFightFrame(); sdBodyFrame(); };   // INT15: and my body, said",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ],
+    "note": "INT15 (PIN MOVED): re-aimed by content - the Hour's body word's own frame step beside the fight's. "
+  },
+  {
+    "name": "SD11D-the-leave-never-letting-go",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdVoiceIn && !inHour) sdVoice.leave();\n",
+    "new": "",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-label-its-1.5s",
+    "file": "src/scenes/world.js",
+    "old": "const sdVoice = createSdVoice({ show: (t, secs) => setMidScreenText(t, secs),",
+    "new": "const sdVoice = createSdVoice({ show: (t) => setMidScreenText(t),",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-said-everywhere",
+    "file": "src/scenes/world.js",
+    "old": "say: (t, key) => { if (sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); } })",
+    "new": "say: (t, key) => { sdSay(t, SD_VOICE_RANK.turn, key); } })",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-blows-said-everywhere",
+    "file": "src/scenes/world.js",
+    "old": "say: (t, everyone = false, key = null) => { if (everyone || sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); },",
+    "new": "say: (t, everyone = false, key = null) => { sdSay(t, SD_VOICE_RANK.turn, key); },",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-arena-out-of-the-hour",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() == null) return false;\n    const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);\n    return sdBarNear(x, z);",
+    "new": "    const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);\n    return sdBarNear(x, z);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-thread-dropped-at-the-host",
+    "file": "src/scenes/world.js",
+    "old": "  const sdSay = (t, rank = SD_VOICE_RANK.turn, key = null) => { sdVoice.say(t, rank, key); return true; };",
+    "new": "  const sdSay = (t, rank = SD_VOICE_RANK.turn, key = null) => { sdVoice.say(t, rank); return true; };",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-way-in-left-in-fire",
+    "file": "src/scenes/world.js",
+    "old": "    }, 'hourIn');   // AUDIT SD II (L6 F8): through the Hour's own veil - SD-LOOK: its blades closing on the Rift",
+    "new": "    });",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-cast-out-in-fire",
+    "file": "src/scenes/world.js",
+    "old": "      if (hour) gateVeil?.flash('hourCast');   // SD-LOOK: forced out - the Hour's face shattered",
+    "new": "      if (hour) gateVeil?.flash();",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-floor-a-turn",
+    "file": "src/scenes/world.js",
+    "old": "    say: (t) => sdSay(t, SD_VOICE_RANK.note),\n  }) : null;",
+    "new": "    say: (t) => sdSay(t),\n  }) : null;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-pulse-first-again",
+    "file": "src/ui/superDungeon/sdRemnantBar.js",
+    "old": "    if (asleep)",
+    "new": "    if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);\n    else if (asleep)",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-landed-blow-over-the-pulse",
+    "file": "src/ui/superDungeon/sdRemnantBar.js",
+    "old": "    } else if (rem && s.ph !== 2 && now < rem.at) callout = callOf(rem, s.ph, SD_BODY.remnant, now);",
+    "new": "    } else if (rem && s.ph !== 2) callout = callOf(rem, s.ph, SD_BODY.remnant, now);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-stun-over-the-pulse",
+    "file": "src/ui/superDungeon/sdRemnantBar.js",
+    "old": "    else if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);",
+    "new": "    else if (stunned && !clk) callout = { text: '', color: '', t: null, dagon: false, move: false };\n    else if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-echo-clock",
+    "file": "src/ui/superDungeon/sdRemnantBar.js",
+    "old": "    else if (fallen >= 0)",
+    "new": "    else if (false)",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-rise-pulse",
+    "file": "src/ui/superDungeon/sdRemnantBar.js",
+    "old": "      !!ec &&",
+    "new": "      false &&",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-chip-says-fallen",
+    "file": "src/ui/superDungeon/sdRemnantBar.js",
+    "old": "  const chip = (E) => {\n    const r = riseIn(E);\n    return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.risesIn(Math.ceil(r / 1000));\n  };",
+    "new": "  const chip = (E) => SD_BAR_TEXT.echoLeft(E.h, E.m);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-return-outside-time",
+    "file": "src/ui/superDungeon/sdRemnantBar.js",
+    "old": "      callout = {\n        text: SD_BAR_TEXT.returns(Math.max(0, Math.ceil((s.ou - now) / 1000))),\n        color: SD_BAR_CSS.ward,\n        t: null,\n        dagon: false,\n        move: false,\n      };",
+    "new": "      callout = { text: SD_BAR_TEXT.outside, color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-host-chip-never-pulses",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "  const hostNear = !!model.host && !!model.hostNear && !model.fallen;",
+    "new": "  const hostNear = false;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-heart-line",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "      else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0)",
+    "new": "      else if (false)",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-broken-heart-said-twice",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "      else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0)",
+    "new": "      else if (w.k === 'cxb' && was.fi)",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-line-off-its-thread",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "        say(SD_FIGHT_TEXT.heartBroken(w.n, state.cx ? state.cx.c.filter((q) => q[2] > 0).length : 0), SD_HEARTS_KEY); // AUDIT SD II (L6 F7): a Heart broken, by whom, and how many stand",
+    "new": "        say(SD_FIGHT_TEXT.heartBroken(w.n, state.cx ? state.cx.c.filter((q) => q[2] > 0).length : 0)); // AUDIT SD II (L6 F7): a Heart broken, by whom, and how many stand",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-last-heart-a-count",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "  heartBroken: (who, left) =>\n    left > 0\n      ? `${who || 'A fighter'} breaks a Heart. ${left} ${left === 1 ? 'remains' : 'remain'}.`\n      : `${who || 'A fighter'} breaks the last Heart!`,",
+    "new": "  heartBroken: (who, left) => `${who || 'A fighter'} breaks a Heart. ${left} remain.`,",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-old-dragon-break",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "  dragonBreak: (ms) => `The Dragon Break! Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other.`, // AUDIT SD III (T14): the window's one form, by its frame's own - \"together\" said none",
+    "new": "  dragonBreak: () =>\n    'The Dragon Break! The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.', // AUDIT SD III (T14): the window's one form, by its frame's own - \"together\" said none",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-old-stun",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "  stunned: 'The Reset breaks! Strike now!', // the bar says \"Stunned - 8s\"",
+    "new": "  stunned: 'The Reset is broken! The Remnant is stunned.', // the bar says \"Stunned - 8s\"",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-count",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "        if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset(s.cx?.c?.length ?? 0), false, SD_HEARTS_KEY);",
+    "new": "        if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset(0), false, SD_HEARTS_KEY);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-call-off-its-thread",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "        if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset(s.cx?.c?.length ?? 0), false, SD_HEARTS_KEY);",
+    "new": "        if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset(s.cx?.c?.length ?? 0));",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-rise",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "      if (!away && t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);\n      return;",
+    "new": "      return;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-stale-rise",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "      if (!away && t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);",
+    "new": "      if (!away) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-hit",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "      if (q[2] > 0) play(BOSS_CUES.crystalHit, heartsOf.p[k]);",
+    "new": "      if (q[2] > 0) continue;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-break",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "      else broke(heartsOf.p[k]);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-ring",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    play(BOSS_CUES.crystalRing, p);\n  };",
+    "new": "  };",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-last-unheard",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "            if (broken) broke(heartsOf.p[k]);",
+    "new": "            if (broken) void 0;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-late-stun-shatters",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "          broken = stunned && s.su > t;",
+    "new": "          broken = stunned;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-hearts-after-the-idle-return",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "      hearts(s, t, !(t - t0 <= SD_VOICE_AWAY_MS)); // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight\n      owedBlows(s, t, t0); // AUDIT SD IV (5): and before it too - a blow the state let go is owed all the same",
+    "new": "      owedBlows(s, t, t0); // AUDIT SD IV (5): and before it too - a blow the state let go is owed all the same",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-end-at-0.25",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    end: cue(THUNDER_ROLL, 0.236, 2.2, 200, 'heart'), // AUDIT SD II (L6 F23): four semitones under the Reset's (WB13d's law - 0.25 was 3.2 apart)",
+    "new": "    end: cue(THUNDER_ROLL, 0.25, 2.2, 200, 'heart'), // AUDIT SD II (L6 F23): four semitones under the Reset's (WB13d's law - 0.25 was 3.2 apart)",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-fall-held-to-the-arena",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "        say(SD_BLOWS_TEXT.fell, true);",
+    "new": "        say(SD_BLOWS_TEXT.fell);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-crystals-again",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "      const model = damageChartModel(chartFell, {\n        boss: SD_BLOWS_TEXT.boss,\n        me: me(),\n        since: chartAt,\n        now: t,\n        crystals: SD_BLOWS_TEXT.hearts,\n        theme: 'brass',\n      }); // AUDIT SD II (L6 F11): its Hearts, in brass",
+    "new": "      const model = damageChartModel(chartFell, { boss: SD_BLOWS_TEXT.boss, me: me(), since: chartAt, now: t }); // AUDIT SD II (L6 F11): its Hearts, in brass",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-no-fade-readout",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "        warn(sdFadeReadout(left, { hour: inHour() }));\n      }",
+    "new": "      }",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-fade-every-frame",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "        fadeWarned = { s: rec.s, at: due };\n        warn(sdFadeReadout(left, { hour: inHour() }));",
+    "new": "        warn(sdFadeReadout(left, { hour: inHour() }));",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-fade-told-outside",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (\n      (phase === 'risen' || phase === 'found') &&\n      stood &&\n      stood.s === rec?.s &&\n      Number.isFinite(rec.until) &&\n      inside(stood.loc)\n    ) {",
+    "new": "    if ((phase === 'risen' || phase === 'found') && stood && stood.s === rec?.s && Number.isFinite(rec.until)) {",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-fallen-hollow-fading",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (\n      (phase === 'risen' || phase === 'found') &&\n      stood &&\n      stood.s === rec?.s &&\n      Number.isFinite(rec.until) &&\n      inside(stood.loc)\n    ) {",
+    "new": "    if (phase !== 'gone' && stood && stood.s === rec?.s && Number.isFinite(rec.until) && inside(stood.loc)) {",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-fade-in-the-hollows-words",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "export const sdFadeReadout = (left, { hour = false } = {}) =>\n  `${hour ? 'The Hour closes' : 'The Abyss Dungeon fades'} in ${countdownText(left)}.`;",
+    "new": "export const sdFadeReadout = (left, { hour = false } = {}) => `The Abyss Dungeon fades in ${countdownText(left)}.`;",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-old-collapse-line",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "      ? `The Hour collapses in ${t}. The way home opens where the Remnant fell.`",
+    "new": "      ? `The Hour is breaking - it collapses in ${t}. The way home stands where the Remnant fell.`",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-an-unfound-fade-said",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && was && was.s === rec.s && was.ph !== 'gone')",
+    "new": "    if (rec.ph === 'gone' && rec.fellAt == null && was && was.s === rec.s && was.ph !== 'gone')",
+    "tests": [
+      "test/systems/superDungeon/sd2b_world.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-article-kept",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "export const sdNameIn = (name) => String(name ?? '').replace(/^The /, 'the ');",
+    "new": "export const sdNameIn = (name) => String(name ?? '');",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js",
+      "test/net/superDungeon/sd1_sdlaw.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-plaques-article-kept",
+    "file": "src/systems/worldTooltips.js",
+    "old": "    if (name) subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`); // AUDIT SD II (L6 F20): \"To the Brass Hollow\"",
+    "new": "    if (name) subs.push(`To ${name}`); // AUDIT SD II (L6 F20): \"To the Brass Hollow\"",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-every-plaques-article-small",
+    "file": "src/systems/worldTooltips.js",
+    "old": "    if (name) subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`); // AUDIT SD II (L6 F20): \"To the Brass Hollow\"",
+    "new": "    if (name) subs.push(`To ${name.replace(/^The /, 'the ')}`); // AUDIT SD II (L6 F20): \"To the Brass Hollow\"",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-hearts-head-ignored",
+    "file": "src/ui/gate/gateDamageChart.js",
+    "old": "          : h)(\n      crystals === DAMAGE_CHART_TEXT.head[6]\n        ? DAMAGE_CHART_TEXT.head\n        : DAMAGE_CHART_TEXT.head.map((c, i) => (i === 6 ? crystals : c)),\n    ),",
+    "new": "          : h)(DAMAGE_CHART_TEXT.head),",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-junk-theme-kept",
+    "file": "src/ui/gate/gateDamageChart.js",
+    "old": "    theme: typeof theme === 'string' && /^[a-z]+$/.test(theme) ? theme : null, // AUDIT SD II (L6 F11): a fight's own palette - the Brass Remnant's",
+    "new": "    theme, // AUDIT SD II (L6 F11): a fight's own palette - the Brass Remnant's",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-key-blind-to-the-head",
+    "file": "src/ui/gate/gateDamageChart.js",
+    "old": "    key: `${crystals}:${dm.length}:${dm.map((r) => `${r.n}|${r.l}|${r.d}|${r.x}|${r.h}|${r.b}|${r.f}|${r.a ?? ''}|${r.hl ?? ''}`).join(';')}:${at}:${n}`,",
+    "new": "    key: `${dm.length}:${dm.map((r) => `${r.n}|${r.l}|${r.d}|${r.x}|${r.h}|${r.b}|${r.f}|${r.a ?? ''}|${r.hl ?? ''}`).join(';')}:${at}:${n}`,",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-brass-never-drawn",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "      else pass.draw(w, h, (t - began) / 1000, current(t), m !== undefined ? VEIL_THEMES.brass : theme);",
+    "new": "      else pass.draw(w, h, (t - began) / 1000, current(t));",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-fires-cues",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "    for (const c of (theme === VEIL_THEMES.brass ? VEIL_BRASS_CUES : VEIL_CUES)[name]) {",
+    "new": "    for (const c of VEIL_CUES[name]) {",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-look-changed-mid-step",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts); // AUDIT EG III (lane4 #13): a cover asked while the last step's veil still opens closes in ITS OWN look - a closing or a shut veil keeps the one it closed with",
+    "new": "      takeLook(look, opts); // AUDIT EG III (lane4 #13): a cover asked while the last step's veil still opens closes in ITS OWN look - a closing or a shut veil keeps the one it closed with",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-a-flash-in-fire",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "      takeLook(look, opts);\n      if (phase === 'idle') show(t);",
+    "new": "      if (phase === 'idle') show(t);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-theme-never-set",
+    "file": "src/render/gate/gateVeil.js",
+    "old": "    gl.uniform1f(this.u.uTheme, theme);\n    gl.bindVertexArray(this.vao);",
+    "new": "    gl.bindVertexArray(this.vao);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-throat-a-pow",
+    "file": "src/render/gate/gateVeil.js",
+    "old": "  col *= 1.0 - 0.5 * exp(-(r - 0.3) * (r - 0.3) * 30.25) * uHeat;                               // the throat (AUDIT SD II: squared, never a pow of a negative - 5.5 squared)",
+    "new": "  col *= 1.0 - 0.5 * exp(-pow((r - 0.3) * 5.5, 2.0)) * uHeat;                               // the throat (AUDIT SD II: squared, never a pow of a negative - 5.5 squared)",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-lip-a-pow",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "  float lip = filled * exp(-(uT - s) * (uT - s) * 144.0) * (1.0 - step(0.999, uT));   // AUDIT SD II: squared - GLSL leaves pow of a negative undefined (NaN on D3D)",
+    "new": "  float lip = filled * exp(-pow((uT - s) * 12.0, 2.0)) * (1.0 - step(0.999, uT));   // AUDIT SD II: squared - GLSL leaves pow of a negative undefined (NaN on D3D)",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-step-blind-to-its-look",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (veil) await veil.cover(look, opts);",
+    "new": "      if (veil) await veil.cover(undefined, opts);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  },
+  {
+    "name": "SD11D-the-hall-around-the-voice",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const sdSayHere = (t) => { if (!opts.sdSay?.(t)) setMidScreenText(t); };",
+    "new": "const sdSayHere = (t) => setMidScreenText(t);",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ],
+    "note": "AUDIT SD-THROUGH (re-aimed by content): the hall says through one named closure, the Way Through's too (C13). SD-THROUGH (re-aimed by content): the hall's own say - the Way Through's copy beside the Rift's is its own record's."
+  },
+  {
+    "name": "SD11D-the-old-concord",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "  concord: 'The Concord! A bridge of light opens.', // AUDIT SD II (L6 F21): WB13b's - the event and what it opens (\"The endings stand as one\" commented)",
+    "new": "  concord: 'The Concord! The endings stand as one, and a bridge of light opens.', // AUDIT SD II (L6 F21): WB13b's - the event and what it opens (\"The endings stand as one\" commented)",
+    "tests": [
+      "test/scenes/superDungeon/sd11d_words.test.js"
+    ]
+  }
+]

@@ -1,0 +1,137 @@
+[
+  {
+    "name": "SEAM-STEP-the-step-never-asked",
+    "file": "src/player/motor.js",
+    "old": "    if (!side && vert > 0 && (w.stuck || (w.sidestep && w.sidestep.gone < w.sidestep.want))) this._fcSidestep(v, n, dt, held);",
+    "new": "",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-STEP-the-search-one-way",
+    "file": "src/player/motor.js",
+    "old": "const f = search([1, -1], PARKOUR_SIDESTEP_MAX);",
+    "new": "const f = search([1], PARKOUR_SIDESTEP_MAX);",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-STEP-no-rise-in-the-step",
+    "file": "src/player/motor.js",
+    "old": "const q = [from[0] + t[0] * s, from[1] + PARKOUR_SIDESTEP_RISE, from[2] + t[2] * s];",
+    "new": "const q = [from[0] + t[0] * s, from[1], from[2] + t[2] * s];",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "SEAM-STEP-the-reach-unbounded",
+    "file": "src/player/motor.js",
+    "old": "k * PARKOUR_SIDESTEP_PROBE <= room + 1e-9;",
+    "new": "k * PARKOUR_SIDESTEP_PROBE <= 4;",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "HUG-TOUCH-the-press-the-whole-step-again",
+    "file": "src/player/motor.js",
+    "old": "    const nx = n[0], nz = n[2], hug = out == null ? (this._wall?.past != null ? 0 : -press) : out;",
+    "new": "    const nx = n[0], nz = n[2], hug = out == null ? (this._wall?.past != null ? 0 : -this.speed * dt) : out;",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "HUG-TOUCH-the-gap-unread",
+    "file": "src/player/motor.js",
+    "old": "    w.gap = c.dist - CAPSULE_RADIUS;   // HUG-TOUCH: how far the face stands off the body (_fcMove's press)",
+    "new": "",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "CRACK-LIP-the-crack-read-as-a-lip",
+    "file": "src/player/parkour.js",
+    "old": "    if (!Number.isFinite(at(i - 1)) && faceGoesOn(collider, ox, rungY(i - 1), oz, dir, dist, PARKOUR_GRIP_RUNG))\n      continue;",
+    "new": "",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "CRACK-LIP-the-plain-wall-asks-an-eave",
+    "file": "src/player/parkour.js",
+    "old": "    if (\n      !Number.isFinite(d) &&\n      faceGoesOn(collider, ox, lipY + PARKOUR_LIP_FOLLOW - i * PARKOUR_GRIP_RUNG, oz, dir, back, PARKOUR_GRIP_RUNG)\n    )\n      continue;",
+    "new": "",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "CRACK-LIP-the-ledge-scan-opens-at-the-crack",
+    "file": "src/player/parkour.js",
+    "old": "      continue; // CRACK-LIP: a crack between two of the wall's pieces, the face going on over it",
+    "new": "      return { ...wall, openY: y, faceDist };",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "STEP-BACK-never-reached-for",
+    "file": "src/player/motor.js",
+    "old": "      if (s && s.normal[0] * n[0] + s.normal[2] * n[2] >= PARKOUR_FACE_FOLLOW) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "STEP-BACK-any-face-reached-for",
+    "file": "src/player/motor.js",
+    "old": "      if (s && s.normal[0] * n[0] + s.normal[2] * n[2] >= PARKOUR_FACE_FOLLOW) {",
+    "new": "      if (s) {",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "STEP-BACK-the-step-not-passed-unpressed",
+    "file": "src/player/motor.js",
+    "old": "        w.past = this._fcFaceTop(was, into);\n",
+    "new": "",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "CORNER-TOP-the-corner-never-asked",
+    "file": "src/player/motor.js",
+    "old": "      if (turned && this._fcTopOut(dt, skill, inputs, turned, false)) return true;\n",
+    "new": "",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "CORNER-TOP-the-look-unread",
+    "file": "src/player/motor.js",
+    "old": "w.corner ??= this._fcCornerSide(into, w.look);",
+    "new": "w.corner ??= this._fcCornerSide(into, null);",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  },
+  {
+    "name": "CORNER-TOP-one-side-only",
+    "file": "src/player/motor.js",
+    "old": "const dir = [-into[2] * side, 0, into[0] * side];",
+    "new": "const dir = [-into[2], 0, into[0]];",
+    "tests": [
+      "test/player/fb1002_climb.test.js"
+    ]
+  }
+]

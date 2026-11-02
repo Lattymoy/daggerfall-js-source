@@ -1,0 +1,552 @@
+// M2 - THE POTION MAKER: DaggerfallPotionMakerWindow (MIT, Daggerfall
+// Workshop) on real ARENA2 art, over M1's law.
+//
+// THE NATIVE-WINDOW RULE, element by element:
+// - the panel is MASK00I0.IMG, which ships a FULL 320x200 - it is a
+//   whole-screen background rather than a centred panel, so there is
+//   no alignment to compute and every rect below is screen-absolute.
+// - NativePanel.BackgroundColor is (0,0,0,0.60) UNDER that texture
+//   (:104) - a 60% black wash, not the opaque black most windows use
+//   and not ScreenDimColor either. Both are drawn.
+// - two buttons at the top right: RECIPES (169,26,36,16) and MIX
+//   (169,42,36,16); exit is (290,178,24,16).
+// - the INGREDIENTS list is a 4x3 scroller in (5,30,151,142) and the
+//   CAULDRON is a 4x2 fixed list in (221,30,84,142) - the cauldron
+//   does not scroll, because it holds eight and shows eight.
+// - three labels on the bottom row (:208-213): the name at (33,185)
+//   and the gold at (237,185). The COST label between them is
+//   commented out in DFU and is not drawn here either.
+//
+// The laws are systems/potions.js's - the hash, the sort, the eight-
+// slot cap, the wagon fallback and the break. This file is the panel,
+// the two lists and the picker.
+//
+// POTION-DOOR (2026-10-25, bible/06-Systems/Professions-Arc.md 52): the window asks its host's door before it mixes
+// (hooks.brew, scenes/potionMakerHost.js) - online at an alchemy station a mix DFU's law accepts is the profession's brew,
+// asked of the service and said by its answer, and the grid holds the Stores' ingredients (hooks.storeItems) beside the
+// carried ones. Everything else here is DFU's maker as M2 built it; offline the host hands no door.
+//
+// D7: DFU's ingredient buttons carry a tooltip AND a stack-count label
+// through ItemListScroller's own template, and both are here now. The
+// stack label is the shared scroller's drawStackLabel
+// (ItemListScroller.cs:360-365/:447); the tooltip is the same file's
+// :340/:464 - the window's shared ToolTip, its text
+// ResolveItemLongName, moved onto whichever button the pointer rests
+// over. Both lists get one, because DFU builds both out of the same
+// ItemListScroller (:226-239) and hands both the same tip.
+
+import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
+import { layoutMessageBox, drawMessageBox } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js'; // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import {
+  ListPickerWindow,
+  listPickerArtLoaded,
+  listPickerSmallFont,
+  preloadListPickerSmallFont,
+  SMALL_FONT_PICKER_ROWS,
+} from './listPicker.js';
+import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './item/itemScroller.js';
+import { audio } from '../systems/audio.js';
+import { isEnchanted, addItem } from '../systems/inventory.js'; // F176: Refresh's !IsEnchanted (:148); AddItem is Refresh's merge (:149)
+import { SOUND } from '../systems/soundClips.js';
+import {
+  CAULDRON_CAPACITY,
+  cauldronAccepts,
+  mixCauldron,
+  consumeCauldron,
+  isIngredient,
+  knownRecipes,
+  gatherRecipe,
+} from '../systems/potions.js';
+import { localizedText } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+
+/** MASK00I0 is a full-screen background (:75-76), so the rects are
+ *  screen-absolute rather than panel-relative. */
+export const POTION_RECTS = Object.freeze({
+  recipes: [169, 26, 36, 16],
+  mix: [169, 42, 36, 16],
+  exit: [290, 178, 24, 16],
+  ingredientsList: [5, 30, 151, 142],
+  cauldronList: [221, 30, 84, 142],
+});
+/** The label row (:208-213). The cost label between these two is
+ *  COMMENTED OUT in DFU and is not drawn. */
+export const POTION_LABELS = Object.freeze({ name: [33, 185], gold: [237, 185] });
+
+/** ingredientButtonRects (:31-38) and cauldronButtonRects (:43-50),
+ *  both panel-relative to their list. Three columns of four for the
+ *  ingredients on a 56/38 grid; two columns of four for the cauldron
+ *  on the same rows - which is why the cauldron holds exactly eight. */
+const GRID = (cols) => {
+  const out = [];
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < cols; col++) out.push([col * 56, row * 38, 28, 28]);
+  }
+  return out;
+};
+export const INGREDIENT_BUTTONS = Object.freeze(GRID(3).map(Object.freeze));
+export const CAULDRON_BUTTONS = Object.freeze(GRID(2).map(Object.freeze));
+/** ingredientsListRect's x offset inside the scroller (:29). */
+export const INGREDIENT_LIST_X = 11;
+/** The ingredient scroller is a REAL scroller (ItemListScroller with
+ *  scroll=true, :226-232), 4 rows of 3, and its left column - the
+ *  11px ingredientsListRect leaves free - carries the two arrows:
+ *  up at (0,0,9,16) and down at (0, height-16, 9, 16) of the
+ *  scroller's own rect (ItemListScroller.cs:27-28, :293-309). The
+ *  cauldron's is scroll=false and has none. */
+export const INGREDIENT_ROWS = 4,
+  INGREDIENT_COLS = 3;
+export const INGREDIENT_SCROLL_UP = Object.freeze([5, 30, 9, 16]);
+export const INGREDIENT_SCROLL_DOWN = Object.freeze([5, 30 + 142 - 16, 9, 16]);
+
+/** "potionMixed" / "potionFailed" / "noRecipes" / "reqIngredients" -
+ *  Internal_Strings.csv:852-855, verbatim. The keys are asked for at
+ *  DaggerfallPotionMakerWindow.cs:381 (noRecipes), :325 (potionMixed),
+ *  :332 (potionFailed) and :300 (reqIngredients). */
+export const POTION_MIXED = 'Your potion has been mixed.';
+export const POTION_FAILED = 'Those ingredients did not concoct an effective potion.';
+export const NO_RECIPES = 'You have no recipes.';
+export const REQ_INGREDIENTS = 'You do not have the ingredients required.';
+
+let _art = null;
+export async function preloadPotionArt(deps) {
+  if (_art) return;
+  try {
+    _art = await loadImg(deps, 'MASK00I0.IMG');
+    // AUDIT 58: the recipe picker is SmallFont, 12 rows (:113).
+    await preloadListPickerSmallFont(deps);
+  } catch {
+    console.warn('[potions] MASK00I0 unavailable; the potion maker stays closed');
+  }
+}
+export const potionArtLoaded = () => !!_art;
+export function _setPotionArtForTests(art) {
+  _art = art;
+}
+
+const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+
+/** Which slot of a list a point lands in, or null. `origin` is the
+ *  list's screen rect and `buttons` its panel-relative grid. */
+export function slotAt(origin, buttons, x, y, offsetX = 0) {
+  for (let i = 0; i < buttons.length; i++) {
+    const [bx, by, bw, bh] = buttons[i];
+    if (inRect([origin[0] + offsetX + bx, origin[1] + by, bw, bh], x, y)) return i;
+  }
+  return null;
+}
+
+/**
+ * hooks:
+ *   packItems()    -> the player's items (the ingredient list filters them)
+ *   wagonItems()   -> the cart. Refresh (:143) walks PlayerEntity.Items
+ *                    AND PlayerEntity.WagonItems into the one
+ *                    `ingredients` collection, so the cart feeds the
+ *                    GRID as well as the consume walk's fallback.
+ *   gold()         -> the label
+ *   recipeKeys()   -> the PotionRecipeKey of every recipe ITEM the
+ *                    player carries, pack and wagon (:150-151, :164-169)
+ *   addPotion(recipe, key)  the host mints and banks the potion
+ *   takeOne(templateIndex, where) -> bool  the host's removal
+ *   icons, entity, onClose
+ *   POTION-DOOR (scenes/potionMakerHost.js, optional):
+ *   storeItems()   -> the Stores' ingredients, each a DFU item carrying its
+ *                    Stores key (`stores`), listed after the carried
+ *   brew(result, cauldron) -> null (DFU's mix, nothing said) |
+ *                    { classic: true, word } (DFU's mix, and why it earned
+ *                    nothing) | { ok: false, text } (refused, nothing spent)
+ *                    | { wait, answer } (the station's brew, asked: its
+ *                    potions and its XP the service's, its words the answer's)
+ */
+export class PotionMakerWindow {
+  constructor(hooks) {
+    this.hooks = hooks;
+    this.done = false;
+    this.isChoiceWindow = true;
+    this.cauldron = [];
+    this.scroll = 0;
+    this.nameLabel = '';
+    this.box = null;
+    this.picker = null;
+    this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);
+    this._tip = makeSlotToolTip(); // D7: the window's shared ToolTip (:340)
+  }
+
+  /** The rest clock DaggerfallBaseWindow's defaultToolTip runs. */
+  tick(dt) {
+    this._tip.update(dt);
+  }
+
+  /** The item under the cursor, on either list - the two grids the
+   *  click path already reads, so the tip can never name a slot the
+   *  click would miss. */
+  _itemAt(vx, vy) {
+    const R = POTION_RECTS;
+    const cs = slotAt(R.cauldronList, CAULDRON_BUTTONS, vx, vy);
+    if (cs !== null) return this.cauldron[cs] ?? null;
+    const is = slotAt(R.ingredientsList, INGREDIENT_BUTTONS, vx, vy, INGREDIENT_LIST_X);
+    if (is === null) return null;
+    return this.ingredients()[this.scroll * INGREDIENT_COLS + is] ?? null;
+  }
+
+  _close() {
+    this.done = true;
+    noticeRelease(this);
+    this.hooks.onClose?.();
+  }
+
+  /** The carried ingredients, minus the UNITS already in the cauldron.
+   *  AUDIT 26 F174/F176: DFU's Refresh collects `item.IsIngredient &&
+   *  !item.IsEnchanted` (:147-149) - an enchanted gem cannot be
+   *  ground into a potion - and AddToCauldron splits ONE unit off a
+   *  stack (:251-264), so the remainder stays visible and addable.
+   *  The old cut filtered on the template flag alone and removed the
+   *  whole stack OBJECT by identity: a stack of N elderberries
+   *  vanished while one unit sat in the pot.
+   *
+   *  AUDIT 63 F43: the walk is DFU's own TWO collections, in DFU's
+   *  order - `foreach (ItemCollection playerItems in new
+   *  ItemCollection[] { PlayerEntity.Items, PlayerEntity.WagonItems })`
+   *  (:143-153) - so reagents kept in the cart are on the grid. They
+   *  go into ONE ItemCollection through AddItem (:149), whose
+   *  FindExistingStack merge (ItemCollection.cs:224-229, :699-718)
+   *  folds a pack stack and a wagon stack of the same reagent into a
+   *  single slot: ingredients are stackable (FormulaHelper.cs:2103)
+   *  unless IsStackable's own refusals bite first
+   *  (DaggerfallUnityItem.cs:681-695 - equipped, quest, enchanted, or
+   *  a summoned non-arrow), which is why the merge below goes through
+   *  inventory.js's addItem rather than a second copy of the rule.
+   *  Two elderberries in the pack and three in the cart are ONE slot
+   *  reading five, which is what the stack label draws; a QUEST
+   *  elderberry keeps a slot of its own. */
+  ingredients() {
+    // POTION-DOOR: a unit in the pot is its source's - the carried stacks', or one Stores row's (`stores`, its key)
+    const at = (it) => `${it.stores ?? ''}|${it.templateIndex}`;
+    const potted = new Map();
+    for (const c of this.cauldron) potted.set(at(c), (potted.get(at(c)) ?? 0) + 1);
+    // THROUGH THE PORT'S ONE AddItem, which is what DFU's line is:
+    // `ingredients.AddItem(item.Clone())` (:149), and AddItem
+    // (ItemCollection.cs:217-253) merges through FindExistingStack
+    // (:699-718). That member OPENS with `if (!item.IsStackable())
+    // return null` and closes on `checkItem.IsStackable()`, and
+    // IsStackable (DaggerfallUnityItem.cs:681-695) refuses an equipped,
+    // a QUEST or an enchanted item, and a summoned non-arrow, before it
+    // ever reaches FormulaHelper.IsItemStackable. inventory.js's
+    // isStackable/stacksWith carry all of that (X11b, AUDIT 39 F105);
+    // an inline re-derivation here filtered on the identity terms
+    // alone, so a quest-item reagent folded into a plain one. The
+    // spread IS the Clone, so no live pack or wagon item is mutated by
+    // the merge.
+    const merged = [];
+    for (const it of [...(this.hooks.packItems?.() ?? []), ...(this.hooks.wagonItems?.() ?? [])]) {
+      if (!isIngredient(it) || isEnchanted(it)) continue;
+      addItem(merged, { ...it });
+    }
+    const out = [];
+    for (const it of [...merged, ...(this.hooks.storeItems?.() ?? [])]) {
+      // POTION-DOOR: the Stores' after what is carried
+      const held = it.stackCount ?? 1;
+      const take = Math.min(potted.get(at(it)) ?? 0, held);
+      if (take > 0) potted.set(at(it), (potted.get(at(it)) ?? 0) - take);
+      const left = held - take;
+      if (left > 0) out.push(left === held ? it : { ...it, stackCount: left });
+    }
+    return out;
+  }
+
+  /** AddToCauldron (:251-264) - a full pot simply refuses, with no
+   *  message, and the name label clears on every change. */
+  _addToCauldron(item) {
+    if (!cauldronAccepts(this.cauldron) || this._brewing) return; // POTION-DOOR: the pot the service is brewing is not touched
+    this.nameLabel = '';
+    // SplitStack(item, 1) (:257-258): the pot holds ONE unit; the
+    // remainder stays in the grid through ingredients()'s subtraction.
+    this.cauldron.push({ ...item, stackCount: 1 });
+  }
+
+  /** ItemsUpButton/ItemsDownButton_OnMouseClick (ItemListScroller.cs:
+   *  588-604): the index steps by ROW, with a click sound, and
+   *  GetSafeScrollIndex (:469-484) clamps it to [0, rows - 4]. */
+  _scrollIngredients(dir) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    const rows = Math.ceil(this.ingredients().length / INGREDIENT_COLS);
+    this.scroll = Math.max(0, Math.min(Math.max(0, rows - INGREDIENT_ROWS), this.scroll + dir));
+  }
+
+  /** RemoveFromCauldron (:266-274). */
+  _removeFromCauldron(slot) {
+    if (slot >= this.cauldron.length || this._brewing) return; // POTION-DOOR: nor taken from
+    this.nameLabel = '';
+    this.cauldron.splice(slot, 1);
+  }
+
+  /** MixCauldron (:311-345), through the law. AUDIT 26 F173: the
+   *  button plays its click and mixes only `if (cauldron.Count > 0)`
+   *  (:393-398) - an empty pot used to hash to no recipe and pop the
+   *  POTION_FAILED box DFU never shows. POTION-DOOR: the host's door asked
+   *  first (hooks.brew) - its brew, its refusal, or DFU's mix and its word;
+   *  one brew at a time (a press while one is asked is that one). */
+  _mix() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    if (this.cauldron.length === 0 || this._brewing) return;
+    const result = mixCauldron(this.cauldron.map((it) => it.templateIndex));
+    const door = this.hooks.brew?.(result, this.cauldron) ?? null;
+    if (door && !door.classic) {
+      this._throughDoor(door);
+      return;
+    }
+    if (result.kind === 'failed') {
+      this.box = this._failedBox();
+    } else {
+      this.hooks.addPotion?.(result.recipe, result.key);
+      // F177: MixCauldron never touches the name label (:311-360) -
+      // only AddRecipeToCauldron writes it (:307); the old mix-time
+      // write inverted DFU's label.
+      // POTION-DOOR: online, the classic mix says it earned nothing, and why
+      this.box = this._mixedBox(door?.word);
+      audio.playOneShot(SOUND.MakePotion, 1);
+    }
+    // The ingredients are spent EITHER WAY, and the walk can break
+    // partway - which leaves the cauldron un-emptied, verbatim.
+    const spend = consumeCauldron(this.cauldron, {
+      // F176: GetItem(group, template, allowEnchantedItem: false)
+      // (:338, :345) - the group rides along so the host can refuse
+      // to spend an enchanted twin of a plain reagent.
+      takeFromPack: (t, g) => !!this.hooks.takeOne?.(t, 'pack', g),
+      takeFromWagon: (t, g) => !!this.hooks.takeOne?.(t, 'wagon', g),
+    });
+    if (spend.kind === 'spent') this.cauldron = [];
+  }
+
+  /** POTION-DOOR: the host's answer to a mix - refused at once (nothing spent), or the station's brew asked: its word while
+   *  it is asked, then the service's - the cauldron emptied only when it brewed (its units are the Stores' and the pack's,
+   *  spent by the service and the book, never by this window's walk). A window closed while it is asked says nothing: the
+   *  host mints the potions on the answer either way. */
+  _throughDoor(door) {
+    if (!door.answer) {
+      this.box = door.failed ? this._failedBox() : { rows: [{ text: door.text ?? '', center: true }] };
+      return;
+    }
+    this._brewing = true;
+    this.box = { rows: [{ text: door.wait ?? '', center: true }] };
+    Promise.resolve(door.answer)
+      .catch(() => null)
+      .then((r) => {
+        this._brewing = false;
+        if (this.done) return;
+        if (!r) {
+          this.box = null;
+          return;
+        }
+        if (r?.ok) {
+          this.cauldron = [];
+          audio.playOneShot(SOUND.MakePotion, 1);
+        }
+        this.box = r.ok ? this._mixedBox(r.text) : { rows: [{ text: r.text ?? '', center: true }] };
+      });
+  }
+  /** "potionFailed" (:332), the box a mix no recipe answers says. */
+  _failedBox() {
+    return { rows: [{ text: localizedText('potionFailed', POTION_FAILED), center: true }] };
+  }
+  /** "potionMixed" (:325), and POTION-DOOR's word beside it where one is said (the brew's answer, a classic mix's why). */
+  _mixedBox(word = '') {
+    return {
+      rows: [
+        { text: localizedText('potionMixed', POTION_MIXED), center: true },
+        ...(word ? [{ text: word, center: true }] : []),
+      ],
+    };
+  }
+
+  /** RecipesButton_OnMouseClick (:376-382): an empty list is a message
+   *  box rather than an empty picker. */
+  _recipes() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    const known = knownRecipes(this.hooks.recipeKeys?.() ?? []);
+    if (!known.length) {
+      this.box = { rows: [{ text: localizedText('noRecipes', NO_RECIPES), center: true }] };
+      return;
+    }
+    this.picker = new ListPickerWindow({
+      // AUDIT 63 F42: the picker's rows are DisplayName (:171-172),
+      // not the recipe's localization key - `name` is that key.
+      items: known.map((r) => r.displayName),
+      onPick: (i) => {
+        this._fillFrom(known[i]);
+        this.picker = null;
+      },
+      onCancel: () => {
+        this.picker = null;
+      },
+      // AUDIT 58: DaggerfallPotionMakerWindow.cs:113 builds this
+      // picker with `(uiManager, this, DaggerfallUI.SmallFont, 12)`.
+      font: listPickerSmallFont(),
+      rowsDisplayed: SMALL_FONT_PICKER_ROWS,
+    });
+  }
+
+  /** AddRecipeToCauldron (:283-309). ANY missing ingredient refuses
+   *  the WHOLE recipe with "reqIngredients" and adds nothing
+   *  (:297-301); otherwise the cauldron is CLEARED first, every
+   *  ingredient goes in, and the name label takes the recipe's name
+   *  (:302-308). */
+  _fillFrom(recipe) {
+    if (this._brewing) return; // POTION-DOOR: nor refilled while it brews
+    const avail = this.ingredients();
+    const { found, missing } = gatherRecipe(
+      recipe,
+      avail.map((it) => it.templateIndex),
+    );
+    if (missing.length > 0) {
+      this.box = { rows: [{ text: localizedText('reqIngredients', REQ_INGREDIENTS), center: true }] };
+      return;
+    }
+    // ClearCauldron() (:304) - leftovers go back to the list, they
+    // are not mixed in under the recipe
+    this.cauldron = [];
+    const pool = [...avail];
+    for (const id of found) {
+      const at = pool.findIndex((it) => it.templateIndex === id);
+      if (at < 0) continue;
+      this._addToCauldron(pool.splice(at, 1)[0]);
+    }
+    // AUDIT 63 F42: RecipePicker_OnItemPicked hands the picked ROW's
+    // text back as `recipeName` (:384-390) and AddRecipeToCauldron
+    // writes it to the label (:307) - the DisplayName, not the key.
+    this.nameLabel = recipe.displayName;
+  }
+
+  input(code) {
+    if (this.picker) {
+      this.picker.input(code);
+      if (this.picker?.done) this.picker = null;
+      return;
+    }
+    if (this.box) {
+      this.box = null;
+      return;
+    }
+    if (code === 'Escape' || code === 'KeyE') {
+      this._close();
+      return;
+    }
+    if (code === 'Enter' || code === 'KeyM') {
+      this._mix();
+      return;
+    }
+    if (code === 'KeyR') this._recipes();
+  }
+
+  /** ROAD-A7: the recipe picker's hover seam. D7: and, with no picker
+   *  over the panel, the item tooltip - which follows the pointer the
+   *  way a button's ToolTip does, and clears the moment it rests on
+   *  nothing. */
+  hover(vx, vy, e = null) {
+    if (this.picker) {
+      this.picker.hover(vx, vy, e);
+      this._tip.hide();
+      return;
+    }
+    if (this.box || vx < 0 || vy < 0) {
+      this._tip.hide();
+      return;
+    }
+    this._tip.show(this._itemAt(vx, vy), vx, vy);
+  }
+
+  /** ROAD-E E1: the release edge, forwarded the way `hover` is - the
+   *  picker's thumb latches on the press and this is what ends it. */
+  release() {
+    this.picker?.release();
+  }
+
+  click(vx, vy) {
+    if (this.picker) {
+      this.picker.click(vx, vy, this._font);
+      if (this.picker?.done) this.picker = null;
+      return true;
+    }
+    if (this.box) {
+      this.box = null;
+      return true;
+    }
+    const R = POTION_RECTS;
+    if (inRect(R.exit, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      return true;
+    }
+    if (inRect(R.mix, vx, vy)) {
+      this._mix();
+      return true;
+    }
+    if (inRect(R.recipes, vx, vy)) {
+      this._recipes();
+      return true;
+    }
+
+    if (inRect(INGREDIENT_SCROLL_UP, vx, vy)) {
+      this._scrollIngredients(-1);
+      return true;
+    }
+    if (inRect(INGREDIENT_SCROLL_DOWN, vx, vy)) {
+      this._scrollIngredients(1);
+      return true;
+    }
+    const cs = slotAt(R.cauldronList, CAULDRON_BUTTONS, vx, vy);
+    if (cs !== null) {
+      this._removeFromCauldron(cs);
+      return true;
+    }
+    const is = slotAt(R.ingredientsList, INGREDIENT_BUTTONS, vx, vy, INGREDIENT_LIST_X);
+    if (is !== null) {
+      // "Convert scroller index to item based scroll index"
+      // (ItemListScroller.cs:419): the row index times the width
+      const item = this.ingredients()[this.scroll * INGREDIENT_COLS + is];
+      if (item) this._addToCauldron(item);
+      return true;
+    }
+    return inRect([0, 0, 320, 200], vx, vy);
+  }
+
+  draw(renderer, canvas, font) {
+    if (!_art) {
+      this._close();
+      return;
+    }
+    this._font = font;
+    const m = nativeMetrics(canvas);
+    // ParentPanel is ScreenDimColor and the NATIVE panel carries its
+    // own 60% black under the texture (:101-105) - both, in that order.
+    drawScreenDimBackdrop(renderer, canvas);
+    drawImg(renderer, _art, m, 0, 0);
+    if (this.picker && listPickerArtLoaded()) {
+      this.picker.draw(renderer, canvas, font);
+      return;
+    }
+
+    const R = POTION_RECTS;
+    this.ingredients()
+      .slice(this.scroll * INGREDIENT_COLS, this.scroll * INGREDIENT_COLS + INGREDIENT_BUTTONS.length)
+      .forEach((it, i) => {
+        const [bx, by] = INGREDIENT_BUTTONS[i];
+        const rect = [R.ingredientsList[0] + INGREDIENT_LIST_X + bx, R.ingredientsList[1] + by, 28, 28];
+        this._icon(renderer, m, it, rect, 0);
+        drawStackLabel(renderer, font, m, it, rect, 0);
+      });
+    this.cauldron.slice(0, CAULDRON_CAPACITY).forEach((it, i) => {
+      const [bx, by] = CAULDRON_BUTTONS[i];
+      this._icon(renderer, m, it, [R.cauldronList[0] + bx, R.cauldronList[1] + by, 28, 28], 0);
+    });
+    shadowText(renderer, font, this.nameLabel, m, ...POTION_LABELS.name);
+    shadowText(renderer, font, String(this.hooks.gold?.() ?? 0), m, ...POTION_LABELS.gold);
+    if (noticeFrame(this, this.box?.rows ?? null)) this._boxLayout = null;
+    else if (this.box) {
+      this._boxLayout = layoutMessageBox(font, this.box.rows, []);
+      drawMessageBox(renderer, m, font, this._boxLayout);
+    } else this._boxLayout = null;
+    this._tip.draw(renderer, m, font); // D7: drawn LAST, over everything (DFU's final-component order)
+  }
+}

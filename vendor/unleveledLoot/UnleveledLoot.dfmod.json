@@ -1,0 +1,28 @@
+{
+    "ModTitle": "Unleveled Loot",
+    "ModVersion": "1.1.2",
+    "ModAuthor": "Ralzar",
+    "ContactInfo": "https://www.nexusmods.com/daggerfallunity/mods/135",
+    "DFUnity_Version": "1.1.1",
+    "ModDescription": "Makes loot and shop stock materials not scale to your level.",
+    "GUID": "1388308f-f430-4e43-8a9b-fa4d9b1fbbf6",
+    "Files": [
+        "Assets/Game/Mods/Unleveled Loot/UnleveledLoot.cs",
+        "Assets/Game/Mods/Unleveled Loot/modsettings.json",
+        "Assets/Game/Mods/Unleveled Loot/UnleveledLoot.dfmod.json"
+    ],
+    "Dependencies": [
+        {
+            "Name": "roleplayrealism",
+            "IsOptional": false,
+            "IsPeer": false,
+            "Version": "1.0.0"
+        },
+        {
+            "Name": "roleplayrealism-items",
+            "IsOptional": false,
+            "IsPeer": false,
+            "Version": "0.5.0"
+        }
+    ]
+}

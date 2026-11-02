@@ -1,0 +1,107 @@
+[
+  {
+    "name": "CHEST3D-the-lid-shut-in-the-open-pose",
+    "file": "tools/bakeChest.mjs",
+    "old": "  const opened = Object.fromEntries(['lid', 'hinge', 'latch'].map((k) => [k, partTriangles(tree, scene, CHEST_PARTS[k], { [LID_BONE]: pose.lid, [LATCH_BONE]: pose.latch })]));",
+    "new": "  const opened = Object.fromEntries(['lid', 'hinge', 'latch'].map((k) => [k, partTriangles(tree, scene, CHEST_PARTS[k], {})]));",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-frame-turned",
+    "file": "tools/bakeChest.mjs",
+    "old": "const toChest = ([x, y, z]) => [-y, z, x];",
+    "new": "const toChest = ([x, y, z]) => [x, z, -y];",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-a-triangle-wound-inward",
+    "file": "tools/bakeChest.mjs",
+    "old": "      if (dot(cross(sub(b, a), sub(c, a)), out) < 0) [b, c] = [c, b];\n",
+    "new": "",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-scale-past-the-box",
+    "file": "src/world/chestModel.js",
+    "old": "  return Math.min((box.max[0] - box.min[0]) / x, (box.max[1] - box.min[1]) / y, (box.max[2] - box.min[2]) / z);",
+    "new": "  return Math.max((box.max[0] - box.min[0]) / x, (box.max[1] - box.min[1]) / y, (box.max[2] - box.min[2]) / z);",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-off-the-floor",
+    "file": "src/world/chestModel.js",
+    "old": "  const at = [(box.min[0] + box.max[0]) / 2, box.min[1], (box.min[2] + box.max[2]) / 2];",
+    "new": "  const at = [(box.min[0] + box.max[0]) / 2, (box.min[1] + box.max[1]) / 2, (box.min[2] + box.max[2]) / 2];",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-latch-in-the-wood",
+    "file": "src/world/chestModel.js",
+    "old": "part === 'latch' ? look.latch ?? CHEST_BRASS : part === 'lid'",
+    "new": "part === 'latch' ? look.body : part === 'lid'",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-density",
+    "file": "src/world/chestModel.js",
+    "old": "export const CHEST_TEXELS_M = 40;",
+    "new": "export const CHEST_TEXELS_M = 20;",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-a-chest-left-to-ARCH3D",
+    "file": "src/world/chestModel.js",
+    "old": "export const CHEST_MODELS = Object.freeze([41811, 41812, 41813]);",
+    "new": "export const CHEST_MODELS = Object.freeze([41811, 41812]);",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-coffer-open-when-shut",
+    "file": "src/world/chestModel.js",
+    "old": "  registerCustomModel(AURUM_COFFER_MODELS.shut, () => chestModel(AURUM_COFFER_BOX, AURUM_COFFER_LOOK), () => true, { climateFree: true });",
+    "new": "  registerCustomModel(AURUM_COFFER_MODELS.shut, () => chestModel(AURUM_COFFER_BOX, AURUM_COFFER_LOOK, true), () => true, { climateFree: true });",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-pipeline-unregistered",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "  registerChestModels();   // CHEST3D: before any chest is asked for\n",
+    "new": "",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-sea-chest-its-own",
+    "file": "src/world/detStandIns.js",
+    "old": "  45190: () => chestModel(SEA_CHEST_BOX, SEA_CHEST_LOOK),",
+    "new": "  45190: () => chestModel(SEA_CHEST_BOX, { body: [67, 0], lid: [67, 0] }),",
+    "tests": ["test/world/chest3d.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-coffer-model-unstood",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "    if (gpu && draws) {\n      unstand();",
+    "new": "    if (false) {\n      unstand();",
+    "tests": ["test/scenes/aurum_cache_world.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-yes-not-swapped",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "await Promise.resolve(meshes.getGpuMesh(coffer.open ? AURUM_COFFER_MODELS.open : AURUM_COFFER_MODELS.shut))",
+    "new": "await Promise.resolve(meshes.getGpuMesh(AURUM_COFFER_MODELS.shut))",
+    "tests": ["test/scenes/aurum_cache_world.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-facing-toward-the-pile",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "Math.atan2(foot[0] - near.pos[0], foot[2] - near.pos[2])",
+    "new": "Math.atan2(near.pos[0] - foot[0], near.pos[2] - foot[2])",
+    "tests": ["test/scenes/aurum_cache_world.test.js"]
+  },
+  {
+    "name": "CHEST3D-the-teardown-leaving-it",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "  ctx.addTeardown?.(() => { gone = true; unstand(); if (_last === coffer) _last = null; });",
+    "new": "  ctx.addTeardown?.(() => { gone = true; if (_last === coffer) _last = null; });",
+    "tests": ["test/scenes/aurum_cache_world.test.js"]
+  }
+]

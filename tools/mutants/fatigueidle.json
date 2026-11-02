@@ -1,0 +1,83 @@
+[
+  {
+    "name": "FATIGUEIDLE-standing-still-pays-the-walk-again",
+    "file": "src/systems/worldTick.js",
+    "old": "    let loss = activity.standing && !activity.swimming ? 0 : FATIGUE_LOSS.Default;",
+    "new": "    let loss = FATIGUE_LOSS.Default;",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  },
+  {
+    "name": "FATIGUEIDLE-treading-water-counts-as-standing",
+    "file": "src/systems/worldTick.js",
+    "old": "    let loss = activity.standing && !activity.swimming ? 0 : FATIGUE_LOSS.Default;",
+    "new": "    let loss = activity.standing ? 0 : FATIGUE_LOSS.Default;",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  },
+  {
+    "name": "FATIGUEIDLE-the-world-host-forgets-standing",
+    "file": "src/scenes/world.js",
+    "old": "        running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),   // AUDIT 23 (entity-2): PlayerEntity.cs:408; STEED1: a gallop is the horse's breath, not the rider's fatigue\n        standing: !!player.standing,   // FATIGUE-IDLE: standing still on the ground pays no minute's band (worldTick.js)\n",
+    "new": "        running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),   // AUDIT 23 (entity-2): PlayerEntity.cs:408; STEED1: a gallop is the horse's breath, not the rider's fatigue\n",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  },
+  {
+    "name": "FATIGUEIDLE-the-street-host-forgets-standing",
+    "file": "src/scenes/exterior.js",
+    "old": "        running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),   // STEED1: a gallop is the horse's breath\n        standing: !!player.standing,   // FATIGUE-IDLE: standing still on the ground pays no minute's band (worldTick.js)\n",
+    "new": "        running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),   // STEED1: a gallop is the horse's breath\n",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  },
+  {
+    "name": "FATIGUEIDLE-the-interiors-forget-standing",
+    "file": "src/scenes/worldModes.js",
+    "old": "        running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2)\n        standing: !!player.standing,   // FATIGUE-IDLE: standing still on the ground pays no minute's band (worldTick.js)\n",
+    "new": "        running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2)\n",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  },
+  {
+    "name": "FATIGUEIDLE-the-dungeon-report-from-worldModes-drops-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "runningTally: player.isRunning && !player.riding, standing: !!player.standing, ",
+    "new": "runningTally: player.isRunning && !player.riding, ",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  },
+  {
+    "name": "FATIGUEIDLE-the-dungeon-host-report-drops-it",
+    "file": "src/scenes/dungeon.js",
+    "old": "runningTally: player.isRunning && !player.riding, standing: !!player.standing, ",
+    "new": "runningTally: player.isRunning && !player.riding, ",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  },
+  {
+    "name": "FATIGUEIDLE-the-report-never-hands-it-on",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      _activity.standing = standing;",
+    "new": "      void standing;",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  },
+  {
+    "name": "FATIGUEIDLE-a-silent-report-reads-as-standing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "climbing = false, standing = false, jumped = false,",
+    "new": "climbing = false, standing = true, jumped = false,",
+    "tests": [
+      "test/systems/fatigue_idle.test.js"
+    ]
+  }
+]

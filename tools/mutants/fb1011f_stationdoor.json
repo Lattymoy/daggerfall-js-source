@@ -1,0 +1,128 @@
+[
+  {
+    "name": "STATION-DOOR-no-chooser",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (Object.hasOwn(STORES_ACT_STATIONS, piece.station) && forgeOffered()) { offerStationActs(piece); return; }",
+    "new": "    if (false) { offerStationActs(piece); return; }",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-chooser-offline",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (Object.hasOwn(STORES_ACT_STATIONS, piece.station) && forgeOffered()) { offerStationActs(piece); return; }",
+    "new": "    if (Object.hasOwn(STORES_ACT_STATIONS, piece.station)) { offerStationActs(piece); return; }",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-chooser-for-every-station",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (Object.hasOwn(STORES_ACT_STATIONS, piece.station) && forgeOffered()) { offerStationActs(piece); return; }",
+    "new": "    if (forgeOffered()) { offerStationActs(piece); return; }",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-slot-left-full",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const leave = () => { if (interiorOverlay === chooser) interiorOverlay = null; };",
+    "new": "    const leave = () => {};",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-focus-never-handed",
+    "file": "src/scenes/worldModes.js",
+    "old": "action: () => { leave(); interiorKeyCtx.togglePause({ at: stationDoorAt(kind) }); } },",
+    "new": "action: () => { leave(); interiorKeyCtx.togglePause({ at: 'crafting' }); } },",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-the-wrong-page",
+    "file": "src/scenes/worldModes.js",
+    "old": "action: () => { leave(); interiorKeyCtx.togglePause({ at: stationDoorAt(kind) }); } },",
+    "new": "action: () => { leave(); interiorKeyCtx.togglePause({ at: (stationDoorAt(kind), 'professions') }); } },",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-maker-door-shut",
+    "file": "src/scenes/worldModes.js",
+    "old": "action: () => { leave(); openStationMaker(piece); } },",
+    "new": "action: () => { leave(); } },",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-maker-mislabelled",
+    "file": "src/scenes/worldModes.js",
+    "old": "SERVICE_DESTINATION[s] === DECOR_STATION_SERVICES[kind]);",
+    "new": "SERVICE_DESTINATION[s] === DECOR_STATION_SERVICES.enchant);",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-table-narrowed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "export const STORES_ACT_STATIONS = Object.freeze({ alchemy: 'Brew', enchant: 'Disenchant' });",
+    "new": "export const STORES_ACT_STATIONS = Object.freeze({ enchant: 'Disenchant' });",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-table-widened",
+    "file": "src/ui/professions/profPages.js",
+    "old": "export const STORES_ACT_STATIONS = Object.freeze({ alchemy: 'Brew', enchant: 'Disenchant' });",
+    "new": "export const STORES_ACT_STATIONS = Object.freeze({ alchemy: 'Brew', enchant: 'Disenchant', spells: 'Spell' });",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-never-scrolled",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    globalThis.requestAnimationFrame?.(() => globalThis.document?.getElementById(head.id)?.scrollIntoView?.({ block: 'start' }));",
+    "new": "    void head;",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-scrolled-every-draw",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    _storesFocus = null;\n    globalThis.requestAnimationFrame",
+    "new": "    globalThis.requestAnimationFrame",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-the-wrong-section",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  detail.append(stationHead(divider, t('prof.page.enchant', 'The Enchanting Station'), 'enchant'));   // STATION-DOOR",
+    "new": "  detail.append(stationHead(divider, t('prof.page.enchant', 'The Enchanting Station'), 'alchemy'));   // STATION-DOOR",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  },
+  {
+    "name": "STATION-DOOR-how-says-nowhere",
+    "file": "src/ui/professions/profPages.js",
+    "old": "at an enchanting station, on the Crafting page.",
+    "new": "at an enchanting station.",
+    "tests": [
+      "test/net/fb1011f_stationdoor.test.js"
+    ]
+  }
+]

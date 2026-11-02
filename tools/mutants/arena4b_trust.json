@@ -1,0 +1,156 @@
+[
+  {
+    "name": "ARENA4b-TRUST-CL-UNCHECKED",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;\n  // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused",
+    "new": "  // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CL-FRACTION",
+    "file": "src/net/identityToken.js",
+    "old": "  Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "new": "  Number.isFinite(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CL-UNMINTED",
+    "file": "src/net/identityToken.js",
+    "old": "  if (who?.cl !== undefined) claims.cl = who.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
+    "new": "  void who?.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CL-MAX",
+    "file": "src/net/identityToken.js",
+    "old": "export const CHARACTER_LEVEL_MAX = 1000;",
+    "new": "export const CHARACTER_LEVEL_MAX = 999;",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CLAIM-BELIEVED",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "  const level = Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? cl : arenaLv(lv);",
+    "new": "  const level =\n    Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? Math.max(cl, arenaLv(lv)) : arenaLv(lv);",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-UNCAPPED",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "  return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
+    "new": "  return ladderVitalityAt(\n    Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX\n      ? Math.min(level, ladderLevelCap(tier))\n      : level,\n  );",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CAP-TIER",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "  for (const b of ARENA_LADDER_SPEC[tier] ?? [])",
+    "new": "  for (const b of ARENA_LADDER_SPEC[0] ?? [])",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-MARGIN",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "export const LADDER_LV_MARGIN = 5;",
+    "new": "export const LADDER_LV_MARGIN = 0;",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-CAP-BEAST",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "  for (const b of ARENA_LADDER_SPEC[tier] ?? [])\n    for (const [m, l] of b) top = Math.max(top, l ?? ARENA_BEASTS[m]?.[0] ?? 1);",
+    "new": "  for (const b of ARENA_LADDER_SPEC[tier] ?? []) for (const [m, l] of b) top = Math.max(top, l ?? 1);",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-VITALITY-SLOPE",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "  Math.max(PVE_HP_MIN, Math.min(PVE_HP_MAX, 25 + 30 * Math.max(1, Math.floor(Number(level) || 1))));",
+    "new": "  Math.max(PVE_HP_MIN, Math.min(PVE_HP_MAX, 25 + 25 * Math.max(1, Math.floor(Number(level) || 1))));",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-ATTACH-DROPPED",
+    "file": "server/src/index.js",
+    "old": "who.cl <= ARENA_CL_MAX ? { cl: who.cl } : {}) } : {};",
+    "new": "who.cl <= ARENA_CL_MAX ? {} : {}) } : {};",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-NAMED-DROPPED",
+    "file": "server/src/index.js",
+    "old": "gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa, mg: c.mg };",
+    "new": "gio: c.i, ar: c.ar, ...house, ci: c.ci, wa: c.wa, mg: c.mg };",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
+  },
+  {
+    "name": "ARENA4b-TRUST-BOUT-UNSIGNED",
+    "file": "server/src/index.js",
+    "old": "lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
+    "new": "lv: m.lv ?? a.lv ?? 1, cl: null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-WORD-BELIEVED",
+    "file": "server/src/index.js",
+    "old": "lv: m.lv ?? a.lv ?? 1, cl: a.cl ?? null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
+    "new": "lv: m.lv ?? a.lv ?? 1, cl: m.mh ?? a.cl ?? null, title: a.title ?? null, banner: m.b ?? null, tk: m.z }]",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-VITALITY-LEVEL",
+    "file": "src/net/arena/arenaBrain.js",
+    "old": "      st.kind === 'pvp' ? (st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv)) : ladderVitality(x.cl, x.lv, st.tier),",
+    "new": "      st.kind === 'pvp' ? (st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv)) : ladderVitality(null, x.lv, st.tier),",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-BRAIN-CL-LOST",
+    "file": "src/net/arena/arenaBrain.js",
+    "old": "      cl: x.cl ?? null,",
+    "new": "      cl: null,",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  },
+  {
+    "name": "ARENA4b-TRUST-IN-HEALTH",
+    "file": "src/scenes/arena/arenaOnline.js",
+    "old": "                  ...myBanner(),",
+    "new": "                  mh: Math.max(1, Math.floor(deps.maxHealth?.() ?? 1)),\n                  ...myBanner(),",
+    "tests": [
+      "test/net/arena/arena4b_trust.test.js"
+    ]
+  }
+]

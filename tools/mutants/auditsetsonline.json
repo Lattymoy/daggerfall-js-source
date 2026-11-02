@@ -1,0 +1,246 @@
+[
+  {
+    "name": "SETS-L1-mark-on-a-body",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)",
+    "new": "export const markedFoe = (now = _now()) => (now < _s.markUntil ? _s.marked : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L1-kill-keeps-the-mark",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (entity && _s.marked === entity) _s.markUntil = 0; // AUDIT SETS L1: the marked foe's own death ends its mark (its chip counted on over a body)",
+    "new": "  if (false) _s.markUntil = 0; // AUDIT SETS L1: the marked foe's own death ends its mark (its chip counted on over a body)",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L5-re-mark-said",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (had === best.entity) return; // AUDIT SETS L5: the same foe marked again - its time renewed, nothing said (Rampage's own law)",
+    "new": "  if (false) return; // AUDIT SETS L5: the same foe marked again - its time renewed, nothing said (Rampage's own law)",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L5-ready-with-the-set-off",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);",
+    "new": "    if (setsAwake() && (!r.spent || r.spent())) say(r.line);",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L5-ready-over-a-ward",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);",
+    "new": "    if (tierOf(entity, r.set, r.tier)) say(r.line);",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L2-your-the",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "  const line = `${/^The /.test(set.name) ? set.name : `Your ${set.name}`} brightens: ${stage.name}.`; // AUDIT SETS L2: never \"Your The Broken Oath\"",
+    "new": "  const line = `Your ${set.name} brightens: ${stage.name}.`; // AUDIT SETS L2: never \"Your The Broken Oath\"",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L3-not-held",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "export const heldPlayerBlow = () => (_blow && _now() - _blow.at <= BLOW_WINDOW_S ? { attacker: _blow.attacker } : null);",
+    "new": "export const heldPlayerBlow = () => null;",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L3-not-remarked",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "export function remarkPlayerBlow(b) {\n  if (b?.attacker) _blow = { attacker: b.attacker, at: _now() };\n}",
+    "new": "export function remarkPlayerBlow(b) {}",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L3-world-remark-dropped",
+    "file": "src/scenes/world.js",
+    "old": "        remarkPlayerBlow(held);   // AUDIT SETS L3: marked again as it lands, so the set powers that answer a blow hear it\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L3-exterior-withheld-lying",
+    "file": "src/scenes/exterior.js",
+    "old": "      else playerBlowCameToNothing(playerEntity);   // AUDIT SETS L3: withheld now - its mark is the door's \"nothing\", never the next hurt's\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L4-warded-blow-modded",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (target.warded) return damage; // AUDIT SETS L4: the Warden's ward turns the blow whole - Riposte is not spent on it (dungeonContext.js gateBossBody marks his stand-in)",
+    "new": "  if (false) return damage; // AUDIT SETS L4: the Warden's ward turns the blow whole - Riposte is not spent on it (dungeonContext.js gateBossBody marks his stand-in)",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L4-ward-off-the-stand-in",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    b.entity.warded = !!b.warded;",
+    "new": "",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-k-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  if (r.k !== undefined) { if (!Number.isFinite(r.k) || r.k < 1 || r.k > FOE_HEALTH_MAX) return null; out.k = r.k; }",
+    "new": "  if (r.k !== undefined) { out.k = r.k; }",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-k-dropped",
+    "file": "src/net/wire.js",
+    "old": "  if (r.k !== undefined) { if (!Number.isFinite(r.k) || r.k < 1 || r.k > FOE_HEALTH_MAX) return null; out.k = r.k; }",
+    "new": "  if (r.k !== undefined) { if (!Number.isFinite(r.k) || r.k < 1 || r.k > FOE_HEALTH_MAX) return null; }",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-puppet-untaken",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (r.k !== undefined) f.entity.maxHealth = r.k;",
+    "new": "",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M1-guest-untaken",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (Number.isFinite(r.k)) f.entity.maxHealth = r.k;",
+    "new": "",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M2-unreadable-forgotten",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "    if (!items) {\n      if (unreadable && interiorLootTarget(ctx, canon)) {\n        seen.add(canon);\n        unreadable.add(canon);\n      }\n      continue;\n    }",
+    "new": "    if (!items) continue;",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M2-never-cleared",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "    unreadable?.delete(canon);\n    if (canon === openKey) {",
+    "new": "    if (canon === openKey) {",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M2-building-claims-over-it",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "  if (bag.unreadable?.has(canon)) return false; // AUDIT SETS M2: never over a word this build cannot read\n  if (claim && bag.seen.has(canon)) return false;",
+    "new": "  if (claim && bag.seen.has(canon)) return false;",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M2-dungeon-claims-over-it",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_lootUnreadable.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M2-dungeon-opens-it",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(roomUnreadableText(lootKeyOf(_u))); return 0; } }   // RPT1026-ITEMS LOOT-SKEW: another build's base said as one (roomLootHost.js); AUDIT SETS M2: not opened here - AUDIT GRAVE-PARTY G2: a room container too (PARTY-LOOT's), a target again so its press says so (roomLootHost.js roomUnborn)\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ],
+    "note": "PIN MOVED BACK (AUDIT GRAVE-PARTY G2): GRAVE-PARTY's personal arm (roomPersonal) is gone and the line is M2's refusal again, its comment saying so - re-aimed by content; deleting it still opens what no word says may open. PIN MOVED (RPT1026-ITEMS LOOT-SKEW): the refusal says roomUnreadableText's line (another build's base said as one) - re-aimed by content; deleting the line still opens it."
+  },
+  {
+    "name": "SETS-L6-values-unchecked",
+    "file": "src/systems/aetheric.js",
+    "old": "      if (r.set !== REGALIA_SET && !(a.value <= want[i].value)) return null;",
+    "new": "      if (false) return null;",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L6-kinds-unchecked",
+    "file": "src/systems/aetheric.js",
+    "old": "      if (a?.id !== want[i].id || (a.param ?? null) !== (want[i].param ?? null)) return null;",
+    "new": "      if (false) return null;",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L6-count-unchecked",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (have.length !== want.length) return null;\n    for (let i = 0; i < want.length; i++) {",
+    "new": "    for (let i = 0; i < Math.min(have.length, want.length); i++) {",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L6-blow-unchecked",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (item.sigil?.power !== undefined && item.sigil.power !== r.power) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-L6-regalia-legacy-refused",
+    "file": "src/systems/aetheric.js",
+    "old": "      if (r.set !== REGALIA_SET && !(a.value <= want[i].value)) return null;",
+    "new": "      if (!(a.value <= want[i].value)) return null;",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "SETS-M2-due-back-locks",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (lootHolder(canon) && !respawnDue(rec.t, _wallNow())) { _lootSeen.add(canon); _lootUnreadable.add(canon); }",
+    "new": "if (lootHolder(canon)) { _lootSeen.add(canon); _lootUnreadable.add(canon); }",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  }
+]

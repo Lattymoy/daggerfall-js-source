@@ -1,0 +1,56 @@
+[
+  {
+    "name": "CLIMB-NODE-the-hold-never-asked",
+    "file": "src/player/motor.js",
+    "old": "    if (pk.hold?.()) { this._fcStart = null; return false; }",
+    "new": "    if (false) { this._fcStart = null; return false; }",
+    "tests": [
+      "test/player/fb1001_climbnode.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB-NODE-the-hold-read-backwards",
+    "file": "src/player/motor.js",
+    "old": "    if (pk.hold?.()) { this._fcStart = null; return false; }",
+    "new": "    if (!pk.hold?.()) { this._fcStart = null; return false; }",
+    "tests": [
+      "test/player/fb1001_climbnode.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB-NODE-the-count-kept-through-the-hold",
+    "file": "src/player/motor.js",
+    "old": "    if (pk.hold?.()) { this._fcStart = null; return false; }",
+    "new": "    if (pk.hold?.()) return false;",
+    "tests": [
+      "test/player/fb1001_climbnode.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB-NODE-the-deps-drop-it",
+    "file": "src/scenes/shared.js",
+    "old": "    say,\n    hold,\n  };",
+    "new": "    say,\n  };",
+    "tests": [
+      "test/player/fb1001_climbnode.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB-NODE-the-host-asks-the-act-alone",
+    "file": "src/scenes/world.js",
+    "old": "{ hold: () => !!gatherHost && (gatherHost.acting() || !!gatherHost.target) }",
+    "new": "{ hold: () => !!gatherHost && gatherHost.acting() }",
+    "tests": [
+      "test/player/fb1001_climbnode.test.js"
+    ]
+  },
+  {
+    "name": "CLIMB-NODE-the-host-asks-the-target-alone",
+    "file": "src/scenes/world.js",
+    "old": "{ hold: () => !!gatherHost && (gatherHost.acting() || !!gatherHost.target) }",
+    "new": "{ hold: () => !!gatherHost && !!gatherHost.target }",
+    "tests": [
+      "test/player/fb1001_climbnode.test.js"
+    ]
+  }
+]

@@ -1,0 +1,238 @@
+[
+  {
+    "name": "CLUTTER-overlap-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "      placed.some(",
+    "new": "      false &&\n      placed.some(",
+    "tests": [
+      "test/ui/naval/shipclutter.test.js"
+    ]
+  },
+  {
+    "name": "CLUTTER-every-line-read",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const detail = t === lead && tagLine(t) !== '';",
+    "new": "    const detail = tagLine(t) !== '';",
+    "tests": [
+      "test/ui/naval/shipclutter.test.js"
+    ]
+  },
+  {
+    "name": "CLUTTER-no-hold",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const pad = (TAG_CLEAR + (held?.has(t.id) ? TAG_HOLD : 0)) * scale;",
+    "new": "    const pad = TAG_CLEAR * scale;",
+    "tests": [
+      "test/ui/naval/shipclutter.test.js"
+    ]
+  },
+  {
+    "name": "CLUTTER-by-distance-alone",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const rank = (t) => (t === lead ? 0 : t.hostile ? 1 : 2);",
+    "new": "  const rank = () => 0;",
+    "tests": [
+      "test/ui/naval/shipclutter.test.js"
+    ]
+  },
+  {
+    "name": "CLUTTER-target-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  let lead = list.find((t) => t.target) ?? null;",
+    "new": "  let lead = null;",
+    "tests": [
+      "test/ui/naval/shipclutter.test.js"
+    ]
+  },
+  {
+    "name": "CLUTTER-radius-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    let best = TAG_FOCUS_PX * scale;",
+    "new": "    let best = Infinity;",
+    "tests": [
+      "test/ui/naval/shipclutter.test.js"
+    ]
+  },
+  {
+    "name": "CLUTTER-draw-unlaid",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const want = covered ? [] : layoutNavalTags(points, { scale, focus, held: tagHeld });",
+    "new": "  const want = covered ? [] : (points ?? []).map((t) => ({ ...t, detail: true }));",
+    "tests": [
+      "test/ui/naval/shipclutter.test.js"
+    ]
+  },
+  {
+    "name": "CLUTTER-hold-never-kept",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  tagHeld = new Set((covered ? [] : (points ?? [])).filter((t) => t && !drawn.has(t.id)).map((t) => t.id));",
+    "new": "  tagHeld = new Set();",
+    "tests": [
+      "test/ui/naval/shipclutter.test.js"
+    ]
+  },
+  {
+    "name": "CLUTTER-crosshair-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "reach: NAVAL_TAG_RANGE, focus: { x: r.x + r.w / 2, y: r.y + r.h / 2 } });",
+    "new": "reach: NAVAL_TAG_RANGE });",
+    "tests": [
+      "test/systems/naval/navaudit_presentation.test.js"
+    ]
+  },
+  {
+    "name": "GHOST-cap-unread",
+    "file": "src/ui/barLoss.js",
+    "old": "  if (stood < GHOST_HOLD_MAX) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/ui/ghostcap.test.js"
+    ]
+  },
+  {
+    "name": "GHOST-stood-unkept",
+    "file": "src/ui/barLoss.js",
+    "old": "  const stood = (g.stood ?? 0) + dt;",
+    "new": "  const stood = 0 * dt;",
+    "tests": [
+      "test/ui/ghostcap.test.js"
+    ]
+  },
+  {
+    "name": "GHOST-dim-undone",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "  background: var(--v-body); opacity: 0.35; }",
+    "new": "  background: linear-gradient(180deg, #fff6e4 0 2px, var(--v-hi) 2px 17px, var(--v-lite) 17px 100%);\n  opacity: 0.55; }",
+    "tests": [
+      "test/ui/ghostcap.test.js"
+    ]
+  },
+  {
+    "name": "TOLIVE-boot-bag-whole",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k];",
+    "new": "  if (boot) return boot;",
+    "tests": [
+      "test/systems/to_live.test.js"
+    ]
+  },
+  {
+    "name": "TOLIVE-restart-half-afresh",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k];",
+    "new": "  void TRAVEL_OPTIONS_RESTART_KEYS;",
+    "tests": [
+      "test/systems/to_live.test.js"
+    ]
+  },
+  {
+    "name": "TOLIVE-never-refreshed",
+    "file": "src/scenes/world.js",
+    "old": "    travelOptionsSettings = readTravelOptionsSettings(modSetting, travelOptionsBoot);\n",
+    "new": "",
+    "tests": [
+      "test/systems/to_live.test.js"
+    ]
+  },
+  {
+    "name": "TOLIVE-not-handed",
+    "file": "src/scenes/world.js",
+    "old": "    if (travelOptions) travelOptions.settings = travelOptionsSettings;   // RATE-LAW: no limit dial to carry to the panel\n",
+    "new": "",
+    "tests": [
+      "test/systems/to_live.test.js"
+    ]
+  },
+  {
+    "name": "TOLIVE-map-unrefreshed",
+    "file": "src/scenes/travelFareHost.js",
+    "old": "      travelOptions: () => {\n        refreshTravelOptionsSettings();\n        return host.travelOptions;\n      }, // TO-LIVE: the live keys as they stand at the map's open",
+    "new": "      travelOptions: () => host.travelOptions, // TO-LIVE: the live keys as they stand at the map's open",
+    "tests": [
+      "test/systems/to_live.test.js"
+    ]
+  },
+  {
+    "name": "TOLIVE-inns-off-tile",
+    "file": "src/systems/features.js",
+    "old": "'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',",
+    "new": "'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',",
+    "tests": [
+      "test/systems/to_live.test.js"
+    ]
+  },
+  {
+    "name": "KEYBOOT-latch-gone",
+    "file": "src/scenes/world.js",
+    "old": "    if (!_worldKeysLive) return;   // KEY-BOOT: the ladder's arms read bindings the boot has not reached yet\n",
+    "new": "",
+    "tests": [
+      "test/scenes/keyboot.test.js"
+    ]
+  },
+  {
+    "name": "KEYBOOT-never-lifted",
+    "file": "src/scenes/world.js",
+    "old": "  _worldKeysLive = true;   // KEY-BOOT: past the boot's last await",
+    "new": "  void _worldKeysLive;   // KEY-BOOT: past the boot's last await",
+    "tests": [
+      "test/scenes/keyboot.test.js"
+    ]
+  },
+  {
+    "name": "SWIMEYE-the-ports-0.20",
+    "file": "src/player/motor.js",
+    "old": "export const SWIM_EYE_HEIGHT = CAPSULE_RADIUS + SWIM_HEIGHT / 2;",
+    "new": "export const SWIM_EYE_HEIGHT = 0.20;",
+    "tests": [
+      "test/player/swimeye.test.js",
+      "test/player/a6_motor_residue.test.js"
+    ]
+  },
+  {
+    "name": "SWIMEYE-ride-the-ports-0.50",
+    "file": "src/player/motor.js",
+    "old": "export const SWIM_RIDE_EYE_HEIGHT = CAPSULE_RADIUS + (SWIM_HEIGHT + SWIM_HORSE_DISPLACEMENT) / 2;",
+    "new": "export const SWIM_RIDE_EYE_HEIGHT = 0.50;",
+    "tests": [
+      "test/player/swimeye.test.js",
+      "test/player/a6_motor_residue.test.js"
+    ]
+  },
+  {
+    "name": "SPRITEGRAD-bb-ternary",
+    "file": "src/render/renderer.js",
+    "old": "  vec4 tex = texture(uTex, uv);\n  vec3 emissionTexel",
+    "new": "  vec4 tex = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? vec4(0.0) : texture(uTex, uv);\n  vec3 emissionTexel",
+    "tests": [
+      "test/render/spritegrad.test.js"
+    ]
+  },
+  {
+    "name": "SPRITEGRAD-el-ternary",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec4 tex = texture(uTex, uv);",
+    "new": "  vec4 tex = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? vec4(0.0) : texture(uTex, uv);",
+    "tests": [
+      "test/render/spritegrad.test.js"
+    ]
+  },
+  {
+    "name": "SPRITEGRAD-bb-emission-past-cut",
+    "file": "src/render/renderer.js",
+    "old": "  vec3 emission = emissionTexel;   // SPRITE-GRAD: sampled above the cut",
+    "new": "  vec3 emission = texture(uEmissionTex, uv).rgb;",
+    "tests": [
+      "test/render/spritegrad.test.js"
+    ]
+  },
+  {
+    "name": "SPRITEGRAD-el-emission-past-cut",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 emission = elDecode(emissionTexel);   // SPRITE-GRAD: sampled above the cut",
+    "new": "  vec3 emission = elDecode(texture(uEmissionTex, uv).rgb);",
+    "tests": [
+      "test/render/spritegrad.test.js"
+    ]
+  }
+]

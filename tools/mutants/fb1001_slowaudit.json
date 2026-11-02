@@ -1,0 +1,56 @@
+[
+  {
+    "name": "SP1-air-control-re-presses-the-face",
+    "file": "src/player/motor.js",
+    "old": "      if (n) { const d = vx * n[0] + vz * n[1]; if (d > 0) { vx -= d * n[0]; vz -= d * n[1]; } }",
+    "new": "",
+    "tests": [
+      "test/player/fb1001_slowaudit.test.js"
+    ]
+  },
+  {
+    "name": "SP1-the-refused-way-never-kept",
+    "file": "src/player/motor.js",
+    "old": "        if (l > 1e-3) this._slowPress = [lx / l, lz / l];",
+    "new": "",
+    "tests": [
+      "test/player/fb1001_slowaudit.test.js"
+    ]
+  },
+  {
+    "name": "SP2-spent-on-the-touch",
+    "file": "src/player/motor.js",
+    "old": "      if (this._slowHeld > STEP_OFFSET) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/player/fb1001_slowaudit.test.js"
+    ]
+  },
+  {
+    "name": "SP2-the-hold-never-let-go",
+    "file": "src/player/motor.js",
+    "old": "      else { this._slowHeld = 0; this._slowPress = null; }   // nothing holds it up",
+    "new": "      else { }   // nothing holds it up",
+    "tests": [
+      "test/player/fb1001_slowaudit.test.js"
+    ]
+  },
+  {
+    "name": "SP-the-held-glide-zeroed",
+    "file": "src/player/motor.js",
+    "old": "        if (ax * ax + az * az < vx * vx + vz * vz - 1e-6) { this._airVelX = ax; this._airVelZ = az; }\n      }\n    } else",
+    "new": "        if (ax * ax + az * az < vx * vx + vz * vz - 1e-6) { this._airVelX = 0; this._airVelZ = 0; }\n      }\n    } else",
+    "tests": [
+      "test/player/fb1001_slowaudit.test.js"
+    ]
+  },
+  {
+    "name": "SP-every-slip-under-the-spell-ends-the-climb",
+    "file": "src/player/climbing.js",
+    "old": "      (airborneGraspWall && c.slowFalling) || // SLOW-GRASP (FIELD BUGS 2026-10-01): a slow fall is not grasped onto a wall (the spell makes the 0.77 s timer 1.6 m of descent, re-rolled all the way down)",
+    "new": "      (airborneGraspWall && c.slowFalling) ||\n      (c.falling && c.slowFalling) || // SLOW-GRASP (FIELD BUGS 2026-10-01): a slow fall is not grasped onto a wall (the spell makes the 0.77 s timer 1.6 m of descent, re-rolled all the way down)",
+    "tests": [
+      "test/player/fb1001_slowaudit.test.js"
+    ]
+  }
+]

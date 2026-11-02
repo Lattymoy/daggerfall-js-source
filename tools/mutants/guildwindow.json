@@ -1,0 +1,353 @@
+[
+  {
+    "name": "GUILD-WINDOW-the-mode-unwritten",
+    "file": "src/ui/socialPanel.js",
+    "old": "      root.dataset.mode = mode;\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-name-unmoved",
+    "file": "src/ui/socialPanel.js",
+    "old": "titleEl.textContent = mode === 'guild' ? t('social.guild.title', 'Guild') : 'Social';",
+    "new": "titleEl.textContent = 'Social';",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-way-back-to-friends-always",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (tab !== 'guild') return;\n    tab = socialTab; confirm = null; ui++;",
+    "new": "    if (tab !== 'guild') return;\n    tab = 'friends'; confirm = null; ui++;",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-a-count-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": ", vault: `${v.vault?.used ?? 0}/${v.vault?.max ?? GUILD_VAULT_SLOTS}` };",
+    "new": " };",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-words-unread",
+    "file": "src/ui/socialPanel.js",
+    "old": "el('span', 'dfguild-navsub', words[id] ?? '')",
+    "new": "el('span', 'dfguild-navsub', '')",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-names-unread",
+    "file": "src/ui/socialPanel.js",
+    "old": "el('span', 'dfguild-navlabel', names[id] ?? label)",
+    "new": "el('span', 'dfguild-navlabel', label + ' ')",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-every-tab-in-the-tab-order",
+    "file": "src/ui/socialPanel.js",
+    "old": "b.setAttribute('tabindex', id === page ? '0' : '-1');",
+    "new": "b.setAttribute('tabindex', '0');",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-orientation-fixed",
+    "file": "src/ui/socialPanel.js",
+    "old": "strip.setAttribute('aria-orientation', row ? 'horizontal' : 'vertical');",
+    "new": "strip.setAttribute('aria-orientation', 'vertical');",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-walk-one-way",
+    "file": "src/ui/socialPanel.js",
+    "old": "e.code === 'ArrowUp' || e.code === 'ArrowLeft' ? -1 : 0",
+    "new": "e.code === 'ArrowUp' || e.code === 'ArrowLeft' ? 1 : 0",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-a-key-not-ours-stopped",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (!step) return;\n    e.stopPropagation?.();",
+    "new": "    e.stopPropagation?.();",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W3-the-world-handed-an-arrow",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (!step) return;\n    e.stopPropagation?.();\n    if (!stripEl",
+    "new": "    if (!step) return;\n    if (!stripEl",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W4-a-repeat-turning",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (e.repeat) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W10-no-focus-in",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (root.dataset.mode !== mode) focusOwed = mode === 'guild';",
+    "new": "if (root.dataset.mode !== mode) focusOwed = false;",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W10-the-focus-lost-to-a-press",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (open && (focusOwed || focusIn) && stripBtns.get(stripPage))",
+    "new": "if (open && focusOwed && stripBtns.get(stripPage))",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W10-the-focus-left-behind",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (open) { repaint(); tabBtns.get(tab)?.b?.focus?.(); }",
+    "new": "if (open) repaint();",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W11-the-close-misnamed",
+    "file": "src/ui/socialPanel.js",
+    "old": "closeBtn.setAttribute('aria-label', mode === 'guild' ? t('social.guild.close', 'Close guild') : CLOSE_SOCIAL_LABEL);",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W5-the-door-left-on-the-guild",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (tab === 'guild') { tab = socialTab; confirm = null; ui++; }\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W16-the-badge-unsummed",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (id !== 'guild') n += Number(badgeText(id)) || 0;",
+    "new": "if (id === 'friends') n = 0;",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W16-the-badge-unread-on-the-live-pass",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (backBadge) { const want = backBadgeText(); if (backBadge.textContent !== want) backBadge.textContent = want; }",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-cards-unmade",
+    "file": "src/ui/socialPanel.js",
+    "old": "main.append(...guildCards(out));",
+    "new": "main.append(...out);",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-heading-not-opening-one",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (!card || String(n?.className ?? '').split(/\\s+/).includes('dfsocial-sec'))",
+    "new": "if (!card)",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W13-the-words-in-the-column",
+    "file": "src/ui/socialPanel.js",
+    "old": "    const rest = nodes.filter((n) => !isSaid(n));",
+    "new": "    const rest = nodes;",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W13-the-foot-only-with-words",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (rest.some((n) => String(n?.className ?? '').split(/\\s+/).includes('dfguild-layout'))) return [...rest, foot];",
+    "new": "if (rest.some((n) => String(n?.className ?? '').split(/\\s+/).includes('dfguild-layout'))) return foot.children.length ? [...rest, foot] : rest;",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-place-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (kept.top) now.scrollTop = kept.top; ",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-place-carried-to-another-page",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (now.dataset?.page === kept.page) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W6-the-body's-place-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (kept.body) body.scrollTop = kept.body; ",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W12-the-row's-place-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": "      if (nav && kept.nav) nav.scrollLeft = kept.nav;\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-unstamped-counted",
+    "file": "src/ui/socialPanel.js",
+    "old": "filter((m) => guildMemberOnline(m, now) === true)",
+    "new": "filter((m) => guildMemberOnline(m, now) !== false)",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-online-line-painted-once",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (sub) { const n = el('div', 'dfguild-statsub', sub()); s.append(n); liveSubs.push({ el: n, of: sub }); }",
+    "new": "if (sub) { const n = el('div', 'dfguild-statsub', sub()); s.append(n); }",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-a-rule-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": ".dfsocial[data-mode=\"guild\"] .dfsocial-tabs { display: none; }",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W7-the-chat-covered",
+    "file": "src/ui/socialPanel.js",
+    "old": "left: var(--dfguild-l); width: min(var(--dfguild-w), calc(100vw - 14px - var(--dfguild-l))); }",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W2-the-finger's-sizes-outranked",
+    "file": "src/ui/socialPanel.js",
+    "old": ".dfsocial.touch[data-mode=\"guild\"] .dfguild-main .dfsocial-swatch { width: 44px; height: 44px; }",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W6-the-short-screen-unscrolled",
+    "file": "src/ui/socialPanel.js",
+    "old": "  .dfsocial[data-mode=\"guild\"] .dfsocial-body { overflow-y: auto; }\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W1-the-toasts'-strip-taken",
+    "file": "src/ui/socialPanel.js",
+    "old": "    top: var(--dfguild-t);\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W14-the-window-read-again",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": ".dfsocial[data-open=\"1\"]:not([data-mode=\"guild\"])",
+    "new": ".dfsocial[data-open=\"1\"]",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-silver-tile-always",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (g.marks?.state?.open === true) stat(t('social.guild.stat.silver', 'Silver')",
+    "new": "stat(t('social.guild.stat.silver', 'Silver')",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-WINDOW-the-tiles-unnamed",
+    "file": "src/ui/socialPanel.js",
+    "old": "s.append(el('div', 'dfguild-statlabel', label), el('div', 'dfguild-statvalue', value));",
+    "new": "s.append(el('div', 'dfguild-statvalue', value));",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W1-the-foot-unpublished",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (y !== toastFoot) { toastFoot = y; doc.documentElement?.style?.setProperty?.('--dfsocial-toast-b', `${y}px`); }",
+    "new": "",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GUILD-WINDOW-W1-a-quiet-frame-measured",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (!wasUp || name !== toastSaid[0] || sub !== toastSaid[1]) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/net/guild/guildwindow.test.js"
+    ]
+  }
+]

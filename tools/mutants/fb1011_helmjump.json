@@ -1,0 +1,8 @@
+[
+  {"name": "HJ-not-raised", "file": "src/scenes/world.js", "old": "    if (modEvent == null && !resolveArrival) csaPreJump();\n", "new": "", "tests": ["test/scenes/fb1011_helmjump.test.js"]},
+  {"name": "HJ-party-released-early", "file": "src/scenes/world.js", "old": "    if (modEvent == null && !resolveArrival) csaPreJump();", "new": "    if (modEvent == null) csaPreJump();", "tests": ["test/scenes/fb1011_helmjump.test.js"]},
+  {"name": "HJ-runtime-not-asked", "file": "src/scenes/world.js", "old": "const csaPreJump = () => { if (csaRuntime) csaCall(() => csaRuntime.OnPreJump()); };", "new": "const csaPreJump = () => {};", "tests": ["test/scenes/fb1011_helmjump.test.js"]},
+  {"name": "HJ-not-packed", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (state.disembarking != null) EndDisembark();\n    OnPreFastTravel();", "new": "    if (state.disembarking != null) EndDisembark();\n    if (isSailing()) StopSailing();", "tests": ["test/systems/comeSailAway/csa_sailing.test.js"]},
+  {"name": "HJ-hold-kept", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (state.disembarking != null) EndDisembark();\n    OnPreFastTravel();", "new": "    OnPreFastTravel();", "tests": ["test/systems/comeSailAway/csa_sailing.test.js"]},
+  {"name": "HJ-noop", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (state.disembarking != null) EndDisembark();\n    OnPreFastTravel();", "new": "    ResetTimeScale(false);", "tests": ["test/systems/comeSailAway/csa_sailing.test.js"]}
+]

@@ -1,0 +1,839 @@
+[
+  {
+    "name": "LW12-count",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const BAND_TOWNS_PER = 40;",
+    "new": "export const BAND_TOWNS_PER = 30;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-count-max",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const BANDS_MAX = 4;",
+    "new": "export const BANDS_MAX = 3;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-count-lone",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const bandCount = (n) => (n > 1 ? Math.min(BANDS_MAX, 1 + Math.floor(n / BAND_TOWNS_PER)) : 0);",
+    "new": "export const bandCount = (n) => (n > 0 ? Math.min(BANDS_MAX, 1 + Math.floor(n / BAND_TOWNS_PER)) : 0);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-leg-near",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const BAND_LEG_PX = Object.freeze([3, 14]);",
+    "new": "export const BAND_LEG_PX = Object.freeze([2, 14]);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-leg-far",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const BAND_LEG_PX = Object.freeze([3, 14]);",
+    "new": "export const BAND_LEG_PX = Object.freeze([3, 16]);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-leg-blocks",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "  const big = towns.filter((t) => (t.blocks | 0) >= BAND_TOWN_BLOCKS);",
+    "new": "  const big = towns;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-pending",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    if (plan === undefined) return undefined; // not planned yet: asked again\n    const at = plan?.pixels?.length",
+    "new": "    const at = plan?.pixels?.length",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-legs-distinct",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    while (taken.has(k)) k = (k + 1) % legs.length;\n    taken.add(k);",
+    "new": "    taken.add(k);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-off-town",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "        if (world.townsNear(px, py, 0).length) continue;\n        const c = pixelNative(px, py);",
+    "new": "        const c = pixelNative(px, py);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-off-dry",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "        if (world.dryAt && !world.dryAt(c.x, c.z)) continue;\n        return { px, py };",
+    "new": "        return { px, py };",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-off-near",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const HIDEOUT_OFF_PX = Object.freeze([1, 2]);",
+    "new": "export const HIDEOUT_OFF_PX = Object.freeze([0, 2]);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-patrolled",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "  const patrolled = top >= COURT_BLOCKS;",
+    "new": "  const patrolled = top > 24;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-rout-chance",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const ROUT_CHANCE = Object.freeze({ patrolled: 0.45, wild: 0.15 });",
+    "new": "export const ROUT_CHANCE = Object.freeze({ patrolled: 0.15, wild: 0.45 });",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-vacant",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const BAND_VACANT_DAYS = 20;",
+    "new": "export const BAND_VACANT_DAYS = 10;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-era",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const BAND_ERA_DAYS = 60;",
+    "new": "export const BAND_ERA_DAYS = 90;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-gen-count",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    gen++;\n    formedT = r + vac;",
+    "new": "    formedT = r + vac;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-gen-vacant",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "      vacant = true;\n      continue;",
+    "new": "      continue;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-heir-vacant",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    if (t < r.t + vac) return null;\n    heir++;",
+    "new": "    heir++;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-heir-future",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    if (r.t > t) break; // a rout to come is no rout yet (a load past it reads it from its minute)\n    if (t < r.t + vac) return null;",
+    "new": "    if (t < r.t + vac) return null;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-size",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const BAND_SIZE = Object.freeze([4, 8]);",
+    "new": "export const BAND_SIZE = Object.freeze([3, 8]);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-leader",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    const level = Math.max(1, base + (i === 0 ? 3 : rollInt(rng, -1, 2)));",
+    "new": "    const level = Math.max(1, base + rollInt(rng, -1, 2));",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-level-base",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "  const base = Math.max(2, Math.min(14, 2 + Math.floor((h.top | 0) / 6)));",
+    "new": "  const base = Math.max(2, Math.min(14, 2 + Math.floor((h.top | 0) / 8)));",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-name-leader",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "  return rng() < 1 / 3 && first ? `${first}'s ${noun}` : `the ${word} ${noun}`;",
+    "new": "  return false && first ? `${first}'s ${noun}` : `the ${word} ${noun}`;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-reach",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const OUTLAW_REACH_PX = 2;",
+    "new": "export const OUTLAW_REACH_PX = 3;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-share",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const BAND_SHARE = 0.6;",
+    "new": "export const BAND_SHARE = 0.5;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-trouble-vacant",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    if (!band) continue;",
+    "new": "    if (!band) return null;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-take-days",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const TAKE_DAYS = 14;",
+    "new": "export const TAKE_DAYS = 7;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-take-share",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const TAKE_PURSE_SHARE = 0.25;",
+    "new": "export const TAKE_PURSE_SHARE = 0.5;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-take-goods-max",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "export const TAKE_GOODS_MAX = 16;",
+    "new": "export const TAKE_GOODS_MAX = 20;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-take-band",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    if (!e || e.kind !== 'robbed' || e.band !== band.key || e.t0 < from || e.t0 > t || seen.has(tr.id)) return false;",
+    "new": "    if (!e || e.kind !== 'robbed' || e.t0 < from || e.t0 > t || seen.has(tr.id)) return false;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-take-formed",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "  const from = Math.max(band.formedT, t - TAKE_DAYS * DAY_MIN);",
+    "new": "  const from = t - TAKE_DAYS * DAY_MIN;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-take-dup",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "    if (!e || e.kind !== 'robbed' || e.band !== band.key || e.t0 < from || e.t0 > t || seen.has(tr.id)) return false;",
+    "new": "    if (!e || e.kind !== 'robbed' || e.band !== band.key || e.t0 < from || e.t0 > t) return false;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-rob-ratio",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "export const ROB_RATIO = 0.6;",
+    "new": "export const ROB_RATIO = 0.4;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-robbed",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    if (outlaws && sP < ROB_RATIO * sF)\n      shape = 'robbed'; // LW12: it yields\n    else {",
+    "new": "    {",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-band-foes",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  const foes = outlaws\n    ? outlaws.foes\n    : (world.foesOf({ climateIndex: world.climateAt(px, py), px, py, minute: t0, level, size, rolls: rng }) ?? []); // BAY-LEFT-GROUND (D2): and the place, so the group is the land's own wild there - past the Bay its zone's",
+    "new": "  const foes =\n    world.foesOf({ climateIndex: world.climateAt(px, py), px, py, minute: t0, level, size, rolls: rng }) ?? []; // BAY-LEFT-GROUND (D2): and the place, so the group is the land's own wild there - past the Bay its zone's",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-band-level",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  const foeLv = outlaws ? outlaws.level : level;",
+    "new": "  const foeLv = level;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-band-named",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    ...(outlaws ? { band: outlaws.band.key, bandName: outlaws.band.name } : {}),",
+    "new": "    ...{},",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-robbed-trip",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "  const robbed = enc.kind === 'robbed' ? { robbed: { t: enc.t0, by: enc.band } } : {};",
+    "new": "  const robbed = {};",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-halt",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "export const HALT_MIN = Object.freeze({ driven: 25, won: 60, fled: 15, fell: 45, robbed: 30 });",
+    "new": "export const HALT_MIN = Object.freeze({ driven: 25, won: 60, fled: 15, fell: 45, robbed: 45 });",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-news-band",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "...(enc.bandName ? { band: enc.bandName } : {}), place:",
+    "new": "place:",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-routed-region",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (!key.startsWith(region) || known > t",
+    "new": "      if (known > t",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-routed-pool",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "                : item.kind === 'routed'\n                  ? ROUTED_NEWS // LW12: a band the player routed\n                  : item.kind === 'held'\n                    ? HELD_NEWS // LW16: a party the player robbed\n                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                      ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                      : item.sea\n                        ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words\n                        : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
+    "new": "                : item.kind === 'held'\n                  ? HELD_NEWS // LW16: a party the player robbed\n                  : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                    ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                    : item.sea\n                      ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words\n                      : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-reach",
+    "file": "src/scenes/hideouts.js",
+    "old": "export const BAND_LIVE_M = 200;",
+    "new": "export const BAND_LIVE_M = 300;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-keep",
+    "file": "src/scenes/hideouts.js",
+    "old": "        if (d > BAND_KEEP_M && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) {",
+    "new": "        if (d > BAND_KEEP_M * 10 && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) {",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-owner",
+    "file": "src/scenes/hideouts.js",
+    "old": "      stand(near.h, t, deps.owner(deps.sceneOf(near.h.x, near.h.z)));",
+    "new": "      stand(near.h, t, true);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-night",
+    "file": "src/scenes/hideouts.js",
+    "old": "  return night ? band.people.slice(0, Math.ceil(band.people.length / 2)) : band.people;",
+    "new": "  return band.people;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-name",
+    "file": "src/scenes/hideouts.js",
+    "old": "          if (rec.entity) rec.entity.name = p.name;\n          rec.living = { outlaw: p.id };",
+    "new": "          rec.living = { outlaw: p.id };",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-looted-read",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (!rel()?.turns?.()?.looted?.has(s.band.key) && c.items.length) {",
+    "new": "    if (c.items.length) {",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-looted-write",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (!s.pile || s.looted || asMinted(s.pile, s.minted)) return;",
+    "new": "    if (!s.pile || s.looted) return;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-takeout",
+    "file": "src/scenes/hideouts.js",
+    "old": "    for (const rec of s.foes) if (!rec.dead) takeOut(rec);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-rout-all",
+    "file": "src/scenes/hideouts.js",
+    "old": "          if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
+    "new": "          if (stood.foes.some((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-rout-once",
+    "file": "src/scenes/hideouts.js",
+    "old": "        if (stood.band && stood.owned && !stood.routed && !stood.spawning && (stood.foes.length || stood.allDown)) {",
+    "new": "        if (stood.band && stood.owned && !stood.spawning && (stood.foes.length || stood.allDown)) {",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-rout-key",
+    "file": "src/scenes/hideouts.js",
+    "old": "    r?.turn?.('routed', `${s.h.key}@${s.band.gen}.${s.band.heir}`, { t, who: s.band.name });",
+    "new": "    r?.turn?.('routed', `${s.h.key}@${s.band.gen}.0`, { t, who: s.band.name });",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-thanks",
+    "file": "src/scenes/hideouts.js",
+    "old": "          r?.note?.(m.id, 'helped', day);\n        }",
+    "new": "        }",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-heard-far",
+    "file": "src/scenes/hideouts.js",
+    "old": "        if (Math.max(Math.abs(h.x - x), Math.abs(h.z - z)) > HEARD_PX * NATIVE_PIXEL) continue;\n        const band = deps.bandAt(h, t);",
+    "new": "        const band = deps.bandAt(h, t);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-heard-once",
+    "file": "src/scenes/hideouts.js",
+    "old": "        if (band && !heard?.has(band.key)) return band;",
+    "new": "        if (band) return band;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-marks-heard",
+    "file": "src/scenes/hideouts.js",
+    "old": "        if (!band || !heard.has(band.key)) continue;",
+    "new": "        if (!band) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-rumour",
+    "file": "src/scenes/hideouts.js",
+    "old": "export const RUMOUR_OFF_N = 16384;",
+    "new": "export const RUMOUR_OFF_N = 32768;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-host-tents",
+    "file": "src/scenes/hideouts.js",
+    "old": "export const tentsFor = (n) => Math.max(2, Math.ceil(n / 3));",
+    "new": "export const tentsFor = (n) => Math.max(1, Math.ceil(n / 3));",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-counter-purse",
+    "file": "src/scenes/caravanHost.js",
+    "old": "        if ((mode === 'Sell' || mode === 'SellMagic') && bandTook(trip, deps.clock())) {\n          deps.say(CARAVAN_LINES.bandTook(name));\n          return false;\n        } // LW12: its purse the band's\n        if ((mode === 'Sell' || mode === 'SellMagic') && s.coin + price > counter.purse) {",
+    "new": "        if ((mode === 'Sell' || mode === 'SellMagic') && s.coin + price > counter.purse) {",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-counter-half",
+    "file": "src/scenes/caravanHost.js",
+    "old": "      const lost = new Set(\n        bandTook(trip, t) ? all.filter((it) => it[WARE_KEY] % 2 === 1).map((it) => it[WARE_KEY]) : [],\n      );",
+    "new": "      const lost = new Set();",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-counter-theirs",
+    "file": "src/scenes/caravanHost.js",
+    "old": "    s.all\n      .filter((/** @type {any} */ it) => !s.items.includes(it) && !s.lost.has(it[WARE_KEY]))\n      .map((/** @type {any} */ it) => it[WARE_KEY]);",
+    "new": "    s.all.filter((/** @type {any} */ it) => !s.items.includes(it)).map((/** @type {any} */ it) => it[WARE_KEY]);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-counter-by",
+    "file": "src/scenes/caravanHost.js",
+    "old": "export const bandTook = (trip, t) => trip?.robbed?.by != null && t >= trip.robbed.t;",
+    "new": "export const bandTook = (trip, t) => trip?.robbed != null && t >= trip.robbed.t;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-roads-warn",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      const band = standing === 'enemy' || standing === 'hostile' ? null : deps.unheard?.(t) ?? null;",
+    "new": "      const band = deps.unheard?.(t) ?? null;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-roads-heard",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "{ band: band.name })}`; deps.heard?.(band); }",
+    "new": "{ band: band.name })}`; }",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-roads-pass",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "const foe = pair.warned ? (pair.warned.trip.enc.bandName ?? deps.foeName",
+    "new": "const foe = pair.warned ? (deps.foeName",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-roads-beset",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "const beset = foes.length ? (p.trip.enc?.bandName ?? deps.foeName",
+    "new": "const beset = foes.length ? (deps.foeName",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-hud-ring",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "    } else if (look === 'wayfarer' && /\\bhideout\\b/.test(m.kind ?? '')) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-wire-bandat",
+    "file": "src/scenes/world.js",
+    "old": "    bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t,",
+    "new": "    bandAt: (trip, px, py, t) => null && bandTrouble(trip, px, py, t,",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-wire-to-region",
+    "file": "src/scenes/world.js",
+    "old": "...(trip.to?.area != null && trip.to.area !== trip.from?.area ? livingHideoutsOf(trip.to.area) : [])]",
+    "new": "]",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-wire-gen",
+    "file": "src/scenes/hideouts.js",
+    "old": "      kept.clear();\n      waiting.clear();\n      gen = deps.generation();",
+    "new": "      gen = deps.generation();",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-wire-frame",
+    "file": "src/scenes/world.js",
+    "old": "{ livingHideoutsHostOf().frame(dt); livePersonBatches.push(...livingHideoutsHostOf().batches()); }",
+    "new": "{ livePersonBatches.push(...livingHideoutsHostOf().batches()); }",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-wire-clear",
+    "file": "src/scenes/world.js",
+    "old": "    else _livingHideoutsHost?.clear();\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-wire-news",
+    "file": "src/scenes/world.js",
+    "old": "foe: n.band ?? (n.foe != null ? livingFoeWord(n.foe, 2) : '')",
+    "new": "foe: (n.foe != null ? livingFoeWord(n.foe, 2) : '')",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-wire-draw",
+    "file": "src/scenes/world.js",
+    "old": "    _livingHideoutsHost?.draw(renderer, null, yardCull);   // LW12: a band's tents; PERF-WAGON: by the street's view test\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C2-frame",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (stood) lootedYet(stood);\n      if (stood?.chest) workChest(stood, CHEST_SLICE_MS); // AUDIT LW-II-2 C5: the chest's take, a slice a frame",
+    "new": "      if (stood?.chest) workChest(stood, CHEST_SLICE_MS); // AUDIT LW-II-2 C5: the chest's take, a slice a frame",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C2-pieces",
+    "file": "src/scenes/hideouts.js",
+    "old": "  return items.length === minted.length && minted.every(([it, n]) => items.includes(it) && it?.stackCount === n);",
+    "new": "  return items.length === minted.length && minted.every(() => true);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C2-counts",
+    "file": "src/scenes/hideouts.js",
+    "old": "  return items.length === minted.length && minted.every(([it, n]) => items.includes(it) && it?.stackCount === n);",
+    "new": "  return items.length === minted.length && minted.every(([it, n]) => items.includes(it));",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11c-load",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (rel() === s.rel) rel()?.turn?.('looted', s.band.key);",
+    "new": "    rel()?.turn?.('looted', s.band.key);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11c-identity",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (stood && rel() !== stood.rel) letGo();\n      if (rel() !== downsRel) {",
+    "new": "      if (rel() !== downsRel) {",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C3-kill",
+    "file": "src/scenes/hideouts.js",
+    "old": "export const killed = (rec) => !!rec?.dead && (!!rec.corpse || !!rec.executed);",
+    "new": "export const killed = (rec) => !!rec?.dead;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C3-latch",
+    "file": "src/scenes/hideouts.js",
+    "old": "          if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
+    "new": "          if (stood.foes.every((/** @type {any} */ rec) => killed(rec))) rout(stood, t);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C3-managed",
+    "file": "src/scenes/world.js",
+    "old": "level: o.level, allied: false, loose: true, transient: true, managed: true }),",
+    "new": "level: o.level, allied: false, loose: true, transient: true }),",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C3-thanks",
+    "file": "src/scenes/hideouts.js",
+    "old": "    s.robbed = c.robbed; // its robbed parties, looted or not: the rout's thanks",
+    "new": "    s.robbed = rel()?.turns?.()?.looted?.has(s.band.key) ? [] : c.robbed; // its robbed parties, looted or not: the rout's thanks",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C8-ask",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (at != null && ms - at < HIDEOUTS_ASK_MS) return [];\n    const h = deps.of(region);",
+    "new": "    const h = deps.of(region);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C8-told",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (waiting.delete(region) && h.length) deps.resolved?.(region);\n    return h;",
+    "new": "    return h;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C8-told-once",
+    "file": "src/scenes/hideouts.js",
+    "old": "    if (waiting.delete(region) && h.length) deps.resolved?.(region);",
+    "new": "    if (h.length) deps.resolved?.(region);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C8-wire",
+    "file": "src/scenes/world.js",
+    "old": "    resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); _livingToldKept.clear(); _livingVisitorsKept.clear(); for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C9-out",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0), ...robbed };",
+    "new": "    return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0) };",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C9-back",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1, ...robbed };",
+    "new": "    return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1 };",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11b-camp",
+    "file": "src/scenes/hideouts.js",
+    "old": "      if (!near) return;",
+    "new": "      if (!near || !deps.owner(deps.sceneOf(near.h.x, near.h.z))) return;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11b-takeup",
+    "file": "src/scenes/hideouts.js",
+    "old": "          if (mine && !stood.owned) standPeople(stood, t);",
+    "new": "          if (mine && !stood.owned) void t;",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  },
+  {
+    "name": "LW12-AUDIT-C11b-once",
+    "file": "src/scenes/hideouts.js",
+    "old": "          if (mine && !stood.owned) standPeople(stood, t);",
+    "new": "          if (mine) standPeople(stood, t);",
+    "tests": [
+      "test/systems/livingWorld/lw12_outlaws.test.js"
+    ]
+  }
+]

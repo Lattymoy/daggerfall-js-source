@@ -1,0 +1,614 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "CautiousTravel",
+            "Description": "Configuration for the Cautious Travel option. If enabled, it provides time accelerated travel at a speed penalty, but with the benefit of a chance to avoid random encounters based on luck plus Stealth, as well as health monitoring.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "PlayerControlledCautiousTravel",
+                    "Description": "Enables the travel option \"Cautiously\" to initiate time accelerated travel, instead of vanilla fast travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 5,
+                    "Max": 40,
+                    "Value": 20,
+                    "Name": "SpeedPenalty",
+                    "Description": "Speed penalty for travelling cautiously, as a percentage",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 60,
+                    "Max": 100,
+                    "Value": 95,
+                    "Name": "MaxChanceToAvoidEncounter",
+                    "Description": "Maximum chance to avoid an encounter when travelling cautiously, as a percentage",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 25,
+                    "Value": 5,
+                    "Name": "HealthMinimumPercentage",
+                    "Description": "Level of health that will automatically pause the journey when travelling cautiously, as a percentage",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 50,
+                    "Value": 5,
+                    "Name": "FatigueMinimumValue",
+                    "Description": "Level of fatigue that will automatically pause the journey when travelling cautiously, absolute value",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "StopAtInnsTravel",
+            "Description": "Configuration for the Stop At Inns Travel option. If enabled, this effectively disables normal fast traveling completely, except when sailing.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": false,
+                    "Name": "PlayerControlledInnsTravel",
+                    "Description": "Enables the stop for night travel option \"Inns\" to initiate time accelerated travel, instead of fast travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "ShipTravel",
+            "Description": "Configuration for the Ship Travel option and the port restrictions applied to it.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "OnlyFromPorts",
+                    "Description": "Restricts ship travel to be possible only from places with ports",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "OnlyToPorts",
+                    "Description": "Restricts ship travel to be possible only if destination has a port, if from ports setting is enabled",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "GeneralOptions",
+            "Description": "Configuration for general travel options to suit each player and system setup. For discovery and exploration also allow travel to any map coordinates and auto-pausing travel wwhen at or near locations.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "AllowTargetingMapCoordinates",
+                    "Description": "Allows travel map to target any coordinates using time accelerated travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Options": [
+                        "off",
+                        "nearby",
+                        "entered"
+                    ],
+                    "Value": 0,
+                    "Name": "LocationPause",
+                    "Description": "Auto pause when encountering a game location during real time accelerated travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "AllowWeather",
+                    "Description": "Allows weather effects during time accelerated travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "AllowAnnoyingSounds",
+                    "Description": "Allows footstep and hoof sounds during time accelerated travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "AllowRealGrass",
+                    "Description": "Allows the Real Grass mod to run during time accelerated travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "TimeAcceleration",
+            "Description": "Time acceleration configuration.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Options": [
+                        "1",
+                        "2",
+                        "3",
+                        "5",
+                        "10",
+                        "15",
+                        "20",
+                        "25",
+                        "30",
+                        "40",
+                        "50"
+                    ],
+                    "Value": 4,
+                    "Name": "DefaultStartingAcceleration",
+                    "Description": "The initial time acceleration used after starting the game",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "AlwaysUseStartingAcceleration",
+                    "Description": "Always uses the default starting acceleration when initiating a journey, rather than value from the previous journey",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 10,
+                    "Max": 100,
+                    "Value": 60,
+                    "Name": "AccelerationLimit",
+                    "Description": "The maximum limit allowed for time acceleration, road following is limited to half this amount",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "Teleportation",
+            "Description": "Allows the mages guild teleportation service to be availible to all members regardless of rank, at a cost of course. Becomes free once reaching rank it was originally availible.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": false,
+                    "Name": "EnablePaidTeleportation",
+                    "Description": "Enable paid Mages teleportation service for all guild members, before rank 8",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "__",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [],
+            "$version": "v1"
+        },
+        {
+            "Name": "RoadsIntegration",
+            "Description": "Configuration for integration of the BasicRoads mod, if it's installed",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "Enable",
+                    "Description": "Enhances the travel map with larger location dots for cities & towns, and shows roads & tracks with toggle buttons",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "VariableSizeDots",
+                    "Description": "All locations, except for cities & towns, are rendered as smaller dots",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Options": [
+                        "None",
+                        "F",
+                        "G",
+                        "K",
+                        "O",
+                        "X",
+                        "Custom Key Bind"
+                    ],
+                    "Value": 1,
+                    "Name": "FollowPathsKey",
+                    "Description": "Sets the key to initiate time accelerated travelling following paths if roads integration enabled",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Value": "",
+                    "Name": "FollowPathsCustomKeyBind",
+                    "Description": "Custom key bind for following paths used if CustomBind set above",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "EnableWaterways",
+                    "Description": "Enhances the travel map with rivers and streams with a toggle button",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "EnableStreamsToggle",
+                    "Description": "Adds a streams toggle button separate from rivers button",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": {
+                        "r": 255,
+                        "g": 235,
+                        "b": 5,
+                        "a": 255
+                    },
+                    "Name": "MarkLocationColor",
+                    "Description": "The colour used to highlight locations using middle mouse button on travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "-",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [],
+            "$version": "v1"
+        },
+        {
+            "Name": "FastTravelCostScaling",
+            "Description": "Scales the cost of standard fast travel to approximate travel costs when using mods such as Climate & Calories.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 1,
+                    "Max": 10,
+                    "Value": 1,
+                    "Name": "FastTravelCostScaleFactor",
+                    "Description": "Scales the cost of inns when using standard fast travel, suggest x4-x6 for Climate & Calories.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 10,
+                    "Value": 1,
+                    "Name": "ShipTravelCostScaleFactor",
+                    "Description": "Scales the cost of ships when using standard fast travel, suggest x2-x3 for Climate & Calories.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "_",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [],
+            "$version": "v1"
+        },
+        {
+            "Name": "RoadsJunctionMap",
+            "Description": "Configure a mini-map that pops up at junctions when following roads. Can also be made to be persistent while following paths.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "Enable",
+                    "Description": "Enables the junction mini-map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "PersistentMap",
+                    "Description": "Set this to have the junction mini-map always displayed when following paths",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "ToggleMapOffPaths",
+                    "Description": "Set this to have the junction mini-map toggled when follow key pressed and not on a path",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 40,
+                    "Max": 200,
+                    "Value": 75,
+                    "Name": "ScreenSize",
+                    "Description": "The width and height the mini-map is rendered on the screen",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 280,
+                    "Value": 235,
+                    "Name": "ScreenPositionX",
+                    "Description": "The X coordinate the mini-map is rendered on the screen",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 160,
+                    "Value": 10,
+                    "Name": "ScreenPositionY",
+                    "Description": "The Y coordinate the mini-map is rendered on the screen",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Options": [
+                        "Point",
+                        "Bilinear",
+                        "Trilinear"
+                    ],
+                    "Value": 0,
+                    "Name": "FilterMode",
+                    "Description": "Pixel filtering to use when rendering the mini-map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "Circular",
+                    "Description": "Draw the mini-map in a circle around the player",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": {
+                        "r": 255,
+                        "g": 0,
+                        "b": 0,
+                        "a": 255
+                    },
+                    "Name": "PlayerColor",
+                    "Description": "The colour of the player position and direction indicator",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "Opaque",
+                    "Description": "Render the mini-map with an opaque background color",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": {
+                        "r": 50,
+                        "g": 127,
+                        "b": 25,
+                        "a": 255
+                    },
+                    "Name": "BackgroundColor",
+                    "Description": "The opaque background color to use for the mini-map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "--",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [],
+            "$version": "v1"
+        },
+        {
+            "Name": ".",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [],
+            "$version": "v1"
+        },
+        {
+            "Name": "LocationColours",
+            "Description": "Configure the colours used to display different types of locations on the travel map.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": {
+                        "r": 215,
+                        "g": 119,
+                        "b": 39,
+                        "a": 255
+                    },
+                    "Name": "DungeonLabyrinth",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 191,
+                        "g": 87,
+                        "b": 27,
+                        "a": 255
+                    },
+                    "Name": "DungeonKeep",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 171,
+                        "g": 51,
+                        "b": 15,
+                        "a": 255
+                    },
+                    "Name": "DungeonRuin",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 147,
+                        "g": 15,
+                        "b": 7,
+                        "a": 255
+                    },
+                    "Name": "Graveyard",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 15,
+                        "g": 15,
+                        "b": 15,
+                        "a": 255
+                    },
+                    "Name": "Coven",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 155,
+                        "g": 105,
+                        "b": 106,
+                        "a": 255
+                    },
+                    "Name": "Farm",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 188,
+                        "g": 138,
+                        "b": 138,
+                        "a": 255
+                    },
+                    "Name": "WealthyHome",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 126,
+                        "g": 81,
+                        "b": 89,
+                        "a": 255
+                    },
+                    "Name": "PoorHome",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 176,
+                        "g": 205,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "Name": "Temple",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 68,
+                        "g": 124,
+                        "b": 192,
+                        "a": 255
+                    },
+                    "Name": "Cult",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 140,
+                        "g": 86,
+                        "b": 55,
+                        "a": 255
+                    },
+                    "Name": "Tavern",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 227,
+                        "g": 180,
+                        "b": 144,
+                        "a": 255
+                    },
+                    "Name": "City",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 193,
+                        "g": 133,
+                        "b": 100,
+                        "a": 255
+                    },
+                    "Name": "Hamlet",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 165,
+                        "g": 100,
+                        "b": 70,
+                        "a": 255
+                    },
+                    "Name": "Village",
+                    "Description": "The colour shown on the travel map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

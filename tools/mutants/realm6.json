@@ -1,0 +1,220 @@
+[
+  {
+    "name": "REALM6-station-free",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (now.station && now.station !== (was?.station ?? null)) delta -= DECOR_STATION_FEES[now.station] ?? 0;\n  return { delta, ledger: next };",
+    "new": "  return { delta, ledger: next };",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-shrink-whole",
+    "file": "src/net/decorLaw.js",
+    "old": "    delta = Math.trunc(base / 2);",
+    "new": "    delta = base;",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-free-write-needs-record",
+    "file": "server-account/src/decor.js",
+    "old": "  if (side.error === 'realm-needed' && realm == null && delta === 0) return { at: null };\n",
+    "new": "",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-place-unpaid",
+    "file": "server-account/src/decor.js",
+    "old": "  if (side.at && delta !== 0) {\n    // REALM P2.2b: the piece and what it cost, together",
+    "new": "  if (false) {\n    // REALM P2.2b: the piece and what it cost, together",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-decor-record-left-out",
+    "file": "server-account/src/decor.js",
+    "old": "    await db.batch([...prep.steps, write, mustChange(db)]);",
+    "new": "    await db.batch([write, mustChange(db)]);",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-removal-half-unpaid",
+    "file": "server-account/src/decor.js",
+    "old": "    if (side.at && delta > 0) {\n      // REALM P2.2b: half of what it cost",
+    "new": "    if (false) {\n      // REALM P2.2b: half of what it cost",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-claim-unpaid",
+    "file": "server-account/src/homes.js",
+    "old": "(save) => (payFromSave(save, claim.price, claim.region) ? null : 'realm-gold')",
+    "new": "() => null",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-second-press-pays",
+    "file": "server-account/src/homes.js",
+    "old": "  if (held) return heldByAccount(held, player, claim.character) ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } } : { error: 'home-taken' };\n",
+    "new": "  if (held && held.player !== player.id) return { error: 'home-taken' };\n",
+    "tests": [
+      "test/server/realm6.test.js"
+    ],
+    "note": "AUDIT HOME-PRICE (PIN MOVED, re-aimed by content): the repeat's answer carries the sale's sum (C2). ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the account's already."
+  },
+  {
+    "name": "REALM6-landed-claim-unsaid",
+    "file": "server-account/src/homes.js",
+    "old": "  const side = await realmActFirst(db, player.id, character, realm);   // AUDIT REALM L1-F2: where the record stands, before the hour's claims",
+    "new": "  const side = await realmActFirst(db, player.id, character, realm).then((s) => (s.error === 'seq' ? { at: realmAtOf(realm) } : s));",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-sale-without-record",
+    "file": "server-account/src/homes.js",
+    "old": "  if (realm != null || (typeof home?.char_id === 'string' && REALM_ID_RE.test(home.char_id))) {",
+    "new": "  if (realm != null) {",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-sale-to-purse",
+    "file": "server-account/src/homes.js",
+    "old": "creditSave(save, back, { bank: home.region })",
+    "new": "creditSave(save, back)",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-sale-share",
+    "file": "src/net/homeLaw.js",
+    "old": "export const HOME_SALE_SHARE = 0.85;",
+    "new": "export const HOME_SALE_SHARE = 0.9;",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-buy-never-reserves",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "        reserve: paid.reserve,\n        // AUDIT REALM: a claim answered as the house already this character's (`repeat`) moved no gold on the record - the",
+    "new": "        // AUDIT REALM: a claim answered as the house already this character's (`repeat`) moved no gold on the record - the",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-sale-guesses",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "      needsAnswer: true,\n      apply: (/** @type {any} */ res) => {",
+    "new": "      apply: (/** @type {any} */ res) => {",
+    "tests": [
+      "test/server/realm6.test.js"
+    ],
+    "note": "ARENA4b (PIN MOVED, re-aimed by content): onlineHomes.js moveArenaHomes's act needs its answer too - aimed at the sale's by the call over it."
+  },
+  {
+    "name": "REALM6-tool-place-unreserved",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "          reserve: paid.reserve,\n          // AUDIT REALM: a placement answered",
+    "new": "          // AUDIT REALM: a placement answered",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-tool-place-no-record",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "character: deps.character?.(), piece, realm: at }),",
+    "new": "character: deps.character?.(), piece }),",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-tool-removal-uncredited",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "          back = Math.max(0, Number(a.data?.gold) || 0);\n          toGuild = Math.max(0, Number(a.data?.treasury) || 0);\n          if (back > 0) deps.wallet?.().credit?.(back);\n        },",
+    "new": "          back = Math.max(0, Number(a.data?.gold) || 0);\n          toGuild = Math.max(0, Number(a.data?.treasury) || 0);\n        },",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-tool-shrink-unpaid",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      apply: refund > 0 ? (/** @type {any} */ a) => { const g = Number(a.data?.gold) || 0; if (g > 0) deps.wallet().credit?.(g); } : null,\n",
+    "new": "",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-tool-licence-unreserved",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      reserve: pay > 0 ? walletReserve(wallet, pay).reserve : null,   // MARKET-AUDIT: a refusal gives back exactly what it took\n",
+    "new": "",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-act-guesses-a-landed-answer",
+    "file": "src/systems/realmSaves.js",
+    "old": "r.seq === at.seq + 1 && !needsAnswer && !read ? { ok: true, landed: true, seq: r.seq }",
+    "new": "r.seq === at.seq + 1 && !read ? { ok: true, landed: true, seq: r.seq }",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-host-no-realm",
+    "file": "src/scenes/world.js",
+    "old": "    realmAct: realmSession ? (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }) : null,",
+    "new": "    realmAct: null,",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-modes-buy-hand-to-hand",
+    "file": "src/scenes/worldModes.js",
+    "old": "      refund: (n) => { const a = homeAccount(region); if (a) a.accountGold += n; else purse.addGold(n); },\n      realm: host.realmAct ? { act: host.realmAct } : null,",
+    "new": "      refund: (n) => { const a = homeAccount(region); if (a) a.accountGold += n; else purse.addGold(n); },\n      realm: null,",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-homes-no-bucket",
+    "file": "server-account/src/index.js",
+    "old": "        const hctx = { ...ctx, bucket: env.SAVES };",
+    "new": "        const hctx = ctx;",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  },
+  {
+    "name": "REALM6-homes-seq-unsaid",
+    "file": "server-account/src/index.js",
+    "old": "(r.error === 'seq' ? json({ error: 'seq', seq: r.seq }, 409, origin) : r.error === 'lease'",
+    "new": "(r.error === 'lease'",
+    "tests": [
+      "test/server/realm6.test.js"
+    ]
+  }
+]

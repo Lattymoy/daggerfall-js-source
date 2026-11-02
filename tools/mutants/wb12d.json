@@ -1,0 +1,3198 @@
+[
+  {
+    "name": "WB12d-the-approach-not-kept",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  const a = unit(gateRoll(day, 16)) * (90 - RITE_OFF_APPROACH_DEG) * (Math.PI / 180);",
+    "new": "  const a = unit(gateRoll(day, 16)) * 90 * (Math.PI / 180);",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-distance-not-kept",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  const d = RITE_MIN_M + unit(gateRoll(day, 10)) * (RITE_MAX_M - RITE_MIN_M);",
+    "new": "  const d = unit(gateRoll(day, 10)) * RITE_MAX_M;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-frame-turned",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  return [sx + c * lx + s * lz, sz - s * lx + c * lz];",
+    "new": "  return [sx + c * lx - s * lz, sz + s * lx + c * lz];",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-native-north-turned",
+    "file": "src/net/gate/gateRite.js",
+    "old": "    (499 - py) * PIXEL_M * RITE_UNITS_PER_M + n * RITE_UNITS_PER_M,",
+    "new": "    (499 - py) * PIXEL_M * RITE_UNITS_PER_M - n * RITE_UNITS_PER_M,",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-reach-unchecked",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  return Math.hypot(x - cx, z - cz) <= RITE_REACH_M * RITE_UNITS_PER_M;",
+    "new": "  return Math.hypot(x - cx, z - cz) <= Infinity;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-count-one-short",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  const n = RITE_FAITHFUL_MIN + (gateRoll(day, 17) % (RITE_FAITHFUL_MAX - RITE_FAITHFUL_MIN + 1));",
+    "new": "  const n = RITE_FAITHFUL_MIN + (gateRoll(day, 17) % (RITE_FAITHFUL_MAX - RITE_FAITHFUL_MIN));",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-window-to-the-seal",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  return { from: t.omenAt, to: t.openAt };",
+    "new": "  return { from: t.omenAt, to: t.sealAt };",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-circle-gone-at-the-opening",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  const end = Math.min(t.wrathAt, Number.isFinite(fellAt) ? fellAt : Infinity) + GATE_COLLAPSE_MS;",
+    "new": "  const end = t.openAt;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-r-dropped",
+    "file": "src/net/gate/gateReceipt.js",
+    "old": "  ...(r === 1 ? { r } : {}),\n  ...(m !== undefined ? { m } : {}),",
+    "new": "  ...(m !== undefined ? { m } : {}),",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+  },
+  {
+    "name": "WB12d-r-on-the-rite-s-own",
+    "file": "src/net/gate/gateReceipt.js",
+    "old": "  if (c.r !== undefined && (c.r !== 1 || c.x === 'rite')) return false; // WB12d: a fighter who broke the rite; a rite's own receipt is its ember already",
+    "new": "  if (c.r !== undefined && c.r !== 1) return false; // WB12d: a fighter who broke the rite; a rite's own receipt is its ember already",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-bad-flag-passed",
+    "file": "src/net/wire.js",
+    "old": "(m.s !== 0 && m.s !== 1) || (m.f !== 0 && m.f !== 1)",
+    "new": "(m.s !== 0 && m.s !== 1)",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-names-unbounded",
+    "file": "src/net/wire.js",
+    "old": ".filter((n) => typeof n === 'string' && n).slice(0, RITE_BY_MAX).map(sanitizeName)",
+    "new": ".filter((n) => typeof n === 'string' && n).map(sanitizeName)",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-version-law",
+    "file": "src/net/wire.js",
+    "old": "export const RITE_RELAY_MIN = 151;",
+    "new": "export const RITE_RELAY_MIN = 150;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ],
+    "note": "The merge (re-aimed): world151, past main's world141-world150."
+  },
+  {
+    "name": "WB12d-the-pose-unasked",
+    "file": "server/src/index.js",
+    "old": "    if (!a.pose || !riteNear(m.d, m.px, m.py, a.pose.x, a.pose.z)) return;   // not at its circle\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-window-unasked",
+    "file": "server/src/index.js",
+    "old": "if (!isGateDay(m.d) || !riteHeard(m.d, now)) return;",
+    "new": "if (!isGateDay(m.d)) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-cell-unasked",
+    "file": "server/src/index.js",
+    "old": "    if (junkOutsideCover(this, ws, a, worldRoom(m.px, m.py))) return;\n    if (!isGateDay(m.d)",
+    "new": "    if (!isGateDay(m.d)",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
+  },
+  {
+    "name": "WB12d-the-hub-never-told",
+    "file": "server/src/index.js",
+    "old": "    await this._riteSave(led);\n    await this._riteTellHub(now);\n  }",
+    "new": "    await this._riteSave(led);\n  }",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-broken-word-unsaid",
+    "file": "server/src/index.js",
+    "old": "      for (const [ws, b] of [...this._all()]) if (b.id) this._send(ws, said);\n      try { await this._heraldRiteOwe",
+    "new": "      void said;\n      try { await this._heraldRiteOwe",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-said-at-every-word",
+    "file": "server/src/index.js",
+    "old": "    if (fresh) {\n      const said = JSON.stringify({ t: 'rite'",
+    "new": "    if (true) {\n      const said = JSON.stringify({ t: 'rite'",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-hello-unsaid",
+    "file": "server/src/index.js",
+    "old": "if (c.said && stands) this._send(ws, JSON.stringify({ t: 'rite', ...riteSaid(r.d, c) }));",
+    "new": "void stands;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ],
+    "note": "BROKER-CAGE (re-aimed by content): the hello's replay walks each circle for its broken word and her cage's."
+  },
+  {
+    "name": "WB12d-the-post-owed-nowhere",
+    "file": "server/src/index.js",
+    "old": "      try { await this._heraldRiteOwe(r.d, now); }",
+    "new": "      try { void this._heraldRiteOwe; }",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-no-retry",
+    "file": "server/src/index.js",
+    "old": "      await this._riteArm(now + RITE_TELL_RETRY_MS);\n      let moved = false;",
+    "new": "      let moved = false;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-helpers-unasked",
+    "file": "server/src/index.js",
+    "old": "const asked = await this._riteHelpersOf(f.day, RITE_ASK_TIMEOUT_MS);",
+    "new": "const asked = new Set();",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-r-for-every-fighter",
+    "file": "server/src/index.js",
+    "old": "...(helped.has(sub) ? { r: 1 } : {})",
+    "new": "r: 1",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-rite-s-own-never-minted",
+    "file": "server/src/index.js",
+    "old": "      for (const sub of riteOnly(book, helped)) {",
+    "new": "      for (const sub of riteOnly(book, [])) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/gatecourts.test.js"
+    ],
+    "note": "PIN MOVED (GATE-COURTS): the rite’s own is minted by the night’s book (_gateBookBeat)"
+  },
+  {
+    "name": "WB12d-the-rite-s-ember-unpaid",
+    "file": "server-account/src/accounts.js",
+    "old": "const embers = c.r === 1 ? 2 : 1;",
+    "new": "const embers = 1;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-rite-counted-a-breach",
+    "file": "server-account/src/accounts.js",
+    "old": "WHERE account = ?1 AND earned != 'rite'",
+    "new": "WHERE account = ?1",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-rite-struck",
+    "file": "server-account/src/accounts.js",
+    "old": "const stmt = c.x === 'rite' ? null : strike?.(c.d) ?? null;",
+    "new": "const stmt = strike?.(c.d) ?? null;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-purse-counting-rows",
+    "file": "server-account/src/accounts.js",
+    "old": "'((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) +",
+    "new": "'((SELECT COUNT(*) FROM gate_kills WHERE account = ?1) +",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the purse and the sale read one sum now (EMBERS_EARNED_SQL), a serpent's embers beside a breach's - re-aimed by content."
+  },
+  {
+    "name": "WB12d-the-omen-without-the-rite",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "new": "    text: `${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "tests": [
+      "test/net/gate/discordgates.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/net/gate/wb13b_words.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-circle-before-the-omen",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!s || !Number.isSafeInteger(s.day) || !riteStands(s.day, t, fellAt(s.day))) {",
+    "new": "      if (!s || !Number.isSafeInteger(s.day)) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-smoke-never-rising",
+    "file": "src/scenes/riteHost.js",
+    "old": "      v = Math.min(1, Math.max(0, (t - w.from) / RITE_SMOKE_IN_MS), Math.max(0, 1 - (t - w.to) / RITE_SMOKE_OUT_MS));",
+    "new": "      v = Math.min(1, 1, Math.max(0, 1 - (t - w.to) / RITE_SMOKE_OUT_MS));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-smoke-past-the-opening",
+    "file": "src/scenes/riteHost.js",
+    "old": "      v = Math.min(1, Math.max(0, (t - w.from) / RITE_SMOKE_IN_MS), Math.max(0, 1 - (t - w.to) / RITE_SMOKE_OUT_MS));",
+    "new": "      v = Math.min(1, Math.max(0, (t - w.from) / RITE_SMOKE_IN_MS), 1);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-sprung-from-anywhere",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (on && holds && foes && C.known && d <= RITE_SPRING_M) maybeStand(t);",
+    "new": "      if (on && holds && foes && C.known) maybeStand(t);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-sprung-twice",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (C.ownLive) return;\n    if (peerSprang(C.site)) {",
+    "new": "    if (peerSprang(C.site)) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-peer-s-sprung-again",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!(peerHeldAgo(C.site) >= RITE_ORPHAN_MS)) return; // a peer holds them - their copies on their way, or every one fallen",
+    "new": "      // a peer holds them - their copies on their way, or every one fallen",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-summoner-a-caster-s",
+    "file": "src/scenes/riteHost.js",
+    "old": "      f.entity.maxHealth = Math.max(1, Math.round((f.entity.maxHealth ?? 1) * RITE_SUMMONER_HEALTH));",
+    "new": "      f.entity.maxHealth = Math.max(1, Math.round((f.entity.maxHealth ?? 1) * 1));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-camp-of-strangers",
+    "file": "src/scenes/riteHost.js",
+    "old": "    f.campId = camp;\n    f.campAlertRadius = RITE_ALERT_M;",
+    "new": "    f.campAlertRadius = RITE_ALERT_M;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-copies-unnamed",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (e && (f.riteRole || summoner || RITE_CAREERS.includes(career))) {",
+    "new": "      if (!f.puppet && e && (f.riteRole || summoner || RITE_CAREERS.includes(career))) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-no-wake",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (waker)",
+    "new": "    if (false)",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-said-from-anywhere",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (on && holds && d <= RITE_SAY_REACH_M) word(t);",
+    "new": "      if (on && holds) word(t);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-never-at-once",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (!changed && t - C.wordAt < RITE_WORD_MS && t < C.resayAt) return;",
+    "new": "    if (t - C.wordAt < RITE_WORD_MS && t < C.resayAt) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-said-after-the-opening",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (on && holds && d <= RITE_SAY_REACH_M) word(t);",
+    "new": "      if (on && d <= RITE_SAY_REACH_M) word(t);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-fall-without-a-body",
+    "file": "src/scenes/riteHost.js",
+    "old": "        if (f.corpse) counted(f, career, summoner, holds, mem);",
+    "new": "        counted(f, career, summoner, holds, mem);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-they-stay",
+    "file": "src/scenes/riteHost.js",
+    "old": "    foes?.drop(C.site);\n    const mem = riteMemory(C.day);",
+    "new": "    const mem = riteMemory(C.day);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-line-over-a-broken-rite",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (standing && !mem.passed && d <= RITE_SPRING_M) {",
+    "new": "    if (standing && !mem.passed && !brokenHere() && d <= RITE_SPRING_M) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-said-at-every-hello",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (b && holds && C.near && !mem.saidBroken) {",
+    "new": "      if (b && holds && C.near) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-casket-open-before-the-word",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (!loot || !C.known || !brokenHere() || riteChestOpened(C.day) || d > RITE_CHEST_SEED_M) return;",
+    "new": "    if (!loot || !C.known || riteChestOpened(C.day) || d > RITE_CHEST_SEED_M) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-seeded-twice-a-day",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (!loot || !C.known || !brokenHere() || riteChestOpened(C.day) || d > RITE_CHEST_SEED_M) return;",
+    "new": "    if (!loot || !C.known || !brokenHere() || d > RITE_CHEST_SEED_M) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-day-kept-untouched",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!riteChestOpened(C.day) && !untouched(C.pile)) markRiteChest(C.day);",
+    "new": "      if (!riteChestOpened(C.day)) markRiteChest(C.day);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-day-never-kept",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!riteChestOpened(C.day) && !untouched(C.pile)) markRiteChest(C.day);\n      if (C.pile.dead || !C.pile.items?.length) {",
+    "new": "      if (C.pile.dead || !C.pile.items?.length) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-dead-pile-never-seeded-again",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (C.pile.dead || !C.pile.items?.length) {",
+    "new": "      if (!C.pile.items?.length) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-pile-outliving-its-pixel",
+    "file": "src/scenes/riteHost.js",
+    "old": "    C.pile = loot.seed(riteChestItems(level(), rolls), [p[0], p[1] + 0.6, p[2]], `${C.px},${C.py}`); // dies with its pixel",
+    "new": "    C.pile = loot.seed(riteChestItems(level(), rolls), [p[0], p[1] + 0.6, p[2]], null); // dies with its pixel",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-casket-unnamed",
+    "file": "src/scenes/riteHost.js",
+    "old": "          title: RITE_TEXT.chest,",
+    "new": "          title: '',",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-press-unsaid",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!brokenHere()) sayNear(RITE_TEXT.sealed);",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-gate-s-keys-taken",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (typeof key !== 'string' || !key.startsWith('rite:') || !C) return false;",
+    "new": "      if (typeof key !== 'string' || !C) return false;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-sigil-flat-on-a-slope",
+    "file": "src/world/riteModel.js",
+    "old": "        row.push({ p: [x, ride(x, z) + RITE_SIGIL_LIFT, z], uv: uvOf(x, z) });",
+    "new": "        row.push({ p: [x, RITE_SIGIL_LIFT, z], uv: uvOf(x, z) });",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-sigil-facing-down",
+    "file": "src/world/riteModel.js",
+    "old": "        else f.quad(RITE_SIGIL_RECORD, a.p, d.p, c.p, b.p, a.uv, d.uv, c.uv, b.uv);",
+    "new": "        else f.quad(RITE_SIGIL_RECORD, a.p, b.p, c.p, d.p, a.uv, b.uv, c.uv, d.uv);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-ring-closed-on-the-gate",
+    "file": "src/world/riteModel.js",
+    "old": "        const a = behind + ((i + 1) / (n + 1) - 0.5) * 1.75 * Math.PI;",
+    "new": "        const a = behind + (i / n) * 2 * Math.PI;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-camp-before-the-circle",
+    "file": "src/world/riteModel.js",
+    "old": "    const [x, z] = dir(behind + d, RITE_TENT_R);",
+    "new": "    const [x, z] = dir(facing + d, RITE_TENT_R);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-cone-of-two-rows",
+    "file": "src/render/riteSmoke.js",
+    "old": "export const SMOKE_ROWS = 40;",
+    "new": "export const SMOKE_ROWS = 1;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-climb-that-wraps-mid-tile",
+    "file": "src/render/riteSmoke.js",
+    "old": "  float n = 0.5 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per), smoothstep(1.0, 3.0, big))",
+    "new": "  float n = 0.5 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x, (y - t * 1.05) * per.y), per), smoothstep(1.0, 3.0, big))",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-drawn-faded",
+    "file": "src/render/riteSmoke.js",
+    "old": "      .filter(\n        (s) =>\n          s &&\n          Array.isArray(s.origin) &&\n          s.origin.length === 3 &&\n          s.origin.every(Number.isFinite) &&\n          s.fade > SMOKE_FADE_MIN,\n      )",
+    "new": "      .filter((s) => s && Array.isArray(s.origin) && s.origin.length === 3 && s.origin.every(Number.isFinite))",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-not-premultiplied",
+    "file": "src/render/riteSmoke.js",
+    "old": "    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);",
+    "new": "    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-colour-unweighted",
+    "file": "src/render/riteSmoke.js",
+    "old": "  o = vec4(${v3(SMOKE_COLOR)} * max(uLight, ${f1(SMOKE_LIGHT_MIN)}) * a + glow, a);",
+    "new": "  o = vec4(${v3(SMOKE_COLOR)} * max(uLight, ${f1(SMOKE_LIGHT_MIN)}) + glow, a);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-no-gold",
+    "file": "src/systems/riteChest.js",
+    "old": "  const items = [goldStack(Math.round(lv * (lo + rolls() * (hi - lo))))];",
+    "new": "  const items = [];",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-brand-never",
+    "file": "src/systems/riteChest.js",
+    "old": "  if (rolls() * RITE_BRAND_IN < 1) items.push(riteBrand(lv, rolls));",
+    "new": "  if (false) items.push(riteBrand(lv, rolls));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-brand-with-no-sigil",
+    "file": "src/systems/riteChest.js",
+    "old": "  it.sigil = { set: RITE_BRAND_SET, party: sigilParty(1), xp: 0 };",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-heart-every-time",
+    "file": "src/systems/riteChest.js",
+    "old": "      rolls() < RITE_HEART_CHANCE\n        ? RITE_HEART\n        : RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length];",
+    "new": "      rolls() < 1 ? RITE_HEART : RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length];",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-day-forgotten",
+    "file": "src/systems/riteChest.js",
+    "old": "  getSaveData: () => ({ day: _day }),",
+    "new": "  getSaveData: () => ({ day: -1 }),",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-rite-alone-paid-full-spoils",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: SIGIL_TIER, record: flat() }];",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-r-unpaid",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-gold-s-dress-moved-by-r",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),",
+    "new": "...(claims?.r === 1 ? [{ ...ember, item: sigilStone(), record: flat() }] : []),",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-spew-without-the-receipt",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite",
+    "new": "spoilsList(seed >>> 0, Math.max(1, level | 0));   // WB12d: the receipt's rite",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-let-go",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "  if (claims?.x === 'rite' && answer?.error === 'receipt' && answer.why === 'claims') return 'keep';",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-said-a-breach",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "            say(answer.data.rite === true ? GATE_CLAIM_TEXT.rite : GATE_CLAIM_TEXT.recorded(n));",
+    "new": "            say(GATE_CLAIM_TEXT.recorded(n));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-verdict-blind",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "        if (gateClaimVerdict(answer, live(r)) === 'done') {",
+    "new": "        if (gateClaimVerdict(answer) === 'done') {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-line-unsaid",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "        if ((line === 'omen' || line === 'rise') && riteDay !== t.day) {\n          riteDay = t.day;\n          if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine());\n        }",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-session-to-an-old-relay",
+    "file": "src/net/online.js",
+    "old": "if (!(this._mine(cell) ? this.riteOk : halo?.riteOk)) return false;",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
+  },
+  {
+    "name": "WB12d-the-hub-s-word-from-anywhere",
+    "file": "src/net/online.js",
+    "old": "if (r && isSocialRoom(room)) this._deliver('rite',",
+    "new": "if (r) this._deliver('rite',",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-world-s-word-unheard",
+    "file": "src/scenes/world.js",
+    "old": "online.onRite = (w) => riteHost?.onBroken(w);",
+    "new": "online.onRite = null;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-casket-off-the-ray",
+    "file": "src/scenes/world.js",
+    "old": "else if (!riteHost?.activate(_gatePick.key)) gatePool.activate(_gatePick.key);",
+    "new": "else gatePool.activate(_gatePick.key);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-faithful-unshared",
+    "file": "src/scenes/world.js",
+    "old": "peerSprang: (site) => _wodPeerSprung.has(site),",
+    "new": "peerSprang: () => false,",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-grant-without-the-receipt",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
+    "new": "spoilsList(seed >>> 0, Math.max(1, level | 0));   // RAID4b",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-new-list-a-frame",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!C?.known) return NONE;",
+    "new": "      if (!C?.known) return [];",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-target-made-every-frame",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!C?.known || C.pile) return NONE;\n      made();",
+    "new": "      if (!C?.known || C.pile) return NONE;\n      madeAt = null;\n      made();",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-matrices-every-draw",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!C?.known || !r?.drawMesh) return 0;\n      made();",
+    "new": "      if (!C?.known || !r?.drawMesh) return 0;\n      madeAt = null;\n      made();",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-heart-moved-never-remade",
+    "file": "src/scenes/riteHost.js",
+    "old": "    const moved = !madeAt || madeAt[0] !== h[0] || madeAt[1] !== h[1] || madeAt[2] !== h[2];",
+    "new": "    const moved = !madeAt;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-smoke-s-arguments-built-with-none",
+    "file": "src/scenes/world.js",
+    "old": "if (riteHost?.smoking() && riteHost.drawSmoke(",
+    "new": "if (riteHost?.drawSmoke(",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-fold-through-the-sigil",
+    "file": "src/world/riteModel.js",
+    "old": "  const ride = (x, z) =>\n    Math.max(\n      h(x, z),\n      h(x + K, z),\n      h(x - K, z),\n      h(x, z + K),\n      h(x, z - K),\n      h(x + D, z + D),\n      h(x - D, z + D),\n      h(x + D, z - D),\n      h(x - D, z - D),\n    );",
+    "new": "  const ride = (x, z) => h(x, z);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-fold-on-the-straight-alone",
+    "file": "src/world/riteModel.js",
+    "old": "  const ride = (x, z) =>\n    Math.max(\n      h(x, z),\n      h(x + K, z),\n      h(x - K, z),\n      h(x, z + K),\n      h(x, z - K),\n      h(x + D, z + D),\n      h(x - D, z + D),\n      h(x + D, z - D),\n      h(x - D, z - D),\n    );",
+    "new": "  const ride = (x, z) => Math.max(h(x, z), h(x + K, z), h(x - K, z), h(x, z + K), h(x, z - K));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-box-on-air",
+    "file": "src/world/riteModel.js",
+    "old": "  const y0 = Math.min(...foot.map(([fx, fz]) => ground(fx, fz))) - 0.15,",
+    "new": "  const y0 = ground(x, z) - 0.15,",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-a-brazier-on-air",
+    "file": "src/world/riteModel.js",
+    "old": "      const y0 = Math.min(h(x, z), ...rim) - 0.3,",
+    "new": "      const y0 = h(x, z) - 0.3,",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "WB12d-the-open-casket-a-loot-pile",
+    "file": "src/scenes/riteHost.js",
+    "old": "      return C.pile && loot?.keyOf && key === loot.keyOf(C.pile) ? { title: RITE_TEXT.chest } : null; // open: its pile wears its name (AUDIT WB12d D8: until it is emptied)",
+    "new": "      return null; // open: its pile wears its name (AUDIT WB12d D8: until it is emptied)",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-first-circle-wins",
+    "file": "server/src/index.js",
+    "old": "      if (Object.keys(led.c).length >= RITE_CIRCLES_MAX) return;",
+    "new": "      if (Object.keys(led.c).length >= 1) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-cell-circles-unbounded",
+    "file": "server/src/index.js",
+    "old": "      if (Object.keys(led.c).length >= RITE_CIRCLES_MAX) return;",
+    "new": "      if (false) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-tells-unguarded",
+    "file": "server/src/index.js",
+    "old": "    if (this._riteTelling) { await this._riteArm(now + RITE_TELL_RETRY_MS); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ],
+    "note": "AUDIT BROKER-CAGE R2 (re-aimed by content): a tell in flight now arms the retry before it answers."
+  },
+  {
+    "name": "AUDIT-WB12d-told-for-ever",
+    "file": "server/src/index.js",
+    "old": "if (!owed.length || !riteStands(led.d, now)) return false;",
+    "new": "if (!owed.length) return false;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-hub-said-past-collapse",
+    "file": "server/src/index.js",
+    "old": "    const stands = riteStands(o.d, now, fellAt);",
+    "new": "    const stands = true;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ],
+    "note": "AUDIT BROKER-CAGE R1 (re-aimed by content): past the collapse the hub keeps a cleared word alone (the cage's, until midnight) - the rite's own word is what this mutant would say there."
+  },
+  {
+    "name": "AUDIT-WB12d-hub-first-circle-wins",
+    "file": "server/src/index.js",
+    "old": "      if (Object.keys(r.c).length >= RITE_HUB_CIRCLES_MAX) return json({ ok: true });",
+    "new": "      if (Object.keys(r.c).length >= 1) return json({ ok: true });",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-hub-circles-unbounded",
+    "file": "server/src/index.js",
+    "old": "      if (Object.keys(r.c).length >= RITE_HUB_CIRCLES_MAX) return json({ ok: true });",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-agreed-site-unread",
+    "file": "server/src/index.js",
+    "old": "riteHelpersBy(await this._riteOf(gateLaneOf(d)), d, agreedGateSite(await this._gateSiteOf(gateLaneOf(d)), d))",
+    "new": "riteHelpersBy(await this._riteOf(gateLaneOf(d)), d, null)",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-liar-paid-beside",
+    "file": "server/src/index.js",
+    "old": "  if (site) return cs.filter((c) => c.px === site.px && c.py === site.py);\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-fall-re-entered",
+    "file": "server/src/index.js",
+    "old": "    if (this._falling) return this._falling;\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-helpers-asked-at-the-kill-alone",
+    "file": "server/src/index.js",
+    "old": "      this._riteAskAhead(f, now);",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-last-answer-dropped",
+    "file": "server/src/index.js",
+    "old": "    if (asked) f.helped = [...asked];\n    const helped = new Set(f.helped ?? []);",
+    "new": "    const helped = asked ?? new Set();",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-said-twice",
+    "file": "server/src/index.js",
+    "old": "    let r = this._riteHubs.get(lane) ?? null;\n",
+    "new": "    let r = await Promise.resolve(this._riteHubs.get(lane) ?? null);\n",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-names-frozen",
+    "file": "server/src/index.js",
+    "old": "ritePost({ day: st.riteOwe.d, place: site?.pl ?? null, by: riteNames(c), n: Object.keys(c.h).length })",
+    "new": "ritePost({ day: st.riteOwe.d, place: site?.pl ?? null, by: riteNames(c).slice(0, 1), n: Object.keys(c.h).length })",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-early-kill-unread",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  const end = Math.min(t.wrathAt, Number.isFinite(fellAt) ? fellAt : Infinity) + GATE_COLLAPSE_MS;",
+    "new": "  const end = t.wrathAt + GATE_COLLAPSE_MS;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-no-grace",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  return now >= w.from && now < w.to + RITE_GRACE_MS;",
+    "new": "  return now >= w.from && now < w.to;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-client-s-burst",
+    "file": "src/net/wire.js",
+    "old": "tokenGate(bucket, nowMs, RITE_HZ_MAX, RITE_RELAY_BURST);",
+    "new": "tokenGate(bucket, nowMs, RITE_HZ_MAX);",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-an-unstruck-word-paid",
+    "file": "server/src/index.js",
+    "old": "if (m.s === 1 && !Object.hasOwn(c.h, a.sub)",
+    "new": "if (!Object.hasOwn(c.h, a.sub)",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-yesterday-folded-into-today",
+    "file": "server/src/index.js",
+    "old": "    if (!this._riteLed || gateOrder(this._riteLed.d, day) < 0) this._riteLed = { d: day, c: {} };",
+    "new": "    if (!this._riteLed) this._riteLed = { d: day, c: {} };",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-hub-s-second-day-never-fresh",
+    "file": "server/src/index.js",
+    "old": "    if (!r || r.d < o.d) r = { d: o.d, c: {} };",
+    "new": "    if (!r) r = { d: o.d, c: {} };",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-r-never-made-good",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (c.r === 1) await db.prepare(\"UPDATE gate_kills SET stones = 2",
+    "new": "  if (false) await db.prepare(\"UPDATE gate_kills SET stones = 2",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-rite-row-raised",
+    "file": "server-account/src/accounts.js",
+    "old": "AND stones = 1 AND earned != 'rite'\").bind",
+    "new": "AND stones = 1\").bind",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-embers-unsaid",
+    "file": "server-account/src/accounts.js",
+    "old": "  return { recorded, why: 'claimed', ...(Number.isSafeInteger(row?.stones) ? { stones: row.stones } : {}),",
+    "new": "  return { recorded, why: 'claimed',",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-rite-answered-drakes",
+    "file": "server-account/src/index.js",
+    "old": "return json(r.recorded && !r.rite ? {",
+    "new": "return json(r.recorded ? {",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-an-r-let-go-at-one",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "    if (claims?.r === 1 && !Number.isSafeInteger(answer.data?.stones)) return 'keep';\n    return 'done'; // counted, or counted before",
+    "new": "    return 'done'; // counted, or counted before",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-guest-told-of-a-breach",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "          say(live(r)?.x === 'rite' ? GATE_CLAIM_TEXT.guestRite : GATE_CLAIM_TEXT.guest);",
+    "new": "          say(GATE_CLAIM_TEXT.guest);",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-read-undoes-a-word",
+    "file": "server/src/index.js",
+    "old": "if (this._riteLed === undefined) this._riteLed = riteRecordOk(v) ? v : null; }",
+    "new": "this._riteLed = riteRecordOk(v) ? v : null; }",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ],
+    "equivalent": true,
+    "why": "belt and braces: the runtime closes the input gate across a storage read, so two first loads never overlap in production; the re-check keeps a harness or a future await honest"
+  },
+  {
+    "name": "AUDIT-WB12d-the-site-said-after-leaving",
+    "file": "src/scenes/riteHost.js",
+    "old": "      unsprang(C.site);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js",
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-site-poisoned-on-leaving",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "function dropSiteFoes(site) { for (const f of [...foes]) if (f.site === site && !f.puppet) questPoolOps.removeFoe(f); }",
+    "new": "function dropSiteFoes(site) { _lostSites.add(site); for (const f of [...foes]) if (f.site === site && !f.puppet) questPoolOps.removeFoe(f); }",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-poison-outlives-the-world",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    _lostSites.clear();   // AUDIT WB12d (C1)",
+    "new": "    // AUDIT WB12d (C1)",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-lost-site-never-taken-back",
+    "file": "src/scenes/riteHost.js",
+    "old": "    foes.reclaim?.(C.site); // a race lost earlier gave it away - its winner is gone",
+    "new": "    // a race lost earlier gave it away - its winner is gone",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js",
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-every-one-stood-again",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (left[m.career] > 0) {\n        left[m.career]--;\n        return;\n      }",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js",
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-fallen-summoner-stood-again",
+    "file": "src/scenes/riteHost.js",
+    "old": "        if (!mem.fell && !brokenHere()) out.push([m, i]);",
+    "new": "        if (!mem.fell) out.push([m, i]);",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js",
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-summoner-s-fall-forgotten",
+    "file": "src/scenes/riteHost.js",
+    "old": "        if (!mem.fell && !brokenHere()) out.push([m, i]);",
+    "new": "        if (!brokenHere()) out.push([m, i]);",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js",
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-nothing-stood-once-broken",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (C.pending || C.pupLive || t - C.standAt < RITE_RESTAND_MS) return;",
+    "new": "    if (brokenHere() || C.pending || C.pupLive || t - C.standAt < RITE_RESTAND_MS) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-copy-counted-twice",
+    "file": "src/scenes/riteHost.js",
+    "old": "    const k = f.puppet ? `${f.puppet}:${f.seq}` : f;",
+    "new": "    const k = f;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-memory-unsaved",
+    "file": "src/systems/riteChest.js",
+    "old": "  getSaveData: () => ({ ..._rite, slain: { ..._rite.slain } }),",
+    "new": "  getSaveData: () => blank(-1),",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-save-s-junk-believed",
+    "file": "src/systems/riteChest.js",
+    "old": "    for (const [k, v] of Object.entries(r.slain && typeof r.slain === 'object' ? r.slain : {}))\n      if (/^\\d{1,4}$/.test(k) && Number.isSafeInteger(v) && v > 0) slain[k] = Math.min(v, SLAIN_MAX);",
+    "new": "    for (const [k, v] of Object.entries(r.slain && typeof r.slain === 'object' ? r.slain : {})) slain[k] = v;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-stood-in-a-save",
+    "file": "src/scenes/riteHost.js",
+    "old": "        .spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: true, eventFoe: true })",
+    "new": "        .spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: false, eventFoe: true })",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-save-s-faithful-restored",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (isRiteSite(sf.site)) continue;",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-peer-s-spring-kept",
+    "file": "src/scenes/riteHost.js",
+    "old": "      forgetPeer(C.site);\n      C.spawned = false; // their owner is gone: the survivors are mine to stand",
+    "new": "      C.spawned = false; // their owner is gone: the survivors are mine to stand",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js",
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-race-lost-for-good",
+    "file": "src/scenes/riteHost.js",
+    "old": "      C.spawned = false; // their owner is gone: the survivors are mine to stand",
+    "new": "      // their owner is gone: the survivors are mine to stand",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-peer-never-heard",
+    "file": "src/scenes/world.js",
+    "old": "      _wodPeerHeard.delete(s); _wodPeerHeard.set(s, performance.now());   // AUDIT WB12d (C2)",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-an-empty-claim-kept",
+    "file": "src/scenes/riteHost.js",
+    "old": "        if (!c.pending && !c.spawned && C === c) unsprang(site); // none stood: claimed by nobody, tried again",
+    "new": "        // none stood: claimed by nobody, tried again",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-late-stand-kept",
+    "file": "src/scenes/riteHost.js",
+    "old": "        if (f && (C !== c || now() >= c.win.to)) {",
+    "new": "        if (f && C !== c) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-no-teleport-handover",
+    "file": "src/scenes/world.js",
+    "old": "    handOverSiteFoes();\n    exteriorFoes.clearLive();",
+    "new": "    exteriorFoes.clearLive();",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-far-heir",
+    "file": "src/scenes/world.js",
+    "old": "let id = null, best = f.site ? CAMP_CULL_DISTANCE : Infinity;",
+    "new": "let id = null, best = Infinity;",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-far-heir-at-the-teleport",
+    "file": "src/scenes/world.js",
+    "old": "        let id = null, best = CAMP_CULL_DISTANCE;\n        for (const q of near)",
+    "new": "        let id = null, best = Infinity;\n        for (const q of near)",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-adopted-unplaced",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f.site) f.placed = true;   // AUDIT WB12d (C3)",
+    "new": "    // AUDIT WB12d (C3)",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-chant-lost-at-a-handover",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!f.riteRole) riteFoe(f, summoner, career, C.camp ?? (C.camp = foes.campId()), false);",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-tended-from-anywhere",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (foes && d <= RITE_TEND_M) tend(holds);",
+    "new": "      if (foes) tend(holds);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-swap-unseen",
+    "file": "src/scenes/riteHost.js",
+    "old": "    return snap.every(([it, n]) => items.includes(it) && (it.stackCount ?? 1) === n);",
+    "new": "    return true;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-split-unseen",
+    "file": "src/scenes/riteHost.js",
+    "old": "    return snap.every(([it, n]) => items.includes(it) && (it.stackCount ?? 1) === n);",
+    "new": "    return snap.every(([it]) => items.includes(it));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-casket-over-its-pile",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!C?.known || C.pile) return NONE;",
+    "new": "      if (!C?.known) return NONE;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-pile-let-go-at-a-take",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!riteChestOpened(C.day) && !untouched(C.pile)) markRiteChest(C.day);",
+    "new": "      if (!riteChestOpened(C.day) && !untouched(C.pile)) {\n        markRiteChest(C.day);\n        C.pile = null;\n        return;\n      }",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-promotion-forgets",
+    "file": "src/net/online.js",
+    "old": "      this.raidOk = !!h.raidOk; this.riteOk = !!h.riteOk;",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-stepped-down-forgets",
+    "file": "src/net/online.js",
+    "note": "WW5 (2026-10-27): re-aimed by content - the step-down keeps the halo's WW5 word beside it (a halo says for itself).",
+    "old": "raidOk: this.raidOk, riteOk: this.riteOk, serpentOk: this.serpentOk, sdOk: this.sdOk, ww5Ok: this.ww5Ok, foeInventoryOk: this.foeInventoryOk",
+    "new": "sdOk: this.sdOk, ww5Ok: this.ww5Ok, foeInventoryOk: this.foeInventoryOk",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-stone-leaked-at-the-going",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (mesh) {\n      renderer?.destroyMesh?.(mesh);\n      mesh = null;\n    }",
+    "new": "    mesh = null;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-old-stone-leaked",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (mesh) renderer.destroyMesh?.(mesh);\n      if (sigilMesh) renderer.destroyMesh?.(sigilMesh);",
+    "new": "      if (sigilMesh) renderer.destroyMesh?.(sigilMesh);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-ground-never-read-again",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (moved || frameN - C.sampledAt >= RITE_GROUND_EVERY) {",
+    "new": "    if (moved) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-new-ground-same-stone",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (ground) C.groundGen++;",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-collider-never-stood",
+    "file": "src/scenes/riteHost.js",
+    "old": "        standCollider();\n        ensureTent();",
+    "new": "        ensureTent();",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-sigil-in-the-collider",
+    "file": "src/scenes/riteHost.js",
+    "old": "      model = buildRiteModel(C.facing, heightAt, { sigil: false });",
+    "new": "      model = buildRiteModel(C.facing, heightAt);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-collider-left-standing",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (colliderGen !== -1) {\n      collider?.()?.removeBucket?.(RITE_BUCKET);\n      colliderGen = -1;\n    }",
+    "new": "    colliderGen = -1;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-throw-retried-every-frame",
+    "file": "src/scenes/riteHost.js",
+    "old": "      meshFailedGen = modelGen;\n    }",
+    "new": "    }",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-new-light-list-a-frame",
+    "file": "src/scenes/riteHost.js",
+    "old": "      return lightPts;",
+    "new": "      return [...lightPts];",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-smoke-built-in-the-draw",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!smokePass && smokeOf && smokeFade(t) > 0) smokePass = smokeOf();",
+    "new": "      if (false) smokePass = smokeOf();",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-two-thresholds",
+    "file": "src/scenes/riteHost.js",
+    "old": "    return v > SMOKE_FADE_MIN ? v : 0;",
+    "new": "    return v;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-grass-never-placed-again",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (C.known && !C.bared) {\n        C.bared = true;\n        bareSaid();\n      }",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-grass-placed-where-it-was",
+    "file": "src/scenes/riteHost.js",
+    "old": "      placeHeart();\n      bareSaid();",
+    "new": "      bareSaid();",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-grass-through-the-sigil",
+    "file": "src/scenes/world.js",
+    "old": "        if (_bare && (x - _bare.x) * (x - _bare.x) + (z - _bare.z) * (z - _bare.z) <= _bare.r * _bare.r) return null;",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-rock-through-the-altar",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "  return boxNear(cx, cz, x0, z0, x1, z1, RITE_CLEAR_M + margin);",
+    "new": "  return false;",
+    "tests": [
+      "test/world/gate/gateclear.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-circle-s-frame-turned",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "  (py - clear.py) * PIXEL_M + clear.rz,",
+    "new": "  (clear.py - py) * PIXEL_M + clear.rz,",
+    "tests": [
+      "test/world/gate/gateclear.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-said-once",
+    "file": "src/scenes/riteHost.js",
+    "old": "    C.resayAt = changed && k > 0 ? t + RITE_RESAY_MS : Infinity;",
+    "new": "    C.resayAt = Infinity;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-said-at-the-relay-s-edge",
+    "file": "src/scenes/riteHost.js",
+    "old": "export const RITE_SAY_REACH_M = RITE_REACH_M - 5;",
+    "new": "export const RITE_SAY_REACH_M = RITE_REACH_M;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-stood-for-an-old-relay",
+    "file": "src/scenes/world.js",
+    "old": "    online: () => !!online?.riteOk,",
+    "new": "    online: () => !!online,",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-order-over-a-broken-rite",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "          if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine());",
+    "new": "          sayOf(riteOmenLine());",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-another-circle-s-word",
+    "file": "src/scenes/riteHost.js",
+    "old": "  const brokenHere = () => (C ? brokenWords.get(C.key) : undefined);",
+    "new": "  const brokenHere = () => (C && brokenWords.size ? brokenWords.values().next().value : undefined);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-early-kill-unread-here",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!s || !Number.isSafeInteger(s.day) || !riteStands(s.day, t, fellAt(s.day))) {",
+    "new": "      if (!s || !Number.isSafeInteger(s.day) || !riteStands(s.day, t)) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-old-news-said",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (b && holds && C.near && !mem.saidBroken) {",
+    "new": "      if (b && C.near && !mem.saidBroken) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-said-before-its-place",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (b && holds && C.near && !mem.saidBroken) {",
+    "new": "      if (b && holds && !mem.saidBroken) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-names-unsaid",
+    "file": "src/scenes/riteHost.js",
+    "old": "  broken: ({ near, by = [], n = 0 }) => `The faithful's rite is broken near ${near}${byWords(by, n)}.`,",
+    "new": "  broken: ({ near }) => `The faithful's rite is broken near ${near}.`,",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-others-uncounted",
+    "file": "src/scenes/riteHost.js",
+    "old": "  const others = Number.isSafeInteger(n) ? Math.max(0, n - names.length) : 0;",
+    "new": "  const others = 0;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-post-s-others-uncounted",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],",
+    "new": "      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), 0)],",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-hub-s-count-unsaid",
+    "file": "server/src/index.js",
+    "old": "by: riteNames(c).slice(0, RITE_BY_MAX), n: Object.keys(c.h).length });",
+    "new": "by: riteNames(c).slice(0, RITE_BY_MAX) });",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-count-trusted",
+    "file": "src/net/wire.js",
+    "old": "const n = intIn(m.n, by.length, RITE_COUNT_MAX) ? m.n : by.length;",
+    "new": "const n = Number.isSafeInteger(m.n) ? m.n : by.length;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-summoner-by-his-kind-dead",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType)); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his",
+    "new": "  const name = championName(entity, enemyDisplayName(mobileType)); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-summoner-by-his-kind-seen",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    const own = properName(entity); // AUDIT WB12d (D2): a foe with a name of its own is seen by it - \"You see the Summoner.\"",
+    "new": "    const own = null; // AUDIT WB12d (D2): a foe with a name of its own is seen by it - \"You see the Summoner.\"",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-rite-s-ember-spoils",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "say(claims.x === 'rite' ? COURT_STRIKE_TEXT.spilledRite() : COURT_STRIKE_TEXT.spilled());",
+    "new": "say(COURT_STRIKE_TEXT.spilled());",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/world/gate/wbx_gate_fixes.test.js",
+      "test/net/gate/auditwb_spoils.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-wabbajack-drops-the-site",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "export const siteFoeSpawn = (f) => (f?.site ? { site: f.site, placed: true, transient: !!f.transient } : {});",
+    "new": "export const siteFoeSpawn = () => ({});",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-wabbajack-drops-the-part",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const SITE_FOE_KEYS = Object.freeze(['campId', 'campKind', 'campAlertRadius', 'riteRole', 'riteCareer']);",
+    "new": "const SITE_FOE_KEYS = Object.freeze(['campId', 'campKind', 'campAlertRadius']);",
+    "tests": [
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-day-less-site",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
+    "old": "export const riteSiteId = (px, py, day) => `${px},${py}:rite.${day}`;",
+    "new": "export const riteSiteId = (px, py) => `${px},${py}:rite.0`;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-mage-pack",
+    "file": "src/scenes/world.js",
+    "old": "    return groupCamps(members, enemyDisplayName).map((c) => (c.kind === 'rite' ? { ...c, label: RITE_TEXT.mark(c.n) } : c));",
+    "new": "    return groupCamps(members, enemyDisplayName);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-side-by-the-roll",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  const across = c * ux - s * uz >= 0 ? 1 : -1,\n    through = s * ux + c * uz >= 0 ? 1 : -1; // its two halves, in the gate's frame",
+    "new": "  const across = gateRoll(day, 9) % 2 ? 1 : -1,\n    through = 1; // its two halves, in the gate's frame",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-across-away-from-the-heart",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  const across = c * ux - s * uz >= 0 ? 1 : -1,",
+    "new": "  const across = c * ux - s * uz >= 0 ? -1 : 1,",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-through-away-from-the-heart",
+    "file": "src/net/gate/gateRite.js",
+    "old": "    through = s * ux + c * uz >= 0 ? 1 : -1; // its two halves, in the gate's frame",
+    "new": "    through = s * ux + c * uz >= 0 ? -1 : 1; // its two halves, in the gate's frame",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-junk-hides-a-name",
+    "file": "src/net/wire.js",
+    "old": "m.by.filter((n) => typeof n === 'string' && n).slice(0, RITE_BY_MAX).map(sanitizeName)",
+    "new": "m.by.slice(0, RITE_BY_MAX).filter((n) => typeof n === 'string' && n).map(sanitizeName)",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-wide-foot",
+    "file": "src/render/riteSmoke.js",
+    "old": "export const SMOKE_FOOT_R = 1.2;",
+    "new": "export const SMOKE_FOOT_R = 3;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-fast-swell",
+    "file": "src/render/riteSmoke.js",
+    "old": "export const SMOKE_SWELL = 0.9;",
+    "new": "export const SMOKE_SWELL = 0.6;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-fade-over-metres",
+    "file": "src/render/riteSmoke.js",
+    "old": "  float body = smoothstep(0.0, ${f1(SMOKE_FOOT_FADE_M / SMOKE_HEIGHT_M)}, h) * (1.0 - smoothstep(0.5, 1.0, h));",
+    "new": "  float body = smoothstep(0.0, 0.02, h) * (1.0 - smoothstep(0.5, 1.0, h));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-glow-everywhere",
+    "file": "src/render/riteSmoke.js",
+    "old": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * f * uFade);",
+    "new": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * pow(1.0 - h, 18.0) * puff * f * uFade);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-glow-through-the-fog",
+    "file": "src/render/riteSmoke.js",
+    "old": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * f * uFade);",
+    "new": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * uFade);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-glow-outlives-the-fade",
+    "file": "src/render/riteSmoke.js",
+    "old": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * f * uFade);",
+    "new": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * f);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-unlit",
+    "file": "src/render/riteSmoke.js",
+    "old": "  o = vec4(${v3(SMOKE_COLOR)} * max(uLight, ${f1(SMOKE_LIGHT_MIN)}) * a + glow, a);",
+    "new": "  o = vec4(${v3(SMOKE_COLOR)} * 1.0 * a + glow, a);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-hole-in-the-night",
+    "file": "src/render/riteSmoke.js",
+    "old": "  o = vec4(${v3(SMOKE_COLOR)} * max(uLight, ${f1(SMOKE_LIGHT_MIN)}) * a + glow, a);",
+    "new": "  o = vec4(${v3(SMOKE_COLOR)} * uLight * a + glow, a);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-light-unhanded",
+    "file": "src/render/riteSmoke.js",
+    "old": "    gl.uniform1f(U.uLight, Number.isFinite(fog?.light) ? Math.max(0, Math.min(1, fog.light)) : 1);",
+    "new": "    gl.uniform1f(U.uLight, 1);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-light-unclamped",
+    "file": "src/render/riteSmoke.js",
+    "old": "    gl.uniform1f(U.uLight, Number.isFinite(fog?.light) ? Math.max(0, Math.min(1, fog.light)) : 1);",
+    "new": "    gl.uniform1f(U.uLight, Number.isFinite(fog?.light) ? fog.light : 1);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-floor-in-all-fog",
+    "file": "src/render/riteSmoke.js",
+    "old": "  a *= (uFogMode == 1 ? max(f, ${f1(SMOKE_FOG_FLOOR)}) : f) * uFade;",
+    "new": "  a *= max(f, ${f1(SMOKE_FOG_FLOOR)}) * uFade;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-one-climb",
+    "file": "src/render/riteSmoke.js",
+    "old": "export const SMOKE_CLIMB_HEIGHTS = Object.freeze([2, 3, 5]);",
+    "new": "export const SMOKE_CLIMB_HEIGHTS = Object.freeze([2, 2, 2]);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-heart-facing-down",
+    "file": "src/world/riteModel.js",
+    "old": "        if (ri === 0) f.tri(RITE_SIGIL_RECORD, a.p, d.p, c.p, a.uv, d.uv, c.uv);",
+    "new": "        if (ri === 0) f.tri(RITE_SIGIL_RECORD, a.p, c.p, d.p, a.uv, c.uv, d.uv);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-sigil-on-the-plinth",
+    "file": "src/world/gate/gateModel.js",
+    "old": "export const RITE_SIGIL_RECORD = 2;",
+    "new": "export const RITE_SIGIL_RECORD = 1;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-plinth-wears-the-sigil",
+    "file": "src/world/gate/gateArt.js",
+    "old": "export const riteArt = () => [[RITE_SIGIL_RECORD, riteSigilArt()]];",
+    "new": "export const riteArt = () => [[GATE_PLINTH_RECORD, riteSigilArt()]];",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-art-unturned",
+    "file": "src/world/riteModel.js",
+    "old": "    uvOf = (x, z) => [0.5 + (x * cf - z * sf) / (2 * RITE_SIGIL_R), 0.5 + (x * sf + z * cf) / (2 * RITE_SIGIL_R)];",
+    "new": "    uvOf = (x, z) => [0.5 + x / (2 * RITE_SIGIL_R), 0.5 + z / (2 * RITE_SIGIL_R)];",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-old-reach",
+    "file": "src/world/riteModel.js",
+    "old": "export const RITE_SIGIL_REACH = 0.5;",
+    "new": "export const RITE_SIGIL_REACH = 0.75;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-old-lift",
+    "file": "src/world/riteModel.js",
+    "old": "export const RITE_SIGIL_LIFT = 0.04;",
+    "new": "export const RITE_SIGIL_LIFT = 0.06;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-old-rings",
+    "file": "src/world/riteModel.js",
+    "old": "export const RITE_SIGIL_RINGS = 12;",
+    "new": "export const RITE_SIGIL_RINGS = 6;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-old-segments",
+    "file": "src/world/riteModel.js",
+    "old": "export const RITE_SIGIL_SEGS = 48;",
+    "new": "export const RITE_SIGIL_SEGS = 28;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-one-strip-turned",
+    "file": "src/world/riteModel.js",
+    "old": "          u = j * 0.15;",
+    "new": "          u = 0;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-sigil-from-anywhere",
+    "file": "src/scenes/riteHost.js",
+    "old": "        (!eye || Math.hypot(eye[0] - C.heart[0], eye[1] - C.heart[1], eye[2] - C.heart[2]) <= RITE_SIGIL_DRAW_M)",
+    "new": "        (!eye || Math.hypot(eye[0] - C.heart[0], eye[1] - C.heart[1], eye[2] - C.heart[2]) <= Infinity)",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-no-eye-no-sigil",
+    "file": "src/scenes/riteHost.js",
+    "old": "        (!eye || Math.hypot(eye[0] - C.heart[0], eye[1] - C.heart[1], eye[2] - C.heart[2]) <= RITE_SIGIL_DRAW_M)",
+    "new": "        !!eye &&\n        Math.hypot(eye[0] - C.heart[0], eye[1] - C.heart[1], eye[2] - C.heart[2]) <= RITE_SIGIL_DRAW_M",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-old-sigil-leaked",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (sigilMesh) renderer.destroyMesh?.(sigilMesh);\n      mesh = next;",
+    "new": "      mesh = next;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-sigil-leaked-at-the-going",
+    "file": "src/scenes/riteHost.js",
+    "old": "      renderer?.destroyMesh?.(sigilMesh);\n      sigilMesh = null;",
+    "new": "      sigilMesh = null;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-no-fire-on-the-altar",
+    "file": "src/scenes/riteHost.js",
+    "old": "      [fire.size, [...ring.filter((_, i) => i % 2 === 0), top(0, 0, RITE_ALTAR.h)]],",
+    "new": "      [fire.size, [...ring.filter((_, i) => i % 2 === 0)]],",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-altar-s-fire-in-its-stone",
+    "file": "src/scenes/riteHost.js",
+    "old": "      [fire.size, [...ring.filter((_, i) => i % 2 === 0), top(0, 0, RITE_ALTAR.h)]],",
+    "new": "      [fire.size, [...ring.filter((_, i) => i % 2 === 0), top(0, 0, 0)]],",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-sigil-s-art-never-up",
+    "file": "src/scenes/riteHost.js",
+    "old": "        for (const [rec, art] of [...gateArt(), ...riteArt()]) {",
+    "new": "        for (const [rec, art] of gateArt()) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-square-tile",
+    "file": "src/world/gate/gateArt.js",
+    "old": "        put(albedo, x, y, CHAR, 0);\n        put(emission, x, y, [0, 0, 0], 0);",
+    "new": "        put(albedo, x, y, CHAR);\n        put(emission, x, y, [0, 0, 0]);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-smooth-rim",
+    "file": "src/world/gate/gateArt.js",
+    "old": "      if (d > 0.9 + 0.16 * (edge(x, y, S) - 0.5)) {",
+    "new": "      if (d > 0.9) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-star-turned-from-the-gate",
+    "file": "src/world/gate/gateArt.js",
+    "old": "    const a = Math.PI / 2 + (i / 7) * 2 * Math.PI;",
+    "new": "    const a = -Math.PI / 2 + (i / 7) * 2 * Math.PI;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-cuts-cold",
+    "file": "src/world/gate/gateArt.js",
+    "old": "          put(emission, px, py, glow(1));",
+    "new": "          put(emission, px, py, glow(0));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-world-draws-the-sigil-from-anywhere",
+    "file": "src/scenes/world.js",
+    "old": "riteHost?.draw(renderer, null, mwv.eye);",
+    "new": "riteHost?.draw(renderer);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-world-s-light-unhanded",
+    "file": "src/scenes/world.js",
+    "old": ", light: (renderer._ambient[0] + renderer._ambient[1] + renderer._ambient[2]) / 3 + 0.6 * renderer._sunScale })",
+    "new": " })",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-smooth-cone",
+    "file": "src/render/riteSmoke.js",
+    "old": "  float r = mix(${f1(SMOKE_FOOT_R)}, ${f1(SMOKE_TOP_R)}, pow(heightOf(uv.y), ${f1(SMOKE_SWELL)})) * (1.0 + ${f1(SMOKE_LUMP)} * (lump - 0.5));",
+    "new": "  float r = mix(${f1(SMOKE_FOOT_R)}, ${f1(SMOKE_TOP_R)}, pow(heightOf(uv.y), ${f1(SMOKE_SWELL)})) * 1.0;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-lumps-of-their-own",
+    "file": "src/render/riteSmoke.js",
+    "old": "  float lump = tnoise(vec2(uv.x * per.x, (clamp(uv.y, 0.0, 1.0) - uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per);",
+    "new": "  float lump = tnoise(vec2(uv.x * per.x, (clamp(uv.y, 0.0, 1.0) - uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[1])}) * per.y), per);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-lumps-off-the-billows",
+    "file": "src/render/riteSmoke.js",
+    "old": "  float lump = tnoise(vec2(uv.x * per.x, (clamp(uv.y, 0.0, 1.0) - uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per);",
+    "new": "  float lump = tnoise(vec2(uv.x * per.x + 1.0, (clamp(uv.y, 0.0, 1.0) - uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-axis-s-line-for-its-normal",
+    "file": "src/render/riteSmoke.js",
+    "old": "  vNormal = cross(placeAt(aUV + vec2(0.0, e.y)) - placeAt(aUV - vec2(0.0, e.y)), placeAt(aUV + vec2(e.x, 0.0)) - placeAt(aUV - vec2(e.x, 0.0)));",
+    "new": "  vNormal = p - axisAt(h);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-thick-edge-on",
+    "file": "src/render/riteSmoke.js",
+    "old": "  float core = smoothstep(0.0, 0.55, abs(dot(normalize(vNormal), normalize(uCamPos - vWorld))));",
+    "new": "  float core = smoothstep(0.0, 0.55, 1.0);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-billows-one-size",
+    "file": "src/render/riteSmoke.js",
+    "old": "  float y = log(1.0 + ${f1(SMOKE_BILLOW)} * h) / ${f1(Math.log(1 + SMOKE_BILLOW))};",
+    "new": "  float y = h;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-rows-evenly-up",
+    "file": "src/render/riteSmoke.js",
+    "old": "float heightOf(float y) { return (exp(clamp(y, 0.0, 1.0) * ${f1(Math.log(1 + SMOKE_BILLOW))}) - 1.0) / ${f1(SMOKE_BILLOW)}; }",
+    "new": "float heightOf(float y) { return clamp(y, 0.0, 1.0); }",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-shimmer-far-off",
+    "file": "src/render/riteSmoke.js",
+    "old": "  float n = 0.5 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per), smoothstep(1.0, 3.0, big))",
+    "new": "  float n = 0.5 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per), 1.0)",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-fine-shimmer-far-off",
+    "file": "src/render/riteSmoke.js",
+    "old": "          + 0.2 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x * 4.0, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[2])}) * per.y * 4.0), per * 4.0), smoothstep(4.0, 12.0, big));",
+    "new": "          + 0.2 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x * 4.0, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[2])}) * per.y * 4.0), per * 4.0), 1.0);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-a-thin-far-plume",
+    "file": "src/render/riteSmoke.js",
+    "old": "export const SMOKE_LOD_MEAN = 0.58;",
+    "new": "export const SMOKE_LOD_MEAN = 0.5;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-pale-floor",
+    "file": "src/render/riteSmoke.js",
+    "old": "export const SMOKE_FOG_FLOOR = 0.6;",
+    "new": "export const SMOKE_FOG_FLOOR = 0.35;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-no-holes",
+    "file": "src/render/riteSmoke.js",
+    "old": "export const SMOKE_COVER = Object.freeze([0.28, 0.7]);",
+    "new": "export const SMOKE_COVER = Object.freeze([0.12, 0.62]);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-cell-helpers-unbounded",
+    "file": "server/src/index.js",
+    "old": "&& Object.keys(c.h).length < RITE_HELPERS_MAX) { c.h[a.sub]",
+    "new": ") { c.h[a.sub]",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-cell-helpers-one-over",
+    "file": "server/src/index.js",
+    "old": "&& Object.keys(c.h).length < RITE_HELPERS_MAX) { c.h[a.sub]",
+    "new": "&& Object.keys(c.h).length <= RITE_HELPERS_MAX) { c.h[a.sub]",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-second-circle-folded",
+    "file": "server/src/index.js",
+    "old": "    let c = led.c[k];\n",
+    "new": "    let c = led.c[k] ?? Object.values(led.c)[0];\n",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-older-day-word",
+    "file": "server/src/index.js",
+    "old": "    if (this._riteLed && gateOrder(this._riteLed.d, day) > 0) return null;\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ],
+    "equivalent": true,
+    "why": "a word is read only inside its own day's window (riteHeard), and no two gate days' windows meet (a day is 2 h, a circle stands 35 min) - an older day's word never reaches the ledger"
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-fall-restamped",
+    "file": "server/src/index.js",
+    "old": "if (m.f === 1 && !c.f) { c.f = 1; c.at = now; moved = true; }",
+    "new": "if (m.f === 1) { c.f = 1; c.at = now; moved = true; }",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-told-at-every-word",
+    "file": "server/src/index.js",
+    "old": "const riteOwed = (c) => (!!c.f && c.told < Object.keys(c.h).length) || (!!c.cl && !c.clTold);",
+    "new": "const riteOwed = (c) => !!c.f || (!!c.cl && !c.clTold);",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ],
+    "note": "BROKER-CAGE (re-aimed by content): the owed test is one home now (riteOwed), the cage's word beside the break."
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-sweep-forgotten",
+    "file": "server/src/index.js",
+    "old": "const riteDue = await this._riteTellHub(Date.now());",
+    "new": "const riteDue = false;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ],
+    "note": "AUDIT BROKER-CAGE R4 (re-aimed by content): the alarm's local renamed riteDue - it shadowed the circle's own test, riteOwed."
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-sweep-owed-unsaid",
+    "file": "server/src/index.js",
+    "old": "      return Object.values(led.c).some(riteOwed);",
+    "new": "      return false;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/raid3_raidLedger.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-hub-older-day-replaces",
+    "file": "server/src/index.js",
+    "old": "    if (r && r.d > o.d) return json({ ok: true });   // an older day's\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ],
+    "equivalent": true,
+    "why": "an older day's tell is answered before this (riteStands: its breach collapsed long before a newer day's omen), so it never meets a newer record"
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-hub-another-circle-folded",
+    "file": "server/src/index.js",
+    "old": "    let c = r.c[k];\n",
+    "new": "    let c = r.c[k] ?? Object.values(r.c)[0];\n",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-hub-helpers-carried-over",
+    "file": "server/src/index.js",
+    "old": "if (!r || r.d < o.d) r = { d: o.d, c: {} };",
+    "new": "if (!r || r.d < o.d) r = { d: o.d, c: { ...(r?.c ?? {}) } };",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-hub-helpers-unbounded",
+    "file": "server/src/index.js",
+    "old": "if (Object.hasOwn(c.h, e[0]) || Object.keys(c.h).length < RITE_HELPERS_MAX) c.h[e[0]] = ",
+    "new": "c.h[e[0]] = ",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-helpers-of-another-day",
+    "file": "server/src/index.js",
+    "old": "  if (!r || r.d !== d) return [];",
+    "new": "  if (!r) return [];",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-helpers-asked-for-another-day",
+    "file": "server/src/index.js",
+    "old": "body: JSON.stringify({ d: day }), signal: AbortSignal.timeout(timeoutMs)",
+    "new": "body: JSON.stringify({ d: day - 1 }), signal: AbortSignal.timeout(timeoutMs)",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-hello-word-in-every-room",
+    "file": "server/src/index.js",
+    "old": "        if (isSocialRoom(a.key)) await this._hubHelloWords(ws, m, who.subject, now);",
+    "new": "        await this._hubHelloWords(ws, m, who.subject, now);",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js",
+      "test/systems/brokercage.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/sd3_relay.test.js"
+    ],
+    "note": "SCALE5c (re-aimed by content): the hub hello words, rite among them, moved into _hubHelloWords - said in every channel AUDIT SCALE II D-5: recorded equivalent until the audit found pins that kill it - test/net/soc1_hub.test.js, test/net/sd3_relay.test.js; it said: the replay runs in a chat room's hello alone (the `if (chat)` block): the hub keeps the circles, and a region's channel keeps no rite key - a cell, whose ledger keeps `cl` (BROKER-CAGE), never reaches it"
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-hello-word-past-collapse",
+    "file": "server/src/index.js",
+    "old": "const stands = riteStands(r.d, now, await this._fellAtOf(r.d)), caged = cageStands(r.d, now);",
+    "new": "const stands = true, caged = cageStands(r.d, now);",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-said-names-unbounded",
+    "file": "server/src/index.js",
+    "old": "by: riteNames(c).slice(0, RITE_BY_MAX), n:",
+    "new": "by: riteNames(c), n:",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-herald-rite-unarmed",
+    "file": "server/src/index.js",
+    "old": "    st.riteOwe = { d };\n    await this.state.storage.put({ [gateLaneKey('herald', lane)]: st, hub: 1 });\n    await this._hubArm(now);",
+    "new": "    st.riteOwe = { d };\n    await this.state.storage.put({ [gateLaneKey('herald', lane)]: st, hub: 1 });",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-herald-rite-place-lost",
+    "file": "server/src/index.js",
+    "old": "ritePost({ day: st.riteOwe.d, place: site?.pl ?? null, by: riteNames(c)",
+    "new": "ritePost({ day: st.riteOwe.d, place: null, by: riteNames(c)",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-herald-rite-names-lost",
+    "file": "server/src/index.js",
+    "old": "place: site?.pl ?? null, by: riteNames(c), n: Object.keys(c.h).length }), 'gate')",
+    "new": "place: site?.pl ?? null, by: [], n: Object.keys(c.h).length }), 'gate')",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-herald-rite-no-retry",
+    "file": "server/src/index.js",
+    "old": "{ st.rite = st.riteOwe.d; st.riteOwe = null; }\n        else retry = now + HERALD_RETRY_MS;",
+    "new": "{ st.rite = st.riteOwe.d; st.riteOwe = null; }",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-herald-rite-none-yet-unretried",
+    "file": "server/src/index.js",
+    "old": "if (!c) retry = now + HERALD_RETRY_MS;   // none yet",
+    "new": "if (!c) {}   // none yet",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-herald-rite-kept-past-collapse",
+    "file": "server/src/index.js",
+    "old": "if (st.riteOwe && (st.riteOwe.d <= st.rite || !riteStands(st.riteOwe.d, now, await this._fellAtOf(st.riteOwe.d)))) st.riteOwe = null;",
+    "new": "if (st.riteOwe && st.riteOwe.d <= st.rite) st.riteOwe = null;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-rite-unmetered",
+    "file": "server/src/index.js",
+    "old": "      if (!this._spend(ws, now, riteRelayGate, 'riteBucket', 'riteDrops', 'too many rite frames')) return;",
+    "new": "      if (false) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-guest-sub-unasked",
+    "file": "server/src/index.js",
+    "old": "    if (typeof a.sub !== 'string' || !a.sub) return;\n    const led = await this._riteLedgerOf(m.d);",
+    "new": "    const led = await this._riteLedgerOf(m.d);",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ],
+    "equivalent": true,
+    "why": "every socket past its hello carries the verified token's subject, never empty (no token is minted without one), and a socket with no hello has no pose to stand at the circle"
+  },
+  {
+    "name": "AUDIT-WB12d-T-wire-out-at-zero",
+    "file": "src/net/wire.js",
+    "old": "!Number.isSafeInteger(m.at) || m.at <= 0) return null;   // WW2: a lane past the Bay's a world pixel\n  if (m.k === 'cl')",
+    "new": "!Number.isSafeInteger(m.at) || m.at < 0) return null;   // WW2: a lane past the Bay's a world pixel\n  if (m.k === 'cl')",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-wire-out-names-unsanitized",
+    "file": "src/net/wire.js",
+    "old": ".slice(0, RITE_BY_MAX).map(sanitizeName) : [];",
+    "new": ".slice(0, RITE_BY_MAX) : [];",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-herald-rite-place-dropped",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    fields: [\n      ['Where', place ? `Near ${place}` : 'In the wilds'],\n      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],",
+    "new": "    fields: [\n      ['Where', 'In the wilds'],\n      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/discordgates.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/net/gate/wb13b_words.test.js",
+      "test/systems/gate/wb12a_breach_words.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-herald-rite-pings",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    title: \"The faithful's rite is broken\",",
+    "new": "    role: '1555589839825670258',\n    title: \"The faithful's rite is broken\",",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/discordgates.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/net/gate/wb13b_words.test.js",
+      "test/systems/gate/wb12a_breach_words.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-herald-rite-by-nobody",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)],",
+    "new": "      ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n) || 'nobody'],",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/discordgates.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/net/gate/wb13b_words.test.js",
+      "test/systems/gate/wb12a_breach_words.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-smoke-nan-origin-drawn",
+    "file": "src/render/riteSmoke.js",
+    "old": "      .filter(\n        (s) =>\n          s &&\n          Array.isArray(s.origin) &&\n          s.origin.length === 3 &&\n          s.origin.every(Number.isFinite) &&\n          s.fade > SMOKE_FADE_MIN,\n      )",
+    "new": "      .filter((s) => s && Array.isArray(s.origin) && s.origin.length === 3 && s.fade > SMOKE_FADE_MIN)",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-wod-rite-site-refused",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
+    "old": "  /^-?\\d{1,5},-?\\d{1,5}:(?:\\d{1,10}(?:\\.\\d{1,3})?|hold|rite\\.\\d{1,9}|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?|brass\\.[0-2]\\.\\d(?:\\.h)?)$/; // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`); STOREFRONT: a Brass Fissure's",
+    "new": "  /^-?\\d{1,5},-?\\d{1,5}:(?:\\d{1,10}(?:\\.\\d{1,3})?|hold|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?|brass\\.[0-2]\\.\\d(?:\\.h)?)$/; // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`); STOREFRONT: a Brass Fissure's",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/scenes/wod7_sharedcamps.test.js",
+      "test/world/worldOfDaggerfall/audit_wod_branch.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-any-faithful-breaks",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (summoner) {\n      if (holds) mem.fell = 1;\n      return;\n    }",
+    "new": "    if (holds) mem.fell = 1;\n    if (summoner) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-foreign-foes-tended",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!ownSite(f)) continue;",
+    "new": "      if (!f) continue;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-foreign-foes-woken",
+    "file": "src/scenes/riteHost.js",
+    "old": "      for (const g of list)\n        if (ownSite(g) && !g.puppet && !g.dead && g.ai && !g.ai.target) g.ai.target = waker.ai.target;",
+    "new": "      for (const g of list) if (g && !g.puppet && !g.dead && g.ai && !g.ai.target) g.ai.target = waker.ai.target;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-spring-after-opening",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (on && holds && foes && C.known && d <= RITE_SPRING_M) maybeStand(t);",
+    "new": "      if (on && foes && C.known && d <= RITE_SPRING_M) maybeStand(t);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-spring-offline",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (on && holds && foes && C.known && d <= RITE_SPRING_M) maybeStand(t);",
+    "new": "      if (holds && foes && C.known && d <= RITE_SPRING_M) maybeStand(t);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-spring-on-unknown-ground",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (on && holds && foes && C.known && d <= RITE_SPRING_M) maybeStand(t);",
+    "new": "      if (on && holds && foes && d <= RITE_SPRING_M) maybeStand(t);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-pass-line-to-everyone",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (standing && !mem.passed && d <= RITE_SPRING_M) {",
+    "new": "    if (standing && !mem.passed) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-pass-said-every-frame",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (standing && !mem.passed && d <= RITE_SPRING_M) {",
+    "new": "    if (standing && d <= RITE_SPRING_M) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-the-dead-pass",
+    "file": "src/scenes/riteHost.js",
+    "old": "    for (const f of foes?.list() ?? NONE) if (ownSite(f) && !f.dead) standing++;",
+    "new": "    for (const f of foes?.list() ?? NONE) if (ownSite(f)) standing++;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-late-spawn-orphaned",
+    "file": "src/scenes/riteHost.js",
+    "old": "        if (f && (C !== c || now() >= c.win.to)) {",
+    "new": "        if (f && now() >= c.win.to) {",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-word-stamped-unsent",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (!send({ d: C.day, px: C.px, py: C.py, s, f, c }, C.cell)) return;",
+    "new": "    send({ d: C.day, px: C.px, py: C.py, s, f, c }, C.cell);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-chest-level-ignored",
+    "file": "src/scenes/riteHost.js",
+    "old": "    C.pile = loot.seed(riteChestItems(level(), rolls), [p[0], p[1] + 0.6, p[2]], `${C.px},${C.py}`); // dies with its pixel",
+    "new": "    C.pile = loot.seed(riteChestItems(1, rolls), [p[0], p[1] + 0.6, p[2]], `${C.px},${C.py}`); // dies with its pixel",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-chest-on-unknown-ground",
+    "file": "src/scenes/riteHost.js",
+    "old": "    if (!loot || !C.known || !brokenHere() || riteChestOpened(C.day) || d > RITE_CHEST_SEED_M) return;",
+    "new": "    if (!loot || !brokenHere() || riteChestOpened(C.day) || d > RITE_CHEST_SEED_M) return;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-casket-sealed-when-broken",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (key.startsWith('rite:'))\n        return {\n          title: RITE_TEXT.chest,\n          subs: !brokenHere() ? [RITE_TEXT.sealedSub] : riteChestOpened(C.day) ? [RITE_TEXT.openedSub] : [],\n        };",
+    "new": "      if (key.startsWith('rite:')) return { title: RITE_TEXT.chest, subs: [RITE_TEXT.sealedSub] };",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-casket-never-opened",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (key.startsWith('rite:'))\n        return {\n          title: RITE_TEXT.chest,\n          subs: !brokenHere() ? [RITE_TEXT.sealedSub] : riteChestOpened(C.day) ? [RITE_TEXT.openedSub] : [],\n        };",
+    "new": "      if (key.startsWith('rite:')) return { title: RITE_TEXT.chest, subs: !brokenHere() ? [RITE_TEXT.sealedSub] : [] };",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-lights-from-anywhere",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (!f || Math.hypot(f[0] - C.heart[0], f[2] - C.heart[2]) > RITE_LIGHT_REACH_M) return NONE;",
+    "new": "      if (!f) return NONE;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-place-learned-late-lost",
+    "file": "src/scenes/riteHost.js",
+    "old": "      if (s.near && !C.near) C.near = s.near;\n      placeHeart();",
+    "new": "      placeHeart();",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-faithful-facing-north",
+    "file": "src/scenes/riteHost.js",
+    "old": "        .spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw, site, transient: true, eventFoe: true })",
+    "new": "        .spawn(m.career, [c.heart[0] + x, c.heart[2] + z], { yaw: 0, site, transient: true, eventFoe: true })",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-ring-one-more-place",
+    "file": "src/scenes/riteHost.js",
+    "old": "      ring = C.layout.ring(riteFaithfulOf(C.day).length - 1);",
+    "new": "      ring = C.layout.ring(riteFaithfulOf(C.day).length);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-leave-keeps-faithful",
+    "file": "src/scenes/riteHost.js",
+    "old": "      foes?.drop(C.site);\n      unsprang(C.site);",
+    "new": "      unsprang(C.site);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-hub-long-ids",
+    "file": "server/src/index.js",
+    "old": "if (!Array.isArray(e) || typeof e[0] !== 'string' || !e[0] || e[0].length > 128) continue;",
+    "new": "if (!Array.isArray(e) || typeof e[0] !== 'string' || !e[0]) continue;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-hub-word-to-the-unhelloed",
+    "file": "server/src/index.js",
+    "old": "      for (const [ws, b] of [...this._all()]) if (b.id) this._send(ws, said);\n      try { await this._heraldRiteOwe",
+    "new": "      for (const [ws] of [...this._all()]) this._send(ws, said);\n      try { await this._heraldRiteOwe",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-relay-herald-next-at-ignores-rite",
+    "file": "server/src/index.js",
+    "old": "if (st.owe || st.riteOwe) return now;",
+    "new": "if (st.owe) return now;",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/discordgates.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-wire-in-last-column-refused",
+    "file": "src/net/wire.js",
+    "old": "  const bay = intIn(px, 0, 999) && intIn(py, 0, 499);\n  return lane === 0",
+    "new": "  const bay = intIn(px, 0, 998) && intIn(py, 0, 499);\n  return lane === 0",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-wire-out-day-unchecked",
+    "file": "src/net/wire.js",
+    "old": "  if (!Number.isSafeInteger(m.d) || m.d < 0 || !gatePixelOk(m.d, m.px, m.py) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;   // WW2: a lane past the Bay's a world pixel\n  if (m.k === 'cl')",
+    "new": "  if (!gatePixelOk(m.d, m.px, m.py) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;   // WW2: a lane past the Bay's a world pixel\n  if (m.k === 'cl')",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-law-reach-strict",
+    "file": "src/net/gate/gateRite.js",
+    "old": "  return Math.hypot(x - cx, z - cz) <= RITE_REACH_M * RITE_UNITS_PER_M;",
+    "new": "  return Math.hypot(x - cx, z - cz) < RITE_REACH_M * RITE_UNITS_PER_M;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-law-one-career-a-day",
+    "file": "src/net/gate/gateRite.js",
+    "old": "    out.push({ career: RITE_CAREERS[gateHash(GATE_SALT, day, 18, i) % RITE_CAREERS.length], summoner: false });",
+    "new": "    out.push({ career: RITE_CAREERS[gateHash(GATE_SALT, day, 18, 0) % RITE_CAREERS.length], summoner: false });",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-law-reach-not-60",
+    "file": "src/net/gate/gateRite.js",
+    "old": "export const RITE_REACH_M = 60;",
+    "new": "export const RITE_REACH_M = 120;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-law-word-not-5s",
+    "file": "src/net/gate/gateRite.js",
+    "old": "export const RITE_WORD_MS = 5000;",
+    "new": "export const RITE_WORD_MS = 20000;",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-herald-rite-names-raw",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "  const shown = (Array.isArray(names) ? names : []).map(heraldName).filter(Boolean);",
+    "new": "  const shown = (Array.isArray(names) ? names : []).filter(Boolean);",
+    "tests": [
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/discordgates.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/net/gate/wb13b_words.test.js",
+      "test/systems/gate/wb12a_breach_words.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-online-halo-never-keeps-rite",
+    "file": "src/net/online.js",
+    "old": "      else { const h = this._halo.get(room); if (h) h.riteOk = relaySupportsRite(relayV); }\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/raid3_raidLedger.test.js",
+      "test/net/auditraid.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-online-rite-to-any-room",
+    "file": "src/net/online.js",
+    "old": "    if (!w || typeof cell !== 'string' || !isCellRoom(cell)) return false;\n    const halo = !this._mine(cell) ? this._haloFor(cell) : null;\n    if (!(this._mine(cell) ? this.riteOk",
+    "new": "    if (!w || typeof cell !== 'string') return false;\n    const halo = !this._mine(cell) ? this._haloFor(cell) : null;\n    if (!(this._mine(cell) ? this.riteOk",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/raid3_raidLedger.test.js",
+      "test/net/auditraid.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-smoke-in-not-8s",
+    "file": "src/scenes/riteHost.js",
+    "old": "export const RITE_SMOKE_IN_MS = 8000;",
+    "new": "export const RITE_SMOKE_IN_MS = 60000;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-host-spring-not-100m",
+    "file": "src/scenes/riteHost.js",
+    "old": "export const RITE_SPRING_M = 100;",
+    "new": "export const RITE_SPRING_M = 400;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-chest-two-or-three-reagents",
+    "file": "src/systems/riteChest.js",
+    "old": "  const n = RITE_REAGENTS_MIN + Math.floor(rolls() * (RITE_REAGENTS_MAX - RITE_REAGENTS_MIN + 1));",
+    "new": "  const n = RITE_REAGENTS_MIN + Math.floor(rolls() * (RITE_REAGENTS_MAX - RITE_REAGENTS_MIN));",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-chest-one-reagent-kind",
+    "file": "src/systems/riteChest.js",
+    "old": "    const r =\n      rolls() < RITE_HEART_CHANCE\n        ? RITE_HEART\n        : RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length];",
+    "new": "    const r = rolls() < RITE_HEART_CHANCE ? RITE_HEART : RITE_REAGENTS[0];",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-chest-brand-not-faint",
+    "file": "src/systems/riteChest.js",
+    "old": "  it.sigil = { set: RITE_BRAND_SET, party: sigilParty(1), xp: 0 };",
+    "new": "  it.sigil = { set: RITE_BRAND_SET, party: sigilParty(4), xp: 0 };",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-chest-heart-twelve-in-a-hundred",
+    "file": "src/systems/riteChest.js",
+    "old": "export const RITE_HEART_CHANCE = 0.08;",
+    "new": "export const RITE_HEART_CHANCE = 0.12;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-chest-brand-one-in-thirty",
+    "file": "src/systems/riteChest.js",
+    "old": "export const RITE_BRAND_IN = 20;",
+    "new": "export const RITE_BRAND_IN = 30;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-smoke-clock-unwrapped",
+    "file": "src/render/riteSmoke.js",
+    "old": "    gl.uniform1f(U.uTime, smokeClock(seconds));",
+    "new": "    gl.uniform1f(U.uTime, seconds);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-T-spoils-rite-ember-unglowing",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: SIGIL_TIER, record: flat() }];",
+    "new": "if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: 'common', record: flat() }];",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/auditwb_spoils.test.js",
+      "test/scenes/wb9f_gate_spoils.test.js",
+      "test/net/gate/wb12d_rite_law.test.js",
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/wb12d_rite_host.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-post-s-rite-after-the-marks",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "new": "    text: `${marks} ${RITE_OMEN_LINE}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js",
+      "test/net/gate/discordgates.test.js",
+      "test/net/gate/wb13b_words.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-chat-s-own-sentence",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "export const riteOmenLine = () => RITE_OMEN_LINE;",
+    "new": "export const riteOmenLine = () => 'The faithful work their rite nearby.';",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-flames-in-step",
+    "file": "src/scenes/riteHost.js",
+    "old": "      for (let i = 0; i < flamesList.length; i++)\n        flamesList[i].frame = (f + Math.round((i * fire.count) / RITE_FLAME_PHASES)) % fire.count;",
+    "new": "      for (let i = 0; i < flamesList.length; i++) flamesList[i].frame = f;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-one-ring-of-flames",
+    "file": "src/scenes/riteHost.js",
+    "old": "      [fire.size, [...ring.filter((_, i) => i % 2 === 0), top(0, 0, RITE_ALTAR.h)]],\n      [fire.size, ring.filter((_, i) => i % 2 === 1)],",
+    "new": "      [fire.size, [...ring, top(0, 0, RITE_ALTAR.h)]],\n      [fire.size, []],",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-camp-fire-a-brazier-s",
+    "file": "src/scenes/riteHost.js",
+    "old": "      [fire.camp, [top(C.layout.fire[0], C.layout.fire[1], 0)]],",
+    "new": "      [fire.size, [top(C.layout.fire[0], C.layout.fire[1], 0)]],",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-braziers-a-camp-fire-s",
+    "file": "src/scenes/riteHost.js",
+    "old": "export const RITE_FLAME_SCALE = 0.8;",
+    "new": "export const RITE_FLAME_SCALE = 1;",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-cap-a-tenth",
+    "file": "src/world/riteModel.js",
+    "old": "        f.tri(\n          GATE_STONE_RECORD,\n          [x, y1, z],\n          p(a1, y1),\n          p(a0, y1),\n          [0.5, 0.5],\n          [0.5 + Math.cos(a1) * 0.3, 0.5 + Math.sin(a1) * 0.3],\n          [0.5 + Math.cos(a0) * 0.3, 0.5 + Math.sin(a0) * 0.3],\n        );",
+    "new": "        f.tri(GATE_STONE_RECORD, [x, y1, z], p(a1, y1), p(a0, y1), [0.5, 0.5], [0.6, 0.5], [0.5, 0.6]);",
+    "tests": [
+      "test/net/gate/wb12d_rite_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-card-s-breaches",
+    "file": "src/ui/brokerWindow.js",
+    "old": "    \"Worn over your name in the breach's fire.\",\n    \"Paid from your account's embers. Wear it here or on your account card.\",",
+    "new": "    \"Worn over your name in the breach's fire.\",\n    \"Paid from your account's breaches closed. Wear it here or on your account card.\",",
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB12d-the-refusal-s-breaches",
+    "file": "src/net/accountClient.js",
+    "old": "short: () => t('account.refusal.short', 'Your account has too few embers for that.'),",
+    "new": "short: () => t('account.refusal.short', 'Your account has too few breaches closed for that.'),",
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js",
+      "test/net/wb9g_insignia.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-WB12d-the-rite-s-row-takes-the-region",
+    "file": "server-account/src/accounts.js",
+    "old": "nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "new": "nowS, gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+  },
+  {
+    "name": "MERGE-WB12d-the-rite-credits-a-seat",
+    "file": "server-account/src/index.js",
+    "old": "if (r.recorded && !r.rite && body.region != null) answer.seat",
+    "new": "if (r.recorded && body.region != null) answer.seat",
+    "tests": [
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "MERGE-WB12d-the-row-without-its-embers",
+    "file": "server-account/src/accounts.js",
+    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "tests": [
+      "test/net/gate/wb12d_rite_law.test.js"
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+  }
+]

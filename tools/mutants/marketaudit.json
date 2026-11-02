@@ -1,0 +1,166 @@
+[
+  {
+    "name": "MARKET-AUDIT-S1-zero-sale-line",
+    "file": "server-account/src/market.js",
+    "old": "      FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND total - tax - tithe > 0`).bind(me, rid, nonce),",
+    "new": "      FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3`).bind(me, rid, nonce),",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-S2-last-unit-untaxed-not",
+    "file": "src/net/marketLaw.js",
+    "old": "  return last && total >= 1 && total - t < 1 ? total - 1 : t;",
+    "new": "  return t;",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-S2-taxed-out-said-as-courier",
+    "file": "server-account/src/market.js",
+    "old": "  if (pay < 1) return { error: road.courier > 0 ? 'market-courier-dear' : 'market-taxed-out' };",
+    "new": "  if (pay < 1) return { error: 'market-courier-dear' };",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-S3-gold-share-unfloored",
+    "file": "server-account/src/market.js",
+    "old": "MAX(0, total - tax - tithe - fee) FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3\n        ON CONFLICT (player, char_id) DO UPDATE SET gold = market_gold.gold + excluded.gold`)",
+    "new": "total - tax - tithe - fee FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3\n        ON CONFLICT (player, char_id) DO UPDATE SET gold = market_gold.gold + excluded.gold`)",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-S4-family-after-cutoff",
+    "file": "server-account/src/market.js",
+    "old": "    const from = `FROM market_orders WHERE state = 'open' AND expires_at > ?1\n      AND (?2 IS NULL OR material IN (SELECT value FROM json_each(?2)))`;",
+    "new": "    const from = `FROM market_orders WHERE state = 'open' AND expires_at > ?1 AND (?2 IS NULL OR 1 = 1)`;",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "MARKET-AUDIT-B1-undo-ignored",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "    if (undo) undo();\n    else wallet.credit?.(n);",
+    "new": "    wallet.credit?.(n);",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-B1-letter-not-back",
+    "file": "src/systems/court.js",
+    "old": "        pack.push(it);\n      }",
+    "new": "      }",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-B2-joined-null",
+    "file": "src/net/marketBook.js",
+    "old": "    if (pending.has(pk)) return pending.get(pk).then((out) => out ?? read(view, q, { force: true }));",
+    "new": "    if (pending.has(pk)) return pending.get(pk);",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-B4-fresh-id-again",
+    "file": "src/net/marketBook.js",
+    "old": "        if (was)\n          return was.gold ? goldBuy(was, mint, key, false) : keptAct('buys', was, () => door.buy(was.body), mint, key);",
+    "new": "        if (was && false) return null;",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-BAG-carried-uncounted",
+    "file": "src/ui/marketTab.js",
+    "old": "  const held = (key) => inStores(key) + carriedOf(key);",
+    "new": "  const held = (key) => inStores(key);",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-BAG-no-put-in",
+    "file": "src/ui/marketTab.js",
+    "old": "      const r = await m.putIn(key, n);\n      if (!r?.ok) return { ok: false, error: r?.error ?? 'materials-short' };",
+    "new": "      await m.putIn(key, n);",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-U2-labels-bare",
+    "file": "src/ui/marketTab.js",
+    "old": "      const pieceSub = (p) =>\n        [\n          packTierWord(p.item),\n          auction ? null : (QUALITY_NAMES[p.item.quality] ?? null),\n          wearText(wearOf(p.item)),\n          p.where === 'home' ? 'your home' : null,\n        ]\n          .filter(Boolean)\n          .join(' · ') || null;",
+    "new": "      const pieceSub = (p) => null;",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-U3-past-cap-hidden",
+    "file": "src/ui/marketTab.js",
+    "old": "  const heldState = (pv) =>\n    st.view !== 'mine' ? null : (st.data?.ways?.[pv] ?? (st.data?.ways && !heldIds().includes(pv) ? 'unasked' : null)); // MARKET-AUDIT U3: past MARKET_HELD_MAX, never asked",
+    "new": "  const heldState = (pv) => (st.view !== 'mine' ? null : (st.data?.ways?.[pv] ?? null)); // MARKET-AUDIT U3: past MARKET_HELD_MAX, never asked",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-U4-shut-tab-vanishes",
+    "file": "src/ui/noticeWindow.js",
+    "old": "  const marketShown = () =>\n    !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
+    "new": "  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false);",
+    "tests": [
+      "test/net/marketaudit.test.js",
+      "test/ui/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-U5-failed-read-alone",
+    "file": "src/ui/marketTab.js",
+    "old": "      if (shut) return box;",
+    "new": "      return box;",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-U6-word-kept",
+    "file": "src/ui/marketTab.js",
+    "old": "    ui.hush?.();\n    st.view = view;",
+    "new": "    st.view = view;",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-U7-other-arrived",
+    "file": "src/ui/marketTab.js",
+    "old": "          : !mine(x) && x.ready\n            ? 'waiting for another of your characters' // MARKET-AUDIT U7: never \"arrived\" forever",
+    "new": "          : false\n            ? '' // MARKET-AUDIT U7: never \"arrived\" forever",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-AUDIT-U7-other-asked",
+    "file": "src/ui/marketTab.js",
+    "old": "    (m.book.state.road ?? []).filter(\n      (x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id),\n    ); // MARKET-ANY: a pack's piece too",
+    "new": "    (m.book.state.road ?? []).filter((x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && !tried.has(x.id)); // MARKET-ANY: a pack's piece too",
+    "tests": [
+      "test/net/marketaudit.test.js"
+    ]
+  }
+]

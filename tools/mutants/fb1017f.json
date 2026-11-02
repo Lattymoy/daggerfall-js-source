@@ -1,0 +1,282 @@
+[
+  {
+    "name": "KEY-LIFT-last-clear-unread",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "  SELECT c.id, COALESCE((SELECT MAX(s.id)",
+    "new": "  SELECT c.id, 0 * COALESCE((SELECT MAX(s.id)",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "every finding a lift or a person already cleared counted again - the report's 0123 history, the gap 0125 left"
+  },
+  {
+    "name": "KEY-LIFT-copies-clear-ends",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "OR (json_extract(s.detail, '$.act') = 'clear' AND COALESCE(json_extract(s.detail, '$.by'), '') <> 'auto-hold')))",
+    "new": "OR (json_extract(s.detail, '$.act') = 'clear')))",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "0120's copies' clear read as zeroing a count it never zeroed"
+  },
+  {
+    "name": "KEY-LIFT-rollback-unread",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "json_extract(s.detail, '$.act') = 'rollback'",
+    "new": "json_extract(s.detail, '$.act') = 'rolled'",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "a rollback's zeroed count read as standing"
+  },
+  {
+    "name": "KEY-LIFT-key-unasked",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "DELETE FROM key_lift WHERE NOT EXISTS (SELECT 1 FROM realm_findings f",
+    "new": "DELETE FROM key_lift WHERE 0 AND NOT EXISTS (SELECT 1 FROM realm_findings f",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "a timed hold with no key in it lifted"
+  },
+  {
+    "name": "KEY-LIFT-timed-act",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "    AND json_extract(s.detail, '$.act') = 'timed');",
+    "new": "    AND json_extract(s.detail, '$.act') = 'timedx');",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "0120's conversion's week read as the key's"
+  },
+  {
+    "name": "KEY-LIFT-excused-counted",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "  WHERE f.kind = 'law' AND f.id > k.since AND COALESCE(json_extract(f.detail, '$.excused'), 0) <> 1 AND (",
+    "new": "  WHERE f.kind = 'law' AND f.id > k.since AND (",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "an excused finding, which held nothing, counted as a strike"
+  },
+  {
+    "name": "KEY-LIFT-uid-strikes",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "WHERE NOT (json_extract(j.value, '$.code') = 'uid'",
+    "new": "WHERE NOT (json_extract(j.value, '$.code') = 'uidx'",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "an id on another piece, never a strike, counted as one"
+  },
+  {
+    "name": "KEY-LIFT-count-guard",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "    OR COALESCE(json_extract(f.detail, '$.count'), 0) > json_array_length(f.detail, '$.findings')\n",
+    "new": "",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "a finding past its kept list read as only the key's"
+  },
+  {
+    "name": "KEY-LIFT-three",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "DELETE FROM key_lift WHERE other >= 3",
+    "new": "DELETE FROM key_lift WHERE other >= 4",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "three other findings, a week without the key, lifted"
+  },
+  {
+    "name": "KEY-LIFT-kept-uncapped",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "MIN(c.strikes + 3 * c.law_holds, key_lift.other)",
+    "new": "MIN(c.strikes + 3 * c.law_holds, 99)",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "the key's strikes kept"
+  },
+  {
+    "name": "KEY-LIFT-staff",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "  WHERE (c.held IS NULL OR c.held <> 'staff') AND",
+    "new": "  WHERE 1 AND",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "staff's own hold's count moved by the lift"
+  },
+  {
+    "name": "KEY-LIFT-other-hold-lifted",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "  held = CASE WHEN held = 'law' AND (law_sig IS NULL OR law_sig = 'template:575') THEN NULL ELSE held END,",
+    "new": "  held = CASE WHEN held = 'law' THEN NULL ELSE held END,",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "a hold another finding makes lifted until the next checkpoint"
+  },
+  {
+    "name": "KEY-LIFT-key-sig-kept",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "  law_sig = CASE WHEN law_sig = 'template:575' THEN NULL ELSE law_sig END,",
+    "new": "  law_sig = law_sig,",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "the key's stale signature kept - the next real finding no strike"
+  },
+  {
+    "name": "KEY-LIFT-strikes-zeroed",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "  strikes = (SELECT k.kept FROM key_lift k WHERE k.char_id = realm_characters.id),",
+    "new": "  strikes = 0,",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "another finding's strike forgiven with the key's"
+  },
+  {
+    "name": "KEY-LIFT-fade-dropped",
+    "file": "server-account/migrations/0130_key_lift.sql",
+    "old": "  law_at = (SELECT CASE WHEN k.kept > 0 THEN k.other_at END FROM",
+    "new": "  law_at = (SELECT CASE WHEN k.kept > 0 THEN NULL END FROM",
+    "tests": [
+      "test/server/fb1017f_keylift.test.js"
+    ],
+    "why": "a kept strike with no time to fade from - kept for good"
+  },
+  {
+    "name": "GROUND-GATE-room-unasked",
+    "file": "server/src/index.js",
+    "old": "    if (!groundRoom(key) || m.gl >= GROUND_LAW) return false;",
+    "new": "    if (m.gl >= GROUND_LAW) return false;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the hub and every social room turn an old build away - its friends and its chat with the ground"
+  },
+  {
+    "name": "GROUND-GATE-law-off-by-one",
+    "file": "server/src/index.js",
+    "old": "    if (!groundRoom(key) || m.gl >= GROUND_LAW) return false;",
+    "new": "    if (!groundRoom(key) || m.gl > GROUND_LAW) return false;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the current build turned away"
+  },
+  {
+    "name": "GROUND-GATE-cold-unawaited",
+    "file": "server/src/index.js",
+    "old": "    if (!groundRoom(key) || m.gl >= GROUND_LAW) return false;\n    if (this._relayCfgAt === -Infinity) await this._relayCfgFresh(now);",
+    "new": "    if (!groundRoom(key) || m.gl >= GROUND_LAW) return false;\n    if (this._relayCfgAt === -Infinity) void this._relayCfgFresh(now);",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "a cold cell's first old hello let through - every empty cell a player walks into"
+  },
+  {
+    "name": "GROUND-GATE-setting-unread",
+    "file": "server/src/index.js",
+    "old": "'groundGate') === 'on';",
+    "new": "'groundGate') === 'yes';",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the switch never in force"
+  },
+  {
+    "name": "GROUND-GATE-door-dropped",
+    "file": "server/src/index.js",
+    "old": "    if (await this._groundRefusal(key, m, now)) {",
+    "new": "    if (false && await this._groundRefusal(key, m, now)) {",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the hello never asks the door"
+  },
+  {
+    "name": "GROUND-GATE-reason-whole",
+    "file": "server/src/index.js",
+    "old": "this._refuse(ws, GROUND_OLD_WORDS, CLOSE_POLICY, GROUND_OLD_REASON); return true; }",
+    "new": "this._refuse(ws, GROUND_OLD_WORDS); return true; }",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the words as the close's reason - past 123 bytes, the close throws and the socket stays open"
+  },
+  {
+    "name": "GROUND-GATE-hub-takes-any",
+    "file": "server/src/index.js",
+    "old": "  if (k === 'groundGate') return v === 'on' || v === 'off' ? null :",
+    "new": "  if (k === 'groundGate') return v ? null :",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "a setting the door never reads said to be in force"
+  },
+  {
+    "name": "GROUND-GATE-wire-zero",
+    "file": "src/net/wire.js",
+    "old": "if (Number.isSafeInteger(m.gl) && m.gl >= 1 && m.gl <= GROUND_LAW_WIRE_MAX) hello.gl = m.gl;",
+    "new": "if (Number.isSafeInteger(m.gl) && m.gl >= 0 && m.gl <= GROUND_LAW_WIRE_MAX) hello.gl = m.gl;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "a ground of none read as one"
+  },
+  {
+    "name": "GROUND-GATE-wire-rooms",
+    "file": "src/net/wire.js",
+    "old": "export const groundRoom = (key) => isLayered(key) || nativePoseRoom(key);",
+    "new": "export const groundRoom = (key) => isCellRoom(key);",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "a town's buildings and its dungeons left open to an old ground"
+  },
+  {
+    "name": "GROUND-GATE-client-session-room",
+    "file": "src/net/online.js",
+    "old": "    if (groundRoom(room)) frame.gl = GROUND_LAW;",
+    "new": "    if (groundRoom(this.room)) frame.gl = GROUND_LAW;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "a halo cell's hello read off the session's room"
+  },
+  {
+    "name": "GROUND-GATE-client-unsaid",
+    "file": "src/net/online.js",
+    "old": "    if (groundRoom(room)) frame.gl = GROUND_LAW;",
+    "new": "    if (groundRoom(room)) frame.gl = 0;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the current build says no ground and is turned away"
+  },
+  {
+    "name": "GROUND-GATE-print-mountains",
+    "file": "src/world/landforms.js",
+    "old": "peaks: Object.freeze({ cell: 360, fill: 0.5, high: 320, sharp: true })",
+    "new": "peaks: Object.freeze({ cell: 360, fill: 0.5, high: 160, sharp: true })",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "MOUNTAINS-SHARP's peaks halved and the law unmoved - the print sees the mountain land"
+  },
+  {
+    "name": "GROUND-GATE-print-desert",
+    "file": "src/world/landforms.js",
+    "old": "desert: Object.freeze({ low: 6, high: 26, upland: 1.3, shape: 'desert', rockFrom: 0.3 })",
+    "new": "desert: Object.freeze({ low: 6, high: 24, upland: 1.3, shape: 'desert', rockFrom: 0.3 })",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the Alik'r's dunes lowered and the law unmoved - the report's own ground"
+  }
+]

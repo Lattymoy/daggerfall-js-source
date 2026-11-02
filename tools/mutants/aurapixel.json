@@ -1,0 +1,143 @@
+[
+  {
+    "name": "AURA-PIXEL-texel-rounded",
+    "file": "src/render/auraPixel.js",
+    "old": "Math.ceil(Math.log2(metres / AURA_TEXEL_M) - 1e-6)",
+    "new": "Math.round(Math.log2(metres / AURA_TEXEL_M))",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "a texel coarser than a flat's pixel"
+  },
+  {
+    "name": "AURA-PIXEL-shader-texel-rounded",
+    "file": "src/render/auraPixel.js",
+    "old": "ceil(log2(max(m, vec2(1e-6)) / texel) - 1e-6)",
+    "new": "floor(log2(max(m, vec2(1e-6)) / texel) + 0.5)",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "the shader's texel off node's law"
+  },
+  {
+    "name": "AURA-PIXEL-scale-inverted",
+    "file": "src/render/auraPixel.js",
+    "old": "  vec2 m = vec2(length(wx * py.y - wy * px.y), length(wy * px.x - wx * py.x)) / abs(det);",
+    "new": "  vec2 m = abs(det) / vec2(length(wx * py.y - wy * px.y), length(wy * px.x - wx * py.x));",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "the surface's metres a unit read upside down"
+  },
+  {
+    "name": "AURA-PIXEL-no-per-pixel",
+    "file": "src/render/auraPixel.js",
+    "old": "  if (any(lessThanEqual(1.0 / n, foot))) return p;\n",
+    "new": "",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "a texel under the pixel still snapped - far auras alias"
+  },
+  {
+    "name": "AURA-PIXEL-levels-linear",
+    "file": "src/render/auraPixel.js",
+    "old": "  float k = floor(sqrt(l) * AURA_STEPS), lo = k / AURA_STEPS, hi = (k + 1.0) / AURA_STEPS;\n  float q = (l - lo * lo) / (hi * hi - lo * lo) + bayer4(auraCell) + 0.03125 >= 1.0 ? hi : lo;\n  return c * (q * q / l);",
+    "new": "  float k = floor(l * AURA_STEPS), lo = k / AURA_STEPS, hi = (k + 1.0) / AURA_STEPS;\n  float q = (l - lo) / (hi - lo) + bayer4(auraCell) + 0.03125 >= 1.0 ? hi : lo;\n  return c * (q / l);",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "the levels spaced evenly - a dim glow dotted out"
+  },
+  {
+    "name": "AURA-PIXEL-cover-colour-lost",
+    "file": "src/render/auraPixel.js",
+    "old": "  return vec4(c.rgb * (q / a), q);",
+    "new": "  return vec4(c.rgb, q);",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "a covering look's colour no longer its own"
+  },
+  {
+    "name": "AURA-PIXEL-aura-at-fragment",
+    "file": "src/render/auraRing.js",
+    "old": "    auraLook(auraOwnPixels() ? vP : t);",
+    "new": "    auraLook(vP);",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "the aura answered per pixel under the law"
+  },
+  {
+    "name": "AURA-PIXEL-aura-levels-uncut",
+    "file": "src/render/auraRing.js",
+    "old": "    o = auraPixel(o, auraCovers());\n",
+    "new": "",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "the aura's light uncut"
+  },
+  {
+    "name": "AURA-PIXEL-covers-not-shade",
+    "file": "src/render/auraRing.js",
+    "old": "const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((look) => 'shade' in look && look.shade)",
+    "new": "const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((look) => 'mesh' in look && look.mesh)",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "a second idea of which looks cover"
+  },
+  {
+    "name": "AURA-PIXEL-aura-never-on",
+    "file": "src/render/auraRing.js",
+    "old": "gl.uniform1f(U.uPixel, this.pixel === false ? 0 : this.pixel === 'levels' ? 2 : 1);",
+    "new": "gl.uniform1f(U.uPixel, 0);",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "the auras' pass never turns the law on"
+  },
+  {
+    "name": "AURA-PIXEL-armory-never-on",
+    "file": "src/render/armoryPass.js",
+    "old": "gl.uniform1f(U.uPixel, this.pixel === false ? 0 : 1);",
+    "new": "gl.uniform1f(U.uPixel, 0);",
+    "tests": [
+      "test/render/aurapixel.test.js"
+    ],
+    "why": "the armory's pass never turns the law on"
+  },
+  {
+    "name": "GLYPHS-MOUNTED-drawn",
+    "file": "src/render/auraRing.js",
+    "old": "if (look.glyphs && !closed && w.mounted !== true) {",
+    "new": "if (look.glyphs && !closed) {",
+    "tests": [
+      "test/render/aurapixel.test.js",
+      "test/net/shadowcloak.test.js"
+    ],
+    "why": "an aura's cards float over a rider"
+  },
+  {
+    "name": "DRAGON-KEEP-SIZE-boss-scale",
+    "file": "src/scenes/dragonKeepHost.js",
+    "old": "export const DRAGON_KEEP_SCALE = 1;",
+    "new": "export const DRAGON_KEEP_SCALE = 1.6;",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ],
+    "why": "the tamed dragon drawn at the boss's size off its back"
+  },
+  {
+    "name": "DRAGON-KEEP-SIZE-handed",
+    "file": "src/scenes/dragonHost.js",
+    "old": "  const keep = createDragonKeep({ ...deps, street });",
+    "new": "  const keep = createDragonKeep({ ...deps, street, scale: DRAGON_SCALE });",
+    "tests": [
+      "test/net/dragon/dragon5b_keep.test.js"
+    ],
+    "why": "the sky host hands the keep the boss's scale again"
+  }
+]

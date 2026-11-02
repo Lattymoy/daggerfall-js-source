@@ -1,0 +1,50 @@
+[
+  {
+    "name": "MOUNTAINS-SHARP-round-again",
+    "file": "src/world/landforms.js",
+    "old": "      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (sharp ? t * t : 0.5 + 0.5 * cosPi(q));",
+    "new": "      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (0.5 + 0.5 * cosPi(q));",
+    "tests": ["test/world/terrain/landform6.test.js"],
+    "note": "The mountains' peaks bells again: no point on top, and off the (1 - q)^2 law."
+  },
+  {
+    "name": "MOUNTAINS-SHARP-a-cone",
+    "file": "src/world/landforms.js",
+    "old": "      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (sharp ? t * t : 0.5 + 0.5 * cosPi(q));",
+    "new": "      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (sharp ? t : 0.5 + 0.5 * cosPi(q));",
+    "tests": ["test/world/terrain/landform6.test.js"],
+    "note": "A straight cone: off the (1 - q)^2 law, and its mean is not PEAK_MEAN_SHARP."
+  },
+  {
+    "name": "MOUNTAINS-SHARP-centred-as-bells",
+    "file": "src/world/landforms.js",
+    "old": "land.peaks.fill * (sharp ? PEAK_MEAN_SHARP : PEAK_MEAN));",
+    "new": "land.peaks.fill * PEAK_MEAN);",
+    "tests": ["test/world/terrain/landform6.test.js", "test/world/terrain/auditlandforms3.test.js"],
+    "note": "Sharp peaks centred by the bell's mean: the mountains' land sinks under its own height."
+  },
+  {
+    "name": "MOUNTAINS-SHARP-half-the-mean",
+    "file": "src/world/landforms.js",
+    "old": "export const PEAK_MEAN_SHARP = PEAK_MEAN / (6 * (0.5 - 2 / (Math.PI * Math.PI)));",
+    "new": "export const PEAK_MEAN_SHARP = PEAK_MEAN / (12 * (0.5 - 2 / (Math.PI * Math.PI)));",
+    "tests": ["test/world/terrain/landform6.test.js"],
+    "note": "The sharp peak's mean halved: not the field's own."
+  },
+  {
+    "name": "MOUNTAINS-SHARP-as-low-as-before",
+    "file": "src/world/landforms.js",
+    "old": "peaks: Object.freeze({ cell: 360, fill: 0.5, high: 320, sharp: true }) }),",
+    "new": "peaks: Object.freeze({ cell: 360, fill: 0.5, high: 160, sharp: true }) }),",
+    "tests": ["test/world/terrain/landform6.test.js", "test/world/terrain/auditlandforms.test.js", "test/systems/landform.test.js"],
+    "note": "The mountains' peaks 200 m again."
+  },
+  {
+    "name": "MOUNTAINS-SHARP-the-woods-sharp-too",
+    "file": "src/world/landforms.js",
+    "old": "      const sharp = !!land.peaks.sharp;   // MOUNTAINS-SHARP",
+    "new": "      const sharp = true;   // MOUNTAINS-SHARP",
+    "tests": ["test/world/terrain/landform6.test.js", "test/world/terrain/auditlandforms3.test.js", "test/world/terrain/auditlandforms.test.js", "test/systems/landform.test.js", "test/world/terrain/landform45.test.js", "test/world/terrain/landform7.test.js"],
+    "note": "The mountain woods' bells made sharp as well."
+  }
+]

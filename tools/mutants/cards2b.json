@@ -1,0 +1,362 @@
+[
+  {
+    "name": "SB-step",
+    "file": "src/player/seatPose.js",
+    "old": "export const SEAT_TOP_STEP = 0.05;",
+    "new": "export const SEAT_TOP_STEP = 0.1;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-byte-floor-zero",
+    "file": "src/player/seatPose.js",
+    "old": "  Math.min(POSE_SEAT_TOP_MAX, Math.max(1, Math.round((Number(top) || 0) / SEAT_TOP_STEP)));",
+    "new": "  Math.min(POSE_SEAT_TOP_MAX, Math.max(0, Math.round((Number(top) || 0) / SEAT_TOP_STEP)));",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-byte-unbounded",
+    "file": "src/player/seatPose.js",
+    "old": "export const seatTopByte = (top) =>\n  Math.min(POSE_SEAT_TOP_MAX, Math.max(1, Math.round((Number(top) || 0) / SEAT_TOP_STEP)));",
+    "new": "export const seatTopByte = (top) => Math.max(1, Math.round((Number(top) || 0) / SEAT_TOP_STEP));",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-top-of-any",
+    "file": "src/player/seatPose.js",
+    "old": "export const seatTopOf = (st) =>\n  Number.isInteger(st) && st >= 1 && st <= POSE_SEAT_TOP_MAX ? st * SEAT_TOP_STEP : SEAT_TOP_DEFAULT;",
+    "new": "export const seatTopOf = (st) => st * SEAT_TOP_STEP || SEAT_TOP_DEFAULT;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-drop",
+    "file": "src/player/seatPose.js",
+    "old": "export const SEAT_HIP_DROP = 0.48;",
+    "new": "export const SEAT_HIP_DROP = 0.45;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-eye-standing",
+    "file": "src/player/seatPose.js",
+    "old": "export const SEATED_EYE_HEIGHT = EYE_HEIGHT - SEAT_HIP_DROP;",
+    "new": "export const SEATED_EYE_HEIGHT = EYE_HEIGHT;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-feet-under",
+    "file": "src/player/seatPose.js",
+    "old": "export const SEAT_FOOT_AHEAD = 0.45;",
+    "new": "export const SEAT_FOOT_AHEAD = 0.3;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-hands-on-the-edge",
+    "file": "src/player/seatPose.js",
+    "old": "export const SEAT_HAND_ON = 0.1;",
+    "new": "export const SEAT_HAND_ON = 0;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-right-backwards",
+    "file": "src/player/seatPose.js",
+    "old": "  const r = [Math.cos(yaw), 0, 0 - Math.sin(yaw)]; // `0 -`, never a bare `-`: due south's -0 is no way a request should carry",
+    "new": "  const r = [-Math.cos(yaw), 0, Math.sin(yaw)]; // `0 -`, never a bare `-`: due south's -0 is no way a request should carry",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-sides-swapped",
+    "file": "src/player/seatPose.js",
+    "old": "      hands: { L: hand(-1), R: hand(1) },",
+    "new": "      hands: { L: hand(1), R: hand(-1) },",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-knees-back",
+    "file": "src/player/seatPose.js",
+    "old": "    pole: f.slice(),",
+    "new": "    pole: [-f[0], 0, -f[2]],",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-palms-up",
+    "file": "src/player/seatPose.js",
+    "old": "    palm: [0, -1, 0],",
+    "new": "    palm: [0, 1, 0],",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-hips-not-dropped",
+    "file": "src/player/seatPose.js",
+    "old": "      offset: [0, -SEAT_HIP_DROP * h, 0],",
+    "new": "      offset: null,",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-drop-unscaled",
+    "file": "src/player/seatPose.js",
+    "old": "      offset: [0, -SEAT_HIP_DROP * h, 0],",
+    "new": "      offset: [0, -SEAT_HIP_DROP, 0],",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-feet-by-height",
+    "file": "src/player/seatPose.js",
+    "old": "    at: at(SEAT_FOOT_AHEAD * w, side * SEAT_FOOT_SIDE * w, SEAT_ANKLE * h),",
+    "new": "    at: at(SEAT_FOOT_AHEAD * h, side * SEAT_FOOT_SIDE * w, SEAT_ANKLE * h),",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-hands-scaled",
+    "file": "src/player/seatPose.js",
+    "old": "    at: at(SEAT_OUT + SEAT_HAND_ON, side * SEAT_HAND_SIDE * w, top + SEAT_HAND_OVER),",
+    "new": "    at: at((SEAT_OUT + SEAT_HAND_ON) * h, side * SEAT_HAND_SIDE * w, top + SEAT_HAND_OVER),",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-hands-under",
+    "file": "src/player/seatPose.js",
+    "old": "    at: at(SEAT_OUT + SEAT_HAND_ON, side * SEAT_HAND_SIDE * w, top + SEAT_HAND_OVER),",
+    "new": "    at: at(SEAT_OUT + SEAT_HAND_ON, side * SEAT_HAND_SIDE * w, SEAT_HAND_OVER),",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-request-no-race",
+    "file": "src/player/seatPose.js",
+    "old": "  const s = seatRigInput(seat.feet, seat.yaw, seat.top, { weight, height });",
+    "new": "  const s = seatRigInput(seat.feet, seat.yaw, seat.top);",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-request-no-seat-guard",
+    "file": "src/player/seatPose.js",
+    "old": "  if (!seat || !seat.feet) return null;",
+    "new": "  if (!seat) return null;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-wire-zero-seat",
+    "file": "src/net/wire.js",
+    "old": "const seatOf = (st) => (Number.isInteger(st) && st >= 1 && st <= POSE_SEAT_TOP_MAX ? { st } : {});",
+    "new": "const seatOf = (st) => (Number.isInteger(st) && st <= POSE_SEAT_TOP_MAX ? { st } : {});",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-wire-clamped",
+    "file": "src/net/wire.js",
+    "old": "const seatOf = (st) => (Number.isInteger(st) && st >= 1 && st <= POSE_SEAT_TOP_MAX ? { st } : {});",
+    "new": "const seatOf = (st) => (Number.isInteger(st) && st >= 1 ? { st: Math.min(st, POSE_SEAT_TOP_MAX) } : {});",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-wire-dropped",
+    "file": "src/net/wire.js",
+    "old": "    ...seatOf(st),   // CARDS2b",
+    "new": "    // CARDS2b",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-wire-no-news",
+    "file": "src/net/wire.js",
+    "old": "    || (a.st | 0) !== (b.st | 0)   // CARDS2b",
+    "new": "    // CARDS2b",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-ease-dropped",
+    "file": "src/net/online.js",
+    "old": "    ...(to.st ? { st: to.st } : {}),   // CARDS2b",
+    "new": "    // CARDS2b",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-sit-slides",
+    "file": "src/net/online.js",
+    "old": "  const k = (!!from.st !== !!to.st) || t > 1 ? 1 : t < 0 ? 0 : t;",
+    "new": "  const k = t > 1 ? 1 : t < 0 ? 0 : t;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-peer-unseated",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    b.cam.seat = peer.shown.st ? seatFor(b, f, b.yaw, peer.shown.st) : null;",
+    "new": "    b.cam.seat = null;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-peer-never-rebuilt",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "  if (b.seatKey !== key) {",
+    "new": "  if (!b.seatSpec) {",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-peer-key-no-st",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${yaw.toFixed(3)},${st}`;",
+    "new": "  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${yaw.toFixed(3)}`;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-peer-key-no-yaw",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${yaw.toFixed(3)},${st}`;",
+    "new": "  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${st}`;",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-peer-top-default",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    b.seatSpec = { feet: [f[0], f[1], f[2]], yaw, top: seatTopOf(st) };",
+    "new": "    b.seatSpec = { feet: [f[0], f[1], f[2]], yaw, top: undefined };",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-sitter-walks",
+    "file": "src/net/peer/peerClimb.js",
+    "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st; // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride",
+    "new": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown); // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-host-hit-sits-on",
+    "file": "src/scenes/worldModes.js",
+    "old": "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before && !tickInFlight()) standFromCardTable(); });",
+    "new": "",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-host-escape-pauses",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mode === 'interior' && cardSeat && actionOf(e, keys) === 'Escape' && !interiorKeyCtx.uiOverlayActive) {\n      // AUDIT KG II C1: every key bound to Escape (the pad's Start among them) is the board's cancel while a King's Gambit\n      // battle is under way - Stand up asked twice, as the raw Escape the cloth takes is - never a stake lost at one press\n      if (gambitGame?.playing()) { gambitGame.key('Escape'); e.preventDefault(); return; }\n      standFromCardTable(); e.preventDefault(); return;\n    }",
+    "new": "",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-host-pose-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "    seatPose: () => (mode === 'interior' && cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),",
+    "new": "    seatPose: () => null,",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-arm-no-seat",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (cam && cam.seat) { climbLast = null; return thirdSeat(cam); }   // CARDS2b",
+    "new": "    // CARDS2b",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-arm-no-race",
+    "file": "src/combat/fpArm.js",
+    "old": "return seatRequestFor(cam && cam.seat, { unitsPerMetre: MW_UNITS_PER_METER, weight: rs.weight, height: rs.height });",
+    "new": "return seatRequestFor(cam && cam.seat, { unitsPerMetre: MW_UNITS_PER_METER });",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-sender-at-capsule",
+    "file": "src/scenes/world.js",
+    "old": "    if (seated) { const w = sceneToOnline(seated.feet); pose.x = w[0]; pose.y = w[1]; pose.z = w[2]; pose.yaw = seated.yaw; }",
+    "new": "",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-sender-no-st",
+    "file": "src/scenes/world.js",
+    "old": "    if (seated) arm.st = seated.st;",
+    "new": "    // CARDS2b",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-host-no-peer-seats",
+    "file": "src/scenes/world.js",
+    "old": "    seatedPeers: () => seatedPeerFeet(),",
+    "new": "    seatedPeers: () => [],",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-host-hidden-peer-seats",
+    "file": "src/scenes/world.js",
+    "old": "if (p.shown?.st && online.visible(p)) out.push(onlineToScene(p.shown));",
+    "new": "if (p.shown?.st) out.push(onlineToScene(p.shown));",
+    "tests": [
+      "test/net/peer/cards2b_seated.test.js"
+    ]
+  }
+]

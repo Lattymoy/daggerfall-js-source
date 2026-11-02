@@ -1,0 +1,110 @@
+[
+  {
+    "name": "NAV-G-to-wire-skipped",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "    const p = toWire(sh.pos);",
+    "new": "    const p = sh.pos;",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-ships-uncapped",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "    if (s.length + h.length >= NAVAL_WIRE_SHIPS) break;\n    const cls = SHIP_CLASSES.findIndex((c) => c.id === sh.classId);",
+    "new": "    const cls = SHIP_CLASSES.findIndex((c) => c.id === sh.classId);",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-variant-unchecked",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (!int(w[2], 0, Math.max(0, variants - 1))) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-states-range",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (!int(w[9], 0, 100) || !int(w[10], 0, 100) || !int(w[11], 0, 100) || !int(w[12], 0, WIRE_STATES.length - 1))",
+    "new": "  if (!int(w[9], 0, 100) || !int(w[10], 0, 100) || !int(w[11], 0, 100) || !int(w[12], 0, WIRE_STATES.length))",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-one-bad-ship-let-through",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "    if (!ship) return null;",
+    "new": "    if (!ship) continue;",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-hits-ceiling",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (!int(nv.n, 0, 0xffff) || !int(nv.h, 0, NAVAL_HIT_MAX) || !int(nv.s, 0, NAVAL_HIT_MAX) || !int(nv.c, 0, 60))\n    return null;",
+    "new": "  if (!int(nv.n, 0, 0xffff) || !int(nv.h, 0, 1e9) || !int(nv.s, 0, NAVAL_HIT_MAX) || !int(nv.c, 0, 60)) return null;",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-zones-swapped",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "    z: zone === 'rig' ? 1 : zone === 'holed' ? 2 : 0,",
+    "new": "    z: zone === 'rig' ? 2 : zone === 'holed' ? 1 : 0,",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-foes-frame-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (data.nv !== undefined) _onNaval?.(from, data.nv, _now());",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-an-idle-boat-hunted",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "          if (!s?.helm || !s.shown || !s.boat.GameObject.activeSelf) continue;",
+    "new": "          if (!s?.shown || !s.boat.GameObject.activeSelf) continue;",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-way-never-read",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    s.vel = next.way; // NAV-H: her way over the water as her word says it - what a captain at sea leads his guns by (scenes/naval/navalHost.js contacts); C7: the pose's own",
+    "new": "    s.vel = null; // NAV-H: her way over the water as her word says it - what a captain at sea leads his guns by (scenes/naval/navalHost.js contacts); C7: the pose's own",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-hit-to-the-foes",
+    "file": "src/scenes/world.js",
+    "old": "if (isCellRoom(online.room) && data?.nv) { naval?.applyPeerHit(id, data); return; } ",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV-G-the-way-left-in-the-wire-frame",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "  return [b[0] - a[0], 0, b[2] - a[2]];",
+    "new": "  return [v[0], 0, v[2]];",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  }
+]

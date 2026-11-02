@@ -1,0 +1,120 @@
+[
+  {
+    "name": "P1-portrait-of-an-unfinished-character",
+    "file": "src/ui/profileBadge.js",
+    "old": "  return (saves ?? []).find((s) => s && s.chargenDone !== false && typeof s.race === 'string' && s.race) ?? null;",
+    "new": "  return (saves ?? []).find((s) => s && typeof s.race === 'string' && s.race) ?? null;",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-portrait-of-a-raceless-save-draws-a-stranger",
+    "file": "src/ui/profileBadge.js",
+    "old": "  return (saves ?? []).find((s) => s && s.chargenDone !== false && typeof s.race === 'string' && s.race) ?? null;",
+    "new": "  return (saves ?? []).find((s) => s && s.chargenDone !== false) ?? null;",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-silhouette-never-gives-way",
+    "file": "src/ui/profileBadge.js",
+    "old": "    stand.remove();\n    frame.append(art);",
+    "new": "    frame.append(art);",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-a-null-face-empties-the-ring",
+    "file": "src/ui/profileBadge.js",
+    "old": "    if (!art) return;\n    stand.remove();",
+    "new": "    stand.remove();",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-a-refused-face-throws",
+    "file": "src/ui/profileBadge.js",
+    "old": "    /** @type {Promise<HTMLCanvasElement|null>} */ (face).then(show).catch(() => {});",
+    "new": "    /** @type {Promise<HTMLCanvasElement|null>} */ (face).then(show);",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-gem-always-filled",
+    "file": "src/ui/profileBadge.js",
+    "old": "  frame.append(el('span', `px-profilegem${session ? ' on' : ''}`, session ? '\\u25c6' : '\\u25c7'));",
+    "new": "  frame.append(el('span', `px-profilegem${session ? ' on' : ''}`, '\\u25c6'));",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-caption-drops-the-character",
+    "file": "src/ui/profileBadge.js",
+    "old": "  words.append(el('span', 'px-profilesub', characterLine(save)));\n  b.append(words);",
+    "new": "  b.append(words);",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-mark-opens-nothing",
+    "file": "src/ui/profileBadge.js",
+    "old": "  b.onclick = () => onOpen();\n  return b;",
+    "new": "  return b;",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-the-box-comes-back",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  min-height: 44px; padding: 0; background: none; border: 0;",
+    "new": "  min-height: 44px; padding: 8px 16px; background: rgba(10,12,17,0.55); border: 2px solid #7d7460;",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-square-portrait",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  position: relative; flex: none; width: 58px; height: 58px; border-radius: 50%;",
+    "new": "  position: relative; flex: none; width: 58px; height: 58px;",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-face-smoothed",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  object-fit: cover; object-position: 50% 20%;\n  /* THE PIXELS, AS THEY ARE - the save tiles' law (.svface canvas). */\n  image-rendering: pixelated;",
+    "new": "  object-fit: cover; object-position: 50% 20%;",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-door-shares-the-tile-canvas",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  return save ? loadFace(save, { scale: 2, copy: true }) : null;",
+    "new": "  return save ? loadFace(save, { scale: 2 }) : null;",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P1-door-reads-no-session",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    session: who,\n",
+    "new": "    session: null,\n",
+    "tests": [
+      "test/ui/enhanced/profile1_badge.test.js",
+      "test/net/nameadopt.test.js"
+    ]
+  }
+]

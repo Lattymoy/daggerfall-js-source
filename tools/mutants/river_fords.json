@@ -1,0 +1,65 @@
+[
+  {
+    "name": "RIVER-FORDS-the-width-unpriced",
+    "file": "src/world/road/roadLand.js",
+    "old": "  for (let i = 0; i < out.length; i++) if (raster.dir[i]) out[i] = RIVER_FORD.cost + RIVER_FORD.perM * raster.width[i];",
+    "new": "  for (let i = 0; i < out.length; i++) if (raster.dir[i]) out[i] = RIVER_FORD.cost;",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-corner-unpriced",
+    "file": "src/world/road/roadLand.js",
+    "old": "    const r =\n      t.river[i] || (cx !== nx && cy !== ny ? Math.min(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx]) : 0);",
+    "new": "    const r = t.river[i];",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-corner-one-side",
+    "file": "src/world/road/roadLand.js",
+    "old": "      t.river[i] || (cx !== nx && cy !== ny ? Math.min(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx]) : 0);",
+    "new": "      t.river[i] || (cx !== nx && cy !== ny ? Math.max(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx]) : 0);",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-price-unread",
+    "file": "src/world/road/roadLand.js",
+    "old": "  if (t.river) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-raster-unread",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  land.river = riverFords(riverRaster(gx, gy, MAP_W, MAP_H));\n",
+    "new": "",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-paths-unread",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "      if (paths && onPath(paths, x, y, span)) continue; // RIVER-FORDS: a road's or a track's own tiles keep their ground - the ford",
+    "new": "      if (false) continue; // RIVER-FORDS: a road's or a track's own tiles keep their ground - the ford",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  },
+  {
+    "name": "RIVER-FORDS-the-paths-unhanded",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);",
+    "new": "paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null);",
+    "tests": [
+      "test/world/road/river_fords.test.js"
+    ]
+  }
+]

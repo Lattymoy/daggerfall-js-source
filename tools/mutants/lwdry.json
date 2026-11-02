@@ -1,0 +1,224 @@
+[
+  {
+    "name": "LW-DRY-corner-unread",
+    "file": "src/world/dryGround.js",
+    "old": "    return !wet(k, x0, y0) && !wet(k, x0 + 1, y0) && !wet(k, x0, y0 + 1) && !wet(k, x0 + 1, y0 + 1);",
+    "new": "    return !wet(k, x0, y0);",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-axes-crossed",
+    "file": "src/world/dryGround.js",
+    "old": "    const x0 = Math.min(span - 1, Math.max(0, Math.floor(fx * span))),\n      y0 = Math.min(span - 1, Math.max(0, Math.floor(fz * span)));",
+    "new": "    const x0 = Math.min(span - 1, Math.max(0, Math.floor(fz * span))),\n      y0 = Math.min(span - 1, Math.max(0, Math.floor(fx * span)));",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-row-unflipped",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return dry(px, 499 - pz, gx - px, gz - pz);",
+    "new": "    return dry(px, pz, gx - px, gz - pz);",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-north-read-south",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return dry(px, 499 - pz, gx - px, gz - pz);",
+    "new": "    return dry(px, 499 - pz, gx - px, 1 - (gz - pz));",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-ring-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    for (let i = 0; ok && i < 8; i++) ok = dry(p.x + Math.sin((i * Math.PI) / 4) * STOP_RING_N, p.z + Math.cos((i * Math.PI) / 4) * STOP_RING_N);\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-ground-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const way = innsAlong(wayOf(plan, world.dryAt), plan, world, home, to);   // LW9: the inns on its road\n    const [trim0, trim1] = wayTrims(home, /** @type {LwTown} */ (to), way);   // WALL-WAY: past each town's walls",
+    "new": "    const way = innsAlong(wayOf(plan), plan, world, home, to);   // LW9: the inns on its road\n    const [trim0, trim1] = wayTrims(home, /** @type {LwTown} */ (to), way);   // WALL-WAY: past each town's walls",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-dive-ground-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const way = wayOf(plan, world.dryAt);\n    const [trim0, trim1] = wayTrims(home, to, way);   // WALL-WAY: past each town's walls\n    const walk = Math.max(0, way.len - trim0 - trim1) / pace;\n    const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + Math.ceil(inside / DAY_MIN) + 1;",
+    "new": "    const way = wayOf(plan);\n    const [trim0, trim1] = wayTrims(home, to, way);   // WALL-WAY: past each town's walls\n    const walk = Math.max(0, way.len - trim0 - trim1) / pace;\n    const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + Math.ceil(inside / DAY_MIN) + 1;",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-way-unkept",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (dry) way.dry = dry;\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-host-unwired",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "    dryAt: (/** @type {number} */ nx, /** @type {number} */ nz) => (dry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7): the trips' world scenes/livingWorld/livingTrips.js's."
+  },
+  {
+    "name": "LW-DRY-tile-compare",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "export const isWaterHeight = (height) => height <= SCALED_OCEAN_ELEVATION;",
+    "new": "export const isWaterHeight = (height) => height < SCALED_OCEAN_ELEVATION;",
+    "tests": [
+      "test/world/terrain/terrain.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-tile-height",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "export const sampleHeight = (sample) => Math.fround(sample * MAX_TERRAIN_HEIGHT);",
+    "new": "export const sampleHeight = (sample) => sample * MAX_TERRAIN_HEIGHT;",
+    "tests": [
+      "test/world/terrain/terrain.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-tile-job-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "  if (isWaterHeight(height)) return WATER;",
+    "new": "  if (height < 0) return WATER;",
+    "tests": [
+      "test/world/terrain/terrain.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-night-unsounded",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    let at = sAt(fall), camp = nightStop(way, at, dir, lo, hi);   // LW9: an inn ahead, else dry ground",
+    "new": "    let at = sAt(fall), camp = at;   // LW9: an inn ahead, else dry ground",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-walk-on-cut",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      const on = pace * gone >= Math.abs(camp - at) ? camp : at + dir * pace * gone;",
+    "new": "      const on = camp;",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ],
+    "note": "AUDIT LW-DRY: the night's camp taken as reached by the next dusk - a wet stretch longer than a day's walk on jumped"
+  },
+  {
+    "name": "LW-DRY-dusk-from-walk",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      at = dir * (w - on) >= 0 ? w : on;",
+    "new": "      at = w;",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ],
+    "note": "AUDIT LW-DRY: each dusk sounded from the day's walk, not where the party stands - back to it at nightfall"
+  },
+  {
+    "name": "LW-DRY-walk-on-jump",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    return { ...placed(phase, there), camp: reached, ...(inn ? { inn: inn.town } : {}) };   // walking on to the night's camp, or at it",
+    "new": "    return { ...placed(phase, camp), camp: true, ...(inn ? { inn: inn.town } : {}) };   // walking on to the night's camp, or at it",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-day-walk-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (daylight(t) && dir * (s - there) >= 0) return { ...placed(phase, s), camp: false };   // the day's walk\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-halt-unheld",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (!h || h.leg !== leg || m < h.t0) return 0;",
+    "new": "    if (!h || h.leg !== leg || m < h.t1) return 0;",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ],
+    "note": "AUDIT LW-DRY: a nightfall during a halt read where the walk would have been - the party popped ahead as the halt ended"
+  },
+  {
+    "name": "LW-DRY-end-not-town",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  let found = dir > 0 ? hi : lo;",
+    "new": "  let found = s;",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ],
+    "note": "AUDIT LW-DRY: nothing dry before the leg's end kept the stop in the water"
+  },
+  {
+    "name": "LW-DRY-step-coarse",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const DRY_STEP_N = 80;",
+    "new": "export const DRY_STEP_N = 320;",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-trouble-wet",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "    const dry = dryStop(trip.way, s, dir, trip.trim0, trip.way.len - trip.trim1);",
+    "new": "    const dry = s;",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-trouble-early",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "      for (t0 = Math.ceil(t0); t0 < end; t0++) {\n        const a = partyAt(trip, t0);\n        if (a.s != null && dir * (a.s - s) >= 0) break;\n      }\n      t0 = Math.min(t0, end); // the leg's end: met as it comes to its town",
+    "new": "      t0 = Math.min(t0, end); // the leg's end: met as it comes to its town",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-halted-in-file",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "  if (at.camp || at.halt) {",
+    "new": "  if (at.camp) {",
+    "tests": [
+      "test/systems/livingWorld/lwdry_ground.test.js"
+    ]
+  },
+  {
+    "name": "LW-DRY-nature-own-product",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "      const height = sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]);",
+    "new": "      const height = Math.fround((opts.beach ?? heightmapData)[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);",
+    "tests": [
+      "test/world/terrain/terrain.test.js"
+    ],
+    "note": "AUDIT LW-DRY (the docs' 'one home'): the nature scatter writes the sample's height out itself again - the same float today, a second literal of WATER1's arithmetic to drift from the tile job's"
+  }
+]

@@ -1,0 +1,430 @@
+[
+  {
+    "name": "RESTORE-A-a-crossed-house-sold",
+    "file": "src/systems/banking.js",
+    "old": "  if (online && slot.crossed) return { kind: 'crossed' };",
+    "new": "",
+    "tests": [
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-a-crossed-ship-sold",
+    "file": "src/systems/banking.js",
+    "old": "  if (online && player.shipCrossed) return { kind: 'crossed' };",
+    "new": "",
+    "tests": [
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-offline-refuses-too",
+    "file": "src/systems/banking.js",
+    "old": "  if (online && slot.crossed) return",
+    "new": "  if (slot.crossed) return",
+    "tests": [
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-a-bought-house-keeps-the-mark",
+    "file": "src/systems/banking.js",
+    "old": "  delete slot.crossed;   // RESTORE: a house bought is the buyer's own",
+    "new": "  void slot;   // RESTORE: a house bought is the buyer's own",
+    "tests": [
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-a-bought-ship-keeps-the-mark",
+    "file": "src/systems/banking.js",
+    "old": "  delete player.shipCrossed;   // RESTORE: a ship bought is the buyer's own",
+    "new": "  void player;   // RESTORE: a ship bought is the buyer's own",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-a-reset-ship-keeps-the-mark",
+    "file": "src/systems/banking.js",
+    "old": "export function resetShip(player) { player.ownedShip = SHIP_TYPES.None; delete player.boatCabinLink; delete player.shipCrossed; }",
+    "new": "export function resetShip(player) { player.ownedShip = SHIP_TYPES.None; delete player.boatCabinLink; }",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-the-words-offline-too",
+    "file": "src/systems/banking.js",
+    "old": "  if (!online) return null;\n  const slot = deed ?? houses?.[regionIndex];",
+    "new": "  const slot = deed ?? houses?.[regionIndex];",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-the-ship-read-as-a-house",
+    "file": "src/systems/banking.js",
+    "old": "kind === 'ship' ? ownsShip(player) && !!player?.shipCrossed :",
+    "new": "kind === 'house' ? ownsShip(player) && !!player?.shipCrossed :",
+    "tests": [
+      "test/systems/auditrealm2_customs.test.js",
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-the-window-offers-a-crossed-house",
+    "file": "src/ui/bankWindow.js",
+    "old": "    const crossed = this.hooks.crossedDeed?.('house');",
+    "new": "    const crossed = null;",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-the-window-offers-a-crossed-ship",
+    "file": "src/ui/bankWindow.js",
+    "old": "      const crossed = this.hooks.crossedDeed?.('ship'); // RESTORE: nor a ship",
+    "new": "      const crossed = null; // RESTORE: nor a ship",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-the-hook-reads-another-region",
+    "file": "src/scenes/worldModes.js",
+    "old": "crossedDeedLines(kind, { houses: playerEntity.houses, regionIndex: bankRegion(), player: playerEntity })",
+    "new": "crossedDeedLines(kind, { houses: playerEntity.houses, regionIndex: 0, player: playerEntity })",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-the-ship-mark-unsaved",
+    "file": "src/systems/save/save.js",
+    "old": "  if (entity.shipCrossed === true) snap.shipCrossed = true;",
+    "new": "",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-the-ship-mark-unrestored",
+    "file": "src/systems/save/save.js",
+    "old": "  if (snap.shipCrossed === true) entity.shipCrossed = true; else delete entity.shipCrossed;",
+    "new": "  delete entity.shipCrossed;",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-a-stale-mark-kept",
+    "file": "src/systems/save/save.js",
+    "old": "entity.shipCrossed = true; else delete entity.shipCrossed;",
+    "new": "entity.shipCrossed = true;",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-a-crossed-house-counted",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "    if (!slot.crossed)",
+    "new": "    if (slot)",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/systems/house_loss.test.js",
+      "test/systems/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-a-crossed-ship-counted",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  if (ownsShip(snap) && !snap.shipCrossed) {",
+    "new": "  if (ownsShip(snap)) {",
+    "tests": [
+      "test/systems/house_loss.test.js",
+      "test/systems/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-A-customs-crosses-nothing",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  const crossed = crossDeeds(snap);",
+    "new": "  const crossed = [];",
+    "tests": [
+      "test/systems/house_loss.test.js",
+      "test/systems/auditrealm2_customs.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-no-evidence-asked",
+    "file": "src/systems/realmCustoms.js",
+    "old": "      if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "new": "      if (regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-a-region-overwritten",
+    "file": "src/systems/realmCustoms.js",
+    "old": "      if (first?.buildingKey > 0) (first.more ??= []).push(deed);\n      else houses[region] = { ...deed, ...(Array.isArray(first?.more) ? { more: first.more } : {}) };",
+    "new": "      houses[region] = { ...deed, ...(Array.isArray(first?.more) ? { more: first.more } : {}) };",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-a-house-uncrossed",
+    "file": "src/systems/realmCustoms.js",
+    "old": "        crossed: true,\n      };",
+    "new": "      };",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-pieces-sell-back",
+    "file": "src/systems/realmCustoms.js",
+    "old": "      ours.decor.push({ ...p, paid: 0 });",
+    "new": "      ours.decor.push({ ...p });",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-the-owner-s-own-twice",
+    "file": "src/systems/realmCustoms.js",
+    "old": "      if (!p || p.item || standing.has(p.id)) continue;",
+    "new": "      if (!p || standing.has(p.id)) continue;",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-a-piece-doubled",
+    "file": "src/systems/realmCustoms.js",
+    "old": "      if (!p || p.item || standing.has(p.id)) continue;",
+    "new": "      if (!p || p.item) continue;",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-a-ship-without-evidence",
+    "file": "src/systems/realmCustoms.js",
+    "old": "    if (permanent.has(name)) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-a-ship-over-a-ship",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  if (ship !== SHIP_TYPES.None && (realm.ownedShip ?? SHIP_TYPES.None) === SHIP_TYPES.None) {",
+    "new": "  if (ship !== SHIP_TYPES.None) {",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-a-ship-uncrossed",
+    "file": "src/systems/realmCustoms.js",
+    "old": "      realm.shipCrossed = true;\n      piecesBack(name);",
+    "new": "      piecesBack(name);",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-any-offline-character",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  const offline = find((/** @type {any} */ e) => e?.snap?.characterId === origin)?.snap ?? null;",
+    "new": "  const offline = find(() => true)?.snap ?? null;",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-the-join-hides-the-origin",
+    "file": "server-account/src/realm.js",
+    "old": "  return { id, lease, seq: row?.seq ?? 0, bytes: row?.bytes ?? 0, origin: row?.origin_id ?? null };",
+    "new": "  return { id, lease, seq: row?.seq ?? 0, bytes: row?.bytes ?? 0, origin: null };",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-the-boot-gives-nothing",
+    "file": "src/scenes/world.js",
+    "old": "const realmGiven = realmBoot?.origin ? reclaimFromDevice(bootSnapRead, realmBoot.origin) : null;",
+    "new": "const realmGiven = null;",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-B-said-as-one",
+    "file": "src/systems/realmCustoms.js",
+    "old": "    `Customs had kept back ${what}. ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'They are' : 'It is'} yours again, with every piece in ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'them' : 'it'}. The realm's bank does not buy back what came through customs.`,",
+    "new": "    `Customs had kept back ${what}. ${'It is'} yours again, with every piece in ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'them' : 'it'}. The realm's bank does not buy back what came through customs.`,",
+    "tests": [
+      "test/systems/restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-the-switch-lets-all-through",
+    "file": "server-account/src/index.js",
+    "old": "    if (maintaining(env)) return no('maintenance', 503, origin);\n",
+    "new": "",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-health-never-says-held",
+    "file": "server-account/src/index.js",
+    "old": "...(maintaining(env) ? { maintenance: true } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-the-switch-never-thrown",
+    "file": "server-account/src/service.js",
+    "old": "export const maintaining = (/** @type {any} */ env) => env?.MAINTENANCE === '1';",
+    "new": "export const maintaining = (/** @type {any} */ env) => !env;",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-a-trader-restored",
+    "file": "tools/realmRestore.mjs",
+    "old": "    if (t.p && !realmIds.has(t.c)) held.add(t.p);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-a-standing-character-restored",
+    "file": "tools/realmRestore.mjs",
+    "old": "    .filter((o) => !standing.has(o))\n    .sort();",
+    "new": "    .sort();",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-a-taken-building-written",
+    "file": "tools/realmRestore.mjs",
+    "old": "        if (nowHome && (nowHome.player !== player || String(nowHome.char_id).startsWith('guild:'))) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-a-home-never-lost-restored",
+    "file": "tools/realmRestore.mjs",
+    "old": "        if (nowHome && nowHome.player === player && nowHome.char_id === origin) continue; // never lost\n        // AUDIT GUILD1d S8: a guild's hall is its guild's, whichever account bought it - never a home bought again",
+    "new": "        // AUDIT GUILD1d S8: a guild's hall is its guild's, whichever account bought it - never a home bought again",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-the-census-unguarded",
+    "file": "tools/realmRestore.mjs",
+    "old": "    sql.push(\n      `UPDATE realm_census SET spent = 0 WHERE char_id = ${lit(origin)} AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ${lit(origin)});`,\n    );",
+    "new": "    sql.push(`UPDATE realm_census SET spent = 0 WHERE char_id = ${lit(origin)};`);",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-a-full-guild-overfilled",
+    "file": "tools/realmRestore.mjs",
+    "old": "        else if (members >= GUILD_MEMBERS_MAX)\n          notes.push(`${who(player)}: ${guild.name} is full - the place waits for you`);",
+    "new": "        else if (false) notes.push(`${who(player)}: ${guild.name} is full - the place waits for you`);",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-a-second-master",
+    "file": "tools/realmRestore.mjs",
+    "old": "        else if (place.rank === GUILD_RANK_MASTER && master)\n          notes.push(`${who(player)}: ${guild.name} has a master again - the place waits for you`);",
+    "new": "        else if (false) notes.push(`${who(player)}: ${guild.name} has a master again - the place waits for you`);",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-not-idempotent",
+    "file": "tools/realmRestore.mjs",
+    "old": "  return `INSERT OR IGNORE INTO ${table} (${cols.join(', ')}) VALUES (${cols.map((c) => lit(row[c])).join(', ')});`;",
+    "new": "  return `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map((c) => lit(row[c])).join(', ')});`;",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-the-present-put-back-only-on-success",
+    "file": ".github/workflows/realm-restore.yml",
+    "old": "        if: always() && env.REWOUND == '1'",
+    "new": "        if: env.REWOUND == '1'",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-the-hold-lifted-over-a-rewind",
+    "file": ".github/workflows/realm-restore.yml",
+    "old": "        if: always() && env.REWOUND != '1'",
+    "new": "        if: always()",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-the-rewind-unmarked",
+    "file": ".github/workflows/realm-restore.yml",
+    "old": "          echo \"REWOUND=1\" >> \"$GITHUB_ENV\"\n",
+    "new": "",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-written-on-a-dry-run",
+    "file": ".github/workflows/realm-restore.yml",
+    "old": "        if: env.APPLY == 'true'",
+    "new": "        if: always()",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ]
+  },
+  {
+    "name": "RESTORE-C-the-hold-proven-by-a-guest",
+    "file": ".github/workflows/realm-restore.yml",
+    "old": "-X POST \"$base/v1/realm/customs\" -H 'content-type: application/json' -d '{}' || true)",
+    "new": "-X POST \"$base/v1/auth/guest\" -H 'content-type: application/json' -d '{\"label\":\"restore-hold\"}' || true)",
+    "tests": [
+      "test/net/realm_restore.test.js"
+    ],
+    "note": "The hold proven by opening an account: on an instance not yet held, the guest route writes its rate row before any refusal (TERMS1's 400)."
+  }
+]

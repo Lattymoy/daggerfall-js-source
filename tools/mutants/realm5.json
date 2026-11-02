@@ -1,0 +1,230 @@
+[
+  {
+    "name": "REALM5-letters-before-coins",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  if (amount <= purse) {\n    save.goldPieces = purse - amount;\n    return true;\n  }\n  let owed = amount;",
+    "new": "  let owed = amount;",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-pays-past-its-reach",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  if (payableOf(save, region) < amount) return false;\n  const purse = whole(save.goldPieces);",
+    "new": "  const purse = whole(save.goldPieces);",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-bank-never-pays",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "    a.accountGold -= take;\n    owed -= take;",
+    "new": "    owed -= take;",
+    "tests": [
+      "test/net/realm5.test.js"
+    ],
+    "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the line EMPIRE-ACCOUNT rewrote; the mutant is the same law."
+  },
+  {
+    "name": "REALM5-credit-to-purse-only",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  const a = bank == null ? null : accountOfSave(save, bank);",
+    "new": "  const a = null;",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-letters-never-count",
+    "file": "src/net/realm/realmGoldLaw.js",
+    "old": "  const letters = (Array.isArray(save?.items) ? save.items : [])\n    .filter((it) => it?.templateIndex === REALM_LETTER_TEMPLATE)\n    .reduce((s, it) => s + whole(it.value), 0);",
+    "new": "  const letters = 0;",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-refusal-ignored",
+    "file": "server-account/src/realm.js",
+    "old": "  const refused = change(save);\n  if (refused) return { error: refused };",
+    "new": "  change(save);",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-offline-carries-record",
+    "file": "server-account/src/realm.js",
+    "old": "  if (!mine) return realm == null ? { at: null } : { error: 'body' };",
+    "new": "  if (!mine) return { at: null };",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-any-record-id",
+    "file": "server-account/src/realm.js",
+    "old": "  if (!at || at.id !== character) return { error: 'realm-needed' };",
+    "new": "  if (!at) return { error: 'realm-needed' };",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-guard-never-trips",
+    "file": "server-account/src/realm.js",
+    "old": "  db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE changes() != ?').bind(n, n);",
+    "new": "  db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE 0 AND ? = ?').bind(n, n, n);",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-moved-unsaid",
+    "file": "server-account/src/realm.js",
+    "old": "  return row.seq !== at.seq ? { error: 'seq', seq: row.seq } : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-record-left-out",
+    "file": "server-account/src/guilds.js",
+    "old": "    await db.batch([...prep.steps, move, mustChange(db)]);",
+    "new": "    await db.batch([move, mustChange(db)]);",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-deposit-hand-to-hand",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (side.at) return realmTreasury(ctx, player, a.me, side.at, 'deposit', gold, region);\n",
+    "new": "",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-withdraw-never-credits",
+    "file": "server-account/src/guilds.js",
+    "old": "    : (creditSave(save, gold, { letter }) ? null : 'bad-gold')), { outbound",
+    "new": "    : null), { outbound",
+    "tests": [
+      "test/net/realm5.test.js"
+    ],
+    "note": "GUILD-LETTER (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed BY CONTENT - the record's credit carries `letter` (a letter of credit for what the pack cannot carry); same law, same killer."
+  },
+  {
+    "name": "REALM5-founding-unpaid",
+    "file": "server-account/src/guilds.js",
+    "old": "      ...(prep?.steps ?? []),\n      db.prepare('INSERT INTO guilds",
+    "new": "      db.prepare('INSERT INTO guilds",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-book-never-reserves",
+    "file": "src/net/guild/guildBook.js",
+    "old": "          reserve: walletReserve(w, gold).reserve, // MARKET-AUDIT: a refusal gives back exactly what it took\n          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
+    "new": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-book-withdraw-uncredited",
+    "file": "src/net/guild/guildBook.js",
+    "old": "            apply: () => this.wallet().credit(gold, { letter }),\n            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at, letter),",
+    "new": "            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at, letter),",
+    "tests": [
+      "test/net/realm5.test.js"
+    ],
+    "note": "GUILD-LETTER (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed BY CONTENT - the apply's credit carries the letter the book weighed before it asked; same law, same killer."
+  },
+  {
+    "name": "REALM5-book-deposit-no-region",
+    "file": "src/net/guild/guildBook.js",
+    "old": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
+    "new": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, null),",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-landed-not-known",
+    "file": "src/systems/realmSaves.js",
+    "old": "      if (r?.error === 'seq') return i > 0 && r.seq === at.seq + 1 && !needsAnswer && !read ? { ok: true, landed: true, seq: r.seq } : unanswered;\n",
+    "new": "",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-unknown-undone",
+    "file": "src/systems/realmSaves.js",
+    "old": "  else if (!r?.unknown) undo?.();",
+    "new": "  else undo?.();",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-no-checkpoint-first",
+    "file": "src/systems/realmSaves.js",
+    "old": "export async function realmGoldAct({ session, checkpoint, reserve = null, apply = null, call, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), needsAnswer = false, read = false }) {\n  checkpoint();\n",
+    "new": "export async function realmGoldAct({ session, checkpoint, reserve = null, apply = null, call, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), needsAnswer = false, read = false }) {\n",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-guilds-no-bucket",
+    "file": "server-account/src/index.js",
+    "old": "        const r = await act({ ...ctx, env, bucket: env.SAVES, self: url.origin }, who.player, body);",
+    "new": "        const r = await act({ ...ctx, env, self: url.origin }, who.player, body);",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-guild-seq-unsaid",
+    "file": "server-account/src/index.js",
+    "old": "        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // REALM P2.2: the service's own, as a checkpoint's\n",
+    "new": "",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-door-drops-seq",
+    "file": "src/net/accountClient.js",
+    "old": "...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(Number.isSafeInteger(data?.at)",
+    "new": "...(Number.isSafeInteger(data?.at)",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-door-drops-region",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/guilds/deposit', { character, gold, ...(realm ? { realm, region } : {}) })",
+    "new": "post('/v1/guilds/deposit', { character, gold, ...(realm ? { realm } : {}) })",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  },
+  {
+    "name": "REALM5-host-hand-to-hand",
+    "file": "src/scenes/world.js",
+    "old": "      realm: realmSession ? { act: (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }), abandon: (why) => realmSession.abandon(why) } : null,",
+    "new": "      realm: null,",
+    "tests": [
+      "test/net/realm5.test.js"
+    ]
+  }
+]

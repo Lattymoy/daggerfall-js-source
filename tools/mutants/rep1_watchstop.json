@@ -1,0 +1,147 @@
+[
+  {
+    "name": "REP1-DFU's-line-moved",
+    "file": "src/systems/standing.js",
+    "old": "export const KNOWN_CRIMINAL_BELOW = -10;",
+    "new": "export const KNOWN_CRIMINAL_BELOW = -20;",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-no-cooldown",
+    "file": "src/systems/standing.js",
+    "old": "  if (ownNow < (s.challengeAt[regionIndex] ?? -Infinity) + CHALLENGE_COOLDOWN_MINUTES) return false;\n  return ownNow >= (s.graceUntil[regionIndex] ?? -Infinity);",
+    "new": "  return ownNow >= (s.graceUntil[regionIndex] ?? -Infinity);",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-no-grace",
+    "file": "src/systems/standing.js",
+    "old": "  return ownNow >= (s.graceUntil[regionIndex] ?? -Infinity);",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-table's-sign",
+    "file": "src/systems/standing.js",
+    "old": "    Math.max(MIN_PENALTY[t], BASE_PENALTY[t] - PENALTY_PER_LEGAL_REP_POINT[t] * rep),",
+    "new": "    Math.max(MIN_PENALTY[t], BASE_PENALTY[t] + PENALTY_PER_LEGAL_REP_POINT[t] * rep),",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-banished-double",
+    "file": "src/systems/standing.js",
+    "old": "  return isBanished(player, regionIndex, worldNow) ? fine * 2 : fine;",
+    "new": "  return fine;",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-stop-without-a-seeing-guard",
+    "file": "src/scenes/standingHost.js",
+    "old": "    if (!cityGuards.guardSeesPlayer({ playerFeet: playerFeet(), pool: guardPool() })) return false;\n    noteChallenge(playerEntity, region, clocks.ownNow);",
+    "new": "    noteChallenge(playerEntity, region, clocks.ownNow);",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-look-every-frame",
+    "file": "src/scenes/standingHost.js",
+    "old": "    if (t < next) return false;\n    next = t + STANDING_LOOK_MS;",
+    "new": "    next = t + STANDING_LOOK_MS;",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-gates-of-the-street",
+    "file": "src/scenes/standingHost.js",
+    "old": "    if (box || !onStreet() || blocked()) return false;",
+    "new": "    if (box) return false;",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-a-crime-held-stopped-again",
+    "file": "src/scenes/standingHost.js",
+    "old": "    if (playerEntity.crimeCommitted || playerEntity.arrested || arrestFlow.inCourt()) return false;\n    if ((playerEntity.health ?? 0) <= 0 || racialSuppressCrime(playerEntity)) return false;",
+    "new": "    if ((playerEntity.health ?? 0) <= 0 || racialSuppressCrime(playerEntity)) return false;",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-dead-and-the-beast-stopped",
+    "file": "src/scenes/standingHost.js",
+    "old": "    if ((playerEntity.health ?? 0) <= 0 || racialSuppressCrime(playerEntity)) return false;\n    // AUDIT REP F7: an invisible criminal is nobody's face either - the witness arm's own gate (town.gate's isInvisible,",
+    "new": "    // AUDIT REP F7: an invisible criminal is nobody's face either - the witness arm's own gate (town.gate's isInvisible,",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-refuse-without-the-crime",
+    "file": "src/scenes/standingHost.js",
+    "old": "          playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy; // the levy's own write (WERE-LEVY: the field)\n          crimeResponse();",
+    "new": "          crimeResponse();",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-pay-offered-unaffordable",
+    "file": "src/scenes/standingHost.js",
+    "old": "      ...(canPay",
+    "new": "      ...(true",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-a-civilian-counted",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (!p?.guard) continue;\n      const toPlayer",
+    "new": "      const toPlayer",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-wall-ignored",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if ((!Number.isFinite(hit) || hit >= dist - 1e-3) && !(coverDistance(collider, eye, dir, dist, true) < dist - 1e-3)) return p;   // TACT1: cover hides him",
+    "new": "      return p;   // TACT1: cover hides him",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-stop-never-looked-for",
+    "file": "src/scenes/world.js",
+    "old": "    standingWatch.frame();   // REP1: a guard who sees a known criminal stops them\n",
+    "new": "",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js",
+      "test/scenes/audit26_dungeonfoes.test.js"
+    ]
+  },
+  {
+    "name": "REP1-the-raid-not-held",
+    "file": "src/scenes/world.js",
+    "old": " || !!travelView?.active || !!raidDefendingHere()\n      || duelEnemyNear()",
+    "new": " || !!travelView?.active\n      || duelEnemyNear()",
+    "tests": [
+      "test/systems/rep1_watchstop.test.js"
+    ]
+  }
+]

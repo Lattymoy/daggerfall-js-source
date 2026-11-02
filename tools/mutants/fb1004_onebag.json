@@ -1,0 +1,74 @@
+[
+  {
+    "name": "ONEBAG-the-refusal-gone",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return { ok: false, refusal: REFUSAL.secondBag };\n",
+    "new": "",
+    "tests": [
+      "test/systems/professions/fb1004_onebag.test.js"
+    ]
+  },
+  {
+    "name": "ONEBAG-the-wagon-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "holdsOtherBag([bag, entity?.wagonItems], item)",
+    "new": "holdsOtherBag([bag], item)",
+    "tests": [
+      "test/systems/professions/fb1004_onebag.test.js"
+    ]
+  },
+  {
+    "name": "ONEBAG-every-take-refused",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return",
+    "new": "  if (!ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return",
+    "tests": [
+      "test/systems/professions/fb1004_onebag.test.js"
+    ]
+  },
+  {
+    "name": "ONEBAG-the-bag-counted-against-itself",
+    "file": "src/net/bagLaw.js",
+    "old": "  (lists ?? []).some((l) => Array.isArray(l) && l.some((x) => x !== item && isBagItem(x)));",
+    "new": "  (lists ?? []).some((l) => Array.isArray(l) && l.some((x) => isBagItem(x)));",
+    "tests": [
+      "test/systems/professions/fb1004_onebag.test.js"
+    ]
+  },
+  {
+    "name": "ONEBAG-the-keyed-guard-gone",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isBagItem(it) && holdsOtherBag([playerEntity.items, playerEntity.wagonItems], it)) return false;   // ONE-BAG: as the counter's planTake refuses it\n",
+    "new": "",
+    "tests": [
+      "test/systems/professions/fb1004_onebag.test.js"
+    ]
+  },
+  {
+    "name": "ONEBAG-the-gold-words-for-a-bag",
+    "file": "src/scenes/worldModes.js",
+    "old": "lines: [bought === false ? BAG_WORDS.second : 'You do not have enough gold.']",
+    "new": "lines: ['You do not have enough gold.']",
+    "tests": [
+      "test/systems/professions/fb1004_onebag.test.js"
+    ]
+  },
+  {
+    "name": "ONEBAG-the-wagons-own-refused",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag(",
+    "new": "  if (isBagItem(item) && holdsOtherBag(",
+    "tests": [
+      "test/systems/professions/fb1004_onebag.test.js"
+    ]
+  },
+  {
+    "name": "ONEBAG-the-bag-a-piece",
+    "file": "src/systems/decor/decorItems.js",
+    "old": "  if (isBagItem(item) || isPackOnly(item)) return null;",
+    "new": "  if (isPackOnly(item)) return null;",
+    "tests": [
+      "test/systems/professions/fb1004_onebag.test.js"
+    ]
+  }
+]

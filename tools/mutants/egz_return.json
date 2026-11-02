@@ -1,0 +1,641 @@
+[
+  {
+    "name": "EGZ-live-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (a?.ok) backHeard(a.data?.live ?? null);",
+    "new": "    if (a?.ok) void 0;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-another-breach-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (wayBack && wayBack.b !== backLive) backDrop();",
+    "new": "    if (wayBack && wayBack.b !== backLive) void 0;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-no-record-no-way-back",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (!wayBack && backLive && backLive !== backOver && /^[0-9a-f]{16}$/.test(backLive)) wayBack =",
+    "new": "    if (false) wayBack =",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-offered-before-the-service",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (!wayBack || backLive !== wayBack.b || inSpire() || returning || leaving) return false;",
+    "new": "    if (!wayBack || inSpire() || returning || leaving) return false;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-calls-window-ignored",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    return !!wayBack.in || !(c?.b === wayBack.b && egPhase(",
+    "new": "    return true || !(c?.b === wayBack.b && egPhase(",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-late-refusal-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (returnable() && (!c || c.b === wayBack.b)) return returnIn();",
+    "new": "    if (false) return returnIn();",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-key-opens-anew",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (returnable()) { answer(); return EG_BACK_TEXT.back; }",
+    "new": "    if (false) { answer(); return EG_BACK_TEXT.back; }",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-first-circle-always",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "c: R.h > 0 ? egCircleOfHall(R.h) : R.ew + 1",
+    "new": "c: R.ew + 1",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-count-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (mine?.in) wayBack.in = 1;",
+    "new": "    if (false) wayBack.in = 1;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-hall-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (E.h > 0) wayBack.h = E.h;",
+    "new": "    if (false) wayBack.h = E.h;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-record-never-written",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "!== was) backKeep(true);",
+    "new": "!== was) void 0;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-island-a-piece",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egSupportAt(F.spec, F.x, F.y, F.z, t / 1000) !== EG_HOLD.island) return;",
+    "new": "egSupportAt(F.spec, F.x, F.y, F.z, t / 1000) !== EG_HOLD.piece) return;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-island-never-flushed",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    else if (backDirty) backKeep();",
+    "new": "    else if (false) backKeep();",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-plate-for-the-island",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "(E.sg === 'trial' && li && li[0] === E.h ? placeAt(E, li) : placeOn(E.h, E))",
+    "new": "placeOn(E.h, E)",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-seed-never-checked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "|| (circleSeed != null && circleSeed !== E.seed >>> 0)) {",
+    "new": "|| false) {",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-return-never-rebuilds",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ if (E.sg !== 'rest' || returning === E.b) swapTo(E, c); return; }",
+    "new": "{ if (E.sg !== 'rest' && returning !== E.b) swapTo(E, c); return; }",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-refusal-keeps-it",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (said) backDrop(M?.egHallBreach?.() ?? undefined); else keysAt = -Infinity;",
+    "new": "        if (said) void 0; else keysAt = -Infinity;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-lost-socket-silent",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (said) backDrop(M?.egHallBreach?.() ?? undefined); else keysAt = -Infinity;",
+    "new": "        if (said) backDrop(M?.egHallBreach?.() ?? undefined);",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-end-keeps-it",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "endSeen = E.end; endAt = t; backDrop(E.b);",
+    "new": "endSeen = E.end; endAt = t;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-home-keeps-it",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (mine && mine.home) { witness = null; backDrop(E.b);",
+    "new": "    if (mine && mine.home) { witness = null;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-forsaking-keeps-it",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ witness = null; backDrop(E.b); walkOut(EG_END_TEXT.forsake); }",
+    "new": "{ witness = null; walkOut(EG_END_TEXT.forsake); }",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-offer-every-frame",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (returnable() && backSaid !== wayBack.b) {",
+    "new": "    if (returnable()) {",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-strip-never-returns",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (returnable()) { if (windowUp()) return null;",
+    "new": "      if (false) { if (windowUp()) return null;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fall-replayed",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    const seen = wayBack?.b === E.b && wayBack.wf >= n;",
+    "new": "    const seen = false;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-no-recall-not-last",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    const final = fin != null ? !!fin : !mine?.recall || n >= 2;",
+    "new": "    const final = fin != null ? !!fin : n >= 2;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-rooms-last-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (w.k === 'fall' && w.s === me() && witness?.fall) witness.fall.final = !!w.fin;",
+    "new": "      if (false) witness.fall.final = !!w.fin;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-no-sinking-eye",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (F?.eye === 'fall') {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fall-never-drawn",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    drawEgFall(witness?.fall ? egFallModel(witness.fall, t, { still: acc.still }) : null,",
+    "new": "    drawEgFall(null,",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-reliquaries-unheld",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (mine?.alive) relHeld = egRunOfMember(E, me()).rel;",
+    "new": "    if (false) relHeld = egRunOfMember(E, me()).rel;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-spans-clock-outside",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (!inSpire() || off == null) return null;\n      if (!spanClock",
+    "new": "      if (off == null) return null;\n      if (!spanClock",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-reanchor-every-sample",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!spanClock || Math.abs(off - spanOff) > EG_SPAN_REANCHOR_MS) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-reanchor-never",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!spanClock || Math.abs(off - spanOff) > EG_SPAN_REANCHOR_MS) {",
+    "new": "if (!spanClock) {",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-breach-clock-outside",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return inSpire() && off != null ? Date.now() + off : null; },",
+    "new": "return off != null ? Date.now() + off : null; },",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-beats-past-the-bus",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "try { bus().beat(S); }",
+    "new": "try { audio?.playOneShot?.(S.rec, S.vol, S.pitch); }",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-bus-not-the-fights",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const bus = () => fight?.mix?.() ?? (ownMix",
+    "new": "const bus = () => null ?? (ownMix",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-surplus-unreachable",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if ((E.sp ?? 0) > 0) items.push({ k: 'surplus', use: 0 }, { k: 'surplus', use: 1 }); }",
+    "new": " }",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-surplus-off-by-one",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "items.push({ k: 'surplus', use: 0 }, { k: 'surplus', use: 1 });",
+    "new": "items.push({ k: 'surplus', use: 1 }, { k: 'surplus', use: 2 });",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-surplus-one-button",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "o?.sendEg?.('surplus', { use: it.use }); return true; }",
+    "new": "o?.sendEg?.('surplus', { use: 0 }); return true; }",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-sink-linear",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    sink: still ? 0 : Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000,",
+    "new": "    sink: still ? 0 : Math.round(EG_FALL_SINK_M * k * 1000) / 1000,",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-colour-never-drains",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  let sat = still ? EG_FALL_SAT : 1 - (1 - EG_FALL_SAT) * k,",
+    "new": "  let sat = still ? EG_FALL_SAT : 1,",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-eye-handed-late",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    if (still || d >= 0.5) {",
+    "new": "    if (still || d >= 0.6) {",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-dither-under-reduced-motion",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    if (!still) veil = Math.round((d < 0.5 ? d * 2 : (1 - d) * 2) * EG_FALL_DITHER_STEPS) / EG_FALL_DITHER_STEPS;",
+    "new": "    if (true) veil = Math.round((d < 0.5 ? d * 2 : (1 - d) * 2) * EG_FALL_DITHER_STEPS) / EG_FALL_DITHER_STEPS;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-lost-with-nothing-lost",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "          lost: (fall.lost ?? 0) > 0 ? EG_FALL_TEXT.lost(fall.lost) : '',",
+    "new": "          lost: EG_FALL_TEXT.lost(fall.lost ?? 0),",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-card-rises-when-still",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "          fresh: m.fresh && !still,",
+    "new": "          fresh: m.fresh,",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-card-line-swapped",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "          ? EG_FALL_TEXT.final\n          : EG_FALL_TEXT.first,",
+    "new": "          ? EG_FALL_TEXT.first\n          : EG_FALL_TEXT.final,",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-sinks-when-still",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    sink: still ? 0 : Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000,",
+    "new": "    sink: Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000,",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-drain-never-drawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    const f = m.sat < 1 ? `saturate(${m.sat})` : '';",
+    "new": "    const f = '';",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-veil-never-drawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    fallP.veil.style.background = egDitherCss(m.veil);",
+    "new": "    fallP.veil.style.background = 'none';",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-lost-not-red",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    fallP.lost.style.color = danger;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fall-never-hidden",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    fall.style.display = m ? '' : 'none';",
+    "new": "    fall.style.display = '';",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-card-line-never-redrawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  for (const k of ['main', 'sub', 'lost'])",
+    "new": "  for (const k of ['main'])",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-dither-out-of-order",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  [1, 1],\n  [1, 0],",
+    "new": "  [1, 0],\n  [1, 1],",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-feint-fill-runs-on",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      sh.t = Math.max(0, Math.min(1, ((bl.cut ? Math.min(t, bl.cut) : t) - from) / Math.max(1, bl.wu)));",
+    "new": "      sh.t = Math.max(0, Math.min(1, (t - from) / Math.max(1, bl.wu)));",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-feint-fade-slow",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        ? Math.max(0, 1 - (t - bl.cut) / EG_FEINT_FADE_MS)",
+    "new": "        ? Math.max(0, 1 - (t - bl.cut) / 300)",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-feint-not-dashed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      sh.cut = !!bl.cut; // EG-ZD (section 13.2): dashed as it fades",
+    "new": "      sh.cut = false; // EG-ZD (section 13.2): dashed as it fades",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-every-blow-dashed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      sh.look = bits | (sh.cut ? EG_LOOK_BIT.dash : 0); // EG-ZD: a cut feint dashed as it fades",
+    "new": "      sh.look = bits | EG_LOOK_BIT.dash; // EG-ZD: a cut feint dashed as it fades",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-stale-dash-kept",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        sl.cut = false;\n        sl.y = NaN;",
+    "new": "        sl.y = NaN;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-feint-lingers",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      for (const bl of F.blows) if (!bl.cut || t - bl.cut < EG_FEINT_FADE_MS) _orderIn.push(bl);",
+    "new": "      for (const bl of F.blows) if (!bl.cut || t - bl.cut < 1000) _orderIn.push(bl);",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-stage-ignores-dash",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    '  if ((uLook & 4) != 0) { float dsh = step(0.5, fract((vCourt.x - vCourt.y) * 2.5)); rgb *= dsh; a *= dsh; }   // EG-ZD: a feint cut - dashed as it fades\\n  o = vec4(rgb * f, clamp(a, 0.0, 1.0) * f);\\n}',",
+    "new": "    '  if ((uLook & 8) != 0) { float dsh = step(0.5, fract((vCourt.x - vCourt.y) * 2.5)); rgb *= dsh; a *= dsh; }   // EG-ZD: a feint cut - dashed as it fades\\n  o = vec4(rgb * f, clamp(a, 0.0, 1.0) * f);\\n}',",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-panel-mark-off-the-button",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "        const b = egEl(doc, 'button', `eg-k-btn${focus === offer.cards.length + use ? ' eg-focus' : ''}`, label);",
+    "new": "        const b = egEl(doc, 'button', `eg-k-btn${focus === use ? ' eg-focus' : ''}`, label);",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-beat-never-ducks",
+    "file": "src/systems/eliteGates/egMix.js",
+    "old": "      mix.critical();\n      return played;",
+    "new": "      return played;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-beat-pitch-lost",
+    "file": "src/systems/eliteGates/egMix.js",
+    "old": "          audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1);",
+    "new": "          audio.playOneShot(S.rec, 1, 1);",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-beat-unguarded",
+    "file": "src/systems/eliteGates/egMix.js",
+    "old": "      if (!S || !Number.isInteger(S.rec)) return false;",
+    "new": "      if (!S) return false;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-strip-word-fixed",
+    "file": "src/scenes/eliteGates/egCall.js",
+    "old": "      const word = m.button ?? 'Answer';",
+    "new": "      const word = 'Answer';",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-toll-pitch",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "  lowToll: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.42 }), // EG-ZD (section 16.5): a fall's low toll - clip 107 at pitch 0.42, the page's",
+    "new": "  lowToll: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.55 }), // EG-ZD (section 16.5): a fall's low toll - clip 107 at pitch 0.42, the page's",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-host-spans-on-the-welcome",
+    "file": "src/scenes/world.js",
+    "old": "  const deadlandsSeconds = () => egClient?.spanSeconds() ?? deadlandsShared();",
+    "new": "  const deadlandsSeconds = () => deadlandsShared();",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-host-egnow-on-the-welcome",
+    "file": "src/scenes/world.js",
+    "old": "  const egNow = () => egClient?.breachNow() ?? Date.now() + _sharedOffsetMs;",
+    "new": "  const egNow = () => Date.now() + _sharedOffsetMs;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-over-reoffered",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!wayBack && backLive && backLive !== backOver && /^",
+    "new": "if (!wayBack && backLive && /^",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-over-unmarked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (b) backOver = b;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-over-read-as-a-record",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "|| !/^[0-9a-f]{16}$/.test(r.b) || r.x === 1) return null;",
+    "new": "|| !/^[0-9a-f]{16}$/.test(r.b)) return null;",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-over-kept-again",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (E.b === backOver) return;   // over for me",
+    "new": "    if (false) return;   // over for me",
+    "tests": [
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  }
+]

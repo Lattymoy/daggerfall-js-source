@@ -1,0 +1,82 @@
+[
+  {
+    "name": "CULLSIZE-the-born-radius-only",
+    "file": "src/render/bounds.js",
+    "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean; // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)",
+    "new": "  out[3] = s[3] + (b.size?.h ?? 0) * _flatLean; // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)",
+    "tests": [
+      "test/scenes/fb1004d_cullsize.test.js"
+    ],
+    "note": "the base: the sphere keeps the radius the batch was born with - the street's foe culled on its { w: 1, h: 1 } placeholder, the cart's horse on its still picture"
+  },
+  {
+    "name": "CULLSIZE-reach-never-grows",
+    "file": "src/render/bounds.js",
+    "old": "  return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : r;",
+    "new": "  return r;",
+    "tests": [
+      "test/scenes/fb1004d_cullsize.test.js"
+    ],
+    "note": "batchReach answers the stored radius whatever the size drawn"
+  },
+  {
+    "name": "CULLSIZE-no-hair",
+    "file": "src/render/bounds.js",
+    "old": "  return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : r;",
+    "new": "  return q > r * r ? Math.sqrt(q) : r;",
+    "tests": [
+      "test/scenes/fb1004d_cullsize.test.js"
+    ],
+    "note": "an unchanged batch whose float32 radius rounded down is handed the double's - its sphere no longer bit for bit what it was born with"
+  },
+  {
+    "name": "CULLSIZE-always-the-drawn-size",
+    "file": "src/render/bounds.js",
+    "old": "  return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : r;",
+    "new": "  return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : Math.sqrt(q);",
+    "tests": [
+      "test/scenes/fb1004d_cullsize.test.js"
+    ],
+    "note": "the reach is the drawn size's alone: a pixel's wood loses its placements' spread, a flat drawn smaller shrinks its sphere"
+  },
+  {
+    "name": "CULLSIZE-half-diagonal-doubled",
+    "file": "src/render/bounds.js",
+    "old": "  const q = (z.w * z.w + z.h * z.h) * 0.25; // the half-diagonal, squared - a root only when it is the answer",
+    "new": "  const q = (z.w * z.w + z.h * z.h) * 0.5; // the half-diagonal, squared - a root only when it is the answer",
+    "tests": [
+      "test/scenes/fb1004d_cullsize.test.js"
+    ],
+    "note": "the square of the half-diagonal taken at a half, not a quarter - every flat grows past what it draws"
+  },
+  {
+    "name": "CULLSIZE-half-diagonal-short",
+    "file": "src/render/bounds.js",
+    "old": "  const q = (z.w * z.w + z.h * z.h) * 0.25; // the half-diagonal, squared - a root only when it is the answer",
+    "new": "  const q = (z.w * z.w + z.h * z.h) * 0.2; // the half-diagonal, squared - a root only when it is the answer",
+    "tests": [
+      "test/scenes/fb1004d_cullsize.test.js"
+    ],
+    "note": "the reach falls short of the quad's corners"
+  },
+  {
+    "name": "CULLSIZE-width-forgotten",
+    "file": "src/render/bounds.js",
+    "old": "  const q = (z.w * z.w + z.h * z.h) * 0.25; // the half-diagonal, squared - a root only when it is the answer",
+    "new": "  const q = z.h * z.h * 0.25; // the half-diagonal, squared - a root only when it is the answer",
+    "tests": [
+      "test/scenes/fb1004d_cullsize.test.js"
+    ],
+    "note": "the height alone - a square sprite's corners left outside"
+  },
+  {
+    "name": "CULLSIZE-no-size-no-reach",
+    "file": "src/render/bounds.js",
+    "old": "  if (!z) return r;",
+    "new": "  if (!z) return 0;",
+    "tests": [
+      "test/scenes/fb1004d_cullsize.test.js"
+    ],
+    "note": "a batch with no size loses its stored radius"
+  }
+]

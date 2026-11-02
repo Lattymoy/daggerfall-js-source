@@ -1,0 +1,299 @@
+[
+  {
+    "name": "CHAP6E-VOCAB-HIGH",
+    "file": "src/net/identityToken.js",
+    "old": "export const CHAPTER_TITLES = Object.freeze([\n  'chaptermaster',\n  'chapterofficer',\n  'formermaster',\n  'highmaster',\n  'seasonmaster',\n]);",
+    "new": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster', 'seasonmaster']);",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-VOCAB-SEASON",
+    "file": "src/net/identityToken.js",
+    "old": "export const CHAPTER_TITLES = Object.freeze([\n  'chaptermaster',\n  'chapterofficer',\n  'formermaster',\n  'highmaster',\n  'seasonmaster',\n]);",
+    "new": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster', 'highmaster']);",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-WORDS-HIGH",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  highmaster: 'High Master',",
+    "new": "  highmaster: 'Master',",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-WORDS-SEASON",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  seasonmaster: 'Master',",
+    "new": "  seasonmaster: 'Season Master',",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-KEPT-INT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  Number.isSafeInteger(n) && /** @type {number} */ (n) >= 1 && /** @type {number} */ (n) <= 9999;",
+    "new": "  Number.isFinite(n) && /** @type {number} */ (n) >= 1 && /** @type {number} */ (n) <= 9999;",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-KEPT-ZERO",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  Number.isSafeInteger(n) && /** @type {number} */ (n) >= 1 && /** @type {number} */ (n) <= 9999;",
+    "new": "  Number.isSafeInteger(n) && /** @type {number} */ (n) >= 0 && /** @type {number} */ (n) <= 9999;",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-KEPT-MAX",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const keptSeasonOk = (/** @type {unknown} */ n) =>\n  Number.isSafeInteger(n) && /** @type {number} */ (n) >= 1 && /** @type {number} */ (n) <= 9999;",
+    "new": "const keptSeasonOk = (/** @type {unknown} */ n) => Number.isSafeInteger(n) && /** @type {number} */ (n) >= 1;",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-TEXT-SEASON",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "      ? `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}, Season ${/** @type {any[]} */ (ts)[1]}`",
+    "new": "      ? `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}`",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-TEXT-GUARD",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    return keptSeasonOk(/** @type {any[]} */ (ts)[1])",
+    "new": "    return true",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-TEXT-BRANCH",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (title === 'seasonmaster')",
+    "new": "  if (false)",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-HIGH-STRICT",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  const high = masters.filter((s) => s.high === true);",
+    "new": "  const high = masters.filter((s) => !!s.high);",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-HIGH-MARK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    ...rows(high, 'chaptermaster').map((r) => ({ ...r, high: true })),",
+    "new": "    ...rows(high, 'chaptermaster'),",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-HIGH-FIRST",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    ...rows(high, 'chaptermaster').map((r) => ({ ...r, high: true })),\n    ...rows(\n      masters.filter((s) => s.high !== true),\n      'chaptermaster',\n    ),",
+    "new": "    ...rows(\n      masters.filter((s) => s.high !== true),\n      'chaptermaster',\n    ),\n    ...rows(high, 'chaptermaster').map((r) => ({ ...r, high: true })),",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SEASONS-NEWEST",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "      .sort((a, b) => b.season - a.season || by(a, b))",
+    "new": "      .sort((a, b) => a.season - b.season || by(a, b))",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SEASONS-BY",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "      .sort((a, b) => b.season - a.season || by(a, b))",
+    "new": "      .sort((a, b) => b.season - a.season)",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SEASONS-ONCE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  const seasons = new Map(\n    [...kept].filter((s) => shown(s) && keptSeasonOk(s.season)).map((s) => [`${s.f}|${s.region}|${s.season}`, s]),\n  );",
+    "new": "  const seasons = new Map([...kept].filter((s) => shown(s) && keptSeasonOk(s.season)).map((s, i) => [i, s]));",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SEASONS-SHOWN",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "    [...kept].filter((s) => shown(s) && keptSeasonOk(s.season)).map((s) => [`${s.f}|${s.region}|${s.season}`, s]),",
+    "new": "    [...kept].filter((s) => keptSeasonOk(s.season)).map((s) => [`${s.f}|${s.region}|${s.season}`, s]),",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SEASONS-OK",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  const seasons = new Map(\n    [...kept].filter((s) => shown(s) && keptSeasonOk(s.season)).map((s) => [`${s.f}|${s.region}|${s.season}`, s]),\n  );",
+    "new": "  const seasons = new Map([...kept].filter((s) => shown(s)).map((s) => [`${s.f}|${s.region}|${s.season}`, s]));",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SEASONS-TITLE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "      .map((s) => ({ title: 'seasonmaster', ts: [chapterTitleKey(s.f, s.region), s.season] })),",
+    "new": "      .map((s) => ({ title: 'seasonmaster', ts: [chapterTitleKey(s.f, s.region), season] })),",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-KIND",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    AND x.kind = 'season'`).bind(playerId, character).all();",
+    "new": "    AND x.kind = 'event'`).bind(playerId, character).all();",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-EARLY",
+    "file": "server-account/src/npcChapters.js",
+    "old": "if (!seats.length && !lost.length && !whole.length) return [];",
+    "new": "if (!seats.length && !lost.length) return [];",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-ASC",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE strength >= ?1 AND (faction, region) IN",
+    "new": "WHERE strength > ?1 AND (faction, region) IN",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-ASC-NARROWED",
+    "file": "server-account/src/npcChapters.js",
+    "old": "WHERE strength >= ?1 AND (faction, region) IN",
+    "new": "WHERE strength >= ?1 AND (faction, region) NOT IN",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-HIGH",
+    "file": "server-account/src/npcChapters.js",
+    "old": "high: ascendant.has(`${r.faction}|${r.region}`) })),",
+    "new": "high: false })),",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-HELD",
+    "file": "server-account/src/npcChapters.js",
+    "old": "try { return Number(JSON.parse(r.data)?.season); } catch { return NaN; }",
+    "new": "try { return 1; } catch { return NaN; }",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-CHARS",
+    "file": "server-account/src/npcChapters.js",
+    "old": "[...seatsHere, ...lostHere, ...whole].map((r) => String(r.char_id))",
+    "new": "[...seatsHere, ...lostHere].map((r) => String(r.char_id))",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-KEPT",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    whole.filter((r) => r.char_id === ch).map((r) => ({ f: Number(r.faction), region: Number(r.region), season: heldOf(r) })),\n",
+    "new": "",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-SVC-STRUCK",
+    "file": "server-account/src/npcChapters.js",
+    "old": "    whole.filter((r) => r.char_id === ch).map(",
+    "new": "    kept(whole).filter((r) => r.char_id === ch).map(",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-MINT",
+    "file": "server-account/src/index.js",
+    "old": "{ t: chapterT.high ? 'highmaster' : wornT, ts: chapterT.ts }",
+    "new": "{ t: wornT, ts: chapterT.ts }",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-BADGE-TEXT-HIGH",
+    "file": "src/ui/playerBadge.js",
+    "old": "  highmaster: 'High Master', // CHAP6e: a Master's in its chapter's Ascendancy - GUILD3e: while its chapter stands Ascendant",
+    "new": "  highmaster: 'Master', // CHAP6e: a Master's in its chapter's Ascendancy - GUILD3e: while its chapter stands Ascendant",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-BADGE-TEXT-SEASON",
+    "file": "src/ui/playerBadge.js",
+    "old": "  seasonmaster: 'Season Master', // CHAP6e: a Season's Master's, kept for good",
+    "new": "  seasonmaster: 'Master', // CHAP6e: a Season's Master's, kept for good",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-BADGE-RGBA-HIGH",
+    "file": "src/ui/playerBadge.js",
+    "old": "  highmaster: Object.freeze([0.365, 0.612, 0.925, 1]), // #5d9cec",
+    "new": "  highmaster: Object.freeze([0.365, 0.612, 0.9, 1]), // #5d9cec",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  },
+  {
+    "name": "CHAP6E-BADGE-RGBA-SEASON",
+    "file": "src/ui/playerBadge.js",
+    "old": "  seasonmaster: Object.freeze([0.435, 0.561, 0.722, 1]), // #6f8fb8",
+    "new": "  seasonmaster: Object.freeze([0.435, 0.561, 0.7, 1]), // #6f8fb8",
+    "tests": [
+      "test/net/chap6e_titles.test.js"
+    ]
+  }
+]

@@ -1,0 +1,132 @@
+[
+  {
+    "name": "SD2-the-world-salt",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "export const sdSalt = (s) => SD_SALT_BASE + 1 + ((Math.max(1, s | 0) - 1) % (SALT_MAX - SD_SALT_BASE));",
+    "new": "export const sdSalt = (s) => 1;",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "A Hollow's id is never a spawned dungeon's - its room and memory are its own."
+  },
+  {
+    "name": "SD2-a-mod-row-counts",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "    if (!loc || !Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || !isBase(loc)) continue;",
+    "new": "    if (!loc || !Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex)) continue;",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "A world-data mod's rows are not on every client."
+  },
+  {
+    "name": "SD2-the-great-cities-any-place",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "    if (r < 0 && loc.mapTableData?.locationType !== LOCATION_TYPES.TownCity) continue;\n    rows.push({ loc, claim });",
+    "new": "    rows.push({ loc, claim });",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "With no region, the Bay's great CITIES."
+  },
+  {
+    "name": "SD2-the-smallest-first",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "    outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : a.loc.regionIndex - b.loc.regionIndex,",
+    "new": "    outranks(a.claim, b.claim) ? 1 : outranks(b.claim, a.claim) ? -1 : a.loc.regionIndex - b.loc.regionIndex,",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "Where population is at its most: the largest first."
+  },
+  {
+    "name": "SD2-all-the-cities",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "  return (r < 0 ? rows.slice(0, SD_GREAT_CITIES) : rows).map((x) => x.loc);",
+    "new": "  return rows.map((x) => x.loc);",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "Eight great cities, not every one."
+  },
+  {
+    "name": "SD2-the-great-cities-always-the-first",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "  const byTown = pixelsByTown(scan);\n  const start = rec.r < 0 ? sdRoll(rec.s, 5) % cities.length : 0;",
+    "new": "  const byTown = pixelsByTown(scan);\n  const start = 0;",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "The slot's roll picks among the great cities. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
+  },
+  {
+    "name": "SD2-a-city-with-no-ring-ends-it",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "    const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) continue;\n    const roll = sdRoll(rec.s, 4) % pixels.length;",
+    "new": "    const ti = scan.towns.findIndex((t) => t.px === cx && t.py === cy);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) return null;\n    const roll = sdRoll(rec.s, 4) % pixels.length;",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "A city with no suitable pixel passes to the next. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
+  },
+  {
+    "name": "SD2-always-the-first-pixel",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) continue;\n    const roll = sdRoll(rec.s, 4) % pixels.length;\n    for (let j = 0; j < pixels.length; j++) {\n      const id = pixels[(roll + j) % pixels.length];",
+    "new": "    const pixels = ti >= 0 ? byTown.get(ti) : null;\n    if (!pixels?.length) continue;\n    const roll = 0;\n    for (let j = 0; j < pixels.length; j++) {\n      const id = pixels[(roll + j) % pixels.length];",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "The slot's roll moves the site round the city. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
+  },
+  {
+    "name": "SD2-a-small-template",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "export const SD_TEMPLATE_MIN_BLOCKS = 12;",
+    "new": "export const SD_TEMPLATE_MIN_BLOCKS = 11;",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "A deep place: twelve blocks or more."
+  },
+  {
+    "name": "SD2-a-ruin-for-a-template",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "      SD_TEMPLATE_TYPES.includes(l.mapTableData?.locationType) &&\n      l.exterior?.exteriorData &&",
+    "new": "      l.exterior?.exteriorData &&",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "A labyrinth or a keep."
+  },
+  {
+    "name": "SD2-a-wide-template",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "      !isMain(l.mapTableData?.mapId) &&\n      spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M,",
+    "new": "      !isMain(l.mapTableData?.mapId),",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "A spawn's clearance: the exterior is crossed into from no pixel edge inside 300 m."
+  },
+  {
+    "name": "SD2-the-main-story-cloned",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "      !isMain(l.mapTableData?.mapId) &&\n      spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M,",
+    "new": "      spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M,",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "Never the main story's."
+  },
+  {
+    "name": "SD2-the-Hollow-no-Super",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "  return { ...loc, name: sdNameOf(rec.s, site.cityName), superTier: true, sdSlot: rec.s };",
+    "new": "  return { ...loc, name: sdNameOf(rec.s, site.cityName), sdSlot: rec.s };",
+    "tests": [
+      "test/systems/superDungeon/sd2_sdsite.test.js"
+    ],
+    "note": "The Hollow is Super."
+  }
+]

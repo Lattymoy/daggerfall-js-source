@@ -1,0 +1,11 @@
+[
+  {
+    "name": "ALL-IN-a-the-draw-reads-the-table-it-let-go",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const p = g.scene.poses(now / 1000, table?.view() ?? null,",
+    "new": "    const p = g.scene.poses(now / 1000, table.view(),",
+    "tests": [
+      "test/systems/auditcards6_e.test.js"
+    ]
+  }
+]

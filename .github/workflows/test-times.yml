@@ -1,0 +1,66 @@
+# CI-TIMES (2026-10-19, Mac: "Do it"): THE SHARDS' TIMES, SAVED. After a
+# green verification (check.yml on a pull request, deploy.yml on main) this
+# merges the eight shards' records (verify.yml's `test-times-shard-*`
+# artifacts, each file's wall time in that run) onto the times the run was
+# split by, and saves them in the Actions cache - the newest of which every
+# later run's shards are split by (verify.yml's `times`). A file no longer
+# in the suite is dropped; one this run did not time keeps its time. It runs
+# beside the result, never ahead of it: no check waits on it. A pull
+# request's save is its own (the cache keeps a branch's to it); main's is
+# everyone's. The merged times are kept as the `test-times` artifact too,
+# for a commit of tools/testTimes.json when one is wanted.
+name: test-times
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: The commit verified (empty - the caller's own).
+        type: string
+        default: ""
+      planned:
+        description: The cache key of the times the run's shards were split by (verify.yml's `times` output; empty - the committed file).
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  save:
+    name: save the shards' times
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false   # nothing here pushes (AUDIT INSTALL L1-1)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: The times the shards were split by
+        if: inputs.planned != ''
+        uses: actions/cache/restore@v4
+        with:
+          path: tools/testTimes.json
+          key: ${{ inputs.planned }}
+      - name: This run's records
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-times-shard-*
+          path: ${{ runner.temp }}/test-times
+          merge-multiple: false
+      - name: Merge them
+        run: node tools/testTimes.mjs --merge "$RUNNER_TEMP/test-times"
+      - name: Save them for the next run's shards
+        uses: actions/cache/save@v4
+        with:
+          path: tools/testTimes.json
+          key: test-times-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Keep them
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-times
+          path: tools/testTimes.json
+          retention-days: 7
+          overwrite: true

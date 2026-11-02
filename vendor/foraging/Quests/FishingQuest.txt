@@ -1,0 +1,131 @@
+-- Edited by Harbinger451
+-- StartsBy: Script
+-- Questee: anyone with a fishing-net
+Quest: FishingQuest
+DisplayName: Let's Go Fishing!
+-- Message panels
+QRC:
+
+Message:  1024
+<ce> While drawing your Fishing Net back in,
+<ce> you managed to trawl up a _pearl_.
+
+Message:  1025
+<ce> While drawing your Fishing Net back in,
+<ce> you managed to trawl up a _roottendrils_
+
+Message:  1026
+<ce> While drawing your Fishing Net back in,
+<ce> you chanced upon a _map_
+<ce> that was floating among the useless flotsum.
+
+Message:  1033
+<ce> While drawing your Fishing Net back in,
+<ce> you chanced upon some _skin_.
+<ce> that was floating among the useless flotsum.
+
+Message:  1034
+<ce> While drawing your Fishing Net back in,
+<ce> you chanced upon a _mark_.
+<ce> that was floating among the useless flotsum.
+
+Message:  1035
+<ce> While drawing your Fishing Net back in,
+<ce> you chanced upon a _clothamulet_.
+<ce> that was floating among the useless flotsum.
+
+
+QBN:
+
+Item _pearl_ pearl
+Item _roottendrils_ root_tendrils
+Item _map_ random_map
+Item _skin_ skin
+Item _mark_ mark
+Item _clothamulet_ cloth_amulet
+
+
+-- Quest start-up:
+	reduce player fatigue by 10
+
+_weakluc_ task:
+	when attribute Luck is at least 0
+
+_evenluc_ task:
+	when attribute Luck is at least 40
+
+_strongluc_ task:
+	when attribute Luck is at least 60
+
+_verystrongluc_ task:
+	when attribute Luck is at least 80
+
+_worstchanceluc_ task:
+	when _weakluc_ and not _evenluc_
+
+_evenchanceluc_ task:
+	when _evenluc_ and not _strongluc_
+
+_goodchanceluc_ task:
+	when _strongluc_ and not _verystrongluc_
+
+_bestchanceluc_ task:
+	when _verystrongluc_
+
+_bonusweak_ task:
+	when _worstchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_
+
+_bonuseven_ task:
+	when _evenchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_
+
+_bonusgood_ task:
+	when _goodchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_ _1bonus_
+
+_bonusbest_ task:
+	when _bestchanceluc_
+	pick one of _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _0bonus_ _1bonus_ _1bonus_ _1bonus_ _1bonus_
+
+_0bonus_ task:
+	end quest
+
+_1bonus_ task:
+	pick one of _pearlitem_ _pearlitem_ _roottendrilitem_ _roottendrilitem_ _mapitem_ _skinitem_ _skinitem_ _markitem_ _clothamuletitem_
+
+_pearlitem_ task:
+	say 1024
+	get item _pearl_
+	make _pearl_ permanent
+	end quest
+
+_roottendrilitem_ task:
+	say 1025
+	get item _roottendrils_
+	make _roottendrils_ permanent
+	end quest
+
+_mapitem_ task:
+	say 1026
+	get item _map_
+	make _map_ permanent
+	end quest
+
+_skinitem_ task:
+	say 1033
+	get item _skin_
+	make _skin_ permanent
+	end quest
+
+_markitem_ task:
+	say 1034
+	get item _mark_
+	make _mark_ permanent
+	end quest
+
+_clothamuletitem_ task:
+	say 1035
+	get item _clothamulet_
+	make _clothamulet_ permanent
+	end quest

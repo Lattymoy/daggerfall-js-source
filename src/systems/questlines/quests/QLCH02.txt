@@ -1,0 +1,126 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE COVENS' HOARD, step 2 of 3.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Ysolde's words
+-- are in the journal at once. A coven lieutenant in a remote dungeon, as a Mages Guild quest sends one (M0B30Y04's
+-- `reveal` and `place foe`), named by the machine's own name banks (`=lieutenant_`, Foe.cs SetFoeName); the key is
+-- given to the foe before it is placed (B0B81Y02's map) and brought back to Ysolde (`toting`, as DFU's deliveries). The
+-- key is a quest item that only LOOKS like a Weir Key in its coven-cloth (a talisman, its words in message 1017): the
+-- real one is the account service's to pay, at the line's last step (net/questlineClaims.js `key`).
+Quest: QLCH02
+DisplayName: The Lieutenant
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>         The key has gone deeper into the covens'
+<ce>       keeping. Ysolde Marnhel has stopped waiting.
+
+QuestComplete:  [1004]
+<ce>         "For the lieutenant," Ysolde says, and pays
+<ce>                     you _gold_ gold.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Ysolde Marnhel's scouts have found one of the
+ covens' lieutenants, =lieutenant_, in __lair_,
+ with a Weir Key in the coven's keeping. I am to
+ kill the lieutenant, take the key, and bring it
+ to her at _hall_ in __hall_.
+
+Message:  1011
+%qdt:
+ =lieutenant_ is dead, and the Weir Key is mine,
+ still wrapped in coven-cloth. Ysolde Marnhel is
+ waiting for it at _hall_ in __hall_.
+
+Message:  1013
+<ce>         =lieutenant_, lieutenant of the covens, is
+<ce>        dead. Somewhere on the body is what the covens
+<ce>          sent their best down here to keep.
+
+Message:  1014
+Ysolde Marnhel? She has been asking about a coven that keeps something in the deep places.
+<--->
+The Master Conjurer's scouts came back from the deep places white as chalk.
+<--->
+They say Marnhel is hunting one of the fire-cultists by name.
+
+Message:  1015
+<ce>         Gold light, somewhere far below, and the smell
+<ce>        of a forge that has never been cold. The coven
+<ce>                       is here.
+
+Message:  1016
+<ce>       Wrapped in coven-cloth and tied with red cord: a
+<ce>       key of gold leaf, a blue stone set in its bow. A
+<ce>       Weir Key - one of the Battlespire's portal keys,
+<ce>       surrendered in 3E 398 and hoarded by the covens
+<ce>                       ever since.
+
+Message:  1017
+<ce>       Inside the coven-cloth: a key of gold leaf with a
+<ce>       blue stone in its bow, cold in a way gold never
+<ce>       is. One of the Battlespire's portal keys.
+
+Message:  1020
+<ce>       Ysolde unwraps the coven-cloth with two fingers,
+<ce>       as if it might bite. The key lies in it, gold leaf
+<ce>       and blue stone, and for a long moment neither of
+<ce>                       you speaks.
+<ce>
+<ce>       "One of the Spire's," she says at last. "I will
+<ce>        keep it safe until we decide what it is for.
+<ce>        That decision is not mine alone."
+
+-- Symbols used in the QRC file:
+--
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--             _hall_ occurs 2 times.
+--            __hall_ occurs 2 times.
+--            __lair_ occurs 1 time.
+--       =lieutenant_ occurs 3 times.
+
+QBN:
+Item _weirkey_ talisman used 1017
+Item _gold_ gold range 300 to 600
+
+Person _ysolde_ faction The_Mages_Guild female anyInfo 1014
+
+Place _hall_ remote magery
+Place _lair_ remote dungeon
+
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+Foe _lieutenant_ is Nightblade
+Foe _bound_ is Fire_daedra
+
+--	Quest start-up:
+	ql name _ysolde_ Ysolde_Marnhel
+	place npc _ysolde_ at _hall_
+	reveal _lair_
+	log 1010 step 0
+	give item _weirkey_ to _lieutenant_
+	place foe _lieutenant_ at _lair_
+	place foe _bound_ at _lair_
+	pc at _lair_ set _atlair_ saying 1015
+	have _weirkey_ set _haskey_
+	start timer _wait_
+
+variable _atlair_
+
+_slain_ task:
+	killed 1 _lieutenant_ saying 1013
+
+_haskey_ task:
+	say 1016
+	log 1011 step 1
+
+_handed_ task:
+	toting _weirkey_ and _ysolde_ clicked
+	say 1020
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

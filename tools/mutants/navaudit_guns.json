@@ -1,0 +1,545 @@
+[
+  {
+    "name": "NAV1G-fired-unrun",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (ship.clock - since < RUN_OUT_S || err > window) return;",
+    "new": "    if (err > window) return;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-tell-said",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "        out.runOuts.push(side);\n      }",
+    "new": "      }",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-run-out-kept",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    ship.runOut.delete(side);\n    ship.lastFire = world.now;",
+    "new": "    ship.lastFire = world.now;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-rates-sign",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (Math.sign(rate) === Math.sign(err) || Math.abs(rate) < 1e-6) return Infinity; // opening, or standing",
+    "new": "  if (Math.sign(rate) !== Math.sign(err) || Math.abs(rate) < 1e-6) return Infinity; // opening, or standing",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-her-own-turn-unread",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const rate = ((dz * rx - dx * rz) / d2 - (ship.yawRate ?? 0)) / DEG;",
+    "new": "  const rate = (dz * rx - dx * rz) / d2 / DEG;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-reachs-margin",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      if (loaded && toLead.dist <= reach * RUN_OUT_REACH && err <= arc && soon && clear && strikes()) {",
+    "new": "      if (loaded && toLead.dist <= reach * 1.02 && err <= arc && soon && clear && strikes()) {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-never-run-in-unfired",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (!loaded || !inReach || err > RUN_IN_DEG || !clear || ship.clock - since > RUN_OUT_S + RUN_OUT_WAIT_S) {",
+    "new": "    if (!loaded || !inReach || err > RUN_IN_DEG || !clear) {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-never-run-in-swung",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (!loaded || !inReach || err > RUN_IN_DEG || !clear || ship.clock - since > RUN_OUT_S + RUN_OUT_WAIT_S) {",
+    "new": "    if (!loaded || !inReach || !clear || ship.clock - since > RUN_OUT_S + RUN_OUT_WAIT_S) {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-cooldown",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      if ((ship.runIn.get(side) ?? -Infinity) > ship.clock - RUN_IN_S) return;\n      const soon =",
+    "new": "      const soon =",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-projection",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      : halfLen * Math.abs(Math.sin(eyaw - los)) + b.halfWidth * Math.abs(Math.cos(eyaw - los));",
+    "new": "      : halfLen * Math.abs(Math.cos(eyaw - los)) + b.halfWidth * Math.abs(Math.sin(eyaw - los));",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-skills-sign",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const miss = extent * (FIRE_EXTENT_K + FIRE_EXTENT_SKILL * (1 - ship.cls.skill));",
+    "new": "  const miss = extent * (FIRE_EXTENT_K + FIRE_EXTENT_SKILL * ship.cls.skill);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-spread-floor",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return Math.min(bear, Math.max(spread, Math.asin(Math.min(1, miss / dist)) / DEG));",
+    "new": "  return Math.min(bear, Math.asin(Math.min(1, miss / dist)) / DEG);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-bear-cap",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return Math.min(bear, Math.max(spread, Math.asin(Math.min(1, miss / dist)) / DEG));",
+    "new": "  return Math.max(spread, Math.asin(Math.min(1, miss / dist)) / DEG);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-mean-profile",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      ? ((halfLen + b.halfWidth) * 2) / Math.PI",
+    "new": "      ? b.halfWidth",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-her-way-unread",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const eyaw = Number.isFinite(enemy.yaw) ? enemy.yaw : Math.hypot(v[0], v[2]) > 0.3 ? Math.atan2(v[0], v[2]) : null;",
+    "new": "  const eyaw = Number.isFinite(enemy.yaw) ? enemy.yaw : null;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-laypasses-always",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return y >= band[0] - 0.25 && y <= band[1];",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-bands-roof",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return y >= band[0] - 0.25 && y <= band[1];",
+    "new": "  return y >= band[0] - 0.25;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-linefoul-never",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (crosses) return true;",
+    "new": "    if (crosses) return false;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-an-enemy-a-friend",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (c.id === ship.id || c.id === enemy.id || c.gone || hostile(ship, c, world)) continue;",
+    "new": "    if (c.id === ship.id || c.id === enemy.id || c.gone) continue;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-clearance",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const hl = (hb.bowZ - hb.aftZ) / 2 + FRIEND_CLEAR,\n      hw = hb.halfWidth + FRIEND_CLEAR;",
+    "new": "    const hl = (hb.bowZ - hb.aftZ) / 2 + FRIEND_CLEAR * 4,\n      hw = hb.halfWidth + FRIEND_CLEAR * 4;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-laid-for-the-sea",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const aimY = rig ? (rig[0] + rig[1]) / 2 : world.seaY + build.top * AIM_FREEBOARD;",
+    "new": "    const aimY = rig ? (rig[0] + rig[1]) / 2 : world.seaY;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-chain-for-the-hull",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const rig = shot === 'chain' && build.rig.length ? rigBand(build).map((y) => world.seaY + y) : null;",
+    "new": "    const rig = null;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-flat-sail",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  return { want, goal: null, sails: clamp(pace / best, PRESENT_SAILS, 1), sailable: true, track: true };",
+    "new": "  return { want, goal: null, sails: PRESENT_SAILS, sailable: true, track: true };",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-bear-free",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "          ? NO_BEAR_S",
+    "new": "          ? 0",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-point-blank-slugs",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    if (\n      ship.guns.ready(side) &&\n      d <= reach * PRESENT_WITHIN &&\n      d >= Math.max(range * POINT_BLANK, deadZone) &&\n      holdsLead(side)\n    )\n      return 0;",
+    "new": "    if (ship.guns.ready(side) && d <= reach * PRESENT_WITHIN && d >= deadZone && holdsLead(side)) return 0;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-helm-lead",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const cmd = clamp(err / (4 * tau) + lead, -maxRate, maxRate);",
+    "new": "  const cmd = clamp(err / (4 * tau), -maxRate, maxRate);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-floor-dropped",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "      s.hull = Math.max(Math.min(s.hull, floor), s.hull - Math.max(0, hurt.hull | 0));",
+    "new": "      s.hull = Math.max(0, s.hull - Math.max(0, hurt.hull | 0));",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-a-floor-mends",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "      s.hull = Math.max(Math.min(s.hull, floor), s.hull - Math.max(0, hurt.hull | 0));",
+    "new": "      s.hull = Math.max(floor, s.hull - Math.max(0, hurt.hull | 0));",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-douse-on-strike",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "          douse();\n        } else if (s.state === SHIP_STATES.afloat && unmanned()) s.state = SHIP_STATES.struck; // HELM-WAY: nobody left to fight her fires either",
+    "new": "        } else if (s.state === SHIP_STATES.afloat && unmanned()) s.state = SHIP_STATES.struck; // HELM-WAY: nobody left to fight her fires either",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-stack-uncapped",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "    if (s.fires.length < FIRE_STACK) {",
+    "new": "    {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-a-lesser-fire-replaces",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "    if (harm(s.fires[low]) < harm(f)) s.fires[low] = f;",
+    "new": "    s.fires[low] = f;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-a-barrel-burns-as-a-ball",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "  return kind === 'barrel' || kind === 2\n    ? { hp: BARREL.burnPerSecond, t: BARREL.burn }\n    : { hp: FIRE_HP, t: FIRE_SECONDS };",
+    "new": "  return kind === 2 ? { hp: BARREL.burnPerSecond, t: BARREL.burn } : { hp: FIRE_HP, t: FIRE_SECONDS };",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-canvas-burns",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "          s.sail = Math.max(0, s.sail - FIRE_SAIL * burn);\n          s.crewBurn += burn;",
+    "new": "          s.crewBurn += burn;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js",
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-rig-never-struck",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "    for (const r of rigsCrossed(targets, a, next, radius, b, firstT)) {",
+    "new": "    for (const r of []) {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-twice-a-ship",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (\n        t.alive === false ||\n        t.id === ball.shooter ||\n        t.hitBy?.(ball.shooter) === false ||\n        !t.rig?.length ||\n        ball.rigged?.has(t.id)\n      )\n        continue;",
+    "new": "      if (t.alive === false || t.id === ball.shooter || t.hitBy?.(ball.shooter) === false || !t.rig?.length) continue;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-targets-per-ball",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "    const ship = nearestHit(targets, a, next, radius, b.shooter);",
+    "new": "    const ship = nearestHit(deps.targets(), a, next, radius, b.shooter);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-no-drift",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (w) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-gone-unsaid",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "        emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun });\n        continue;",
+    "new": "        continue;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js",
+      "test/systems/naval/nav_a_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-carry-dropped",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "      p0: [p0[0] + (c[0] ?? 0) * delay, p0[1] + (c[1] ?? 0) * delay, p0[2] + (c[2] ?? 0) * delay],",
+    "new": "      p0: [...p0],",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-clocks-run-braced",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "      if (braced) return;\n      for (const k of Object.keys(clocks)) if (clocks[k] > 0) clocks[k] = Math.max(0, clocks[k] - Math.max(0, dt));",
+    "new": "      for (const k of Object.keys(clocks)) if (clocks[k] > 0) clocks[k] = Math.max(0, clocks[k] - Math.max(0, dt));",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-lay-height-unread",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "  if (!look && Number.isFinite(targetY)) layDy = c[1] - targetY;\n  if (look?.at) {",
+    "new": "  if (look?.at) {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-old-carriages",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "    minEl: -8,",
+    "new": "    minEl: -3,",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-old-great-gun",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "    speed: 68,\n    minEl: -6,\n    maxEl: 15,",
+    "new": "    speed: 56,\n    minEl: -2,\n    maxEl: 13,",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-trade-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!stray && (!striker || !kindred(striker, s))) provoke(s, by, clock);",
+    "new": "    if (!stray) provoke(s, by, clock);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-lawful-pair-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const kindred = (a, b) => a.cls.faction === b.cls.faction || (!!NAVAL_FACTIONS[a.cls.faction]?.lawful && !!NAVAL_FACTIONS[b.cls.faction]?.lawful);",
+    "new": "  const kindred = (a, b) => a.cls.faction === b.cls.faction;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-grace-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const floor = Math.max(hurt.floor ?? 0, entry.struck && entry.struck.by === by && clock - entry.struck.at <= STRUCK_GRACE_S ? 1 : 0);",
+    "new": "    const floor = Math.max(hurt.floor ?? 0, 0);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-fire-on-every-zone",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const fire = e.type === 'blast' ? 'barrel' : (zone === 'hull' || (zone === 'rig' && shotRigFire(e.shot))) && random() < shotFireChance(e.shot, FIRE_CHANCE, gun.fireK);",
+    "new": "    const fire = e.type === 'blast' ? 'barrel' : random() < shotFireChance(e.shot, FIRE_CHANCE, gun.fireK);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-warning-not-through-the-flight",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    let best = inbound.length ? { name: inbound[0].name, side: inbound[0].side, t: 0 } : null;",
+    "new": "    let best = null;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-every-run-out-warns",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      for (const [side, since] of s.runOut) {\n        if (!bearsOn(s, side, p)) continue;",
+    "new": "      for (const [side, since] of s.runOut) {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-tell-unheard",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    sound(NAVAL_SFX.runout, mid, 1);",
+    "new": "    void mid;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-glint-mirrored",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      for (const m of bat.muzzles) effects.glint(toWorld(pose, m), k, d);",
+    "new": "      for (const m of bat.muzzles) effects.glint(toWorld(pose, [-m[0], m[1], m[2]]), k, d);",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-bits-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "        const on = (w.runOut & (1 << i)) !== 0;",
+    "new": "        const on = false;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-tally-early",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "      if (t.ended >= t.balls) {",
+    "new": "      if (t.ended >= t.balls - 1) {",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-a-miss-a-hit",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') t.ended++;\n      else return;",
+    "new": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') {\n        t.ended++;\n        t.hits++;\n      } else return;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-warning-unsaid",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const warn = model.incoming ? { text: 'Broadside', key: touch ? 'Brace' : bracePress } : null;",
+    "new": "  const warn = null;",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-bits-unsaid",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "      (sh.runOut | 0) & 15,",
+    "new": "      0,",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-an-old-word-refused",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (!Array.isArray(w) || (w.length !== 16 && w.length !== 17 && w.length !== 19) || !w.every(Number.isFinite))\n    return null;",
+    "new": "  if (!Array.isArray(w) || (w.length !== 17 && w.length !== 19) || !w.every(Number.isFinite)) return null;",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-barrel-fire-unsaid",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "    f: fire === 'barrel' ? 2 : fire ? 1 : 0,",
+    "new": "    f: fire ? 1 : 0,",
+    "tests": [
+      "test/systems/naval/nav_g_online.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-rumble-a-footstep",
+    "file": "src/systems/naval/navalSounds.js",
+    "old": "  [NAVAL_SFX.runout]: Object.freeze({ refDistance: 24, maxDistance: 900 }),\n  // AUDIT NAV1 (the presentation): a battery of mine ready - heard at my own helm, a word for the player alone",
+    "new": "  // AUDIT NAV1 (the presentation): a battery of mine ready - heard at my own helm, a word for the player alone",
+    "tests": [
+      "test/systems/naval/navaudit_guns.test.js",
+      "test/tooling/nav_e_sounds.test.js"
+    ]
+  },
+  {
+    "name": "NAV1G-the-beam-steered-into",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const dir = Math.abs(brg) < AVOID_HEAD_ON * DEG ? 1 : side > 0 ? -1 : 1;",
+    "new": "    const dir = Math.abs(brg) < 112.5 * DEG ? 1 : side > 0 ? -1 : 1;",
+    "tests": [
+      "test/systems/naval/navaudit_captains.test.js"
+    ]
+  }
+]

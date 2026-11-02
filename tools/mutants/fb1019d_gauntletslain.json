@@ -1,0 +1,32 @@
+[
+  {
+    "name": "GAUNTLET-SLAIN-a-slain-caster-left-standing",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "        if (g.i && !egBodyById(F, g.i)) { g.done = 1; out.push({ k: 'esay', w: 'silenced' }); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/fb1019d_gauntletslain.test.js"
+    ],
+    "why": "the report: a Caster killed is never its pillar done - \"Casters left\" stands where it stood and the door never gives"
+  },
+  {
+    "name": "GAUNTLET-SLAIN-silenced-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "        if (g.i && !egBodyById(F, g.i)) { g.done = 1; out.push({ k: 'esay', w: 'silenced' }); continue; }",
+    "new": "        if (g.i && !egBodyById(F, g.i)) { g.done = 1; continue; }",
+    "tests": [
+      "test/net/eliteGates/fb1019d_gauntletslain.test.js"
+    ],
+    "why": "the pillar done in silence: the hall says a Caster silenced at its plate, and a slain one the same"
+  },
+  {
+    "name": "GAUNTLET-SLAIN-a-living-caster-done",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "        if (g.i && !egBodyById(F, g.i)) { g.done = 1; out.push({ k: 'esay', w: 'silenced' }); continue; }",
+    "new": "        if (g.i) { g.done = 1; out.push({ k: 'esay', w: 'silenced' }); continue; }",
+    "tests": [
+      "test/net/eliteGates/fb1019d_gauntletslain.test.js"
+    ],
+    "why": "every pillar done at the wake, its Caster standing: the Gauntlet a hall with no trial"
+  }
+]

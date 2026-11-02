@@ -1,0 +1,62 @@
+[
+  {
+    "name": "HANDLE-EMAIL-law",
+    "file": "src/net/handleShape.js",
+    "old": "typeof name === 'string' && name.includes('@');",
+    "new": "typeof name === 'string' && name.includes('@@');",
+    "tests": [
+      "test/net/handleemail.test.js"
+    ],
+    "note": "an address taken as a name"
+  },
+  {
+    "name": "HANDLE-EMAIL-refusal",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (handleLooksLikeEmail(h)) return 'email';",
+    "new": "  if (false) return 'email';",
+    "tests": [
+      "test/net/handleemail.test.js"
+    ],
+    "note": "the service registers an address"
+  },
+  {
+    "name": "HANDLE-EMAIL-order",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!isHandleShaped(h)) return 'shape';\n",
+    "new": "  if (handleLooksLikeEmail(h)) return 'email';\n  if (!isHandleShaped(h)) return 'shape';\n",
+    "tests": [
+      "test/net/handleemail.test.js"
+    ],
+    "note": "the address asked before the shape"
+  },
+  {
+    "name": "HANDLE-EMAIL-display",
+    "file": "server-account/src/accounts.js",
+    "old": "handle.length > 0 && !handleLooksLikeEmail(handle)) return handle;",
+    "new": "handle.length > 0) return handle;",
+    "tests": [
+      "test/net/handleemail.test.js"
+    ],
+    "note": "an address chosen before read out to the world"
+  },
+  {
+    "name": "HANDLE-EMAIL-form-unasked",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (handleLooksLikeEmail(v('handle'))) return refuse(accountRefusalText('handle-email'));",
+    "new": "    if (false) return refuse(accountRefusalText('handle-email'));",
+    "tests": [
+      "test/net/handleemail.test.js"
+    ],
+    "note": "a round trip to learn it"
+  },
+  {
+    "name": "HANDLE-EMAIL-signin-refused",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (fields.includes('code') && !v('code')) return LOCAL_REFUSALS['code-empty'];",
+    "new": "    if (fields.includes('handle') && handleLooksLikeEmail(v('handle'))) return 'refused';\n    if (fields.includes('code') && !v('code')) return LOCAL_REFUSALS['code-empty'];",
+    "tests": [
+      "test/net/handleemail.test.js"
+    ],
+    "note": "one chosen before can no longer sign in"
+  }
+]

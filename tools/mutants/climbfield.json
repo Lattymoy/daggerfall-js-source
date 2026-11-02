@@ -1,0 +1,148 @@
+[
+  {
+    "name": "CLIMBFIELD-W1-stop-anywhere",
+    "file": "src/player/collider.js",
+    "old": "      if (sOut.grounded) {\n        feet[0] = stop[0];",
+    "new": "      if (true) {\n        feet[0] = stop[0];",
+    "tests": [
+      "test/player/climbfield.test.js",
+      "test/systems/disc8.test.js",
+      "test/player/audit64_motor.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-W2-head-grounds",
+    "file": "src/player/collider.js",
+    "old": "      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil, axis === 0 ? lowOneWay : false, axis !== 0);",
+    "new": "      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil, axis === 0 ? lowOneWay : false, tall && axis !== 0);",
+    "tests": [
+      "test/player/climbfield.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E1-no-eave",
+    "file": "src/player/parkour.js",
+    "old": "    return senseEave(collider, face, normal, lipY, opts, fit);",
+    "new": "    return null;",
+    "tests": [
+      "test/player/climbfield.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E1-eave-up-every-wall",
+    "file": "src/player/parkour.js",
+    "old": "    if (Math.abs(d - back) <= PARKOUR_EDGE_INSET) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/player/climbfield.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E1-face-under-unasked",
+    "file": "src/player/parkour.js",
+    "old": "  if (Number.isFinite(under.dist)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/player/climbfield.test.js",
+      "test/player/climb2.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E1-eave-snapped-to",
+    "file": "src/player/motor.js",
+    "old": "      if (level && !g.eave) {",
+    "new": "      if (level) {",
+    "tests": [
+      "test/player/climbfield.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E1-lower-no-eave",
+    "file": "src/player/parkour.js",
+    "old": "  const grip = face\n    ? senseGrip(collider, face.point, face.normal, lipY, opts)\n    : senseGrip(collider, edge, dir, lipY, opts);",
+    "new": "  const grip = face ? senseGrip(collider, face.point, face.normal, lipY, opts) : null;",
+    "tests": [
+      "test/player/climbfield.test.js",
+      "test/player/climbdown.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E2-no-eave-ahead",
+    "file": "src/player/motor.js",
+    "old": "    if (!move && air && !ledge.ok && !this.crouching) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/player/climbfield.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E3-no-eave-mantle",
+    "file": "src/player/motor.js",
+    "old": "      if (!move && hold.eave) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/player/climbfield.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-J1-free-climb-holds-on",
+    "file": "src/player/motor.js",
+    "old": "      if (vert >= 0 && this._pkLeapFrom(dt, 'back', 0)) return true;",
+    "new": "",
+    "tests": [
+      "test/player/climbfield.test.js",
+      "test/player/climb3.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-J1-hang-holds-on",
+    "file": "src/player/motor.js",
+    "old": "      if (jump && this._pkLeapFrom(dt, 'back', 0)) return true;",
+    "new": "",
+    "tests": [
+      "test/player/climbfield.test.js",
+      "test/player/climb3.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-J1-side-press-holds-on",
+    "file": "src/player/motor.js",
+    "old": "Math.sign(side)) || this._pkLeapFrom(dt, 'back', 0) || true;",
+    "new": "Math.sign(side)) || true;",
+    "tests": [
+      "test/player/climbfield.test.js",
+      "test/player/climb3.test.js",
+      "test/systems/auditclimbarc.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-J1-press-no-top-out",
+    "file": "src/player/motor.js",
+    "old": "      if (vert >= 0 && !side && this._fcTopOut(dt, skill, inputs, into, true)) return true;",
+    "new": "",
+    "tests": [
+      "test/player/climbfield.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E1-terrain-eave",
+    "file": "src/player/parkour.js",
+    "old": "    const h = collider.raycastHit([face[0] + n[0] * s, y0, face[2] + n[2] * s], DOWN, len);",
+    "new": "    const h = collider.surfaceHit([face[0] + n[0] * s, y0, face[2] + n[2] * s], DOWN, len);",
+    "tests": [
+      "test/player/climbfield.test.js",
+      "test/systems/auditclimbarc.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBFIELD-E2-terrain-roof-ahead",
+    "file": "src/player/parkour.js",
+    "old": "    const h = collider.raycastHit([px, y0, pz], DOWN, high + 0.05 - low); // a roof: the meshes' (the eave's own law)",
+    "new": "    const h = collider.surfaceHit([px, y0, pz], DOWN, high + 0.05 - low); // a roof: the meshes' (the eave's own law)",
+    "tests": [
+      "test/player/climbfield.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: a terrain top ahead only hands senseGrip a point to seek the eave from, and the eave's own rays are the meshes' (CLIMBFIELD-E1-terrain-eave) - a heightmap cliff is refused there either way. Kept so the sensor asks nothing of the terrain in the first place."
+  }
+]

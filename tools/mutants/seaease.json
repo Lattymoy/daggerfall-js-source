@@ -1,0 +1,335 @@
+[
+  {
+    "name": "SE-densities-back",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const DENSITY = Object.freeze({ off: 0, few: 1, some: 2, many: 4 });",
+    "new": "export const DENSITY = Object.freeze({ off: 0, few: 2, some: 3, many: 5 });",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-cadence-back",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const SPAWN_EVERY = Object.freeze([60, 140]);",
+    "new": "export const SPAWN_EVERY = Object.freeze([30, 65]);",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-first-roll-back",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const FIRST_ROLL_S = 30;",
+    "new": "export const FIRST_ROLL_S = 12;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-weights-back",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "export const FACTION_WEIGHTS = Object.freeze({ pirate: 30, merchant: 45, navy: 25 });",
+    "new": "export const FACTION_WEIGHTS = Object.freeze({ pirate: 45, merchant: 38, navy: 17 });",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-port-pirates-kept",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "    w.pirate *= PORT_PIRATE_K;\n  } // SEA-EASE: the crown's own waters",
+    "new": "  } // SEA-EASE: the crown's own waters",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-relief-wait-unread",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      if (distress) wait = Math.min(wait, RELIEF_WAIT_S);\n      wait -= spent;",
+    "new": "      wait -= spent;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-relief-no-berth",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      if (alive >= (ctx.density ?? 0) + (distress ? 1 : 0) || random() >= SHIP_SPAWN_CHANCE) return out;",
+    "new": "      if (alive >= (ctx.density ?? 0) || random() >= SHIP_SPAWN_CHANCE) return out;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-relief-always",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null; // CAPT-BOARD: an Admiral's crown always answers (the draw taken either way)",
+    "new": "",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-relief-about-stander",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      const pos = [at[0] + Math.sin(a) * d, ctx.seaY ?? at[1], at[2] + Math.cos(a) * d];",
+    "new": "      const pos = [ctx.player[0] + Math.sin(a) * d, ctx.seaY ?? at[1], ctx.player[2] + Math.cos(a) * d];",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-relief-facing-away",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      return {\n        seed,\n        classId: cls.id,\n        variant,\n        pos,\n        yaw: Math.atan2(at[0] - pos[0], at[2] - pos[2]),\n        hunter: false,\n        relief: true,\n      };",
+    "new": "      return { seed, classId: cls.id, variant, pos, yaw: 0, hunter: false, relief: true };",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-relief-strangers",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "        out.spawn = reliefSpawn(seed, ctx, nearest, distress);\n        return out;",
+    "new": "        out.spawn = reliefSpawn(seed, ctx, nearest, distress);\n        if (out.spawn) return out;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-relieving-unread",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "      const distress = Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil",
+    "new": "      const distress = Array.isArray(ctx.distress) && !ctx.ether ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-bold-back",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "export const BOLD_SHARE = 0.25;",
+    "new": "export const BOLD_SHARE = 0.4;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-grapple-still-back",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "export const GRAPPLE_STILL_S = 15;",
+    "new": "export const GRAPPLE_STILL_S = 5;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-aid-priority-dropped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "      const rank = (held ? dist * 0.8 : dist) * (aids && fightsAny(c, aids) ? AID_PRIORITY : 1);",
+    "new": "      const rank = (held ? dist * 0.8 : dist) * 1;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-hunted-stood-by",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  for (const c of world.contacts ?? [])\n    if (c.kind === 'player' && !hostile(ship, c, world)) (ids ??= new Set()).add(c.id);",
+    "new": "  for (const c of world.contacts ?? []) if (c.kind === 'player') (ids ??= new Set()).add(c.id);",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-fight-any-mode",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && (c.ship.mode === 'engage' || c.ship.mode === 'board');",
+    "new": "  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && c.ship.mode !== 'cruise';",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-fight-board-dropped",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && (c.ship.mode === 'engage' || c.ship.mode === 'board');",
+    "new": "  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && c.ship.mode === 'engage';",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-not-navy-stands-by",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  if (ship.cls.faction !== 'navy') return null;\n  let ids = null;",
+    "new": "  let ids = null;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-raiders-back",
+    "file": "src/systems/naval/navalRaiders.js",
+    "old": "export const RAIDER_SHIPS_MAX = 1;",
+    "new": "export const RAIDER_SHIPS_MAX = 2;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-distress-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "distress, relieving,   // SEA-EASE: THE RELIEF",
+    "new": "distress: null, relieving,   // SEA-EASE: THE RELIEF",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-course-not-laid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "{ e.relief = true; e.ship.course = [distress[0], distress[2]]; }",
+    "new": "{ e.relief = true; }",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-course-kept",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "<= RELIEF_REACHED_M)) s.course = null;",
+    "new": "<= RELIEF_REACHED_M)) s.course = s.course;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-course-dropped-at-guns",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "((s.mode !== 'cruise' && s.mode !== 'answer') ||",
+    "new": "(s.mode !== 'cruise' ||",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-cry-every-frame",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "{ e.aidSaid = true; deps.say?.(`${calledName(e)} comes to your aid!`, 4); }",
+    "new": "{ deps.say?.(`${calledName(e)} comes to your aid!`, 4); }",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-navy-by-me-uncounted",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const stood = [...sea.values()].some((w) => w.ship.cls.faction === 'navy'",
+    "new": "const stood = false && [...sea.values()].some((w) => w.ship.cls.faction === 'navy'",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-law-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (!p || !(p.law < NAVY_HUNTS)) continue;",
+    "new": "if (!p) continue;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-relief-errand",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "!out.spawn.encounter && !out.spawn.relief) e.ship.errand",
+    "new": "!out.spawn.encounter) e.ship.errand",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-stray-unweighed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const stray = byMe && !target.owner && strayOnAlly(target, hurt, myId());",
+    "new": "const stray = false;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-stray-no-share",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (struck > ALLY_STRAY_SHARE * s.damage.maxHull) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-stray-witnessed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (byPlayer && !stray && s.cls.faction !== 'pirate') {",
+    "new": "if (byPlayer && s.cls.faction !== 'pirate') {",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-stray-cry-every-ball",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "{ entry.straySaid = true; deps.say?.(",
+    "new": "{ deps.say?.(",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-stray-any-navy",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "s.damage.state !== SHIP_STATES.afloat || s.mode !== 'engage' || sea.get(s.target)?.ship.cls.faction !== 'pirate') return false;",
+    "new": "s.damage.state !== SHIP_STATES.afloat) return false;",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-stray-provokes",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (!stray && (!striker || !kindred(striker, s))) provoke(s, by, clock);",
+    "new": "if (!striker || !kindred(striker, s)) provoke(s, by, clock);",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-stray-charged",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (byMe && !stray) chargePlayer('fire', target);",
+    "new": "if (byMe) chargePlayer('fire', target);",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-peer-stray-unweighed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "strike(entry, hurt, from, true, strayOnAlly(entry, hurt, from));",
+    "new": "strike(entry, hurt, from, true);",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  },
+  {
+    "name": "SE-stray-cry-for-peer",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (by === myId() && !entry.straySaid)",
+    "new": "if (!entry.straySaid)",
+    "tests": [
+      "test/systems/naval/seaease.test.js"
+    ]
+  }
+]

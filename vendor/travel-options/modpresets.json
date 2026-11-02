@@ -1,0 +1,264 @@
+[
+    {
+        "Title": "DefaultSettings",
+        "Author": "Hazelnut",
+        "Description": "Default settings the mod ships with - affects all settings, except for junction map & travel map colours",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "GeneralOptions": {
+                "AllowWeather": "False",
+                "AllowAnnoyingSounds": "False",
+                "AllowRealGrass": "False",
+                "LocationPause": "0",
+                "PathsTravel": "True",
+                "AllowTargetingMapCoordinates": "True"
+            },
+            "CautiousTravel": {
+                "PlayerControlledCautiousTravel": "True",
+                "StopAtInnsTravel": "False",
+                "SpeedPenalty": "20",
+                "MaxChanceToAvoidEncounter": "95",
+                "HealthMinimumPercentage": "5",
+                "FatigueMinimumValue": "5"
+            },
+            "ShipTravel": {
+                "OnlyFromPorts": "True",
+                "OnlyToPorts": "False"
+            },
+            "StopAtInnsTravel": {
+                "PlayerControlledInnsTravel": "False"
+            },
+            "TimeAcceleration": {
+                "DefaultStartingAcceleration": "4",
+                "AlwaysUseStartingAcceleration": "False",
+                "AccelerationLimit": "60"
+            },
+            "RoadsIntegration": {
+                "Enable": "True",
+                "FollowPathsKey": "1",
+                "VariableSizeDots": "True",
+                "EnableWaterways": "False",
+                "EnableStreamsToggle": "False",
+                "MarkLocationColor": "FFEB05FF"
+            },
+            "Teleportation": {
+                "EnablePaidTeleportation": "False"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "BalancedTravel",
+        "Author": "Hazelnut",
+        "Description": "Balanced integration of time acceleration into the base game of Daggerfall.",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "CautiousTravel": {
+                "PlayerControlledCautiousTravel": "True"
+            },
+            "ShipTravel": {
+                "OnlyFromPorts": "True",
+                "OnlyToPorts": "False"
+            },
+            "StopAtInnsTravel": {
+                "PlayerControlledInnsTravel": "False"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "FreedomTravel",
+        "Author": "Hazelnut",
+        "Description": "Freely choose whether you use normal fast travel or time accelerated travel when selecting reckless, foot/horse, and camp out options.",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "CautiousTravel": {
+                "PlayerControlledCautiousTravel": "False"
+            },
+            "ShipTravel": {
+                "OnlyFromPorts": "False",
+                "OnlyToPorts": "False"
+            },
+            "StopAtInnsTravel": {
+                "PlayerControlledInnsTravel": "False"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "TediousTravel",
+        "Author": "Hazelnut",
+        "Description": "Travel is more tedious, and close to the Tedious Travel mod but without the shipping logic from that mod.",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "CautiousTravel": {
+                "PlayerControlledCautiousTravel": "True"
+            },
+            "ShipTravel": {
+                "OnlyFromPorts": "True",
+                "OnlyToPorts": "True"
+            },
+            "StopAtInnsTravel": {
+                "PlayerControlledInnsTravel": "True"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "TravelMapColours-DaggerfallUnity",
+        "Author": "Hazelnut",
+        "Description": "Travel Map Location colours, Daggerfall Unity defaults",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "LocationColours": {
+                "DungeonLabyrinth": "D77727FF",
+                "DungeonKeep": "BF571BFF",
+                "DungeonRuin": "AB330FFF",
+                "Graveyard": "930F07FF",
+                "Coven": "0F0F0FFF",
+                "Farm": "9B696AFF",
+                "WealthyHome": "BC8A8AFF",
+                "PoorHome": "7E5159FF",
+                "Temple": "B0CDFFFF",
+                "Cult": "447CC0FF",
+                "Tavern": "8C5637FF",
+                "City": "E3B490FF",
+                "Hamlet": "C18564FF",
+                "Village": "A56446FF"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "TravelMapColours-DaggerfallOriginal",
+        "Author": "Hazelnut",
+        "Description": "Original Daggerfall defaults for travel map location colours",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "LocationColours": {
+                "DungeonLabyrinth": "D77524FF",
+                "DungeonKeep": "BE5518FF",
+                "DungeonRuin": "AA300CFF",
+                "Graveyard": "930F07FF",
+                "Coven": "0C0C0CFF",
+                "Farm": "A56446FF",
+                "WealthyHome": "C18564FF",
+                "PoorHome": "8C5637FF",
+                "Temple": "B0CDFFFF",
+                "Cult": "447CC0FF",
+                "Tavern": "7E5159FF",
+                "City": "DCB1B1FF",
+                "Hamlet": "BC7F9EFF",
+                "Village": "9B6282FF"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "TravelMapColours-GhostPutty",
+        "Author": "GhostPutty",
+        "Description": "GhostPutty preset for travel map location colours",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "LocationColours": {
+                "DungeonLabyrinth": "A249AFF",
+                "DungeonKeep": "285353FF",
+                "DungeonRuin": "930F07FF",
+                "Graveyard": "797979FF",
+                "Coven": "0F0F0FFF",
+                "Farm": "94B08DFF",
+                "WealthyHome": "C6891EFF",
+                "PoorHome": "996813FF",
+                "Temple": "B0CDFFFF",
+                "Cult": "447CC0FF",
+                "Tavern": "B4A800FF",
+                "City": "DCB1B1FF",
+                "Hamlet": "C18564FF",
+                "Village": "825740FF"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "JunctionMap-DefaultSettings",
+        "Author": null,
+        "Description": "Default settings the mod ships with for junction map",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "RoadsJunctionMap": {
+                "Enable": "True",
+                "ScreenSize": "100",
+                "ScreenPositionX": "107",
+                "ScreenPositionY": "10",
+                "FilterMode": "0",
+                "Circular": "True",
+                "PlayerColor": "FF0000FF",
+                "Opaque": "False",
+                "BackgroundColor": "327F19FF",
+                "PersistentMap": "False",
+                "ToggleMapOffPaths": "True"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "JunctionMap-Center",
+        "Author": null,
+        "Description": "Display normal size junction map in the center of the screen",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "RoadsJunctionMap": {
+                "Enable": "True",
+                "ScreenSize": "100",
+                "ScreenPositionX": "107",
+                "ScreenPositionY": "46"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "JunctionMap-TopCenter",
+        "Author": null,
+        "Description": "Display normal size junction map at the top center of the screen",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "RoadsJunctionMap": {
+                "Enable": "True",
+                "ScreenSize": "100",
+                "ScreenPositionX": "107",
+                "ScreenPositionY": "10"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "JunctionMap-MediumTopLeft",
+        "Author": null,
+        "Description": "Display smaller size junction map at the top left of the screen",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "RoadsJunctionMap": {
+                "Enable": "True",
+                "ScreenSize": "75",
+                "ScreenPositionX": "10",
+                "ScreenPositionY": "10"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "JunctionMap-MediumTopRight",
+        "Author": null,
+        "Description": "Display smaller size junction map at the top right of the screen",
+        "SettingsVersion": "1.0",
+        "Values": {
+            "RoadsJunctionMap": {
+                "Enable": "True",
+                "ScreenSize": "75",
+                "ScreenPositionX": "235",
+                "ScreenPositionY": "10"
+            }
+        },
+        "$version": "v1"
+    }
+]

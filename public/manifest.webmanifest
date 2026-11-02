@@ -1,0 +1,16 @@
+{
+  "name": "DFO Online",
+  "short_name": "DFO",
+  "description": "An open-source reimplementation of a classic 1996 RPG, played from your own copy of The Elder Scrolls II: Daggerfall.",
+  "start_url": "./play/",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0a0c11",
+  "theme_color": "#0a0c11",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

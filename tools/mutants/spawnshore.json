@@ -1,0 +1,44 @@
+[
+  {
+    "name": "SHORE-law-byte-only",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && spawnGroundDry(woods, px, py));",
+    "new": "if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && woods.getHeightMapValue(px, py) * 8 > 27.2);",
+    "tests": [
+      "test/world/terrain/spawnshore.test.js"
+    ],
+    "note": "SPAWN-SHORE: the pixel's own height byte instead of its plateau: a low shore flattened to the beach stands a ruin."
+  },
+  {
+    "name": "SHORE-law-beach-admitted",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "export const SPAWN_DRY_ELEVATION = SCALED_BEACH_ELEVATION + BEACH_JITTER;",
+    "new": "export const SPAWN_DRY_ELEVATION = 27.2;",
+    "tests": [
+      "test/world/terrain/spawnshore.test.js"
+    ],
+    "note": "SPAWN-SHORE: the dry line at the sea's surface: a ruin stands on the beach."
+  },
+  {
+    "name": "SHORE-build-ungated",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;",
+    "new": "maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;",
+    "tests": [
+      "test/world/terrain/spawnshore.test.js",
+      "test/world/spawneddungeons.test.js"
+    ],
+    "note": "SPAWN-SHORE: the build stands a ruin on the sea's edge again - the reported bug."
+  },
+  {
+    "name": "SHORE-overworld-ungated",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;",
+    "new": "    if (clocks && spawnGone(px, py)) return null;",
+    "tests": [
+      "test/systems/travel/tv6_dungeons.test.js",
+      "test/world/terrain/spawnshore.test.js"
+    ],
+    "note": "SPAWN-SHORE: the Overworld marks a far spawn on the sea's edge that the build would never stand."
+  }
+]

@@ -1,0 +1,272 @@
+[
+  {
+    "name": "NAV-D-the-captain-counted-twice",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  for (let i = 0; i < n - 1; i++) men.push(m.men[i % m.men.length]);",
+    "new": "  for (let i = 0; i < n; i++) men.push(m.men[i % m.men.length]);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-thinning-dropped",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  const n = clamp(Math.round(shipClass.boarders * clamp(crewShare, 0, 1)), MUSTER_MIN, MUSTER_MAX);",
+    "new": "  const n = clamp(shipClass.boarders, MUSTER_MIN, MUSTER_MAX);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-hands-uncapped",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "export const handsOf = (crew, crewed) => (crewed ? clamp(Math.floor(crew / CREW_PER_HAND), 0, HANDS_MAX) : 0);",
+    "new": "export const handsOf = (crew, crewed) => (crewed ? Math.floor(crew / CREW_PER_HAND) : 0);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-side-fixed",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  const side = lie?.side ?? (d[0] * r[0] + d[2] * r[2] >= 0 ? 1 : -1);",
+    "new": "  const side = 1;",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-gap-dropped",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "    Math.max(\n      anchor.beam + ship.beam + BERTH_GAP,\n      (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR,\n    );",
+    "new": "    Math.max(anchor.beam + ship.beam, (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-long-way-round",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  const dy = wrapAngle(to.yaw - at.yaw); // the short way round, in one step whatever the input (ONCRASH1)",
+    "new": "  const dy = to.yaw - at.yaw; // the short way round, in one step whatever the input (ONCRASH1)",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-captain-not-asked",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  return captainDown && down / total >= SURRENDER_SHARE;",
+    "new": "  return down / total >= SURRENDER_SHARE;",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-a-won-fight-abandoned",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "      if (b.phase === 'fight' || b.phase === 'grapple') {\n        b.phase = 'done';\n        b.outcome = 'abandoned';\n      }",
+    "new": "      b.phase = 'done';\n      b.outcome = 'abandoned';",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-a-raid-won-by-ending",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  return RAID_WIN_TASKS.some((name) => tasks.get(name)?.getTriggerValue?.() === true);",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-flagship-raid",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "export const raidQuestOf = (shipClass) => (shipClass?.flagship ? WA_ATTACK_PIRATE : WA_SMALLRAID);",
+    "new": "export const raidQuestOf = () => WA_SMALLRAID;",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-strongbox-dropped",
+    "file": "src/systems/naval/navalPlunder.js",
+    "old": "  for (let i = Math.max(0, lots - strongboxesOf(shipClass)); i < lots; i++) out[i] = STRONGBOX_KEY;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-tier-ignored",
+    "file": "src/systems/naval/navalPlunder.js",
+    "old": "    for (const it of generate(key, holdTier(shipClass, strongbox)) ?? []) items.push(it);",
+    "new": "    for (const it of generate(key, 5) ?? []) items.push(it);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-seed-ignored",
+    "file": "src/systems/naval/navalPlunder.js",
+    "old": "  const rng = mulberry32((seed ^ 0x401d) >>> 0);",
+    "new": "  const rng = mulberry32(0x401d);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-repair-unbounded",
+    "file": "src/systems/naval/navalPlunder.js",
+    "old": "    const hull = Math.max(0, Math.min(fx.repair.hull, Math.round(mine.maxHull - mine.hull)));",
+    "new": "    const hull = fx.repair.hull;",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-a-loaded-deck-offered-powder",
+    "file": "src/systems/naval/navalPlunder.js",
+    "old": "    const useful = !loaded || topUp;",
+    "new": "    const useful = true;",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-plural",
+    "file": "src/systems/naval/navalPlunder.js",
+    "old": "      detail:\n        mine.maxCrew <= 0\n          ? 'No berths for them'\n          : n > 0\n            ? `${n} ${n === 1 ? 'hand' : 'hands'} to your guns`\n            : 'Your crew is whole',",
+    "new": "      detail: mine.maxCrew <= 0 ? 'No berths for them' : n > 0 ? `${n} hands to your guns` : 'Your crew is whole',",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-every-shot-a-crime",
+    "file": "src/systems/naval/navalLaw.js",
+    "old": "    if (act === 'fire' && firstStrike) {",
+    "new": "    if (act === 'fire') {",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-a-pirate-charged",
+    "file": "src/systems/naval/navalLaw.js",
+    "old": "  const lawful = ship.faction === 'merchant' || ship.faction === 'navy';",
+    "new": "  const lawful = true;",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-ceiling",
+    "file": "src/systems/naval/navalLaw.js",
+    "old": "      const v = Math.max(0, Math.min(NOTORIETY.max, n.get(crown) + amount));",
+    "new": "      const v = Math.max(0, n.get(crown) + amount);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-quiet-crown-kept",
+    "file": "src/systems/naval/navalLaw.js",
+    "old": "        if (w > 0) by.set(k, w);\n        else by.delete(k);",
+    "new": "        by.set(k, w);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-restore-unbounded",
+    "file": "src/systems/naval/navalLaw.js",
+    "old": "        if (Number.isFinite(v) && v > 0) by.set(c.name, Math.min(NOTORIETY.max, v));",
+    "new": "        if (Number.isFinite(v) && v > 0) by.set(c.name, v);",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-gate-not-asked",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "    const gate = h.leaveShipGate?.(this.parentQuest) ?? 'proceed';",
+    "new": "    const gate = 'proceed';",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-naval-falling-through",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "      return;\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-wait-completing",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "    if (gate === 'wait') return;",
+    "new": "    if (gate === 'wait') {\n      this.setComplete();\n      return;\n    }",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-running-raid-unasked",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "  if (hasTraveledbyShip || _boardIn !== null || raidRunning()) return 'busy';",
+    "new": "  if (hasTraveledbyShip || _boardIn !== null) return 'busy';",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-under-way-forgets-the-lent-ship",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "  if (tempShip) return 'lent';\n  return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-under-way-forgets-the-running-raid",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "  if (hasTraveledbyShip || _boardIn !== null || raidRunning()) return 'busy';",
+    "new": "  if (hasTraveledbyShip || _boardIn !== null) return 'busy';",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-boarders-raid-over-an-ambush",
+    "file": "src/scenes/world.js",
+    "old": "        if (warmAshesRaidUnderWay()) return null;   // THE MERGE (NAV-D, OWS3): one raid at a time - the boarders come over as the arc's own party\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-the-host-word-never-given",
+    "file": "src/scenes/world.js",
+    "old": "    raidRunning: () => [...questBridge.machine.quests.values()].some((q) => WA_RAID_QUESTS.includes(q.questName) && !q.questComplete && !q.questTombstoned),\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "NAV-D-a-finished-raid-still-running",
+    "file": "src/scenes/world.js",
+    "old": "WA_RAID_QUESTS.includes(q.questName) && !q.questComplete && !q.questTombstoned)",
+    "new": "WA_RAID_QUESTS.includes(q.questName))",
+    "tests": [
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  }
+]

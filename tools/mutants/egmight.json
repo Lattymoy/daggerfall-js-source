@@ -1,0 +1,542 @@
+[
+  {
+    "name": "EG-MIGHT-the-loot-past-its-top",
+    "file": "src/net/kitMight.js",
+    "old": "loot: Math.min(BLOW_TOPS.loot, ",
+    "new": "loot: Math.min(Infinity, ",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-per-cents-added",
+    "file": "src/net/mightLaw.js",
+    "old": "pcts.reduce((k, p) => k * (1 + Math.max(0, p) / 100), 1)",
+    "new": "pcts.reduce((k, p) => k + Math.max(0, p) / 100, 1)",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-top-widened",
+    "file": "src/net/mightLaw.js",
+    "old": "export const MIGHT_MOST = 1000;",
+    "new": "export const MIGHT_MOST = 2000;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-under-none-taken",
+    "file": "src/net/mightLaw.js",
+    "old": "export const mightOk = (gm) => Number.isSafeInteger(gm) && gm >= MIGHT_NONE && gm <= MIGHT_MOST;",
+    "new": "export const mightOk = (gm) => Number.isSafeInteger(gm) && gm >= 0 && gm <= MIGHT_MOST;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-mint-reads-none",
+    "file": "server-account/src/realm.js",
+    "old": "    km: mightOk(row.might) ? /** @type {number} */ (row.might) : null, // EG-MIGHT: the kit's might, judged",
+    "new": "    km: null, // EG-MIGHT: the kit's might, judged",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-mint-signs-none",
+    "file": "server-account/src/index.js",
+    "old": "...(mg != null ? { mg } : {}), ",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-signed-without-the-realm",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.mg !== undefined && !(c.rc === 1 && mightIssuable(c.mg))) return false; // EG-MIGHT: the kit's might, beside the realm's yes alone",
+    "new": "  if (c.mg !== undefined && !mightIssuable(c.mg)) return false; // EG-MIGHT: the kit's might, beside the realm's yes alone",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-socket-drops-it",
+    "file": "src/net/eliteGates/egMight.js",
+    "old": "  ...(mightOk(who?.mg) ? { mg: who.mg } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-purse-never-grown",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const bx = vx.bx * egPurseX(mm.mg);",
+    "new": "const bx = vx.bx;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-depth-not-grown",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "bucket: BUCKET_DEPTH_X * dpsRef(lv) * egPurseX(mg),",
+    "new": "bucket: BUCKET_DEPTH_X * dpsRef(lv),",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-reentry-takes-the-newest",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (B.mem[sub]?.in) { B.mem[sub].seenAt = now; return null; }",
+    "new": "  if (B.mem[sub]?.in) { B.mem[sub].seenAt = now; B.mem[sub].mg = might; return null; }",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-admission-drops-it",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const might = mightOk(mg) ? mg : null;",
+    "new": "  const might = null;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-health-at-the-whole",
+    "file": "src/net/eliteGates/egMight.js",
+    "old": "export const EG_MIGHT_HEALTH_EXP = 0.5;",
+    "new": "export const EG_MIGHT_HEALTH_EXP = 1;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-team-without-it",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "team = L.reduce((s, lv, j) => s + egHealthRef(lv, M[j]), 0);",
+    "new": "team = L.reduce((s, lv, j) => s + egHealthRef(lv, null), 0);",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-company-mights-not-handed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "subs = L.map(([sub]) => sub), mgs = L.map(([, m]) => m.mg ?? null);",
+    "new": "subs = L.map(([sub]) => sub), mgs = [];",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-share-without-it",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "L.fs[s] = { share: L.per * egHealthRef(F.lvs[j], F.mgs?.[j] ?? null), retired: false };",
+    "new": "L.fs[s] = { share: L.per * egHealthRef(F.lvs[j], null), retired: false };",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-newcomer-without-it",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (admits && !p) p = fs[sub] = { share: L.per * egHealthRef(lv, mg), retired: true };",
+    "new": "if (admits && !p) p = fs[sub] = { share: L.per * egHealthRef(lv, null), retired: true };",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-seam-drops-it",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "egLordsShare(f.F, sub, lv, !!o.admits, o.mg ?? null);",
+    "new": "egLordsShare(f.F, sub, lv, !!o.admits);",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-whole-not-grown",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "export const EG_STAND_IN_WHOLE = STAND_IN_WHOLE * (MIGHT_MOST / MIGHT_NONE);",
+    "new": "export const EG_STAND_IN_WHOLE = STAND_IN_WHOLE;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-power-twice",
+    "file": "src/net/kitMight.js",
+    "old": "  return Math.min(wornBest(worn, own), sumOf([...byId.values()]));",
+    "new": "  return wornBest(worn, own) + sumOf([...byId.values()]);",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-slayers-kinds-summed",
+    "file": "src/net/kitMight.js",
+    "old": "    const slayer = Math.max(0, ...groups.values());",
+    "new": "    const slayer = sumOf([...groups.values()]);",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-guard-power-counted",
+    "file": "src/net/kitMight.js",
+    "old": "  return b && (b.moment === 'any' || b.moment === moment) ? b.pct(p) : 0;",
+    "new": "  return p ? (b ? b.pct(p) : 100) : 0;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-bag-of-rings-worn",
+    "file": "src/net/kitMight.js",
+    "old": "      if (n >= cap || (id && seen.has(id))) continue;",
+    "new": "      if (id && seen.has(id)) continue;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-legendary-twice-in-a-place",
+    "file": "src/net/kitMight.js",
+    "old": "      const id = it?.rarity === 'legendary' ? it.legendary : null;",
+    "new": "      const id = null;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-copies-counted",
+    "file": "src/net/kitMight.js",
+    "old": "    if (seen.has(k)) return false;",
+    "new": "    if (seen.has(k) && false) return false;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-law-ignored",
+    "file": "src/net/kitMight.js",
+    "old": "    if (!it || typeof it !== 'object' || !lawful(it)) return false;",
+    "new": "    if (!it || typeof it !== 'object') return false;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-no-roll",
+    "file": "src/net/kitMight.js",
+    "old": "      roll: w ? sumOf(linesOf(w, 'damage').map((a) => a.value)) : 0,",
+    "new": "      roll: 0,",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-heirloom-past-its-generations",
+    "file": "src/net/kitMight.js",
+    "old": "HEIRLOOM_DAMAGE_PER_GEN * Math.min(HEIRLOOM_GEN_MAX, w.heirloom.gen | 0)",
+    "new": "HEIRLOOM_DAMAGE_PER_GEN * (w.heirloom.gen | 0)",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-sigil-unread",
+    "file": "src/net/kitMight.js",
+    "old": "      sigil: w ? Math.min(BLOW_TOPS.sigil, sigilPercent(w.sigil, ANY_RENOWN)) : 0,",
+    "new": "      sigil: 0,",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-largest-set-alone",
+    "file": "src/net/kitMight.js",
+    "old": "next[c] = Math.max(next[c], best[c - n] + blow);",
+    "new": "next[c] = Math.max(next[c], blow);",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-stage-past-its-pieces",
+    "file": "src/net/kitMight.js",
+    "old": "      const stage = r[n - 1], tiers",
+    "new": "      const stage = r[0], tiers",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-six-helms-six-places",
+    "file": "src/net/kitMight.js",
+    "old": "    m.set(place, Math.max(m.get(place) ?? 0, sigilRank(it.sigil)));",
+    "new": "    m.set(place + m.size, sigilRank(it.sigil));",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-an-unmastered-climb",
+    "file": "src/net/kitMight.js",
+    "old": "  return mastered.includes(s) && Number.isFinite(v) ?",
+    "new": "  return Number.isFinite(v) ?",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-short-blades-climb-paid",
+    "file": "src/net/kitMight.js",
+    "old": "(/** @type {any} */ (CLIMB_PER_POINT)[s] ?? 0)",
+    "new": "(/** @type {any} */ (CLIMB_PER_POINT)[s] ?? WEAPON_POTENCY_PER_POINT)",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-axe-at-the-swords-rate",
+    "file": "src/net/kitMight.js",
+    "old": "  [SKILLS.Axe]: WEAPON_HALF_PER_POINT,",
+    "new": "  [SKILLS.Axe]: WEAPON_POTENCY_PER_POINT,",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-any-path-a-path",
+    "file": "src/net/kitMight.js",
+    "old": "    martial: path && path.skills.every((/** @type {number} */ s) => mastered.includes(s)) ? BLOW_TOPS.martial : 0,",
+    "new": "    martial: path ? BLOW_TOPS.martial : 0,",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-enchantment-unread",
+    "file": "src/net/kitMight.js",
+    "old": "  + ENHANCE_SKILL_MOD * (",
+    "new": "  + 0 * (",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-gear-past-its-most",
+    "file": "src/net/kitMight.js",
+    "old": "Math.min(WEAPON_GEAR_PCT_MOST, points * WEAPON_GEAR_PER_POINT)",
+    "new": "points * WEAPON_GEAR_PER_POINT",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-sky-unread",
+    "file": "src/net/kitMight.js",
+    "old": "    firmament: Math.min(BLOW_TOPS.firmament, skyBlow),",
+    "new": "    firmament: 0,",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-skys-skill-unread",
+    "file": "src/net/kitMight.js",
+    "old": " + (sets.skills[s] ?? 0) + firmSkill(firm, s, sk);",
+    "new": " + (sets.skills[s] ?? 0);",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-sets-skill-unread",
+    "file": "src/net/kitMight.js",
+    "old": " + blessed + (sets.skills[s] ?? 0) + ",
+    "new": " + blessed + ",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-blessings-unbounded",
+    "file": "src/net/kitMight.js",
+    "old": "const blessed = Math.min(BLESSING_SKILL_MAX, sumOf(",
+    "new": "const blessed = (sumOf(",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-spell-unread",
+    "file": "src/net/kitMight.js",
+    "old": "  return Math.max(blow, mightOf([(p.spell - 1) * 100]));",
+    "new": "  return blow;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-school-unread",
+    "file": "src/net/kitMight.js",
+    "old": "1 + climbOf(sk, mastered, s) * SCHOOL_POTENCY_PER_POINT",
+    "new": "1",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-potency-past-its-cap",
+    "file": "src/net/kitMight.js",
+    "old": "Math.min(POTENCY_CAP, wornBest(worn, (it) => sumOf(linesOf(it, 'potency').map((a) => a.value))))",
+    "new": "wornBest(worn, (it) => sumOf(linesOf(it, 'potency').map((a) => a.value)))",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-paths-spell-unread",
+    "file": "src/net/kitMight.js",
+    "old": "(PATH_SPELL_MOST)[save.arcanePath] ?? 0 : 0;",
+    "new": "(PATH_SPELL_MOST)[save.arcanePath] * 0 : 0;",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-other-hands-mark-unread",
+    "file": "src/net/kitMight.js",
+    "old": "(m === 'struck' ? mark : 0)",
+    "new": "0",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-might-floored",
+    "file": "src/net/mightLaw.js",
+    "old": "Math.max(MIGHT_NONE, Math.min(MIGHT_MOST, Math.round(MIGHT_NONE *",
+    "new": "Math.max(MIGHT_NONE, Math.min(MIGHT_MOST, Math.floor(MIGHT_NONE *",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-price-taken",
+    "file": "src/net/mightLaw.js",
+    "old": "k * (1 + Math.max(0, p) / 100)",
+    "new": "k * (1 + p / 100)",
+    "tests": [
+      "test/net/eliteGates/auditpotionmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-out-of-bounds-signed",
+    "file": "src/net/mightLaw.js",
+    "old": "(mightOk(kit) ? /** @type {number} */ (kit) : null)",
+    "new": "(kit == null ? null : /** @type {number} */ (kit))",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-judge-takes-the-forged",
+    "file": "server-account/src/judge.js",
+    "old": "might: kitMightOf(save, lawful, { firm: o.firm ?? {} })",
+    "new": "might: kitMightOf(save, () => true, { firm: o.firm ?? {} })",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-sky-not-handed",
+    "file": "server-account/src/judge.js",
+    "old": "might: kitMightOf(save, lawful, { firm: o.firm ?? {} })",
+    "new": "might: kitMightOf(save, lawful, {})",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-verdict-writes-none",
+    "file": "server-account/src/verdict.js",
+    "old": "    might: lawHolds > 0 ? null : judged.might, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it",
+    "new": "    might: null, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-a-held-kit-signed",
+    "file": "server-account/src/verdict.js",
+    "old": "    might: lawHolds > 0 ? null : judged.might, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it",
+    "new": "    might: judged.might, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-verdict-skyless",
+    "file": "server-account/src/verdict.js",
+    "old": "  const firm = firmOpen ? treeStats(unpackTree(typeof row.firm_tree === 'string' ? row.firm_tree : '')) : {};",
+    "new": "  const firm = false ? treeStats(unpackTree(typeof row.firm_tree === 'string' ? row.firm_tree : '')) : {};",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-checkpoint-reads-no-sky",
+    "file": "server-account/src/realm.js",
+    "old": "    (SELECT tree FROM firmament f WHERE f.player = realm_characters.player AND f.char_id = realm_characters.id) AS firm_tree",
+    "new": "    (SELECT tree FROM firmament f WHERE f.player = realm_characters.player AND f.char_id = realm_characters.id) AS firm_tree_unread",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-checkpoint-hands-no-switch",
+    "file": "server-account/src/realm.js",
+    "old": "    { db, nowS, firmOpen },",
+    "new": "    { db, nowS },",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-switch-never-read",
+    "file": "server-account/src/index.js",
+    "old": "firmOpen: firmamentOpenFor(who.player, env) };",
+    "new": "firmOpen: false };",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-rollback-keeps-it",
+    "file": "server-account/src/review.js",
+    "old": "          ' arms_top = NULL, arms_bow = NULL, might = NULL WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',",
+    "new": "          ' arms_top = arms_top WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  },
+  {
+    "name": "EG-MIGHT-the-pistols-own-mark",
+    "file": "src/net/kitMight.js",
+    "old": "(powerOf(id)?.kind === 'broadside' ? 0 : blowOf(id, m))",
+    "new": "blowOf(id, m)",
+    "tests": [
+      "test/net/eliteGates/egmight.test.js"
+    ]
+  }
+]

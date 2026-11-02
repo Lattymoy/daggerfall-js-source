@@ -1,0 +1,9 @@
+{
+    "ModTitle": "TheKingsGambit",
+    "ModVersion": "1",
+    "DFUnity_Version": "1.1.1",
+    "GUID": "e3406109-b550-43e4-ae70-51e32850e225",
+    "Files": [
+        "Assets/Game/Mods/TheKingsGambit/Scripts/TheKingsGambit.cs"
+    ]
+}

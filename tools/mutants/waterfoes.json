@@ -1,0 +1,65 @@
+[
+  {
+    "name": "WATER-FOES-aquatic-not-water",
+    "file": "src/systems/foeReach.js",
+    "old": "  if (ai.swims) return true;\n",
+    "new": "  if (ai.swims && false) return true;\n",
+    "tests": [
+      "test/systems/waterfoes.test.js"
+    ]
+  },
+  {
+    "name": "WATER-FOES-centre-at-feet",
+    "file": "src/systems/foeReach.js",
+    "old": "y + (ai.centreOffset ?? 0) < seaY",
+    "new": "y < seaY",
+    "tests": [
+      "test/systems/waterfoes.test.js"
+    ]
+  },
+  {
+    "name": "WATER-FOES-latch-ignores-aboard",
+    "file": "src/systems/foeReach.js",
+    "old": "f.ai.unreachable = !!aboard && foeInWater(f, seaY);",
+    "new": "f.ai.unreachable = foeInWater(f, seaY);",
+    "tests": [
+      "test/systems/waterfoes.test.js"
+    ]
+  },
+  {
+    "name": "WATER-FOES-latch-sticks",
+    "file": "src/systems/foeReach.js",
+    "old": "for (const f of foes) if (f?.ai) f.ai.unreachable = !!aboard && foeInWater(f, seaY);",
+    "new": "for (const f of foes) if (f?.ai && aboard) f.ai.unreachable = foeInWater(f, seaY);",
+    "tests": [
+      "test/systems/waterfoes.test.js"
+    ]
+  },
+  {
+    "name": "WATER-FOES-sweep-counts-it",
+    "file": "src/systems/encounters.js",
+    "old": "    if (f.ai.unreachable) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/waterfoes.test.js"
+    ]
+  },
+  {
+    "name": "WATER-FOES-swimmer-aboard",
+    "file": "src/scenes/world.js",
+    "old": "aboard: playerAfloat() && !(walkMode && playerSpawned && player.isPlayerSwimming)",
+    "new": "aboard: playerAfloat()",
+    "tests": [
+      "test/systems/waterfoes.test.js"
+    ]
+  },
+  {
+    "name": "WATER-FOES-overworld-threat",
+    "file": "src/scenes/world.js",
+    "old": "if (!foeAlerted(f) || !f.ai.feet || f.ai.unreachable) continue;",
+    "new": "if (!foeAlerted(f) || !f.ai.feet) continue;",
+    "tests": [
+      "test/systems/waterfoes.test.js"
+    ]
+  }
+]

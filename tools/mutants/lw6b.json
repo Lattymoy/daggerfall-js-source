@@ -1,0 +1,400 @@
+[
+  {
+    "name": "LW6b-window",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const DEEP_REMAINS_MIN = 3 * DAY_MIN;",
+    "new": "export const DEEP_REMAINS_MIN = 4 * DAY_MIN;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-before",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "          if (!f.inside || f.hand || !(f.t <= t && t < f.t + DEEP_REMAINS_MIN)) continue;",
+    "new": "          if (!f.inside || f.hand || !(t < f.t + DEEP_REMAINS_MIN)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-after",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "          if (!f.inside || f.hand || !(f.t <= t && t < f.t + DEEP_REMAINS_MIN)) continue;",
+    "new": "          if (!f.inside || f.hand || !(f.t <= t)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-inside",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "          if (!f.inside || f.hand || !(f.t <= t && t < f.t + DEEP_REMAINS_MIN)) continue;",
+    "new": "          if (f.hand || !(f.t <= t && t < f.t + DEEP_REMAINS_MIN)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-hand",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "          if (!f.inside || f.hand || !(f.t <= t && t < f.t + DEEP_REMAINS_MIN)) continue;",
+    "new": "          if (!f.inside || !(f.t <= t && t < f.t + DEEP_REMAINS_MIN)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-dungeon",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "        if (!trip.dive || trip.to?.mapId !== dungeon.mapId) continue;",
+    "new": "        if (!trip.dive) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-back",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    for (let back = 0; back * DAY_MIN <= DEEP_REMAINS_MIN + DAY_MIN; back++) {",
+    "new": "    for (let back = 0; back < 1; back++) {",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-key",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "          const key = `deep:${f.res.id}:${trip.id}`;",
+    "new": "          const key = `deep:${f.res.id}`;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-order",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  return { remains: [...found.values()].sort((a, b) => a.t - b.t ||",
+    "new": "  return { remains: [...found.values()].sort((a, b) => b.t - a.t ||",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-pending",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      const trips = townTrips(town, t - back * DAY_MIN, world, o);\n      if (trips === undefined) { pending = true; break; }",
+    "new": "      const trips = townTrips(town, t - back * DAY_MIN, world, o);\n      if (trips === undefined) { break; }",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-mark-kinds",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "export const MARK_KINDS = Object.freeze(['laid', 'heard', 'looted']);",
+    "new": "export const MARK_KINDS = Object.freeze(['heard', 'looted']);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-mark-kept",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "      const set = turns[kind] ?? marks[kind]; // LW6b: a mark is kept as a turn is",
+    "new": "      const set = turns[kind]; // LW6b: a mark is kept as a turn is",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-mark-written",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "      const marksOut = Object.fromEntries(MARK_KINDS.filter((k) => marks[k].size).map((k) => [k, [...marks[k]]])); // LW6b: only once there is one",
+    "new": "      const marksOut = {}; // LW6b: only once there is one",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-mark-always",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "      const marksOut = Object.fromEntries(MARK_KINDS.filter((k) => marks[k].size).map((k) => [k, [...marks[k]]])); // LW6b: only once there is one",
+    "new": "      const marksOut = Object.fromEntries(MARK_KINDS.map((k) => [k, [...marks[k]]])); // LW6b: only once there is one",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-mark-read",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "      if (Array.isArray(list)) for (const key of list.slice(-TURNS_MAX)) if (turnOk(key)) marks[k].add(key);",
+    "new": "      void list;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-mark-alone",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        TURN_KINDS.some((k) => turns[k].size) ||\n        Object.keys(handsOut).length > 0 ||\n        Object.keys(marksOut).length > 0 ||\n        Object.keys(talesOut).length > 0;",
+    "new": "        TURN_KINDS.some((k) => turns[k].size) || Object.keys(handsOut).length > 0 || Object.keys(talesOut).length > 0;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-notice",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "export const DEEP_NOTICE_M = 4;",
+    "new": "export const DEEP_NOTICE_M = 6;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-lay-m",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "export const DEEP_LAY_M = 15;",
+    "new": "export const DEEP_LAY_M = 10;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-deal",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "(n > 0 ? lwSeed(textSeed(key), 0x72657374) % n : -1)",
+    "new": "(n > 0 ? 0 : -1)",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-way-in",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "          if (!(arriving || away)) continue;",
+    "new": "          if (!away) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-reach",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "          if (!(arriving || away)) continue;",
+    "new": "          if (false) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-mark",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": ") deps.mark(r.key);   // taken from: spent",
+    "new": ") void 0;   // taken from: spent",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js",
+      "test/systems/livingWorld/lwfix5_deep.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-arrival-ends",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "      if (feet) arriving = false;",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-told-reach",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "Math.hypot(at[0] - feet[0], at[2] - feet[2]) > DEEP_NOTICE_M ||",
+    "new": "Math.hypot(at[0] - feet[0], at[2] - feet[2]) > DEEP_NOTICE_M * 2 ||",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-told-floor",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": " || Math.abs(at[1] - feet[1]) > 3 || !deps.there(at)) continue;",
+    "new": " || !deps.there(at)) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-told-there",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": " || Math.abs(at[1] - feet[1]) > 3 || !deps.there(at)) continue;",
+    "new": " || Math.abs(at[1] - feet[1]) > 3) continue;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-told-once",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "        if (told.has(r.key) || !feet ||",
+    "new": "        if (!feet ||",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-words",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "        deps.say(town ? `The remains of ${r.res.name}, of ${town}.` : `The remains of ${r.res.name}.`);",
+    "new": "        deps.say(`The remains of ${r.res.name}.`);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-visit",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "    clear() { told.clear(); here.clear(); arriving = true; },",
+    "new": "    clear() { here.clear(); arriving = true; },",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-places",
+    "file": "src/scenes/livingWorld/deepRemains.js",
+    "old": "        if (!at) continue;   // AUDIT LW-II D13",
+    "new": "        void 0;   // AUDIT LW-II D13",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ],
+    "note": "AUDIT LW-II (re-aimed by content): the route's places beside it."
+  },
+  {
+    "name": "LW6b-stood-member",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c;",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-stood-allies",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c && c.foes.has(resId);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-stood-foes",
+    "file": "src/scenes/dungeonDivers.js",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c && c.allies.has(resId);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-dc-places",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "_layoutEnemies.filter((e) => !e.fixed).map((e) => floorLanding(",
+    "new": "_layoutEnemies.map((e) => floorLanding(",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-dc-pile",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    layRemains: (items, feet, icon, key = null) => { const p = droppedLoot.dropPile(items, feet, null, icon);",
+    "new": "    layRemains: (items, feet, icon, key = null) => { const p = droppedLoot.dropPile(items, feet);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-dc-near",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " <= r && Math.abs(p.pos[1] - feet[1]) <= 2),",
+    "new": " <= r),",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-host-step",
+    "file": "src/scenes/world.js",
+    "old": "      try { livingRemainsStep(now); }",
+    "new": "      try { void 0; }",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-host-fallen",
+    "file": "src/scenes/world.js",
+    "old": "        return !turns.fallen.has(key) && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers?.stood(r.trip.id, r.res.id);",
+    "new": "        return !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers?.stood(r.trip.id, r.res.id);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-host-spared",
+    "file": "src/scenes/world.js",
+    "old": "        return !turns.fallen.has(key) && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers?.stood(r.trip.id, r.res.id);",
+    "new": "        return !turns.fallen.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers?.stood(r.trip.id, r.res.id);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-host-stood",
+    "file": "src/scenes/world.js",
+    "old": "        return !turns.fallen.has(key) && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key) && !livingDivers?.stood(r.trip.id, r.res.id);",
+    "new": "        return !turns.fallen.has(key) && !turns.spared.has(key) && !turns.slain.has(key) && !turns.died.has(key);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-host-mark",
+    "file": "src/scenes/world.js",
+    "old": "        mark: (key) => livingRelations.turn('laid', key),",
+    "new": "        mark: () => {},",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-host-picture",
+    "file": "src/scenes/livingWorld/remainsGoods.js",
+    "old": "  return d.layRemains(items, feet, { archive: corpse.archive, record: corpse.record }, key);",
+    "new": "  return d.layRemains(items, feet, null, key);",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-host-loot",
+    "file": "src/scenes/livingWorld/remainsGoods.js",
+    "old": "  for (const raw of [createRandomWeapon(level, rolls), createRandomArmor(level, rolls)]) if",
+    "new": "  for (const raw of []) if",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  },
+  {
+    "name": "LW6b-host-street",
+    "file": "src/scenes/world.js",
+    "old": "    if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b",
+    "new": "    void 0;   // LW6b",
+    "tests": [
+      "test/systems/livingWorld/lw6b_remains.test.js"
+    ]
+  }
+]

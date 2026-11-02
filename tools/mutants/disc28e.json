@@ -1,0 +1,871 @@
+[
+  {
+    "name": "LEVEL-PCT-sum-for-everyone",
+    "file": "src/ui/charsheet.js",
+    "old": "  if (usesVirtueLeveling(entity)) return Math.trunc((levelBarProgress(entity) * 100) / LEVELUP_TOTAL);\n",
+    "new": "",
+    "tests": [
+      "test/systems/disc28e_levelpct.test.js"
+    ]
+  },
+  {
+    "name": "LEVEL-PCT-double-not-single",
+    "file": "src/ui/charsheet.js",
+    "old": "  const current = Math.fround(((entity?.currentLevelUpSkillSum ?? 0)",
+    "new": "  const current = (((entity?.currentLevelUpSkillSum ?? 0)",
+    "tests": [
+      "test/systems/disc28e_levelpct.test.js"
+    ]
+  },
+  {
+    "name": "LEVEL-PCT-scale-identity",
+    "file": "src/ui/charsheet.js",
+    "old": "  if (usesVirtueLeveling(entity)) return Math.trunc((levelBarProgress(entity) * 100) / LEVELUP_TOTAL);",
+    "new": "  if (usesVirtueLeveling(entity)) return Math.trunc(levelBarProgress(entity));",
+    "tests": [
+      "test/systems/disc28e_levelpct.test.js"
+    ],
+    "equivalent": true,
+    "why": "LEVELUP_TOTAL is 100 (the mod's bar is out of a hundred), so the scale is the identity; it stays so the box reads a percent of whatever total the bar has."
+  },
+  {
+    "name": "LEVEL-PCT-oghma-reads-the-lane",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  if (levelUpLane(screen) === LANE_VIRTUE || usesVirtueLeveling(e)) {",
+    "new": "  if (levelUpLane(screen) === LANE_VIRTUE) {",
+    "tests": [
+      "test/systems/disc28e_levelpct.test.js"
+    ]
+  },
+  {
+    "name": "LEVEL-PCT-virtue-canvas-raw",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    at(`bar ${levelBarProgress(this.entity)}/${LEVELUP_TOTAL}`",
+    "new": "    at(`bar ${this.entity.levelProgress ?? 0}/${LEVELUP_TOTAL}`",
+    "tests": [
+      "test/systems/disc28e_levelpct.test.js"
+    ]
+  },
+  {
+    "name": "LEVEL-PCT-bar-unheld",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "export const levelBarProgress = (entity) => Math.max(0, Math.min(LEVELUP_TOTAL, entity?.levelProgress ?? 0));",
+    "new": "export const levelBarProgress = (entity) => Math.max(0, entity?.levelProgress ?? 0);",
+    "tests": [
+      "test/systems/disc28e_levelpct.test.js"
+    ]
+  },
+  {
+    "name": "LEVEL-PCT-crown-own-copy",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "      now: levelBarProgress(e),",
+    "new": "      now: e.levelProgress ?? 0,",
+    "tests": [
+      "test/systems/disc28e_levelpct.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-deck-reads-deck",
+    "file": "src/scenes/travelFareHost.js",
+    "old": "      currentLocationMapId: () => travelOriginMapId(),",
+    "new": "      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null,",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-origin-ignored",
+    "file": "src/scenes/world.js",
+    "old": "    if (from.x === here.x && from.y === here.y) return _musicLoc?.mapTableData?.mapId ?? null;",
+    "new": "    if (true) return _musicLoc?.mapTableData?.mapId ?? null;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-no-rebill",
+    "file": "src/ui/heldMap.js",
+    "old": "        if (st.opts.travelShip !== wasShip) this._refreshTrip();",
+    "new": "",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-place-dropped",
+    "file": "src/scenes/world.js",
+    "old": "tvSeaNoWay(from, summary.pixel, means, net, 'land', summary)",
+    "new": "tvSeaNoWay(from, summary.pixel, means, net, 'land')",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-row-only",
+    "file": "src/scenes/world.js",
+    "old": "    if (from.x === here.x && from.y === here.y) return _musicLoc?.mapTableData?.mapId ?? null;",
+    "new": "    if (from.y === here.y) return _musicLoc?.mapTableData?.mapId ?? null;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-column-only",
+    "file": "src/scenes/world.js",
+    "old": "    if (from.x === here.x && from.y === here.y) return _musicLoc?.mapTableData?.mapId ?? null;",
+    "new": "    if (from.x === here.x) return _musicLoc?.mapTableData?.mapId ?? null;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ],
+    "equivalent": true,
+    "why": "It differs only where the boarding pixel shares a deck's column but not its row. DFU boards the ship anywhere (ShipAvailiable = HasShip), but columns x=2 and x=5 are ocean in all 500 rows of the retail CLIMATE.PAK, hold no location but the two decks, and no harbour id lies on them: the real answer there (null, no place) and the mutant's (\"Your Ship\", 2002/5005) are both not-a-harbour, and isNotAtPort is the answer's only reader. Rows are shared (The Mouse and Goblin Tavern, a harbour at 222,5, on the large deck's row), so the row-only mutant dies."
+  },
+  {
+    "name": "SHIP-PORT-dep-bag-kept-as-comment",
+    "file": "src/scenes/travelFareHost.js",
+    "old": "      currentLocationMapId: () => travelOriginMapId(),",
+    "new": "      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null, // currentLocationMapId: () => travelOriginMapId(),",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-boarding-port-unread",
+    "file": "src/scenes/world.js",
+    "old": "    return locationIndex.get(`${from.x},${from.y}`)?.mapTableData?.mapId ?? null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-rebill-inverted",
+    "file": "src/ui/heldMap.js",
+    "old": "if (st.opts.travelShip !== wasShip) this._refreshTrip();",
+    "new": "if (st.opts.travelShip === wasShip) this._refreshTrip();",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-live-is-permanent",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "export const liveAttribute = (entity, key, permanent) =>\n  liveStat({ stats: { [key]: permanent }, activeEffects: entity?.activeEffects, _mods: entity?._mods }, key);",
+    "new": "export const liveAttribute = (entity, key, permanent) => permanent;",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-capped-never",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  return { live, capped: canRaise && liveAttribute(entity, key, value + 1) === live };",
+    "new": "  return { live, capped: false };",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-capped-unraisable",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  return { live, capped: canRaise && liveAttribute(entity, key, value + 1) === live };",
+    "new": "  return { live, capped: liveAttribute(entity, key, value + 1) === live };",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-classic-working-ignored",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "      ...liveOf(screen.entity, key, value, canRaise),",
+    "new": "      ...liveOf(screen.entity, key, base, canRaise),",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-virtue-delta-ignored",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "        ...liveOf(screen.entity, key, base + delta, canRaise),",
+    "new": "        ...liveOf(screen.entity, key, base, canRaise),",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-note-silent-when-capped",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  return row.capped ? t('levelup.live.capped', \"{said} - a point here won't show\", { said }) : said;",
+    "new": "  return said;",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-note-lowered-as-bonus",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  const said =\n    row.live > row.value\n      ? t('levelup.live.boosted', '{live} with its bonus', { live: row.live })\n      : t('levelup.live.lowered', 'Lowered to {live} for now', { live: row.live });",
+    "new": "  const said = t('levelup.live.boosted', '{live} with its bonus', { live: row.live });",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-star-permanent",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "      s.val.textContent = String(r.live);",
+    "new": "      s.val.textContent = String(r.value);",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-pick-unpainted",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "      a.line.textContent = liveNote(r);",
+    "new": "      a.line.textContent = '';",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-star-figure-kept-as-comment",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "      s.val.textContent = String(r.live);",
+    "new": "      s.val.textContent = String(r.value); // s.val.textContent = String(r.live);",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-star-boosted-kept-as-comment",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "      s.node.classList.toggle('boosted', tint === 'boosted');",
+    "new": "      s.node.classList.toggle('boosted', false); // s.node.classList.toggle('boosted', tint === 'boosted');",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-star-lowered-unpainted",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "      s.node.classList.toggle('lowered', tint === 'lowered');",
+    "new": "      s.node.classList.toggle('lowered', false);",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-pick-lowered-unpainted",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "      a.line.classList.toggle('lowered', liveTint(r) === 'lowered');",
+    "new": "      a.line.classList.toggle('lowered', false);",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-aria-built-inline-again",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "      s.node.setAttribute('aria-label', starLabel(r));",
+    "new": "      s.node.setAttribute('aria-label', `${r.label} ${r.value}`);",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-tint-lowered-never",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "export const liveTint = (row) => (!row ? '' : row.live > row.value ? 'boosted' : row.live < row.value ? 'lowered' : '');",
+    "new": "export const liveTint = (row) => (!row ? '' : row.live > row.value ? 'boosted' : '');",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-aria-own-value-dropped",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  const said = [\n    row.live !== row.value\n      ? t('levelup.star.permanent', '{name} {live} ({value} permanent)', {\n          name: row.label,\n          live: row.live,\n          value: row.value,\n        })\n      : t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live }),\n  ];",
+    "new": "  const said = [t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live })];",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-aria-capped-dropped",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  if (row.capped) said.push(t('levelup.star.capped', \"a point here won't show for now\"));",
+    "new": "",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-folds-dropped",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  liveStat({ stats: { [key]: permanent }, activeEffects: entity?.activeEffects, _mods: entity?._mods }, key);",
+    "new": "  liveStat({ stats: { [key]: permanent }, activeEffects: entity?.activeEffects }, key);",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-boosted-colour-not-DFUs",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".lv-star.boosted:not(.full) .lv-val { color: rgb(178,207,255);",
+    "new": ".lv-star.boosted:not(.full) .lv-val { color: rgb(255,255,255);",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-drained-line-colour-not-DFUs",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".lv-live.lowered { color: rgb(190,85,24); }",
+    "new": ".lv-live.lowered { color: rgb(255,0,0); }",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-floor-unflagged",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  return { live, capped: canRaise && liveAttribute(entity, key, value + 1) === live };",
+    "new": "  return { live, capped: canRaise && live >= MAX_STAT_VALUE };",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-floor-said-as-bonus",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  return row.capped ? t('levelup.live.capped', \"{said} - a point here won't show\", { said }) : said;",
+    "new": "  return row.capped\n    ? t('levelup.live.capped', \"{said} - a point here won't show\", {\n        said: t('levelup.live.boosted', '{live} with its bonus', { live: row.live }),\n      })\n    : said;",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-tint-under-the-raised-gold",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".lv-star.boosted:not(.full) .lv-val {",
+    "new": ".lv-star.boosted .lv-val {",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-blurbs-unstacked",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".lv-blurb > .lv-about { grid-area: 1 / 1; min-width: 0; visibility: hidden; }",
+    "new": ".lv-blurb > .lv-about { min-width: 0; visibility: hidden; }",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-phone-line-beside-its-blurb",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .lv-about:has(> .lv-live:not(:empty)) > p { display: none; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-short-line-wraps",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .lv-live { height: 1.3em; max-height: none; white-space: nowrap; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-luck-the-long-one-again",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "    return t('levelup.blurb.luck', 'Helps you hit and avoid hits, as Agility does, and improves your loot.');",
+    "new": "    return t(\n      'levelup.blurb.luck',\n      'Helps you hit and avoid being hit, as Agility does, and improves all the loot you find.',\n    );",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "ASCEND-LIVE-every-line-unwritten",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "      a.line.textContent = liveNote(r);",
+    "new": "      a.line.textContent = k === m.focus ? liveNote(r) : '';",
+    "tests": [
+      "test/systems/disc28e_ascendlive.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-never-offered",
+    "file": "src/scenes/world.js",
+    "old": "    if (sea && place && tvOfferPassage(place)) return;",
+    "new": "    if (false && sea && place && tvOfferPassage(place)) return;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-law-ignored",
+    "file": "src/scenes/world.js",
+    "old": "    if (!fare.opts.travelShip) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-door-ignored",
+    "file": "src/scenes/world.js",
+    "old": "    if (refused) { tvSay(refused); return true; }\n    if (giveOffer())",
+    "new": "    if (giveOffer())",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-purse-ignored",
+    "file": "src/scenes/world.js",
+    "old": "    if (!fare.afford) { tvSay(`${TRAVEL_VIEW_TEXT.noWay} ${fareText(fare.computed, false, fare.coinsShort)}`); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-priced-on-foot",
+    "file": "src/scenes/world.js",
+    "old": "partyTripFare(place.pixel, { ...travelMapPopUpState(), travelShip: true })",
+    "new": "partyTripFare(place.pixel, travelMapPopUpState())",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-party-skipped",
+    "file": "src/scenes/world.js",
+    "old": "        if (!partyTravel?.propose(pick, fare.opts, fare.computed)) partyTravelJourney(pick, fare.opts, fare.computed);",
+    "new": "        partyTravelJourney(pick, fare.opts, fare.computed);",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-online-says-no-days",
+    "file": "src/scenes/world.js",
+    "old": "    const days = travelDays(fare.computed.minutes);",
+    "new": "    const days = sharedClockOn() ? 0 : travelDays(fare.computed.minutes);",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-online-days-not-yours",
+    "file": "src/scenes/world.js",
+    "old": "shipPassageRows(place.name, fareText(fare.computed), days, fare.unwell, sharedClockOn()),",
+    "new": "shipPassageRows(place.name, fareText(fare.computed), days, fare.unwell),",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-warning-dropped",
+    "file": "src/scenes/travelView.js",
+    "old": "  if (unwell) rows.push('You are diseased or poisoned.');\n  return rows;",
+    "new": "  return rows;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-offered-only-with-the-mod",
+    "file": "src/scenes/world.js",
+    "old": "    if (sea && place && tvOfferPassage(place)) return;",
+    "new": "    if (sea && !!csaRuntime && csaOn() && place && tvOfferPassage(place)) return;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-offered-with-no-sea",
+    "file": "src/scenes/world.js",
+    "old": "    if (sea && place && tvOfferPassage(place)) return;",
+    "new": "    if (place && tvOfferPassage(place)) return;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-boat-line-without-the-mod",
+    "file": "src/scenes/world.js",
+    "old": "    const boat = sea && !!csaRuntime && csaOn();",
+    "new": "    const boat = sea;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-days-rounded-down",
+    "file": "src/scenes/travelView.js",
+    "old": "  if (days > 0) rows.push(`The voyage takes ${days} ${days === 1 ? 'day' : 'days'}${own ? ' of your time' : ''}.`);",
+    "new": "  if (days > 0) rows.push(`The voyage takes ${days} days${own ? ' of your time' : ''}.`);",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-route-pin-kept-as-comment",
+    "file": "src/scenes/world.js",
+    "old": "if (!plan) { tvSeaNoWay(from, summary.pixel, means, net, 'land', summary); return false; }",
+    "new": "if (!plan) { tvSeaNoWay(from, summary.pixel, means, net, 'land'); return false; } // if (!plan) { tvSeaNoWay(from, summary.pixel, means, net, 'land', summary); return false; }",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-pick-region-dropped",
+    "file": "src/scenes/world.js",
+    "old": "mapId: place.mapId, regionIndex: place.regionIndex, locationIndex: place.locationIndex };",
+    "new": "mapId: place.mapId, regionIndex: 0, locationIndex: place.locationIndex };",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-popup-built-unpriced",
+    "file": "src/ui/travel/travelPopUp.js",
+    "old": "      if (refusal) { this._itText = IT_TEXT[refusal]; this.top = 'itPush'; }\n    }\n    this.refresh();",
+    "new": "      if (refusal) { this._itText = IT_TEXT[refusal]; this.top = 'itPush'; }\n    }",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ],
+    "note": "IT1 (PIN MOVED): re-aimed by content - Immersive Travel’s arm sits beside the line this record mutates."
+  },
+  {
+    "name": "SHIP-SAIL-guard-after-pricing",
+    "file": "src/scenes/world.js",
+    "old": "    pop.enforceShipRestriction();\n    pop.refresh();\n    return {",
+    "new": "    pop.refresh();\n    pop.enforceShipRestriction();\n    return {",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-journey-left-running",
+    "file": "src/scenes/world.js",
+    "old": "        travelOptions?.clearTravelDestination();\n        if (!partyTravel?.propose(pick, fare.opts, fare.computed))",
+    "new": "        if (!partyTravel?.propose(pick, fare.opts, fare.computed))",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-no-leaves-the-view-down",
+    "file": "src/scenes/world.js",
+    "old": "    }), () => { if (viewUp && !sailed) travelView?.enter(); });",
+    "new": "    }));",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-yes-raises-the-view",
+    "file": "src/scenes/world.js",
+    "old": "    }), () => { if (viewUp && !sailed) travelView?.enter(); });",
+    "new": "    }), () => { if (viewUp) travelView?.enter(); });",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-offer-kept-back",
+    "file": "src/scenes/world.js",
+    "old": "    if (giveOffer()) return true;   // the map door",
+    "new": "    if (false) return true;   // the map door",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-coins-blamed-on-the-fare",
+    "file": "src/scenes/world.js",
+    "old": "fareText(fare.computed, false, fare.coinsShort)",
+    "new": "fareText(fare.computed, false)",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-coins-never-short",
+    "file": "src/scenes/world.js",
+    "old": "      coinsShort: (pop.deps.gold?.() ?? 0) >= pop.trip.totalCost && (pop.deps.goldPieces?.() ?? 0) < pop.trip.piecesCost,",
+    "new": "      coinsShort: false,",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-SAIL-coins-words-dropped",
+    "file": "src/systems/party/partyTravelLaw.js",
+    "old": "  if (!afford && coinsShort)\n    return `You cannot afford the journey (${Math.max(0, Math.round(computed?.piecesCost ?? 0))} gold in coin for the inns).`;\n  if (!afford) return `You cannot afford the journey (${total} gold).`;",
+    "new": "  if (!afford) return `You cannot afford the journey (${total} gold).`;",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "SHIP-PORT-deck-scene-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      if (isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel())) cacheExteriorScene(playerTravelPixel());\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/disc28e_shipport.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-never-lifted",
+    "file": "app/lib/frameRate.cjs",
+    "old": "  return savedVSync(userDataRoot) ? [] : [...VSYNC_OFF_SWITCHES];",
+    "new": "  return [];",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-always-lifted",
+    "file": "app/lib/frameRate.cjs",
+    "old": "  return savedVSync(userDataRoot) ? [] : [...VSYNC_OFF_SWITCHES];",
+    "new": "  return [...VSYNC_OFF_SWITCHES];",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-stored-junk-reads-on",
+    "file": "app/lib/frameRate.cjs",
+    "old": "    return String(v).trim().toLowerCase() === 'true';",
+    "new": "    return String(v).trim().toLowerCase() !== 'false';",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-unreadable-lifts",
+    "file": "app/lib/frameRate.cjs",
+    "old": "  } catch {\n    return true;\n  }",
+    "new": "  } catch {\n    return false;\n  }",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-one-wait-left",
+    "file": "app/lib/frameRate.cjs",
+    "old": "const VSYNC_OFF_SWITCHES = Object.freeze(['disable-gpu-vsync', 'disable-frame-rate-limit']);",
+    "new": "const VSYNC_OFF_SWITCHES = Object.freeze(['disable-gpu-vsync']);",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-browser-offered-it",
+    "file": "src/systems/settings/settings.js",
+    "old": "  if (key in SHELL_AT_LAUNCH && inDesktopShell()) return 'restart';",
+    "new": "  if (key in SHELL_AT_LAUNCH) return 'restart';",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-app-never-offers-it",
+    "file": "src/systems/settings/settings.js",
+    "old": "  if (key in SHELL_AT_LAUNCH && inDesktopShell()) return 'restart';",
+    "new": "  if (false) return 'restart';",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-screen-hides-row",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "function drawsFlat(key) { const t = tierOf(key); return t === 'live' || t === 'restart'; }",
+    "new": "function drawsFlat(key) { const t = tierOf(key); return t === 'live'; }",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-shell-never-asks",
+    "file": "app/main.cjs",
+    "old": "for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);\n",
+    "new": "",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-unset-reads-off",
+    "file": "app/lib/frameRate.cjs",
+    "old": "    if (v == null) return true;",
+    "new": "    if (v === null) return true;",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-restart-said-live",
+    "file": "src/ui/settings/settingsCopy.js",
+    "old": "  restart: 'Takes effect the next time the app starts.', // FPS-VSYNC: the desktop shell reads it at launch",
+    "new": "  restart: 'This works now.', // FPS-VSYNC: the desktop shell reads it at launch",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-drawsFlat-kept-as-comment",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "function drawsFlat(key) { const t = tierOf(key); return t === 'live' || t === 'restart'; }",
+    "new": "function drawsFlat(key) { const t = tierOf(key); return t === 'live'; } // function drawsFlat(key) { const t = tierOf(key); return t === 'live' || t === 'restart'; }",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-sub-rail-counts-live-only",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (isSettingItem(item)) { if (!featureForControl('settings', item) && drawsHere(item, ctx.pause)) n++; }",
+    "new": "if (isSettingItem(item)) { if (!featureForControl('settings', item) && tierOf(item) === 'live') n++; }",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-shell-ask-kept-as-comment",
+    "file": "app/main.cjs",
+    "old": "for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);\n",
+    "new": "// for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);\n",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-restart-dot-grey",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".tier.restart { background: transparent; box-shadow: inset 0 0 0 1.5px var(--verdigris); }\n",
+    "new": "",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-pacer-never-installed",
+    "file": "src/main.js",
+    "old": "  installFramePacer();   // FPS-VSYNC: first",
+    "new": "  // installFramePacer();   // FPS-VSYNC: first",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-pacer-holds-its-own-frame",
+    "file": "src/systems/frameCap.js",
+    "old": "    take(stamp); // this frame is the slot: drawn, the next one booked\n    const batch = [...queue.values()];",
+    "new": "    const batch = [...queue.values()];",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-pacer-asks-at-the-slot",
+    "file": "src/systems/frameCap.js",
+    "old": "    const wait = fps() > 0 ? due() - PACER_LEAD_MS - now() : 0;",
+    "new": "    const wait = fps() > 0 ? due() - now() : 0;",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-pacer-cap-off-still-timed",
+    "file": "src/systems/frameCap.js",
+    "old": "    const wait = fps() > 0 ? due() - PACER_LEAD_MS - now() : 0;",
+    "new": "    const wait = due() - PACER_LEAD_MS - now();",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-pacer-one-ask-a-frame",
+    "file": "src/systems/frameCap.js",
+    "old": "    const batch = [...queue.values()];\n    queue.clear(); // a request made while the batch runs is the NEXT slot's",
+    "new": "    const [first] = queue.keys();\n    const batch = first == null ? [] : [queue.get(first)];\n    queue.delete(first); // a request made while the batch runs is the NEXT slot's",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-pacer-a-throw-stops-the-rest",
+    "file": "src/systems/frameCap.js",
+    "old": "    for (const cb of batch) {\n      try {\n        cb(stamp);\n      } catch (e) {\n        report(e);\n      }\n    } // one callback's throw is not the others'",
+    "new": "    for (const cb of batch) cb(stamp); // one callback's throw is not the others'",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-pacer-cancel-lost",
+    "file": "src/systems/frameCap.js",
+    "old": "      if (!queue.delete(id)) caf(id);",
+    "new": "      caf(id);",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-pacer-in-every-shell",
+    "file": "src/systems/frameCap.js",
+    "old": "  if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame !== 'function' || win.__framePacer)\n    return false;",
+    "new": "  if (!win?.daggerShell || typeof win.requestAnimationFrame !== 'function' || win.__framePacer) return false;",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-take-books-from-the-stamp",
+    "file": "src/systems/frameCap.js",
+    "old": "  state.due = state.due && stamp - state.due < interval ? state.due + interval : stamp + interval;",
+    "new": "  state.due = stamp + interval;",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-shell-tells-the-page-nothing",
+    "file": "app/preload.cjs",
+    "old": "  framesLifted: ipcRenderer.sendSync('dagger:frames-lifted') === true,",
+    "new": "  framesLifted: false,",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-shell-answers-the-setting-not-the-launch",
+    "file": "app/main.cjs",
+    "old": "ipcMain.on('dagger:frames-lifted', (e) => { e.returnValue = FRAME_SWITCHES.length > 0; });",
+    "new": "ipcMain.on('dagger:frames-lifted', (e) => { e.returnValue = frameRateSwitches(app.getPath('userData')).length > 0; });",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  },
+  {
+    "name": "FPS-VSYNC-launch-read-builds-a-store",
+    "file": "app/lib/frameRate.cjs",
+    "old": "    const raw = readPref(userDataRoot, SETTINGS_PREF);",
+    "new": "    const raw = require('./fileStorage.cjs').createFileStorage(userDataRoot).getItem(SETTINGS_PREF);",
+    "tests": [
+      "test/ui/settings/disc28e_vsync.test.js"
+    ]
+  }
+]

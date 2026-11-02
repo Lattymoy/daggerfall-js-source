@@ -1,0 +1,606 @@
+[
+  {
+    "name": "RAID4b-raid-set-in-the-world",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "    .filter((s) => !s.aetheric)",
+    "new": "    .filter((s) => !s.aetheric || s.raid === 2)",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-party-wrong-set",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "export const raidSetOf = (party) => Object.values(SIGIL_SETS).find((s) => 'raid' in s && s.raid === party) ?? null;",
+    "new": "export const raidSetOf = (party) =>\n  Object.values(SIGIL_SETS).find((s) => 'raid' in s && s.raid === (party + 1) % 3) ?? null;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-no-party-a-world-set",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "export const raidSetOf = (party) => Object.values(SIGIL_SETS).find((s) => 'raid' in s && s.raid === party) ?? null;",
+    "new": "export const raidSetOf = (party) => Object.values(SIGIL_SETS).find((s) => s.raid === party) ?? null;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-oath-part-left-out",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += oath.armor;",
+    "new": "    for (let p = 1; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += oath.armor;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-oath-wrong-stat",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    add(m().stats, 'willpower', oath.willpower);",
+    "new": "    add(m().stats, 'endurance', oath.willpower);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-keen-wrong-skill",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    add(m().skills, SKILLS.Archery, keen.archery);",
+    "new": "    add(m().skills, SKILLS.LongBlade, keen.archery);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-keen-wrong-stat",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    add(m().stats, 'agility', keen.agility);",
+    "new": "    add(m().stats, 'speed', keen.agility);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-hide-wrong-skill",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    add(m().skills, SKILLS.BluntWeapon, hide.blunt);",
+    "new": "    add(m().skills, SKILLS.Axe, hide.blunt);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-hide-wrong-stat",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    add(m().stats, 'endurance', hide.endurance);",
+    "new": "    add(m().stats, 'strength', hide.endurance);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-riposte-never-spent",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (keep) _s.riposteUntil = 0;\n  } // RAID4b: Riposte - the next blow alone",
+    "new": "  } // RAID4b: Riposte - the next blow alone",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-riposte-window-never-closes",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (oath?.[1] && now < _s.riposteUntil) {",
+    "new": "  if (oath?.[1] && _s.riposteUntil > 0) {",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-riposte-a-fall-arms",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (!blow) return; // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath",
+    "new": "  if (!blow) {\n    bloodied(entity);\n    return;\n  }",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-riposte-a-swallowed-blow-arms",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (before - after > 0) bloodied(entity); // RAID4b: Riposte, Blood for Blood",
+    "new": "  bloodied(entity); // RAID4b: Riposte, Blood for Blood",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-riposte-no-window",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (t.get('oath')?.[1]) _s.riposteUntil = now + RIPOSTE_SECONDS;",
+    "new": "  if (t.get('oath')?.[1]) _s.riposteUntil = now;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-riposte-two-pieces",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (t.get('oath')?.[1]) _s.riposteUntil = now + RIPOSTE_SECONDS;",
+    "new": "  if (t.get('oath')?.[0]) _s.riposteUntil = now + RIPOSTE_SECONDS;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-run-at-half",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (taker?.[1] && belowHalf(target)) pct += taker[1].more; // RAID4b: Run Them Down",
+    "new": "  if (taker?.[1] && target.health <= target.maxHealth / 2) pct += taker[1].more; // RAID4b: Run Them Down",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-run-my-health",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (taker?.[1] && belowHalf(target)) pct += taker[1].more; // RAID4b: Run Them Down",
+    "new": "  if (taker?.[1] && belowHalf(attacker)) pct += taker[1].more; // RAID4b: Run Them Down",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-the-last",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (d > reach || door.clear?.(feet, f.ai.feet) === false) continue;",
+    "new": "    if (d > MARK_METRES || door.clear?.(feet, f.ai.feet) === false) continue;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-the-killed",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M)\n      continue;",
+    "new": "    if (f.dead || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-reach-ignored",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    reach = MARK_METRES;",
+    "new": "    reach = Infinity;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-through-a-wall",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (d > reach || door.clear?.(feet, f.ai.feet) === false) continue;",
+    "new": "    if (d > reach) continue;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-an-ally",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M)\n      continue;",
+    "new": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-a-storey-up",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M)\n      continue;",
+    "new": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f)) continue;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-never-ends",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)",
+    "new": "export const markedFoe = (now = _now()) => (!(_s.marked?.health <= 0) ? (_s.marked ?? null) : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-no-bonus",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (taker?.[2] && markedFoe(now) === target) pct += taker[2].more; // RAID4b: No Escape",
+    "new": "  if (taker?.[2] && markedFoe(now) === target) pct += 0; // RAID4b: No Escape",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-four-pieces",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (t.get('thieftaker')?.[2]) markNext(door, entity, now);",
+    "new": "  if (t.get('thieftaker')?.[1]) markNext(door, entity, now);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mark-unsaid",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  say('No Escape! The nearest enemy is marked.');\n  sound('mark');\n}",
+    "new": "}",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-blood-no-cap",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    _s.blood = Math.min(BLOOD_STACKS, bloodStacks(now) + 1);",
+    "new": "    _s.blood = bloodStacks(now) + 1;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-blood-window-from-first",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    _s.bloodUntil = now + BLOOD_SECONDS;",
+    "new": "    if (!bloodStacks(now)) _s.bloodUntil = now + BLOOD_SECONDS;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-blood-no-share",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (orcs?.[1]) pct += orcs[1].stack * bloodStacks(now); // RAID4b: Blood for Blood",
+    "new": "  if (orcs?.[1]) pct += orcs[1].stack; // RAID4b: Blood for Blood",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-hold-at-half",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (hold && d > 0 && belowHalf(entity)) {",
+    "new": "  if (hold && d > 0 && entity.health <= entity.maxHealth / 2) {",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-hold-carry-dropped",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    _holdOwed = owed - cut;\n    d -= cut;",
+    "new": "    d -= cut;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-hold-four-pieces",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  const hold = tierOf(entity, 'oath', 2);",
+    "new": "  const hold = tierOf(entity, 'oath', 1) && { less: 10 };",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-ward-no-recovery",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (hide && now >= _s.wardReady) {",
+    "new": "  if (hide) {",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-ward-stacked",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    _s.ward = hide.ward;",
+    "new": "    _s.ward += hide.ward;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-ward-never-spent",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    _s.ward -= took;\n    d -= took;",
+    "new": "    d -= took;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-ward-asleep",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (_s.ward > 0 && d > 0 && tierOf(entity, 'orcsbane', 2)) {",
+    "new": "  if (_s.ward > 0 && d > 0) {",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-ward-never-ready",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    at: () => _s.wardReady,",
+    "new": "    at: () => Infinity,",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-chip-ward-time",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    if (st.ward) out.push({ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: String(st.ward), state: 'active' });",
+    "new": "    if (st.ward) out.push({ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: time(st.ward), state: 'active' });",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-chip-mark-four",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (t.get('thieftaker')?.[2] && st.markLeft)",
+    "new": "  if (t.get('thieftaker')?.[1] && st.markLeft)",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-chip-ward-four",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (t.get('orcsbane')?.[2]) {",
+    "new": "  if (t.get('orcsbane')?.[1]) {",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-affix-at-top",
+    "file": "src/systems/aetheric.js",
+    "old": "const floor = (id) => AFFIX_RANGES[id].legendary[0];",
+    "new": "const floor = (id) => AFFIX_RANGES[id].legendary[1];",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-weapon-top-blow",
+    "file": "src/systems/aetheric.js",
+    "old": "export const RAID_SET_POWER = SIGIL_BANDS.legendary[0];",
+    "new": "export const RAID_SET_POWER = SIGIL_POWER_MAX;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-wrong-make",
+    "file": "src/systems/aetheric.js",
+    "old": "const oath = raidRec('oath', 'Mithril')",
+    "new": "const oath = raidRec('oath', 'Daedric')",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mint-make-ignored",
+    "file": "src/systems/aetheric.js",
+    "old": "    ? createWeapon(r.templateIndex, aethericMaterial(r))",
+    "new": "    ? createWeapon(r.templateIndex, WEAPON_MATERIALS.Daedric)",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-mint-regalia-blow",
+    "file": "src/systems/aetheric.js",
+    "old": "{ power: r.power, set: r.set, party, xp: 0 }",
+    "new": "{ power: SIGIL_POWER_MAX, set: r.set, party, xp: 0 }",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-lookup-regalia-only",
+    "file": "src/systems/aetheric.js",
+    "old": "export const aethericById = (id) => AETHERIC_RECORDS.find((r) => r.id === id) ?? null;",
+    "new": "export const aethericById = (id) => REGALIA.find((r) => r.id === id) ?? null;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-wire-raid-sigil-on-rare",
+    "file": "src/systems/aetheric.js",
+    "old": "if (setById(s.set)?.aetheric && item.rarity !== AETHERIC) return null;",
+    "new": "if (s.set === REGALIA_SET && item.rarity !== AETHERIC) return null;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-wire-make-unchecked",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (item.material !== aethericMaterial(r)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-wire-another-set",
+    "file": "src/systems/aetheric.js",
+    "old": "    if (item.sigil?.set !== undefined && item.sigil.set !== r.set) return null;   // RAID4b: its own set, never another's\n",
+    "new": "",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-roll-chance-inverted",
+    "file": "src/systems/aetheric.js",
+    "old": "if (!recs.length || !(rolls() < RAID_SET_CHANCE)) return null;",
+    "new": "if (!recs.length || rolls() < RAID_SET_CHANCE) return null;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-roll-another-party",
+    "file": "src/systems/aetheric.js",
+    "old": "export const raidSetPieces = (party) => { const set = raidSetOf(party);",
+    "new": "export const raidSetPieces = (party) => { const set = raidSetOf(Number.isInteger(party) ? (party + 1) % 3 : party);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-roll-last-unreachable",
+    "file": "src/systems/aetheric.js",
+    "old": "return mintAetheric(recs[Math.min(recs.length - 1, Math.floor(rolls() * recs.length))]);",
+    "new": "return mintAetheric(recs[Math.min(recs.length - 2, Math.floor(rolls() * recs.length))]);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-roll-no-party-rolls",
+    "file": "src/systems/aetheric.js",
+    "old": "if (!recs.length || !(rolls() < RAID_SET_CHANCE)) return null;",
+    "new": "if (!(rolls() < RAID_SET_CHANCE) || !recs.length) return null;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-spoils-gold-per-level",
+    "file": "src/systems/raidSpoils.js",
+    "old": "  const gold = Math.round(RAID_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()) * (held ? RAID_HELD_GOLD_X : 1));",
+    "new": "  const gold = Math.round(RAID_SPOILS_GOLD_PER_LEVEL * (0.8 + 0.4 * rolls()) * (held ? RAID_HELD_GOLD_X : 1));",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-spoils-unknown",
+    "file": "src/systems/raidSpoils.js",
+    "old": "  item.isIdentified = true;\n  const pieces = [{ item, tier: item.rarity ?? tier }]; // a Legendary with no record for its kind falls to Rare: read back off the item",
+    "new": "  const pieces = [{ item, tier: item.rarity ?? tier }]; // a Legendary with no record for its kind falls to Rare: read back off the item",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-spoils-set-first",
+    "file": "src/systems/raidSpoils.js",
+    "old": "  if (set) pieces.push({ item: set, tier: set.rarity });",
+    "new": "  if (set) pieces.unshift({ item: set, tier: set.rarity });",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-spoils-party-ignored",
+    "file": "src/systems/raidSpoils.js",
+    "old": "  const set = rollRaidSetPiece(party, rolls); // LAST: every thanks before it stays what it was for its seed",
+    "new": "  const set = rollRaidSetPiece(0, rolls); // LAST: every thanks before it stays what it was for its seed",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-spoils-common",
+    "file": "src/systems/raidSpoils.js",
+    "old": "  applyRarity(item, tier, rolls);",
+    "new": "  applyRarity(item, 'common', rolls);",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-pool-keys-ignored",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "  const STORE_KEY = keys.store, DAY_KEY = keys.day;",
+    "new": "  const STORE_KEY = SPOILS_KEYS.store, DAY_KEY = SPOILS_KEYS.day;",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-pool-roll-ignored",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
+    "new": "const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ],
+    "note": "SD9e (PIN MOVED): the burst's line takes a pool's own roll too - re-aimed by content to the grant's."
+  },
+  {
+    "name": "RAID4b-pool-gate-words",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      say(text);\n",
+    "new": "      say(SPOILS_TEXT.granted);\n",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-recover-key-ignored",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "  try { v = store.get(key); } catch { v = null; }",
+    "new": "  try { v = store.get(SPOILS_STORE_KEY); } catch { v = null; }",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-world-receipt-never-granted",
+    "file": "src/scenes/world.js",
+    "old": "    onSpoils: (entry) => grantRaidSpoils(entry),",
+    "new": "    onSpoils: () => {},",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-world-gate-keys",
+    "file": "src/scenes/world.js",
+    "old": "store: _spoilsStore, who: () => characterIdOf(playerEntity), keys: RAID_SPOILS_KEYS,",
+    "new": "store: _spoilsStore, who: () => characterIdOf(playerEntity),",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-world-save-never-clears",
+    "file": "src/scenes/world.js",
+    "old": "  onSlotSaved((characterId) => { try { raidSpoils.saved(characterId); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } });   // RAID4b\n",
+    "new": "",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  },
+  {
+    "name": "RAID4b-world-crash-door-unasked",
+    "file": "src/scenes/world.js",
+    "old": "onHanded: (rec) => raidSpoils.adopt(rec), key: RAID_SPOILS_KEYS.store",
+    "new": "onHanded: (rec) => raidSpoils.adopt(rec)",
+    "tests": [
+      "test/systems/raid4b_sets.test.js"
+    ]
+  }
+]

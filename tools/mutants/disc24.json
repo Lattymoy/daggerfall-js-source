@@ -1,0 +1,305 @@
+[
+  {
+    "name": "D24A-click-keeps-the-box",
+    "file": "src/ui/chargen.js",
+    "old": "    if (this.classConfirm && idx !== this.classListIndex) this.classConfirm = null;\n",
+    "new": "",
+    "tests": [
+      "test/ui/disc24a_class_describe.test.js"
+    ]
+  },
+  {
+    "name": "D24A-same-row-closes-too",
+    "file": "src/ui/chargen.js",
+    "old": "if (this.classConfirm && idx !== this.classListIndex) this.classConfirm = null;",
+    "new": "if (this.classConfirm) this.classConfirm = null;",
+    "tests": [
+      "test/ui/disc24a_class_describe.test.js"
+    ]
+  },
+  {
+    "name": "D24A-stage-bypasses-the-door",
+    "file": "src/ui/chargen.js",
+    "old": "if (hit.setClass != null) { this._selectClassRow(hit.setClass); return true; }",
+    "new": "if (hit.setClass != null) { this.classListIndex = hit.setClass; return true; }",
+    "tests": [
+      "test/ui/disc24a_class_describe.test.js"
+    ]
+  },
+  {
+    "name": "D24A-pointer-bypasses-the-door",
+    "file": "src/ui/chargen.js",
+    "old": "    this._selectClassRow(idx);   // MouseClick moves the LIST's selection",
+    "new": "    this.classListIndex = idx;   // MouseClick moves the LIST's selection",
+    "tests": [
+      "test/ui/disc24a_class_describe.test.js"
+    ]
+  },
+  {
+    "name": "D24B-horse-borrowed-again",
+    "file": "src/systems/item/itemTemplates.js",
+    "old": "const BORROWED_ART_INDICES = new Set(\n  (GROUP_TEMPLATE_INDICES.Transportation ?? []).filter((i) => i !== TRANSPORT_HORSE),\n);",
+    "new": "const BORROWED_ART_INDICES = new Set((GROUP_TEMPLATE_INDICES.Transportation ?? []).filter(() => true));",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-cart-has-no-model",
+    "file": "src/systems/item/itemTemplates.js",
+    "old": "  if (item?.templateIndex === TRANSPORT_SMALL_CART) return WAGON_KINDS[wagonKindOf(item)].icon;\n  return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ],
+    "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - the cart's model map was unreachable past WAGONS1's arm and went; the arm is the cart's model now."
+  },
+  {
+    "name": "D24B-classic-drawer-no-fallback",
+    "file": "src/ui/item/itemScroller.js",
+    "old": "if (!img || !img.archive) return drawModelPicture(renderer, m, it, rect, slot);",
+    "new": "if (!img || !img.archive) return false;",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-picture-uploaded-mipped",
+    "file": "src/ui/item/itemScroller.js",
+    "old": "renderer.uploadTexture(MODEL_ICON_ARCHIVE, id, pic, { mips: false })",
+    "new": "renderer.uploadTexture(MODEL_ICON_ARCHIVE, id, pic, {})",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-picture-not-color32-order",
+    "file": "src/ui/modelIcon.js",
+    "old": "    colors.set(rgba.subarray(from, from + cw * 4), (ch - 1 - y) * cw * 4);",
+    "new": "    colors.set(rgba.subarray(from, from + cw * 4), y * cw * 4);",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-texture-read-top-down",
+    "file": "src/ui/modelIcon.js",
+    "old": "            const ti = ((tex.height - 1 - rowTop) * tex.width + col) * 4; // color32: row 0 is the texture's bottom",
+    "new": "            const ti = (rowTop * tex.width + col) * 4; // color32: row 0 is the texture's bottom",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-v-sign-dropped",
+    "file": "src/ui/modelIcon.js",
+    "old": "            const v = -(w0 * uvs[a * 2 + 1] + w1 * uvs[b * 2 + 1] + w2 * uvs[c * 2 + 1]); // meshReader stores -(V / height)",
+    "new": "            const v = w0 * uvs[a * 2 + 1] + w1 * uvs[b * 2 + 1] + w2 * uvs[c * 2 + 1]; // meshReader stores -(V / height)",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-no-depth-test",
+    "file": "src/ui/modelIcon.js",
+    "old": "          if (z <= depth[o]) continue; // the nearer face wins: z grows toward the viewer\n          depth[o] = z;",
+    "new": "          depth[o] = z;",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-no-crop",
+    "file": "src/ui/modelIcon.js",
+    "old": "  const cw = bx1 - bx0 + 1,\n    ch = by1 - by0 + 1;",
+    "new": "  const cw = w,\n    ch = w;\n  bx0 = 0;\n  by0 = 0;",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-unlit",
+    "file": "src/ui/modelIcon.js",
+    "old": "      const shade = ICON_AMBIENT + (1 - ICON_AMBIENT) * Math.abs((nx * L[0] + ny * L[1] + nz * L[2]) / (nl * ll));",
+    "new": "      const shade = 1 + 0 * Math.abs((nx * L[0] + ny * L[1] + nz * L[2]) / (nl * ll));",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-second-list-never-woken",
+    "file": "src/ui/modelIcon.js",
+    "old": "    if (onReady) waiting.push(onReady);\n    return null;",
+    "new": "    return null;",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-miss-asked-again",
+    "file": "src/ui/modelIcon.js",
+    "old": "        _pictures.set(id, pic);",
+    "new": "        if (pic) _pictures.set(id, pic);",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-line-carries-no-model",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "model: img ? null : inventoryItemModel(item),",
+    "new": "model: null,",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24B-enhanced-door-no-model",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (line.model != null) return requestModelIconUrl(line.model, { scale, onReady });\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
+    ]
+  },
+  {
+    "name": "D24C-self-judged-still",
+    "file": "src/render/shadowPass.js",
+    "old": "const moving = b._dyn === true || b.selfCard === true || b._shIdler === true || (",
+    "new": "const moving = b._dyn === true || b._shIdler === true || (",
+    "tests": [
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "D24C-self-into-every-lamp",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (lightPos && b.selfCard && !self) continue;   // DISC24-C: the player's own card, only where it is redrawn every frame\n",
+    "new": "",
+    "tests": [
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "D24C-self-faces-the-lamp",
+    "file": "src/render/shadowPass.js",
+    "old": "if (perBatchRight && b.selfCard) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "D24C-rank-fall-with-a-walker-waits-for-cadence",
+    "file": "src/render/shadowPass.js",
+    "old": "(dueDyn || staticStale || !this._slotLiveDyn[k] || selfMoved)",
+    "new": "(dueDyn || staticStale || !this._slotLiveDyn[k])",
+    "tests": [
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "D24C-far-lamp-redrawn-for-self",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (b.selfCard && !self) continue;   // DISC24-C: the player's own card is no reason to redraw a map it will not be drawn into\n",
+    "new": "",
+    "tests": [
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "D24C-eotb-card-unflagged",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "          batch.selfCard = grow === 1;",
+    "new": "          batch.selfCard = false;",
+    "tests": [
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "D24D-no-lift",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const lifted = liftZeroedStats(entity);",
+    "new": "  const lifted = [];\n  void liftZeroedStats;",
+    "tests": [
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "D24D-living-release-hands-over-the-zero",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const lifted = liftZeroedStats(entity);",
+    "new": "  const lifted = dead || force ? liftZeroedStats(entity) : [];",
+    "tests": [
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "D24D-lift-cures-whole",
+    "file": "src/systems/deathRespawn.js",
+    "old": "      if (live >= target) {\n        hold.set(-(live - target));\n        break;\n      } // give back all but the lift",
+    "new": "      if (live >= target) break; // give back all but the lift",
+    "tests": [
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "D24D-diseases-not-eased",
+    "file": "src/systems/deathRespawn.js",
+    "old": "    if (a?.kind === 'disease' && a.statMods)",
+    "new": "    if (false)",
+    "tests": [
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "D24D-drains-not-eased",
+    "file": "src/systems/deathRespawn.js",
+    "old": "    if ((a?.kind === 'drainAttribute' || a?.kind === 'transferAttribute') && a.stat === stat)",
+    "new": "    if (false)",
+    "tests": [
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "D24D-lift-to-one",
+    "file": "src/systems/deathRespawn.js",
+    "old": "    const target = respawnHealth(permanent);",
+    "new": "    const target = 1;",
+    "tests": [
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
+    ]
+  }
+]

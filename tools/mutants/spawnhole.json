@@ -1,0 +1,10 @@
+[
+  {
+    "name": "SPAWN-HOLE-the-world-lane-gone",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "  if (!inBay(px, py)) {\n    if (salt !== WORLD_SALT || !inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);\n    return worldLaneMapId(SPAWN_WORLD_LANE, px, py);\n  }\n",
+    "new": "",
+    "note": "SPAWN-WORLD re-aimed: the guard SPAWN-HOLE stood in spawnGroundPlace.js spawnAt is gone - the law that keeps the build from throwing past the Bay is the spawn's own id there.",
+    "tests": ["test/world/spawnhole.test.js"]
+  }
+]

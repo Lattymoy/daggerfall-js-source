@@ -1,0 +1,29 @@
+[
+  {
+    "name": "BAL8-the-rival-backstabbed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (rival) { rival._backFacing = false; live.push(rival); }",
+    "new": "    if (rival) { rival._backFacing = foeDeps.isBackFacing(rival.ai.yaw, rival.ai.feet, playerFeet); live.push(rival); }",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  },
+  {
+    "name": "BAL8-the-rivals-shaft-from-behind",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet: null,",
+    "new": "playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet,",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  },
+  {
+    "name": "PVP-HIT-the-share",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "export const PVP_HIT = Object.freeze({ share: 0.34 });",
+    "new": "export const PVP_HIT = Object.freeze({ share: 0.5 });",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  }
+]

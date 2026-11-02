@@ -1,0 +1,228 @@
+[
+  {
+    "name": "FH-stand-run-left",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  if (f.ai) f.ai.fleeLeft = 0; // FEUD HARNESS: its run over too, as a kneel's - risen mid-flight it ran on untargeted, never cornered nor escaped",
+    "new": "  // FEUD HARNESS: its run over too, as a kneel's - risen mid-flight it ran on untargeted, never cornered nor escaped",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-band-unstood",
+    "file": "tools/tellDuel.mjs",
+    "old": "    const kin = band ? bandMembers(r, FEUD_ME.level).map((m) => standKin(m, ai.feet, ai.yaw, r.id, rand)) : []; // RVN6: its band about it as it stands",
+    "new": "    const kin = []; // RVN6: its band about it as it stands",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-ring-moved",
+    "file": "tools/tellDuel.mjs",
+    "old": "    d = 1 + rand() * (BAND_SPACING - 1);",
+    "new": "    d = rand() * BAND_SPACING;",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-kin-unnamed",
+    "file": "tools/tellDuel.mjs",
+    "old": "  entity.retinueOf = id;\n  const a = rand() * Math.PI * 2,",
+    "new": "  const a = rand() * Math.PI * 2,",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-kin-unstepped",
+    "file": "tools/tellDuel.mjs",
+    "old": "        g.atk.update(DT, g.ai, p);\n        if (g.atk.swingSeq !== g.swings) {",
+    "new": "        if (g.atk.swingSeq !== g.swings) {",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-swings-uncounted",
+    "file": "tools/tellDuel.mjs",
+    "old": "          if (!g.atk.firedRanged) out.bandSwings++;\n        } // a plain swing at me (its damage is my health's - not modelled)",
+    "new": "        } // a plain swing at me (its damage is my health's - not modelled)",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-dodger-blind",
+    "file": "tools/tellDuel.mjs",
+    "old": "      const blows = [blow, ...kin.map((g) => g.blow)].filter(Boolean);",
+    "new": "      const blows = [blow].filter(Boolean);",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-flight-unasked",
+    "file": "tools/tellDuel.mjs",
+    "old": "        flight && (f.fleeing || (!f._fleeRolled && RV.revenantFleeHealth(ent))) ? RV.revenantFleeStep(f, p) : null;",
+    "new": "        false && (f.fleeing || (!f._fleeRolled && RV.revenantFleeHealth(ent))) ? RV.revenantFleeStep(f, p) : null;",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-escape-unread",
+    "file": "tools/tellDuel.mjs",
+    "old": "      if (run === 'escape') return done('fled');\n      if (run === 'start') {",
+    "new": "      if (run === 'start') {",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-unscattered",
+    "file": "tools/tellDuel.mjs",
+    "old": "        scatter();\n      }",
+    "new": "      }",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-scatter-never-gone",
+    "file": "tools/tellDuel.mjs",
+    "old": "          if (!(g.ai.fleeLeft > 0)) {\n            g.gone = true;\n            releaseTactics(g.ai);\n            out.bandGone++;\n          }\n          continue;",
+    "new": "          continue;",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-chase-walk",
+    "file": "tools/tellDuel.mjs",
+    "old": "        const k = Math.min((chasing ? runner : WALK) * DT, d - (REACH - CLOSE)) / d;",
+    "new": "        const k = Math.min(WALK * DT, d - (REACH - CLOSE)) / d;",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-let-go-chases",
+    "file": "tools/tellDuel.mjs",
+    "old": "        (chase || !chasing) &&\n        !(mode === 'dodge' && blows.some((lb) => T < lb.land + CLASSIC_UPDATE_INTERVAL))",
+    "new": "        !(mode === 'dodge' && blows.some((lb) => T < lb.land + CLASSIC_UPDATE_INTERVAL))",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-running-strikes",
+    "file": "tools/tellDuel.mjs",
+    "old": "      if (run !== 'start' && run !== 'run') atk.update(DT, ai, p); // running, it strikes nothing (the pools' `continue`)",
+    "new": "      atk.update(DT, ai, p); // running, it strikes nothing (the pools' `continue`)",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-stood-running-uncounted",
+    "file": "tools/tellDuel.mjs",
+    "old": "          if (f.fleeing) out.stoodInFlight = true;\n          const ev = FATE.beginLastStand(FEUD_ME, f, {",
+    "new": "          const ev = FATE.beginLastStand(FEUD_ME, f, {",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-caught-uncounted",
+    "file": "tools/tellDuel.mjs",
+    "old": "        caught: end !== 'fled' && !!f.fleeing,",
+    "new": "        caught: false,",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js",
+      "test/systems/revenant/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FH-rally-unasked",
+    "file": "tools/tellDuel.mjs",
+    "old": "          if (band && ev && (ent.revenant.rank | 0) >= 5) rally(); // the pools' word: its rank-5 rally rides its stand's card (no band, none)",
+    "new": "          // the pools' word: its rank-5 rally rides its stand's card (no band, none)",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-rally-without-band",
+    "file": "tools/tellDuel.mjs",
+    "old": "          if (band && ev && (ent.revenant.rank | 0) >= 5) rally(); // the pools' word: its rank-5 rally rides its stand's card (no band, none)",
+    "new": "          if (ev && (ent.revenant.rank | 0) >= 5) rally(); // the pools' word: its rank-5 rally rides its stand's card (no band, none)",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-portal-unopened",
+    "file": "tools/tellDuel.mjs",
+    "old": "      for (const m of bandMembers(RV.revenantById(r.id), FEUD_ME.level, RALLY_KIN)) {\n        kin.push(standKin(m, ai.feet, ai.yaw, r.id, rand));\n        out.portal++;\n      }\n    };",
+    "new": "    };",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-portal-count",
+    "file": "tools/tellDuel.mjs",
+    "old": "      for (const m of bandMembers(RV.revenantById(r.id), FEUD_ME.level, RALLY_KIN)) {",
+    "new": "      for (const m of bandMembers(RV.revenantById(r.id), FEUD_ME.level, RALLY_KIN + 1)) {",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-rally-scattered-counted",
+    "file": "tools/tellDuel.mjs",
+    "old": "      const live = kin.filter(standing);",
+    "new": "      const live = kin.filter((g) => !g.dead && !g.gone);",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-band-first-unread",
+    "file": "tools/tellDuel.mjs",
+    "old": "      const prey =\n        order === 'band'\n          ? (kin\n              .filter(standing)\n              .sort(\n                (a, b) =>\n                  Math.hypot(a.ai.feet[0] - p[0], a.ai.feet[2] - p[2]) -\n                  Math.hypot(b.ai.feet[0] - p[0], b.ai.feet[2] - p[2]),\n              )[0] ?? null)\n          : null;",
+    "new": "      const prey = false\n        ? (kin\n            .filter(standing)\n            .sort(\n              (a, b) =>\n                Math.hypot(a.ai.feet[0] - p[0], a.ai.feet[2] - p[2]) -\n                Math.hypot(b.ai.feet[0] - p[0], b.ai.feet[2] - p[2]),\n            )[0] ?? null)\n        : null;",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-slain-standing",
+    "file": "tools/tellDuel.mjs",
+    "old": "          prey.dead = true;\n          releaseTactics(prey.ai);",
+    "new": "          releaseTactics(prey.ai);",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-cell-fled-dropped",
+    "file": "tools/tellDuel.mjs",
+    "old": "    fled: n('fled'),\n    flights: rows.filter((x) => x.flight).length,",
+    "new": "    flights: rows.filter((x) => x.flight).length,",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  },
+  {
+    "name": "FH-beside-unmeasured",
+    "file": "tools/tellDuel.mjs",
+    "old": "  for (const rank of [3, 5])",
+    "new": "  for (const rank of [])",
+    "tests": [
+      "test/systems/revenant/feudharness.test.js"
+    ]
+  }
+]

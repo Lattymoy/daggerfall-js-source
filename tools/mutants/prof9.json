@@ -1,0 +1,1551 @@
+[
+  {
+    "name": "PROF9-stew-tier-two",
+    "file": "src/net/recipeLaw.js",
+    "old": "    templateIndex: 685,\n    tier: 1,",
+    "new": "    templateIndex: 685,\n    tier: 2,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-feast-tier-five",
+    "file": "src/net/recipeLaw.js",
+    "old": "    tier: 6,",
+    "new": "    tier: 5,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-stew-template-elsewhere",
+    "file": "src/net/recipeLaw.js",
+    "old": "    templateIndex: 685,",
+    "new": "    templateIndex: 684,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-stew-one-meat",
+    "file": "src/net/recipeLaw.js",
+    "old": "    inputs: Object.freeze([Object.freeze(['food:meat', 2]), Object.freeze(['food:mushroom', 1])]),",
+    "new": "    inputs: Object.freeze([Object.freeze(['food:meat', 1]), Object.freeze(['food:mushroom', 1])]),",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-supper-of-meat",
+    "file": "src/net/recipeLaw.js",
+    "old": "    inputs: Object.freeze([Object.freeze(['food:fish', 2]), Object.freeze(['food:egg', 1])]),",
+    "new": "    inputs: Object.freeze([Object.freeze(['food:meat', 2]), Object.freeze(['food:egg', 1])]),",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-tart-of-oranges",
+    "file": "src/net/recipeLaw.js",
+    "old": "    inputs: Object.freeze([Object.freeze(['food:apple', 2]), Object.freeze(['food:egg', 1])]),",
+    "new": "    inputs: Object.freeze([Object.freeze(['food:orange', 2]), Object.freeze(['food:egg', 1])]),",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-feast-one-egg",
+    "file": "src/net/recipeLaw.js",
+    "old": "      Object.freeze(['food:egg', 2]),",
+    "new": "      Object.freeze(['food:egg', 1]),",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-stew-raises-strength",
+    "file": "src/net/recipeLaw.js",
+    "old": "    effect: Object.freeze({ stats: Object.freeze({ endurance: 5 }), minutes: 120 }),",
+    "new": "    effect: Object.freeze({ stats: Object.freeze({ strength: 5 }), minutes: 120 }),",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-supper-an-hour",
+    "file": "src/net/recipeLaw.js",
+    "old": "    effect: Object.freeze({ stats: Object.freeze({ agility: 5 }), minutes: 120 }),",
+    "new": "    effect: Object.freeze({ stats: Object.freeze({ agility: 5 }), minutes: 60 }),",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-tart-two-hours",
+    "file": "src/net/recipeLaw.js",
+    "old": "    effect: Object.freeze({ stamina: 20, minutes: 240 }),",
+    "new": "    effect: Object.freeze({ stamina: 20, minutes: 120 }),",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-feast-no-party",
+    "file": "src/net/recipeLaw.js",
+    "old": "      party: true,",
+    "new": "      party: false,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-feast-half-a-day",
+    "file": "src/net/recipeLaw.js",
+    "old": "      minutes: 1440,",
+    "new": "      minutes: 720,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-northern-herb-southern",
+    "file": "src/net/recipeLaw.js",
+    "old": "      : [dishRecipe(d, 'north', `p1:${d.herb}`, 'northern'), dishRecipe(d, 'south', `p2:${d.herb}`, 'southern')],",
+    "new": "      : [dishRecipe(d, 'north', `p2:${d.herb}`, 'northern'), dishRecipe(d, 'south', `p2:${d.herb}`, 'southern')],",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-dish-no-rank",
+    "file": "src/net/recipeLaw.js",
+    "old": "    rank: TIER_RANKS[d.tier - 1],",
+    "new": "    rank: 0,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-dish-family-furniture",
+    "file": "src/net/recipeLaw.js",
+    "old": "    family: 'dishes',",
+    "new": "    family: 'furniture',",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-dish-a-garment",
+    "file": "src/net/recipeLaw.js",
+    "old": "    kind: 'dish',",
+    "new": "    kind: 'garment',",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-recipes-no-dishes",
+    "file": "src/net/recipeLaw.js",
+    "old": "  ...COOKING_RECIPES,\n  ...JEWELCRAFTING_RECIPES,",
+    "new": "  ...JEWELCRAFTING_RECIPES,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-dish-takes-quality",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
+    "new": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-cook-no-second-serving",
+    "file": "src/net/recipeLaw.js",
+    "old": "  (r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === COOK) ? 2 : 1;",
+    "new": "  (r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === 'chef') ? 2 : 1;",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-provisioner-a-chef",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (spec100 === PROVISIONER) return HAND_PROVISIONER;",
+    "new": "  if (spec100 === PROVISIONER) return HAND_CHEF;",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-chef-every-dish",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (spec100 === CHEF && dishOf(r.id)?.effect.party === true) return HAND_CHEF;",
+    "new": "  if (spec100 === CHEF) return HAND_CHEF;",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-chef-quarter-more",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const CHEF_FEAST = 1.5;",
+    "new": "export const CHEF_FEAST = 1.25;",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-chef-hand-ignored",
+    "file": "src/net/recipeLaw.js",
+    "old": "  d?.effect.party === true && hand === HAND_CHEF ? Math.round(d.effect.minutes * CHEF_FEAST) : (d?.effect.minutes ?? 0);",
+    "new": "  d?.effect.party === true && hand === HAND_PROVISIONER\n    ? Math.round(d.effect.minutes * CHEF_FEAST)\n    : (d?.effect.minutes ?? 0);",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-endurance-subtype-wrong",
+    "file": "src/net/recipeLaw.js",
+    "old": "  endurance: 4,",
+    "new": "  endurance: 6,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-dish-level-twenty",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const DISH_LEVEL = 30;",
+    "new": "export const DISH_LEVEL = 20;",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-duration-wrong-level",
+    "file": "src/net/recipeLaw.js",
+    "old": "      durationMod: Math.round(minutes / DISH_LEVEL),",
+    "new": "      durationMod: Math.round(minutes / 20),",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-magnitude-rolls",
+    "file": "src/net/recipeLaw.js",
+    "old": "      magnitudeBaseHigh: n,",
+    "new": "      magnitudeBaseHigh: n + 1,",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-spell-not-magic",
+    "file": "src/net/recipeLaw.js",
+    "old": "    element: 4,",
+    "new": "    element: 0,",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-feast-text-alone",
+    "file": "src/net/recipeLaw.js",
+    "old": "  return `${list} +${Object.values(d.effect.stats)[0]} for ${span}${d.effect.party ? ', for the whole party at your table' : ''}`;",
+    "new": "  return `${list} +${Object.values(d.effect.stats)[0]} for ${span}`;",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-four-pans",
+    "file": "src/net/recipeLaw.js",
+    "old": "  pans: 3,",
+    "new": "  pans: 4,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-feast-three",
+    "file": "src/net/recipeLaw.js",
+    "old": "  feastPans: 5,",
+    "new": "  feastPans: 3,",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-burns-slower",
+    "file": "src/net/recipeLaw.js",
+    "old": "  burnS: 3.0,",
+    "new": "  burnS: 4.0,",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-window-lower",
+    "file": "src/net/recipeLaw.js",
+    "old": "  lo: 0.6,",
+    "new": "  lo: 0.5,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-window-wider",
+    "file": "src/net/recipeLaw.js",
+    "old": "  w: 0.12,",
+    "new": "  w: 0.15,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-master-no-wider",
+    "file": "src/net/recipeLaw.js",
+    "old": "  w: 0.12,\n  masterWiden: 0.5,",
+    "new": "  w: 0.12,\n  masterWiden: 0,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-skillet-nothing",
+    "file": "src/net/recipeLaw.js",
+    "old": "  skillet: 1.5,",
+    "new": "  skillet: 1,",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-no-gap",
+    "file": "src/net/recipeLaw.js",
+    "old": "  paceHi: 1.2,\n  gapS: 0.3,",
+    "new": "  paceHi: 1.2,\n  gapS: 0,",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-band-intelligence-twice",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const panBand = ({ intelligence, personality }) => actBand(Math.trunc((intelligence + personality) / 2));",
+    "new": "export const panBand = ({ intelligence, personality }) => actBand(Math.trunc((intelligence + intelligence) / 2));",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-feast-three-pans",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const panCount = (r) => (dishOf(r?.id ?? '')?.effect.party === true ? PAN_ACT.feastPans : PAN_ACT.pans);",
+    "new": "export const panCount = (r) => (dishOf(r?.id ?? '')?.effect.party === true ? PAN_ACT.pans : PAN_ACT.pans);",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-done-at-burnt",
+    "file": "src/net/recipeLaw.js",
+    "old": "  return [PAN_ACT.lo, Math.min(0.95, PAN_ACT.lo + w)];",
+    "new": "  return [PAN_ACT.lo, Math.min(1, PAN_ACT.lo + w)];",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-cook-xp-tier-one",
+    "file": "src/net/recipeLaw.js",
+    "old": "  const xp = CRAFT_XP_PER_TIER * topTierOf(rank);",
+    "new": "  const xp = CRAFT_XP_PER_TIER * 1;",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-cook-clean-nothing",
+    "file": "src/net/recipeLaw.js",
+    "old": "  const n = (clean ? 1 : 0) + (Number.isSafeInteger(steps) && steps > 0 ? steps : 0);",
+    "new": "  const n = 0 + (Number.isSafeInteger(steps) && steps > 0 ? steps : 0);",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "PROF12 (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "PROF9-lines-keep-unsaid",
+    "file": "src/net/recipeLaw.js",
+    "old": "    if (item.noRot === true) out.push('Never spoils');\n    if (typeof item.maker === 'string' && item.maker) out.push(`Cooked by ${item.maker}`);",
+    "new": "    if (typeof item.maker === 'string' && item.maker) out.push(`Cooked by ${item.maker}`);",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-lines-chef-unsaid",
+    "file": "src/net/recipeLaw.js",
+    "old": "    const out = [dishEffectText(dishOf(item.recipe), item.chef === true ? HAND_CHEF : null)];",
+    "new": "    const out = [dishEffectText(dishOf(item.recipe), null)];",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-record-drops-hand",
+    "file": "src/net/productRecord.js",
+    "old": "    ...(f == null ? {} : { f }),",
+    "new": "    ...{},",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-record-reads-any-hand",
+    "file": "src/net/productRecord.js",
+    "old": "  if (c.f !== undefined && !handOk(r, c.f)) return false; // PROF9: a dish's cook's hand; PROF10: a jeweller's\n  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false; // CRAFT-PROCS: the mint's version",
+    "new": "  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false; // CRAFT-PROCS: the mint's version",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-record-chef-any-dish",
+    "file": "src/net/productRecord.js",
+    "old": "  return f === HAND_PROVISIONER || (f === HAND_CHEF && dishOf(r.id)?.effect.party === true);",
+    "new": "  return f === HAND_PROVISIONER || f === HAND_CHEF;",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-record-hand-on-a-sword",
+    "file": "src/net/productRecord.js",
+    "old": "  if (r.kind !== 'dish') return false;\n  return f === HAND_PROVISIONER || (f === HAND_CHEF && dishOf(r.id)?.effect.party === true);",
+    "new": "  return f === HAND_PROVISIONER || (f === HAND_CHEF && dishOf(r.id)?.effect.party === true);",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-market-no-dishes",
+    "file": "src/net/marketLaw.js",
+    "old": "  Object.freeze(['dishes', 'Dishes']),\n  // PROF10: the jeweller's bench's - DFU's eight pieces of jewellery (recipeLaw JEWEL_PIECES), a jeweller's hand with each",
+    "new": "  // PROF10: the jeweller's bench's - DFU's eight pieces of jewellery (recipeLaw JEWEL_PIECES), a jeweller's hand with each",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-fire-asks-a-fee",
+    "file": "src/net/professionLaw.js",
+    "old": "export const COOK_FIRE = Object.freeze({ kind: 'fire', fee: 0 });",
+    "new": "export const COOK_FIRE = Object.freeze({ kind: 'fire', fee: 50 });",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-svc-cook-one-serving",
+    "file": "server-account/src/professions.js",
+    "old": "  const count = craftCount(r, specs[100], specs[50]);   // PROF9: a Cook's dish two\n",
+    "new": "  const count = craftCount(r, specs[100]);\n",
+    "tests": [
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-svc-pan-never-clean",
+    "file": "server-account/src/professions.js",
+    "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank),",
+    "new": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: false, steps: halls }) : craftXp(r.tier, rank),",
+    "tests": [
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "PROF12 (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "PROF9-svc-dish-tier-xp",
+    "file": "server-account/src/professions.js",
+    "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank),",
+    "new": "const xp = scaleXp(craftXp(r.tier, rank),",
+    "tests": [
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "PROF12 (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "PROF9-svc-no-hand",
+    "file": "server-account/src/professions.js",
+    "old": "  const hand = dishHand(r, specs[100]) ?? jewelHand(r, specs[50]);",
+    "new": "  const hand = null ?? jewelHand(r, specs[50]);",
+    "tests": [
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-svc-hand-unsigned",
+    "file": "server-account/src/professions.js",
+    "old": "u, f: hand, v: craftMintVersion(mint) }, key, { subtle, nowS })",
+    "new": "u, v: craftMintVersion(mint) }, key, { subtle, nowS })",
+    "tests": [
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-svc-hand-unkept",
+    "file": "server-account/src/professions.js",
+    "old": "records[i], marked, hand, ...inputs",
+    "new": "records[i], marked, null, ...inputs",
+    "tests": [
+      "test/net/prof9_service.test.js"
+    ],
+    "note": "AUDIT PROF-541 (RE-AIMED by content): the inputs' keys bound after it."
+  },
+  {
+    "name": "PROF9-svc-hand-unanswered",
+    "file": "server-account/src/professions.js",
+    "old": "...(r?.kind === 'dish' || r?.kind === 'jewel' ? { hand:",
+    "new": "...(r?.kind === 'never' || r?.kind === 'jewel' ? { hand:",
+    "tests": [
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-svc-market-piece-no-hand",
+    "file": "server-account/src/market.js",
+    "old": "  ...(p.hand == null ? {} : { hand: Number(p.hand) }),",
+    "new": "",
+    "tests": [
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-svc-market-crafted-no-hand",
+    "file": "server-account/src/market.js",
+    "old": "p.marked, p.dye, p.hand, p.record, p.template, p.material AS dfu_material\n      ${from}",
+    "new": "p.marked, p.dye, p.record, p.template, p.material AS dfu_material\n      ${from}",
+    "tests": [
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-migration-any-hand",
+    "file": "server-account/migrations/0069_cooking.sql",
+    "old": "CHECK (hand IS NULL OR hand IN (1, 2))",
+    "new": "CHECK (hand IS NULL OR hand IN (1, 2, 3))",
+    "tests": [
+      "test/net/prof9_service.test.js",
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-mint-provisioner-spoils",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (hand === HAND_PROVISIONER) item.noRot = true; // 3.3: a Provisioner's dish never spoils",
+    "new": "  // 3.3: a Provisioner's dish never spoils",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-mint-chef-any-dish",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (hand === HAND_CHEF && dishOf(r.id)?.effect.party === true) item.chef = true; // 3.3: a Chef's feast lasts half again",
+    "new": "  if (hand === HAND_CHEF) item.chef = true; // 3.3: a Chef's feast lasts half again",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-mint-any-recipe",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (!r || r.kind !== 'dish' || typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance)) return null;",
+    "new": "  if (!r || typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance)) return null;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-effect-stacks",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (ids.size) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId)); // every bundle of the dish's - renewed, never stacked",
+    "new": "  if (false) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId)); // every bundle of the dish's - renewed, never stacked",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-effect-chef-ignored",
+    "file": "src/systems/cookItems.js",
+    "old": "  const rounds = dishMinutes(d, hand);",
+    "new": "  const rounds = dishMinutes(d, null);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-effect-extra-entries-a-round-long",
+    "file": "src/systems/cookItems.js",
+    "old": "      roundsRemaining: rounds - 1,",
+    "new": "      roundsRemaining: rounds,",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-effect-extra-entries-not-mine",
+    "file": "src/systems/cookItems.js",
+    "old": "      bundleSelfCast: true,",
+    "new": "      bundleSelfCast: false,",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-effect-second-stat-lost",
+    "file": "src/systems/cookItems.js",
+    "old": "    (entity.activeEffects ??= []).push(e);\n    out.push(e);",
+    "new": "    out.push(e);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-tart-divisor-quarter",
+    "file": "src/systems/cookItems.js",
+    "old": "export const DISH_STAMINA_DIVISOR = 1.2;",
+    "new": "export const DISH_STAMINA_DIVISOR = 1.25;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-tart-never-runs-out",
+    "file": "src/systems/cookItems.js",
+    "old": "  (entity?.activeEffects ?? []).some((a) => a.kind === DISH_STAMINA_KIND && !a.ended && a.roundsRemaining > 0)\n    ? 1 / DISH_STAMINA_DIVISOR\n    : 1;",
+    "new": "  (entity?.activeEffects ?? []).some((a) => a.kind === DISH_STAMINA_KIND && !a.ended) ? 1 / DISH_STAMINA_DIVISOR : 1;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-eat-past-cc",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (survivalOn()) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-eat-refusal-fed",
+    "file": "src/systems/cookItems.js",
+    "old": "    if (!out || out.kind !== 'ate') return out ?? { kind: 'none' };",
+    "new": "    if (!out) return { kind: 'none' };",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-eat-off-not-taken",
+    "file": "src/systems/cookItems.js",
+    "old": "    if (i >= 0) collection.splice(i, 1);",
+    "new": "",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-feast-never-shared",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (d.effect.party === true) {",
+    "new": "  if (d.effect.party === false) {",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-install-stew-uneaten",
+    "file": "src/systems/cookItems.js",
+    "old": "  for (const t of DISH_TEMPLATES) registerItemUseHandler(t, dishUse);",
+    "new": "  for (const t of DISH_TEMPLATES.slice(1)) registerItemUseHandler(t, dishUse);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-dish-any-template-item",
+    "file": "src/systems/cookItems.js",
+    "old": "export const isDish = (item) =>\n  !!item && DISH_TEMPLATES.includes(item.templateIndex) && recipeById(item.recipe)?.kind === 'dish';",
+    "new": "export const isDish = (item) => !!item && DISH_TEMPLATES.includes(item.templateIndex);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-shared-line-twice",
+    "file": "src/systems/cookItems.js",
+    "old": "  const list = [...new Set((names ?? []).filter(Boolean))];",
+    "new": "  const list = (names ?? []).filter(Boolean);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-gentle-done",
+    "file": "src/systems/panAct.js",
+    "old": "  const inWindow = (h) => !gentle && h >= st.lo && h <= st.hi;",
+    "new": "  const inWindow = (h) => h >= st.lo && h <= st.hi;",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-burnt-done",
+    "file": "src/systems/panAct.js",
+    "old": "        off(false, st.t);",
+    "new": "        off(true, st.t);",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-ignores-gap",
+    "file": "src/systems/panAct.js",
+    "old": "      if (st.done || at - st.lastAt < PAN_ACT.gapS) return null;",
+    "new": "      if (st.done) return null;",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-lead-unbounded",
+    "file": "src/systems/panAct.js",
+    "old": "      const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const l = Math.max(0, Number(lead) || 0);",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-lead-ignored",
+    "file": "src/systems/panAct.js",
+    "old": "      const ok = inWindow(Math.min(1, st.heat + st.rate * l));",
+    "new": "      const ok = inWindow(st.heat);",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-next-not-cold",
+    "file": "src/systems/panAct.js",
+    "old": "    st.heat = 0;\n    st.rate = pace() / PAN_ACT.burnS;",
+    "new": "    st.rate = pace() / PAN_ACT.burnS;",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-short-clean",
+    "file": "src/systems/panAct.js",
+    "old": "      return {\n        pans: st.takes.length,\n        hits,\n        burnt: st.burnt,\n        clean: st.takes.length >= st.need && hits === st.takes.length,\n      };",
+    "new": "      return { pans: st.takes.length, hits, burnt: st.burnt, clean: hits === st.takes.length };",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pan-one-pace",
+    "file": "src/systems/panAct.js",
+    "old": "  const pace = () => PAN_ACT.paceLo + (PAN_ACT.paceHi - PAN_ACT.paceLo) * Math.max(0, Math.min(1, Number(rng()) || 0));",
+    "new": "  const pace = () => PAN_ACT.paceLo + 0 * Math.max(0, Math.min(1, Number(rng()) || 0));",
+    "tests": [
+      "test/net/prof9_law.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-cc-provisioner-rots",
+    "file": "src/systems/survival/food.js",
+    "old": "      if (item.noRot === true) continue;\n      // PROF7: a Butcher's meat spoils half as fast (PROF0 3.3) - the same days at half the pace: rolled every other day,",
+    "new": "      // PROF7: a Butcher's meat spoils half as fast (PROF0 3.3) - the same days at half the pace: rolled every other day,",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-cc-dishes-no-food",
+    "file": "src/systems/survival/food.js",
+    "old": "  !!item &&\n  (FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex)) != null &&\n  (item.group == null || item.group === SURVIVAL_GROUP);",
+    "new": "  !!item && FOOD[item.templateIndex] != null && (item.group == null || item.group === SURVIVAL_GROUP);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-cc-dishes-unnamed",
+    "file": "src/systems/survival/food.js",
+    "old": "export const foodOf = (item) => (item ? (FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex) ?? null) : null);",
+    "new": "export const foodOf = (item) => (item ? (FOOD[item.templateIndex] ?? null) : null);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-camps-field-cook-unasked",
+    "file": "src/scenes/camps.js",
+    "old": "const r = spendCampNight(best.rec, now(), fieldCook?.() === true);",
+    "new": "const r = spendCampNight(best.rec, now(), false);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "PIN MOVED - AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
+  },
+  {
+    "name": "PROF9-camps-field-cook-kept-reads-unspent",
+    "file": "src/scenes/camps.js",
+    "old": "    if (r.kept) return true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
+  },
+  {
+    "name": "PROF9-field-cook-perk-unread",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (fieldCook && fieldCookKeeps(camp)) return { spent: false, empty: false, kept: true };",
+    "new": "  if (false && fieldCookKeeps(camp)) return { spent: false, empty: false, kept: true };",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
+  },
+  {
+    "name": "PROF9-field-cook-keeps-a-tent",
+    "file": "src/systems/survival/camp.js",
+    "old": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
+    "new": "export const fieldCookKeeps = (camp) => !!camp && !camp.jar;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
+  },
+  {
+    "name": "PROF9-field-cook-keeps-a-jar",
+    "file": "src/systems/survival/camp.js",
+    "old": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
+    "new": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !!camp.fuel;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire.",
+    "equivalent": true,
+    "why": "An Ember Jar's record never carries `fuel` (placeCampItem returns before setting it on a jar - AUDITREST-F1-the-jar-comes-out-too and REST6-the-jar-picked-up are equivalent for the same reason), so `!!camp.fuel` already refuses it; `!camp.jar` names the intent. AUDIT REST II (L8-5): the test had killed it only with a hand-built {fuel, jar} record the game never writes."
+  },
+  {
+    "name": "PROF9-field-cook-keeps-a-kit-fire",
+    "file": "src/systems/survival/camp.js",
+    "old": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
+    "new": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !camp.jar;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "AUDIT REST-PARTY (the Field Cook given again): under REST2 a placing spends nothing, so the perk keeps a night's fuel at the Field Cook's own Campfire."
+  },
+  {
+    "name": "PROF9-withdraw-noRot-on-herbs",
+    "file": "src/systems/professions/profItems.js",
+    "old": "    if (noRot === true && key.startsWith('food:')) item.noRot = true; // PROF9: a Provisioner's",
+    "new": "    if (noRot === true) item.noRot = true; // PROF9: a Provisioner's",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-withdraw-noRot-never",
+    "file": "src/systems/professions/profItems.js",
+    "old": "    if (noRot === true && key.startsWith('food:')) item.noRot = true; // PROF9: a Provisioner's",
+    "new": "    // PROF9: a Provisioner's",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-rows-stew-on-fish",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "export const DISH_FOODS = Object.freeze({ stew: CC.Meat, supper: CC.CookedFish, tart: CC.Bread, feast: CC.Meat });",
+    "new": "export const DISH_FOODS = Object.freeze({ stew: CC.CookedFish, supper: CC.CookedFish, tart: CC.Bread, feast: CC.Meat });",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-rows-price-twice",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "      basePrice: food.basePrice * (feast ? 12 : 3),",
+    "new": "      basePrice: food.basePrice * (feast ? 12 : 2),",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-rows-feast-light",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "      baseWeight: food.baseWeight * (feast ? 4 : 1),",
+    "new": "      baseWeight: food.baseWeight * (feast ? 2 : 1),",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-rows-stacking",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "      stackable: false, // each serving its own piece, its own provenance",
+    "new": "      stackable: true, // each serving its own piece, its own provenance",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-rows-no-food-law",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "registerFoods(DISH_FOOD_ROWS);\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-rows-food-unnamed",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "  Object.fromEntries(DISHES.map((d) => [d.templateIndex, Object.freeze({ ...FOOD[DISH_FOODS[d.id]], name: d.name })])),",
+    "new": "  Object.fromEntries(DISHES.map((d) => [d.templateIndex, Object.freeze({ ...FOOD[DISH_FOODS[d.id]] })])),",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-mint-hand-dropped",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (r.kind === 'dish') return mintDish({ recipe, maker, hand }, provenance); // PROF9: a dish, its cook's hand the record's",
+    "new": "  if (r.kind === 'dish') return mintDish({ recipe, maker, hand: null }, provenance); // PROF9: a dish, its cook's hand the record's",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-spoiled-as-minted",
+    "file": "src/systems/smithItems.js",
+    "old": "  if ((item.foodStage ?? 0) > 0) return false; // PROF9: a dish spoiled since it was cooked - the record mints it fresh",
+    "new": "  // PROF9: a dish spoiled since it was cooked - the record mints it fresh",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-crafted-text-servings",
+    "file": "src/systems/smithItems.js",
+    "old": "    return pieces.length > 1",
+    "new": "    return pieces.length > 2",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-field-noRot-unsaved",
+    "file": "src/systems/item/itemFields.js",
+    "old": "  noRot: bool(),",
+    "new": "  noRot: str(),",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-tart-unread",
+    "file": "src/scenes/shared.js",
+    "old": "if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0 * tart;",
+    "new": "if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-tart-unread-athlete",
+    "file": "src/scenes/shared.js",
+    "old": "return (entityImprovedAthleticism(entity) ? 0.8 : 0.9) * tart;",
+    "new": "return (entityImprovedAthleticism(entity) ? 0.8 : 0.9);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-host-never-cooks",
+    "file": "src/scenes/shared.js",
+    "old": "  installCooking();   // PROF9",
+    "new": "  // installCooking();   // PROF9",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-cooking-unpractised",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  cooking: () => [[t('prof.page.unlocks.cooking1', 'Hunter\\'s Stew, Fisherman\\'s Supper'), 1],",
+    "new": "  cookery: () => [[t('prof.page.unlocks.cooking1', 'Hunter\\'s Stew, Fisherman\\'s Supper'), 1],",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
+  },
+  {
+    "name": "PROF9-pages-feast-unlock-55",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  cooking: () => [[t('prof.page.unlocks.cooking1', 'Hunter\\'s Stew, Fisherman\\'s Supper'), 1], [t('prof.page.unlocks.cooking2', 'Orchard Tart'), 2], [t('prof.page.unlocks.cooking6', 'Feast of the Hearth'), 6]],",
+    "new": "  cooking: () => [[t('prof.page.unlocks.cooking1', 'Hunter\\'s Stew, Fisherman\\'s Supper'), 1], [t('prof.page.unlocks.cooking2', 'Orchard Tart'), 2], [t('prof.page.unlocks.cooking6', 'Feast of the Hearth'), 5]],",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-skillet-unread",
+    "file": "src/ui/professions/profPages.js",
+    "old": "done: panWindow(rank, p.panBand?.() ?? 1, skillet) });",
+    "new": "done: panWindow(rank, p.panBand?.() ?? 1, false) });",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-always-clean",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const res = await p.craft(id, { clean: clean === true && getPref('gentleActs') !== true });",
+    "new": "const res = await p.craft(id, { clean: true });",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-gentle-pan",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (gentle) { void finishFor(r.id)(false); return; }   // Gentle acts: a plain dish, no pan\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-hands-not-at-the-fire",
+    "file": "src/ui/professions/profPages.js",
+    "old": ": me !== _cook && (_cook.act || _cook.crafting) ? 'fire' : me !== _jewel",
+    "new": ": me !== _jewel",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-escape-leaves-the-pan",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (_cook.act) { _cook.act.cancel(); endPan(); _cook.word = panDownLine(); return true; }   // PROF9\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-burnt-never-ends",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (_cook.act.state.done) { ended(); return; }   // the last pan burnt on the fire\n",
+    "new": "",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-shut-page-holds-the-pan",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (!els?.bar || els.bar.isConnected === false) { _cook.act.cancel(); endPan(); return; }   // the page shut under the act: nothing spent",
+    "new": "      if (!els?.bar || els.bar.isConnected === false) { return; }   // the page shut under the act: nothing spent",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-repeat-takes",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  const key = (e) => actKey(e, _cook.els?.hit, take);",
+    "new": "  const key = (e) => { if (e.code === 'Space') take(e); };",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-fire-away-offers",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    detail.append(el('p', 'px-note', fireAwayLine()));\n    return;",
+    "new": "    detail.append(el('p', 'px-note', fireAwayLine()));",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-servings-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "${serves > 1 ? t('prof.page.fire.servesTwo', 'Two servings (a Cook\\'s), into your pack.') : t('prof.page.fire.servesOne', 'One serving, into your pack.')}",
+    "new": "${t('prof.page.fire.servesOne', 'One serving, into your pack.')}",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-pages-no-pan-css",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".prof-heatbar.prof-panbar { background: linear-gradient(",
+    "new": ".prof-heatbar.prof-pan-bar { background: linear-gradient(",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-world-cook-at-the-anvil",
+    "file": "src/scenes/world.js",
+    "old": ": profession === 'cooking'   // PROF9: the fire - any lit one, a campfire, a hearth, a brazier; no fee",
+    "new": ": profession === 'cookery'   // PROF9: the fire - any lit one, a campfire, a hearth, a brazier; no fee",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-world-fire-unread",
+    "file": "src/scenes/world.js",
+    "old": "    ? (camps.fireNear(walkMode && playerSpawned ? player.pos : cam.pos) ? COOK_FIRE : null)",
+    "new": "    ? (camps.byFire(walkMode && playerSpawned ? player.pos : cam.pos) ? COOK_FIRE : null)",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-world-provisioner-rots",
+    "file": "src/scenes/world.js",
+    "old": "noRot: profBook?.track('cooking')?.specs?.[100] === 'provisioner' });",
+    "new": "noRot: false });",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-world-field-cook-50",
+    "file": "src/scenes/world.js",
+    "old": "profBook.track('cooking')?.specs?.[50] === 'field-cook';",
+    "new": "profBook.track('cooking')?.specs?.[100] === 'field-cook';",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-world-feast-to-strangers",
+    "file": "src/systems/cookItems.js",
+    "old": "    if (!isMate(peer.id)) continue;\n    if (send(peer.id)) out.push(nameOf(peer.id) ?? 'a party member');",
+    "new": "    if (send(peer.id)) out.push(nameOf(peer.id) ?? 'a party member');",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-modes-no-hearth",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (mode === 'interior') return interiorCamps.fireNear(player.pos) ? COOK_FIRE : null;",
+    "new": "      if (mode === 'interior') return null;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF9-dungeon-no-fire",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    cookFire: () => !!(_fpFeet && camps.fireNear(_fpFeet)),",
+    "new": "    cookFire: () => false,",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF9-K1-slow-rot-first",
+    "file": "src/systems/survival/food.js",
+    "old": "      if (item.noRot === true) continue;",
+    "new": "      if (item.noRot === true && item.slowRot !== true) continue;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF9-K2-any-dish-a-feast",
+    "file": "src/systems/cookItems.js",
+    "old": "export const isPartyDishSpell = (name) =>\n  typeof name === 'string' && DISHES.some((d) => d.effect.party === true && d.name === name);",
+    "new": "export const isPartyDishSpell = (name) => typeof name === 'string' && DISHES.some((d) => d.name === name);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF9-K2-feast-stacks",
+    "file": "src/systems/cookItems.js",
+    "old": "  return renewDish(entity, spell.name, Math.max(0, ...(spell.effects ?? []).map((e) => rollDuration(e, level))));",
+    "new": "  return (\n    true || renewDish(entity, spell.name, Math.max(0, ...(spell.effects ?? []).map((e) => rollDuration(e, level))))\n  );",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K3-stranger-feast",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (!mate) return false;\n  if (!isFeastRecord(spell)) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped",
+    "new": "  if (!isFeastRecord(spell)) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF12-P1-apothecary-old-words",
+    "file": "src/net/fortLaw.js",
+    "old": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
+    "new": "    `members' alchemy, cooking and jewelcrafting here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
+    "tests": [
+      "test/systems/prof12_client.test.js",
+      "test/net/seat2b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF12-P1-dish-xp-words",
+    "file": "src/net/fortLaw.js",
+    "old": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
+    "new": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'half again' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
+    "tests": [
+      "test/systems/prof12_client.test.js",
+      "test/net/seat2b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF12-P1-potent-words",
+    "file": "src/net/fortLaw.js",
+    "old": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
+    "new": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${5 * t}% Potent chance`,",
+    "tests": [
+      "test/systems/prof12_client.test.js",
+      "test/net/seat2b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K3-arm-every-feast-a-mates",
+    "file": "src/scenes/world.js",
+    "old": "      if (!takeFeastGift(playerEntity, spell, d.level, mate)) return;",
+    "new": "      if (!takeFeastGift(playerEntity, spell, d.level, true)) return;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K4-shortens",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (mine.some((a) => a.roundsRemaining >= rounds)) return false;",
+    "new": "  if (mine.some((a) => a.roundsRemaining >= rounds && false)) return false;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K4-equal-renews",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (mine.some((a) => a.roundsRemaining >= rounds)) return false;",
+    "new": "  if (mine.some((a) => a.roundsRemaining > rounds)) return false;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K4-eaten-shortens",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (!renewDish(entity, d.name, rounds)) return []; // AUDIT PROF-541 K4: renewed, never stacked - and never shortened",
+    "new": "  if (!renewDish(entity, d.name, Infinity)) return []; // AUDIT PROF-541 K4: renewed, never stacked - and never shortened",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K5-whole-room",
+    "file": "src/scenes/professionsHost.js",
+    "old": "return shareFeastWith(host.peersNear(), {",
+    "new": "return shareFeastWith(host.online.peers.values(), {",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K6-tart-not-endable",
+    "file": "src/systems/mysticism.js",
+    "old": "    DISH_STAMINA_KIND, // AUDIT PROF-541 K6: the Tart's (cookItems.js feedEffect) - the other dishes are Fortify Attribute's",
+    "new": "    // AUDIT PROF-541 K6: the Tart's (cookItems.js feedEffect) - the other dishes are Fortify Attribute's",
+    "tests": [
+      "test/systems/prof9_client.test.js",
+      "test/ui/hud/buffend.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K7-steps-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "xp: paidXp(steps > 0 ? cookXp(rank, { steps }) : cookXp(rank), { pct: pay.pct }),",
+    "new": "xp: paidXp(cookXp(rank), { pct: pay.pct }),",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ],
+    "note": "CRAFT3: re-aimed by content. PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "AUDIT-PROF-541-K7-steps-unread",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const steps = Math.max(0, Math.trunc(Number(p.cookSteps?.()) || 0));",
+    "new": "const steps = 0;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K7-host-alchemy-steps",
+    "file": "src/scenes/professionsHost.js",
+    "old": "cookSteps: () => myHall('cooking').steps,",
+    "new": "cookSteps: () => myHall('alchemy').steps,",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-K8-brew-words",
+    "file": "src/scenes/professionsHost.js",
+    "old": "'Your hands are busy with another craft.'",
+    "new": "'Your last brew is still in the cauldron.'",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K5-unsent-named",
+    "file": "src/systems/cookItems.js",
+    "old": "    if (send(peer.id)) out.push(nameOf(peer.id) ?? 'a party member');",
+    "new": "    send(peer.id);\n    out.push(nameOf(peer.id) ?? 'a party member');",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K9-gift-by-its-name",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (!isFeastRecord(spell)) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped",
+    "new": "  if (false) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K9-record-by-its-name",
+    "file": "src/systems/cookItems.js",
+    "old": "export const isFeastRecord = (spell) => FEAST_FORMS.get(spell?.name)?.records.has(recordKey(spell)) === true;",
+    "new": "export const isFeastRecord = (spell) => FEAST_FORMS.has(spell?.name);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K9-no-chefs-record",
+    "file": "src/systems/cookItems.js",
+    "old": "    const recs = [null, HAND_CHEF].map((h) => dishSpell(d, h)).filter(Boolean);",
+    "new": "    const recs = [null].map((h) => dishSpell(d, h)).filter(Boolean);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K9-every-bundle-of-the-name",
+    "file": "src/systems/cookItems.js",
+    "old": "  const mine = (entity?.activeEffects ?? []).filter(\n    (a) => a.bundleId != null && !a.ended && a.bundleName === name && dishEntry(a, name),\n  );",
+    "new": "  const mine = (entity?.activeEffects ?? []).filter((a) => a.bundleId != null && !a.ended && a.bundleName === name);",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K9-look-alike-gift-stands",
+    "file": "src/systems/cookItems.js",
+    "old": "  return a.bundleAlly === true && FEAST_FORMS.get(name)?.entries.has(`${a.stat}/${a.settingsKey}`) === true;",
+    "new": "  return a.bundleAlly === true || FEAST_FORMS.get(name)?.entries.has(`${a.stat}/${a.settingsKey}`) === true;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K9-any-kind",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (a.kind !== 'fortifyAttribute' && a.kind !== DISH_STAMINA_KIND) return false;\n  if (a.settingsKey == null) return a.bundleAlly !== true;",
+    "new": "  if (a.settingsKey == null) return a.bundleAlly !== true;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K10-nothing-said",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (entity && !laid.length) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)",
+    "new": "  if (false) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K10-said-unlaid",
+    "file": "src/systems/cookItems.js",
+    "old": "  if (entity && !laid.length) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)",
+    "new": "  if (!laid.length) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K10-words",
+    "file": "src/systems/cookItems.js",
+    "old": "  d?.effect?.party === true\n    ? 'The feast you already enjoy lasts longer.'\n    : `The ${d?.name ?? 'dish'} you already enjoy lasts longer.`;",
+    "new": "  d?.effect?.party === true ? 'You are already full.' : `The ${d?.name ?? 'dish'} you already enjoy lasts longer.`;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-K10-dish-words",
+    "file": "src/systems/cookItems.js",
+    "old": "  d?.effect?.party === true\n    ? 'The feast you already enjoy lasts longer.'\n    : `The ${d?.name ?? 'dish'} you already enjoy lasts longer.`;",
+    "new": "  d?.effect?.party === true ? 'The feast you already enjoy lasts longer.' : 'The feast you already enjoy lasts longer.';",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-H1-any-guild",
+    "file": "src/net/fortLaw.js",
+    "old": "  const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;",
+    "new": "  const steps = !!guild && !!seat ? stationSteps(profession, seat.forts ?? {}) : 0;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-H1-no-guild-of-mine",
+    "file": "src/net/fortLaw.js",
+    "old": "  const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;",
+    "new": "  const steps = seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-H1-seat-without-steps",
+    "file": "src/net/fortLaw.js",
+    "old": "  return { steps, seat: steps > 0 ? (seat.key ?? null) : null };",
+    "new": "  return { steps, seat: seat?.key ?? null };",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-H1-one-profession",
+    "file": "src/net/fortLaw.js",
+    "old": "  const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;",
+    "new": "  const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps('cooking', seat.forts ?? {}) : 0;",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PROF-541-R2-H1-host-craft-alchemy",
+    "file": "src/scenes/professionsHost.js",
+    "old": "const { seat } = myHall(recipeById(recipe)?.profession);",
+    "new": "const { seat } = myHall('alchemy');",
+    "tests": [
+      "test/systems/prof9_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF541-R2-S7-dish-key",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const firstCraftKey = (r) => (!r ? null : `${r.product}@${r.tier}`);",
+    "new": "export const firstCraftKey = (r) => (!r ? null : r.kind === 'dish' ? r.id : `${r.product}@${r.tier}`);",
+    "tests": [
+      "test/net/prof9_law.test.js",
+      "test/net/prof9_service.test.js"
+    ],
+    "note": "AUDIT PROF-541 R2-S7: a dish's first craft its dish's."
+  },
+  {
+    "name": "PROF541-R2-S7-dish-prefix",
+    "file": "server-account/src/professions.js",
+    "old": "  const kin = firstCraftKin(r);",
+    "new": "  const kin = r.kind === 'dish' ? [r.id] : firstCraftKin(r);",
+    "tests": [
+      "test/net/prof9_service.test.js"
+    ],
+    "note": "AUDIT PROF-541 R2-S7: the dish's key asked by its prefix."
+  },
+  {
+    "name": "PROF541-R2-S7-plain-ring-prefix",
+    "file": "server-account/src/professions.js",
+    "old": "  const kin = firstCraftKin(r);",
+    "new": "  const kin = r.kind === 'jewel' && !r.gem ? [r.id] : firstCraftKin(r);",
+    "tests": [
+      "test/net/prof10_service.test.js"
+    ],
+    "note": "AUDIT PROF-541 R2-S7: a plain ring's key its own id, its gems' base all the same."
+  }
+]

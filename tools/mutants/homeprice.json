@@ -1,0 +1,509 @@
+[
+  {
+    "name": "HOME-PRICE-the-rate",
+    "file": "src/net/homeLaw.js",
+    "old": "export const HOME_PRICE_PER_M2 = 300;",
+    "new": "export const HOME_PRICE_PER_M2 = 250;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-town-factor-linear",
+    "file": "src/net/homeLaw.js",
+    "old": "  return (3 + Math.sqrt(n)) / 4;",
+    "new": "  return (3 + n) / 4;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-town-unbounded",
+    "file": "src/net/homeLaw.js",
+    "old": "  const n = Number.isFinite(blocks) ? Math.min(HOME_TOWN_BLOCKS_MAX, Math.max(1, Math.trunc(blocks))) : 1;",
+    "new": "  const n = Number.isFinite(blocks) ? Math.max(1, Math.trunc(blocks)) : 1;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-no-floor",
+    "file": "src/net/homeLaw.js",
+    "old": "  return Math.min(HOME_PRICE_MAX, Math.max(HOME_PRICE_MIN, price));",
+    "new": "  return Math.min(HOME_PRICE_MAX, price);",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-no-cap",
+    "file": "src/net/homeLaw.js",
+    "old": "  return Math.min(HOME_PRICE_MAX, Math.max(HOME_PRICE_MIN, price));",
+    "new": "  return Math.max(HOME_PRICE_MIN, price);",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-rounded-down",
+    "file": "src/net/homeLaw.js",
+    "old": "    Math.round((footprintM2 * HOME_PRICE_PER_M2 * homeTownFactor(townBlocks)) / HOME_PRICE_STEP) * HOME_PRICE_STEP;",
+    "new": "    Math.floor((footprintM2 * HOME_PRICE_PER_M2 * homeTownFactor(townBlocks)) / HOME_PRICE_STEP) * HOME_PRICE_STEP;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-D1-rounded-up",
+    "file": "src/net/homeLaw.js",
+    "old": "    Math.round((footprintM2 * HOME_PRICE_PER_M2 * homeTownFactor(townBlocks)) / HOME_PRICE_STEP) * HOME_PRICE_STEP;",
+    "new": "    Math.ceil((footprintM2 * HOME_PRICE_PER_M2 * homeTownFactor(townBlocks)) / HOME_PRICE_STEP) * HOME_PRICE_STEP;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-an-unmeasured-house-priced",
+    "file": "src/net/homeLaw.js",
+    "old": "  if (!(Number.isFinite(footprintM2) && footprintM2 > 0)) return 0;",
+    "new": "  if (!Number.isFinite(footprintM2)) return 0;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-floor-unchecked",
+    "file": "src/net/homeLaw.js",
+    "old": "export const homePriceOk = (v) =>\n  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "new": "export const homePriceOk = (v) => Number.isSafeInteger(v) && v > 0 && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-L2-the-hundreds-unread",
+    "file": "src/net/homeLaw.js",
+    "old": "export const homePriceOk = (v) =>\n  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "new": "export const homePriceOk = (v) => Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-service-range-unread",
+    "file": "server-account/src/homes.js",
+    "old": "  if (!homePriceOk(price)) return { error: 'home-update' };\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-update-unsaid",
+    "file": "server-account/src/homes.js",
+    "old": "  if (!homePriceOk(price)) return { error: 'home-update' };\n",
+    "new": "  if (!homePriceOk(price)) return { error: 'bad-home' };\n",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-hall-range-unread",
+    "file": "server-account/src/halls.js",
+    "old": "  if (!homePriceOk(price)) return { error: 'home-update' };   // HOME-PRICE",
+    "new": "  // HOME-PRICE",
+    "tests": [
+      "test/systems/homeprice.test.js",
+      "test/net/guild1d_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-D2-the-refund-off-the-price",
+    "file": "server-account/src/homes.js",
+    "old": "const realmSaleOf = (row) => (Number(row.paid) > 0 ? { refund: homeSaleRefund(Number(row.paid)) } : { crossed: true });",
+    "new": "const realmSaleOf = (row) => (Number(row.paid) > 0 ? { refund: homeSaleRefund(Number(row.price)) } : { crossed: true });",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-L3-the-character-unasked",
+    "file": "server-account/src/homes.js",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ?",
+    "new": "const sale = mine && !deedRow && !crossed ?",
+    "tests": [
+      "test/systems/homeprice.test.js",
+      "test/server/home1.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the sum told to a realm character of the account (any of them), never to a read naming none."
+  },
+  {
+    "name": "HOME-PRICE-the-refund-told-another",
+    "file": "server-account/src/homes.js",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ?",
+    "new": "const sale = !deedRow && !crossed && Number(h.me_realm) === 1 ?",
+    "tests": [
+      "test/systems/homeprice.test.js",
+      "test/server/account_homes.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - another account's own realm character named."
+  },
+  {
+    "name": "HOME-PRICE-a-crossed-house-refunded",
+    "file": "server-account/src/homes.js",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ? { ...realmSaleOf(h),",
+    "new": "const sale = mine && !deedRow && Number(h.me_realm) === 1 ? { refund: homeSaleRefund(Number(h.paid) || 0),",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C3-the-rent-unsaid",
+    "file": "server-account/src/homes.js",
+    "old": "...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C2-the-repeat-silent",
+    "file": "server-account/src/homes.js",
+    "old": "home: homeOf(held), ...realmSaleOf(held), realm:",
+    "new": "home: homeOf(held), realm:",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C2-the-claim-silent",
+    "file": "server-account/src/homes.js",
+    "old": "return { ok: true, home: homeOf(row), ...realmSaleOf(row), realm: { seq: prep.seq }, moved: homeMoved(claim.mapId, [claim.buildingKey]) };",
+    "new": "return { ok: true, home: homeOf(row), realm: { seq: prep.seq }, moved: homeMoved(claim.mapId, [claim.buildingKey]) };",
+    "tests": [
+      "test/systems/homeprice.test.js",
+      "test/server/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-height-for-depth",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale * scale;",
+    "new": "  const m2 = (size?.x ?? 0) * (size?.y ?? 0) * scale * scale;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-scale-once",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale * scale;",
+    "new": "  const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-town-width-alone",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  const n = (ext?.width ?? 0) * (ext?.height ?? 0);",
+    "new": "  const n = ext?.width ?? 0;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-registry-drops-the-refund",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "              refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null, // HOME-PRICE: mine, what its sale pays back",
+    "new": "              refund: null, // HOME-PRICE: mine, what its sale pays back",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-D6-the-registry-drops-nothing",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "              refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null, // HOME-PRICE: mine, what its sale pays back",
+    "new": "              refund: Number.isSafeInteger(h.refund) && h.refund > 0 ? h.refund : null, // HOME-PRICE: mine, what its sale pays back",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C3-the-registry-drops-the-rent",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "              rentDue: Number.isSafeInteger(h.rentDue) && h.rentDue > 0 ? h.rentDue : 0, // AUDIT HOME-PRICE C3: and the rent held on it",
+    "new": "              rentDue: 0, // AUDIT HOME-PRICE C3: and the rent held on it",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C2-crossed-unread",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "      const crossed = r.data?.crossed === true;",
+    "new": "      const crossed = false;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-claims-answer-unread",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "      const refund = crossed\n        ? null\n        : Number.isSafeInteger(r.data?.refund) && r.data.refund >= 0\n          ? r.data.refund\n          : homeRefund(price);",
+    "new": "      const refund = crossed ? null : homeRefund(price);",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-offer-off-the-price",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeSaleOffer = (home, price) =>\n  Number.isSafeInteger(home?.refund) && home.refund >= 0 ? home.refund : homeRefund(price);",
+    "new": "export const homeSaleOffer = (home, price) => homeRefund(price);",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-D6-the-offer-drops-nothing",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  Number.isSafeInteger(home?.refund) && home.refund >= 0 ? home.refund : homeRefund(price);",
+    "new": "  Number.isSafeInteger(home?.refund) && home.refund > 0 ? home.refund : homeRefund(price);",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C3-the-sale-box-rent-unsaid",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  rentDue > 0",
+    "new": "  false",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-world-without-the-size",
+    "file": "src/scenes/world.js",
+    "old": "townBlocks: homeTownBlocks(dfLoc), ",
+    "new": "",
+    "tests": [
+      "test/systems/homeprice.test.js",
+      "test/world/audit68_worldjs.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-exterior-without-the-size",
+    "file": "src/scenes/exterior.js",
+    "old": "regionIndex: dfLocation.regionIndex, townBlocks: homeTownBlocks(dfLocation), ",
+    "new": "regionIndex: dfLocation.regionIndex, ",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-D5-the-model-by-another-key",
+    "file": "src/scenes/worldModes.js",
+    "old": "  function houseFootprintM2(building) {\n    const id = building?.modelIdNum;",
+    "new": "  function houseFootprintM2(building) {\n    const id = building?.modelId;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-door-ignores-the-town",
+    "file": "src/scenes/worldModes.js",
+    "old": "const price = homeOnlinePrice(houseFootprintM2(bd), bd?.townBlocks ?? 0);",
+    "new": "const price = homeOnlinePrice(houseFootprintM2(bd), 1);",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-sale-off-the-price",
+    "file": "src/scenes/worldModes.js",
+    "old": "const refund = homeSaleOffer(home, homeListPrice(bd));",
+    "new": "const refund = homeSaleOffer(null, homeListPrice(bd));",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C3-the-door-drops-the-rent",
+    "file": "src/scenes/worldModes.js",
+    "old": "lines: homeSaleLines(refund, home?.rentDue ?? 0),",
+    "new": "lines: homeSaleLines(refund),",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-the-radius-online",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!isOnlinePage()) return houseSellPrice(houseMeshRadius(owned));\n",
+    "new": "    return houseSellPrice(houseMeshRadius(owned));\n",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-the-online-price-offline",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!isOnlinePage()) return houseSellPrice(houseMeshRadius(owned));\n",
+    "new": "    if (isOnlinePage()) return houseSellPrice(houseMeshRadius(owned));\n",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-the-town-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "townBlocks: buildingDirectory?.()?.townBlocks ?? 0 }",
+    "new": "townBlocks: 0 }",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-the-bank-price-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "price: deedSellPrice(summary),",
+    "new": "price: houseSellPrice(houseMeshRadius(summary)),",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-the-sale-unpriced",
+    "file": "src/scenes/worldModes.js",
+    "old": "found: owned !== null, price: deedSellPrice(owned), deed: offered?.deed ?? null }",
+    "new": "found: owned !== null, deed: offered?.deed ?? null }",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-the-bank-ignores-the-price",
+    "file": "src/systems/banking.js",
+    "old": "online = isOnlinePage(), price = houseSellPrice(meshRadius), deed = null } = {}, {",
+    "new": "online = isOnlinePage(), deed = null } = {}, {\n  price = houseSellPrice(meshRadius),",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-the-grant-over-a-home",
+    "file": "src/scenes/worldModes.js",
+    "old": "housesForSale: homes ? currentHousesForSale().filter((h) => !homes.homeAt(dir?.mapId ?? 0, h.buildingKey)) : currentHousesForSale(),",
+    "new": "housesForSale: currentHousesForSale(),",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-the-town-unasked",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (homes && !homes.known(dir?.mapId ?? 0)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-world-directory-without-the-size",
+    "file": "src/scenes/world.js",
+    "old": "regionIndex: loc.regionIndex ?? 0, townBlocks: homeTownBlocks(loc),",
+    "new": "regionIndex: loc.regionIndex ?? 0,",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C1-exterior-directory-without-the-size",
+    "file": "src/scenes/exterior.js",
+    "old": "regionIndex: dfLocation.regionIndex ?? 0, townBlocks: homeTownBlocks(dfLocation),",
+    "new": "regionIndex: dfLocation.regionIndex ?? 0,",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-a-bare-number",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeForSaleLine = (price) => `Can be your home: ${gold(price)} gold`;",
+    "new": "export const homeForSaleLine = (price) => `Can be your home: ${price} gold`;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "HOME-PRICE-the-region-named",
+    "file": "src/systems/homeWords.js",
+    "old": "export const EMPIRE_ACCOUNT_WORDS = 'your account at the Bank of the Empire';",
+    "new": "export const EMPIRE_ACCOUNT_WORDS = \"this region's bank account\";",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-D3-the-rent-clause-bare",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    rent > 0 ? `${gold(rent)} of it rent you had not collected` : null,",
+    "new": "    rent > 0 ? `${rent} of it rent you had not collected` : null,",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-E4-the-rent-row-bare",
+    "file": "src/systems/homeRent.js",
+    "old": "export const rentRowLabel = (from) => `Rent a room: from ${goldSum(from)} gold a day`;",
+    "new": "export const rentRowLabel = (from) => `Rent a room: from ${from} gold a day`;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-E4-the-rent-region-named",
+    "file": "src/systems/homeRent.js",
+    "old": "  `You need ${goldSum(cost)} gold, in your purse and ${EMPIRE_ACCOUNT_WORDS} together.`;",
+    "new": "  `You need ${goldSum(cost)} gold, in your purse and this region's bank account together.`;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-E4-the-collected-rent-region-named",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "It went to ${EMPIRE_ACCOUNT_WORDS}.`);",
+    "new": "It went to this region's bank account.`);",
+    "tests": [
+      "test/systems/homeprice.test.js",
+      "test/server/homerent.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-E4-the-pieces-account-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "gold to ${accountWords(goldRegion(playerEntity.bankAccounts, region) !== region)}.`);",
+    "new": "gold to ${accountWords(false)}.`);",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HOME-PRICE-C4-the-arena-refund-bare",
+    "file": "src/systems/arena/arenaText.js",
+    "old": "    refund: (gold) => `${goldSum(gold)} gold for your catalog pieces was refunded to your bank account.`,",
+    "new": "    refund: (gold) => `${gold} gold for your catalog pieces was refunded to your bank account.`,",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  }
+]

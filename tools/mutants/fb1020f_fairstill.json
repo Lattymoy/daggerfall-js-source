@@ -1,0 +1,112 @@
+[
+  {
+    "name": "FAIR-STILL-none",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "if (dt > EG_BLIND_MS && !egStillGap(A, L, p, hold)) {",
+    "new": "if (dt > EG_BLIND_MS) {",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "the report: a member who waited still was unseen, and a crossing waited out at its timed pieces opened no door"
+  },
+  {
+    "name": "FAIR-STILL-snap-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "Math.hypot(p.x - L[1], p.y - L[2], p.z - L[3]) <= EG_FAIR_SNAP_M;",
+    "new": "Math.hypot(p.x - L[1], p.y - L[2], p.z - L[3]) <= Infinity;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "a gap that went anywhere read as standing still: a hidden move judged seen"
+  },
+  {
+    "name": "FAIR-STILL-start-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "!!A.sup && A.sup[0] === L[0] &&",
+    "new": "!!A.sup &&",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "a gap begun in the air read as standing still because the body once stood somewhere"
+  },
+  {
+    "name": "FAIR-STILL-end-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "export const egStillGap = (A, L, p, hold) => !!hold && !!A.sup",
+    "new": "export const egStillGap = (A, L, p, hold) => !!A.sup",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "a gap ending in the air read as standing still"
+  },
+  {
+    "name": "DOOR-WORD-never-said",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    else doorWord(B, spec, inHall, out);   // FIELD BUGS 2026-10-20f DOOR-WORD: an arrival it will not take is told why",
+    "new": "    else void 0;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "the report: a member at the door refused in silence, the objective still Cross."
+  },
+  {
+    "name": "DOOR-WORD-every-beat",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "m.downH === B.h || m.fairSaid === B.h || !egAtDoor",
+    "new": "m.downH === B.h || !egAtDoor",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "the word said every beat while the member stands at the door"
+  },
+  {
+    "name": "DOOR-WORD-to-everyone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "? A.why : 'blind', to: b.sub });",
+    "new": "? A.why : 'blind' });",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "one member's refusal said to the whole company"
+  },
+  {
+    "name": "DOOR-WORD-break-called-blind",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "w: A && A.brk > 0 && EG_FAIR_WORDS.includes(A.why) ? A.why : 'blind',",
+    "new": "w: 'blind',",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "a broken trail told to wait at the door, where only going back to the last island clears it"
+  },
+  {
+    "name": "DOOR-WORD-closing-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    doorWord(B, spec, inHall, out);   // FIELD BUGS 2026-10-20f DOOR-WORD: a step through it refused (egDown) is told why",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "a refused step through the door in the closing still silent"
+  },
+  {
+    "name": "DOOR-WORD-client-line",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "mid(unfair.h === E.h ? EG_FAIR_TEXT[unfair.w]() : 'You wait at the door for your company.')",
+    "new": "mid('You wait at the door for your company.')",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "the client saying you wait at the door every second while the door refuses you"
+  },
+  {
+    "name": "DOOR-WORD-wire-any-word",
+    "file": "src/net/wire.js",
+    "old": "case 'efair': return EG_FAIR_WIRE_WORDS.includes(m.w) ?",
+    "new": "case 'efair': return typeof m.w === 'string' ?",
+    "tests": [
+      "test/net/eliteGates/fb1020f_fairstill.test.js"
+    ],
+    "why": "a word the law never says carried to the screen"
+  }
+]

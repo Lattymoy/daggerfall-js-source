@@ -1,0 +1,42 @@
+[
+  {
+    "name": "DWAIT-thirty-minutes-again",
+    "file": ".github/workflows/deploy.yml",
+    "old": "for i in $(seq 1 1050); do",
+    "new": "for i in $(seq 1 90); do",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "The site gives up on a service still waiting on a slow relay (#983)."
+  },
+  {
+    "name": "DWAIT-past-the-job-ceiling",
+    "file": ".github/workflows/deploy.yml",
+    "old": "for i in $(seq 1 1050); do",
+    "new": "for i in $(seq 1 1100); do",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "A wait GitHub kills at six hours never says why the site was not published."
+  },
+  {
+    "name": "DWAIT-relay-wait-outgrows-the-site",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "for i in $(seq 1 1000); do",
+    "new": "for i in $(seq 1 1040); do",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "The service may wait longer on the relay than the site waits on the service."
+  },
+  {
+    "name": "DWAIT-gives-up-green",
+    "file": ".github/workflows/deploy.yml",
+    "old": "not publishing a site whose forms it would not answer (see account-deploy.yml's run, then re-run this)\"\n          exit 1",
+    "new": "not publishing a site whose forms it would not answer (see account-deploy.yml's run, then re-run this)\"\n          exit 0",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "A site published over a service that never came."
+  }
+]

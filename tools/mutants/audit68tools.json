@@ -1,0 +1,131 @@
+[
+  {
+    "name": "AUDIT68-S01-a-bake-runs-on-import-again",
+    "file": "scripts/bakeBooks.mjs",
+    "old": "if (isMain(import.meta.url)) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S01-the-guard-compares-unresolved-paths",
+    "file": "tools/lib/isMain.mjs",
+    "old": "  return realpathSync(argv1) === realpathSync(fileURLToPath(url));",
+    "new": "  return argv1 === fileURLToPath(url);",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S01-the-schema-line-is-a-label-again",
+    "file": "scripts/bakeSettingsText.mjs",
+    "old": "    if (line.startsWith('-') || /^schema:/i.test(line)) continue;\n    const c = line.indexOf(',');",
+    "new": "    const c = line.indexOf(',');",
+    "tests": [
+      "test/tooling/audit68_tools.test.js",
+      "test/systems/settings/settingsText.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-foreign-path-is-this-targets-cite",
+    "file": "tools/citeShift.mjs",
+    "old": "        if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;\n        const a = +m[1],",
+    "new": "        const a = +m[1],",
+    "tests": [
+      "test/tooling/audit68_tools.test.js",
+      "test/tooling/citemerge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-shared-basename-moves-once-per-target",
+    "file": "tools/citeShift.mjs",
+    "old": "        const bare = ambiguousBare && spelling !== 'ledger' && !dir;",
+    "new": "        const bare = false;",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-regex-delimiter-hides-the-escaped-cite",
+    "file": "tools/citeShift.mjs",
+    "old": "    new RegExp(`(?<![\\\\w\\\\\\\\])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}\\\\\\\\${esc(ext)}:(\\\\d+)(?:-(\\\\d+))?`, 'g'),",
+    "new": "    new RegExp(`(?<![\\\\w/])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}\\\\\\\\${esc(ext)}:(\\\\d+)(?:-(\\\\d+))?`, 'g'),",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-leftover-backup-is-copied-over",
+    "file": "tools/mutate.mjs",
+    "old": "if (leftovers.length) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-signal-kills-the-harness-mid-mutant",
+    "file": "tools/mutate.mjs",
+    "old": "for (const sig of ['SIGINT', 'SIGTERM'])\n  process.on(sig, () => {\n    interrupted = sig;\n    for (const c of children) c.kill(sig);\n  });\n",
+    "new": "",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-an-unparseable-mutant-is-a-verdict",
+    "file": "tools/mutate.mjs",
+    "old": "  if (!m.syntax && /\\.[cm]?js$/.test(m.file)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-confirm-reads-the-suite-through-1-MiB",
+    "file": "tools/mutation/confirm.mjs",
+    "old": "  const r = spawnSync(process.execPath, ['--test'], {\n    cwd: ROOT,\n    encoding: 'utf8',\n    timeout: 600000,\n    maxBuffer: 1 << 28,\n  });",
+    "new": "  const r = spawnSync(process.execPath, ['--test'], { cwd: ROOT, encoding: 'utf8', timeout: 600000 });",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-one-commit-two-tags-is-two-commits",
+    "file": "tools/verify-deploy.mjs",
+    "old": "  if (localTag.startsWith(liveTag) || liveTag.startsWith(localTag)) {",
+    "new": "  if (localTag === liveTag) {",
+    "tests": [
+      "test/tooling/audit68_tools.test.js",
+      "test/tooling/verifydeploy.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-git-sizes-the-tag-again",
+    "file": "scripts/buildTag.mjs",
+    "old": "  const sha = execSync('git rev-parse --short=12 HEAD').toString().trim();",
+    "new": "  const sha = execSync('git rev-parse --short HEAD').toString().trim();",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-an-empty-open-flags-list-is-unreadable",
+    "file": "tools/regenOpenFlags.mjs",
+    "old": "const cut = firstEntry < 0 ? bodyLines.length : firstEntry;",
+    "new": "const cut = firstEntry < 0 ? process.exit(2) : firstEntry;",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S06-the-drape-is-compressed-twice",
+    "file": "tools/villagerRender.mjs",
+    "old": "  return dr ? drapedPiece(dr.name, dr.ramp) : [];",
+    "new": "  return dr ? compress(drapedPiece(dr.name, dr.ramp)) : [];",
+    "tests": [
+      "test/tooling/audit68_tools.test.js"
+    ]
+  }
+]

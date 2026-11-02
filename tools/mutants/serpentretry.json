@@ -1,0 +1,11 @@
+[
+  {
+    "name": "SERPENT-RETRY-no-retry",
+    "file": "server/src/index.js",
+    "old": "      if (f.fell && !f.said) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);   // SERPENT-RETRY: a kill whose receipts failed to mint is tried again, never left to the fight's end (the dragon's AUDIT DRAGON twin)\n",
+    "new": "      if (false) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);\n",
+    "tests": [
+      "test/net/serpent/serpentretry.test.js"
+    ]
+  }
+]

@@ -1,0 +1,425 @@
+[
+  {
+    "name": "LOOT20-rare-a-third",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const SOCKET_PER_MILLE = Object.freeze({ rare: 150, legendary: 300 });",
+    "new": "export const SOCKET_PER_MILLE = Object.freeze({ rare: 300, legendary: 300 });",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-a-garment-socketed",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const SOCKET_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery']);",
+    "new": "export const SOCKET_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', ...CLOTHING_GROUPS]);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-ruby-a-weapons-frost",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  ruby: Object.freeze({ weapon: graded('elemental', 'fire', [1, 2, 3, 4, 6]),",
+    "new": "  ruby: Object.freeze({ weapon: graded('elemental', 'frost', [1, 2, 3, 4, 6]),",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-diamond-double",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  diamond: Object.freeze({ weapon: graded('damage', null, [2, 4, 6, 9, 12]),",
+    "new": "  diamond: Object.freeze({ weapon: graded('damage', null, [2, 4, 12, 9, 12]),",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-gems-out-of-order",
+    "file": "src/systems/loot/gemGrades.js",
+    "old": "  'emerald',\n  'sapphire',",
+    "new": "  'sapphire',\n  'emerald',",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS GEM-GRADES): re-aimed by content - a gem's kind, grade and price ladder moved to their one home, systems/loot/gemGrades.js (a leaf the jeweller's law reads too); lootRarity.js and gems.js re-export them."
+  },
+  {
+    "name": "LOOT20-a-weapon-reads-as-a-jewel",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return row ? { ...gradeLine(item?.group === 'Weapons' ? row.weapon : row.other, gemGrade(gem)), gem } : null;",
+    "new": "  return row ? { ...gradeLine(row.other, gemGrade(gem)), gem } : null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-a-line-unmarked",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return row ? { ...gradeLine(item?.group === 'Weapons' ? row.weapon : row.other, gemGrade(gem)), gem } : null;",
+    "new": "  return row ? { ...gradeLine(item?.group === 'Weapons' ? row.weapon : row.other, gemGrade(gem)) } : null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-any-group-socketed",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (!perMille || !SOCKET_GROUPS.includes(it.group) || hasSocket(it) || !socketCap(it)) continue;",
+    "new": "    if (!perMille || hasSocket(it)) continue;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-a-magic-socketed",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    const perMille = SOCKET_PER_MILLE[it?.rarity] == null ? 0 : (_socketPerMille ?? SOCKET_PER_MILLE[it.rarity]);",
+    "new": "    const perMille = _socketPerMille ?? SOCKET_PER_MILLE[it?.rarity] ?? 150;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-pass-ignores-the-switch",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const given = [];\n  if (!lootRarityOn()) return given;\n  for (const it of pieces ?? []) {\n    const perMille",
+    "new": "  const given = [];\n  for (const it of pieces ?? []) {\n    const perMille",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-over-the-chance",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (rolls() * 1000 < perMille) { writeSockets(it, [SOCKET_EMPTY]); given.push(it); }",
+    "new": "    if (rolls() * 1000 >= 0) { writeSockets(it, [SOCKET_EMPTY]); given.push(it); }",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-set-in-a-set-socket",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (list[i] !== SOCKET_EMPTY || !isGemId(gem)) return null;",
+    "new": "  if (!isGemId(gem)) return null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-line-unset-on-set",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);",
+    "new": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+  },
+  {
+    "name": "LOOT20-the-socket-unnamed",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  writeSockets(item, list.map((v, j) => (j === i ? gem : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);",
+    "new": "  item.affixes = [...(Array.isArray(item.affixes) ? item.affixes : []), line];\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+  },
+  {
+    "name": "LOOT20-the-gem-worthless",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + gemWorth(gem);\n  return line;",
+    "new": "  return line;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+  },
+  {
+    "name": "LOOT20-the-line-left-on-unset",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));",
+    "new": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+  },
+  {
+    "name": "LOOT20-unset-keeps-the-gem",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  writeSockets(item, list.map((v, j) => (j === i ? SOCKET_EMPTY : v)));\n  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));",
+    "new": "  layGemLines(item);\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - (legacy ? affixesWorth([line], item) : gemWorth(gem));",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+  },
+  {
+    "name": "LOOT20-wire-gem-without-socket",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (item?.socket == null && item?.sockets == null) return gems.length === 0;",
+    "new": "  if (item?.socket == null && item?.sockets == null) return true;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-wire-any-tier",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (list.length > socketCap(item) || !list.every((v) => SOCKET_VALUES.includes(v))) return false;",
+    "new": "  if (list.length > socketMax(item) || !list.every((v) => SOCKET_VALUES.includes(v))) return false;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-wire-any-group",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (list.length > socketCap(item) || !list.every((v) => SOCKET_VALUES.includes(v))) return false;",
+    "new": "  if (list.length > 3 || !list.every((v) => SOCKET_VALUES.includes(v))) return false;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-wire-empty-with-a-line",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (gems.length !== set.length) return false;",
+    "new": "  if (gems.length < set.length) return false;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-wire-any-value",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    return !!want && a.gem === g && a.id === want.id && a.param === want.param && a.value === want.value;",
+    "new": "    return !!want && a.gem === g && a.id === want.id && a.param === want.param;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-wire-any-gem",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    return !!want && a.gem === g && a.id === want.id && a.param === want.param && a.value === want.value;",
+    "new": "    return !!want && a.id === want.id && a.param === want.param && a.value === want.value;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-an-empty-socket-unsaid",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  { const s = socketLine(item); if (s) out.push(s); }   // LOOT20: an empty socket says so; a set gem's line said itself above\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-a-gem-line-banded",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (a.gem != null) return null;   // LOOT20: a set gem's line is the gem's, fixed - no roll made it\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-gem-unnamed",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (gem != null) return `${GEM_NAMES[gem] ?? 'Gem'}: ${label}`;   // LOOT20: \"Ruby: +3 Fire damage\"",
+    "new": "  if (gem != null) return label;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-a-gem-spoils-perfect",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (item.affixes.some((a) => a?.gem != null)) return isPerfect({ ...item, affixes: item.affixes.filter((a) => a?.gem == null) });   // LOOT20: a gem's line is no roll's\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-exalted-reforges-the-gem",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "&& item.exalted === true && list.length) lines = [list.filter((a) => a?.gem == null).length - 1];",
+    "new": "&& item.exalted === true && list.length) lines = [list.length - 1];",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-a-gem-reforged",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return lines.filter((i) => validAffix(list[i]) && list[i].gem == null && reforgePool(item, i).ids.length > 0);",
+    "new": "  return lines.filter((i) => validAffix(list[i]) && reforgePool(item, i).ids.length > 0);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the filter is the reforgeable lines' last line, a line nothing can replace beside it."
+  },
+  {
+    "name": "LOOT20-the-door-no-sockets",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  socketPass(minted, rolls);   // LOOT20: and a socket, after the curse (a garment never takes one)\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-kit-no-sockets",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  socketPass(kit, opts.rolls ?? Math.random); // LOOT20: and a socket, after the curse\n  weaponSocketPass(kit, opts.rolls ?? Math.random); // GEM1: and a weapon's own sockets, after that (law 9)",
+    "new": "  weaponSocketPass(kit, opts.rolls ?? Math.random); // GEM1: and a weapon's own sockets, after that (law 9)",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-wire-unchecked",
+    "file": "src/systems/loot/loot.js",
+    "old": "  if (!validSocket(out)) return null; // LOOT20: a socket only as the pass and the Reforge make one\n  // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost",
+    "new": "  // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-a-locked-gem-spent",
+    "file": "src/systems/reforge.js",
+    "old": "const looseGem = (it, gem) =>\n  gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
+    "new": "const looseGem = (it, gem) => gemKindOf(it) === gem && !it.questItem && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II B1): a quest's gem is no loose gem either. AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+  },
+  {
+    "name": "LOOT20-a-stack-taken-whole",
+    "file": "src/systems/reforge.js",
+    "old": "    if ((it.stackCount ?? 1) > 1) it.stackCount -= 1;\n    else items.splice(i, 1);",
+    "new": "    items.splice(i, 1);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-set-anything",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!hasSocket(item)) return 'not';\n  return !itemIsIdentified(item) ? 'unknown' : null;",
+    "new": "  return !itemIsIdentified(item) ? 'unknown' : null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-set-unknown",
+    "file": "src/systems/reforge.js",
+    "old": "  return !itemIsIdentified(item) ? 'unknown' : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-set-over-a-gem",
+    "file": "src/systems/reforge.js",
+    "old": "  if (list[at == null ? list.indexOf(SOCKET_EMPTY) : at] !== SOCKET_EMPTY) return 'set';\n  if (!ALL_GEM_IDS.includes(gem) || !(gemsHeld(player?.items)[gem] > 0)) return 'nogem';",
+    "new": "  if (!ALL_GEM_IDS.includes(gem) || !(gemsHeld(player?.items)[gem] > 0)) return 'nogem';",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-set-a-gem-not-held",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!ALL_GEM_IDS.includes(gem) || !(gemsHeld(player?.items)[gem] > 0)) return 'nogem';\n  return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-gem-kept",
+    "file": "src/systems/reforge.js",
+    "old": "  const stone = takeGem(player.items, gem, from); // AUDIT GEM: the pressed stone first",
+    "new": "  const stone = null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ],
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+  },
+  {
+    "name": "LOOT20-unset-an-empty-socket",
+    "file": "src/systems/reforge.js",
+    "old": "  return socketWork(item) ?? (socketGem(item, at) ? null : 'empty');",
+    "new": "  return socketWork(item) ?? null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-unset-anywhere",
+    "file": "src/systems/reforge.js",
+    "old": "export function unsetGemPiece(item, player, at = null) {\n  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };",
+    "new": "export function unsetGemPiece(item, player, at = null) {\n  if (!player || !Array.isArray(player.items)) return { ok: false, reason: 'gone' };",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-page-unrouted",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    if (page === 'sockets') {\n      renderSockets(items, payer, have, picture);\n      return;\n    } // LOOT20\n    if (page === 'imbue') {",
+    "new": "    if (page === 'imbue') {",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-page-lists-all",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    const rows = items.filter((it) => hasSocket(it));",
+    "new": "    const rows = items.filter((it) => it?.rarity);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-unset-unasked",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "        if (!ask) {\n          asking = it;\n          askingAt = at;\n          say(false, UNSET_ASK(gem));\n          render();\n          return;\n        }\n        asking = null;",
+    "new": "        asking = null;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-a-gem-not-held-offered",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      const kinds = ALL_GEM_IDS.filter((g) => held[g] > 0);",
+    "new": "      const kinds = ALL_GEM_IDS;",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "LOOT20-the-host-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "      setGem: (item, gem) => setGemPiece(item, gem, playerEntity),   // LOOT20: a gem from the pack in a socket\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  }
+]

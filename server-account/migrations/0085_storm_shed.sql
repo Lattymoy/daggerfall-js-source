@@ -1,0 +1,24 @@
+-- STORM-SHED (2026-10-06 evening, the account service overloaded a second time - "D1_ERROR: D1 DB is overloaded.
+-- Requests queued for too long." - and players' decorations missing): A CHARACTER'S HARVESTS TODAY, READ OFF ITS OWN ROWS.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). Deploy this service (acct88) with the site; no
+-- relay change.
+--
+-- The professions' state read asks what one character took today
+-- (professions.js, `SELECT node, kind FROM node_harvests WHERE player = ?1
+-- AND char_id = ?2 AND day = ?3`), and SQLite answered it off the primary
+-- key (day, node, kind, player, char_id) with `day` alone: a covering index
+-- for node and kind, so the planner took it - and read EVERY PLAYER'S
+-- HARVESTS OF THE DAY for one character's. In the outage's two hours that
+-- was 8,021 rows a call on average, 9.1 million rows (d1 insights), and
+-- it grows through the day with everyone's harvests. This index holds the
+-- character's own rows of the day with their node and kind, so the read
+-- is that character's alone (test/stormshed.test.js holds the plan).
+--
+-- node_harvests has been rebuilt by four migrations to widen its CHECK
+-- (0028, 0031, 0036, 0042; 0043 says so of its own index): a fifth must
+-- create this index again.
+CREATE INDEX IF NOT EXISTS idx_node_harvests_char_day ON node_harvests (player, char_id, day, node, kind);

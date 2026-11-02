@@ -1,0 +1,29 @@
+[
+  {
+    "name": "IR-the-refund-ignores-the-cost-modifiers",
+    "file": "src/systems/spell/identifyRefund.js",
+    "old": "  const { sp } = calculateCastCost(identifyAlone, casterEntity);",
+    "new": "  const { sp } = calculateCastCost(identifyAlone, casterEntity, { portMods: false });",
+    "tests": [
+      "test/systems/identify.test.js"
+    ]
+  },
+  {
+    "name": "IR-the-refund-prices-the-whole-bundle",
+    "file": "src/systems/spell/identifyRefund.js",
+    "old": "  const identifyAlone = { ...spell, effects: [identifyEffect] };",
+    "new": "  const identifyAlone = spell;",
+    "tests": [
+      "test/systems/identify.test.js"
+    ]
+  },
+  {
+    "name": "IR-the-refund-loses-its-floor",
+    "file": "src/systems/spell/identifyRefund.js",
+    "old": "  return Math.max(IDENTIFY_REFUND_FLOOR, sp);",
+    "new": "  return sp;",
+    "tests": [
+      "test/systems/identify.test.js"
+    ]
+  }
+]

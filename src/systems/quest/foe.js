@@ -1,0 +1,285 @@
+// THE QUEST FOE (Q1 declaration + Q2b tracking + Q3-iii the name and
+// queue halves) - Foe.cs. Q1: "Foe _sym_ is [COUNT] aFoeName" - the
+// name resolves to a MobileTypes id through the Quests-Foes table
+// (unknown names throw, as DFU), and the count clamps
+// 1..maxSpawnCount(8) - ParseInt of a missing count is 0 and the
+// clamp is what makes it 1. Q2b: the injury/kill/restrain tracking
+// the trigger actions read - the world half that CALLS
+// SetInjured/IncrementKills (EnemyEntity damage/death) and READS
+// IsRestrained (EnemyMotor) rides Q4's behaviour mount; until then
+// tests drive the setters directly, as QuestResourceBehaviour does
+// in DFU. Q3-iii: SetFoeName (the world half - a HEADLESS parse
+// leaves `namePending` true - a FLAG, the npcPending precedent),
+// deathTrigger/kill, the spell queue (CastSpellOnFoe's consumer) and
+// the cloned item queue. The scene halves that DRAIN the queues
+// (QuestResourceBehaviour.CastSpellQueue/AddItemQueue per instance)
+// ride Q4's behaviour mount, as does macro expansion reading
+// typeName/displayName.
+
+import { QuestResource, matchFirst } from './questResource.js';
+import { Symbol as QuestSymbol } from './symbol.js';
+import { parseInt as questParseInt } from './parseUtils.js';
+import { foesTable } from './tables.js';
+import { GENDERS, getNameBankOfRegion, monsterName } from '../../characters/nameHelper.js';
+import { personName } from '../../characters/personNames.js'; // REGION-NAMES
+import { srand, randomRange } from '../../formats/dfRandom.js';
+import { enemyDisplayName, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
+import { getLocalizedEnemyName } from '../textManager.js'; // L10N3e: the type name shown
+
+const MAX_SPAWN_COUNT = 8;
+
+// AUDIT 24 (wave 38): ENEMY_NAMES and isClassEnemyId moved to
+// characters/enemy/enemyBasics.js - the leaf that holds the rows they name,
+// which this file already imports. Re-exported so every existing
+// importer keeps working (ONE DFU MEMBER, ONE EXPORT).
+export { ENEMY_NAMES, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
+
+const DECL = [
+  /(Foe|foe) (?<symbol>[a-zA-Z0-9_.-]+) is (?<count>\d+) (?<aFoe>\w+)/,
+  /(Foe|foe) (?<sym2>[a-zA-Z0-9_.-]+) is (?<aFoe2>\w+)/,
+];
+
+export class Foe extends QuestResource {
+  constructor(parentQuest, line = null) {
+    super(parentQuest);
+    this.spawnCount = 0;
+    this.foeName = '';
+    this.foeType = -1; // MobileTypes id from the Quests-Foes table
+    // Q2b tracking state (Foe.cs:41-44)
+    this.injuredTrigger = false; // true once enemy injured, rearmed each wave
+    this.deathTrigger = false; // true when the enemy should instantly die (Foe.cs:42); NOT save state
+    this.isRestrained = false; // true if enemy restrained by quest
+    this.killCount = 0; // kills of this spawn; does NOT rearm
+    this.learnedKills = new Map(); // QUEST-AUDIT III KILL-ONCE: a party member's kills an envelope brought, not yet credited, by whose envelope - transient
+    // Q3-iii name state (Foe.cs:45-46, SetFoeName)
+    //
+    // AUDIT 24 (wave 27), EXAMINED AND NOT A DIVERGENCE - recorded so
+    // the next sweep does not raise it again. Foe.cs:45-46 declares
+    // both of these with NO initialiser, so they are NULL in C# where
+    // these are '' - the same shape as Quest.displayName, which wave 26
+    // had to fix. The difference is the CONSUMER. Quest.displayName is
+    // read through `displayName ?? quest.QuestName`, where '' and null
+    // part company. These two are read through Foe.ExpandMacro
+    // (Foe.cs:160-174) into `words[word].Replace(macro.token, result)`
+    // (QuestMacroHelper.cs:122), and .NET's String.Replace documents a
+    // null newValue as "all occurrences of oldValue are removed" -
+    // exactly what '' does. Unobservable, so the port keeps '' and its
+    // own namePending convention below.
+    this.humanoidGender = GENDERS.Male;
+    this.displayName = '';
+    this.typeName = '';
+    this.namePending = true; // no world seam -> SetFoeName PENDS (a flag; AUDIT-QUEST F1)
+    if (line !== null) this.setResource(line);
+  }
+
+  get isFoe() {
+    return true;
+  }
+
+  _rolls() {
+    return this.parentQuest?.rolls ?? Math.random;
+  }
+  _range(n) {
+    return n > 0 ? Math.floor(this._rolls()() * n) : 0;
+  }
+
+  get gender() {
+    return this.humanoidGender;
+  }
+
+  /** ExpandMacro (Foe.cs:153-177): _symbol_ answers the TYPE name,
+   *  =symbol_ the display name - the inversion is C#'s own. Stores
+   *  this foe as the quest's last resource for pronouns.
+   *
+   *  L10N3e: the type name AS SHOWN. SetFoeName writes it through
+   *  GetLocalizedEnemyName(enemy.ID) (Foe.cs:276) and _symbol_ prints
+   *  it (:164); the port's `typeName` stays the canonical name the save
+   *  holds, so the lookup is made here, by the foe's MobileTypes id. */
+  expandMacro(macroType) {
+    this.parentQuest.lastResourceReferenced = this;
+    if (macroType === 1) return getLocalizedEnemyName(this.foeType, this.typeName); // NameMacro1
+    if (macroType === 5) return this.displayName; // DetailsMacro
+    return false;
+  }
+
+  /** SetInjured / RearmInjured (Foe.cs:186-196). */
+  setInjured() {
+    this.injuredTrigger = true;
+  }
+  rearmInjured() {
+    this.injuredTrigger = false;
+  }
+
+  /** SetRestrained / ClearRestrained (Foe.cs:202-212). */
+  setRestrained() {
+    this.isRestrained = true;
+  }
+  clearRestrained() {
+    this.isRestrained = false;
+  }
+
+  /** QUEST-AUDIT III KILL-ONCE (VERMIN-SHARED's "Said, not fixed"): a party member's kill of this Foe, counted on this
+   *  copy - their puppet's fall seen, their pose's word - unless their copy's envelope already brought it here
+   *  (`learnedKills`, machine.js updateSharedQuest's merge): each copy counted the kills it saw and the resync kept the
+   *  larger count, so an envelope that came before the credit counted one kill twice (a `killed 2` closed on one spider).
+   *  A credit the envelope never carried counts; the next envelope's larger count corrects any it held back. AUDIT QA3
+   *  E3: by WHOSE kill - `owner`, the member whose fall it is, spends only a kill their own envelope brought: a kill no
+   *  holder saw, learned, swallowed a third member's credit that no envelope ever corrects (a `killed 3` never closed).
+   *  Answers whether it counted. */
+  creditPartnerKill(owner = null) {
+    const key = owner == null ? '' : String(owner);
+    const n = this.learnedKills.get(key) ?? 0;
+    if (n > 0) {
+      this.learnedKills.set(key, n - 1);
+      return false;
+    }
+    this.incrementKills();
+    return true;
+  }
+
+  /** IncrementKills (Foe.cs:219-222). */
+  incrementKills(amount = 1) {
+    this.killCount += amount;
+    // QUEST-NOTE (2026-10-13, a player: "killed the mage in question, but DFO never popped up saying the mage was
+    // killed"): THE PORT'S OWN WORD - a quest's foe fell, told to the host (a notice and a chat line), whatever the
+    // quest's own script says or does not say. DFU tells nothing here; the script's `say` stays its own box.
+    this.parentQuest?.hooks?.questFoeKilled?.(this.parentQuest, this, amount);
+  }
+
+  /** Kill (Foe.cs:224-227): flags every live instance to die; the
+   *  behaviour mount zeroes entity health per instance (Q4). */
+  kill() {
+    this.deathTrigger = true;
+  }
+
+  /** QueueSpell (Foe.cs:233-239): a plain lazy Add - no duplicate
+   *  refusal, unlike the item queue. Delivery is per-instance
+   *  (CastSpellQueue's foeSpellQueuePosition cursor, Q4); the queue
+   *  itself is never cleared, so FUTURE instances of this 1-to-many
+   *  Foe receive every spell queued so far. */
+  queueSpell(spell) {
+    if (!this.spellQueue) this.spellQueue = [];
+    this.spellQueue.push(spell);
+  }
+
+  get spellQueueCount() {
+    return this.spellQueue?.length ?? 0;
+  }
+
+  /** QueueItem (Foe.cs:246-252): items added to this Foe by the quest
+   *  system; Q2b-ii - GiveItem's consumer. Q3's spawner clones the
+   *  queue onto every instance (GetClonedItemQueue keeps the
+   *  originals here, as C# does). The queue rides ItemCollection in
+   *  C#, whose AddItem REFUSES a second add of the same item
+   *  (ItemCollection.cs:233-237, keyed by UID; here by identity) -
+   *  a rearmed "give item" cannot double-queue (Q2b-ii VERIFY). */
+  queueItem(dfItem) {
+    if (!this.itemQueue) this.itemQueue = [];
+    if (this.itemQueue.includes(dfItem)) {
+      console.warn('[quest] Duplicate item added to foe item queue.');
+      return;
+    }
+    this.itemQueue.push(dfItem);
+  }
+
+  get itemQueueCount() {
+    return this.itemQueue?.length ?? 0;
+  }
+
+  /** GetClonedItemQueue (Foe.cs:254-265): null when empty, else a
+   *  clone per item - "Original item UIDs will remain on Foe in
+   *  their item queue." FIELD BUGS 2026-10-25i HEART-KEPT (AUDIT FB1025i
+   *  B1): CloneAll gives each clone a UID of its own, so the record the
+   *  player takes off a body is never the quest's own under
+   *  Contains(DaggerfallUnityItem) - the port's item IS its UID, and a
+   *  quest item's copy is found by its quest and symbol (a load restores
+   *  the two apart), so a clone says it is one (`questClone`,
+   *  itemTransfer.js heldQuestRecordIndex). */
+  getClonedItemQueue() {
+    if (!this.itemQueueCount) return null;
+    return this.itemQueue.map((it) => (it?.questItem ? { ...it, questClone: true } : { ...it }));
+  }
+
+  setResource(line) {
+    super.setResource(line);
+    const match = matchFirst(line, DECL);
+    if (!match) return;
+    const g = match.groups;
+    this.symbol = new QuestSymbol(g.symbol ?? g.sym2);
+    this.foeName = g.aFoe ?? g.aFoe2;
+    const count = g.count != null ? questParseInt(g.count) : 0;
+
+    const table = foesTable();
+    if (!table.hasValue(this.foeName)) {
+      throw new Error(`Foes data table does not contain an entry for ${this.foeName}`);
+    }
+    this.foeType = questParseInt(table.getValue('id', this.foeName));
+
+    this.spawnCount = Math.min(Math.max(count, 1), MAX_SPAWN_COUNT); // Mathf.Clamp(count, 1, 8)
+
+    const world = this.parentQuest?.hooks?.world;
+    if (!world) return; // namePending stays true - the headless charter (the BRIDGE reports the absent seam)
+    this._setFoeName(world);
+    this.namePending = false;
+  }
+
+  /** SetFoeName (Foe.cs:271-296). Monsters draw a random monster name
+   *  ("Always treating monsters as male for now"); humanoids roll
+   *  gender at 55% MALE and draw a full name from the REGION's bank.
+   *  Both wall-clock DateTime.Now.Millisecond seeds ride the quest's
+   *  injectable roll (0..999, the same surface) per THE ENGINE-PRNG
+   *  RULE, Ledger A; the
+   *  monster seed ADDS DFRandom.random_range(1, 1000000) drawn from
+   *  DFRandom's own current state, verbatim. */
+  _setFoeName(world) {
+    // TextManager.GetLocalizedEnemyName's English - the CANONICAL name,
+    // saved; expandMacro shows it in the player's language (L10N3e). The
+    // enum-name fallback for a type missing from EnemyBasics is
+    // unreachable through the Quests-Foes table (every id is a real enemy).
+    // DEX1: a mod's foe (the table's new rows) by its custom name, as
+    // GetLocalizedEnemyName names it - enemyDisplayName is that one law
+    this.typeName = enemyDisplayName(this.foeType) ?? String(this.foeType);
+    if (!isClassEnemyId(this.foeType)) {
+      srand(this._range(1000) + randomRange(1, 1000000));
+      this.displayName = monsterName(GENDERS.Male, this._rolls());
+      return;
+    }
+    this.humanoidGender = this._rolls()() < 0.55 ? GENDERS.Male : GENDERS.Female;
+    srand(this._range(1000));
+    this.displayName = personName(getNameBankOfRegion(world.currentRegionIndex()), this.humanoidGender);
+  }
+
+  // ---- the save envelope (Q4-iv; Foe.cs SaveData_v2) ----
+
+  /** GetSaveData: the v2 shape (foeId as int). The v1->v2 upgrade
+   *  arm is legacy-save migration with no port-side v1 saves in the
+   *  wild - recorded, not ported. */
+  getSaveData() {
+    return {
+      spawnCount: this.spawnCount,
+      foeId: this.foeType,
+      humanoidGender: this.humanoidGender,
+      injuredTrigger: this.injuredTrigger,
+      restrained: this.isRestrained,
+      killCount: this.killCount,
+      displayName: this.displayName,
+      typeName: this.typeName,
+      spellQueue: this.spellQueue ? structuredClone(this.spellQueue) : null,
+      itemQueue: this.itemQueue ? structuredClone(this.itemQueue) : null,
+    };
+  }
+
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    this.spawnCount = dataIn.spawnCount;
+    this.foeType = dataIn.foeId;
+    this.humanoidGender = dataIn.humanoidGender;
+    this.injuredTrigger = dataIn.injuredTrigger;
+    this.isRestrained = dataIn.restrained;
+    this.killCount = dataIn.killCount;
+    this.displayName = dataIn.displayName;
+    this.typeName = dataIn.typeName;
+    this.spellQueue = dataIn.spellQueue ? structuredClone(dataIn.spellQueue) : null;
+    this.itemQueue = dataIn.itemQueue ? structuredClone(dataIn.itemQueue) : null;
+  }
+}

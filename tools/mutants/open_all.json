@@ -1,0 +1,21 @@
+[
+  {
+    "name": "OPEN-ALL-a-window-holds-the-sale-back",
+    "file": "src/net/shopLaw.js",
+    "old": "  const limits = mine.filter((e) => e.limited);",
+    "new": "  if (mine.length && nowMs < Math.min(...mine.map((e) => e.fromMs))) return false;\n  const limits = mine.filter((e) => e.limited);",
+    "tests": [
+      "test/server/storefront_service.test.js",
+      "test/ui/shop_untold.test.js"
+    ]
+  },
+  {
+    "name": "OPEN-ALL-a-window-hides-the-ware",
+    "file": "src/net/shopLaw.js",
+    "old": "  return !mine.some((e) => e.bad) && (!limits.length || nowMs >= Math.min(...limits.map((e) => e.fromMs)));",
+    "new": "  return !mine.some((e) => e.bad) && (!mine.length || nowMs >= Math.min(...mine.map((e) => e.fromMs)));",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  }
+]

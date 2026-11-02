@@ -1,0 +1,104 @@
+[
+    {
+        "index": 500,
+        "element": 2,
+        "spellName": "!Blood Leech",
+        "rangeType": 1,
+        "icon": 8,
+        "effects": [
+            {
+                "type": 11,
+                "subType": 8,
+                "magnitudeBaseLow": 4,
+                "magnitudeBaseHigh": 4,
+                "magnitudeLevelBase": 1,
+                "magnitudeLevelHigh": 4,
+                "magnitudePerLevel": 1
+            }
+        ]
+    },
+    {
+        "index": 501,
+        "spellName": "!Daemon Touch",
+        "element": 0,
+        "rangeType": 1,
+        "icon": 58,
+        "effects": [
+            {
+                "type": 4,
+                "subType": 0,
+                "magnitudeBaseLow": 1,
+                "magnitudeBaseHigh": 1,
+                "magnitudeLevelBase": 1,
+                "magnitudeLevelHigh": 7,
+                "magnitudePerLevel": 1
+            },
+            {
+                "type": 4,
+                "subType": 2,
+                "magnitudeBaseLow": 1,
+                "magnitudeBaseHigh": 1,
+                "magnitudeLevelBase": 1,
+                "magnitudeLevelHigh": 4,
+                "magnitudePerLevel": 1
+            }
+        ]
+    },
+    {
+        "index": 502,
+        "spellName": "!Wrack",
+        "element": 4,
+        "rangeType": 1,
+        "icon": 21,
+        "effects": [
+            {
+                "type": 11,
+                "subType": 8,
+                "magnitudeBaseLow": 1,
+                "magnitudeBaseHigh": 6,
+                "magnitudeLevelBase": 1,
+                "magnitudeLevelHigh": 1,
+                "magnitudePerLevel": 1
+            },
+            {
+                "type": 1,
+                "subType": 2,
+                "durationBase": 1,
+                "durationMod": 1,
+                "durationPerLevel": 4,
+                "magnitudeBaseLow": 1,
+                "magnitudeBaseHigh": 4,
+                "magnitudeLevelBase": 1,
+                "magnitudeLevelHigh": 1,
+                "magnitudePerLevel": 2
+            }
+        ]
+    },
+    {
+        "index": 503,
+        "spellName": "!Bolt of Vengeance",
+        "element": 3,
+        "rangeType": 4,
+        "icon": 39,
+        "effects": [
+            {
+                "type": 4,
+                "subType": 0,
+                "magnitudeBaseLow": 1,
+                "magnitudeBaseHigh": 25,
+                "magnitudeLevelBase": 1,
+                "magnitudeLevelHigh": 5,
+                "magnitudePerLevel": 1
+            },
+            {
+                "type": 7,
+                "subType": 3,
+                "magnitudeBaseLow": 1,
+                "magnitudeBaseHigh": 10,
+                "magnitudeLevelBase": 0,
+                "magnitudeLevelHigh": 0,
+                "magnitudePerLevel": 1
+            }
+        ]
+    }
+]

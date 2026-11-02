@@ -1,0 +1,56 @@
+[
+  {
+    "name": "MACBUG1-the-mill-is-a-trap-again",
+    "file": "src/world/interior/interiorLayout.js",
+    "old": "  if (doors.length === 0) {\n    const enter =\n      markers.find((m) => m.type === INTERIOR_MARKER.ENTER) ?? markers.find((m) => m.type === INTERIOR_MARKER.REST);\n    if (enter) doors.push(exitDoorAt(enter, blockIndex, recordIndex));\n  }\n",
+    "new": "",
+    "tests": [
+      "test/world/windmillinterior.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG1-the-exit-is-added-to-every-interior",
+    "file": "src/world/interior/interiorLayout.js",
+    "old": "  if (doors.length === 0) {",
+    "new": "  if (doors.length >= 0) {",
+    "tests": [
+      "test/world/windmillinterior.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG1-the-player-is-stood-inside-the-door",
+    "file": "src/world/interior/interiorLayout.js",
+    "old": "    normal: { x: 0, y: 0, z: 1 },",
+    "new": "    normal: { x: 0, y: 0, z: 0 },",
+    "tests": [
+      "test/world/windmillinterior.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG2-the-shop-and-the-town-leave-the-table",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "  shopName, cityName,\n});",
+    "new": "});",
+    "tests": [
+      "test/systems/guild/guildserviceflows.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG2-one-flow-forgets-to-pass-them-on",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: getDivineLocalized(godName), playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) });",
+    "new": "  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: getDivineLocalized(godName), playerName: entity.name ?? '', ...identity(entity) });",
+    "tests": [
+      "test/systems/guild/guildserviceflows.test.js"
+    ]
+  },
+  {
+    "name": "MACBUG2-the-host-forgets-one-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "        shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,   // MAC-BUG2\n",
+    "new": "",
+    "tests": [
+      "test/systems/guild/guildserviceflows.test.js"
+    ]
+  }
+]

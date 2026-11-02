@@ -1,0 +1,137 @@
+[
+  {
+    "name": "ACT-TOUCH-the-strike-never-reaches-the-act",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      const attack = input.attack || (!!act && struck === act);",
+    "new": "      const attack = input.attack;",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "ACT-TOUCH-the-strike-kept-past-its-frame",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      struck = null;\n      if (act) {",
+    "new": "      if (act) {",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "ACT-TOUCH-a-strike-carried-to-the-next-act",
+    "file": "src/scenes/gatherHost.js",
+    "old": "(!!act && struck === act)",
+    "new": "(!!act && !!struck)",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "ACT-TOUCH-the-edge-read-off-the-hold",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      const edge = !!held && !strikeHeld && !repeat;",
+    "new": "      const edge = !!held && !repeat;",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "ACT-TOUCH-the-hook-never-calls-it",
+    "file": "src/scenes/world.js",
+    "old": "      gatherHost?.strike(held, o?.repeat === true);   // ACT-TOUCH",
+    "new": "      // gone   // ACT-TOUCH",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "ACT-TOUCH-the-tap-not-a-strike",
+    "file": "src/scenes/world.js",
+    "old": "      if (gatherHost?.acting() && !opts?.lockOnly) { gatherHost.strike(true); gatherHost.strike(false); return; }   // ACT-TOUCH",
+    "new": "      // gone   // ACT-TOUCH",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "ACT-CLICK-the-click-left-out",
+    "file": "src/scenes/professionsHost.js",
+    "old": "attack: pressed(host.latch.edge, host.keys, 'SwingWeapon') || pressed(host.latch.edge, host.keys, 'ActivateCenterObject'),",
+    "new": "attack: pressed(host.latch.edge, host.keys, 'SwingWeapon'),",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "ACT-CLICK-the-hold-read-for-the-press",
+    "file": "src/scenes/professionsHost.js",
+    "old": "attack: pressed(host.latch.edge, host.keys, 'SwingWeapon') || pressed(host.latch.edge, host.keys, 'ActivateCenterObject'),",
+    "new": "attack: pressed(host.latch.edge, host.keys, 'SwingWeapon') || held(host.keys, 'ActivateCenterObject'),",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "NODE-AIM-the-aim-point-alone",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        const up = run > 0 ? Math.max(dy - lift, Math.min(dy - lift + top, (dir[1] * (dx * dx + dz * dz)) / run)) : dy;",
+    "new": "        const up = dy;",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "NODE-AIM-the-span-past-the-base",
+    "file": "src/scenes/gatherHost.js",
+    "old": "Math.max(dy - lift, Math.min(dy - lift + top,",
+    "new": "Math.max(dy - 5, Math.min(dy - lift + top,",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "NODE-AIM-the-span-past-the-aim-point",
+    "file": "src/scenes/gatherHost.js",
+    "old": "Math.max(dy - lift, Math.min(dy - lift + top,",
+    "new": "Math.max(dy - lift, Math.min(dy - lift + top + 5,",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "NODE-AIM-only-the-nearest-asked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
+    "new": "    for (const c of seen.slice(0, 1)) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "NODE-AIM-the-hidden-taken",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
+    "new": "    for (const c of seen) return c.best;",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "VEIN-CLEAR-the-stone-inside-a-piece-taken",
+    "file": "src/scenes/mineHost.js",
+    "old": "      if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }",
+    "new": "      if (at) { best = at; bestD = d; }",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  },
+  {
+    "name": "VEIN-CLEAR-the-last-fallback-inside-a-piece-taken",
+    "file": "src/scenes/mineHost.js",
+    "old": "?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, pass, beach));",
+    "new": "?? natureStandsAt(samples, tilemap, locationRect, tx, ty, pass, beach);",
+    "tests": [
+      "test/scenes/fb1001_mining.test.js"
+    ]
+  }
+]

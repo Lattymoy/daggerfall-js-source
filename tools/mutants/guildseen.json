@@ -1,0 +1,128 @@
+[
+  {
+    "name": "GUILD-SEEN-the-stamp-unsaid",
+    "file": "server-account/src/guilds.js",
+    "old": "        seenAt: Number.isSafeInteger(m.seen_at) ? (hid == null ? m.seen_at : Math.min(m.seen_at, hid)) : null,",
+    "new": "        seenAt: null,",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-call-ahead-of-the-beat",
+    "file": "server-account/src/guilds.js",
+    "old": "COALESCE(p.played_at, p.last_seen) AS seen_at",
+    "new": "COALESCE(p.last_seen, p.played_at) AS seen_at",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-beat-unread",
+    "file": "server-account/src/guilds.js",
+    "old": "COALESCE(p.played_at, p.last_seen) AS seen_at",
+    "new": "p.last_seen AS seen_at",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-grace-edge-off-by-one",
+    "file": "src/net/guild/guildBook.js",
+    "old": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
+    "new": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 < PLAY_GRACE_S * 1000;",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-reader-read-off-the-clock",
+    "file": "src/net/guild/guildBook.js",
+    "old": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
+    "new": "  return nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-seconds-as-milliseconds",
+    "file": "src/net/guild/guildBook.js",
+    "old": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
+    "new": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt <= PLAY_GRACE_S * 1000;",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-no-stamp-read-as-offline",
+    "file": "src/net/guild/guildBook.js",
+    "old": "  if (!Number.isSafeInteger(m?.seenAt)) return null;",
+    "new": "  if (!Number.isSafeInteger(m?.seenAt)) return false;",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-stamp-compared-with-the-rest",
+    "file": "src/net/guild/guildBook.js",
+    "old": "  JSON.stringify([\n    state,\n    Array.isArray(guild?.members)\n      ? { ...guild, members: guild.members.map((m) => ({ ...m, seenAt: undefined })) }\n      : guild,\n    invites,\n  ]);",
+    "new": "  JSON.stringify([state, Array.isArray(guild?.members) ? { ...guild } : guild, invites]);",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-no-dot",
+    "file": "src/ui/socialPanel.js",
+    "old": "sub: `${rankName(v, m.rank)}${standing}`, online, seen: guildSeenText(m, g.now()) });",
+    "new": "sub: `${rankName(v, m.rank)}${standing}`, seen: guildSeenText(m, g.now()) });",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-no-line",
+    "file": "src/ui/socialPanel.js",
+    "old": "sub: `${rankName(v, m.rank)}${standing}`, online, seen: guildSeenText(m, g.now()) });",
+    "new": "sub: `${rankName(v, m.rank)}${standing}`, online });",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-line-frozen-at-its-paint",
+    "file": "src/ui/socialPanel.js",
+    "old": "      if (r.seenNode) liveSubs.push(",
+    "new": "      if (false) liveSubs.push(",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-dot-frozen-at-its-paint",
+    "file": "src/ui/socialPanel.js",
+    "old": "      if (r.dotNode) liveDots.push(",
+    "new": "      if (false) liveDots.push(",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-dot-unpainted",
+    "file": "src/ui/socialPanel.js",
+    "old": "    for (const d of liveDots) { const c = dotClass(d.of()); if (d.el.className !== c) d.el.className = c; }",
+    "new": "    for (const d of []) { const c = dotClass(d.of()); if (d.el.className !== c) d.el.className = c; }",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-SEEN-the-stale-row-read",
+    "file": "src/ui/socialPanel.js",
+    "old": "      const fresh = () => g.guild?.members?.find((x) => x?.member === m.member) ?? m;",
+    "new": "      const fresh = () => m;",
+    "tests": [
+      "test/net/guildseen.test.js"
+    ]
+  }
+]

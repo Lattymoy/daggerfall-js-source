@@ -1,0 +1,415 @@
+// THE CLASSIC SPELLCASTING HANDS, 1:1.
+//
+// Source, verbatim: FPSSpellCasting.cs (Assets/Scripts/Game, 324
+// lines) - PlayOneShot, SetCurrentAnims, UpdateSpellCast,
+// AlignLeftHand/AlignRightHand, the AnimateSpellCast coroutine and
+// OnGUI's two DrawTextureWithTexCoords calls - plus
+// WeaponBasics.GetMagicAnimFilename (:187-204), which is the whole
+// per-element archive table.
+//
+// It is a SEPARATE module from fpsWeapon.js for the reason DFU's own
+// header gives: "Spellcasting animations have different texture and
+// layout requirements to weapons and are never mixed with weapons
+// directly on screen at same time. Opted to create a new class to
+// play these animations and separate from FPSWeapon." Everything
+// differs - a 300-wide design surface rather than 320, one frame per
+// record rather than a frame list, TWO hands drawn per frame with the
+// right one mirrored, and a frame-index list that starts and ends on
+// the same small frame.
+//
+// THE ART comes from the player's own ARENA2 at runtime through the
+// SAME path the weapon sprite rides: CifRciFile over fetched bytes,
+// ART_PAL.COL, fpsWeapon's frameToColor32 bake (index 0 transparent),
+// renderer.uploadTexture. There is no dye - a spell has no material -
+// so the bake is called with a null dye, which is the branch
+// FPSWeapon.GetWeaponTexture2D takes for steel.
+//
+// THE ANIMATION IS A SINGLETON, exactly as DFU's is: FPSSpellCasting
+// is ONE component on the player (GameManager.PlayerSpellCasting,
+// GameManager.cs:322), and this port has four hosts each holding
+// their own weapon rig. A per-rig animation would have played in the
+// rig that took the cast and drawn in whichever rig owns the frame -
+// which for a spell cast from inside a building is not the same rig
+// (worldModes' interior rig shares its parent host's cast engine).
+// One player, one pair of hands.
+
+import { CifRciFile } from '../formats/cifRciFile.js';
+import { frameToColor32 } from './fpsWeapon.js'; // the ONE indexed-bitmap bake
+import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';
+import { validCastRate } from '../systems/castSpeed.js'; // CAST-SPEED: the rate a cast runs at
+
+/** nativeScreenWidth / nativeScreenHeight (:44-45). NOT 320x200: the
+ *  hands are laid out against a 300-wide surface, which is why they
+ *  sit further in from the edges than a weapon sprite does. The
+ *  comment at :218 - "Source casting animations are designed to fit
+ *  inside a fixed 320x200 display" - is about the ART, not the scale. */
+export const NATIVE_SPELL_W = 300;
+export const NATIVE_SPELL_H = 200;
+
+/** releaseFrame (:46) - the step the spell leaves the hands on. */
+export const RELEASE_FRAME = 5;
+
+/** smallFrameAdjust (:47): frames 0 and 5 (and fire's frame 4) are
+ *  narrower drawings, and are pushed in by this fraction of the
+ *  screen so the hands stay where the wide frames put them. */
+export const SMALL_FRAME_ADJUST = 0.134;
+
+/** animSpeed (:48) - "Set slower than classic for now", DFU's own
+ *  note. Seven steps at 0.04s is a 0.28s cast. The port's hands no
+ *  longer step at it - see CAST_FRAME_PERIOD. */
+export const ANIM_SPEED = 0.04;
+
+/** CAST-SPEED (2026-10-08, Mac: "nerf the animation of the regular sprite spellcasting to fall in line with the
+ *  morrowind model"): THE PERIOD THE HANDS STEP AT, at rate 1 - two and a half times DFU's animSpeed. The release
+ *  (frame 5) lands at 0.5 s and the hands come down at 0.7 s, where at DFU's 0.2 s and 0.28 s a classic caster cast
+ *  three times for every Morrowind hand's one. Divided by the cast's rate (systems/castSpeed.js: the live Speed and the
+ *  castSpeed loot line), which the Morrowind arm's spellcast group plays at too. */
+// CAST-QUICK (2026-10-09, the owner: "the casting got slowed in a update i think"): back to DFU's own clock
+// (ANIM_SPEED, 0.04 s - the release at 0.2 s, the hands down at 0.28 s). Speed and the castSpeed loot line still scale it.
+export const CAST_FRAME_PERIOD = 0.04;
+
+/** CAST-RECOVER (2026-10-09, the owner: "i can spam the spell way more than before the fix"): THE QUICK HANDS, THE OLD
+ *  PACE. CAST-QUICK gave the hands DFU's clock back (the spell leaves 0.2 s after the click), and with it the next cast
+ *  0.28 s after the last - the spam CAST-SPEED's slower clock had closed. The two are split now: the hands and the
+ *  release keep the quick clock, and the NEXT cast waits out this recovery from the click before it may start - the
+ *  0.7 s a whole cast took at CAST-SPEED's 0.1 s step (seven steps), over the cast's rate as the hands are (Speed and
+ *  the castSpeed loot line still quicken it). Casting feels as it did; it repeats no faster than before the fix. */
+export const CAST_RECOVER_S = 0.7;
+
+/** MW-CAST1: the longest a release HELD for the Morrowind arm's own key waits (seconds from the cast) before it goes
+ *  anyway - NEVER-TRAPS, the bow's HELD_HIT_MAX_S law (combat/weapon/weaponRig.js, MW-D42): a .kf with no "<type> release",
+ *  an arm that loses its build mid-cast, and the spell still leaves, late rather than never. Morrowind's own casts
+ *  release well inside it. */
+export const HELD_RELEASE_MAX_S = 1.5;
+
+/** RPT1026-MISC CAST-PACE (a private report: a Morrowind-look caster's spells left later than a Daggerfall-look caster's,
+ *  whose hands move faster): THE MOMENT A SPELL LEAVES, WHATEVER THE HANDS LOOK LIKE - frame 5 of the
+ *  classic hands' step at the cast's rate (0.2 s at rate 1), seconds from the cast. The Morrowind arm's spellcast section
+ *  is paced to bring its "<type> release" here (combat/fpArm.js castSpell's `releaseIn`, MW-PACE1's fit for a blow), and
+ *  an arm so paced lets the spell go on this frame, the classic lane's own (combat/weapon/weaponRig.js castSpellAnim). */
+export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD) / validCastRate(rate);
+
+/** frameIndices (:50) - "Animation starts and ends with frame 0". */
+export const FRAME_INDICES = Object.freeze([0, 1, 2, 3, 4, 5, 0]);
+
+/** MW-SHOT-PACE: when the classic hands come down - past their last frame at the cast's rate (0.28 s at rate 1), seconds
+ *  from the cast. A paced Morrowind cast ends its tail here (combat/fpArm.js castSpell's `endIn`). */
+export const castEndS = (rate = 1) => (FRAME_INDICES.length * CAST_FRAME_PERIOD) / validCastRate(rate);
+
+/**
+ * The classic element index a spell record carries - the SAME
+ * numbering systems/spellcast.js ELEMENTS uses and missileArchive
+ * indexes (375..379 = fire/cold/poison/shock/magic, DaggerfallMissile
+ * .cs:55-59). DFU's ElementTypes enum is a bit field (None 0, Fire 1,
+ * Cold 2, Poison 4, Shock 8, Magic 16) that this port never adopted;
+ * the table below is GetMagicAnimFilename's switch re-indexed onto the
+ * port's spelling, arm for arm.
+ */
+export const ELEMENT_TYPES = Object.freeze({ Fire: 0, Cold: 1, Poison: 2, Shock: 3, Magic: 4 });
+
+/** WeaponBasics.GetMagicAnimFilename (:187-204), verbatim. */
+export const MAGIC_ANIM_FILE = Object.freeze([
+  'FIRE00C6.CIF', // Fire
+  'FRST00C6.CIF', // Cold
+  'POIS00C6.CIF', // Poison
+  'SHOK00C6.CIF', // Shock
+  'MJIC00C6.CIF', // Magic
+]);
+
+/** GetMagicAnimFilename's default arm throws "Unsupported element
+ *  type." - and it is reachable, because ElementTypes.None is a value
+ *  a spell settings record can carry. A throw here would take the
+ *  frame down instead of the cast, so the refusal answers null and the
+ *  caller plays no animation; every other clause is verbatim. */
+export function magicAnimFilename(element) {
+  return MAGIC_ANIM_FILE[element] ?? null;
+}
+
+/**
+ * SetCurrentAnims' loader (:150-199), minus the two arms DFU never
+ * reaches: `border`/`dilate` are 0/false at the only call site
+ * (:139), so the DilateColors branch is dead in the reference too.
+ *
+ * "Load textures - spells have a single frame per record unlike
+ * weapons" (:174) - hence GetColor32(record, 0, ...) and one texture
+ * per record, where the weapon loader walks a frame list.
+ *
+ * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
+ * CIF override a texture mod supplies - is not consulted, exactly as
+ * combat/fpsWeapon.js does not consult it for WEAPON*.CIF. The port's
+ * replacement registry (systems/textureReplacement.js) covers archive
+ * textures only, so there is no CIF door to knock on yet.
+ *
+ * @returns {Promise<{element:number, records:{width:number,height:number,tex:*}[]}>}
+ */
+export async function loadSpellCastArt(getBytes, palette, renderer, element) {
+  const fileName = magicAnimFilename(element);
+  if (!fileName) return null;
+  const cif = new CifRciFile();
+  // "Could not load spell anims file {0}" (:169) - DFU throws; the
+  // caller here catches and the hands simply do not draw.
+  if (!cif.load(await getBytes(fileName), fileName, palette)) {
+    throw new Error(`Could not load spell anims file ${fileName}`);
+  }
+  const records = [];
+  for (let r = 0; r < cif.recordCount; r++) {
+    const size = cif.getSize(r);
+    // No dye: a spell has no material. This is GetWeaponTexture2D's
+    // steel arm, which is the branch that skips ChangeDye entirely.
+    const c32 = frameToColor32(cif.getDFBitmap(r, 0), palette, null);
+    records.push({
+      width: size.width,
+      height: size.height,
+      tex: renderer.uploadTexture('img', `fpsc:${fileName}:${r}`, c32, { clamp: true }), // HAND-SEAM: one quad, never tiled - no wrap onto the far edge (render/renderer.js textureParams)
+    });
+  }
+  return { element, records };
+}
+
+/**
+ * FPSSpellCasting's own state: currentAnimType, currentFrame and the
+ * AnimateSpellCast coroutine (:265-286), as one object.
+ *
+ * The coroutine is `while (true) { ...; yield return
+ * WaitForSeconds(animSpeed); }` - a fixed-period stepper that runs
+ * whether or not anything is playing, so a cast started mid-period
+ * shows its first frame for less than a full period. The accumulator
+ * below is that same fixed period; it is reset at PlayOneShot rather
+ * than carried, which is the one place this cannot be verbatim (a
+ * free-running coroutine has no start).
+ */
+export class SpellCastAnim {
+  constructor() {
+    this.element = null; // currentAnimType
+    this.currentFrame = -1;
+    this._acc = 0;
+    this._onRelease = null; // the OnReleaseFrame subscriber (see playOneShot)
+    this._hold = null; // MW-CAST1: the release held for the Morrowind arm's key (see playOneShot)
+    this._heldAge = 0;
+    this._period = CAST_FRAME_PERIOD; // CAST-SPEED: this cast's step, CAST_FRAME_PERIOD over its rate
+    this._recover = 0; // CAST-RECOVER: seconds before the next cast may start
+  }
+
+  /** CAST-RECOVER: is the last cast's recovery still running (the hands may already be down)? */
+  get recovering() {
+    return this._recover > 0;
+  }
+
+  /** MW-CAST1: is a release waiting on the Morrowind arm's own key? */
+  get releaseHeld() {
+    return !!this._hold;
+  }
+
+  /** IsPlayingAnim (:71-74). */
+  get isPlayingAnim() {
+    return this.currentFrame >= 0;
+  }
+
+  /** frameIndices[currentFrame] - the RECORD to draw, or -1. */
+  get frameIndex() {
+    return this.currentFrame < 0 ? -1 : FRAME_INDICES[this.currentFrame];
+  }
+
+  /**
+   * PlayOneShot (:126-136), verbatim: "Do nothing if already playing
+   * anim", then SetCurrentAnims + currentFrame = 0. The element gate
+   * is magicAnimFilename's refusal (see there).
+   *
+   * THE RELEASE SUBSCRIBER RIDES THE CAST. DFU subscribes ONCE, at
+   * Awake - `GameManager.Instance.PlayerSpellCasting.OnReleaseFrame +=
+   * PlayerSpellCasting_OnReleaseFrame` (EntityEffectManager.cs:165-166),
+   * gated on IsPlayerEntity - because there is one player, one
+   * FPSSpellCasting component (GameManager.cs:322) and therefore one
+   * handler for the life of the game. This port has the same ONE
+   * animation (the singleton below) but up to FOUR cast engines: each
+   * host builds its own `scenes/hostMagic.js`, and a streaming host
+   * mounts a dungeon context that builds another. So the single
+   * subscription binds at PlayOneShot rather than at Awake - the engine
+   * that started the hands is the engine the release reaches, which is
+   * the same one-handler shape DFU gets from having one manager. A
+   * REFUSED PlayOneShot (either arm below) leaves the standing handler
+   * untouched, exactly as a refused PlayOneShot leaves DFU's running
+   * animation - and its pending release - untouched.
+   *
+   * @param {?Function} onRelease raised on the release frame (:284).
+   * @param {{hold?: ?Function, rate?: number}} [opts] CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js),
+   *   fixed for the cast as it starts.
+   * @returns true when a cast actually started.
+   */
+  playOneShot(element, onRelease = null, { hold = null, rate = 1 } = {}) {
+    if (this.isPlayingAnim || this._hold || this._recover > 0) return false; // CAST-RECOVER: nor inside the last cast's recovery
+    if (!magicAnimFilename(element)) return false;
+    this.element = element;
+    this.currentFrame = 0;
+    this._acc = 0;
+    this._onRelease = onRelease;
+    // MW-CAST1 (Mac: "We need to implement morrowind spell casting effects and animations"): THE SPELL LEAVES ON THE
+    // ARM'S KEY. With the Morrowind arm casting, the release waits for its "<type> release" (`hold` answers true once
+    // the arm has crossed it, or once it no longer casts) - OpenMW casts there (character.cpp handleTextKey:
+    // `groupname == "spellcast" && action == mAttackType + " release"`), as the bow's shot waits for "shoot release"
+    // (MW-D42). The classic frames still run - their IsPlayingAnim is DFU's gate, and frame 5 is simply not the
+    // release - and the hold has a ceiling, HELD_RELEASE_MAX_S, so nothing waits for ever.
+    this._hold = typeof hold === 'function' ? hold : null;
+    this._heldAge = 0;
+    this._period = CAST_FRAME_PERIOD / validCastRate(rate);
+    this._recover = CAST_RECOVER_S / validCastRate(rate); // CAST-RECOVER: from the click, at the cast's rate
+    return true;
+  }
+
+  /** RaiseOnReleaseFrameEvent (:317-321). The handler is taken BEFORE
+   *  it runs: DFU's event stays subscribed across casts because the
+   *  subscription is per-component, and this port's is per-cast, so
+   *  one cast raises exactly one release. */
+  _raiseRelease() {
+    const h = this._onRelease;
+    this._onRelease = null;
+    if (h) h();
+  }
+
+  /**
+   * AnimateSpellCast's body (:267-283). Steps at the cast's period (CAST-SPEED: CAST_FRAME_PERIOD over its rate, where
+   * DFU steps at ANIM_SPEED), raises
+   * the release on the step that reaches releaseFrame, and ends the
+   * animation past the last index.
+   *
+   * THE RELEASE IS THE SPELL (ROAD-E6, closing this site's flag). DFU
+   * raises OnReleaseFrame HERE and
+   * EntityEffectManager.PlayerSpellCasting_OnReleaseFrame (:2098-2143)
+   * is what tallies, plays the cast sound, assigns the bundle or
+   * launches the missile, raises OnCastReadySpell and clears the ready
+   * - five frames (RELEASE_FRAME x ANIM_SPEED = 0.2s) into the hand
+   * motion (CAST-SPEED: the port's five are 0.5 s at rate 1). `scenes/hostMagic.js`'s castInput now runs DFU's split:
+   * the gates and the magicka spend at the CAST (CastReadySpell
+   * :402-435, where DecreaseMagicka sits BEFORE PlayOneShot), the
+   * resolution parked on this raise. The return value is still the
+   * step signal; the raise below is what carries the cast.
+   *
+   * @returns true on the step that crossed the release frame.
+   */
+  tick(dt) {
+    let released = false;
+    if (this._recover > 0) this._recover = Math.max(0, this._recover - (Number.isFinite(dt) && dt > 0 ? dt : 0)); // CAST-RECOVER
+    // MW-CAST1: a held release goes on the arm's key, or at the ceiling - whether or not the classic frames still run
+    if (this._hold) {
+      this._heldAge += dt;
+      if (this._hold() || this._heldAge >= HELD_RELEASE_MAX_S) {
+        this._hold = null;
+        released = true;
+        this._raiseRelease();
+      }
+    }
+    if (!this.isPlayingAnim) {
+      this._acc = 0;
+      return released;
+    }
+    this._acc += dt;
+    while (this._acc >= this._period && this.currentFrame >= 0) {
+      this._acc -= this._period;
+      this.currentFrame++;
+      // :283-284 - the raise happens ON the step, before the end-of-
+      // frames wrap, and the handler runs inside the coroutine.
+      if (this.currentFrame === RELEASE_FRAME && !this._hold) {
+        released = true;
+        this._raiseRelease();
+      }
+      if (this.currentFrame >= FRAME_INDICES.length) this.currentFrame = -1;
+    }
+    return released;
+  }
+}
+
+/** THE ONE PAIR OF HANDS (see the header): DFU's single
+ *  GameManager.PlayerSpellCasting component. */
+export const fpsSpellCasting = new SpellCastAnim();
+
+/**
+ * UpdateSpellCast (:201-231) + AlignLeftHand (:233-241) and
+ * AlignRightHand (:243-251), verbatim.
+ *
+ * screenRect.x/y are 0 here: DaggerfallUI.CustomScreenRect is the
+ * retro-rendering rect, and this port composites its overlays onto
+ * the canvas itself.
+ *
+ * The non-point filter adjust (:212-217) - "Adjust scale to be
+ * slightly larger when not using point filtering... reduces the
+ * effect of filter shrink at edge of display", handScaleX/Y *= 1.01 -
+ * is CORRECTLY ABSENT, the same answer the 2026-08-17 classic-weapon
+ * parity audit reached for FPSWeapon's identical fudge (Combat.md,
+ * "NEAREST filtering (DFU's 1.01 non-point fudge correctly absent)").
+ * renderer.uploadTexture binds NEAREST for every image texture
+ * (render/renderer.js textureParams), so there is no filter shrink to
+ * compensate for; applying it off the Video/MainFilterMode setting
+ * alone would scale the hands up by 1% for nothing.
+ */
+export function spellHandRects(canvas, rec, { frameIndex, element, offsetHeight = 0 }) {
+  const handScaleX = canvas.width / NATIVE_SPELL_W;
+  const handScaleY = canvas.height / NATIVE_SPELL_H;
+  // "Frames 0 and 5 are always small frames"; "Fire frame 4 is also a
+  // small frame" (:220-225).
+  const offsetWidth =
+    frameIndex === 0 || frameIndex === 5 || (element === ELEMENT_TYPES.Fire && frameIndex === 4)
+      ? SMALL_FRAME_ADJUST
+      : 0;
+  const w = rec.width * handScaleX;
+  const h = rec.height * handScaleY;
+  const y = canvas.height - h - offsetHeight;
+  return {
+    left: { x: canvas.width * offsetWidth, y, w, h },
+    right: { x: canvas.width * (1 - offsetWidth) - w, y, w, h },
+  };
+}
+
+/** rightHandAnimRect = new Rect(1, 0, -1, 1) (:210) - the right hand
+ *  is the SAME drawing, mirrored. leftHandAnimRect is the identity. */
+export const RIGHT_HAND_UV = Object.freeze({ u0: 1, v0: 0, u1: 0, v1: 1 });
+
+/**
+ * OnGUI's repaint (:110-118): the frame's record drawn twice, left
+ * hand upright and right hand mirrored, "behind other HUD elements".
+ *
+ * offsetHeight defaults to the large HUD's weapon offset - :86-95 is
+ * FPSWeapon's rule word for word ("Same logic as in FPSWeapon"), so
+ * it reads the one home rather than restating the gate.
+ */
+export function drawSpellCastHands(
+  renderer,
+  canvas,
+  art,
+  frameIndex,
+  {
+    offsetHeight = weaponOffsetHeight(),
+    tint = null, // MAC-I: the room's light, as FPSWeapon.Tint carries it for the weapon beside these hands
+  } = {},
+) {
+  if (!art || frameIndex < 0) return false;
+  const rec = art.records[frameIndex];
+  if (!rec || !rec.width || !rec.height) return false;
+  const { left, right } = spellHandRects(canvas, rec, { frameIndex, element: art.element, offsetHeight });
+  renderer.drawScreenQuad(rec.tex, left, undefined, tint ?? undefined);
+  renderer.drawScreenQuad(rec.tex, right, RIGHT_HAND_UV, tint ?? undefined);
+  return true;
+}
+
+/**
+ * RSH1 (2026-10-11, Mac: "can we implement this mod into the source"): READIED SPELLCASTING HANDS 1.3 (jefetienne,
+ * vendor/readied-spellcasting-hands/, MIT). The mod's whole change is AnimateSpellCast
+ * (Modded_FPSSpellCasting_Ready.cs, the coroutine): every step it shows FRAME 0 of the readied spell's element while
+ *
+ *   `pef.HasReadySpell && pef.ReadySpell.Settings.TargetType != TargetTypes.CasterOnly && !psc.IsPlayingAnim`
+ *
+ * and nothing (`currentFrame = -1`) otherwise. Its SetCurrentAnims, UpdateSpellCast and the two aligns are DFU's own,
+ * unchanged - the port's (above) - so the hands it draws are drawSpellCastHands at this frame, with the element's own
+ * archive. This answers that frame: 0, or -1 for no hands.
+ *
+ *   - `spell` is the readied spell record (scenes/hostMagic.js readiedSpell), or null for HasReadySpell false;
+ *   - CasterOnly is the port's rangeType 0 (spellcast.js, the classic range byte DFU's TargetTypes is read from);
+ *   - `castPlaying` is PlayerSpellCasting.IsPlayingAnim - the real cast owns the hands while it plays, from frame 0;
+ *   - an element with no archive (ElementTypes.None: GetMagicAnimFilename throws in DFU) draws nothing, as for the cast.
+ */
+export const READIED_HANDS_FRAME = 0;
+export function readiedHandsFrame(spell, castPlaying) {
+  if (!spell || castPlaying) return -1;
+  if (spell.rangeType === 0) return -1; // TargetTypes.CasterOnly: cast the moment it is readied - nothing to hold
+  if (!magicAnimFilename(spell.element)) return -1;
+  return READIED_HANDS_FRAME;
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "MAT-SHOW-heirloom-legendary-takes-the-metal",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "  const whole = parts.material && !bare ? `${parts.material} ${parts.name}` : parts.name;",
+    "new": "  const whole = parts.material ? `${parts.material} ${parts.name}` : parts.name;",
+    "tests": [
+      "test/systems/legacy/legacy4_heirloom.test.js"
+    ]
+  },
+  {
+    "name": "MAT-FILTER-reads-the-raw-metal",
+    "file": "src/ui/storeFilter.js",
+    "old": "  if (!itemSaysMaterial(it)) return '';",
+    "new": "  if (it?.group !== 'Armor' && it?.group !== 'Weapons') return '';",
+    "tests": [
+      "test/ui/lootbulk.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BULK-take-all-launders-the-owners-piece",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "          ok = await deps.loot.commit(taking ? 'take' : 'put', q.item, plan.amount, () => {\n            applyTransfer(q.item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo: taking ? null : keeping });",
+    "new": "          ok = await deps.loot.commit(taking ? 'take' : 'put', q.item, plan.amount, () => {\n            applyTransfer(q.item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, returnTo: taking ? null : keeping });",
+    "tests": [
+      "test/ui/lootbulk.test.js"
+    ]
+  },
+  {
+    "name": "CONTAINER-PEEK-asks-the-room-for-every-key",
+    "file": "src/systems/containerPreview.js",
+    "old": "    if (typeof key !== 'string' || (!key.startsWith('container:') && !key.startsWith('decor:'))) return null;",
+    "new": "    if (typeof key !== 'string') return null;",
+    "tests": [
+      "test/systems/containerpreview.test.js"
+    ]
+  }
+]

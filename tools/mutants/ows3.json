@@ -1,0 +1,308 @@
+[
+  {
+    "name": "OWS3-every-cell",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  if (r() >= RAIDER_CHANCE) return null;",
+    "new": "  r();",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-born-on-land",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  if (!open(px, py)) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-born-outside-its-pixel",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  const born = { x: o.x + r() * NATIVE_PIXEL, z: o.z + r() * NATIVE_PIXEL };",
+    "new": "  const born = { x: o.x + r() * NATIVE_PIXEL, z: o.z - r() * NATIVE_PIXEL };",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-unseeded",
+    "file": "src/systems/seaRaiders.js",
+    "old": "const seedOf = (cx, cy, life) =>\n  (Math.imul(cx + 1013, 73856093) ^ Math.imul(cy + 2029, 19349663) ^ Math.imul(life + 7, 83492791) ^ RAIDER_SEED) >>> 0;",
+    "new": "const seedOf = () => (Math.random() * 4294967296) >>> 0;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-lives-forever",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  const t = Math.max(0, Math.min(RAIDER_LIFE_MS, ms - raider.bornMs));",
+    "new": "  const t = Math.max(0, ms - raider.bornMs);",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-sails-through-land",
+    "file": "src/systems/seaRaiders.js",
+    "old": "      if (!sea(x + Math.sin(hd) * f, z + Math.cos(hd) * f)) return false;",
+    "new": "      if (false) return false;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-never-about",
+    "file": "src/systems/seaRaiders.js",
+    "old": "    const way = clear(h) ? h : clear(h + Math.PI) ? h + Math.PI : null;",
+    "new": "    const way = clear(h) ? h : null;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-no-leg-step",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  sail((t - legs * RAIDER_LEG_MS) / RAIDER_LEG_MS);",
+    "new": "  sail(0);",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-cells-off-by-reach",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  const c0x = Math.floor((at.x - reach) / RAIDER_CELL_PX),\n    c1x = Math.floor((at.x + reach) / RAIDER_CELL_PX);",
+    "new": "  const c0x = Math.floor(at.x / RAIDER_CELL_PX),\n    c1x = Math.floor(at.x / RAIDER_CELL_PX);",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-where-born-not-now",
+    "file": "src/systems/seaRaiders.js",
+    "old": "      if (raider) out.push({ ...raider, ...raiderAt(raider, ms, sea) });",
+    "new": "      if (raider) out.push({ ...raider, x: raider.born.x, z: raider.born.z });",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-night-sight",
+    "file": "src/systems/seaRaiders.js",
+    "old": "export const raiderSight = (night) => (night ? RAIDER_SIGHT_NIGHT_M : RAIDER_SIGHT_M);",
+    "new": "export const raiderSight = () => RAIDER_SIGHT_M;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-chase-no-scale",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  const move = Math.min(dist, RAIDER_CHASE_MPS * dt * Math.max(1, scale));",
+    "new": "  const move = Math.min(dist, RAIDER_CHASE_MPS * dt);",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-never-alongside",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  if (left <= contact) return { state: 'contact', pos: next, left, best: Math.min(best, left), bestAt: now };",
+    "new": "",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-sails-the-isthmus",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  if (!sea(next.x, next.z)) return { state: 'lost', pos, left: dist, best, bestAt };",
+    "new": "",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-no-leash",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)\n    return { state: 'lost', pos: next, left, best: b, bestAt: at };",
+    "new": "  if (now - at > RAIDER_GIVE_UP_MS) return { state: 'lost', pos: next, left, best: b, bestAt: at };",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-never-gives-up",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)\n    return { state: 'lost', pos: next, left, best: b, bestAt: at };",
+    "new": "  if (left > RAIDER_LEASH_M) return { state: 'lost', pos: next, left, best: b, bestAt: at };",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-patience-never-renewed",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  const gained = left < best - 1;",
+    "new": "  const gained = false;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-rows-north",
+    "file": "src/systems/seaRaiders.js",
+    "old": "export const pixelOfNative = (x, z) => worldCoordToMapPixel(x, z);",
+    "new": "export const pixelOfNative = (x, z) => ({ x: Math.trunc(x / NATIVE_PIXEL), y: Math.trunc(z / NATIVE_PIXEL) });",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-raid-no-coroutine",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "  onPostFastTravel();\n  return armed;",
+    "new": "  return armed;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-raid-twice",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "  if (hasTraveledbyShip || _boardIn !== null || raidRunning()) return 'busy';\n  if (tempShip) return 'lent';",
+    "new": "  if (tempShip) return 'lent';",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-raid-with-a-lent-ship-out",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "  if (tempShip) return 'lent';\n  return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-arm-no-lend",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "    tempShip = true;\n    h.assignShip?.(SHIP_TYPES.Large); // \"Temporary ship assigned.\"",
+    "new": "    h.assignShip?.(SHIP_TYPES.Large); // \"Temporary ship assigned.\"",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-hud-raider-dressed-traveller",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "|| k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';",
+    "new": "|| k === 'band' || k === 'camp' ? k : 'traveller';",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-hud-raider-name-bone",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": ": look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'quest' ? QUEST_MARK_CSS : C.bone;   // OWS3",
+    "new": ": look === 'stranger' ? C.stranger : look === 'quest' ? QUEST_MARK_CSS : C.bone;   // OWS3",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-host-born-on-lakes",
+    "file": "src/scenes/world.js",
+    "old": " || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-host-own-clock",
+    "file": "src/scenes/world.js",
+    "old": "const raidNowMs = () => Date.now() + _sharedOffsetMs;",
+    "new": "const raidNowMs = () => Date.now();",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-host-chase-ashore",
+    "file": "src/scenes/world.js",
+    "old": "(modes?.mode ?? 'exterior') === 'exterior' && raidQuarry();",
+    "new": "(modes?.mode ?? 'exterior') === 'exterior';",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-host-chase-unseen",
+    "file": "src/scenes/world.js",
+    "old": "    if (up && tvRaid.chase.size < 1) {",
+    "new": "    if (tvRaid.chase.size < 1) {",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-host-no-raid",
+    "file": "src/scenes/world.js",
+    "old": "      if (step.state === 'contact') raidContact();",
+    "new": "      if (false) raidContact();",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-host-journey-sails-on",
+    "file": "src/scenes/world.js",
+    "old": "    if (said !== 'raid' && said !== 'raid-lent') return;\n    travelControlUI?.closeWindow?.();",
+    "new": "    if (said !== 'raid' && said !== 'raid-lent') return;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-host-chase-kept-across-loads",
+    "file": "src/scenes/world.js",
+    "old": "    tvRaid.chase.clear(); tvRaid.spent.clear(); tvRaid.list = []; tvRaid.at = -Infinity; tvRaid.peer.clear(); tvRaid.spentAt.length = 0;   // OWS3: no chase across a load; OW6: nor what the peers said, nor what I was saying\n",
+    "new": "",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "OWS3-host-chaser-lost-off-screen",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "kind: chase ? 'raider ship chase' : 'raider ship', edge: chase });",
+    "new": "kind: chase ? 'raider ship chase' : 'raider ship', edge: false });",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OWS-A3-spent-kept-forever",
+    "file": "src/scenes/world.js",
+    "old": "      tvRaid.life = life; for (const id of tvRaid.spent) if (!tvRaid.chase.has(id)) tvRaid.spent.delete(id);",
+    "new": "      tvRaid.life = life;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OWS-A3-chase-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "for (const id of tvRaid.spent) if (!tvRaid.chase.has(id)) tvRaid.spent.delete(id);",
+    "new": "for (const id of tvRaid.spent) tvRaid.spent.delete(id);",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ]
+  }
+]

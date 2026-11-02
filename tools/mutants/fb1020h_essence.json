@@ -1,0 +1,182 @@
+[
+  {
+    "name": "ESSENCE-LOOSE-the-disenchant-reads-bought_with-alone",
+    "file": "server-account/src/alchemy.js",
+    "old": "(Number(p.loose) === 1 ? LOOSE_ORIGIN : 'gold')",
+    "new": "'gold'",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-the-craft-never-marks-its-goods-wall",
+    "file": "server-account/src/professions.js",
+    "old": "  const looseWall = `CASE WHEN ${anySql(13, LOOSE_ORIGIN)} THEN 1 ELSE 0 END`;",
+    "new": "  const looseWall = '0';",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-the-temper-never-marks-its-goods-wall",
+    "file": "server-account/src/professions.js",
+    "old": " AND (bought_with IS NOT 'gold' OR loose = 1) THEN 1 ELSE loose END",
+    "new": " AND 0 THEN 1 ELSE loose END",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-the-temper-marks-a-gold-bought-piece-its-goods",
+    "file": "server-account/src/professions.js",
+    "old": " AND (bought_with IS NOT 'gold' OR loose = 1) THEN 1 ELSE loose END",
+    "new": " AND (1 OR loose = 1) THEN 1 ELSE loose END",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-the-gold-purchase-keeps-the-makers-mark",
+    "file": "server-account/src/market.js",
+    "old": "bought_with = 'gold', loose = 0 WHERE provenance",
+    "new": "bought_with = 'gold' WHERE provenance",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-the-reforge-decision-reads-own-and-bought-alone",
+    "file": "server-account/src/alchemy.js",
+    "old": "SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE ${workableSql('?1', '?2', '?9')} >= ?5`)",
+    "new": "SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?9 AND origin IN ('own', 'bought')), 0) >= ?5`)",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-the-reforge-spends-nothing",
+    "file": "server-account/src/alchemy.js",
+    "old": "materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_reforges",
+    "new": "materialSql: '?3', qtySql: '0', guard: 'EXISTS (SELECT 1 FROM prof_reforges",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-the-reforge-refusal-counts-no-loose",
+    "file": "server-account/src/alchemy.js",
+    "old": "  return { error: workHeld(st) + (st.gold ?? 0) >= essence ? 'stores-gold' : 'stores-short', material: ARCANE_ESSENCE.key };",
+    "new": "  return { error: st.own + st.bought + (st.gold ?? 0) >= essence ? 'stores-gold' : 'stores-short', material: ARCANE_ESSENCE.key };",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-the-disenchants-room-word-counts-no-loose",
+    "file": "server-account/src/alchemy.js",
+    "old": "  if (workHeld(room) + (room.gold ?? 0) + essence > STORES_MAX)",
+    "new": "  if (room.own + room.bought + (room.gold ?? 0) + essence > STORES_MAX)",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-pages-the-split-says-from-your-pack",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const fromPack = () => (withdrawable(r.material) ?",
+    "new": "const fromPack = () => (true ?",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-pages-the-loose-line-says-the-pack",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const looseGoodsLine = (/** @type {string} */ m) => (withdrawable(m) ?",
+    "new": "const looseGoodsLine = (/** @type {string} */ m) => (true ?",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-pages-the-gold-line-says-the-pack",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const goldGoodsLine = (/** @type {string} */ m) => (withdrawable(m) ?",
+    "new": "const goldGoodsLine = (/** @type {string} */ m) => (true ?",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-pages-the-reforge-counts-no-loose",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  const have = (ess.own | 0) + (ess.bought | 0) + (ess.loose | 0);",
+    "new": "  const have = (ess.own | 0) + (ess.bought | 0);",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-pages-the-room-counts-no-loose",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  const room = storesRoomOf(book, ess);",
+    "new": "  const room = (book.state?.caps?.stores ?? STORES_MAX) - ((ess.own | 0) + (ess.bought | 0) + (ess.gold | 0));",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-0142-the-standing-pieces-unmarked",
+    "file": "server-account/migrations/0142_essence_loose.sql",
+    "old": "UPDATE products SET loose = 1\n",
+    "new": "UPDATE products SET loose = 0\n",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-0142-a-gold-bought-piece-marked-too",
+    "file": "server-account/migrations/0142_essence_loose.sql",
+    "old": "AND s.provenance = products.provenance AND s.buyer = products.owner)",
+    "new": "AND s.provenance = products.provenance AND s.buyer = products.owner AND 0)",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-0142-a-disenchant-left-gold",
+    "file": "server-account/migrations/0142_essence_loose.sql",
+    "old": "      THEN 'loose' ELSE d.origin END,",
+    "new": "      THEN 'gold' ELSE d.origin END,",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-0142-a-gold-bought-disenchant-named-loose",
+    "file": "server-account/migrations/0142_essence_loose.sql",
+    "old": "AND s.provenance = d.provenance AND s.buyer = d.player)",
+    "new": "AND s.provenance = d.provenance AND s.buyer = d.player AND 0)",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-0142-the-essence-left-gold",
+    "file": "server-account/migrations/0142_essence_loose.sql",
+    "old": "UPDATE prof_stores SET qty = qty - MIN(qty, (SELECT",
+    "new": "UPDATE prof_stores SET qty = qty - 0 * MIN(qty, (SELECT",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  },
+  {
+    "name": "ESSENCE-LOOSE-0142-more-moved-than-held",
+    "file": "server-account/migrations/0142_essence_loose.sql",
+    "old": "  SELECT s.player, s.char_id, s.material, 'loose', MIN(s.qty, d.n)",
+    "new": "  SELECT s.player, s.char_id, s.material, 'loose', d.n",
+    "tests": [
+      "test/net/fb1020h_essence.test.js"
+    ]
+  }
+]

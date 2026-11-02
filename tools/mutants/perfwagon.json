@@ -1,0 +1,227 @@
+[
+  {
+    "name": "PERF-WAGON-a-the-radius-ungrown",
+    "file": "src/render/frustum.js",
+    "old": "      Math.max(",
+    "new": "      1,\n      Math.max(",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-b-the-centre-unmoved",
+    "file": "src/render/frustum.js",
+    "old": "  const x = m[0] * s[0] + m[4] * s[1] + m[8] * s[2] + m[12];",
+    "new": "  const x = m[0] * s[0] + m[4] * s[1] + m[8] * s[2];",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-c-the-verdict-unread",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  const seen = cull && box ? cull(box) : DECOR_DRAW;",
+    "new": "  const seen = DECOR_DRAW;",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-d-the-cast-arm-drawn",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  (seen === DECOR_SHADOW ? castOnly(r) : r).drawMesh(mesh, m, remap, o);",
+    "new": "  (seen === DECOR_SHADOW ? r : r).drawMesh(mesh, m, remap, o);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-e-the-skip-drawn",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (seen === DECOR_SKIP) return false;\n  (seen === DECOR_SHADOW",
+    "new": "  (seen === DECOR_SHADOW",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-f-a-cast-counted",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  (seen === DECOR_SHADOW ? castOnly(r) : r).drawMesh(mesh, m, remap, o);\n  return seen === DECOR_DRAW;",
+    "new": "  (seen === DECOR_SHADOW ? castOnly(r) : r).drawMesh(mesh, m, remap, o);\n  return true;",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-g-the-road-test-not-taken",
+    "file": "src/world/road/roadTeams.js",
+    "old": "const one = cull && pres.drawWagonSeen ?",
+    "new": "const one = false ?",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-h-the-road-cast-arm-drawn",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    return drawWagon(v === DECOR_SHADOW ? castOnly(r) : r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look) && v === DECOR_DRAW;",
+    "new": "    return drawWagon(r, texRemap, position, rotation, tier, turn, scale, kind, hitched, look) && v === DECOR_DRAW;",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-i-the-road-grow-unread",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "teamVerdict({ at: position, g: scale }, cull)",
+    "new": "teamVerdict({ at: position, g: 1 }, cull)",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-j-the-roads-hand-no-test",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "deps.teams?.draw(r, null, cull) ?? 0,",
+    "new": "deps.teams?.draw(r, null, null) ?? 0,",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-k-the-harness-box-unmade",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "const box = cull ? sphereAabb(h.gpu.bounds, WORLD_MATRIX, _harnessBox) : null;",
+    "new": "const box = null;",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-l-the-harness-off-screen-drawn",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (box && cull(box) !== DECOR_DRAW) continue;",
+    "new": "if (box && cull(box) === DECOR_SKIP) continue;",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-m-the-harness-handed-no-test",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "drawHarness(r, cull);   // WAGONS3",
+    "new": "drawHarness(r, null);   // WAGONS3",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-n-the-cart-box-unmade",
+    "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
+    "old": "      return drawSeen(renderer, cull, cull && localBox ? transformedAabb(localBox, m) : null, gpu, m, texRemap);",
+    "new": "      return drawSeen(renderer, cull, null, gpu, m, texRemap);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-o-the-cart-handed-no-test",
+    "file": "src/player/mwView.js",
+    "old": "  return eotbWagon.draw(renderer, texRemap, cull);",
+    "new": "  return eotbWagon.draw(renderer, texRemap, null);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-p-the-camp-tent-box-unmade",
+    "file": "src/scenes/camps.js",
+    "old": "cull && _tent.box ? transformedAabb(_tent.box, m) : null",
+    "new": "null",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-q-the-hideout-tent-box-unmade",
+    "file": "src/scenes/hideouts.js",
+    "old": "        if (drawSeen(r, cull, cull ? sphereAabb(tent.gpu.bounds, m) : null, tent.gpu, m, texRemap)) n++;",
+    "new": "        if (drawSeen(r, cull, null, tent.gpu, m, texRemap)) n++;",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-r-the-world-cart-untested",
+    "file": "src/scenes/world.js",
+    "old": "    mwViewDrawWagon(renderer, null, yardCull);",
+    "new": "    mwViewDrawWagon(renderer, null, null);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-s-the-world-tents-untested",
+    "file": "src/scenes/world.js",
+    "old": "    camps.draw(renderer, null, yardCull);",
+    "new": "    camps.draw(renderer, null, null);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-t-the-world-road-teams-untested",
+    "file": "src/scenes/world.js",
+    "old": "livingRoads.drawTeams(renderer, yardCull);",
+    "new": "livingRoads.drawTeams(renderer, null);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-u-the-world-hideout-tents-untested",
+    "file": "src/scenes/world.js",
+    "old": "    _livingHideoutsHost?.draw(renderer, null, yardCull);",
+    "new": "    _livingHideoutsHost?.draw(renderer, null, null);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-v-the-fixed-city-test-off",
+    "file": "src/scenes/exterior.js",
+    "old": "const streetCull = (box) => (cullOn ? decorCullVerdict(_planes, box, streetReach) : DECOR_DRAW);",
+    "new": "const streetCull = (box) => DECOR_DRAW;",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-w-the-fixed-city-wagons-untested",
+    "file": "src/scenes/exterior.js",
+    "old": "    hcc.draw(renderer, texRemap, undefined, streetCull);",
+    "new": "    hcc.draw(renderer, texRemap, undefined, null);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-x-the-fixed-city-tents-untested",
+    "file": "src/scenes/exterior.js",
+    "old": "    camps.draw(renderer, texRemap, streetCull);",
+    "new": "    camps.draw(renderer, texRemap, null);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  },
+  {
+    "name": "PERF-WAGON-y-the-fixed-city-cart-untested",
+    "file": "src/scenes/exterior.js",
+    "old": "    mwViewDrawWagon(renderer, texRemap, streetCull);",
+    "new": "    mwViewDrawWagon(renderer, texRemap, null);",
+    "tests": [
+      "test/systems/livingWorld/perfwagon.test.js"
+    ]
+  }
+]

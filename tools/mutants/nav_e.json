@@ -1,0 +1,57 @@
+[
+  {
+    "name": "NAV-E-registered-every-ship",
+    "file": "src/systems/naval/navalSounds.js",
+    "old": "  return (_sounds ??= (async () => {",
+    "new": "  return (_sounds = (async () => {",
+    "tests": [
+      "test/tooling/nav_e_sounds.test.js"
+    ]
+  },
+  {
+    "name": "NAV-E-a-failure-thrown",
+    "file": "src/systems/naval/navalSounds.js",
+    "old": "      try {\n        if (await audio.registerSound(key, await load(file))) n++;\n      } catch {\n        /* the gun still fires, silently */\n      }",
+    "new": "      if (await audio.registerSound(key, await load(file))) n++;",
+    "tests": [
+      "test/tooling/nav_e_sounds.test.js"
+    ]
+  },
+  {
+    "name": "NAV-E-the-footstep-range",
+    "file": "src/systems/naval/navalSounds.js",
+    "old": "  [NAVAL_SFX.cannon]: Object.freeze({ refDistance: 30, maxDistance: 2400 }),",
+    "new": "  [NAVAL_SFX.cannon]: Object.freeze({ refDistance: 1, maxDistance: 2400 }),",
+    "tests": [
+      "test/tooling/nav_e_sounds.test.js",
+      "test/systems/naval/nav_h_host.test.js"
+    ]
+  },
+  {
+    "name": "NAV-E-the-bake-moved",
+    "file": "tools/navalSfx.mjs",
+    "old": "  ['naval-cannon', cannon, 0.95],",
+    "new": "  ['naval-cannon', cannon, 0.9],",
+    "tests": [
+      "test/tooling/nav_e_sounds.test.js"
+    ]
+  },
+  {
+    "name": "NAV-E-the-kit-changed-under-the-guns",
+    "file": "tools/sfxSynth.mjs",
+    "old": "export const softClip = (x, drive = 1) => x.map((v) => Math.tanh(v * drive) / Math.tanh(drive));",
+    "new": "export const softClip = (x, drive = 1) => x.map((v) => Math.tanh(v * drive));",
+    "tests": [
+      "test/tooling/nav_e_sounds.test.js"
+    ]
+  },
+  {
+    "name": "NAV-E-the-host-range-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const o = { ...navalSoundRange(key), ...opts };",
+    "new": "    const o = { ...opts };",
+    "tests": [
+      "test/systems/naval/nav_h_host.test.js"
+    ]
+  }
+]

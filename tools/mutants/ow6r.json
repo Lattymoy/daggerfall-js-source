@@ -1,0 +1,102 @@
+[
+  {
+    "name": "OW6-R-band-ids-taken",
+    "file": "src/systems/seaRaiders.js",
+    "old": "export const validRaiderWord = (raw) => validChaseWord(raw, RAIDER_ID_RE);",
+    "new": "export const validRaiderWord = (raw) => validChaseWord(raw, /^[rb]-?\\d{1,4}\\.-?\\d{1,4}\\.\\d{1,9}$/);",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "A band's word read as a raider's."
+  },
+  {
+    "name": "OW6-R-life-too-many",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  if (l !== life && l !== life - 1) return false;",
+    "new": "  if (l !== life && l !== life - 1 && l !== life - 2) return false;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "Words about raiders two lives gone kept."
+  },
+  {
+    "name": "OW6-R-reach-off",
+    "file": "src/systems/seaRaiders.js",
+    "old": "  const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;",
+    "new": "  const reach = RAIDER_REACH_PX + 2 * RAIDER_CELL_PX;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "Words about raiders past my reach kept."
+  },
+  {
+    "name": "OW6-R-spent-unheard",
+    "file": "src/scenes/world.js",
+    "old": "      if (flag === 2) { tvRaid.spent.add(id); tvRaid.chase.delete(id); tvRaid.peer.delete(id); continue; }",
+    "new": "      if (flag === 2) continue;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "A raider a peer fought stands again for me."
+  },
+  {
+    "name": "OW6-R-yield-lost",
+    "file": "src/scenes/world.js",
+    "old": "      if (tvRaid.chase.has(id) && chaseYields(online?.id ?? '', from)) tvRaid.chase.delete(id);",
+    "new": "",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "Two players chased by one sail."
+  },
+  {
+    "name": "OW6-R-peer-hold-lost",
+    "file": "src/scenes/world.js",
+    "old": "        if (tvRaid.spent.has(r.id) || tvRaid.chase.has(r.id) || seaRaidPeerChase(r.id)) continue;   // OW6: never a sail a peer's chase holds",
+    "new": "        if (tvRaid.spent.has(r.id) || tvRaid.chase.has(r.id)) continue;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "A sail a peer's chase holds gives chase to me too."
+  },
+  {
+    "name": "OW6-R-peer-place-unused",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "        const at = ship ? state.worldCoords(ship.pos) : c ? c.pos : (seaRaidPeerChase(r.id) ?? r);   // OW6: one a peer's chase holds, where they say it sails",
+    "new": "        const at = ship ? state.worldCoords(ship.pos) : c ? c.pos : r;",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "A peer's chase drawn where the sail would wander, not where it runs."
+  },
+  {
+    "name": "OW6-R-spent-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "      tvRaid.chase.delete(id); seaRaidSpend(id);   // OW6: spent, and said to the others",
+    "new": "      tvRaid.chase.delete(id); tvRaid.spent.add(id);",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "A raider that came alongside is never said spent."
+  },
+  {
+    "name": "OW6-R-word-unwritten",
+    "file": "src/scenes/world.js",
+    "old": "    if (frame) { frame.sr = word; _seaRaidWordKey = key; }",
+    "new": "    if (frame) { _seaRaidWordKey = key; }",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "The chase never rides the frame."
+  },
+  {
+    "name": "OW6-R-stale-kept",
+    "file": "src/scenes/world.js",
+    "old": "    if (performance.now() - p.at > p.hold) { tvRaid.peer.delete(id); return null; }",
+    "new": "",
+    "tests": [
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "A peer's word believed for ever: the sail never sails its own course again."
+  }
+]

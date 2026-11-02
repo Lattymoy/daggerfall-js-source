@@ -1,0 +1,52 @@
+[
+ {
+  "name": "WRITB-owner-unindexed",
+  "file": "server-account/migrations/0138_writ_board.sql",
+  "old": "CREATE INDEX IF NOT EXISTS idx_writs_owner ON writs (day, owner, region, kind, faction);\n",
+  "new": "",
+  "tests": [
+   "test/server/writ_board.test.js"
+  ],
+  "note": "the board and the member's own read walk a region's day, every region's, again"
+ },
+ {
+  "name": "WRITB-owner-regionless",
+  "file": "server-account/migrations/0138_writ_board.sql",
+  "old": "ON writs (day, owner, region, kind, faction);",
+  "new": "ON writs (day, owner, kind, faction);",
+  "tests": [
+   "test/server/writ_board.test.js"
+  ],
+  "note": "the board's owners sought with no region - every region's public writs of the day walked"
+ },
+ {
+  "name": "WRITB-member-uncovered",
+  "file": "server-account/migrations/0138_writ_board.sql",
+  "old": "ON writs (day, owner, region, kind, faction);",
+  "new": "ON writs (day, owner, region);",
+  "tests": [
+   "test/server/writ_board.test.js"
+  ],
+  "note": "the member's read answered by the table's UNIQUE index, covering, on its day alone"
+ },
+ {
+  "name": "WRITB-order-indexed",
+  "file": "server-account/src/professions.js",
+  "old": "owner IN ('', ?3) ORDER BY +kind, faction, slot",
+  "new": "owner IN ('', ?3) ORDER BY kind, faction, slot",
+  "tests": [
+   "test/server/writ_board.test.js"
+  ],
+  "note": "the UNIQUE index chosen for its order"
+ },
+ {
+  "name": "WRITB-order",
+  "file": "server-account/src/professions.js",
+  "old": "owner IN ('', ?3) ORDER BY +kind, faction, slot",
+  "new": "owner IN ('', ?3) ORDER BY +kind, slot",
+  "tests": [
+   "test/server/writ_board.test.js"
+  ],
+  "note": "the board in another order"
+ }
+]

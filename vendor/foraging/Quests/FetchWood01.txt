@@ -1,0 +1,124 @@
+-- Edited by Harbinger451
+-- StartsBy: Commoner
+-- Questee: anyone
+Quest: FetchWood01
+DisplayName: Collect some Firewood
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You look like you might be good with your hands!
+<ce> I have a spot of work, if you're interested?
+<--->
+<ce> How do you feel about manual work, %ra?
+<ce> It pays well.
+<--->
+<ce> I'm in need of someone big and strong and not
+<ce> afraid of hard work!
+<ce> Might you fit the bill?
+
+RefuseQuest:  [1001]
+<ce> That's the trouble with people these days.
+<ce> Averse to good, honest work.
+<--->
+<ce> I should've known better than to ask a %ra!
+
+AcceptQuest:  [1002]
+<ce> I'm running short of firewood, you see.
+<ce> I simply don't have the time to chop 'n' collect
+<ce> it myself, far too busy for that. Anyway, if you
+<ce> can get me two wood bundles before =deadline_ days
+<ce> have passed, I'll reward you with _reward_ gold.
+<ce> Get 'em however you like, makes no difference to me
+<ce> ... just be sure to get 'em.
+<--->
+<ce> I really need to get some firewood,
+<ce> but who has the time to go out 'n' chop
+<ce> wood for themselves. Especially with the
+<ce> wilderness being such a dangerous place.
+<ce> If you bring me two bundles of wood within
+<ce> lets say =deadline_ days, I'll pay you _reward_ gold.
+
+QuestFail:  [1003]
+<ce> You have failed to get _questgiver_
+<ce> %g3 firewood in time!
+
+QuestComplete:  [1004]
+<ce> Oh, good job, %pcn.
+<ce> For these two wood bundles, here's
+<ce> your _reward_ gold as promised.
+<--->
+<ce> My firewood ... nicely chopped and everything!
+<ce> Well done, %pcf. Here's your _reward_ gold.
+
+QuestorPostsuccess:  [1008]
+Greetings Friend. You did a good job collecting that firewood for me. How can I help you?
+
+QuestLogEntry:  [1010]
+%qdt
+_questgiver_ of __questgiver_ 
+at ___questgiver_
+has asked me to collect two wood bundles
+before =deadline_ days have passed.
+I will be paid _reward_ gold for the both of them.
+
+Message:  1011
+%qdt
+_questgiver_ of __questgiver_ 
+at ___questgiver_
+paid me _reward_ gold for two wood bundles.
+
+Message:  1012
+<ce> You don't have the two wood bundles I requested.
+<ce> Come back when you have the two of them ...
+<ce> and not before.
+<--->
+<ce> Stop waisting my time, %pcn!
+<ce> Come back when you have the two wood bundles.
+
+Message:  1013
+<ce> You have the two wood bundles
+<ce> that _questgiver_ of __questgiver_ 
+<ce> at ___questgiver_ requires.
+
+
+QBN:
+
+Person _questgiver_ group Questor
+
+Clock _deadline_ 48:00
+
+Item _reward_ gold range 200 to 300
+
+--	Quest start-up:
+	log 1010 step 0
+	start timer _deadline_
+
+variable _deadline_
+
+_questgiverclicked_ task:
+	clicked npc _questgiver_
+
+_gotitem_ task:
+	player possesses 2 items class 20 subclass 1604
+	say 1013
+
+_success_ task:
+	when _questgiverclicked_ and _gotitem_
+	player handsover 2 items class 20 subclass 1604
+	give pc _reward_
+    remove log step 0
+	log 1011 step 1
+	clear _questgiverclicked_
+	end quest
+
+_failure_ task:
+	when _questgiverclicked_ and not _gotitem_
+	say 1012
+	clear _questgiverclicked_
+
+_timeout_ task:
+	when _deadline_ and not _success_
+	say 1003
+    remove log step 0
+	end quest

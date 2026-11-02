@@ -1,0 +1,212 @@
+-- STAR8 (2026-10-20; bible/11-Multiplayer/Starfall.md section 7): THE THIRTEENTH OF FROSTFALL, step 2 of 4.
+-- Begun by the raven's letter (the line's runner starts it an hour after the first). The Sisters of the Bluff spin the
+-- black thread at their coven nearest the capital (`permanent BluffCoven`, the region of Daggerfall). A coven is an
+-- open-air place with no quest marker (WITCAA04.RMB - QLTF01 says why), so its people come out of the dark when the
+-- player arrives, as DFU's own ambushes do (`create foe ... 1 times`, started by the arrival, so a return while the
+-- coven stands brings no second): the Spinner and three of her sisters, each named and stood as a woman (`ql name ...
+-- female`, systems/questlines/qlActions.js QlName - Foe.cs SetFoeName rolls a man as often as not). AUDIT STAR8 S1: the
+-- spindle is the player's as the Spinner falls (`get item`, never on her body - a body the cull, a teleport or a load
+-- takes would take it too), and a coven gone unfought (`ql gone`: the Spinner unkilled and none of them standing - the
+-- encounters' 120 m cull, a death's teleport) is called up again at the next arrival; her death costs the Sisters of
+-- the Bluff's favour (`change repute with`, a stand-in of their faction - A0C0XY04's `_dummymage_` way). Then Morwen at
+-- the Glenmoril Coven's fire, met once on the player's arrival with the spindle, and her question: a length unwound to
+-- sell (`unwound`, and Morwen buys it herself rather than see it sold) or the spindle given whole (`wound`); with the
+-- spindle in hand her patience has no end (`stop timer`). Lore: canon - the Sisters of the Bluff (FACTION.TXT 423), the
+-- Coven on the Bluff (MAPS.BSA, the quest table's BluffCoven). The port's own: the Spinner, her spindle, the starlight
+-- spun on it.
+Quest: QLTF02
+DisplayName: The Coven on the Bluff
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>         The Sisters of the Bluff have moved their
+<ce>         spindle, and Morwen has gone after it alone.
+
+QuestComplete:  [1004]
+<ce>                Morwen counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Morwen of Glenmoril has found where the black
+ thread is spun. The Sisters of the Bluff keep a
+ spindle of it at __bluff_, and the one they call
+ the Spinner works it. I am to kill the Spinner and
+ her sisters, take the spindle, and bring it to
+ Morwen at __glenmoril_.
+
+Message:  1011
+%pcn,
+
+     I followed the thread back to its spindle. The
+ Sisters of the Bluff spin it at their coven,
+ __bluff_ in ____bluff_, close enough to the
+ capital to hear its bells.
+
+     Their Spinner works the spindle, and three of
+ her sisters stand with her. Kill them and take the
+ spindle. Bring it to me at __glenmoril_. Do not
+ let the thread touch your skin.
+
+<ce>                   Morwen of Glenmoril
+
+Message:  1012
+<ce>         The raven again, with a letter tied to its leg.
+<ce>            It eyes your pack before it goes.
+
+Message:  1013
+<ce>         The Spinner falls across her spindle, and the
+<ce>           black thread on it stops turning at last.
+
+Message:  1014
+<ce>         The spindle is heavier than wood should be. The
+<ce>          thread wound on it is warm, and it glows where
+<ce>                     it crosses itself.
+
+Message:  1015
+<ce>         Somewhere close, a wheel is turning. The Sisters
+<ce>                     are at their spinning.
+
+Message:  1016
+%qdt:
+ The Spinner of the Bluff is dead, and her spindle
+ of black thread is mine. Morwen of Glenmoril waits
+ for it at __glenmoril_ in ____glenmoril_.
+
+Message:  1017
+<ce>         A spindle of black thread, warm to the touch.
+<ce>         Where the thread crosses itself, it glows.
+
+Message:  1019
+<ce>         The wheel stops. "Someone has come to the Bluff,"
+<ce>         a woman's voice says, "on the Festival, of all
+<ce>                  nights." The Sisters come.
+
+Message:  1020
+<ce>         Morwen is waiting by the coven's fire. She turns
+<ce>         the spindle over in her hands and never once
+<ce>                   touches the thread.
+<ce>
+<ce>         "Starlight, spun fine. Every turn of this is a
+<ce>          star they pulled down. Any alchemist in the Bay
+<ce>          would pay a fortune for a length of it."
+<ce>
+<ce>         "I would rather have it whole. Whole, it can
+<ce>          show me how the rite was made."
+
+Message:  1030
+<ce>              "Well? Is it mine, or is it yours?"
+
+Message:  1031
+Unwind a length to sell, and give her the rest
+
+Message:  1032
+Give it to her whole
+
+Message:  1033
+<ce>         Morwen watches you unwind a length with a face
+<ce>         like stone. "An alchemist would pay this for
+<ce>         it," she says, and pays it herself. "Better my
+<ce>               coin than a stranger's questions."
+
+Message:  1034
+<ce>         "Whole." Morwen closes her hand over the spindle.
+<ce>         "Glenmoril will remember who brought it so."
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--            __bluff_ occurs 2 times.
+--          ____bluff_ occurs 1 time.
+--       __glenmoril_ occurs 3 times.
+--     ____glenmoril_ occurs 1 time.
+
+QBN:
+Item _letter_ letter used 1011
+Item _spindle_ trinket used 1017
+Item _gold_ gold range 300 to 600
+
+Place _glenmoril_ permanent GlenmorilCoven
+Place _bluff_ permanent BluffCoven
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+Person _bluffsister_ face 1 faction The_Sisters_of_the_Bluff remote
+
+Foe _spinner_ is Sorcerer
+Foe _sisters_ is 3 Nightblade
+
+--	Quest start-up:
+	ql name _spinner_ The_Spinner female
+	ql name _sisters_ Sister_of_the_Bluff female
+	pc at _bluff_ set _atbluff_ saying 1015
+	pc at _glenmoril_ set _atcoven_
+	have _spindle_ set _hasspindle_
+	start timer _courier_
+
+variable _atbluff_
+variable _atcoven_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	reveal _bluff_
+	reveal _glenmoril_
+	log 1010 step 0
+	start timer _wait_
+
+_arrived_ task:
+	when _courier_ and _atbluff_
+	start task _ambush_
+
+_lost_ task:
+	ql gone _spinner_ _sisters_
+	clear _arrived_ _ambush_ _lost_
+
+_ambush_ task:
+	create foe _spinner_ every 0 minutes 1 times with 100% success msg 1019
+	create foe _sisters_ every 0 minutes 1 times with 100% success
+
+_spinnerslain_ task:
+	killed 1 _spinner_ saying 1013
+	get item _spindle_
+	change repute with _bluffsister_ by -10
+
+_sistersslain_ task:
+	killed 3 _sisters_
+
+_hasspindle_ task:
+	stop timer _wait_
+	say 1014
+	log 1016 step 1
+
+_back_ task:
+	when _hasspindle_ and _atcoven_
+	start task _home_
+
+_home_ task:
+	say 1020
+	ask 1030 choices 1031 _unwind_ 1032 _keepwhole_
+
+variable _unwind_
+variable _keepwhole_
+
+_soldway_ task:
+	when _unwind_
+	say 1033
+	outcome _unwound_
+	give pc _gold_
+	end quest
+
+_wholeway_ task:
+	when _keepwhole_
+	say 1034
+	outcome _wound_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

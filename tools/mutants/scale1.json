@@ -1,0 +1,322 @@
+[
+  {
+    "name": "SCALE1-A-every-request-touches",
+    "file": "server-account/src/accounts.js",
+    "old": "const stale = !Number.isSafeInteger(session.last_seen) || nowS - session.last_seen >= SESSION_TOUCH_S;",
+    "new": "const stale = true;",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-A-the-stale-touch-dropped",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (Number.isSafeInteger(nowS) && stale) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-B-the-point-never-written",
+    "file": "server-account/src/metrics.js",
+    "old": "    sink.writeDataPoint({\n      indexes: [route],\n      blobs: [route, request.method, String(res.status), await refusalOf(res), tablesBlob(tally.tables), parts], // SCALE4h: the tables written, a heartbeat's parts\n      doubles: [\n        Date.now() - started,\n        res.status,\n        tally.n,\n        tally.rw,\n        tally.ms,\n        tally.rr,\n        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0),\n      ], // SCALE4h: the hot rows, by table\n    });",
+    "new": "    void {\n      indexes: [route],\n      blobs: [route, request.method, String(res.status), await refusalOf(res), tablesBlob(tally.tables), parts], // SCALE4h: the tables written, a heartbeat's parts\n      doubles: [\n        Date.now() - started,\n        res.status,\n        tally.n,\n        tally.rw,\n        tally.ms,\n        tally.rr,\n        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0),\n      ], // SCALE4h: the hot rows, by table\n    };",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-B-the-slot-named",
+    "file": "server-account/src/metrics.js",
+    "old": "  if (slot) return `/v1/saves/:slot${slot.part ? `/${slot.part}` : ''}`;",
+    "new": "  if (slot) return path;",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-B-the-realm-id-named",
+    "file": "server-account/src/metrics.js",
+    "old": "  if (realmPathOf(path)) return '/v1/realm/:id/data';",
+    "new": "  if (realmPathOf(path)) return path;",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-B-statements-uncounted",
+    "file": "server-account/src/metrics.js",
+    "old": "          tally.n += 1;\n          return timedStatement(target.prepare(...args), tally, args[0]);",
+    "new": "          return timedStatement(target.prepare(...args), tally, args[0]);",
+    "tests": [
+      "test/net/scale1.test.js"
+    ],
+    "note": "SCALE4f (2026-10-10) re-aimed it by content: a prepared statement is timed too (timedStatement). SCALE4h (re-aimed by content): the statement's SQL carried."
+  },
+  {
+    "name": "SCALE1-B-a-throwing-sink-costs-the-request",
+    "file": "server-account/src/metrics.js",
+    "old": "    });\n  } catch {",
+    "new": "    });\n  } finally {",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-B-no-refusal-word",
+    "file": "server-account/src/metrics.js",
+    "old": "    return typeof body?.error === 'string' ? body.error.slice(0, 64) : '';",
+    "new": "    return '';",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_home_decor_pv-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_home_decor_pv ON home_decor (json_extract(item, '$.pv'));\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_market_deliveries_provenance-dropped",
+    "file": "server-account/migrations/0044_market_goods.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_deliveries_provenance ON market_deliveries (provenance, collected);   -- SCALE1 (0043)\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ],
+    "note": "MARKET-AUDIT (PIN MOVED: 0043): MARKET-ANY's 0044 rebuilds the table and makes the index again - the live definition is 0044's; dropped from 0043 alone it survived."
+  },
+  {
+    "name": "SCALE1-C-idx_market_deliveries_at-dropped",
+    "file": "server-account/migrations/0044_market_goods.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_deliveries_at ON market_deliveries (collected, at);   -- SCALE1 (0043)\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ],
+    "note": "MARKET-AUDIT (PIN MOVED: 0043): MARKET-ANY's 0044 rebuilds the table and makes the index again - the live definition is 0044's; dropped from 0043 alone it survived."
+  },
+  {
+    "name": "SCALE1-C-idx_realm_trades_waiting-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_realm_trades_waiting ON realm_trades (a_player, a_char, state);\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_players_played-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_players_played ON players (played_at) WHERE handle IS NOT NULL;\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_realm_census_char-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_realm_census_char ON realm_census (char_id, spent);\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_market_fills_day-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_fills_day ON market_fills (day);\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_market_listings_closed-dropped",
+    "file": "server-account/migrations/0044_market_goods.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_listings_closed ON market_listings (closed_at);   -- SCALE1 (0043)\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ],
+    "note": "MARKET-AUDIT (PIN MOVED: 0043): MARKET-ANY's 0044 rebuilds the table and makes the index again - the live definition is 0044's; dropped from 0043 alone it survived."
+  },
+  {
+    "name": "SCALE1-C-idx_market_orders_closed-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_orders_closed ON market_orders (closed_at);\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_market_bids_at-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_bids_at ON market_bids (at);\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_node_harvests_day-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_node_harvests_day ON node_harvests (day);\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-C-idx_guild_writs_unreturned-dropped",
+    "file": "server-account/migrations/0043_scale_indexes.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_guild_writs_unreturned ON guild_writs (returned, state);\n",
+    "new": "",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-D-the-materials-bound-one-each",
+    "file": "server-account/src/market.js",
+    "old": "      ${keys ? 'AND material IN (SELECT value FROM json_each(?2))' : ''} ${local ? `AND region = ?${keys ? 3 : 2}` : ''} ORDER BY price, at LIMIT ${local ? MARKET_SHOWN / 2 : MARKET_SHOWN}`;\n    const binds = [nowS, ...(keys ? [JSON.stringify(keys)] : [])];",
+    "new": "      ${keys ? `AND material IN (${keys.map((_, i) => `?${i + 2}`).join(', ')})` : ''} ${local ? `AND region = ?${keys ? keys.length + 2 : 2}` : ''} ORDER BY price, at LIMIT ${local ? MARKET_SHOWN / 2 : MARKET_SHOWN}`;\n    const binds = [nowS, ...(keys ?? [])];",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-D-the-medians-bound-one-each",
+    "file": "server-account/src/market.js",
+    "old": "    (SELECT value FROM json_each(?2))`).bind(today - MARKET_MEDIAN_DAYS, JSON.stringify(keys));",
+    "new": "    (${keys.map((_, i) => `?${i + 2}`).join(', ')})`).bind(today - MARKET_MEDIAN_DAYS, ...keys);",
+    "tests": [
+      "test/net/scale1.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "SCALE1-E-the-service-deploys-unverified",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "  deploy:\n    needs: verify\n",
+    "new": "  deploy:\n",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-E-no-bookmark",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          b=$($WRANGLER d1 time-travel info \"$DB_NAME\" --json | jq -r '.bookmark // empty' || true)\n          if [ -z \"$b\" ]; then\n            echo \"::warning::could not read the database's Time Travel bookmark before the migrations\"",
+    "new": "          b=''\n          if [ -z \"$b\" ]; then\n            echo \"::warning::could not read the database's Time Travel bookmark before the migrations\"",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-E-the-relay-deploys-unverified",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "    needs: [drift, verify]\n",
+    "new": "    needs: [drift]\n",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-E-the-relay-deploys-over-a-red-suite",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "(needs.verify.result == 'success' || needs.verify.result == 'skipped')",
+    "new": "(needs.verify.result != 'cancelled')",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-unjittered",
+    "file": "src/net/backoff.js",
+    "old": "Math.max(0, Math.round(ms * (0.5 + rand())))",
+    "new": "Math.max(0, Math.round(ms))",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-rate-asked-again-at-once",
+    "file": "src/net/backoff.js",
+    "old": "export const ASK_AGAIN_NOW = Object.freeze(['offline', 'server']);",
+    "new": "export const ASK_AGAIN_NOW = Object.freeze(['offline', 'server', 'rate', 'maintenance']);",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-prof-asks-into-the-minute",
+    "file": "src/net/profBook.js",
+    "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r;   // SCALE1: `rate` and `maintenance` go back kept, to the pump",
+    "new": "      if (r?.ok || !RETRY.includes(r?.error)) return r;",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-prof-unjittered",
+    "file": "src/net/profBook.js",
+    "old": "await sleep(jittered(PROF_RETRY_MS[Math.min(i - 1, PROF_RETRY_MS.length - 1)]));",
+    "new": "await sleep(PROF_RETRY_MS[Math.min(i - 1, PROF_RETRY_MS.length - 1)]);",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-market-asks-into-the-minute",
+    "file": "src/net/marketBook.js",
+    "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r; // SCALE1: `rate` goes back kept, to the pump",
+    "new": "      if (r?.ok || !RETRY.includes(r?.error)) return r;",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-market-unjittered",
+    "file": "src/net/marketBook.js",
+    "old": "      if (i > 0) await sleep(jittered(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]));",
+    "new": "      if (i > 0) await sleep(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]);",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-writs-ask-into-the-minute",
+    "file": "src/net/writBook.js",
+    "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r; // SCALE1: `rate` goes back kept, to the pump",
+    "new": "      if (r?.ok || !RETRY.includes(r?.error)) return r;",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-writs-unjittered",
+    "file": "src/net/writBook.js",
+    "old": "      if (i > 0) await sleep(jittered(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]));",
+    "new": "      if (i > 0) await sleep(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]);",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "SCALE1-F-drakes-back-to-back",
+    "file": "src/net/marksBook.js",
+    "old": "      if (i > 0) await sleep(jittered(MARKS_RETRY_MS[Math.min(i - 1, MARKS_RETRY_MS.length - 1)])); // SCALE1\n      try {",
+    "new": "      try {",
+    "tests": [
+      "test/net/scale1.test.js"
+    ]
+  }
+]

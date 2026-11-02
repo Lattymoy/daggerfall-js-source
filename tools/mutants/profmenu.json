@@ -1,0 +1,277 @@
+[
+  {
+    "name": "PROFMENU-no-yield",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!rows.some(pressable) && ray && ray.distance <= ray.reach) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-prompt-beside-plaque",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (!plan || deps.plaque?.()) hud.setPrompt(null);",
+    "new": "if (!plan) hud.setPrompt(null);",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-lit-unread",
+    "file": "src/scenes/gatherHost.js",
+    "old": "const lit = deps.lit?.(menuKey(t)) ?? null;",
+    "new": "const lit = null;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-click-unheld",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (click) return chosen ? pressRow(t, chosen, true) : false;",
+    "new": "if (click) return chosen ? pressRow(t, chosen) : false;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-click-unlit-acts",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (click) return chosen ? pressRow(t, chosen, true) : false;",
+    "new": "if (click && chosen) return pressRow(t, chosen, true);",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-list-never",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (ready.length > 1 && deps.choose?.(",
+    "new": "if (false && deps.choose?.(",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-pick-unheld",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (now) pressRow(t, now, true); })) return true;",
+    "new": "if (now) pressRow(t, now); })) return true;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-start-not-first-pressable",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        ...(start > 0 ? { actionsStart: start } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-refusals-hidden",
+    "file": "src/scenes/gatherHost.js",
+    "old": "actions: rows.map((p) => (pressable(p) ? { id: p.id, label: p.verb } : { id: p.id, label: p.verb, disabled: true, why: p.rest ?? '' })),",
+    "new": "actions: rows.filter(pressable).map((p) => ({ id: p.id, label: p.verb })),",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-step-no-wrap",
+    "file": "src/scenes/gatherHost.js",
+    "old": "deps.step?.(at >= rows.length - 1 ? -at : 1);",
+    "new": "deps.step?.(1);",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-step-without-plaque",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (input.choice && rows.length > 1 && deps.plaque?.()) {",
+    "new": "if (input.choice && rows.length > 1) {",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-search-need-lost",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!took && !passedOn) passedOn = rows.map((r) => needLine(r, rank)).find(Boolean) ?? '';\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-why-empty-suffixed",
+    "file": "src/systems/worldHover.js",
+    "old": "name: a.disabled ? (a.why === '' ? a.label : ",
+    "new": "name: a.disabled ? (false ? a.label : ",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-herb-food-row",
+    "file": "src/scenes/herbHost.js",
+    "old": "      return [\n        { ...herbs, id: 'herbs' },\n        { ...food, id: 'food' },\n      ];",
+    "new": "      return [{ ...herbs, id: 'herbs' }];",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-hunt-search-row",
+    "file": "src/scenes/huntHost.js",
+    "old": "return [skin, { ...search, profession: 'hunting', id: 'search', ...(key ? { open: () => openLoot?.(key) } : {}) }];",
+    "new": "return [skin];",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-herb-press-unheld",
+    "file": "src/scenes/herbHost.js",
+    "old": "      const used = usedTool ?? (byPress || null); // PROF-MENU: a click's or a list's press holds the act as a tool's Use does",
+    "new": "      const used = usedTool; // PROF-MENU: a click's or a list's press holds the act as a tool's Use does",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-world-namer",
+    "file": "src/scenes/world.js",
+    "old": "(key) => gatherHost?.hoverName?.(key) ?? yards?.hoverName?.(key) ?? null,   // PROF-MENU",
+    "new": "(key) => yards?.hoverName?.(key) ?? null,   // PROF-MENU",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-world-pick",
+    "file": "src/scenes/world.js",
+    "old": "const profHoverOver = (ray) => gatherHost?.hoverHit?.(ray) ?? ray;",
+    "new": "const profHoverOver = (ray) => ray;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-world-plaque",
+    "file": "src/scenes/professionsHost.js",
+    "old": "plaque: () => worldPlaqueOn(),",
+    "new": "plaque: () => false,",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-world-click",
+    "file": "src/scenes/world.js",
+    "old": "!naval?.takesActivate?.() && profClickPress();",
+    "new": "!naval?.takesActivate?.() && false;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-world-list-after-act",
+    "file": "src/scenes/world.js",
+    "old": "onPick: (i) => { close(); pick(i); }, onCancel: close });",
+    "new": "onPick: (i) => { pick(i); close(); }, onCancel: close });",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-modes-click",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!interact && !pressCast && !actClick && !host.profActing?.() && host.profClick?.()) return true;\n    // AUDIT 32 H5: and a click mid-act is the act's (D3's law for E) - it opened the body's loot under the knife.",
+    "new": "    // AUDIT 32 H5: and a click mid-act is the act's (D3's law for E) - it opened the body's loot under the knife.",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-dungeon-pick",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "return opts.profHoverPick?.(ray) ?? ray;",
+    "new": "return ray;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-dungeon-name",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "return opts.profHoverName?.(key) ?? _namer(key, hit);",
+    "new": "return _namer(key, hit);",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "PROFMENU-step-nudge",
+    "file": "src/systems/quickLoot.js",
+    "old": "  _nudge += Math.trunc(n);\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  }
+]

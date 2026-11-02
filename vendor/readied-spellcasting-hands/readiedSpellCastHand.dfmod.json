@@ -1,0 +1,14 @@
+{
+    "ModTitle": "Readied Spellcasting Hands",
+    "ModVersion": "1.3",
+    "ModAuthor": "jefetienne",
+    "ContactInfo": "https://forums.dfworkshop.net/memberlist.php?mode=viewprofile&u=2186",
+    "DFUnity_Version": "0.11.4",
+    "ModDescription": "Displays hands when ready for spellcasting",
+    "GUID": "09eff704-86dc-45ce-a3a9-642e0ce7bb9a",
+    "Files": [
+        "Assets/Scripts/Game/ModLoader.cs",
+        "Assets/Scripts/Game/Modded_FPSSpellCasting_Ready.cs",
+        "Assets/Game/Mods/readiedSpellCastHand.dfmod.json"
+    ]
+}

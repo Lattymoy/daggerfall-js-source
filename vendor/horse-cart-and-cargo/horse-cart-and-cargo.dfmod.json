@@ -1,0 +1,17 @@
+{
+  "ModTitle": "Horse Cart and Cargo",
+  "ModVersion": "1.0.0-rc12",
+  "ModAuthor": "demifiend000",
+  "ContactInfo": "",
+  "DFUnity_Version": "1.1.1",
+  "ModDescription": "A persistent animated horse and cargo cart with physical hitching and mounting, Follow/Wait commands, local storage access, animated wheels, and weight-based cargo fullness. Built for DFU 1.1.1.",
+  "GUID": "8f8c9e8c-3190-4a66-a4f8-bc38e4761830",
+  "Files": [],
+  "Dependencies": [
+    {
+      "Name": "daggerfall.harmony",
+      "IsOptional": true,
+      "IsPeer": false
+    }
+  ]
+}

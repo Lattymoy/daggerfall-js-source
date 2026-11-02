@@ -1,0 +1,1493 @@
+[
+  {
+    "name": "AUDIT-SERPENT-S9-wake-seq",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "f.seq = (Number.isSafeInteger(f.seq) ? f.seq : 0) + SERPENT_WAKE_SEQ;",
+    "new": "f.seq = Number.isSafeInteger(f.seq) ? f.seq : 0;",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T2-wanted-wreck",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "export const serpentShareWanted = (p, now) => !p.wreck && ",
+    "new": "export const serpentShareWanted = (p, now) => ",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js",
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-E2-wanted-idle",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": " && !(p.share > 0 && now - (p.hitAt ?? p.joinedAt) > SERPENT_IDLE_RETIRE_MS);",
+    "new": ";",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B4-hull-upgrade",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "if (ref > known.ref || (ref > 0 && ref < known.ref)) {",
+    "new": "if (ref > 0 && ref < known.ref) {",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S8-near",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "if (near) { known.seenAt = now;",
+    "new": "if (true) { known.seenAt = now;",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js",
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T2-wreck-retires",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "  if (wreck) {\n    retireSerpentShare(f, p);\n",
+    "new": "  if (wreck) {\n",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js",
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-E2-blow-restores",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "  if (p.retired && serpentShareWanted(p, now)) restoreSerpentShare(f, p);\n",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T3-coil-pass",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "f.hp -= Math.min(f.hp, got * SERPENT_COIL_PASS);",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S4-fall-cx",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "f.coil.why = 'fell'; out.push({ k: 'cx', i: f.coil.i, at: go });",
+    "new": "f.coil.why = 'fell';",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-M2-throes-said",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "pushMode(f, go, MODE.dying, out);",
+    "new": "pushMode(f, go, MODE.dying, null);",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S4-sound-cx",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "f.coil.why = 'gone'; out.push({ k: 'cx', i: f.coil.i, at: go });",
+    "new": "f.coil.why = 'gone';",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-E1-target-reach",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": " && Math.hypot(b.x, b.z) <= SERPENT_TARGET_R);",
+    "new": ");",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T2-target-wreck",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": " && !f.players[b.sub].wreck && Math.hypot(b.x, b.z)",
+    "new": " && Math.hypot(b.x, b.z)",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S10-ship-only",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "const pool = ships.length || shipOnly ? ships : live;",
+    "new": "const pool = ships.length ? ships : live;",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S10-coil-ship-only",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "pickSerpentTarget(f, here, rng, true)",
+    "new": "pickSerpentTarget(f, here, rng)",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S2-supersede-legs",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "  if (!onTimeline(f.legs, leg, sameLeg)) return leg;\n",
+    "new": "  f.legs.push(leg);\n",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): the rule is serpentBody.js onTimeline's, the relay's legs pushed through it."
+  },
+  {
+    "name": "AUDIT-SERPENT-S2-supersede-modes",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "  if (!onTimeline(f.modes, d, sameMode)) return;\n",
+    "new": "  f.modes.push(d);\n",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): the relay's modes pushed through onTimeline."
+  },
+  {
+    "name": "AUDIT-SERPENT-S2-mode-said-away",
+    "file": "src/net/serpent/serpentBody.js",
+    "old": "  if (last && same(last, entry)) return list.length !== had;",
+    "new": "  if (last && same(last, entry)) return false;",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js",
+      "test/net/serpent/serpent1_audit2.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): a mode still to come taken away is said away - onTimeline answers that the track changed."
+  },
+  {
+    "name": "AUDIT-SERPENT-S6-yaw-wrap",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "yw: r4(serpentWrapYaw(a.yw))",
+    "new": "yw: r4(a.yw)",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T3-coil-health-fighting",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "return s + (p && !p.wreck && (f.threat[b.sub] ?? 0) > 0 ? p.ref : 0); }, 0);",
+    "new": "return s + (p ? p.ref : 0); }, 0);",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S3-word-heard-at-wind",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "if (a.word) out.push(...coilWord(",
+    "new": "if (false) out.push(...coilWord(",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S3-word-kept",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "a.word = { sub, k, x: Number.isFinite(x) ? x : null, z: Number.isFinite(z) ? z : null };",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-E1-stand-radius",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "if (nearestPoint(pts, b.x, b.z) <= SERPENT_STAND_R) f.players[b.sub].stoodMs += dt;",
+    "new": "f.players[b.sub].stoodMs += dt;",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-E2-share-loop",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "if (serpentShareWanted(p, now)) restoreSerpentShare(f, p); else retireSerpentShare(f, p); }",
+    "new": "restoreSerpentShare(f, p); }",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B7-ships-afloat",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "export const serpentShareWanted = (p, now) => !p.wreck && !p.stale && p.aboard !== false",
+    "new": "export const serpentShareWanted = (p, now) => !p.stale && p.aboard !== false",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B7-n-ships",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "n: f.ships ?? 0,",
+    "new": "n: Object.keys(f.players).length,",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S2-stray-once",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "if (f.fell || f.gone || (!law && !(now - t0 > SERPENT_SLEEP_MS))) return out;",
+    "new": "if (f.fell || f.gone) return out;",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js",
+      "test/net/serpent/auditships.test.js"
+    ],
+    "note": "SERPENT3 (re-aimed by content): the stray's surfacing is gone - its once is the resume's now (serpentBrain.js serpentResume), a slept fight taken up once, never every beat"
+  },
+  {
+    "name": "AUDIT-SERPENT-S2-phase-waits",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "if (!f.atk) { const [first, ...rest] = f.queue;",
+    "new": "if (true) { f.atk = null; const [first, ...rest] = f.queue;",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-E1-receipt-share",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "export const SERPENT_PART_SHARE = 0.025;",
+    "new": "export const SERPENT_PART_SHARE = 0.005;",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T6-ship-ref",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "export const SHIP_REF = Object.freeze([0, 3.6, 10, 13, 12]);",
+    "new": "export const SHIP_REF = Object.freeze([0, 5, 10, 13, 12]);",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S2-supersede-strict",
+    "file": "src/net/serpent/serpentBody.js",
+    "old": "  for (let i = list.length - 1; i >= 0; i--) if (list[i].at > at) list.splice(i, 1);",
+    "new": "  for (let i = list.length - 1; i >= 0; i--) if (list[i].at > at + 1e9) list.splice(i, 1);",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S2-link-legs",
+    "file": "src/net/serpent/serpentLink.js",
+    "old": "      if (!onTimeline(f.legs, w.l, sameLeg)) return s;",
+    "new": "      f.legs.push(w.l);",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): the client's fold through onTimeline."
+  },
+  {
+    "name": "AUDIT-SERPENT-S2-link-modes",
+    "file": "src/net/serpent/serpentLink.js",
+    "old": "      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;",
+    "new": "      modes.push({ at: w.at, m: w.m });",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): the client's fold through onTimeline."
+  },
+  {
+    "name": "AUDIT-SERPENT-S4-link-fell-lets-go",
+    "file": "src/net/serpent/serpentLink.js",
+    "old": "        coil: letGo(s.coil, w.at),",
+    "new": "        coil: s.coil,",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S4-link-gone-lets-go",
+    "file": "src/net/serpent/serpentLink.js",
+    "old": "      return { ...s, gone: w.at, atk: null, coil: letGo(s.coil, w.at), heardAt: now };",
+    "new": "      return { ...s, gone: w.at, atk: null, coil: s.coil, heardAt: now };",
+    "tests": [
+      "test/net/serpent/serpent1_audit.test.js",
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-link-state-guard",
+    "file": "src/net/serpent/serpentLink.js",
+    "old": "      if (!mine || !sameSerpentSite(mine, w)) return;\n      state = foldSerpent(state, w, now());",
+    "new": "      state = foldSerpent(state, w, now());",
+    "tests": [
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent/serpent1_audit2.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): F1 made the whole state's guard every word's: only this machine's own site's is folded."
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-fall-key",
+    "file": "src/net/serpent/serpentLink.js",
+    "old": "const fallKey = (day, site) => `${day}|${serpentSiteKey(site.sx, site.sz)}`;",
+    "new": "const fallKey = (day) => `${day}`;",
+    "tests": [
+      "test/systems/serpent1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B9-rising-countdown",
+    "file": "src/net/serpent/serpentLaw.js",
+    "old": "  if (phase === 'omen') return { to: 'rise', ms: Math.max(0, t.riseAt - nowMs) };",
+    "new": "  if (phase === 'omen' || phase === 'rising') return { to: 'rise', ms: Math.max(0, t.riseAt - nowMs) };",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-words-clock",
+    "file": "src/net/serpent/serpentLaw.js",
+    "old": "  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;",
+    "new": "  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/systems/serpent1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-words-dives",
+    "file": "src/net/serpent/serpentLaw.js",
+    "old": "  cd ? `${cd.to === 'rise' ? 'rises' : 'dives'} in ${serpentClock(cd.ms)}` : null;",
+    "new": "  cd ? `${cd.to === 'rise' ? 'rises' : 'sounds'} in ${serpentClock(cd.ms)}` : null;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-site-key",
+    "file": "src/net/serpent/serpentLaw.js",
+    "old": "export const serpentSiteKey = (sx, sz) => `${Math.round(sx)},${Math.round(sz)}`;",
+    "new": "export const serpentSiteKey = (sx, sz) => `${sx},${sz}`;",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-omen-site-fell",
+    "file": "src/systems/serpent/serpentOmen.js",
+    "old": "      const phase = serpentPhase(t, now(), s ? fellAt(t.day, s) : null);",
+    "new": "      const phase = serpentPhase(t, now(), fellAt(t.day));",
+    "tests": [
+      "test/systems/serpent1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-L4-omen-reset",
+    "file": "src/systems/serpent/serpentOmen.js",
+    "old": "    reset() {\n      current = null;\n      readyAt = null;\n      settled = false;\n    },",
+    "new": "    reset() {},",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-H3-forget-day",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      if (sw.day !== memDay) forget(sw.day);",
+    "new": "      if (sw.day !== memDay) memDay = sw.day;",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-M5-silence",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      if (!s.fell && !s.gone && t - s.heardAt > SERPENT_HEARD_MS) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-M5-throes-kept",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      if (!s.fell && !s.gone && t - s.heardAt > SERPENT_HEARD_MS) {",
+    "new": "      if (t - s.heardAt > SERPENT_HEARD_MS) {",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B4-hull-on-deck",
+    "file": "src/scenes/serpentHost.js",
+    "old": "    const hl = b ? b.hull : -1; // AUDIT SERPENT B4/H2: my own ship's, at her helm or on her deck",
+    "new": "    const hl = b?.atHelm ? b.hull : -1; // AUDIT SERPENT B4/H2: my own ship's, at her helm or on her deck",
+    "tests": [
+      "test/systems/serpent1_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-L3-pending-kept",
+    "file": "src/scenes/serpentHost.js",
+    "old": "        kept.set(z, Math.min(5000, d));",
+    "new": "        void 0;",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T2-wreck-said",
+    "file": "src/scenes/serpentHost.js",
+    "old": "    if (deps.online?.send?.({ k: 'wr', w }, cellRoomOfWire(sw.site.sx, sw.site.sz))) wreckSaid = w;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-M3-wake-3d",
+    "file": "src/scenes/serpentHost.js",
+    "old": "    deps.fx?.('wake', [x, deps.seaY(), z], 1);",
+    "new": "    deps.fx?.('wake', [x, z], 1);",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-L1-hold-site-frame",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      const [x, z] = scene(held.x, held.z);",
+    "new": "      const [x, z] = [held.x, held.z];",
+    "tests": [
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T4-head-two",
+    "file": "src/scenes/serpentHost.js",
+    "old": "    return seg <= 1 && headExposed(s, p, t, t < s.su) ? ZONES.head : coiled ? ZONES.coil : ZONES.body;",
+    "new": "    return seg === 0 && headExposed(s, p, t, t < s.su) ? ZONES.head : coiled ? ZONES.coil : ZONES.body;",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T4-lead-way",
+    "file": "src/scenes/serpentHost.js",
+    "old": "        out.push({\n          id: `${SERPENT_TARGET}${i}`,\n          box: segmentBox(p, i, seaY, scene),\n          rig: [],\n          v: [((x1 - x0) * 1000) / LEAD_DT_MS, 0, ((z1 - z0) * 1000) / LEAD_DT_MS],\n        });",
+    "new": "        out.push({ id: `${SERPENT_TARGET}${i}`, box: segmentBox(p, i, seaY, scene), rig: [], v: [0, 0, 0] });",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B2-ram-move",
+    "file": "src/scenes/serpentHost.js",
+    "old": "        const by = A === SERPENT_ATTACK_TABLE.ram ? a.at + A.active : Math.max(t, a.at);",
+    "new": "        const by = Math.max(t, a.at);",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T8-mael-disc",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      } else if (A === SERPENT_ATTACK_TABLE.mael && t < a.at && !s.mael) {",
+    "new": "      } else if (false) {",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-phase-joined-unsaid",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      if (lastPhase !== null && s.ph > lastPhase) deps.mid?.(`${boss.name}: ${SERPENT_PHASE_NAMES[s.ph - 1]}`, 4);",
+    "new": "      if (s.ph > (lastPhase ?? 1)) deps.mid?.(`${boss.name}: ${SERPENT_PHASE_NAMES[s.ph - 1]}`, 4);",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B11-coil-name",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      deps.mid?.(`${serpentBossById(deps.link.state().boss).name} coils about your ship! Break its grip!`, 4);",
+    "new": "      deps.mid?.(`Sethrakul coils about your ship! Break its grip!`, 4);",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B5-ring-any",
+    "file": "src/systems/serpent/serpentStrike.js",
+    "old": "      return pts.some(([x, z]) => Math.hypot(x - cx, z - cz) <= A.r); // AUDIT SERPENT B5: laid where the relay saw her helm - any of her inside it",
+    "new": "      return Math.hypot(boat.x - cx, boat.z - cz) <= A.r; // AUDIT SERPENT B5: laid where the relay saw her helm - any of her inside it",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-L5-tube-order",
+    "file": "src/render/serpentRender.js",
+    "old": "      ringPut(i + 1, k);\n      ringPut(i + 1, k2);",
+    "new": "      ringPut(i + 1, k2);\n      ringPut(i + 1, k);",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-L5-ring-side",
+    "file": "src/render/serpentRender.js",
+    "old": "      for (let j = 0; j < 3; j++) S[o + j] = g.p[j] + (g.n[j] * dh + g.b[j] * dw) * r;",
+    "new": "      for (let j = 0; j < 3; j++) S[o + j] = g.p[j] + (g.n[j] * dw + g.b[j] * dh) * r;",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D6-settle-after-grant",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "        if (given && serpentClaimVerdict(answer) === 'done') {",
+    "new": "        if (serpentClaimVerdict(answer) === 'done') {",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D3-claims-max",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "export const SERPENT_CLAIMS_MAX = 24;",
+    "new": "export const SERPENT_CLAIMS_MAX = 48;",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B11-claim-name",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "    `The sea will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`, // AUDIT SERPENT B11: the table's name",
+    "new": "    `The sea will remember the Old Coil's fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`, // AUDIT SERPENT B11: the table's name",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-words-stun-seconds",
+    "file": "src/ui/serpentBar.js",
+    "old": "  stunned: (s) => `Stunned. Strike its head! ${s}s`,",
+    "new": "  stunned: (s) => `Stunned. Strike its head! ${s}`,",
+    "tests": [
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B10-hoard-pack",
+    "file": "src/systems/serpent/serpentSpoils.js",
+    "old": "granted: (boss) => `${boss.name}'s hoard is yours. It is in your pack.`,",
+    "new": "granted: (boss) => `${boss.name}'s hoard is in your hold. And your pack.`,",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-stood-half-renown",
+    "file": "server-account/src/serpents.js",
+    "old": "  const xp = Math.floor(renownSerpentXp(before?.level ?? 1) * (c.x === 'stood' ? SERPENT_STOOD_RENOWN : 1));",
+    "new": "  const xp = Math.floor(renownSerpentXp(before?.level ?? 1));",
+    "tests": [
+      "test/net/serpent/serpent1_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D4-profile-line",
+    "file": "src/ui/profileWindow.js",
+    "old": "    serpents: profileSerpentLine(record), // AUDIT SERPENT D4\n    dragons: profileDragonLine(record), // AUDIT DRAGON",
+    "new": "    dragons: profileDragonLine(record), // AUDIT DRAGON",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D4-account-row",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "if (serpents) row(t('account.card.serpents', 'Serpents slain'), serpents);",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T2-wire-wr",
+    "file": "src/net/wire.js",
+    "old": "if (m.k === 'wr') return m.w === 0 || m.w === 1 ? { k: 'wr', w: m.w } : null;",
+    "new": "if (m.k === 'wr') return { k: 'wr', w: m.w };",
+    "tests": [
+      "test/net/serpent/serpent1_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-wire-fell-half-site",
+    "file": "src/net/wire.js",
+    "old": ": finite(m.sx) && finite(m.sz) && Math.abs(m.sx) <= POSE_BOUND && Math.abs(m.sz) <= POSE_BOUND ? { sx: m.sx, sz: m.sz } : null);",
+    "new": ": finite(m.sx) && Math.abs(m.sx) <= POSE_BOUND ? { sx: m.sx, sz: m.sz } : null);",
+    "tests": [
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): the site is every fight word's (spSite), the kill's with them."
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-wire-fell-site-carried",
+    "file": "src/net/wire.js",
+    "old": "  return w ? { ...w, ...at } : null;",
+    "new": "  return w;",
+    "tests": [
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/net/serpent/serpent1_auditrelay.test.js",
+      "test/net/serpent/serpent1_audit2.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): every fight word carries its site, the kill's with them."
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-hears-sps",
+    "file": "server/src/index.js",
+    "old": "if (b.sps && b.spd === f.day) return b.sps === id;",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-hears-one",
+    "file": "server/src/index.js",
+    "old": "JSON.stringify({ t: 'serpent', ...fr, sx: f.sx, sz: f.sz })",
+    "new": "JSON.stringify({ t: 'serpent', ...fr })",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js",
+      "test/net/serpent/serpent1_audit2.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): F1 replaced 'no other fight about the pose' (which could not reach another cell's) with the site stamped on every word the fight fans; a socket about two hears both, each naming its own."
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-one-site-account",
+    "file": "server/src/index.js",
+    "old": "if (mine && mine[0] !== id && mine[1].day === t.day) { no('the waters are full'); return; }",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-sites-cap",
+    "file": "server/src/index.js",
+    "old": "if (today.length < SERPENT_SITES_MAX) return true;",
+    "new": "return true;",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-evict-idle-part",
+    "file": "server/src/index.js",
+    "old": "const idle = today.find(([, f]) => !f.fell && !Object.values(f.players).some(serpentBrain.serpentHasPart)",
+    "new": "const idle = today.find(([, f]) => !f.fell",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-storm-no-birth",
+    "file": "server/src/index.js",
+    "old": "if (!serpentAdmits(t.day, now)) { no('the serpent is gone'); return; }",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-sps-set",
+    "file": "server/src/index.js",
+    "old": "this._setAttach(ws, { ...(this._all().get(ws) ?? a), sps: id, spd: t.day });",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-E4-level-cap",
+    "file": "server/src/index.js",
+    "old": "const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? Math.min(m.lv, a.cl) : m.lv;",
+    "new": "const lv = m.lv;",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-E4-cl-attached",
+    "file": "server/src/index.js",
+    "old": "const charLv = (isCellRoom(a.key) || realmRoom || ktRoom || isWorldRoom(a.key)) && Number.isSafeInteger(who.cl) && who.cl >= 1 ? { cl: who.cl } : {};",
+    "new": "const charLv = {};",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S8-relay-near",
+    "file": "server/src/index.js",
+    "old": "near: off <= serpentBrain.ENGAGE_R })) {",
+    "new": "near: true })) {",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B8-slain-words",
+    "file": "server/src/index.js",
+    "old": "no(f.fell ? 'it is already slain' :",
+    "new": "no(f.fell ? 'the serpent is gone' :",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S7-not-junk",
+    "file": "server/src/index.js",
+    "old": "    const by = this._serpentFightBy(fights, a.sub);\n    if (!by) return;",
+    "new": "    const by = this._serpentFightBy(fights, a.sub);\n    if (!by) { this._junk(ws); return; }",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T2-relay-wr",
+    "file": "server/src/index.js",
+    "old": "      if (m.w || !sunk) { delete me.cw; delete me.wf; const out = []; serpentBrain.serpentWreck(f, a.sub, m.w, now, out); await this._serpentSay(fights, id, f, out, now); }\n      else me.wf = 1;",
+    "new": "      /* unheard */ void me;",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+  },
+  {
+    "name": "AUDIT-SERPENT-S9-woke-on-read",
+    "file": "server/src/index.js",
+    "old": "fights.set(id, serpentBrain.serpentWoke(f));",
+    "new": "fights.set(id, f);",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-here",
+    "file": "server/src/index.js",
+    "old": "f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, serpentBrain.SERPENT_FIGHTERS_MAX);",
+    "new": "f.here = [];",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-tell-rc",
+    "file": "server/src/index.js",
+    "old": "rc: Object.entries(f.rc ?? {}), here: f.here ?? [],",
+    "new": "rc: [], here: f.here ?? [],",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-tell-site",
+    "file": "server/src/index.js",
+    "old": "n: f.fell.n, sx: f.sx, sz: f.sz, rc:",
+    "new": "n: f.fell.n, rc:",
+    "tests": [
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-newer-kept",
+    "file": "server/src/index.js",
+    "old": "const fresh = [...rc].filter(([sub]) => { const v = had.get(SERPENT_RC_PREFIX + sub); return !(v && typeof v === 'object' && Number.isSafeInteger(v.d) && v.d > fell.d); });",
+    "new": "const fresh = [...rc];",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-rc-checked",
+    "file": "server/src/index.js",
+    "old": "if (c && c.s === e[0] && c.d === fell.d && Number.isFinite(c.e) && now < c.e * 1000)",
+    "new": "if (c)",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-hub-hands",
+    "file": "server/src/index.js",
+    "old": "    for (const [sub, [ws]] of this._siegeSockets()) if (handed.has(sub) && !here.has(sub)) this._send(ws, JSON.stringify({ t: 'serpent', k: 'rcpt', r: rc.get(sub).r }));\n",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): the newest socket an account's by the roll call's _siegeSockets (F10)."
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-hub-skips-here",
+    "file": "server/src/index.js",
+    "old": "if (handed.has(sub) && !here.has(sub)) this._send(ws, JSON.stringify({ t: 'serpent', k: 'rcpt'",
+    "new": "if (handed.has(sub)) this._send(ws, JSON.stringify({ t: 'serpent', k: 'rcpt'",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ],
+    "note": "AUDIT SERPENT 2 (re-aimed by content): the newest socket an account's by _siegeSockets (F10)."
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-fells-per-site",
+    "file": "server/src/index.js",
+    "old": "const list = kept && kept.d === fell.d ? kept.list.filter((g) => !sameSerpentSite(g, fell)) : [];",
+    "new": "const list = [];",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-fells-cap",
+    "file": "server/src/index.js",
+    "old": "list: [...list, fell].slice(-SERPENT_FELLS_MAX) };",
+    "new": "list: [...list, fell] };",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S12-older-day",
+    "file": "server/src/index.js",
+    "old": "const newer = !kept || fell.d >= kept.d;",
+    "new": "const newer = true;",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S12-stale-unsaid",
+    "file": "server/src/index.js",
+    "old": "const said = newer && serpentHolds(fell.d, now) ?",
+    "new": "const said = newer ?",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-hello-every-site",
+    "file": "server/src/index.js",
+    "old": "for (const fell of g.list) this._send(",
+    "new": "for (const fell of g.list.slice(-1)) this._send(",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-hello-receipt",
+    "file": "server/src/index.js",
+    "old": "    if (sub) { try { await this._serpentReceiptTo(ws, sub, now); }",
+    "new": "    if (false) { try { await this._serpentReceiptTo(ws, sub, now); }",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ],
+    "note": "SCALE5c (re-aimed by content): the hub hello words moved into _hubHelloWords"
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-hello-expired",
+    "file": "server/src/index.js",
+    "old": "if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }",
+    "new": "if (typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-sweep",
+    "file": "server/src/index.js",
+    "old": "for (const [k, r] of src) { slast = k; if (!r || typeof r !== 'object' || !(Number.isFinite(r.e) && now < r.e * 1000)) dead.push(k); }",
+    "new": "for (const [k, r] of src) { slast = k; }",
+    "tests": [
+      "test/net/serpent/serpent1_auditrelay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S5-online-rcpt",
+    "file": "src/net/online.js",
+    "old": "r.k === 'fell' || r.k === 'rcpt' || r.k === 'at' :",
+    "new": "r.k === 'fell' || r.k === 'at' :",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-L2-tally",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "          t.hits++;\n          t.ended++;",
+    "new": "          t.ended++;",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-B6-brace",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const k = st.guns.braced ? BRACE_TAKEN : 1;",
+    "new": "const k = 1;",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T4-aim-lead",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const v = best.e ? velocityOf(best.e.ship) : best.v;",
+    "new": "const v = best.e ? velocityOf(best.e.ship) : [0, 0, 0];",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-T4-strikes-lead",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "ships.push({ e: SERPENT_AIM, v: t.v ?? [0, 0, 0]",
+    "new": "ships.push({ e: SERPENT_AIM, v: [0, 0, 0]",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-M4-naval-off",
+    "file": "src/scenes/world.js",
+    "old": "ready: (cell) => navalOn() && !!online?.serpentReady?.(cell)",
+    "new": "ready: (cell) => !!online?.serpentReady?.(cell)",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-S1-world-fell-site",
+    "file": "src/scenes/world.js",
+    "old": "if (!site || site.day !== day || !sameSerpentSite(site, at)) return;",
+    "new": "if (!site) return;",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-L4-world-reset",
+    "file": "src/scenes/world.js",
+    "old": "if (offline) { serpentHost?.leave(); serpentOmen?.reset(); }",
+    "new": "if (offline) { serpentHost?.leave(); }",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D2-hoard-level",
+    "file": "src/scenes/world.js",
+    "old": "const level = spoilsLevel(entry.ch === characterIdOf(playerEntity) ? playerEntity.level ?? 1 : Number(entry.lv) || c.l || 1, c.l);",
+    "new": "const level = Math.max(1, Math.floor(Number(entry.lv) || c.l || playerEntity.level || 1));",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D6-world-promise",
+    "file": "src/scenes/world.js",
+    "old": "return spoilsLock(() => serpentSpoils.grant(",
+    "new": "void spoilsLock(() => serpentSpoils.grant(",
+    "tests": [
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D5-slot-loaded",
+    "file": "src/scenes/world.js",
+    "old": " serpentSpoils.loaded(characterId);",
+    "new": "",
+    "tests": [
+      "test/net/auditonline2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-books-credit-not-by-own-row",
+    "file": "server-account/src/serpents.js",
+    "old": "  const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1 AND nonce = ?4)';",
+    "new": "  const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1)';",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-books-hour-ignored",
+    "file": "server-account/src/serpents.js",
+    "old": "  const room = 'CASE WHEN renown_hour >= ?8 THEN MAX(0, ?7 - renown_hour_xp) ELSE ?7 END';",
+    "new": "  const room = '?7';",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-books-track-cap-ignored",
+    "file": "server-account/src/serpents.js",
+    "old": "        `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7",
+    "new": "        `UPDATE renown_tracks SET xp = MAX(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-books-row-not-what-paid",
+    "file": "server-account/src/serpents.js",
+    "old": "      .prepare(\n        `UPDATE serpent_kills SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE day = ?3 AND account = ?1 AND nonce = ?4`,\n      )",
+    "new": "      .prepare(`UPDATE serpent_kills SET xp = xp WHERE day = ?3 AND account = ?1 AND nonce = ?4`)",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-books-cid-unchecked",
+    "file": "server-account/src/serpents.js",
+    "old": "  const hoard = typeof cid === 'string' && SERPENT_CID_RE.test(cid);",
+    "new": "  const hoard = typeof cid === 'string' && cid.length > 0;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-books-new-track-unbounded",
+    "file": "server-account/src/serpents.js",
+    "old": "         AND ${renownHeldSql('?1')} < ?7\n         AND ${mine}`,",
+    "new": "         AND ${mine}`,",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-receipt-future-honoured",
+    "file": "src/net/serpent/serpentReceipt.js",
+    "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };\n  return { ok: true, claims };",
+    "new": "  return { ok: true, claims };",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-route-body-account-believed",
+    "file": "server-account/src/index.js",
+    "old": "const r = await claimSerpent(ctx, who.player, { receipt: body.receipt,",
+    "new": "const r = await claimSerpent(ctx, typeof body.account === 'string' ? { ...who.player, id: body.account } : who.player, { receipt: body.receipt,",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-route-status-flattened",
+    "file": "server-account/src/index.js",
+    "old": "serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),\n        });\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);\n",
+    "new": "serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),\n        });\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, 400, origin);\n",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the claim's call carries the serpent's strike now - re-aimed by content."
+  },
+  {
+    "name": "AUDIT-SERPENT-D-claims-hoard-on-any-answer",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "        const given = answer?.ok && answer.data?.spoils === true ? await granted(onSpoils, e, answer.data) : true; // the hoard, this claim's",
+    "new": "        const given = answer?.ok ? await granted(onSpoils, e, answer.data) : true; // the hoard, this claim's",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-claims-cid-not-stable",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "          answer = await claim(e.r, e.ch, e.nm ?? null, e.cid);",
+    "new": "          answer = await claim(e.r, e.ch, e.nm ?? null, cid());",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-claims-other-account-offered",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "        if (!mine || live(e.r)?.s !== mine) continue; // another account's waits for its own sign-in",
+    "new": "        if (!mine) continue; // another account's waits for its own sign-in",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-claims-unsigned-kept",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && (t == null || c.e > t) ? c : null;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-claims-expired-offered",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && c.signed ? c : null;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-claims-settled-not-on-device",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "          markSettled(live(e.r));\n          keep(kept().filter((k) => k.r !== e.r));",
+    "new": "          keep(kept().filter((k) => k.r !== e.r));",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-claims-renown-character-kept",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "  if (answer?.error === 'renown-character') return 'done'; // no character to pay - it never will be",
+    "new": "  if (answer?.error === 'renown-character') return 'keep'; // no character to pay - it never will be",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-claims-retry-every-frame",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "        due = t - lastAt >= SERPENT_CLAIM_RETRY_MS;",
+    "new": "        due = t - lastAt >= 0;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-renown-any-character",
+    "file": "src/scenes/world.js",
+    "old": "      if (data?.renown?.character !== characterIdOf(playerEntity)) return;   // RENOWN-CHAR: the character that fought the serpent adopts its Renown, no other\n",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-claims-device-clock",
+    "file": "src/scenes/world.js",
+    "old": "    me: _accountSerpents.me,\n    nowS: relayNowS,\n",
+    "new": "    me: _accountSerpents.me,\n",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-claims-no-store",
+    "file": "src/scenes/world.js",
+    "old": "    nowS: relayNowS,\n    store: _spoilsStore,\n    say: (text) => chatNotice(text),\n    onSpoils: (entry) => grantSerpentSpoils(entry),",
+    "new": "    nowS: relayNowS,\n    store: null,\n    say: (text) => chatNotice(text),\n    onSpoils: (entry) => grantSerpentSpoils(entry),",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-hoard-no-owner",
+    "file": "src/scenes/world.js",
+    "old": "      owner: entry.ch, kept: SERPENT_SPOILS_TEXT.kept(entry.nm, boss) }));",
+    "new": "      kept: SERPENT_SPOILS_TEXT.kept(entry.nm, boss) }));",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-hoard-gate-keys",
+    "file": "src/scenes/world.js",
+    "old": "keys: SERPENT_SPOILS_KEYS, recordsMax: SERPENT_SPOILS_RECORDS_MAX,",
+    "new": "recordsMax: SERPENT_SPOILS_RECORDS_MAX,",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-hoard-no-crash-door",
+    "file": "src/scenes/world.js",
+    "old": "    try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door; SERPENT-SET: its embers by the gate's",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the serpent's crash door takes its spoils by the ember's door (takeGateSpoil) now - re-aimed by content."
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-hoard-never-cleared-by-save",
+    "file": "src/scenes/world.js",
+    "old": "  onSlotSaved((characterId) => { try { serpentSpoils.saved(characterId); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } });   // SERPENT1",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-realm-held-no-hoard",
+    "file": "src/scenes/world.js",
+    "old": ", ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool",
+    "new": ", ...(sdSpoilsPool",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ],
+    "note": "SD9e (PIN MOVED): the Brass Remnant's spoils pool joins the line - re-aimed by content."
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-realm-landed-no-hoard",
+    "file": "src/scenes/world.js",
+    "old": " try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool",
+    "new": " try { sdSpoilsPool",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ],
+    "note": "SD9e (PIN MOVED): the Brass Remnant's spoils pool joins the line - re-aimed by content."
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-hoard-unlocked",
+    "file": "src/scenes/world.js",
+    "old": "spoilsLock(() => serpentSpoils.grant(",
+    "new": "Promise.resolve().then(() => serpentSpoils.grant(",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-world-hoard-level-any",
+    "file": "src/scenes/world.js",
+    "old": "const level = spoilsLevel(entry.ch === characterIdOf(playerEntity) ? playerEntity.level ?? 1 : Number(entry.lv) || c.l || 1, c.l);",
+    "new": "const level = 60;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js",
+      "test/net/serpent/serpent1_auditclient.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-relay-wake-forgets-fight",
+    "file": "server/src/index.js",
+    "old": "const ids = await this.state.storage.get(SERPENT_FIGHTS_KEY);",
+    "new": "const ids = null;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-relay-hub-never-retold",
+    "file": "server/src/index.js",
+    "old": "else if (f.said && !f.told) await this._serpentTellHubOnce(id, f, now);",
+    "new": "else if (false) await this._serpentTellHubOnce(id, f, now);",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-relay-hub-failure-believed",
+    "file": "server/src/index.js",
+    "old": "        ok = !!res?.ok;\n      } catch (e) { console.warn('[serpent] hub', e?.message ?? e); ok = false; }",
+    "new": "        ok = true;\n      } catch (e) { console.warn('[serpent] hub', e?.message ?? e); ok = true; }",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-relay-retry-not-armed",
+    "file": "server/src/index.js",
+    "old": "if (f.said && !f.told) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);",
+    "new": "if (false) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-relay-receipts-not-kept-first",
+    "file": "server/src/index.js",
+    "old": "    await this._serpentSave(id, f, now, true);\n    const { at: fellAt, top, n, dm } = f.fell;",
+    "new": "    const { at: fellAt, top, n, dm } = f.fell;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-relay-keeping-none",
+    "file": "server/src/index.js",
+    "old": "const SERPENT_KEEP_MS = 2 * 60 * 60 * 1000;",
+    "new": "const SERPENT_KEEP_MS = 0;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-relay-hub-word-not-kept",
+    "file": "server/src/index.js",
+    "old": "await this.state.storage.put(SERPENT_FELLS_KEY, this._serpentFells);",
+    "new": "",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-brain-receipt-share-doubled",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "export const SERPENT_RECEIPT_SHARE = 0.06;",
+    "new": "export const SERPENT_RECEIPT_SHARE = 0.12;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-brain-level-unclamped",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "lv: clampSerpentLv(lv), hl: hull,",
+    "new": "lv: Math.max(1, Math.floor(Number(lv) || 1)), hl: hull,",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SERPENT-D-brain-reclaim-raises-level",
+    "file": "src/net/serpent/serpentBrain.js",
+    "old": "    if (typeof name === 'string' && name) known.name = name.slice(0, 24);\n    if (f.fell || f.gone) return true;",
+    "new": "    known.lv = clampSerpentLv(lv);\n    if (typeof name === 'string' && name) known.name = name.slice(0, 24);\n    if (f.fell || f.gone) return true;",
+    "tests": [
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js",
+      "test/systems/serpent1_client.test.js",
+      "test/net/serpent1_auditbooks.test.js"
+    ]
+  }
+]

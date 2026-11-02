@@ -1,0 +1,125 @@
+# The public copy: the repository that takes over this one's public name when this one goes
+# private, so every copy of the app players installed still finds its releases there. By hand.
+# A seed gives it main's tree as one commit, without the internal docs. Tags copies the named
+# releases there, their names, text and every file, and the newest of them takes `latest`.
+# Both write with secrets.RELEASE_TOKEN, a token for that repository alone. Its Actions are off
+# first, or what arrives there would start its own deploy and release workflows.
+name: public copy
+
+on:
+  workflow_dispatch:
+    inputs:
+      to:
+        description: 'The public repository to fill (owner/name)'
+        required: true
+      seed:
+        description: 'Give it main as one commit first, the internal docs left out'
+        type: boolean
+        default: false
+      tags:
+        description: 'Releases to copy there (app-v tags, space-separated); the newest takes latest'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-copy
+  cancel-in-progress: false
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    env:
+      # read from the environment, never pasted into a script
+      TO: ${{ inputs.to }}
+      TAGS: ${{ inputs.tags }}
+    steps:
+      - name: The copy can be made
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          [[ "$TO" =~ ^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$ ]] || { echo "::error::to must be owner/name"; exit 1; }
+          [ "${TO,,}" != "${GITHUB_REPOSITORY,,}" ] || { echo "::error::to names this repository"; exit 1; }
+          for T in $TAGS; do
+            [[ "$T" =~ ^app-v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::tags must be app-v<major>.<minor>.<patch>"; exit 1; }
+          done
+          [ -n "$GH_TOKEN" ] || { echo "::error::secrets.RELEASE_TOKEN is not set"; exit 1; }
+          [ "$(gh api "repos/$TO" --jq .private)" = false ] || { echo "::error::$TO is not a public repository this token can read"; exit 1; }
+          [ "$(gh api "repos/$TO/actions/permissions" --jq .enabled)" = false ] || { echo "::error::turn Actions off on $TO first"; exit 1; }
+
+      - uses: actions/checkout@v4
+        if: inputs.seed
+        with:
+          persist-credentials: false   # the push below names its own token, for that repository alone
+
+      # One commit, so a file left out here is in no older commit there either. Left out: the
+      # bible, every CLAUDE.md, .claude/, and every Markdown file but the third-party credits and
+      # permissions (vendor/), the sound credits and the two policies players read. Its README is
+      # .github/public-copy/README.md. No tag goes: each names a commit of this history. A copy
+      # is seeded once; a second seed is refused.
+      - name: Seed it with main as one commit, the internal docs left out
+        if: inputs.seed
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          OWNER_ID: ${{ github.repository_owner_id }}
+        run: |
+          DAY=$(git log -1 --format=%cs HEAD)
+          git ls-files -z -- '*.md' '.claude' 'bible' \
+            | grep -zv -e '^vendor/' -e '^SECURITY\.md$' -e '^SUPPORT\.md$' -e '^public/sfx/SOURCES\.md$' \
+            | xargs -0 -r git rm -q --cached --
+          sed "s/{{DAY}}/$DAY/" .github/public-copy/README.md > "$RUNNER_TEMP/README.md"
+          git update-index --add --cacheinfo "100644,$(git hash-object -w "$RUNNER_TEMP/README.md"),README.md"
+          export GIT_AUTHOR_NAME="$OWNER" GIT_AUTHOR_EMAIL="$OWNER_ID+$OWNER@users.noreply.github.com"
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME" GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          BASIC=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          echo "::add-mask::$BASIC"
+          far() { git -c http.extraheader="AUTHORIZATION: basic $BASIC" "$@"; }
+          # A repository made with a licence, README or .gitignore has GitHub's one creation commit.
+          # The copy goes on top of that, and of nothing else.
+          PARENT=()
+          if [ -n "$(far ls-remote "https://github.com/$TO.git" refs/heads/main)" ]; then
+            far fetch --quiet --depth=2 "https://github.com/$TO.git" refs/heads/main
+            BASE=$(git rev-parse FETCH_HEAD)
+            EXTRA=$(git ls-tree --name-only "$BASE" | grep -vx -e LICENSE -e README.md -e .gitignore || true)
+            if [ -n "$(git log -1 --format=%P "$BASE")" ] || [ -n "$EXTRA" ]; then
+              echo "::error::$TO holds more than GitHub's creation commit - a copy is seeded once"
+              exit 1
+            fi
+            PARENT=(-p "$BASE")
+          fi
+          COMMIT=$(git commit-tree "$(git write-tree)" "${PARENT[@]}" -m "DFO Online, open-source edition ($DAY)")
+          far push --quiet "https://github.com/$TO.git" "$COMMIT:refs/heads/main"
+          echo "seeded $TO: $COMMIT, main's tree at $(git rev-parse HEAD) without the internal docs, $(git ls-files | wc -l) files"
+
+      # Each release as it is here, staged as a draft with every file and published in one step,
+      # so nothing half-uploaded is ever visible there. A draft a failed run left is deleted first.
+      - name: Copy the releases
+        if: inputs.tags != ''
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          HERE_TOKEN: ${{ github.token }}
+        run: |
+          NEWEST=$(printf '%s\n' $TAGS | sort -V | tail -n 1)
+          for TAG in $TAGS; do
+            export TAG
+            if gh api "repos/$TO/releases/tags/$TAG" --silent 2>/dev/null; then
+              echo "$TAG is already published on $TO"
+              continue
+            fi
+            LEFT=$(gh api --paginate "repos/$TO/releases?per_page=100" --jq '.[] | select(.draft and .tag_name == env.TAG) | .id')
+            for ID in $LEFT; do gh api -X DELETE "repos/$TO/releases/$ID" --silent; done
+            rm -rf files && mkdir files
+            GH_TOKEN="$HERE_TOKEN" gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > release.json
+            GH_TOKEN="$HERE_TOKEN" gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir files
+            node -e "process.stdout.write(require('./release.json').body ?? '')" > body.md
+            NAME=$(node -p "require('./release.json').name || process.env.TAG")
+            ID=$(gh api -X POST "repos/$TO/releases" -f tag_name="$TAG" -f name="$NAME" -F body=@body.md -F draft=true --jq .id)
+            gh release upload "$TAG" files/* --repo "$TO"
+            LATEST=false
+            if [ "$TAG" = "$NEWEST" ]; then LATEST=true; fi
+            gh api -X PATCH "repos/$TO/releases/$ID" -F draft=false -f make_latest="$LATEST" --silent
+            echo "copied $TAG to $TO (latest: $LATEST)"
+          done

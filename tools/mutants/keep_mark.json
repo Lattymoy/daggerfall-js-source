@@ -1,0 +1,32 @@
+[
+ {
+  "name": "KEEPMARK-carried-unsaid",
+  "file": "server-account/src/index.js",
+  "old": "REPLICA_ROUTES.get(new URL(request.url).pathname) === request.method) mark = d1BookmarkOf(request);",
+  "new": "REPLICA_ROUTES.get(new URL(request.url).pathname) === request.method) mark = null;",
+  "tests": [
+   "test/server/keep_mark.test.js"
+  ],
+  "note": "a shed or refused replica read says no bookmark, the page forgets its own, and its next reads start at the primary"
+ },
+ {
+  "name": "KEEPMARK-timeout-forgets",
+  "file": "src/net/accountClient.js",
+  "old": "    if (!read || !passKeptThrough(e)) forgetD1Bookmark();",
+  "new": "    forgetD1Bookmark();",
+  "tests": [
+   "test/server/keep_mark.test.js"
+  ],
+  "note": "a read past its wait - the overload's own answer - sends every next read to the primary"
+ },
+ {
+  "name": "KEEPMARK-write-timeout-keeps",
+  "file": "src/net/accountClient.js",
+  "old": "    if (!read || !passKeptThrough(e)) forgetD1Bookmark();",
+  "new": "    if (!passKeptThrough(e)) forgetD1Bookmark();",
+  "tests": [
+   "test/server/keep_mark.test.js"
+  ],
+  "note": "a write that timed out may have landed; a replica from before it would read it unmade"
+ }
+]

@@ -1,0 +1,710 @@
+[
+  {
+    "name": "SD11c-L1F1-the-window-left",
+    "file": "src/scenes/worldModes.js",
+    "old": "    dungeonCtx.overlayWindow?.()?.dispose?.();   // AUDIT SD II (L1 F1): forceExitToExterior's OnPop - a Hollow's end casts out under any window (AUDIT SD III: above the packing)\n    const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;",
+    "new": "    const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/net/world1.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F2-latched-on-the-refusal",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "      if (castOut(key) !== false) {\n        castOutS = s;\n        castOutAt = t;\n      }",
+    "new": "      castOut(key);\n      castOutS = s;\n      castOutAt = t;",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/systems/superDungeon/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F2-the-dead-said-done",
+    "file": "src/scenes/world.js",
+    "old": "      if (!(playerEntity.health > 0) || modes?.deathUp?.()) return false;\n      const hour = ",
+    "new": "      if (!(playerEntity.health > 0) || modes?.deathUp?.()) return;\n      const hour = ",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/systems/superDungeon/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F2-the-refused-way-out-said",
+    "file": "src/scenes/world.js",
+    "old": "      if (!modes?.unstuck?.()) return false;\n      if (hour) gateVeil?.flash('hourCast');",
+    "new": "      modes?.unstuck?.();\n      if (hour) gateVeil?.flash('hourCast');",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/systems/superDungeon/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F2-asked-twice-a-frame",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F9-no-veil",
+    "file": "src/scenes/world.js",
+    "old": "      if (hour) gateVeil?.flash('hourCast');   // SD-LOOK: forced out - the Hour's face shattered\n      sdSay(SD_CAST_OUT_LINE);",
+    "new": "      void hour;\n      sdSay(SD_CAST_OUT_LINE);",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/systems/superDungeon/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F3-never-judged-where-I-stand",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    void at;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F3-judged-before-the-hub-spoke",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (!asked && at != null && !(rec && rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F3-cast-out-of-a-standing-Hollow",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (!asked && at != null && rec && !(rec.s === at && false) && again(at)) ask(at, `slot:${at}`);",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F3-the-Hour-unseen",
+    "file": "src/scenes/world.js",
+    "old": "(modes?.dungeonLocation?.sdSlot ?? modes?.dungeonLocation?.sdRealm ?? null) : null),",
+    "new": "(modes?.dungeonLocation?.sdSlot ?? null) : null),",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F3-asked-before-the-walk-alone",
+    "file": "src/scenes/world.js",
+    "old": "      const late = sdRiftOf(s)?.word;\n      if (late) { sdSay(late); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1-the-site-unguarded",
+    "file": "src/scenes/world.js",
+    "old": "if (!h || h.s !== s || !h.site || !modes?.stepThroughFire) return false;",
+    "new": "if (!h || h.s !== s || !modes?.stepThroughFire) return false;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F17-never-kept",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "      try {\n        storage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX)));\n      } catch {\n        /* this session's memory holds it */\n      }",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F17-never-read",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "      raw = storage()?.getItem?.(k) ?? null;",
+    "new": "      raw = null;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F17-unbounded",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "        storage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX)));",
+    "new": "        storage()?.setItem?.(k, JSON.stringify([...now, s]));",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F18-on-the-Returns-foot",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    _sdLanding = sdLandingPlace(rift, _sdRetAt, probe);",
+    "new": "    _sdLanding = _sdRetAt;",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/world/superDungeon/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F18-toward-the-Rift",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "    const at = besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe);",
+    "new": "    const at = besideOn(ret, [-dx / len, 0, -dz / len], SD_LANDING_PAST_M, probe);",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F18-any-bearing",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "    if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) > len) return at;",
+    "new": "    if (at) return at;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F18-boxed-in-nowhere",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  return [ret[0], ret[1], ret[2]];",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F8-the-first-door-kept",
+    "file": "src/systems/save/save.js",
+    "old": "  return here ?? site ?? null;\n}",
+    "new": "  return here ?? site ?? list[0] ?? null;\n}",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/scenes/castle1.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5C2-the-hubs-hand-granted-in-my-Hour",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }",
+    "new": "    if (isSdRoom(room) && modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/systems/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L1F5-save-said",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "    'an older Hour': 'Your game is older than this Hour. Leave it, then reload or update the app to fight.', // AUDIT SD II (L1 F5, L6 F12): it said \"save\" where the Hour refuses a save",
+    "new": "    'an older Hour': 'Your game is older than this Hour - save, then reload (or update the app) to fight.', // AUDIT SD II (L1 F5, L6 F12): it said \"save\" where the Hour refuses a save",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F1-the-towns-dropped",
+    "file": "src/net/duel/duelRecord.js",
+    "old": "            ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),\n            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),",
+    "new": "            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F1-the-serpents-dropped",
+    "file": "src/net/duel/duelRecord.js",
+    "old": "            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),\n            ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}), // AUDIT DRAGON",
+    "new": "            ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}), // AUDIT DRAGON",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F1-the-Hours-dropped",
+    "file": "src/net/duel/duelRecord.js",
+    "old": "            ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),\n          };",
+    "new": "          };",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F1-a-malformed-count-kept",
+    "file": "src/net/duel/duelRecord.js",
+    "old": "            ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),",
+    "new": "            ...(d?.raids ? { raids: { defended: d.raids.defended } } : {}),",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F1-unlaid",
+    "file": "src/ui/profileWindow.js",
+    "old": "export const profileRecordLines = (record) => ({\n  gates: profileGateLine(record),\n  raids: profileRaidLine(record),\n  serpents: profileSerpentLine(record),\n  dragons: profileDragonLine(record),\n  hours: profileSdLine(record),\n  stars: profileStarLine(record),\n  voyages: profileKetchLine(record),\n});",
+    "new": "export const profileRecordLines = (record) => ({ gates: profileGateLine(record) });",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/net/gate/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-the-word-forgotten",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (!went) { const o = owedWords(); if (!o.some((w) => w.d === day && w.a === acct)) keep(OWED_KEY, [...o, { d: day, a: acct }].slice(-SPOILS_SPENT_MAX)); }",
+    "new": "    void went;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-said-under-another-account",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (mine(acct)) { try { went = onSpent(day) !== false; }",
+    "new": "    if (true) { try { went = onSpent(day) !== false; }",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-resaid-under-another-account",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "{ if (!mine(w.a)) return true; try { return onSpent(w.d) === false; }",
+    "new": "{ try { return onSpent(w.d) === false; }",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-never-resaid",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      const left = list.filter((w) => { if (!mine(w.a)) return true; try { return onSpent(w.d) === false; } catch { return true; } });",
+    "new": "      const left = list;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-a-throw-gone",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "try { went = onSpent(day) !== false; } catch { went = false; }",
+    "new": "try { went = onSpent(day) !== false; } catch { went = true; }",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-the-gates-word-unanswered",
+    "file": "src/scenes/world.js",
+    "old": "    onSpent: (day) => socialLink()?.sendGateSpent?.(day) === true,",
+    "new": "    onSpent: (day) => { socialLink()?.sendGateSpent?.(day); },",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-the-Hours-word-unanswered",
+    "file": "src/scenes/world.js",
+    "old": "return s == null || socialLink()?.sendSdSpent?.(s) === true; },",
+    "new": "socialLink()?.sendSdSpent?.(s); return true; },",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/systems/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-resaid-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (t - _spentResendAt < SPOILS_SPENT_RESEND_MS) return;\n",
+    "new": "",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-resaid-into-a-closed-link",
+    "file": "src/scenes/world.js",
+    "old": "    if (socialLink()?.status !== 'open') return;\n    try { for (const pool of [spoilsPool, sdSpoilsPool, ketch?.spoils]) pool?.resendSpent?.();",
+    "new": "    try { for (const pool of [spoilsPool, sdSpoilsPool, ketch?.spoils]) pool?.resendSpent?.();",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content): the pools resent in one loop, the Ketch's with them."
+  },
+  {
+    "name": "SD11c-L5F4-never-resaid-by-the-host",
+    "file": "src/scenes/world.js",
+    "old": "    resendSpentWords();   // AUDIT SD II (L5 F4): the spent words a pool still owes the hub\n",
+    "new": "",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F4-the-account-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    me: _accountGates.me,   // AUDIT SD II (L5 F4): said on its own account's socket alone\n",
+    "new": "",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F5-no-checkpoint",
+    "file": "src/scenes/world.js",
+    "old": "if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }",
+    "new": "if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); }",
+    "tests": [
+      "test/systems/sd11c_page.test.js",
+      "test/systems/sd9e_spoils.test.js",
+      "test/net/superDungeon/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F6-one-bound-for-the-device",
+    "file": "src/net/superDungeon/sdClaims.js",
+    "old": "        keep([...list.filter((k) => k !== drop), r].slice(-SD_CLAIMS_ALL_MAX));",
+    "new": "        keep([...list, r].slice(-SD_CLAIMS_MAX));",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F6-anothers-pushed-out",
+    "file": "src/net/superDungeon/sdClaims.js",
+    "old": "        const theirs = list.filter((k) => readSdReceipt(k)?.s === c.s);",
+    "new": "        const theirs = list;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F6-the-device-unbounded",
+    "file": "src/net/superDungeon/sdClaims.js",
+    "old": "        keep([...list.filter((k) => k !== drop), r].slice(-SD_CLAIMS_ALL_MAX));",
+    "new": "        keep([...list.filter((k) => k !== drop), r]);",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L5F7-saved-unread",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (!v || !(max > 0) || !(after > 0) || saved) return;",
+    "new": "  if (!v || !(max > 0) || !(after > 0)) return;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F4-no-veil",
+    "file": "src/scenes/world.js",
+    "old": "      if (diedInHour) { gateVeil?.flash('hourCast'); kind = 'hour'; }",
+    "new": "      if (diedInHour) { kind = 'hour'; }",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F4-the-dungeons-words",
+    "file": "src/scenes/world.js",
+    "old": "      if (diedInHour) { gateVeil?.flash('hourCast'); kind = 'hour'; }",
+    "new": "      if (diedInHour) { gateVeil?.flash('hourCast'); }",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F4-the-Hours-words-unwritten",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  hour: [SD_REALM_TEXT.died],\n});",
+    "new": "});",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F4-never-read",
+    "file": "src/scenes/world.js",
+    "old": "    const diedInHour = madeRuleHere('death') === 'final';",
+    "new": "    const diedInHour = false;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-L6F14-over-the-screen",
+    "file": "src/scenes/world.js",
+    "old": "say: (text) => (text === SD_SPOILS_TEXT.gathered ? chatNotice(text) : sdSay(text, SD_VOICE_RANK.note)),",
+    "new": "say: (text) => sdSay(text, SD_VOICE_RANK.note),",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G3-the-slot-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const slot = modes?.sdRealmSlot?.();\n    if (w?.k === 'bd') { bossCountFell(slot != null); return; }   // INT12: the relay's count's fall of me - the Hour's one life\n    if (!sdFightLink || slot == null",
+    "new": "    const slot = 0;\n    if (w?.k === 'bd') { bossCountFell(slot != null); return; }   // INT12: the relay's count's fall of me - the Hour's one life\n    if (!sdFightLink || slot == null",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+  },
+  {
+    "name": "SD11c-G3-another-slots-whole-state",
+    "file": "src/scenes/world.js",
+    "old": "slot == null || (w.k === 'st' && w.s !== slot)) return;",
+    "new": "slot == null) return;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G3-the-realm-never-known",
+    "file": "src/scenes/world.js",
+    "old": "    const inRealm = modes?.sdRealmSlot?.() != null;\n    if (!inRealm && _sdReceipts.size)",
+    "new": "    const inRealm = false;\n    if (!inRealm && _sdReceipts.size)",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G3-left-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); sdFx?.leave(); _sdFightHeld = false; }",
+    "new": "    if (!inRealm) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); sdFx?.leave(); _sdFightHeld = false; }",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G2-the-Hearts-unfolded",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "      cx: w.cx ? { i: w.cx.i, m: w.cx.m, c: w.cx.c.map((q) => [q[0], q[1], q[2]]) } : null,",
+    "new": "      cx: null,",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G2-the-stuns-moment-moved",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "      stunAt: same && s.su === w.su ? s.stunAt : w.su ? now : 0,",
+    "new": "      stunAt: w.su ? now : 0,",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G10-the-law-leaves-the-Echoes",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "      for (const B of [f.rem, ...(f.ec ?? []).map((x) => x.body)]) {",
+    "new": "      for (const B of [f.rem]) {",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G10-the-page-leaves-the-Echoes",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "        return {\n          ...s,\n          clk: atkOf(w),\n          ended: w.at,\n          rem: stopped(s.rem, at),\n          ec: s.ec ? s.ec.map((E) => ({ ...E, ...stopped(E, at) })) : null,\n          cx: null,\n          su: 0,\n          heardAt: now,\n        };",
+    "new": "        return { ...s, clk: atkOf(w), ended: w.at, rem: stopped(s.rem, at), ec: s.ec, cx: null, su: 0, heardAt: now };",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-a-fallen-Echo-strikes",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
+    "old": "    if (E.h > 0 && E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
+    "new": "    if (E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-Silver-named-Gold",
+    "file": "src/net/superDungeon/sdFightLink.js",
+    "old": "  echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Silver'} Echo.`,",
+    "new": "  echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Gold'} Echo.`,",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-no-Hollow-the-line-waits",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "      if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;",
+    "new": "      if (!h && t - o.at < SD_LINE_WAIT_MS) return;",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-no-Hollow-no-region",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "        region = province ? '' : regionName(o.rec.r) || ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province",
+    "new": "        region = province ? '' : ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province",
+    "tests": [
+      "test/systems/sd11c_page.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-the-oldest-socket",
+    "file": "server/src/index.js",
+    "old": "      if (!had || (b.since ?? 0) >= (had[1].since ?? 0)) newest.set(b.sub, [ws, b]);\n    }\n    return [...newest.values()].map(([ws, b]) => { const c = this._arenaPoseOf(b.pose);",
+    "new": "      if (!had) newest.set(b.sub, [ws, b]);\n    }\n    return [...newest.values()].map(([ws, b]) => { const c = this._arenaPoseOf(b.pose);",
+    "tests": [
+      "test/net/superDungeon/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-another-slots-fight",
+    "file": "server/src/index.js",
+    "old": "    let f = await this._sdFightOf();\n    if (f && f.s !== s) f = this._sdFight = null;\n",
+    "new": "    let f = await this._sdFightOf();\n",
+    "tests": [
+      "test/net/superDungeon/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-another-slots-list",
+    "file": "server/src/index.js",
+    "old": "v && v.s === s && Array.isArray(v.in) ?",
+    "new": "v && Array.isArray(v.in) ?",
+    "tests": [
+      "test/net/superDungeon/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-a-throw-read-as-no-record",
+    "file": "server/src/index.js",
+    "old": "  } catch (e) { console.warn('[sd] live', e?.message ?? e); return undefined; }",
+    "new": "  } catch (e) { console.warn('[sd] live', e?.message ?? e); return null; }",
+    "tests": [
+      "test/net/superDungeon/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G13-the-census-unbounded",
+    "file": "server/src/index.js",
+    "old": "if (Number.isSafeInteger(v?.n) && v.n >= 0) counts[r] = Math.min(v.n, CHAT_SOCKETS_MAX);",
+    "new": "if (Number.isSafeInteger(v?.n) && v.n >= 0) counts[r] = v.n;",
+    "tests": [
+      "test/net/superDungeon/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G5-the-Echoes-reach-unread",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK)\n    return out;",
+    "new": "  void 0;",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G5-the-Echoes-pose-unread",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if (!poseIn(pose)) return out;\n  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK)",
+    "new": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK)",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G5-the-Hearts-reach-unread",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - SD_HEART.r > MELEE_REACH + POSE_SLACK) return out;",
+    "new": "  void 0;",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G5-the-Hearts-pose-unread",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if (!poseIn(pose)) return out;\n  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - SD_HEART.r > MELEE_REACH + POSE_SLACK) return out;",
+    "new": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - SD_HEART.r > MELEE_REACH + POSE_SLACK) return out;",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G6-the-Remnants-hand-unread",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if (!spendBlow(p, now, seq, 'b')) return 0;",
+    "new": "  spendBlow(p, now, seq, 'b');",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G6-the-Echoes-hand-unread",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if (!spendBlow(p, now, seq, `e${e}`)) return out;",
+    "new": "  spendBlow(p, now, seq, `e${e}`);",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G6-the-Hearts-hand-unread",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if (!spendBlow(p, now, seq, `x${c}`)) return out;",
+    "new": "  spendBlow(p, now, seq, `x${c}`);",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G6-each-body-charged",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    p.bqWho.push(who);\n    return true;",
+    "new": "    void who;",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G7-never-retired",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  for (const p of Object.values(f.players))\n    if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);",
+    "new": "  void 0;",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G7-never-restored",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "      restoreShare(f, p);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G7-the-Echoes-unrescaled",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  rescaleEchoes(f);\n  // LOST: nobody living has stood in the arena this long - the next fight is fresh. AUDIT SD: and an Hour ENDED is lost",
+    "new": "  // LOST: nobody living has stood in the arena this long - the next fight is fresh. AUDIT SD: and an Hour ENDED is lost",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  },
+  {
+    "name": "SD11c-G12-the-run-unread",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  return fresh.length ? fresh : run >= REPEAT_MAX ? [] : out;",
+    "new": "  return fresh.length ? fresh : out;",
+    "tests": [
+      "test/net/superDungeon/sd11c_law.test.js"
+    ]
+  }
+]

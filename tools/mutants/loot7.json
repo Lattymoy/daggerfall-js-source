@@ -1,0 +1,401 @@
+[
+  {
+    "name": "LOOT7-rate-ten-times",
+    "file": "src/systems/champions.js",
+    "old": "export const CHAMPION_PER_MILLE = 70;",
+    "new": "export const CHAMPION_PER_MILLE = 700;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-dungeon-marks-allies",
+    "file": "src/systems/champions.js",
+    "old": "    if (!e || e.allied || e.champion != null) return;",
+    "new": "    if (!e || e.champion != null) return;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-dungeon-remarks-a-marked-record",
+    "file": "src/systems/champions.js",
+    "old": "    if (!e || e.allied || e.champion != null) return;",
+    "new": "    if (!e || e.allied) return;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-dungeon-trait-from-the-low-bits",
+    "file": "src/systems/champions.js",
+    "old": "      e.champion = (h >>> 10) % CHAMPION_TRAITS.length;",
+    "new": "      e.champion = h % CHAMPION_TRAITS.length;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-dungeon-hash-without-the-marker",
+    "file": "src/systems/champions.js",
+    "old": "    const h = mix(locationKey, i, 0x10071);",
+    "new": "    const h = mix(locationKey, 0x10071);",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-dungeon-marks-off",
+    "file": "src/systems/champions.js",
+    "old": "  if (!lootRarityOn() || !Array.isArray(records)) return 0;",
+    "new": "  if (!Array.isArray(records)) return 0;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-street-off",
+    "file": "src/systems/champions.js",
+    "old": "  if (!lootRarityOn()) return null;\n  const h = mix(",
+    "new": "  const h = mix(",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-street-without-the-count",
+    "file": "src/systems/champions.js",
+    "old": "    ++_streetN,\n    0x57ee7,",
+    "new": "    0x57ee7,",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-street-without-its-type",
+    "file": "src/systems/champions.js",
+    "old": "    mobileType,\n    ++_streetN,",
+    "new": "    ++_streetN,",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-street-without-the-spot",
+    "file": "src/systems/champions.js",
+    "old": "  const h = mix(\n    Math.round((Number(feet?.[0]) || 0) * 64),\n    Math.round((Number(feet?.[2]) || 0) * 64),\n    mobileType,\n    ++_streetN,\n    0x57ee7,\n  );",
+    "new": "  const h = mix(mobileType, ++_streetN, 0x57ee7);",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-street-trait-from-the-low-bits",
+    "file": "src/systems/champions.js",
+    "old": "  return h % 1000 < CHAMPION_PER_MILLE ? (h >>> 10) % CHAMPION_TRAITS.length : null;",
+    "new": "  return h % 1000 < CHAMPION_PER_MILLE ? h % CHAMPION_TRAITS.length : null;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-street-every-spawn-rolls",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(capped ? rollStreetChampion(pending.feet, mobileType) : null)",
+    "new": "rollStreetChampion(pending.feet, mobileType)",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-stands-off",
+    "file": "src/systems/champions.js",
+    "old": "  if (!entity || !Number.isInteger(traitIndex) || !lootRarityOn()) return null;",
+    "new": "  if (!entity || !Number.isInteger(traitIndex)) return null;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-stands-under-level-3",
+    "file": "src/systems/champions.js",
+    "old": "  if (!t || (entity.level | 0) < CHAMPION_MIN_LEVEL) return null;",
+    "new": "  if (!t) return null;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-stands-the-watch",
+    "file": "src/systems/champions.js",
+    "old": "  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly')\n    return null;",
+    "new": "  if (entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly') return null;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-stands-an-ally",
+    "file": "src/systems/champions.js",
+    "old": "  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly')\n    return null;",
+    "new": "  if (entity.mobileType === KNIGHT_CITY_WATCH) return null;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-stalwart-no-more",
+    "file": "src/systems/champions.js",
+    "old": "  const hp = CHAMPION_HEALTH * (t.health ?? 1);",
+    "new": "  const hp = CHAMPION_HEALTH;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-health-not-refilled",
+    "file": "src/systems/champions.js",
+    "old": "  entity.health = entity.maxHealth;\n  entity.healthMult = (entity.healthMult ?? 1) * hp; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
+    "new": "  entity.healthMult = (entity.healthMult ?? 1) * hp; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-over-the-elites-scale",
+    "file": "src/systems/champions.js",
+    "old": "  entity.damageScale =\n    (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE * (t.damage ?? 1);",
+    "new": "  entity.damageScale = CHAMPION_DAMAGE * (t.damage ?? 1);",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-mighty-no-more",
+    "file": "src/systems/champions.js",
+    "old": "  entity.damageScale =\n    (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE * (t.damage ?? 1);",
+    "new": "  entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-swift-uncapped",
+    "file": "src/systems/champions.js",
+    "old": "  if (t.speed && entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);",
+    "new": "  if (t.speed && entity.stats) entity.stats.speed = (entity.stats.speed ?? 50) + t.speed;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-every-champion-swift",
+    "file": "src/systems/champions.js",
+    "old": "  if (t.speed && entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);",
+    "new": "  if (entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-vampiric-drinks-all",
+    "file": "src/systems/champions.js",
+    "old": "  attacker.health = Math.min(\n    attacker.maxHealth ?? attacker.health,\n    attacker.health + Math.max(1, Math.round((damage * t.drink) / 100)),\n  );",
+    "new": "  attacker.health = Math.min(attacker.maxHealth ?? attacker.health, attacker.health + Math.max(1, Math.round(damage)));",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-vampiric-past-its-max",
+    "file": "src/systems/champions.js",
+    "old": "  attacker.health = Math.min(\n    attacker.maxHealth ?? attacker.health,\n    attacker.health + Math.max(1, Math.round((damage * t.drink) / 100)),\n  );",
+    "new": "  attacker.health = attacker.health + Math.max(1, Math.round((damage * t.drink) / 100));",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-vampiric-on-any-blow",
+    "file": "src/systems/champions.js",
+    "old": "  if (!t?.drink || !(damage > 0) || !target?.isPlayer || !(attacker.health > 0)) return;",
+    "new": "  if (!t?.drink || !(damage > 0) || !(attacker.health > 0)) return;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-thorns-whole",
+    "file": "src/systems/champions.js",
+    "old": "  hurtPlayer(attacker, Math.max(1, Math.round(damage / t.thorns)));",
+    "new": "  hurtPlayer(attacker, Math.max(1, Math.round(damage)));",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-thorns-on-a-peer",
+    "file": "src/systems/champions.js",
+    "old": "  if (!t?.thorns || !(damage > 0) || !attacker?.isPlayer || attacker.peer) return;",
+    "new": "  if (!t?.thorns || !(damage > 0) || !attacker?.isPlayer) return;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-thorns-on-anyone",
+    "file": "src/systems/champions.js",
+    "old": "  if (!t?.thorns || !(damage > 0) || !attacker?.isPlayer || attacker.peer) return;",
+    "new": "  if (!t?.thorns || !(damage > 0) || attacker.peer) return;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-struck-unregistered",
+    "file": "src/systems/champions.js",
+    "old": "registerPlayerStruckListener(CHAMPIONS, championStruck);",
+    "new": "registerPlayerStruckListener(CHAMPIONS, null);",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-strike-unregistered",
+    "file": "src/systems/champions.js",
+    "old": "registerPlayerStrikeListener(CHAMPIONS, championStrike);",
+    "new": "registerPlayerStrikeListener(CHAMPIONS, null);",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-unnamed",
+    "file": "src/systems/foeTitle.js",
+    "old": "  const named = typeof c === 'string' && c ? `${c.charAt(0).toUpperCase()}${c.slice(1)} ${base}` : base;",
+    "new": "  const named = base;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ],
+    "note": "FOE-TITLE (re-aimed by content): championName asks systems/foeTitle.js, the names' one home"
+  },
+  {
+    "name": "LOOT7-hud-unnamed",
+    "file": "src/ui/hud/hudFoeTarget.js",
+    "old": "    name: String(titled(e, e.name ?? e.career?.name ?? 'Foe')), // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name",
+    "new": "    name: String(e.name ?? e.career?.name ?? 'Foe'), // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-hover-unnamed",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export const liveEntityName = (rec, enemyName = null) => foeTitle(rec?.entity, rec?.entity?.name ?? enemyName ?? null);",
+    "new": "export const liveEntityName = (rec, enemyName = null) => rec?.entity?.name ?? enemyName ?? null;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-death-line-unnamed",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType)); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his",
+    "new": "  const name = properName(entity) ?? enemyDisplayName(mobileType); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-dungeon-body-unnamed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "corpseName(championName(f.entity, corpseEntityName(f.mobileType)))",
+    "new": "corpseName(corpseEntityName(f.mobileType))",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-wire-cp-unbounded",
+    "file": "src/net/wire.js",
+    "old": "r.cp < 0 || r.cp > CHAMPION_TRAIT_MAX) return null;",
+    "new": "r.cp < 0) return null;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-wire-cp-dropped",
+    "file": "src/net/wire.js",
+    "old": "return null; out.cp = r.cp; }",
+    "new": "return null; }",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-street-record-silent",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!onWatch && f.entity?.champion) r.cp = championIndex(f.entity.champion);",
+    "new": "if (!onWatch && f.entity?.champion) void 0;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-dungeon-unmarked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  if (!_undercroftHall) markDungeonChampions(enemies, dfLocation.dungeon.recordElement.header.locationId);",
+    "new": "  void enemies, _undercroftHall;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-plain-dungeon-no-champion",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "return void applyChampion(entity, e?.champion);",
+    "new": "return;",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "CHAMP-LOOT-door-plain-source",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "rollLootRarity(loot, champ ? championSource(source, qualityMult) : {",
+    "new": "rollLootRarity(loot, false ? championSource(source, qualityMult) : {",
+    "tests": [
+      "test/systems/loot7_champions.test.js"
+    ]
+  },
+  {
+    "name": "CHAMP-LOOT-magic-and-rare-whole",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  ladder: CHAMPION_SOURCE.ladder,",
+    "new": "  ladder: 1,",
+    "tests": [
+      "test/systems/search1_searchables.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-source-no-tiers",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  legendaryTier: source.tier + CHAMPION_SOURCE.tier,",
+    "new": "  legendaryTier: source.tier,",
+    "tests": [
+      "test/systems/loot7_champions.test.js",
+      "test/systems/search1_searchables.test.js"
+    ]
+  },
+  {
+    "name": "LOOT7-source-no-quality",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  legendaryQuality: qualityMult * CHAMPION_SOURCE.quality,",
+    "new": "  legendaryQuality: qualityMult,",
+    "tests": [
+      "test/systems/loot7_champions.test.js",
+      "test/systems/search1_searchables.test.js"
+    ]
+  }
+]

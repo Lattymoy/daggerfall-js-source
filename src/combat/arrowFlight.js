@@ -1,0 +1,558 @@
+// C13: arrow flight for the hosts WITHOUT the dungeon missile system
+// (worldModes interiors, the exterior walk hosts). The dungeon's
+// arrows are full S5 missiles (foe seeking, BowDamage recovery);
+// DFU's law for an arrow that meets geometry is simply LOST - so this
+// module owns the flight: the 99800 arrow model oriented along its
+// direction, MISSILE_SPEED with the swept geometry raycast (the
+// sweep covers the whole step - raw dt cannot tunnel), the
+// MISSILE_LIFESPAN retire. Constants single-source from the S5
+// missile system (spellcast.js); the matrix law mirrors
+// dungeonContext's arrowMatrix verbatim.
+//
+// AUDIT 39 (#64) retires the premise this module was written on -
+// "out here there are no live targets yet". The X-slice/AR1 pools
+// (exteriorFoes, cityGuards, the interior quest-foe pool) ARE those
+// targets, and both impact arms used to be gated on `m.enemy`, so a
+// player's shaft could hit nothing anywhere but a dungeon while
+// WeaponManager.cs:398-417 spawns an ArrowMissile for every bow hit
+// frame and DaggerfallMissile.cs:391 assigns its damage wherever the
+// player is standing. The player arm and its damage law live here
+// now, one copy for the three hosts that share this flight.
+
+import { MISSILE_SPEED, ARROW_FLIGHT_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS, sweepFrom, struckPoints } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
+import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
+import { trs } from '../world/mat4.js';
+import { SWING_MODS, foeUnaware } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact (SET2: and whether the shaft's foe had noticed me)
+import { bloodHit } from './blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
+import { calculateAttackDamage } from './formulas.js';
+import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // AUDIT PISTOLET A1: a pair's off-hand shot, DUAL's terms as its swing's
+import { liveStat } from '../systems/statMods.js';
+import { segmentBoxEntry } from '../systems/naval/navalBallistics.js';   // SERPENT4: a shaft's step through a box - the guns' own test
+import { bowDamageArrow } from './enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
+import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
+import { isBackFacing } from '../characters/enemy/enemyMotor.js';
+import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
+import { addItem, ARROW_TEMPLATE } from '../systems/inventory.js';
+import { noteShotRecoverable, shotTallyOpen } from '../systems/shotTally.js';   // ARENA-ARROWS: a recoverable shaft is no shot the healers pay; STUCK-ARROWS: nor one stuck on the sand
+import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot/loot.js';   // STUCK-ARROWS: the stuck shaft's container picture (seedPile's icon)
+import { bowShotAim } from '../ui/bowBloomRing.js';   // BOW-BLOOM
+import { bowShotStamp, bowFastDamage, whileShaftLands } from './bowBloom.js';   // BOW-FAST, BOW-KINDS
+import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand   // FIELD-GUN18: ...and how big it is drawn
+import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher (worldTick never reaches this module - no cycle)
+import { sparedByPlayer } from './friendlyFire.js';   // SHIPMATES: the player's shaft passes their own crew by
+import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
+import { blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's shaft - its weight, and never a player's body
+import { takeOwed } from '../systems/playerDoor.js';   // AUDIT MARTIAL L2 F5: the follow-ups a shaft owes a body the relay runs
+import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
+
+export const ARROW_MODEL_ID = 99800;
+
+// ---- STUCK-ARROWS (bible/05-Combat/Arrow-Supply.md) ---------------------------------------------------------------
+// Mac, 2026-10-11: "allow arrows to stick in walls/ground wherever shot and be retrieved". DFU's law for a shaft that
+// meets geometry is LOST (DaggerfallMissile.DoCollision destroys it); the port's departure keeps the PLAYER's: it stays
+// where it struck, drawn as the 99800 shaft along its flight, and is a container of one Arrow in the host's own
+// dropped-loot pool - so the press, quick loot, the plaque and Detect Treasure that every host already runs over its
+// piles take it back, and no host learns a new key. The pile is `drawn: false` (this module draws it, the DW-E5 door),
+// `unsaved` (it outlives no scene: WOD5's LoadID-0 container), and takes nothing put on it (WILD1's `noStore`).
+
+/** STUCK-ARROWS (Mac: "Allow arrows to sometimes be retrieved from enemies"): the share of the player's real shafts that
+ *  survive striking a foe and lodge in its pack (playerArrowHitFoe) - DFU's BowDamage keeps every one. */
+export const ARROW_LODGE_CHANCE = 0.5;
+/** The pool's mark on a stuck shaft's pile (seedPile's `owner`). */
+export const STUCK_ARROW_OWNER = 'stuckArrow';
+/** The most stuck shafts a pool holds - the oldest goes when another sticks. */
+export const STUCK_ARROWS_MAX = 40;
+/** A pile's box is based at its pos and 0.6 tall (droppedLoot lootTargets): the shaft stands at its middle. */
+export const STUCK_ARROW_LIFT = 0.3;
+/** The share of the shaft's length that goes into what it struck. */
+export const STUCK_ARROW_EMBED = 0.25;
+/** The shaft's plaque word (droppedLoot labelFor) and its pile's refusal of a stored item (droppedLootHooks capacity). */
+export const STUCK_ARROW_LABEL = 'Arrow';
+export const STUCK_ARROW_NO_STORE = Object.freeze({ kg: 0, name: 'The arrow' });
+const STUCK_ARROW_ICON = Object.freeze({ archive: RANDOM_TREASURE_ARCHIVE, record: RANDOM_TREASURE_ICONS[0] });
+
+/** Does this shaft stay where it struck? The player's own (never a peer's drawn echo), a real arrow (a conjured one
+ *  vanishes anyway, WeaponManager.cs:554-559's `isArrowSummoned`), never a gun's spent pellet, and never on a bout's sand
+ *  (its healers refund the shot - systems/shotTally.js). */
+export function stickable(m) {
+  return !!m?.fromPlayer && !m.visual && !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen();
+}
+
+/** The stuck shafts' piles of `loot`, oldest first - every one the pool still holds, emptied or not. */
+const stuckPilesOf = (loot) => (loot?._piles ?? []).filter((p) => p.owner === STUCK_ARROW_OWNER && !p.dead);
+const _struck = [];   // TRUNK-FOES: a step's struck points
+/** The shafts still standing - the ones drawn and pressed. */
+export const liveStuckArrows = (loot) => stuckPilesOf(loot).filter((p) => !p.inactive && p.items.length > 0);
+
+/** A shaft sticks at `at` (the point it struck), along `dir`: a pile of one Arrow (bowDamageArrow, the one minter) in
+ *  `loot`, on `pixelKey` (the world host's - it dies with its pixel). The pool keeps STUCK_ARROWS_MAX; the oldest goes. */
+export function stickArrow(loot, at, dir, { pixelKey = null } = {}) {
+  if (!loot?.seedPile || !Array.isArray(at)) return null;
+  const l = Math.hypot(dir[0], dir[1], dir[2]) || 1;   // a crouch-dipped shaft carries |dir| > 1 (missileReach)
+  const pile = loot.seedPile([bowDamageArrow()], [at[0], at[1] - STUCK_ARROW_LIFT, at[2]], STUCK_ARROW_ICON, null, pixelKey,
+    { unsaved: true, drawn: false, owner: STUCK_ARROW_OWNER });
+  pile.label = STUCK_ARROW_LABEL;
+  pile.noStore = STUCK_ARROW_NO_STORE;
+  pile.stuckDir = [dir[0] / l, dir[1] / l, dir[2] / l];
+  const all = stuckPilesOf(loot);
+  for (let i = 0; i < all.length - STUCK_ARROWS_MAX; i++) loot.removePile(all[i]);
+  return pile;
+}
+
+/** A taken shaft's pile goes: emptied by the press (quick loot, the window) or deactivated by releaseEmptied - a
+ *  scene-built container is only ever deactivated, and nothing re-mints a stuck shaft. */
+export function pruneStuckArrows(loot) {
+  for (const p of stuckPilesOf(loot)) if (p.inactive || !p.items.length) loot.removePile(p);
+}
+
+/** How far back from the struck point the shaft's ORIGIN is drawn, so STUCK_ARROW_EMBED of it is in: its tip is the
+ *  front of the mesh's own sphere (`bounds` [cx, cy, cz, r], renderer.createMesh) along +Z - arrowMatrix's forward,
+ *  which flies it nose first - and its length the sphere's diameter. A mesh with no sphere is drawn at the point. */
+export function stuckArrowSetBack(bounds) {
+  if (!bounds || !(bounds[3] > 0)) return 0;
+  return bounds[2] + bounds[3] - STUCK_ARROW_EMBED * 2 * bounds[3];
+}
+
+/** A stuck shaft's model matrix, from its pile - read live, so a recentre (offsetAll) or the ground's move carries it. */
+export function stuckArrowMatrix(pile, bounds = null) {
+  const d = pile.stuckDir, back = stuckArrowSetBack(bounds);
+  return arrowMatrix([pile.pos[0] - d[0] * back, pile.pos[1] + STUCK_ARROW_LIFT - d[1] * back, pile.pos[2] - d[2] * back], d);
+}
+
+/** Where a shaft's step from `a` to `b` went into the bare ground (the collider's heightAt floor, which the mesh
+ *  raycast never sees): the crossing between the two heights, set on the ground there. */
+export function groundEntry(a, b, c) {
+  const da = a[1] - c.heightAt(a[0], a[2]), db = b[1] - c.heightAt(b[0], b[2]);
+  const t = da > 0 && da - db > 0 ? Math.min(1, da / (da - db)) : 0;
+  const x = a[0] + (b[0] - a[0]) * t, z = a[2] + (b[2] - a[2]) * t;
+  return [x, c.heightAt(x, z), z];
+}
+
+/** THE DUNGEON'S HALF (scenes/dungeonContext.js): its meshes are a list of `{ gpu, object: { matrix } }` it draws
+ *  (dynamicDraws), so a stuck shaft is an entry there for as long as its pile stands. `held` maps pile -> entry;
+ *  `meshOf` answers the 99800 mesh (null while it loads), asked only when a shaft is still to be drawn. */
+export function syncStuckArrowDraws(loot, draws, held, meshOf) {
+  pruneStuckArrows(loot);
+  const live = liveStuckArrows(loot);
+  for (const [p, d] of held) {
+    if (live.includes(p)) continue;
+    const i = draws.indexOf(d);
+    if (i >= 0) draws.splice(i, 1);
+    held.delete(p);
+  }
+  if (live.every((p) => held.has(p))) return;
+  const gpu = meshOf();
+  if (!gpu) return;
+  for (const p of live) {
+    if (held.has(p)) continue;
+    const d = { gpu, object: { matrix: stuckArrowMatrix(p, gpu.bounds) } };
+    draws.push(d);
+    held.set(p, d);
+  }
+}
+
+/** TECH1: a piercing technique shaft that has just struck `ref` - it notes the foe and flies on while it has foes left to
+ *  strike (`pierce`, its number); answers whether it flies on. Every other shaft stops on what it strikes. Shared by the
+ *  dungeon's own missile lane (scenes/dungeonContext.js). */
+export function techniquePierces(m, ref) {
+  const t = m?.technique;
+  if (!t || !(t.pierce > 1)) return false;
+  (t.struck ??= []).push(ref);
+  return t.struck.length < t.pierce;
+}
+/** AUDIT FB1031 F2: the bodies shaft `m` may strike, and no other (TRUNK-FOES' cover law reads them - a body it flies
+ *  through held cover open for it). A drawn one any body; a foe's me (`meetsMe`) and every foe but its shooter
+ *  (`meetsFoes`: DoCollision stops it on whatever it meets); mine the foes but a defender, a shipmate and a body its
+ *  technique passes - never me. The tests in ArrowFlight.update read the same. */
+export function shaftBodies(m, foeTargets, playerFeet, playerHeight, meetsMe, meetsFoes) {
+  const out = [];
+  for (const t of (m.visual || meetsFoes) ? foeTargets ?? [] : []) {
+    if (!t?.feet || t.ref?.dead || (!m.visual && t.ref === m.shooterFoe)) continue;
+    if (!m.visual && m.fromPlayer && (sparedByPlayer(t.ref) || (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))))) continue;
+    out.push({ feet: t.feet, height: t.ref?.ai?.height });   // the foe's capsule as the sweep below meets it
+  }
+  if (playerFeet && (m.visual || (m.enemy && meetsMe))) out.push({ feet: playerFeet, height: playerHeight, radius: PLAYER_BODY_RADIUS });
+  return out;
+}
+/** AUDIT TECH1: A PIERCING SHAFT IS ONE SHAFT to a referee that counts blows by their sequence (net/arena/arenaBrain.js refBlow -
+ *  ARENA4b: "each shaft its own blow", a swing through three bodies one). `q` the sequence the lane has just taken for
+ *  this body (one past the last); answers the one it is struck under - the sequence its first body took, while that is
+ *  still the newest (this body's own taking undone), else `q`: any blow between, and the body is a blow of its own. A
+ *  shaft that is no technique's is `q` always. */
+export function shaftSequence(m, q) {
+  const t = m?.technique;
+  if (!t) return q;
+  const back = (q - 1) & 0x7fffffff;
+  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;
+  return t.seq;
+}
+
+/** The oriented arrow transform (dungeonContext.arrowMatrix law). */
+export function arrowMatrix(pos, dir) {
+  const yaw = Math.atan2(dir[0], dir[2]) * 180 / Math.PI;
+  const pitch = Math.asin(-Math.max(-1, Math.min(1, dir[1]))) * 180 / Math.PI;
+  return trs(pos[0], pos[1], pos[2], pitch, yaw, 0);
+}
+
+export class ArrowFlight {
+  /**
+   * @param getGpuMesh (modelId) => gpu mesh (async ok - the host's
+   *                   pipeline function)
+   * @param collider   Collider, or () => Collider for hosts whose
+   *                   collider rebuilds (the weaponRig canvas rule)
+   */
+  constructor({ getGpuMesh, collider = null, effects = null, loot = null, pixelKeyAt = null }) {
+    this.getGpuMesh = getGpuMesh;
+    this._collider = collider;
+    // STUCK-ARROWS: the host's dropped-loot pool a player's shaft sticks into (null: it is LOST, DFU's law), and the
+    // map pixel it lies on (the world host's - null everywhere else); the 99800 mesh the stuck shafts are drawn with
+    this._loot = loot;
+    this._pixelKeyAt = pixelKeyAt;
+    this._stuckGpu = null;
+    // FIELD-GUN14: the host's own one-shot billboard pool (hitEffects),
+    // which every host already builds. A shot that flies as an ORB is
+    // drawn through it rather than through `getGpuMesh` - see `fire`.
+    // Null is an answer: the flight is unchanged and nothing is drawn,
+    // which is what a host with no effects pool has always had.
+    this._effects = effects;
+    this.arrows = [];
+  }
+
+  /** X2-slice: `meta` rides the arrow record - an ENEMY arrow
+   *  carries { enemy: true, shooterFoe, weapon } and hunts the
+   *  player through update's impact arm. AUDIT 39 (#64): a PLAYER
+   *  arrow carries { fromPlayer: true, weapon } - the bow is DFU's
+   *  LastBowUsed, which the impact prices off - and hunts the foes
+   *  through the same contact law. */
+  fire(from, dir, meta = {}) {
+    // FIELD-GUN14 (Mac: "The projectile that shoots out should be an
+    // orb, not an arrow"). IT WAS AN ARROW because this module draws
+    // ONE model - 99800, the shaft - for everything it carries, which
+    // was right while the only thing it carried was a shaft. The
+    // Thunderlock rides this lane because `isBowWeapon` is "scored on
+    // Archery" (that is the whole reason every host's ranged gate took
+    // it without being told it exists), and it inherited the bow's
+    // PICTURE along with the bow's physics.
+    //
+    // The flight is untouched - same speed, same sweep, same contact,
+    // same lifespan. What forks is the draw, and it forks on the
+    // WEAPON, which the record already carries: a shaft takes the mesh
+    // lane below, an orb takes the billboard lane.
+    const orb = orbArchiveFor(meta.weapon);
+    // FIELD-GUN17 (Mac: "the orb doesnt allign with the barrel when
+    // firing. Its above the barrel"). THE SAME SENTENCE ONE FIELD ON
+    // from FIELD-GUN14's: the lane was written for the one ranged
+    // weapon Daggerfall has, so its ORIGIN is the bow's too. A host
+    // that knows where its weapon's muzzle is hands the offset over
+    // and it is used INSTEAD of GetAimPosition's bow-hand arm; a host
+    // that does not - and every bow, at every host - hands over
+    // nothing and gets the verbatim arm, unchanged.
+    // AUDIT FIELD-GUN-MW F2: the fork is playerShotOrigin's, once, for both spawn seams - a muzzle may now be a
+    // WORLD point (the third-person Morrowind body's barrel, behind the camera).
+    if (meta.fromPlayer && !orb && !meta.technique) { dir = bowShotAim(dir, meta.weapon); meta = { ...meta, ...bowShotStamp(meta.weapon) }; }   // BOW-BLOOM, BOW-FAST, BOW-KINDS: a bow's own shot, never a gun's or a technique's
+    const origin = meta.fromPlayer
+      ? playerShotOrigin(from, dir, meta.muzzle)
+      : [...from];
+    this.arrows.push({ pos: origin, dir: [...dir], age: 0, gpu: null, dead: false, orb, orbFlat: null, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
+  }
+
+  update(dt, { playerFeet = null, playerHeight = CAPSULE_HEIGHT, onPlayerHit = null, foeTargets = null, onFoeHit = null,
+    onPlayerArrowHitFoe = null, boxTargets = null, onPlayerArrowHitBox = null } = {}) {
+    let live = 0;
+    const c = typeof this._collider === 'function' ? this._collider() : this._collider;
+    if (this._loot) pruneStuckArrows(this._loot);   // STUCK-ARROWS: a taken shaft's pile goes
+    for (const m of this.arrows) {
+      if (m.dead) { this._releaseOrb(m); continue; }   // FIELD-GUN14: the flat goes out with the flight - `arrows` is not compacted until every record is dead
+      live++;
+      if (m.orb) {
+        // FIELD-GUN14: the orb's flat, lazily, on the same in-flight
+        // guard the mesh uses - and then MOVED every step, which is
+        // the one thing this pool's other entries never do.
+        if (m.orbFlat === null) {
+          // FIELD-GUN17: THE ORB TELLS US ITS COLOUR. The pool hands
+          // the archive over the one moment it is warm, and the leaf
+          // reduces it to the single colour the muzzle flash is painted
+          // in and the muzzle light is thrown in. Sampled rather than
+          // named, so "the same colour as the orb" is exact and follows
+          // ORB_ARCHIVE if it ever changes.
+          m.orbFlat = this._effects?.showFlyingFlat?.(m.orb, m.pos, {
+            record: ORB_RECORD,
+            scale: ORB_SCALE,   // FIELD-GUN18: a pellet, not a fireball
+            onTexture: (t, archive, record) => noteOrbColour(t?.getColor32?.(t.getDFBitmap(record, 0), 0)),
+          }) ?? false;
+        }
+      } else if (m.gpu === null) {   // lazy model fetch, in-flight guard
+        m.gpu = false;
+        Promise.resolve(this.getGpuMesh(ARROW_MODEL_ID)).then((g) => { if (g && !m.dead) m.gpu = g; });
+      }
+      m.age += dt;
+      if (m.age > MISSILE_LIFESPAN_S) { m.dead = true; continue; }
+      const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * (m.speedScale ?? 1) * dt;   // TELL6d: an aimed shot flies x1.3 as fast; BAL-ARCHERY: a shaft, not a gun's orb
+      const { unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: displacement.magnitude + ColliderRadius along the NORMALISED direction (DaggerfallMissile.cs:333 builds the displacement, :337 casts it - an ARROW always takes that Raycast arm, never the :339 SphereCast) - a crouch-dipped shaft carries |dir| > 1
+      // TACT1: a tree, a crate - cover stops a shaft; AUDIT TACT B5: by touch, the bodies before it tested first
+      const struckBy = c?.cover?.on() ? shaftBodies(m, foeTargets, playerFeet, playerHeight, !!onPlayerHit, !!(m.enemy ? onFoeHit : m.fromPlayer && onPlayerArrowHitFoe)) : null;   // TRUNK-FOES: the bodies it may strike (AUDIT FB1031 F2: this shaft's own)
+      const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach, false, struckBy?.length ? struckPoints(m.pos, unit, struckBy, _struck) : null), c.raycast(m.pos, unit, reach), reach, reach - step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), !!m.fromPlayer) : null;   // WALL-SHAFT: a player's shaft is swept (SHAFT-SWEEP), so a wall is met by touch and a foe before it first
+      if (cs && Number.isFinite(cs.stop)) { this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit); m.dead = true; continue; }   // met geometry: the arrow is LOST (DFU); STUCK-ARROWS: the player's stays where it struck - the RAY's point (`unit`, the collider's units)
+      const adv = cs ? step * cs.advance : step;
+      const from = m.fromPlayer ? sweepFrom(m.pos, c) : null;   // STUCK-ARROWS: the step's start, for the ground's crossing (AUDIT WALL-SHAFT W1: and the sweep, never through a wall)
+      const was = boxTargets?.length && m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;   // SERPENT4: the step's start, for a box
+      m.pos[0] += m.dir[0] * adv;
+      m.pos[1] += m.dir[1] * adv;
+      m.pos[2] += m.dir[2] * adv;
+      // FIELD-GUN14: the flat follows AFTER the advance, so what is
+      // drawn is where the shot IS rather than where it was a step
+      // ago. The mesh lane gets this for free - `arrowMatrix(m.pos)`
+      // is built in the draw pass, which runs after this one.
+      if (m.orbFlat) m.orbFlat.move(m.pos);
+      // X2-slice: an enemy arrow tests the player mid-capsule per
+      // step - the dungeon missile's exact contact law
+      // (MISSILE_COLLIDER_RADIUS + the player's OWN 0.35 body = 0.80).
+      if (m.enemy && playerFeet && onPlayerHit) {   // AUDIT 65 CV-2: PlayerAdvanced.prefab:82 m_Radius 0.35, not the foe prefab's 0.45
+        // ROAD-H tail: the SphereCast at :339 meets the player's
+        // CharacterController CAPSULE at its LIVE height, not a point
+        // 0.9 up - a crouched player (0.9) is a shorter target.
+        if (missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {
+          // ROAD-H tail (review): the CONTACT stops the shaft on any
+          // body (DoCollision, DaggerfallMissile.cs:388-396: an arrow is
+          // destroyed on whatever it meets); the DAMAGE is gated on the
+          // struck body being the archer's Target
+          // (AssignBowDamageToTarget, :669). A shaft loosed at another
+          // foe that the player steps into is spent on the player and
+          // deals nothing - no BowDamage, no Dodging tally, no
+          // recovered Arrow. `aimFoe` is that Target, snapshotted at
+          // the loose as the dungeon flight's is (null = the player).
+          if (!m.aimFoe) onPlayerHit(m);
+          m.dead = true;
+          continue;
+        }
+      }
+      // AR1: the impact learns the FOES - MT-ii's infighting arrows
+      // flew true at a selected foe and landed nothing, because this
+      // module knew only the player capsule. Same contact law, every
+      // live foe but the SHOOTER (an archer must not feather itself
+      // on the release frame).
+      // AUDIT 39 (#64): the arm is the SHOOTER's, not a flag on one
+      // side of it - an enemy shaft runs BowDamage's non-player arm,
+      // a player shaft runs WeaponManager.WeaponDamage.
+      // SPELLFX1: ANOTHER PLAYER'S SHAFT, DRAWN (meta.visual) - neither arm: it stops on my capsule or a foe's and
+      // applies nothing, since the player who loosed it has already dealt whatever it did
+      if (m.visual) {
+        if ((playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS))
+          || (foeTargets ?? []).some((t) => t?.feet && !t.ref?.dead && missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height))) m.dead = true;
+        else if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) m.dead = true;
+        continue;
+      }
+      const foeImpact = m.enemy ? onFoeHit : (m.fromPlayer ? onPlayerArrowHitFoe : null);
+      if (foeImpact && foeTargets) {
+        for (const t of foeTargets) {
+          if (!t?.feet || t.ref === m.shooterFoe || t.ref?.dead) continue;
+          if (m.fromPlayer && sparedByPlayer(t.ref)) continue;   // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)
+          if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue;   // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck
+          if (missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height, undefined, m.fromPlayer ? from : null)) {   // SHAFT-SWEEP: a player's shaft along its whole step (spellcast.js sweptSphereOverlapsCapsule)   // ROAD-H tail: the target's own CAPSULE (REVIEW 2026-09-05 had its centre as a point)
+            // ROAD-H tail (review): an ENEMY shaft damages only the foe
+            // it was loosed at (:669); any other foe it meets stops it
+            // and takes nothing. A PLAYER shaft (WeaponDamage through
+            // playerArrowHitFoe) has no such gate - it strikes what it hits.
+            if (!m.enemy || t.ref === m.aimFoe) whileShaftLands(m, () => foeImpact(m, t.ref));   // BOW-FAST: a duel's door reads the shaft's stacks
+            // TECH1: a PIERCING SHOT flies on through - each foe it meets struck once, until it has struck its number
+            if (techniquePierces(m, t.ref)) continue;
+            m.dead = true;
+            break;
+          }
+        }
+        if (m.dead) continue;
+      }
+      // SERPENT4 (the players: "also let players on the ship be able to hurt it"): A PLAYER'S SHAFT ON A BOX - the sea
+      // serpent's segments (`boxTargets`: `{id, box}`, navalBallistics.js orientedBox's shape - its host's handBoxes): the
+      // step's path meets the box grown by the shaft's own collider radius (segmentBoxEntry, the guns' own test), and the
+      // shaft stops in it, its impact the host's (`onPlayerArrowHitBox(m, target)`)
+      if (was && onPlayerArrowHitBox) {
+        const hit = boxTargets.find((t) => t?.box && segmentBoxEntry(was, m.pos, t.box, MISSILE_COLLIDER_RADIUS));
+        if (hit) { onPlayerArrowHitBox(m, hit); m.dead = true; continue; }
+      }
+      // The mesh raycast never sees bare TERRAIN (the collider's
+      // heightAt fallback floor) - an arrow at or under it has landed.
+      if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) { if (from) this._stick(m, groundEntry(from, m.pos, c), m.dir); m.dead = true; }   // STUCK-ARROWS: in the ground where the step crossed it
+    }
+    if (!live && this.arrows.length) { for (const m of this.arrows) this._releaseOrb(m); this.arrows.length = 0; }
+  }
+
+  /** STUCK-ARROWS: a shaft that met the world stays there when it is the player's real arrow and the host has a pool. */
+  _stick(m, at, dir) {
+    if (this._loot && stickable(m)) stickArrow(this._loot, at, dir, { pixelKey: this._pixelKeyAt?.() ?? null });
+  }
+
+  /** STUCK-ARROWS: the 99800 mesh, fetched once the first shaft stands (the host's pipeline caches it). */
+  _stuckMesh() {
+    if (this._stuckGpu === null) {
+      this._stuckGpu = false;
+      Promise.resolve(this.getGpuMesh(ARROW_MODEL_ID)).then((g) => { if (g) this._stuckGpu = g; }, () => {});
+    }
+    return this._stuckGpu || null;
+  }
+
+  /** FIELD-GUN14: an orb's flat, taken down. Idempotent - a record
+   *  can be swept more than once before the array is compacted. */
+  _releaseOrb(m) {
+    if (m.orbFlat) { m.orbFlat.retire(); m.orbFlat = null; }
+  }
+
+  /** FIELD-GUN14: every flat down, now. A host tearing its scene down
+   *  (worldModes' one pool across every building) must not leave an
+   *  orb hanging in the next one - hitEffects' own `clear` covers the
+   *  pool, and this covers the handles that point into it. */
+  clear() {
+    for (const m of this.arrows) { this._releaseOrb(m); m.dead = true; }
+    this.arrows.length = 0;
+    this._stuckGpu = null;   // STUCK-ARROWS: a new scene asks its own pipeline again
+  }
+
+  /** Draw every live arrow (the host's mesh pass, after update). */
+  draw(renderer, texRemap = undefined) {
+    for (const m of this.arrows) {
+      // FIELD-GUN14: an ORB is not drawn here. A billboard batch is
+      // pushed into the host's own flats list and drawn on the flats'
+      // axis, so the pool paints it - this pass is the MESH pass, and
+      // a shaft is the only thing in this module that is a mesh.
+      if (!m.dead && !m.orb && m.gpu) renderer.drawMesh(m.gpu, arrowMatrix(m.pos, m.dir), texRemap);
+    }
+    // STUCK-ARROWS: the shafts that stayed where they struck - the pool's own piles, read live
+    const stuck = this._loot ? liveStuckArrows(this._loot) : [];
+    const gpu = stuck.length ? this._stuckMesh() : null;
+    if (gpu) for (const p of stuck) renderer.drawMesh(gpu, stuckArrowMatrix(p, gpu.bounds), texRemap);
+  }
+}
+
+/**
+ * AUDIT 39 (#64): a PLAYER arrow that meets a foe, verbatim to the
+ * dungeon host's own arm (dungeonContext's `m.fromPlayer` block) so
+ * the hosts that call it price one shot one way.
+ *
+ * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
+ * `m.fromPlayer` block - the arm this function was extracted FROM -
+ * now calls it (dungeonContext.js:"if (!mf.drawn) continue"), so the copy that survived
+ * the extraction is gone. It was not a harmless copy: it still
+ * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
+ * DaggerfallMissile.cs:681-687 routes an arrow into
+ * WeaponManager.WeaponDamage with `arrowHit` true, which is the SAME
+ * CalculateAttackDamage a melee swing runs - `attacker == player`, so
+ * the swing modifiers, the backstab chance and the enemy-type modifier
+ * all apply, and the hit sound and the splash ring BEFORE the
+ * knockback and the pain voice. The arrow is recoverable from the
+ * target whatever the damage was (BowDamage).
+ *
+ * AUDIT 39r (R16): the splash is at the TARGET, not the arrow tip.
+ * The header used to claim the missile's own position was DFU's
+ * impactPosition, "the one place these hosts hold the real hit point"
+ * - it is not. AssignBowDamageToTarget passes `hitTransform.position`
+ * (DaggerfallMissile.cs:679-687), the struck entity's own transform
+ * origin; only the MELEE callers pass a contact point
+ * (WeaponManager.cs:1054 ClosestPoint, :1068 hit.point), and
+ * WeaponManager.cs:568-571 hands whichever it got to ShowBloodSplash.
+ *
+ * AUDIT 62 F20: and that transform origin is NOT the foe's feet. The
+ * DaggerfallEnemy prefab's CharacterController is centred on the
+ * transform (m_Center 0) and SetupDemoEnemy.cs:98-115 only ever moves
+ * controller.center (AdjustControllerHeight, BOTTOM justification),
+ * never the transform - so `hitTransform.position` is the idle sprite's
+ * CENTRE, feet + idleH/2, which is the motor's `centreOffset`
+ * (enemyAnchor.js:"The inverse: DFU's"). The header used to claim the feet were the
+ * transform origin and bled every struck foe half a sprite low. It is
+ * still not bloodCentre, which is the melee-miss centre+height/8 point
+ * EnemyAttack.cs:326-328 builds when there is no contact point at all.
+ * The hit sound and the AUDIT 58 pain voice keep the FEET (feet + 0.9
+ * for the voice), the convention the three sibling pools share.
+ *
+ * `dealDamage` is the pool's own damage door, so death runs whole -
+ * corpse, loot, crime - and this function never writes health itself.
+ */
+/** AUDIT MARTIAL L2 F5: MY SHAFT INTO A BODY THE RELAY RUNS AND NO FOE RECORD HOLDS - the sea serpent's hide
+ *  (scenes/world.js serpentArrowOn): `rolled` the formula's number on its stand-in. A technique's shaft weighs it and
+ *  tells the riders, as playerArrowHitFoe does a foe's (TECH1's weight was never laid on the hide, and a path's rider
+ *  never heard it - AUDIT SCHOOLS L2 F4's spell, for the shaft), and the follow-ups the blow owes the body (a rider's, the
+ *  loot's echo) ride its one claim (systems/playerDoor.js - OPEN-HAND's law, the gate's own). Answers what to claim. */
+export function shaftOnRelayBody(m, entity, rolled) {
+  const body = { name: entity?.name ?? '', entity };
+  const dmg = bowFastDamage(m, m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled);   // BOW-FAST
+  if (m?.technique) tellTechniqueLanded(m.technique, body, dmg);
+  const owed = takeOwed(entity);
+  return dmg > 0 ? dmg + owed : dmg;
+}
+
+export function playerArrowHitFoe(m, foe, {
+  playerEntity, playerWeapon = null, playerFeet = null, dealDamage = null,
+  audio = null, hitEffects = null, say = null, onInflictPoison = null,
+  // AUDIT 58: HandleAttackFromSource (WeaponManager.cs:630) is NOT in
+  // the damage fork - it runs for every shaft that CONNECTED, so a
+  // zero-damage arrow enrages what it hit and, through
+  // DaggerfallEntityBehaviour.cs:255-258, its whole area. It cannot
+  // ride `dealDamage` with a 0: that door carries the pools' knockback,
+  // and WeaponManager's knockback (:575-582) is inside the `damage > 0`
+  // arm - weaponKnockbackSpeed(0, w) would return the 15/ratio FLOOR
+  // and shove a foe DFU leaves standing.
+  onAttackFromPlayer = null,
+  rolls = Math.random,
+} = {}) {
+  if (!foe || foe.dead || !playerEntity) return 0;
+  // REVENANT-FATE (the 2026-10-02 audit): one held by its fate (kneeling, burning, gathering into a portal) - the shaft
+  // lands nothing: no blow, no poison, no rage, no Archery (the kill door refused the damage; the rest still landed)
+  if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return 0;   // RVN4: nor one roaring its last stand
+  const swing = SWING_MODS[playerWeapon?.machine?.state] ?? { damage: 0, toHit: 0 };
+  const back = foe.ai && playerFeet ? isBackFacing(foe.ai.yaw, foe.ai.feet, playerFeet) : false;
+  // AUDIT PISTOLET A1 (TWO-HANDS DUAL): a pair's OFF-HAND shot strikes less surely and less hard, as the off hand's swing
+  // does (playerWeapon.js resolveHit) - Agility's to-hit term and OFF_HAND_BLOW's share and weight. Read off the gun the
+  // shot left, since the strike that fired it is over by the time it lands.
+  const off = !!playerWeapon?.isOffHandItem?.(m.weapon);
+  const rolled = calculateAttackDamage(playerEntity, foe.entity, {
+    weapon: m.weapon ?? null,
+    damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(liveStat(playerEntity, 'agility')) : 0),
+    ...(off ? OFF_HAND_BLOW : {}),
+    backstabChance: backstabChanceOf(playerEntity, back, foe),
+    weaponAnimTime: playerWeapon?.lastDrawMs ?? 0,   // PCO1: the draw's length, for Roleplay Realism's archery
+    rolls, onInflictPoison, say,
+    unaware: foeUnaware(foe),   // SET2: a shaft at a foe that had not noticed me - Nightfall Strike's "arrows too"
+  });
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): a technique's shaft (a Volley's, a Piercing Shot's) weighs the formula's
+  // number by the technique - never on a player's body (its shaft passes them by in flight; a door that hands one here
+  // anyway gets the plain number)
+  const dmg = bowFastDamage(m, m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled);   // BOW-FAST
+  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg);   // MARTIAL3: a path's rider answers its signature's shaft
+  const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
+  // AUDIT 62 F20: the splash point is the struck foe's TRANSFORM
+  // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:571), i.e. its
+  // feet lifted by its own centreOffset. `at` stays the feet for the
+  // hit sound and the pain voice below.
+  const bloodAt = foe.ai?.feet
+    ? [at[0], at[1] + (foe.ai.centreOffset ?? (foe.ai.height ?? 1.8) / 2), at[2]]
+    : at;
+  if (dmg > 0) {
+    audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt, null, bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }));   // BLOOD1b: the player's shaft drives the ladder, and the bow it came off decides the heavy branch   // ...and NO SWING: the reference reads the LIVE weapon state when blood spawns, which for a shaft that has been in the air is whatever the player's arm happens to be doing now. A shaft's blood is thrown by the shaft.
+    const pain = enemyPainVoice(foe, dmg, rolls);
+    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], monsterVolume(), { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
+    dealDamage?.(foe, dmg);
+  }
+  // :627/:630's unconditional pair, whatever the fork above did - and
+  // BEFORE the arrow is added back (BowDamage's own order).
+  onAttackFromPlayer?.(foe, dmg);   // AUDIT WORLD6b-iii(e) C2: with what landed - a pool that diverts a zero blow to a puppet's owner sends none when the damage already went
+  // FIELD-GUN14: AND A GUN LEAVES NO SHAFT TO PULL OUT. BowDamage
+  // (DaggerfallMissile.cs:679-687) adds the arrow back to whatever it
+  // struck because an arrow SURVIVES being shot - that is what makes
+  // it recoverable. This law was keyed on the lane rather than on the
+  // round, so every foe the Thunderlock killed dropped Arrows it had
+  // never been shot with. A Dwemer Pellet is spent. Said off the same
+  // leaf the orb is, so the two answers cannot drift apart.
+  // STUCK-ARROWS (bible/05-Combat/Arrow-Supply.md): and a CONJURED shaft is never added (WeaponManager.cs:554-559's
+  // isArrowSummoned - it vanishes), and a real one survives the strike ARROW_LODGE_CHANCE of the time - the roll last, on
+  // the blow's own stream, so every roll above is drawn as it was
+  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned && rolls() < ARROW_LODGE_CHANCE) {
+    addItem(foe.entity.items, bowDamageArrow());   // MAC-N1: one minter, not a bare literal with no value
+    if (!foe.entity.bout && foe.rival == null) noteShotRecoverable(ARROW_TEMPLATE);   // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)
+  }
+  // DISC10-D H1: the shaft is a WeaponDamage like the swing
+  // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:627-635), so its last
+  // line is OnWeaponHitEntity - after the door took the health, whatever the
+  // damage. The one dispatcher, for every host's arrow.
+  playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType ?? null });
+  return dmg;
+}

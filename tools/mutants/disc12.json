@@ -1,0 +1,83 @@
+[
+  {
+    "name": "DISC12-lh-dropped-at-the-door",
+    "file": "src/net/wire.js",
+    "old": "    ...(uint(lh, 1) ? { lh: 1 } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  },
+  {
+    "name": "DISC12-wb-dropped-at-the-door",
+    "file": "src/net/wire.js",
+    "old": "    ...(uint(wb, 2) ? { wb: uint(wb, 2) } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  },
+  {
+    "name": "DISC12-edges-not-sent",
+    "file": "src/net/wire.js",
+    "old": "    || (a.lh | 0) !== (b.lh | 0) || (a.wb | 0) !== (b.wb | 0)   // DISC12",
+    "new": "    || false   // DISC12",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  },
+  {
+    "name": "DISC12-eased-pose-loses-the-hand",
+    "file": "src/net/online.js",
+    "old": "    ...(to.lh ? { lh: 1 } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  },
+  {
+    "name": "DISC12-body-right-hand-always",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "  return stubSlotsOf(look)[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
+    "new": "  return stubSlotsOf(look)[EQUIP_SLOTS.RightHand] ?? null;",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  },
+  {
+    "name": "DISC12-body-never-follows",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    if (look && !look.creature) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  },
+  {
+    "name": "DISC12-beast-drawn-as-person",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : peer.shown.rd === POSE_RIDE.Dragon && ENEMY_BASICS[DWARVEN_DRAGON_ID] ? DWARVEN_DRAGON_ID : spritesOn && peer.look ? classMobileType(peer.look.class) : null;",
+    "new": "      const mobileType = peer.shown.rd === POSE_RIDE.Dragon && ENEMY_BASICS[DWARVEN_DRAGON_ID] ? DWARVEN_DRAGON_ID : spritesOn && peer.look ? classMobileType(peer.look.class) : null;",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  },
+  {
+    "name": "DISC12-beast-keeps-a-body",
+    "file": "src/scenes/world.js",
+    "old": "(peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) && !d.shown?.wb || (peerIsWolf(d.shown) && !d.shown.rd));",
+    "new": "(peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) || (peerIsWolf(d.shown) && !d.shown.rd));",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  },
+  {
+    "name": "DISC12-pack-right-hand-always",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "slots?.[deps.usingRightHand?.() === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand]",
+    "new": "slots?.[EQUIP_SLOTS.RightHand]",
+    "tests": [
+      "test/net/disc12.test.js"
+    ]
+  }
+]

@@ -1,0 +1,206 @@
+/* DA8 - THE LAUNCHER'S FACE. The brand's own: the landing page's night,
+   wordmark, rule and gem, and its plaques - every colour here is one the
+   Enhanced skin already uses (src/ui/enhanced/enhancedStyle.js), and
+   test/tooling/da8_launcher.test.js holds it to that the way landing.test.js
+   holds the site. The two faces are on disk (fonts/README.md): this window
+   runs before anything is known about the network.
+   DA10 - THE FRONT DOOR: the patch notes on the left, the player's
+   options on the right, the update and PLAY along the bottom - the
+   Warframe launcher's shape in the brand's own pixels. Words at 12-14px
+   read #a89f88 (7.2:1 on the night); #7d7460 (4.1-4.4:1, under WCAG AA's
+   4.5) is for rules, borders and a held Play (AUDIT INSTALL L5-23). The
+   NEW badge's words read #e8e0c8 on the ruby (5.0:1 - #d8cfae there was
+   4.26, R2-E3); test/tooling/audit_install2.test.js computes every pair. */
+@font-face { font-family: 'Pixelify Five'; unicode-range: U+0035; font-display: block; src: url(data:font/woff2;base64,d09GMgABAAAAAAIIAA0AAAAABKQAAAG5AAEAQgAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcIAZgADQRCAo8UQE2AiQDCAsGAAQgBYQEByAb0gMRFZQRZF8mbyrtyKnsmUtW0uh5eajRkkYiwmd9zzwevvZ7PXd3A4jjU0BFqJDHE1p0Mq4uqiyrUX1VpBcA/QCAwLv/sfo5F6Rn9t09Ls65/8pEjkFdE/m2A84AIXIHmiZwJJFm0pbQC2cFlGjCRS2xqAUWJRAZpScLgtmEN4H2INg9T6DZqHGxacuuvRoVqAhYvaSloI70IIWdVRLHLfgNBOxl356deyxZYUWpr+rJNb8JiK/pmJSRkNErC/QqJlEUgRWVXLV6ESBEVQESKEjoRA+gAFJrOROtuU2rFi1ORpsvt1y9+lW3f3N7TL8NBMKGS6Nj8yes/za5Bg8HfwuvHq+zWX05l2uol0Dwz5V3RP1cQJeUzrud3rstkMyqCwJGSQINDsuiNGGRJvRaJGn3iGytlxSz0U6dvbHww+rNxh0babDbhyLLJzB13YBvnsCnqKuRDUnSwnPAMmETnOcpx2EEPp+mbgw1LSumfKYqw0bLELM6SbGdRm08TAsa7XeSzTUZDFX+dPS7X+6RR5RVmJvg9p8MY4EtHAlMk2kyC+YFf/8E/GKovmqrnuLEDhW0/Ak2MwEAAA==) format('woff2'); }
+@font-face { font-family: 'Pixelify Five'; unicode-range: U+0032, U+005A; font-display: block; src: url(data:font/woff2;base64,d09GMgABAAAAAAGgAAoAAAAAAxAAAAFVAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAAPAqBJIEfATYCJAMKCwgABCAFaQcoG08CEK4G7CZ4Jq7VZnqPaS6YXuWQw1RbJh6+H/t27nvrmtQMbRCLt0hnKJGdvlT+z5/rbZqg29elVx1WpXCJB/CNL2EDTlNMNbGZr4i7wsrKf1Qlsx1PdmMc+kB2w92NINLQ3/I4DzSggLvLbQzxeALBIZ3X3J0op6mYYkWkA21shWnP+fr/hfwzOID4lQKdICGjSRZoUmQQJYqEZNpzAflL4Y8FADIoQSVGsQwoApTJRWg/BOVjEKpJt/zRejXl4RPResYon4PypSPKH6ezwgzNirNnNhfmUC4f5rlc/pHOPd3f5P95UE+t19nX6YofP9MAgeB3e0qV0f6R8wv8LSXHVguvqTEFZAkEBz1d7mKtI1ileMUFqwJZpzKQABWZFyBUUDgpVSGLonKhSX2hpEbfbhBlI6P9rLf8Vr0BeAJRrAMjezM9SwltXWsjdQs4kyybrQEAAAA=) format('woff2'); }
+@font-face { font-family: 'Pixelify Sans'; font-weight: 400 700; font-display: block; src: url(fonts/PixelifySans-latin.woff2) format('woff2'); }
+@font-face { font-family: 'Jacquard 12'; font-display: block; src: url(fonts/Jacquard12-latin.woff2) format('woff2'); }
+
+:root { --brass: #c08a3e; --ruby: #b91309; }
+* { box-sizing: border-box; }
+/* `hidden` must win over every region's own display below */
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body {
+  color: #d8cfae; background: #0a0c11;
+  font-family: 'Pixelify Five', 'Pixelify Sans', monospace; font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: none; font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  user-select: none; cursor: default;
+}
+button { font: inherit; color: inherit; }
+
+/* THE NIGHT: ink above, deeper ink below, and a scatter of two-pixel stars. */
+.night { position: fixed; inset: 0; z-index: -1; background: linear-gradient(#12161b, #0a0c11 55%, #050608); }
+.night::before, .night::after { content: ''; position: absolute; left: 0; top: 0; width: 2px; height: 2px; }
+.night::before {
+  background: #d8cfae;
+  box-shadow:
+    64px 38px #d8cfae, 212px 96px #7d7460, 318px 22px #d8cfae, 446px 70px #7d7460, 590px 30px #d8cfae,
+    702px 112px #7d7460, 834px 52px #d8cfae, 128px 170px #7d7460, 388px 150px #7d7460, 760px 188px #d8cfae,
+    40px 262px #7d7460, 866px 290px #7d7460, 150px 420px #7d7460, 812px 452px #7d7460, 520px 118px #d8cfae,
+    930px 140px #7d7460, 906px 560px #d8cfae;
+}
+.night::after {
+  background: rgba(216,207,174,0.7);
+  box-shadow: 276px 204px rgba(216,207,174,0.7), 640px 240px rgba(216,207,174,0.7), 96px 330px rgba(216,207,174,0.7), 744px 360px rgba(216,207,174,0.7);
+}
+
+.launcher { height: 100%; display: flex; flex-direction: column; padding: 18px 28px 16px; }
+
+/* THE MARK, left, as a game's own launcher wears it; the two doors out, right. */
+.top { flex: none; display: flex; align-items: flex-end; justify-content: space-between; }
+/* AUDIT BR5: the mark is the product's logo, the game's own file; the face stays on the heading for its alt */
+.wordmark {
+  margin: 0; font-family: 'Jacquard 12', serif; font-weight: 400; font-size: 58px; line-height: 0.9;
+  text-shadow: 4px 4px 0 rgba(0,0,0,0.7);
+}
+.wordmark img { display: block; width: auto; height: 76px; }
+.links { display: flex; gap: 18px; padding-bottom: 4px; }
+.rule { flex: none; display: flex; align-items: center; gap: 16px; margin: 12px 0 14px; }
+.rule::before, .rule::after { content: ''; flex: 1; height: 2px; background: #7d7460; opacity: 0.55; }
+.gem {
+  position: relative; width: 2px; height: 2px; background: var(--ruby);
+  box-shadow:
+    0 -4px 0 var(--brass), 0 4px 0 var(--brass), -4px 0 0 var(--brass), 4px 0 0 var(--brass),
+    -2px -2px 0 var(--ruby), 2px -2px 0 var(--ruby), -2px 2px 0 var(--ruby), 2px 2px 0 var(--ruby);
+}
+/* the gem breathes while the launcher works, and holds still when it waits on the player */
+body[data-busy] .gem { animation: gleam 1.6s steps(8) infinite; }
+@keyframes gleam { 50% { background: var(--brass); } }
+
+.middle { flex: 1; min-height: 0; display: flex; gap: 18px; }
+
+/* THE PANEL: the patch notes - or, until the game has files, the first run's card. */
+.panel {
+  flex: 1; min-width: 0; display: flex; flex-direction: column;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.3);
+}
+.news { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.news > .caps { margin: 0; padding: 10px 16px 8px; border-bottom: 2px solid rgba(125,116,96,0.3); }
+.feed { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 16px; user-select: text; cursor: auto; }
+.feed:focus-visible { outline: 2px solid rgba(192,138,62,0.5); outline-offset: -2px; }
+.feed::-webkit-scrollbar { width: 10px; }
+.feed::-webkit-scrollbar-thumb { background: rgba(125,116,96,0.45); }
+.news .note { margin: 0; padding: 12px 16px; color: #a89f88; }
+.release + .release { margin-top: 14px; padding-top: 12px; border-top: 2px solid #20262e; }
+.release .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.release .ver { font-size: 13px; letter-spacing: 0.14em; color: #d8cfae; }
+.release .date { font-size: 13px; letter-spacing: 0.14em; color: #a89f88; }
+.badge { padding: 0 6px; font-size: 12px; line-height: 18px; letter-spacing: 0.14em; text-transform: uppercase; }
+.badge.new { color: #e8e0c8; background: var(--ruby); }
+.badge.update { color: #0a0c11; background: var(--brass); }
+.release h4 { margin: 4px 0; font-size: 18px; font-weight: 400; color: #d8cfae; }
+.release h5 { margin: 8px 0 2px; font-size: 14px; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: #a89f88; }
+.release p { margin: 0 0 6px; color: #a89f88; }
+.release ul { margin: 0 0 6px; padding-left: 18px; color: #a89f88; }
+.release li > ul { margin: 2px 0 0; }
+.release li { margin: 0 0 4px; }
+.release strong { font-weight: 500; color: #d8cfae; }
+
+/* `safe`: a card taller than the panel scrolls from its TOP - plain `center` overflows both ways, and the title
+   and the first folders went where no scroll reaches (six folders found, measured) */
+.setup { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: safe center; padding: 18px 24px; text-align: center; }
+/* R2-E7: the card scrolls in the feed's own bar, not the system's white one */
+.setup::-webkit-scrollbar { width: 10px; }
+.setup::-webkit-scrollbar-thumb { background: rgba(125,116,96,0.45); }
+#setup-title { margin: 0; font-size: 24px; font-weight: 400; line-height: 1.2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+#setup-detail { margin: 8px 0 0; max-width: 58ch; color: #a89f88; }
+#setup-detail:empty { display: none; }
+.found { list-style: none; margin: 16px 0 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.found li {
+  display: flex; align-items: center; gap: 14px; padding: 10px 12px; text-align: left;
+  background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35);
+}
+.found .where { flex: 1; min-width: 0; }
+.found .from { display: block; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: #a89f88; }
+.path { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #d8cfae; direction: rtl; text-align: left; }
+.actions { flex: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+.actions:empty { display: none; }
+
+/* THE OPTIONS: the player's own doors, beside the news. */
+.side { flex: none; width: 236px; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #7d7460 transparent; display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
+.opt { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.opt > .caps { margin: 0; font-size: 13px; }
+.files { margin: 0; width: 100%; min-width: 0; font-size: 14px; color: #a89f88; }
+.files .path { font-size: 14px; }
+/* The Private server option */
+/* The Private server screen: opened from its option, in the panel's place of the patch notes */
+.private { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 10px 16px 16px; }
+.private[hidden] { display: none; }
+.private > .caps { margin: 0 -16px; padding: 0 16px 8px; align-self: stretch; border-bottom: 2px solid rgba(125,116,96,0.3); }
+.choices { display: flex; gap: 14px; flex-wrap: wrap; }
+.choices .plaque { min-width: 200px; height: 60px; }
+#private-note { font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+#private-off { display: flex; align-items: center; gap: 8px; width: 100%; }
+#private-off[hidden] { display: none; }
+#private-off .address { flex: 1; min-width: 0; width: auto; }
+#private-off .files { width: auto; flex: none; }
+.address {
+  width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit; font-size: 14px; color: #d8cfae;
+  border: 2px solid #7d7460; background: rgba(10,12,17,0.72);
+}
+.address:focus-visible { outline: none; border-color: var(--brass); }
+#backend-note { font-size: 13px; line-height: 1.35; }
+#backend-note:empty { display: none; }
+.check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.check input {
+  appearance: none; flex: none; margin: 0; width: 18px; height: 18px; cursor: pointer;
+  border: 2px solid #7d7460; background: rgba(10,12,17,0.72);
+}
+.check input:checked { background: var(--brass); box-shadow: inset 0 0 0 2px #0a0c11; }
+.check input:focus-visible { outline: none; border-color: var(--brass); }
+.check:hover { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* THE BAR: what the launcher is doing, and PLAY. */
+/* one height for every state - a bar that grew with its words would move the panel under the pointer */
+.bar { flex: none; display: flex; align-items: center; gap: 18px; margin-top: 14px; height: 100px; }
+.state { flex: 1; min-width: 0; }
+#status { margin: 0; font-size: 20px; line-height: 1.2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+#detail { margin: 4px 0 0; font-size: 14px; color: #a89f88; }
+#detail:empty { display: none; }
+.progress { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.progress .track { flex: 1; height: 12px; padding: 2px; border: 2px solid #7d7460; background: rgba(10,12,17,0.72); }
+.progress .track i { display: block; height: 100%; width: 0; background: var(--brass); transition: width 0.25s linear; }
+.progress .label { flex: none; font-size: 13px; color: #a89f88; letter-spacing: 0.08em; }
+.status-actions { flex: none; display: flex; gap: 10px; }
+.status-actions:empty { display: none; }
+.go { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#version { font-size: 12px; letter-spacing: 0.14em; text-transform: none; }
+
+.plaque {
+  min-height: 44px; padding: 8px 22px; cursor: pointer;
+  font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em; text-transform: uppercase;
+  color: #d8cfae; background: rgba(10,12,17,0.55); border: 2px solid #7d7460; text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+}
+.plaque.primary { border-color: var(--brass); }
+.plaque.small { min-height: 34px; padding: 4px 12px; font-size: 13px; }
+.plaque:hover, .plaque:focus-visible { outline: none; color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+.play {
+  min-width: 208px; height: 60px; padding: 0 28px; cursor: pointer;
+  font-size: 26px; letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase;
+  color: #d8cfae; background: rgba(192,138,62,0.18); border: 2px solid var(--brass);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); box-shadow: 4px 4px 0 rgba(0,0,0,0.7);
+}
+.play:not(:disabled):hover, .play:not(:disabled):focus-visible {
+  outline: none; color: rgb(243,239,44); background: rgba(192,138,62,0.25); text-shadow: 2px 2px 0 rgb(93,77,12);
+}
+.play:disabled { cursor: default; color: #7d7460; background: rgba(10,12,17,0.55); border-color: #7d7460; box-shadow: none; }
+
+.caps { font-size: 14px; letter-spacing: 0.26em; text-transform: uppercase; color: #a89f88; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.link { padding: 2px 4px; border: 0; background: none; cursor: pointer; color: #a89f88; letter-spacing: inherit; text-transform: inherit; }
+.link:hover, .link:focus-visible { outline: none; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.opt .link { padding: 2px 0; font-size: 14px; letter-spacing: 0.08em; }
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-busy] .gem { animation: none; }
+  .progress .track i { transition: none; }
+}
+
+/* DA12: the controller's focus (app/launcher/pad.js) - the game's own pad loop marks what it focused .pad-focus,
+   drawn as the keyboard's focus is above. */
+.feed.pad-focus { outline: 2px solid rgba(192,138,62,0.5); outline-offset: -2px; }
+.check input.pad-focus { outline: none; border-color: var(--brass); }
+.plaque.pad-focus, .link.pad-focus { outline: none; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.plaque.pad-focus { border-color: var(--brass); }
+.play:not(:disabled).pad-focus { outline: none; color: rgb(243,239,44); background: rgba(192,138,62,0.25); text-shadow: 2px 2px 0 rgb(93,77,12); }

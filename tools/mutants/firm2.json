@@ -1,0 +1,38 @@
+[
+  {
+    "name": "FIRM2-attr-doubled",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "    if (ATTRS.includes(k)) put(`pct.${k}`, v);",
+    "new": "    if (ATTRS.includes(k)) put(`pct.${k}`, v * 2);",
+    "tests": [
+      "test/net/firmament/firm2_balance.test.js"
+    ]
+  },
+  {
+    "name": "FIRM2-skill-doubled",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "    else if (k.startsWith('skill.')) put(`skillPct.${k.slice(6)}`, v);",
+    "new": "    else if (k.startsWith('skill.')) put(`skillPct.${k.slice(6)}`, v * 2);",
+    "tests": [
+      "test/net/firmament/firm2_balance.test.js"
+    ]
+  },
+  {
+    "name": "FIRM2-keystone-over-cap",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "      { unawareDmg: 19, weaponDmg: -5 },",
+    "new": "      { unawareDmg: 30, weaponDmg: -5 },",
+    "tests": [
+      "test/net/firmament/firm2_balance.test.js"
+    ]
+  },
+  {
+    "name": "FIRM2-life-keystone-over-cap",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "      { 'skill.Mercantile': 11, 'skill.Etiquette': 6 },",
+    "new": "      { 'skill.Mercantile': 20, 'skill.Etiquette': 6 },",
+    "tests": [
+      "test/net/firmament/firm2_balance.test.js"
+    ]
+  }
+]

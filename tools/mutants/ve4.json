@@ -1,0 +1,210 @@
+[
+  {
+    "name": "VE4-attached-copy-not-shadowing",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  _shippedLive = new Set(_shipped.filter((s) => !shadowed.has(s.key)).map((s) => s.key));",
+    "new": "  _shippedLive = new Set(_shipped.map((s) => s.key));"
+  },
+  {
+    "name": "VE4-shipped-read-from-the-store",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "        if (shipped) return shipped.open(); // VE4: the port's own files - nothing stored to read\n        if (_loadBlob) {",
+    "new": "        if (_loadBlob) {"
+  },
+  {
+    "name": "VE4-clear-takes-the-shipped",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "  _mods = dfmodLoadOrder(liveShipped());",
+    "new": "  _mods = [];"
+  },
+  {
+    "name": "VE4-shipped-outside-the-load-order",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]); // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them",
+    "new": "  _mods = [...dfmodLoadOrder(_attached), ...liveShipped()];"
+  },
+  {
+    "name": "VE4-shipped-installed-outside-the-load-order",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  );\n  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);",
+    "new": "  );\n  _mods = [..._attached, ...liveShipped()];"
+  },
+  {
+    "name": "VE4-same-list-installed-again",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/auditve.test.js",
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "  if (list === _shippedSrc) return _registered;\n  _shippedSrc = list;",
+    "new": "  _shippedSrc = list;"
+  },
+  {
+    "name": "VE4-detail-not-honoured",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/auditve.test.js"
+    ],
+    "old": "  return w === img.width && h === img.height ? img : resampleRgba(img, w, h);",
+    "new": "  return img;"
+  },
+  {
+    "name": "VE4-every-slice-fetched-at-once",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "      await Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, paths.length) }, lane));",
+    "new": "      await Promise.all(Array.from({ length: paths.length }, lane));"
+  },
+  {
+    "name": "VE4-fit-not-a-mip",
+    "file": "src/formats/resample.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/auditve.test.js"
+    ],
+    "old": "  while (Math.max(w, h) > maxSize && (w > 1 || h > 1)) {",
+    "new": "  if (Math.max(w, h) > maxSize && (w > 1 || h > 1)) {"
+  },
+  {
+    "name": "VE4-slices-served-from-the-wrong-mod",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "  const files = new Map(\n    mod.index.textures.map(([name]) => [name, `${mod.dir === '.' ? '' : `${mod.dir}/`}${name}.png`]),\n  );",
+    "new": "  const files = new Map(mod.index.textures.map(([name]) => [name, `base/${name}.png`]));"
+  },
+  {
+    "name": "VE4-addons-worn-by-default",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhanced.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  setDfmodEnabled(\n    [\n      ...(base ? [base.key] : []),\n      ...veAddons()\n        .filter((m) => keep.has(m.key))\n        .map((m) => m.key),\n    ],\n    true,\n  );",
+    "new": "  setDfmodEnabled([...(base ? [base.key] : []), ...veAddons().map((m) => m.key)], true);"
+  },
+  {
+    "name": "VE4-base-not-switched-on",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhanced.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "      ...(base ? [base.key] : []),\n      ...veAddons()",
+    "new": "      ...veAddons()"
+  },
+  {
+    "name": "VE4-pick-not-kept",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhanced.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "  setPref(VE_ADDONS_PREF, [...keep].sort());\n  return setDfmodEnabled(key, on);",
+    "new": "  return setDfmodEnabled(key, on);"
+  },
+  {
+    "name": "VE4-classic-forgets-the-addons",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhanced.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "  if (veWorn())\n    setPref(\n      VE_ADDONS_PREF,\n      veAddons()\n        .filter((m) => m.enabled)\n        .map((m) => m.key)\n        .sort(),\n    );\n  setDfmodEnabled(",
+    "new": "  setDfmodEnabled("
+  },
+  {
+    "name": "VE4-pack-not-in-the-door-before-a-boot",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhanced.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js",
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "const doorMods = () => {\n  installVanillaEnhancedPack();\n  return attachedDfmods();\n};",
+    "new": "const doorMods = () => attachedDfmods();"
+  },
+  {
+    "name": "VE4-addons-not-offered",
+    "file": "src/systems/overhauls.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "        addons: veAddons,",
+    "new": "        addons: null,"
+  },
+  {
+    "name": "VE4-addon-rows-when-not-worn",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "tests": [
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "const addons = o === cur ? o.addons?.() ?? [] : [];",
+    "new": "const addons = o.addons?.() ?? [];"
+  },
+  {
+    "name": "VE4-shipped-mod-removable",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "tests": [
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ],
+    "old": "...(m.shipped ? [] : [remove(t('menu.packs.removeYes', 'Remove'),",
+    "new": "...(false ? [] : [remove(t('menu.packs.removeYes', 'Remove'),"
+  },
+  {
+    "name": "VE4-packs-card-before-a-boot-empty",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "  installVanillaEnhancedPack();   // VE4: the shipped mods are listed even before a host has registered the store\n",
+    "new": ""
+  },
+  {
+    "name": "VE4-doll-hd-for-a-shipped-mod",
+    "file": "src/ui/paperDoll.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "const composeScale = () => (dfmodCarriesDollArt() ? PAPERDOLL_HD_SCALE : 1);",
+    "new": "const composeScale = () => PAPERDOLL_HD_SCALE;"
+  },
+  {
+    "name": "VE4-boot-without-the-pack",
+    "file": "src/scenes/dataSource.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "  installVanillaEnhancedPack();   // VE4: the shipped mods, in one load order with the attached\n",
+    "new": ""
+  },
+  {
+    "name": "VE4-store-registration-without-the-pack",
+    "file": "src/scenes/dataSource.js",
+    "tests": [
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ],
+    "old": "  installVanillaEnhancedPack();   // VE4: the shipped mods, in one load order with the attached\n",
+    "new": ""
+  }
+]

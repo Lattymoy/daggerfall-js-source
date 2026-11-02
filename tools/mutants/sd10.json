@@ -1,0 +1,193 @@
+[
+  {
+    "name": "SD10-a-mark-twice",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "  for (const m of SD_COLLAPSE_WARN_MS) if (left <= m) due = m;\n  return due < said ? due : null;",
+    "new": "  for (const m of SD_COLLAPSE_WARN_MS) if (left <= m) due = m;\n  return due <= said ? due : null;",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-a-passed-mark",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "  for (const m of SD_COLLAPSE_WARN_MS) if (left <= m) due = m;",
+    "new": "  for (const m of SD_COLLAPSE_WARN_MS) if (left < m + 5000) due = m;",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-said-when-out",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "  if (!(left > 0)) return null;\n  let due = SD_COLLAPSE_MS;",
+    "new": "  let due = SD_COLLAPSE_MS;",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-minute-lost",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "export const SD_COLLAPSE_WARN_MS = Object.freeze([60_000, 30_000, 10_000]);",
+    "new": "export const SD_COLLAPSE_WARN_MS = Object.freeze([30_000, 10_000]);",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-way-home-unsaid",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "  if (hour)\n    return first\n      ? `The Hour collapses in ${t}. The way home opens where the Remnant fell.`\n      : `The Hour collapses in ${t}.`;",
+    "new": "  if (hour) return first ? `The Hour collapses in ${t}.` : `The Hour collapses in ${t}.`;",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-hours-words-in-the-hollow",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "  if (hour)",
+    "new": "  if (true)",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-never-told",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "        warn(sdCollapseLine(left, { hour: inHour(), first }));\n      }",
+    "new": "      }",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-told-outside",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (phase === 'fell' && stood && stood.s === rec?.s && rec.fellAt != null && inside(stood.loc)) {",
+    "new": "    if (phase === 'fell' && stood && stood.s === rec?.s && rec.fellAt != null) {",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-told-every-frame",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "        warned = { s: rec.s, at: due };",
+    "new": "        warned = { s: rec.s, at: Infinity };",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-returns-words-in-the-hour",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "        return { title: retTitle, subs: [retTo] };",
+    "new": "        return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] };",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-stood-twice",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "      if (ret || !at) return false;",
+    "new": "      if (!at) return false;",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-carried-off-where-it-rises",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "      };\n      wasRet = null;\n      retarget();",
+    "new": "      };\n      retarget();",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT SD II (SD11f, L6 F9): the way home is pressed alone, so no step into it is ever taken and the step latch's reset changes nothing a player can meet. It was the law that a player standing where it rose is not carried off; press-only keeps that law whole, and the reset stays for a Return stood this way that a later change lets be walked into again."
+  },
+  {
+    "name": "SD10-the-way-home-unstood",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (home && !sdEnd.hasRet) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity, { dynamicDraws });",
+    "new": "if (home && !sdEnd.hasRet) void home;",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-never-taken-down",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "else if (!home && sdEnd.hasRet) sdEnd.returnOut(); }",
+    "new": "}",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-hollows-check-in-the-hour",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    else if (sdEnd.hasRet && t >= _sdEndCheckAt) {",
+    "new": "    if (sdEnd.hasRet && t >= _sdEndCheckAt) {",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-no-way-out",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "onReturn: () => opts.sdWayHome?.(), retTitle",
+    "new": "retTitle",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-doors-unhanded",
+    "file": "src/scenes/worldModes.js",
+    "old": "          sdWayHome: () => host.sdWayHome?.(),",
+    "new": "          sdWayHome: () => {},",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-stood-before-the-body-sank",
+    "file": "src/scenes/world.js",
+    "old": "    if (!s?.fell || sdFightLink.now() < s.fell.at + SD_REM_SINK_MS) return null;",
+    "new": "    if (!s?.fell) return null;",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-out-with-no-veil",
+    "file": "src/scenes/world.js",
+    "old": "    gateVeil?.flash('hourHome');   // SD-LOOK: the way home's veil - its crack mended\n    if (!modes?.unstuck?.()) return false;",
+    "new": "    if (!modes?.unstuck?.()) return false;",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-readouts-unvoiced",
+    "file": "src/scenes/world.js",
+    "old": "    warn: (text) => sdSay(text, SD_VOICE_RANK.readout),   // AUDIT SD II (SD11d): the readouts wait for the fight's turns and the floor's words\n",
+    "new": "",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-hour-unasked",
+    "file": "src/scenes/world.js",
+    "old": "    inHour: () => modes?.sdRealmSlot?.() != null,\n",
+    "new": "",
+    "tests": [
+      "test/scenes/sd10_collapse.test.js"
+    ]
+  }
+]

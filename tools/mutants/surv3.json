@@ -1,0 +1,151 @@
+[
+  {
+    "name": "SURV3-a-tent-goes-up-in-a-dungeon",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (kind === CAMP_KIND.Tent && place.insideDungeon) return { ok: false, text: CAMP_TEXT.noTentBelow };",
+    "new": "",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "REST2-a-campfire-with-no-fuel-relights",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if ((camp.wear | 0) <= 0) return false; // REST2: no fuel, no fire - AUDIT REST F8: and a worn-through tent's neither\n  camp.litUntil = Math.max(camp.litUntil ?? 0, from) + FIRE_MINUTES;",
+    "new": "  camp.litUntil = Math.max(camp.litUntil ?? 0, from) + FIRE_MINUTES;",
+    "tests": [
+      "test/systems/rest2_campfire.test.js"
+    ],
+    "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "REST2-a-burnt-down-campfire-is-swept-away",
+    "file": "src/systems/survival/camp.js",
+    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now); // REST6: a fire with no fuel of its own - an Ember Jar's, AUDIT REST F12: an old save's kit fire - goes with its embers",
+    "new": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !fireLit(camp, now); // REST6: a fire with no fuel of its own - an Ember Jar's, AUDIT REST F12: an old save's kit fire - goes with its embers",
+    "tests": [
+      "test/systems/rest2_campfire.test.js"
+    ],
+    "note": "REST6 (PIN MOVED): re-aimed by content. AUDIT REST (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "REST2-a-placed-campfire-stays-in-the-pack",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (i >= 0) list.splice(i, 1);\n  const text = kind === CAMP_KIND.Tent ? CAMP_TEXT.pitched : CAMP_TEXT.lit;",
+    "new": "  const text = kind === CAMP_KIND.Tent ? CAMP_TEXT.pitched : CAMP_TEXT.lit;",
+    "tests": [
+      "test/systems/rest2_campfire.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-cooking-keeps-the-stage",
+    "file": "src/systems/survival/camp.js",
+    "old": "  const cooked = createSurvivalItem(f.cooks, { foodStage: Math.max(0, foodStage(item) - 1) });",
+    "new": "  const cooked = createSurvivalItem(f.cooks, { foodStage: foodStage(item) });",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-a-skillet-is-no-faster",
+    "file": "src/systems/survival/camp.js",
+    "old": "  return { item: cooked, minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES, text: CAMP_TEXT.cooked(rawName) };",
+    "new": "  return { item: cooked, minutes: COOK_MINUTES, text: CAMP_TEXT.cooked(rawName) };",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-a-cold-fire-warms",
+    "file": "src/systems/survival/camp.js",
+    "old": "    if (!fireLit(c, now)) continue;\n    const d = Math.hypot(c.pos[0] - pos[0], c.pos[1] - pos[1], c.pos[2] - pos[2]);",
+    "new": "    const d = Math.hypot(c.pos[0] - pos[0], c.pos[1] - pos[1], c.pos[2] - pos[2]);",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-the-wire-takes-a-camp-anywhere",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[2]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-an-owners-word-keeps-their-old-camps",
+    "file": "src/systems/survival/camp.js",
+    "old": "  const kept = (camps ?? []).filter((c) => c.owner !== owner);",
+    "new": "  const kept = [...(camps ?? [])];",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-anyone-may-pack-your-camp",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel))",
+    "new": "  if (!camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel))",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ],
+    "note": "AUDIT REST-PARTY (PIN MOVED): the row asks fuel of a fire too."
+  },
+  {
+    "name": "SURV3-a-dead-kit-fire-stands-for-ever",
+    "file": "src/scenes/camps.js",
+    "old": "      if (c.owner == null && campExpired(c.rec, t)) { drop(c); onChanged?.(); continue; }",
+    "new": "",
+    "tests": [
+      "test/systems/survival/auditrest.test.js",
+      "test/systems/survival/surv3_camps.test.js"
+    ],
+    "note": "AUDIT REST (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "SURV3-the-pixel-sweep-leaves-the-camp",
+    "file": "src/scenes/camps.js",
+    "old": "    for (let i = camps.length - 1; i >= 0; i--) if (camps[i].pixelKey === key) { unmount(camps[i]); camps.splice(i, 1); }",
+    "new": "",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-my-own-id-is-a-peers-word",
+    "file": "src/scenes/camps.js",
+    "old": "    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
+    "new": "    if (typeof owner !== 'string' || !owner) return false;",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-a-camp-beats-the-door",
+    "file": "src/player/activationRace.js",
+    "old": "  const ground = Number.isFinite(doorDistance) ? { key: GROUND_KEY, distance: doorDistance } : null;",
+    "new": "  const ground = null;",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-the-scene-cache-drops-the-camps",
+    "file": "src/systems/sceneCache.js",
+    "old": "  cache.scenes.set(sceneName, copySceneEntry(entry));",
+    "new": "  cache.scenes.set(sceneName, { ...copySceneEntry(entry), camps: [] });",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "SURV3-the-classic-pack-keeps-the-window-open",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "      if (this.hooks.placeCamp) { this._closeSilently(); this.hooks.placeCamp(r.item, collection); }",
+    "new": "      if (this.hooks.placeCamp) { this.hooks.placeCamp(r.item, collection); }",
+    "tests": [
+      "test/systems/survival/surv3_camps.test.js"
+    ]
+  }
+]

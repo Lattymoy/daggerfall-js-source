@@ -1,0 +1,128 @@
+[
+ {
+  "name": "PARTY-LEAD-anyone-hands-it-on",
+  "file": "server/src/index.js",
+  "old": "    if (party.leader !== me) return 'only the leader can do that';\n    if (them === me) return 'that is you';\n    if (!party.members.includes(them)) return 'they are not in your party';\n    if (!this._socketsOf(them).length)",
+  "new": "    if (them === me) return 'that is you';\n    if (!party.members.includes(them)) return 'they are not in your party';\n    if (!this._socketsOf(them).length)",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-to-a-stranger",
+  "file": "server/src/index.js",
+  "old": "    if (!party.members.includes(them)) return 'they are not in your party';\n    if (!this._socketsOf(them).length)",
+  "new": "    if (!this._socketsOf(them).length)",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-to-an-away-seat",
+  "file": "server/src/index.js",
+  "old": "    if (!party.members.includes(them)) return 'they are not in your party';\n    if (!this._socketsOf(them).length) return 'they are not online';\n",
+  "new": "    if (!party.members.includes(them)) return 'they are not in your party';\n",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-nobody-told",
+  "file": "server/src/index.js",
+  "old": "    for (const m of next.members) this._sayNote(m, 'party.leader', them, trec?.name ?? null);\n    await this._sayParty(next, now);\n    return null;\n  }\n}",
+  "new": "    await this._sayParty(next, now);\n    return null;\n  }\n}",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-the-store-unwritten",
+  "file": "server/src/index.js",
+  "old": "    const next = { ...party, leader: them };\n    await this._putParty(next);",
+  "new": "    const next = { ...party, leader: them };",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-the-hub-does-not-know-it",
+  "file": "server/src/index.js",
+  "old": "      case 'party.lead': return this._partyLead(me, rec, m.acct, now);   // PARTY-LEAD\n",
+  "new": "",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-the-floor-too-early",
+  "file": "src/net/wire.js",
+  "old": "export const PARTY_LEAD_RELAY_MIN = 164;",
+  "new": "export const PARTY_LEAD_RELAY_MIN = 163;",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-the-client-sends-it-anywhere",
+  "file": "src/net/online.js",
+  "old": "    if (shaped.k === 'party.lead' && !this.partyLeadOk) return false;",
+  "new": "",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-the-welcome-never-says",
+  "file": "src/net/online.js",
+  "old": "      if (primary) this.partyLeadOk = relaySupportsPartyLead(relayV);   // PARTY-LEAD\n",
+  "new": "",
+  "tests": [
+   "test/net/partylead.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-a-member-offered-it",
+  "file": "src/ui/socialPanel.js",
+  "old": "if (!me && leads && canLead()) n.append(btn(MAKE_LEADER_TEXT",
+  "new": "if (!me && canLead()) n.append(btn(MAKE_LEADER_TEXT",
+  "tests": [
+   "test/net/soc3_socialpanel.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-my-own-seat",
+  "file": "src/ui/socialPanel.js",
+  "old": "if (!me && leads && canLead()) n.append(btn(MAKE_LEADER_TEXT",
+  "new": "if (leads && canLead()) n.append(btn(MAKE_LEADER_TEXT",
+  "tests": [
+   "test/net/soc3_socialpanel.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-an-older-hub-offered-it",
+  "file": "src/ui/socialPanel.js",
+  "old": "if (!me && leads && canLead()) n.append(btn(MAKE_LEADER_TEXT",
+  "new": "if (!me && leads) n.append(btn(MAKE_LEADER_TEXT",
+  "tests": [
+   "test/net/soc3_socialpanel.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-an-offline-seat-pressable",
+  "file": "src/ui/socialPanel.js",
+  "old": "{ enabled: m.online !== false, why: 'offline', run: () => act({ k: 'party.lead', acct: m.acct }) }",
+  "new": "{ run: () => act({ k: 'party.lead', acct: m.acct }) }",
+  "tests": [
+   "test/net/soc3_socialpanel.test.js"
+  ]
+ },
+ {
+  "name": "PARTY-LEAD-the-capability-never-repaints",
+  "file": "src/ui/socialPanel.js",
+  "old": "    if (!!canLead() !== paintedLead) ui++;",
+  "new": "",
+  "tests": [
+   "test/net/soc3_socialpanel.test.js"
+  ]
+ }
+]

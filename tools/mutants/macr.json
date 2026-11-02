@@ -1,0 +1,171 @@
+[
+  {
+    "name": "MACR1-no-transform-takes-a-window-too",
+    "file": "src/combat/fpArm.js",
+    "old": "      const rect = screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : null;",
+    "new": "      const rect = screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H };",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/systems/disc13.test.js"
+    ]
+  },
+  {
+    "name": "MACR1-the-lens-takes-no-window",
+    "file": "src/combat/fpArm.js",
+    "old": "      const proj = win ? frustum(-hw + win.k0 * px, -hw + (win.k0 + fw) * px, hh - (win.r0 + fh) * py, hh - win.r0 * py, near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);",
+    "new": "      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/formats/morrowind/fparm.test.js",
+      "test/systems/disc13.test.js"
+    ]
+  },
+  {
+    "name": "MACR1-the-composite-back-on-the-moved-rect",
+    "file": "src/combat/fpArm.js",
+    "old": "        renderer.drawScreenQuad(tex, win.dst, { u0: 0, v0: fh / edge, u1: fw / edge, v1: 0 });",
+    "new": "        renderer.drawScreenQuad(tex, rect, { u0: 0, v0: fh / edge, u1: fw / edge, v1: 0 });",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/systems/disc13.test.js"
+    ]
+  },
+  {
+    "name": "MACR1-frustums-top-offset-dropped",
+    "file": "src/combat/fpArm.js",
+    "old": "  out[9] = (top + bottom) / (top - bottom);",
+    "new": "  out[9] = 0;",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR2-routeKey-hands-the-repeat-on",
+    "file": "src/ui/input.js",
+    "old": "  if (e.repeat && act) return true;",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR2-the-world-host-routes-the-repeat",
+    "file": "src/scenes/world.js",
+    "old": "{ if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return true; } if (e.repeat) { e.preventDefault(); return true; } }   // MAC-R2",
+    "new": "{ if (routeAction(act, hudCtx)) { e.preventDefault(); return true; } }   // MAC-R2",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR3-the-off-hand-weapon-still-asks-for-a-light",
+    "file": "src/systems/quickslots.js",
+    "old": "  const light = kind === 'torch' || (kind === 'empty' && carries);",
+    "new": "  const light = kind === 'torch' || carries;",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR3-an-empty-hand-with-no-light-says-the-old-line",
+    "file": "src/systems/quickslots.js",
+    "old": "    if (typeof switchHand !== 'function') {\n      say?.(QUICKSLOT_TEXT.noLight);",
+    "new": "    say?.(QUICKSLOT_TEXT.noLight);\n    if (typeof switchHand !== 'function') {",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR3-a-lit-light-switches-hands-instead-of-dousing",
+    "file": "src/systems/quickslots.js",
+    "old": "  const light = kind === 'torch' || (kind === 'empty' && carries);",
+    "new": "  const light = kind === 'empty' && carries;",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/systems/qs4_offhand.test.js"
+    ]
+  },
+  {
+    "name": "MACR3-the-swap-cell-is-pressed-as-a-hand",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (kind === 'swap') return { kind: 'swap' };",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR3-the-rigs-refusal-reads-as-a-switch",
+    "file": "src/systems/quickslots.js",
+    "old": "    return switchHand() === true ? { kind: 'hand' } : { kind: 'refused' };",
+    "new": "    switchHand();\n    return { kind: 'hand' };",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR3-the-main-cell-holds-like-a-slot",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));",
+    "new": "  bindHold(cells.main.cell, 'c1', () => liveOpts.quickSwitchHand?.());",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/ui/enhanced/qs3_hud.test.js"
+    ]
+  },
+  {
+    "name": "MACR3-the-world-host-drops-the-hands-door",
+    "file": "src/scenes/world.js",
+    "old": "    offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), switchHand: () => weaponRig.switchHand(), toggleLight: () => weaponRig.toggleLight() });   // MAC-R3: the hand's own act beside the light's",
+    "new": "    offHandQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), toggleLight: () => weaponRig.toggleLight() });   // MAC-R3: the hand's own act beside the light's",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR4-the-capture-is-kept",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (touch) { giveBack(); row.addEventListener?.('gotpointercapture', giveBack, { once: true }); }",
+    "new": "    if (touch) { row.addEventListener?.('gotpointercapture', giveBack, { once: true }); }",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR4-the-lost-capture-end-put-back",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    globalThis.addEventListener?.('pointercancel', onDragAbort, true);\n    globalThis.addEventListener?.('scroll', onDragScroll, true);",
+    "new": "    globalThis.addEventListener?.('pointercancel', onDragAbort, true);\n    globalThis.addEventListener?.('lostpointercapture', onDragAbort, true);\n    globalThis.addEventListener?.('scroll', onDragScroll, true);",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "MACR4-the-menu-watch-outlives-the-session",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    globalThis.removeEventListener?.('contextmenu', onDragMenu, true);",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR4-the-menu-is-watched-but-not-refused",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const onDragMenu = (e) => { if (drag && e.cancelable) e.preventDefault(); };",
+    "new": "const onDragMenu = (e) => { void e; };",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  },
+  {
+    "name": "MACR4-the-callout-comes-back-on-the-tile",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }",
+    "new": ".itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; }",
+    "tests": [
+      "test/ui/enhanced/macr_fixes.test.js"
+    ]
+  }
+]

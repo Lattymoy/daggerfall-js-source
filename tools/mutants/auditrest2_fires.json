@@ -1,0 +1,332 @@
+[
+  {
+    "name": "AUDITREST2-F1-the-joiner-asks-blind",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const spot = encounterSpot(hit, feet, _motorYaw);\n    if (!spot) return null;",
+    "new": "const spot = encounterSpot(hit, feet, _motorYaw) ?? { x: feet[0], y: feet[1], z: feet[2] };\n    if (!spot) return null;",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ],
+    "note": "AUDIT REST III E1 (PIN MOVED): re-aimed by content - the ask names the spot its placement found, the host stands it there."
+  },
+  {
+    "name": "AUDITREST2-F1-the-placement-forgets-the-ward",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sharedClockOn() && inFireWard(dungeonFires, spot)) spot = null;",
+    "new": "sharedClockOn() && inFireWard([], spot)) spot = null;",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F1-the-host-reads-another-placement",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "|| encounterSpot({ minDistance, maxDistance, lineOfSightCheck }, feet, yaw);",
+    "new": "|| placeFoeFreely(placeFoeEnv({ collider, playerFeet: [feet[0], feet[1] + 0.9, feet[2]], playerYawRad: yaw, fovDegrees: 65 }), { minDistance, maxDistance, lineOfSightCheck });",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ],
+    "note": "AUDIT REST III E1 (PIN MOVED): re-aimed by content - the ask names the spot its placement found, the host stands it there."
+  },
+  {
+    "name": "AUDITREST2-F1-the-joiner-sleeps-on-to-the-hour",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!ambushNight()) _restAskAt = Date.now();",
+    "new": "      _restAskAt = Date.now();",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F1-the-latch-left-behind",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!ambushNight()) _restAskAt = Date.now();",
+    "new": "      ambushNight(); _restAskAt = Date.now();",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F2-a-palace-wing-gets-fires",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  if (isPalaceLayout(blocks)) return 0;\n  return dungeonFireCount((blocks ?? []).filter((b) => !isBorderBlock(b?.name)).length, elite);",
+    "new": "  return dungeonFireCount((blocks ?? []).filter((b) => !isBorderBlock(b?.name)).length, elite);",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F2-only-a-castle-at-the-door-is-a-palace",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "export const isPalaceLayout = (blocks) => (blocks ?? []).some((b) => !!b?.layout?.castleBlock);",
+    "new": "export const isPalaceLayout = (blocks) => !!blocks?.[0]?.layout?.castleBlock;",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F2-the-probe-counts-the-wings",
+    "file": "tools/dungeonFireProbe.mjs",
+    "old": "    wanted: layoutFireCount(blocks, elite),",
+    "new": "    wanted: layoutFireCount(\n      blocks.filter((b) => !b.layout.castleBlock),\n      elite,\n    ),",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F3-a-fire-on-its-marker",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    if (!c?.marker) {",
+    "new": "    {",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F3-a-fire-beside-a-pile",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    if (\n      items.some(\n        (m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM) && Math.abs(m[1] - pos[1]) < DFIRE.storeyM,\n      )\n    )\n      continue; // AUDIT REST II F3: never on a pile, a quest's item or the way in",
+    "new": "    // AUDIT REST II F3: never on a pile, a quest's item or the way in",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F3-a-pile-a-storey-up-clears-this-floor",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    if (\n      items.some(\n        (m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM) && Math.abs(m[1] - pos[1]) < DFIRE.storeyM,\n      )\n    )\n      continue; // AUDIT REST II F3: never on a pile, a quest's item or the way in",
+    "new": "    if (items.some((m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM))) continue; // AUDIT REST II F3: never on a pile, a quest's item or the way in",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F3-the-clearance-shrinks",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  itemM: 1.5, // AUDIT REST II F3: never this near (across, on its storey) a start, enter, treasure, quest or fixed-treasure marker",
+    "new": "  itemM: 1, // AUDIT REST II F3: never this near (across, on its storey) a start, enter, treasure, quest or fixed-treasure marker",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F3-the-ring-shrinks",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  ringM: 2, // AUDIT REST II F3: a marker's fire stands on a ring this far out from it, never on the marker",
+    "new": "  ringM: 1.6, // AUDIT REST II F3: a marker's fire stands on a ring this far out from it, never on the marker",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F3-every-spot-of-the-ring-kept",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    if (c === landed) continue;\n    const f = probe?.floor?.(at);",
+    "new": "    const f = probe?.floor?.(at);",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F3-the-ring-in-another-order",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "      [r, 0],\n      [-r, 0],",
+    "new": "      [-r, 0],\n      [r, 0],",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F4-a-roof-is-a-floor",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "      return Number.isFinite(hit?.dist) && hit.normal && !hit.back && hit.key === DUNGEON_BUCKET",
+    "new": "      return Number.isFinite(hit?.dist) && hit.normal && hit.key === DUNGEON_BUCKET",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F4-the-collider-never-says-back",
+    "file": "src/player/collider.js",
+    "old": "    return { dist: best, key: bestKey, normal, back };",
+    "new": "    return { dist: best, key: bestKey, normal, back: false };",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F4-the-callers-result-never-says-back",
+    "file": "src/player/collider.js",
+    "old": "      out.back = back;\n",
+    "new": "",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F4-no-second-ring",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "const LEVEL_RINGS = Object.freeze([...ringOf(DFIRE.levelR), ...ringOf(DFIRE.reachR)]);",
+    "new": "const LEVEL_RINGS = Object.freeze([...ringOf(DFIRE.levelR)]);",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F4-the-second-ring-shrinks",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  reachR: 1.4, // AUDIT REST II F4: ...and the floor level on a second ring this far out (roomM - 0.1): no tabletop, plinth or ledge",
+    "new": "  reachR: 0.9, // AUDIT REST II F4: ...and the floor level on a second ring this far out (roomM - 0.1): no tabletop, plinth or ledge",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F5-the-door-fire-unreported",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  const adopted = doorFire ? nearestOf(existing, from) : null;",
+    "new": "  const adopted = null;",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F5-the-farther-brazier",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    return a < b ||",
+    "new": "    return a > b ||",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F5-the-tie-to-the-list",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "      (a === b && (q[0] < best[0] || (q[0] === best[0] && (q[1] < best[1] || (q[1] === best[1] && q[2] < best[2])))))",
+    "new": "      (false && (q[0] < best[0] || (q[0] === best[0] && (q[1] < best[1] || (q[1] === best[1] && q[2] < best[2])))))",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F5-the-host-forgets-the-door-fire",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const dungeonFires = firePlan?.doorFire ? [firePlan.doorFire, ...placedFires] : placedFires;",
+    "new": "  const dungeonFires = placedFires;",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F6-the-probe-reads-raw",
+    "file": "tools/dungeonFireProbe.mjs",
+    "old": "      cache.set(\n        id,\n        index === -1 ? null : dfMeshToModel(patchSeams(id, arch.getMesh(index)), () => ({ width: 1, height: 1 })),\n      );",
+    "new": "      cache.set(id, index === -1 ? null : dfMeshToModel(arch.getMesh(index), () => ({ width: 1, height: 1 })));",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F6-the-tool-keeps-the-raw-reader",
+    "file": "tools/dungeonFireProbe.mjs",
+    "old": "    const col = hostFireCollider(blocks, getModel);",
+    "new": "    const col = hostFireCollider(blocks, data.getModel);",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F7-the-door-at-its-origin",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    const p = d.centre\n      ? transformPoint(d.matrix, d.centre.x, d.centre.y, d.centre.z)\n      : [d.matrix[12], d.matrix[13], d.matrix[14]];",
+    "new": "    const p = [d.matrix[12], d.matrix[13], d.matrix[14]];",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F8-the-fires-outlive-their-flames",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        dropDungeonFires(isFixture);",
+    "new": "        void isFixture;",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ],
+    "note": "AUDIT REST III E4 (PIN MOVED): every hearth whose flame is a fixture goes, asked of its own flat; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-F8-the-hearths-stay-under-the-water",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    dungeonHearths.length = 0;\n    dungeonHearths.push(...kept);\n",
+    "new": "",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ],
+    "note": "AUDIT REST III E4 (PIN MOVED): every hearth whose flame is a fixture goes, asked of its own flat; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-F8-the-marks-and-the-ward-stay",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    dungeonHearths.push(...kept);\n    dungeonFires.length = 0;\n",
+    "new": "    dungeonHearths.push(...kept);\n",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ],
+    "note": "AUDIT REST III E4 (PIN MOVED): every hearth whose flame is a fixture goes, asked of its own flat; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-F9-a-roster-every-frame",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (_coldSweepT < COLD_SWEEP_S) return;\n",
+    "new": "",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F9-a-roster-with-no-peer-camp",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!peerCamp) return;\n",
+    "new": "",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F9-the-sweep-offline",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!onlineRoom()) return;\n    let peerCamp = false;",
+    "new": "    let peerCamp = false;",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F9-the-frame-never-sweeps",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    sweepColdPeers(dt);   // AUDIT REST-PARTY B3",
+    "new": "    void 0;   // AUDIT REST-PARTY B3",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-the-room-rays-by-sine",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "const ROOM_RAYS = ringOf(1);",
+    "new": "const ROOM_RAYS = Object.freeze(\n  Array.from({ length: 8 }, (_, k) => [Math.sin((k * Math.PI) / 4), Math.cos((k * Math.PI) / 4)]),\n);",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-F-fires-on-the-arena-sand",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const firePlan = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _ketch ? null : dungeonFirePlan({",
+    "new": "const firePlan = isGateArena(dfLocation) || _ketch ? null : dungeonFirePlan({",
+    "tests": [
+      "test/world/auditrest2_fires.test.js"
+    ],
+    "note": "The merge of main's #545: its Arena floor is a dungeon whose rest is refused - no campfire, ward or mark on the sand."
+  }
+]

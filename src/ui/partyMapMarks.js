@@ -1,0 +1,319 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// SOC6 (2026-09-16, Mac: "Party members should be able to be seen on
+// the world map, regardless of their location") - THE PARTY'S MARKS.
+//
+// ONE reading of the host's `party` dep, shared by BOTH maps.
+//
+// The two travel maps could not be less alike - the enhanced one is a
+// parchment in the player's hands with the bay inked on (ui/heldMap.js), the classic
+// one is a 320x160 region page painted out of TRAV0I00's art
+// (ui/travel/travelMapWindow.js) - and neither of them should be the place
+// that decides what a party member IS. So the host says it once, in
+// the plainest shape it can (`party: () => [{acct, name, px, py, in,
+// loc, online, leader}]`, scenes/world.js partyMarkers), and this
+// module is the one reading of that shape: validate, drop what cannot
+// be drawn, and hand each map a mark it can place in its own idiom.
+//
+// WHY A FUNCTION AND NOT A LIST. A party changes while the map is
+// open - a member travels, enters a dungeon, drops offline, is
+// invited, leaves - and the map may be open for a minute of real
+// time. A snapshot taken at open would be a lie by the second frame,
+// so the dep is a FUNCTION and both maps read it on their own refresh
+// cadence. Nothing here caches.
+//
+// WHAT "REGARDLESS OF THEIR LOCATION" MEANS HERE. The pose the hub
+// relays (net/social.js PartyPose) is composed from the player's
+// TRAVEL pixel (scenes/world.js composePartyPose), which inside a
+// dungeon or a building is the PLACE's own pixel, not a pixel of
+// nowhere. So a member in Privateer's Hold and a member standing in
+// the rain outside it mark the same map pixel, and `in` (0 outside,
+// 1 dungeon, 2 building) is what tells the two apart in words. A
+// member is never hidden for being indoors - that was the whole of
+// Mac's sentence.
+//
+// WHAT IS DROPPED, AND WHY IT IS DROPPED RATHER THAN CLAMPED. A row
+// whose pixel is not a real map pixel is not drawn at all. A mark
+// clamped to 0,0 is a party member reported to be in the Iliac Sea
+// off Northmoor; an absent one is only "not yet", which is the truth
+// while a member's first pose is still in flight (net/social.js keeps
+// a seat's `p` null until then, and the host omits those seats).
+//
+// NOT A DFU MEMBER, and nothing here is ported from anything:
+// Daggerfall Unity has neither parties nor online play, so this whole
+// lane belongs with the rest of the online arc (SOC1's hub, SOC2's
+// picture) rather than beside a .cs file. The travel maps' own laws
+// are untouched by it - a party mark is drawn OVER a page whose every
+// number is still DFU's.
+// ═══════════════════════════════════════════════════════════════════
+
+import { PARTY_GREEN, PARTY_GREEN_CSS } from '../net/social.js';
+import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
+
+/** The bay, when a caller does not say (the overworld probe stands up a small synthetic one). */
+const BAY = Object.freeze({ width: MAP_WIDTH, height: MAP_HEIGHT });
+
+/** The mark's colour, in each map's own units. The GREEN is the one green the whole slice draws a party in
+ *  (net/social.js PARTY_GREEN / PARTY_GREEN_CSS - "the players name who are in a party together should turn
+ *  green"); a copy of it here would be the drift a shared constant exists to prevent. */
+export const PARTY_MARK_RGBA = PARTY_GREEN;
+export const PARTY_MARK_CSS = PARTY_GREEN_CSS;
+/** ...and OFFLINE: the same mark with the life taken out of it. A member who logged out is still worth seeing -
+ *  that is where they will be when they come back - so the mark stays and goes grey rather than vanishing. */
+export const PARTY_OFFLINE_RGBA = Object.freeze([0.55, 0.58, 0.55, 0.85]);
+
+/** The byte triple the classic page's dot buffer wants, derived from the one green rather than spelled twice. */
+const bytes = (rgba) =>
+  Object.freeze([Math.round(rgba[0] * 255), Math.round(rgba[1] * 255), Math.round(rgba[2] * 255)]);
+const hex = (rgb) => '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('');
+export const PARTY_DOT_RGB = bytes(PARTY_MARK_RGBA);
+export const PARTY_OFFLINE_DOT_RGB = bytes(PARTY_OFFLINE_RGBA);
+/** AUDIT SOC D7: the grey the DOM wears, DERIVED from the grey the maps' buffers wear rather than typed a second
+ *  time - the two had already drifted (#8c948c against the bytes' #8c928c), which is one green channel between the
+ *  enhanced map's label and the classic page's dot for the very same offline seat. One source, one grey. */
+export const PARTY_OFFLINE_CSS = hex(PARTY_OFFLINE_DOT_RGB);
+
+/** What a legend calls the mark, said once so both maps and the tests agree. */
+export const PARTY_LEGEND_TEXT = 'Party member';
+
+/** TV3 (bible/06-Systems/Travel-View.md): THE REGION'S TRAVELLERS on the map - the travel view's own verdigris, a
+ *  smaller ring than a party member's (they are strangers, and a party member's mark must stay the one that reads
+ *  first), and the legend's word. */
+export const TRAVELLER_MARK_CSS = '#4e7f72';
+export const TRAVELLER_LEGEND_TEXT = 'Traveller';
+/**
+ * TV3: the host's travellers ({id, name, px, py, fx, fy, tv} rows - systems/travellerMarks.js's book, the host's
+ * `travellers` dep), as marks placed within their pixel to the mark's own 256th: `x`/`y` in map pixels (y counts
+ * south, the fraction counts north, so it is turned round). OWS1: `ship` - the host's word that the row's traveller
+ * is at sea (isShipMark: their mark's way), drawn as a ship. OW-KIN / OW-WHO (FIELD BUGS 2026-10-04e): `kin` - the
+ * host's word of who they are to me ('friend' | 'guild', systems/travel/travelViewFilters.js travellerKin) - and `lv` their
+ * Renown, for the name's colour and the players' filters.
+ * @returns {Array<{id:string, name:string, x:number, y:number, journey:boolean, ship:boolean, kin:string|null, lv:number|null}>}
+ */
+export function readTravellerMarks(travellers, size = BAY) {
+  return readTravellerMarksIn(travellers, boxOfSize(size));
+}
+/** A map's size as the box readers take it - the Bay's corner at the origin (MapsFile's frame unless a probe says otherwise). */
+const boxOfSize = (size) => ({ x0: 0, y0: 0, w: size?.width ?? BAY.width, h: size?.height ?? BAY.height });
+/** BAY-LEFT-MAPS (bible/10-UI/Held-Map-Arc.md): the travellers over a BOX of map pixels (`box` {x0, y0, w, h} - the held
+ *  map's sheet: the continent's frame while it is shown, world/tamriel/tamrielFrame.js tamrielFrameInBay; the Bay's own
+ *  rectangle else), as the bounties are read (ui/bounty/bountyMapMark.js readBountyMarksIn). The held map read them against
+ *  the Bay's 1000 x 500, so a rider past the Bay was never drawn - the Overworld drew them. The Bay's own box is
+ *  readTravellerMarks', to the pixel.
+ *  @param {{x0:number, y0:number, w:number, h:number}} box */
+export function readTravellerMarksIn(travellers, box) {
+  const rows = typeof travellers === 'function' ? travellers() : null;
+  if (!Array.isArray(rows)) return [];
+  const out = [];
+  for (const r of rows) {
+    if (!r || typeof r.id !== 'string') continue;
+    const px = Math.floor(Number(r.px)),
+      py = Math.floor(Number(r.py));
+    if (
+      !Number.isFinite(px) ||
+      !Number.isFinite(py) ||
+      px < box.x0 ||
+      py < box.y0 ||
+      px >= box.x0 + box.w ||
+      py >= box.y0 + box.h
+    )
+      continue;
+    const fx = Math.min(255, Math.max(0, Number(r.fx) || 0)),
+      fy = Math.min(255, Math.max(0, Number(r.fy) || 0));
+    out.push({
+      id: r.id,
+      name: String(r.name ?? '').trim() || TRAVELLER_LEGEND_TEXT,
+      x: px + (fx + 0.5) / 256,
+      y: py + 1 - (fy + 0.5) / 256,
+      journey: !!r.tv,
+      ship: r.ship === true,
+      kin: r.kin === 'friend' || r.kin === 'guild' ? r.kin : null,
+      lv: Number.isFinite(r.lv) ? Number(r.lv) : null,
+    }); // OW-KIN / OW-WHO
+  }
+  return out;
+}
+/** TV3: what moves a traveller's mark - the pixel's 256th and the name; a key a poll compares. */
+export const travellerMarksKey = (marks) =>
+  marks
+    .map(
+      (m) =>
+        `${m.id}:${m.x.toFixed(3)},${m.y.toFixed(3)},${m.journey ? 1 : 0},${m.ship ? 1 : 0},${m.kin ?? ''},${m.lv ?? ''},${m.name}`,
+    )
+    .join('|'); // OW-KIN: a friend made, a guild joined - drawn again   // OWS1: a traveller putting to sea is drawn again
+
+/**
+ * @typedef {{ acct: string|null, name: string, px: number, py: number, in: number, loc: string,
+ *             online: boolean, leader: boolean }} PartyMark
+ */
+
+/**
+ * The host's `party` dep, read once and made safe to draw.
+ *
+ * `party` is the dep itself - a function, or absent. ABSENT IS THE
+ * ORDINARY CASE, not an error: a solo player, an offline game and
+ * every host that never heard of the hub all pass no `party` at all,
+ * and they must get an empty list rather than a guard at each call
+ * site.
+ *
+ * @param {(() => any[])|null|undefined} party
+ * @param {{width: number, height: number}} [size] the map's own frame (MapsFile's, unless a probe says otherwise)
+ * @returns {PartyMark[]}
+ */
+export function readPartyMarks(party, size = BAY) {
+  return readPartyMarksIn(party, boxOfSize(size));
+}
+
+/**
+ * BAY-LEFT-MAPS (bible/10-UI/Held-Map-Arc.md): the party over a BOX of map pixels (`box` {x0, y0, w, h} - the held map's
+ * sheet: the continent's frame while it is shown, the Bay's own rectangle else), as the bounties are read
+ * (ui/bounty/bountyMapMark.js readBountyMarksIn). SOC6's promise is "regardless of their location", and the held map read
+ * them against the Bay's 1000 x 500: a member past the Bay was no mark. The Bay's own box is readPartyMarks', to the pixel.
+ * @param {(() => any[])|null|undefined} party
+ * @param {{x0:number, y0:number, w:number, h:number}} box
+ * @returns {PartyMark[]}
+ */
+export function readPartyMarksIn(party, box) {
+  const rows = typeof party === 'function' ? party() : null;
+  if (!Array.isArray(rows)) return [];
+  const marks = [];
+  for (const r of rows) {
+    if (!r) continue;
+    const px = Math.floor(Number(r.px)),
+      py = Math.floor(Number(r.py));
+    if (!Number.isFinite(px) || !Number.isFinite(py)) continue;
+    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;
+    marks.push({
+      acct: r.acct ?? null,
+      // a nameless seat still gets a mark: WHERE they are is the thing asked for, and a blank label
+      // over a green ring reads as a bug rather than as an anonymous friend
+      name: String(r.name ?? '').trim() || 'Party member',
+      px,
+      py,
+      in: r.in === 1 ? 1 : r.in === 2 ? 2 : 0,
+      loc: String(r.loc ?? '').trim(),
+      online: r.online !== false,
+      leader: !!r.leader,
+    });
+  }
+  return marks;
+}
+
+/** The word for where a member stands, or '' outdoors - `in` is the pose's own 0/1/2. */
+export function partyPlaceWords(mark) {
+  return mark?.in === 1 ? 'dungeon' : mark?.in === 2 ? 'inside' : '';
+}
+
+/** The hover line both maps say: "Name - place (dungeon)". A member in open country has no place name in their
+ *  pose (composePartyPose reads the location index, which is empty between locations), so the wilderness is
+ *  named rather than left as a dangling dash. */
+export function partyHoverText(mark) {
+  if (!mark) return '';
+  const place = mark.loc || 'the wilderness';
+  const kind = partyPlaceWords(mark);
+  return `${mark.name} - ${place}${kind ? ` (${kind})` : ''}${mark.online ? '' : ' - offline'}`;
+}
+
+/** What the label under the mark reads: the name, and the place's kind where there is one, so a member indoors
+ *  is legible without hovering (Mac's "regardless of their location", said on the map itself). */
+export function partyLabelText(mark) {
+  const kind = partyPlaceWords(mark);
+  return kind ? `${mark.name} (${kind})` : mark.name;
+}
+
+/** A signature of the marks as DRAWN - the one thing a map must repaint for. Poses arrive on a timer whether or
+ *  not anything moved (net/wire.js PARTY_SEND_MS), so a map that repainted per pose would repaint forever; a map
+ *  that compares this repaints when a member actually moves, goes indoors, drops offline, joins or leaves. */
+export function partyMarksKey(marks) {
+  // AUDIT SOC D6: `loc` is in the signature because `loc` is DRAWN - the enhanced label's second line
+  // (the ink label under the ring) and both maps' hover sentence are the place's name, so a member who walked from Daggerfall into
+  // Privateers Hold WITHOUT changing map pixel (the pose carries the place's own pixel, so that happens) left a
+  // label naming the town they had left. `leader` is still absent, and deliberately: no map draws it.
+  return marks
+    .map((m) => `${m.acct ?? m.name}:${m.px},${m.py},${m.in},${m.online ? 1 : 0},${m.name},${m.loc}`)
+    .join('|');
+}
+
+/**
+ * DISC23-A (2026-09-24, Starempire42 on Discord: "It would be really nice to be able to see your party members on the
+ * town and dungeon maps. This would make it much easier to figure out where everyone is and find each other") - THE
+ * PARTY ON THE PLANS.
+ *
+ * The bay reads a member's TRAVEL PIXEL (readPartyMarks above), which is the whole of what the hub relays - and a
+ * pixel is the whole town, the whole dungeon. A street plan and a storey need METRES, and the only metres this client
+ * has for another player are their BODY's: the peer the room is drawing, at its feet in this scene's own frame
+ * (scenes/world.js peersNear, the reading trade's 5 m and party rest's 15 m already measure by). So the plans take a
+ * second dep, `partyNear: () => [{acct, name, feet: [x, y, z], yaw}]` - the party members whose bodies stand in THIS
+ * room - and this is its one reading. A member in another dungeon, or out of the room's range, has no body here and
+ * is simply not on this plan; they are still on the bay, which is the map for "where is everyone".
+ *
+ * @param {(() => any[])|null|undefined} party
+ * @returns {Array<{acct: string|null, name: string, feet: number[], yaw: number}>}
+ */
+export function readPartyBodies(party) {
+  const rows = typeof party === 'function' ? party() : null;
+  if (!Array.isArray(rows)) return [];
+  const out = [];
+  for (const r of rows) {
+    const f = r?.feet;
+    if (!f || typeof f !== 'object') continue;
+    const x = Number(f[0]),
+      y = Number(f[1]),
+      z = Number(f[2]);
+    // a body with no place in this frame is not drawn at the origin - "not here" is the truth (SOC6's law)
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
+    const yaw = Number(r.yaw);
+    out.push({
+      acct: r.acct ?? null,
+      name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT,
+      feet: [x, y, z],
+      yaw: Number.isFinite(yaw) ? yaw : 0,
+    });
+  }
+  return out;
+}
+
+/**
+ * COMPASS-PARTY (2026-09-27, Discord - Ashley: "being able to see where party members are on compass? - just lil green
+ * marks that point in that direction"; Satranath: "Party members show up on the map but not compass"): THE POINTS THE
+ * COMPASS MARKS, in the scene's own XZ - the frame the Detect markers are measured in (ui/hud/hud.js compassMarkerLerp).
+ *
+ * A mate whose BODY this client draws is marked where it stands (`bodies`, the plans' own dep - readPartyBodies). The
+ * rest are marked only OUTDOORS (`here`, my travel pixel; indoors it is null and the bodies are the whole answer - a
+ * building or a dungeon has no bearing to the open country), where their pose says: the leader's own feet
+ * (`wx`,`wz` - the world pose's frame, which only a leader in the open air sends; `fromWorld` turns them into this
+ * scene's) or the middle of their map pixel (`pixelCentre`). A mate in MY pixel whose body I do not draw - in a
+ * building here, or not yet streamed in - is no mark: the middle of the town is not where they are. An offline seat
+ * and a seat whose first pose has not landed are no mark either (SOC6's law: "not yet" is the truth).
+ *
+ * @param {{ bodies?: (() => any[])|null, others?: any[], here?: {x: number, y: number}|null,
+ *           fromWorld?: ((wx: number, wz: number) => number[])|null, pixelCentre?: ((px: number, py: number) => number[])|null }} [o]
+ * @returns {number[][]} one [x, z] per mark
+ */
+export function partyCompassPoints({
+  bodies = null,
+  others = [],
+  here = null,
+  fromWorld = null,
+  pixelCentre = null,
+} = {}) {
+  const out = [];
+  const drawn = new Set();
+  for (const b of readPartyBodies(bodies)) {
+    if (b.acct) drawn.add(b.acct);
+    out.push([b.feet[0], b.feet[2]]);
+  }
+  if (!here) return out;
+  for (const m of Array.isArray(others) ? others : []) {
+    const p = m?.p;
+    if (!p || m.online === false || drawn.has(m.acct)) continue;
+    if (!Number.isInteger(p.px) || !Number.isInteger(p.py)) continue;
+    if (p.in === 0 && Number.isFinite(p.wx) && Number.isFinite(p.wz) && fromWorld) {
+      out.push(fromWorld(p.wx, p.wz));
+      continue;
+    }
+    if (p.px === here.x && p.py === here.y) continue;
+    if (pixelCentre) out.push(pixelCentre(p.px, p.py));
+  }
+  return out.filter((q) => Array.isArray(q) && Number.isFinite(q[0]) && Number.isFinite(q[1]));
+}

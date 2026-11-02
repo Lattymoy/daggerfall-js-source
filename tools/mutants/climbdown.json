@@ -1,0 +1,604 @@
+[
+  {
+    "name": "CLIMBDOWN-clamp-pulls-a-rising-body-down",
+    "file": "src/player/collider.js",
+    "old": "if (feet[1] < floor + SKIN && !(dy > 0 && feet[1] >= floor)) {",
+    "new": "if (feet[1] < floor + SKIN) {",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-clamp-leaves-a-rising-body-under-the-terrain",
+    "file": "src/player/collider.js",
+    "old": "if (feet[1] < floor + SKIN && !(dy > 0 && feet[1] >= floor)) {",
+    "new": "if (feet[1] < floor + SKIN && !(dy > 0)) {",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-fit-ignores-the-terrain",
+    "file": "src/player/parkour.js",
+    "old": "  if (collider.restFloor && p[1] < collider.restFloor(p[0], p[2]) - PARKOUR_FIT_EPS) return false;\n  if (!(collider.penetrationAt(p, height) < PARKOUR_FIT_EPS) || !bandsClear(collider, p, height)) return false;",
+    "new": "  if (!(collider.penetrationAt(p, height) < PARKOUR_FIT_EPS) || !bandsClear(collider, p, height)) return false;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-45-degree-eave-refused",
+    "file": "src/player/parkour.js",
+    "old": "  const flat = Number.isFinite(top.dist) && top.normal && top.normal[1] >= PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER;",
+    "new": "  const flat = Number.isFinite(top.dist) && top.normal && top.normal[1] >= PARKOUR_TOP_MIN_NY;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-edge-takes-any-drop-for-floor",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_EDGE_DROP = 1.0;",
+    "new": "export const PARKOUR_EDGE_DROP = 10.0;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-face-ray-over-the-lip",
+    "file": "src/player/parkour.js",
+    "old": "    lipY - PARKOUR_EDGE_FACE_DROP,",
+    "new": "    lipY + PARKOUR_EDGE_FACE_DROP,",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-face-asked-from-the-edge",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_EDGE_FACE_OUT = 0.6;",
+    "new": "export const PARKOUR_EDGE_FACE_OUT = 0;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-ignores-crouch",
+    "file": "src/player/motor.js",
+    "old": "if (!this.grounded || !(this.crouching || this.heightAction === 'crouch') || this.swimming",
+    "new": "if (!this.grounded || this.swimming",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-waits-for-the-crouch-to-land",
+    "file": "src/player/motor.js",
+    "old": "if (!this.grounded || !(this.crouching || this.heightAction === 'crouch') || this.swimming",
+    "new": "if (!this.grounded || !this.crouching || this.swimming",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-never-asked",
+    "file": "src/player/motor.js",
+    "old": "    if (!mode) return this._pkLowerStart(dt, input, yaw, pk) || this._freeStart(dt, input, yaw, pk);",
+    "new": "    if (!mode) return this._freeStart(dt, input, yaw, pk);",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-gate-ignored",
+    "file": "src/player/motor.js",
+    "old": "    if (!edge) { this._pkEdgeSaid = false; return false; }\n    const refusal = parkourRefusal();",
+    "new": "    if (!edge) { this._pkEdgeSaid = false; return false; }\n    const refusal = null;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-refusal-said-every-step",
+    "file": "src/player/motor.js",
+    "old": "      if (!this._pkEdgeSaid) { pk.say?.(refusal); this._pkEdgeSaid = true; }",
+    "new": "      pk.say?.(refusal);",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-refused-body-walks-off",
+    "file": "src/player/motor.js",
+    "old": "      this.movingLessThanHalfSpeed = true;\n      return true;\n    }\n    this._parkourBegin(planLower(",
+    "new": "      this.movingLessThanHalfSpeed = true;\n      return false;\n    }\n    this._parkourBegin(planLower(",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-stands-at-once",
+    "file": "src/player/motor.js",
+    "old": "      this.heightTimerMax = m.dur * (1 - m.split);",
+    "new": "      this.heightTimerMax = 1e-6;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-chain-dropped",
+    "file": "src/player/motor.js",
+    "old": "      this._pkMove = nx;",
+    "new": "      this._pkMove = null;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-save-keeps-the-point-over-the-drop",
+    "file": "src/player/motor.js",
+    "old": "    while (m?.next) m = m.next;",
+    "new": "",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-recentre-leaves-the-chain",
+    "file": "src/player/parkour.js",
+    "old": "  if (m.next) offsetMove(m.next, offset); // CLIMB-DOWN: the move chained on after it",
+    "new": "  // CLIMB-DOWN: the move chained on after it",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-overhang-never-planned",
+    "file": "src/player/motor.js",
+    "old": "        if (oh) move = planOverHang(this.pos, ledge, oh, skill);",
+    "new": "        if (oh) move = null;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-overhang-ends-unheld",
+    "file": "src/player/parkour.js",
+    "old": "    hang: { normal: [...oh.grip.normal], lipY: oh.grip.lipY },",
+    "new": "    hang: null,",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-ends-unheld",
+    "file": "src/player/parkour.js",
+    "old": "    stand: true,\n    exit: null,\n    hang: { normal: [...grip.normal], lipY: grip.lipY },\n    key: grip.key ?? null,",
+    "new": "    stand: true,\n    exit: null,\n    hang: null,\n    key: grip.key ?? null,",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-edge-sensed-behind",
+    "file": "src/player/motor.js",
+    "old": "    const dx = sin * f + cos * st, dz = cos * f - sin * st, l = Math.hypot(dx, dz);",
+    "new": "    const dx = -(sin * f + cos * st), dz = -(cos * f - sin * st), l = Math.hypot(dx, dz);",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-overhang-unchained",
+    "file": "src/player/parkour.js",
+    "old": "    next: down,",
+    "new": "    next: null,",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-edge-floor-is-the-top-slope",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_EDGE_FLOOR_NY = Math.cos((70 * Math.PI) / 180);",
+    "new": "export const PARKOUR_EDGE_FLOOR_NY = Math.cos((45 * Math.PI) / 180);",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-45-degree-ledge-refused",
+    "file": "src/player/parkour.js",
+    "old": "  if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) {",
+    "new": "  if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY) {",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-45-degree-landing-refused",
+    "file": "src/player/parkour.js",
+    "old": "    if (ny >= PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER && y - lipY <= s * tan + PARKOUR_SLOPE_SLACK) {",
+    "new": "    if (ny >= PARKOUR_TOP_MIN_NY && y - lipY <= s * tan + PARKOUR_SLOPE_SLACK) {",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-45-degree-slab-refused",
+    "file": "src/player/parkour.js",
+    "old": "    if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER)\n      continue;",
+    "new": "    if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY) continue;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-edge-asked-under-the-axis-only",
+    "file": "src/player/parkour.js",
+    "old": "  const ahead = radius + PARKOUR_EDGE_AHEAD;",
+    "new": "  const ahead = PARKOUR_EDGE_AHEAD;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-edge-unbisected",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_EDGE_BISECT = 6;",
+    "new": "export const PARKOUR_EDGE_BISECT = 0;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-face-any-facing",
+    "file": "src/player/parkour.js",
+    "old": "  if (!h || h.normal[0] * out[0] + h.normal[2] * out[2] < PARKOUR_FACING_DOT) return null;",
+    "new": "  if (!h) return null;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ],
+    "equivalent": true,
+    "why": "faceUnder's ray is faceHit(collider, o, -out, ...), and faceHit already refuses a hit whose wall faces the ray's reverse less than PARKOUR_FACING_DOT: its -(nx * dir[0] + nz * dir[2]) / l with dir = -out is the very quantity faceUnder's test reads as (nx / l) * out[0] + (nz / l) * out[2] - the two differ only in float rounding, at exactly cos 50 degrees. Belt and braces, kept: T10's crouched walks 55 and 65 degrees off the face walk off unlowered with it or without it (probed 51 to 70 degrees, identical both ways)."
+  },
+  {
+    "name": "CLIMBDOWN-edge-path-unproven",
+    "file": "src/player/parkour.js",
+    "old": "  return pathClear(collider, m, stand) ? { grip, lipY: grip.lipY } : null;",
+    "new": "  return { grip, lipY: grip.lipY };",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-stands-at-the-start",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_LOWER_SPLIT = 0.4;",
+    "new": "export const PARKOUR_LOWER_SPLIT = 0;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-pace-flat",
+    "file": "src/player/parkour.js",
+    "old": "  return lerp(PARKOUR_LOWER_MIN_S, PARKOUR_LOWER_MAX_S, clamp01(skill / 100));",
+    "new": "  return PARKOUR_LOWER_MIN_S;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-hangs-crouched",
+    "file": "src/player/parkour.js",
+    "old": "    crouch: false,\n    stand: true,\n    exit: null,",
+    "new": "    crouch: false,\n    stand: false,\n    exit: null,",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-lower-never-stands",
+    "file": "src/player/motor.js",
+    "old": "    if (m.stand && this.crouching && m.t >= m.split) {",
+    "new": "    if (m.stand && this.crouching && m.t >= m.split && false) {",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-deck-leaves-the-chain",
+    "file": "src/player/parkour.js",
+    "old": "  if (m.next) carryMove(m.next, was, now); // CLIMB-DOWN: the move chained on after it\n}",
+    "new": "}",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-overhang-any-depth",
+    "file": "src/player/parkour.js",
+    "old": "export function senseOverHang(collider, feet, ledge, opts) {\n  if (!ledge?.ok || ledge.depth == null || ledge.depth > PARKOUR_VAULT_DEPTH) return null;",
+    "new": "export function senseOverHang(collider, feet, ledge, opts) {\n  if (!ledge?.ok || ledge.depth == null || false) return null;",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-overhang-down-leg-pathless",
+    "file": "src/player/parkour.js",
+    "old": "    if (!pathClear(collider, path(over, over, grip.feet, 0, 0), stand)) continue;\n    return { up, over, grip };",
+    "new": "    return { up, over, grip };",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-edge-strafe-mirrored",
+    "file": "src/player/motor.js",
+    "old": "    const dx = sin * f + cos * st, dz = cos * f - sin * st, l = Math.hypot(dx, dz);",
+    "new": "    const dx = sin * f - cos * st, dz = cos * f + sin * st, l = Math.hypot(dx, dz);",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-overhang-path-under-the-top",
+    "file": "src/player/parkour.js",
+    "old": "  const { face, into, normal, lipY, depth } = ledge;\n  const y = lipY + PARKOUR_VAULT_CLEAR;\n  const tangent = [-into[2], 0, into[0]];",
+    "new": "  const { face, into, normal, lipY, depth } = ledge;\n  const y = lipY - PARKOUR_VAULT_CLEAR;\n  const tangent = [-into[2], 0, into[0]];",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBDOWN-edge-floor-off-the-walks-slope-limit",
+    "file": "src/player/parkour.js",
+    "old": "export const PARKOUR_EDGE_FLOOR_NY = Math.cos((70 * Math.PI) / 180);",
+    "new": "export const PARKOUR_EDGE_FLOOR_NY = Math.cos((60 * Math.PI) / 180);",
+    "tests": [
+      "test/player/climbdown.test.js",
+      "test/player/climb3.test.js",
+      "test/player/climb2.test.js",
+      "test/systems/parkour.test.js",
+      "test/systems/auditclimb1.test.js",
+      "test/player/auditclimb2.test.js",
+      "test/player/climb4.test.js"
+    ]
+  }
+]

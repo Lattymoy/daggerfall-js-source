@@ -1,0 +1,119 @@
+[
+  {
+    "name": "TACT5-retreats-from-press",
+    "file": "src/ai/tactics.js",
+    "old": "  const open = (backTurned && dist <= ring + TACT.RING_SLACK) || dist < ring - TACT.RING_SLACK;",
+    "new": "  const open = backTurned && dist <= ring + TACT.RING_SLACK;",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-recover-retreats",
+    "file": "src/ai/tactics.js",
+    "old": "    s.backUntil = now + TACT.RECOVER_HOP; // FEEDBACK: a hop out, not a retreat",
+    "new": "    s.backUntil = s.until; // FEEDBACK: a hop out, not a retreat",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-backstep-unbounded",
+    "file": "src/ai/tactics.js",
+    "old": "    ai.moving = false;\n    return true;\n  } // FEEDBACK: its back-step spent, it stands",
+    "new": "    ai._tacDir = [-ux, -uz];\n    ai._tacSpeed = TACT.STEP_SPEED;\n    ai.moving = true;\n    return true;\n  }",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-backoff-backpedals",
+    "file": "src/ai/tactics.js",
+    "old": "    if (s.state === 'backoff') return walkAway(ai, -ux, -uz, TACT.STEP_SPEED);",
+    "new": "    if (false) return walkAway(ai, -ux, -uz, TACT.STEP_SPEED);",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-kite-backpedals",
+    "file": "src/ai/tactics.js",
+    "old": "      return walkAway(ai, -ux, -uz, TACT.STEP_SPEED);",
+    "new": "      ai._tacDir = [-ux, -uz];\n      ai._tacSpeed = TACT.STEP_SPEED;\n      ai.moving = true;\n      face();\n      return true;",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-walks-before-turning",
+    "file": "src/ai/tactics.js",
+    "old": "  if (Math.abs(d) > (TACT.WALK_FACE_DEG * Math.PI) / 180) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-backoff-no-cooldown",
+    "file": "src/ai/tactics.js",
+    "old": "    if (\n      s.hp.length > 1 &&\n      (s.hp[0][1] - v.health) / v.maxHealth >= TACT.HURT_SHARE &&\n      s.state !== 'backoff' &&\n      now >= (s.backoffReady ?? 0)\n    ) {",
+    "new": "    if (s.hp.length > 1 && (s.hp[0][1] - v.health) / v.maxHealth >= TACT.HURT_SHARE && s.state !== 'backoff') {",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-kite-uncapped",
+    "file": "src/ai/tactics.js",
+    "old": "      if (ai._tacBlocked || now >= s.kiteUntil) {",
+    "new": "      if (ai._tacBlocked) {",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-kite-no-cooldown",
+    "file": "src/ai/tactics.js",
+    "old": "  s.kind =\n    shooter(ai) && now >= s.meleeUntil && (dist >= TACT.KITE_IN || s.kiting || now >= (s.kiteReady ?? 0))\n      ? 'ranged'\n      : 'melee';",
+    "new": "  s.kind = shooter(ai) && now >= s.meleeUntil && (dist >= TACT.KITE_IN || s.kiting || true) ? 'ranged' : 'melee';",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-token-kept-across-kinds",
+    "file": "src/ai/tactics.js",
+    "old": "  if (s.kind === 'ranged') b.melee.delete(ai);\n  else b.ranged.delete(ai); // FEEDBACK: a token of the kind it no longer fights as is handed back",
+    "new": "  if (false) b.melee.delete(ai);\n  else if (false) b.ranged.delete(ai); // FEEDBACK: a token of the kind it no longer fights as is handed back",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-shooter-circles",
+    "file": "src/ai/tactics.js",
+    "old": "    // (it holds its fire), never circling the target\n    return false;",
+    "new": "    // (it holds its fire), never circling the target\n    return holdRing(ai, s, b, ux, uz, dist, ring + 2, now, face);",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-walk-away-unheld",
+    "file": "src/ai/tactics.js",
+    "old": "  const away = s.key != null && (s.kiting || s.state === 'backoff' || now < (s.faceUntil ?? 0));",
+    "new": "  const away = false;",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  },
+  {
+    "name": "TACT5-blocked-walks-on",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "        if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; this.moving = false; }",
+    "new": "        if (this._tacDir) { this._tacDir = null; this._tacBlocked = true; }",
+    "tests": [
+      "test/characters/enemy/tact5_feedback.test.js"
+    ]
+  }
+]

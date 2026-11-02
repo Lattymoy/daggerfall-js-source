@@ -1,0 +1,115 @@
+[
+  {
+    "name": "K1-tier-the-keepalive",
+    "file": "server/src/index.js",
+    "old": "(still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id))",
+    "new": "poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id)",
+    "tests": [
+      "test/net/slam8.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/online.test.js",
+      "test/net/mac7.test.js",
+      "test/net/chat1.test.js"
+    ]
+  },
+  {
+    "name": "K2-never-tier-anything",
+    "file": "server/src/index.js",
+    "old": "(still ? heard : poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id))",
+    "new": "heard",
+    "tests": [
+      "test/net/slam8.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/online.test.js",
+      "test/net/mac7.test.js",
+      "test/net/chat1.test.js"
+    ]
+  },
+  {
+    "name": "K3-exact-equality-not-epsilon",
+    "file": "server/src/index.js",
+    "old": "const unmoved = posed && !!a.pose && !poseChanged(a.pose, m.p);",
+    "new": "const unmoved = posed && !!a.pose && JSON.stringify(a.pose) === JSON.stringify(m.p);",
+    "tests": [
+      "test/net/slam8.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/online.test.js",
+      "test/net/mac7.test.js",
+      "test/net/chat1.test.js"
+    ]
+  },
+  {
+    "name": "K5-turn-in-plain-patch",
+    "file": "server/src/index.js",
+    "old": "this._meter(ws, a, now, { pose: posed ? m.p : a.pose }, turned, posed && !stopped)",
+    "new": "this._meter(ws, a, now, { pose: posed ? m.p : a.pose, turn: posed ? ((a.turn | 0) + 1) & 0xffff : (a.turn | 0) }, posed && still ? { kept: now } : {}, posed && !stopped)",
+    "tests": [
+      "test/net/slam8.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/online.test.js",
+      "test/net/mac7.test.js",
+      "test/net/chat1.test.js"
+    ]
+  },
+  {
+    "name": "K6-passpatch-applied-always",
+    "file": "server/src/index.js",
+    "old": "const write = pass ? { ...patch, ...passPatch } : patch;",
+    "new": "const write = { ...patch, ...passPatch };",
+    "tests": [
+      "test/net/slam8.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/online.test.js",
+      "test/net/mac7.test.js",
+      "test/net/chat1.test.js"
+    ]
+  },
+  {
+    "name": "K7-heartbeat-9000",
+    "file": "src/net/wire.js",
+    "old": "export const HEARTBEAT_MS = 20000;",
+    "new": "export const HEARTBEAT_MS = 9000;",
+    "tests": [
+      "test/net/slam8.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/online.test.js",
+      "test/net/mac7.test.js",
+      "test/net/chat1.test.js",
+      "test/net/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "K8-timeout-5000",
+    "file": "src/net/online.js",
+    "old": "export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;",
+    "new": "export const PEER_TIMEOUT_MS = HEARTBEAT_MS;",
+    "tests": [
+      "test/net/slam8.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/online.test.js",
+      "test/net/mac7.test.js",
+      "test/net/chat1.test.js"
+    ]
+  },
+  {
+    "name": "K9-share-8",
+    "file": "src/net/wire.js",
+    "old": "export const POSE_FAR_SHARE = 4;",
+    "new": "export const POSE_FAR_SHARE = 8;",
+    "tests": [
+      "test/net/slam8.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/online.test.js",
+      "test/net/mac7.test.js",
+      "test/net/chat1.test.js"
+    ]
+  }
+]

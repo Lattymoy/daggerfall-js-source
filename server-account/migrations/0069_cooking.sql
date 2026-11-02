@@ -1,0 +1,14 @@
+-- PROF9 (2026-10-02) - COOKING: THE FIRE, THE PAN AND THE DISHES
+-- (bible/06-Systems/Professions-Arc.md 3.3, 9.3, 9.4; section 35).
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI). SQLite has no ADD COLUMN IF
+-- NOT EXISTS, so a second run errors harmlessly and the ledger is what stops it.
+--
+-- A DISH is a craft's piece (prof_crafts, products - PROF3's route, /v1/prof/craft), into the pack, with no quality. What
+-- it carries besides is its COOK'S HAND (src/net/recipeLaw.js dishHand): 1 a Chef's feast, which lasts half again; 2 a
+-- Provisioner's dish, which never spoils (3.3). The hand is the dish's, wherever it goes - signed into its record (`f`,
+-- src/net/productRecord.js) and kept here beside the dye, so the market mints a dish bought there with it (market.js
+-- reads every piece's columns, never its record). Every row before this, and every piece but a dish, carries none.
+ALTER TABLE products ADD COLUMN hand INTEGER CHECK (hand IS NULL OR hand IN (1, 2));

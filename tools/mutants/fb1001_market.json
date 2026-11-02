@@ -1,0 +1,605 @@
+[
+  {
+    "name": "MARKET-KEEP-not-yours-read-as-gone-again",
+    "file": "src/net/marketBook.js",
+    "old": "export const PIECE_GONE = Object.freeze(['market-listed', 'market-uncollected', 'market-standing']);",
+    "new": "export const PIECE_GONE = Object.freeze(['market-not-yours', 'market-listed', 'market-uncollected', 'market-standing']);",
+    "tests": [
+      "test/net/fb1001_market.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-KEEP-the-settle-drops-it",
+    "file": "src/net/marketBook.js",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') {",
+    "tests": [
+      "test/net/fb1001_market.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-KEEP-the-writs-keep-their-own-list",
+    "file": "src/net/writBook.js",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a new fill is the market's own realm act (realmPieceAct, PIECE_GONE); the writs' own list is their settle's, of a fill a tab from before kept",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') {",
+    "tests": [
+      "test/net/fb1001_market.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-KEEP-the-words",
+    "file": "src/net/accountClient.js",
+    "old": "It stays in your pack, where it sells for gold.'),",
+    "new": "It is gone.'),",
+    "tests": [
+      "test/net/fb1001_market.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-worn-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (rec.equipSlot != null) return 'worn';\n  if (rec.locked === true) return 'locked';",
+    "new": "  if (rec.locked === true) return 'locked';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-locked-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (rec.locked === true) return 'locked';\n  if (rec.questItem) return 'quest';",
+    "new": "  if (rec.questItem) return 'quest';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-quest-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (rec.questItem) return 'quest';\n  if ((rec.timeForItemToDisappear ?? 0) !== 0) return 'summoned';",
+    "new": "  if ((rec.timeForItemToDisappear ?? 0) !== 0) return 'summoned';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-summoned-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if ((rec.timeForItemToDisappear ?? 0) !== 0) return 'summoned';\n  if (boundRecord(rec)) return 'bound';",
+    "new": "  if (boundRecord(rec)) return 'bound';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-bound-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (boundRecord(rec)) return 'bound';\n  if (rec.templateIndex === GOLD_PIECES_TEMPLATE && rec.group === 'Currency') return 'gold';",
+    "new": "  if (rec.templateIndex === GOLD_PIECES_TEMPLATE && rec.group === 'Currency') return 'gold';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-letter-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec.templateIndex)) return 'letter';\n  if (BOAT_TEMPLATES.includes(rec.templateIndex)) return 'boat';",
+    "new": "  if (BOAT_TEMPLATES.includes(rec.templateIndex)) return 'boat';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-boat-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (BOAT_TEMPLATES.includes(rec.templateIndex)) return 'boat';\n  if (rec.templateIndex === GOOD_ARROW_TEMPLATE) return 'arrows';",
+    "new": "  if (rec.templateIndex === GOOD_ARROW_TEMPLATE) return 'arrows';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-arrows-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (rec.templateIndex === GOOD_ARROW_TEMPLATE) return 'arrows';\n  if (storesForm(rec)) return 'stores';",
+    "new": "  if (storesForm(rec)) return 'stores';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-stores-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (storesForm(rec)) return 'stores';\n  if (!tradeableRecord(rec)) return 'shape'; // the trade's law, whole - nothing it refuses lists",
+    "new": "  if (!tradeableRecord(rec)) return 'shape'; // the trade's law, whole - nothing it refuses lists",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-gold-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  if (rec.templateIndex === GOLD_PIECES_TEMPLATE && rec.group === 'Currency') return 'gold';\n  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec.templateIndex)) return 'letter';",
+    "new": "  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec.templateIndex)) return 'letter';",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-large-dropped",
+    "file": "src/net/marketLaw.js",
+    "old": "  return text.length > GOOD_RECORD_MAX ? 'large' : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-the-arrow-row",
+    "file": "src/net/marketLaw.js",
+    "old": "export const GOOD_ARROW_TEMPLATE = 131;",
+    "new": "export const GOOD_ARROW_TEMPLATE = 130;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-clothing-family",
+    "file": "src/net/marketLaw.js",
+    "old": "  Object.freeze(['WomensClothing', 'clothing']),\n  Object.freeze(['Jewellery', 'jewellery']),",
+    "new": "  Object.freeze(['Jewellery', 'jewellery']),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-a-herb-unwalled",
+    "file": "src/net/marketLaw.js",
+    "old": "    const keys = [\n      ...MINED_KEYS,\n      ...Object.entries(PLANT_GROUP_TEMPLATES).flatMap(([g, ts]) => ts.map((t) => `${g}:${t}`)),\n    ];",
+    "new": "    const keys = [...MINED_KEYS];",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-law-the-goods-view",
+    "file": "src/net/marketLaw.js",
+    "old": "  Object.freeze(['goods', 'Goods']),\n  Object.freeze(['mine', 'My listings']),",
+    "new": "  Object.freeze(['mine', 'My listings']),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js",
+      "test/net/prof5_law.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-listing-record-unmoved",
+    "file": "server-account/src/market.js",
+    "old": "      ...prep.steps,\n      // THE DECISION: a place among the thirty, the id not spent - the record's piece on the listing, for gold",
+    "new": "      // THE DECISION: a place among the thirty, the id not spent - the record's piece on the listing, for gold",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-listing-guard",
+    "file": "server-account/src/market.js",
+    "old": "      mustChange(db),   // no listing, no piece out of the record: the record's step rolls back with it\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-record-piece-unread",
+    "file": "server-account/src/market.js",
+    "old": "    if (goodRefusal(Array.isArray(save.items) ? save.items[pick] : null)) return 'market-not-good';\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-Drakes-taken",
+    "file": "server-account/src/market.js",
+    "old": "  if (currency !== 'gold') return { error: 'market-goods-gold' };   // law 3: what a save holds never becomes Drakes\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-offer-unread",
+    "file": "server-account/src/market.js",
+    "old": "  if (goodRefusal(item)) return { error: 'market-not-good' };\n  if (typeof item.provenance === 'string') {",
+    "new": "  if (typeof item.provenance === 'string') {",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-piece-route-skipped",
+    "file": "server-account/src/market.js",
+    "old": "    if (p?.owner === me) return { error: 'market-piece-route' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-record-unasked-first",
+    "file": "server-account/src/market.js",
+    "old": "  const side = await realmActFirst(db, me, character, realm);\n  if (side.error) return side;\n  if (!side.at) return { error: 'market-gold-realm' };   // a piece from the pack is a realm record's",
+    "new": "  const side = { at: realm };\n  if (!side.at) return { error: 'market-gold-realm' };   // a piece from the pack is a realm record's",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-a-way-misread",
+    "file": "server-account/src/market.js",
+    "old": "r.owner !== me ? 'other' :",
+    "new": "r.owner !== me ? 'yours' :",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-goods-family-unfiltered",
+    "file": "server-account/src/market.js",
+    "old": "return !!it && (!family || goodFamily(it) === family);",
+    "new": "return !!it;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ],
+    "equivalent": true,
+    "why": "MARKET-AUDIT: the Goods view's family is chosen in its query (GOODS_FAMILY_SQL, the LATTY patch's family-before-the-cutoff) from the one GOOD_GROUP_FAMILIES table goodFamily reads - this JS filter after it is belt-and-braces, kept, and survives on the base too"
+  },
+  {
+    "name": "MARKET-ANY-service-the-buy-delivery-unwritten",
+    "file": "server-account/src/market.js",
+    "old": "        WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'item'`).bind(me, rid, nonce),",
+    "new": "        WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'none'`).bind(me, rid, nonce),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-sale-names-no-delivery",
+    "file": "server-account/src/market.js",
+    "old": "          CASE WHEN l.kind = 'item' THEN ?22 END   -- MARKET-ANY: the delivery a pack's piece comes by",
+    "new": "          CASE WHEN l.kind = 'none' THEN ?22 END   -- MARKET-ANY: the delivery a pack's piece comes by",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-collect-record-unmoved",
+    "file": "server-account/src/market.js",
+    "old": "      ...prep.steps,\n      db.prepare(`UPDATE market_deliveries SET collected = 1, rid = ?3 WHERE id = ?1 AND player = ?2 AND char_id = ?4 AND collected = 0 AND arrives_at <= ?5\n        AND item IS NOT NULL`)",
+    "new": "      db.prepare(`UPDATE market_deliveries SET collected = 1, rid = ?3 WHERE id = ?1 AND player = ?2 AND char_id = ?4 AND collected = 0 AND arrives_at <= ?5\n        AND item IS NOT NULL`)",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-collect-guard",
+    "file": "server-account/src/market.js",
+    "old": "      mustChange(db),   // no delivery collected, no piece into the record\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-a-pack-piece-minted-as-a-crafted-one",
+    "file": "server-account/src/market.js",
+    "old": "  if (d.item != null) return { error: 'realm-needed' };   // MARKET-ANY: a pack's piece goes into a record, never minted\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-cancel-delivery",
+    "file": "server-account/src/market.js",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the cancel's batch carries a crafted piece's return after it",
+    "old": "      SELECT id, seller, char_id, item, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3 AND kind = 'item'`).bind(id, nowS, nonce),",
+    "new": "      SELECT id, seller, char_id, item, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3 AND kind = 'none'`).bind(id, nowS, nonce),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-settle-return",
+    "file": "server-account/src/market.js",
+    "old": "    if (l.kind === 'item') {\n      // MARKET-ANY: a piece from a pack back to its seller",
+    "new": "    if (l.kind === 'none') {\n      // MARKET-ANY: a piece from a pack back to its seller",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-road-without-goods",
+    "file": "server-account/src/market.js",
+    "old": "    ...goods.map((d) => ({ kind: 'item',",
+    "new": "    ...goods.filter(() => false).map((d) => ({ kind: 'item',",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-the-history-unnamed",
+    "file": "server-account/src/market.js",
+    "old": "      ...(s.kind === 'item' ? { item: goodOf(s.good) } : {}) })),",
+    "new": "      })),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-service-a-pack-piece-bought-in-units",
+    "file": "server-account/src/market.js",
+    "old": "  if (l.kind === 'piece' || l.kind === 'item') units = 1;   // MARKET-ANY: a piece from a pack, whole",
+    "new": "  if (l.kind === 'piece') units = 1;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-routes-the-list-without-R2",
+    "file": "server-account/src/index.js",
+    "old": "'/v1/market/list': () => marketList(mctx, who.player, env, body),",
+    "new": "'/v1/market/list': () => marketList(ctx, who.player, env, body),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-routes-the-collect-without-R2",
+    "file": "server-account/src/index.js",
+    "old": "'/v1/market/collect': () => marketCollect(mctx, who.player, env, body),",
+    "new": "'/v1/market/collect': () => marketCollect(ctx, who.player, env, body),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-migration-the-reports-lost",
+    "file": "server-account/migrations/0044_market_goods.sql",
+    "old": "INSERT OR IGNORE INTO market_reports (listing, reporter, at)\n  SELECT k.listing, k.reporter, k.at FROM market_reports_keep k WHERE EXISTS (SELECT 1 FROM market_listings l WHERE l.id = k.listing);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-migration-an-index-dropped",
+    "file": "server-account/migrations/0044_market_goods.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_listings_closed ON market_listings (closed_at);   -- SCALE1 (0043)\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js",
+      "test/net/scale1.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-migration-a-Drakes-pack-piece",
+    "file": "server-account/migrations/0044_market_goods.sql",
+    "old": "        AND currency = 'gold')),",
+    "new": "        AND currency IN ('marks', 'gold'))),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-book-taken-before-the-hold",
+    "file": "src/net/marketBook.js",
+    "old": "    let undo = null,\n      asked = false;",
+    "new": "    let undo = good?.take?.() ?? null,\n      asked = true;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-book-never-put-back",
+    "file": "src/net/marketBook.js",
+    "old": "        reserve: () => () => {\n          const u = undo;\n          undo = null;\n          u?.();\n        },",
+    "new": "        reserve: () => () => {},",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-book-asked-for-a-piece-the-pack-would-not-give",
+    "file": "src/net/marketBook.js",
+    "old": "          if (!undo) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });\n          return door.list({ ...body, realm: at });",
+    "new": "          return door.list({ ...body, realm: at });",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-book-the-repeat-received",
+    "file": "src/net/marketBook.js",
+    "old": "            held = mine && goods.receive(a?.data?.item ?? null, why) === true;",
+    "new": "            held = goods.receive(a?.data?.item ?? null, why) === true;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-book-held-regardless",
+    "file": "src/net/marketBook.js",
+    "old": "          if (!held) realm.abandon?.('unknown');\n        },",
+    "new": "        },",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-book-arrivals-uncollected",
+    "file": "src/net/marketBook.js",
+    "old": "          for (const d of state.road.filter((x) => x.kind === 'item' && x.ready && x.character === me)) {",
+    "new": "          for (const d of state.road.filter((x) => x.kind === 'none' && x.ready && x.character === me)) {",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-book-the-pieces-unkeyed",
+    "file": "src/net/marketBook.js",
+    "old": "      (q.pieces ?? []).join(','),\n      (q.board ?? []).join(','),",
+    "new": "      (q.board ?? []).join(','),",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-pack-an-unwireable-piece-offered",
+    "file": "src/systems/tradePack.js",
+    "old": "          const why =\n            goodRefusal(item) ??\n            (pack.wire([{ item, count: Math.max(1, item.stackCount ?? 1) }])?.[0] ? null : 'shape');",
+    "new": "          const why = goodRefusal(item) ?? null;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-pack-taken-from-anywhere",
+    "file": "src/systems/tradePack.js",
+    "old": "          if ((entity.items ?? [])[pick] !== item || goodRefusal(item)) return null;",
+    "new": "          if (goodRefusal(item)) return null;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-pack-the-keeper-unasked",
+    "file": "src/systems/tradePack.js",
+    "old": "        .filter((it) => it && !(typeof it.provenance === 'string' && kept(it.provenance)))",
+    "new": "        .filter((it) => it)",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-pack-nothing-said",
+    "file": "src/systems/tradePack.js",
+    "old": "      say(\n        why === 'bought'\n          ? marketArrivedText(name)\n          : why === 'returned'\n            ? marketBackText(name)\n            : `${name} is in your pack.`,\n      );\n      return true;",
+    "new": "      return true;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-tab-the-option-without-gold",
+    "file": "src/ui/marketTab.js",
+    "old": "    const packOk = goldOk() && !!m.goods;",
+    "new": "    const packOk = !!m.goods;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-tab-the-refused-unsaid",
+    "file": "src/ui/packPicker.js",
+    "old": "  if (refused.length) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-tab-another-piece-offered-as-crafted",
+    "file": "src/ui/marketTab.js",
+    "old": "  const pieceListedAsCrafted = (pv) =>\n    st.data?.ways ? ['yours', 'unasked'].includes(/** @type {string} */ (heldState(pv))) : true;",
+    "new": "  const pieceListedAsCrafted = () => true;",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-tab-own-make-from-the-pack",
+    "file": "src/ui/marketTab.js",
+    "old": "        ? 'made by you. List it as a crafted piece'",
+    "new": "        ? null",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-tab-the-pieces-unsent",
+    "file": "src/ui/marketTab.js",
+    "old": "      ...(st.view === 'mine' ? { pieces: heldIds() } : {}), // MARKET-ANY",
+    "new": "      ...{}, // MARKET-ANY",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-tab-the-goods-view-unread",
+    "file": "src/ui/marketTab.js",
+    "old": "    } else if (st.view === 'goods') {",
+    "new": "    } else if (st.view === 'none') {",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-tab-arrivals-unasked",
+    "file": "src/ui/marketTab.js",
+    "old": "    (m.book.state.road ?? []).filter(\n      (x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id),\n    ); // MARKET-ANY: a pack's piece too",
+    "new": "    (m.book.state.road ?? []).filter((x) => x.kind === 'piece' && x.ready && mine(x) && !tried.has(x.id)); // MARKET-ANY: a pack's piece too",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-host-the-keeper-unasked",
+    "file": "src/scenes/marketPiecesHost.js",
+    "old": "const marketGoods = createMarketGoods(playerEntity, { kept: (pv) => pieceKept(pv), say: (t) => host.townTalk.say(t) });",
+    "new": "const marketGoods = createMarketGoods(playerEntity, { say: (t) => host.townTalk.say(t) });",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-host-the-tab-goods-unwired",
+    "file": "src/scenes/world.js",
+    "old": " drop: marketDrop, goods: () => marketGoods.goods(), good: (it) => marketGoods.good(it), goodName: (rec) => marketGoods.goodName(rec),   // MARKET-ANY: a piece from the pack, for gold",
+    "new": " drop: marketDrop,",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ]
+  },
+  {
+    "name": "MARKET-ANY-host-the-book-receive-unwired",
+    "file": "src/scenes/world.js",
+    "old": " goods: realmSession ? { receive: (rec, why) => marketGoods.receive(rec, why) } : null,\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js",
+      "test/net/goldmarket_client.test.js"
+    ]
+  },
+  {
+    "name": "PROF541-R2-S2-pack-drakes-wall",
+    "file": "server-account/src/market.js",
+    "old": "    if (p?.bought_with === 'marks') return { error: 'market-drakes-goods' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ],
+    "note": "AUDIT PROF-541 R2-S2: a Drakes-bought make never lists for gold from the pack."
+  },
+  {
+    "name": "PROF541-R2-S2-pack-gold-passes",
+    "file": "server-account/src/market.js",
+    "old": "    if (p?.bought_with === 'marks') return { error: 'market-drakes-goods' };\n",
+    "new": "    if (p?.bought_with) return { error: 'market-drakes-goods' };\n",
+    "tests": [
+      "test/systems/fb1001_market_goods.test.js"
+    ],
+    "note": "AUDIT PROF-541 R2-S2: a gold-bought one lists."
+  }
+]

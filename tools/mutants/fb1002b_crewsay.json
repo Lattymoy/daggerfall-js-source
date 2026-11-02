@@ -1,0 +1,154 @@
+[
+  {
+    "name": "SAY-talk-together",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const together = p.kind === 'sing' || p.kind === 'shout';",
+    "new": "    const together = true;",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-shout-each",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const together = p.kind === 'sing' || p.kind === 'shout';",
+    "new": "    const together = p.kind === 'sing';",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-sing-each",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const together = p.kind === 'sing' || p.kind === 'shout';",
+    "new": "    const together = p.kind === 'shout';",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-who-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const key = together ? `${p.kind}|${p.text}` : `${p.who ?? p.name ?? ''}|${p.text}`;",
+    "new": "    const key = together ? `${p.kind}|${p.text}` : `${p.text}`;",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-order-by-distance",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  for (const g of chosen) g.born = memory?.bubbles.get(g.key)?.born ?? (memory ? ++memory.seq : g.at); // a line's place in its stack: when it was first laid, the nearest first of a frame's",
+    "new": "  for (const g of chosen) g.born = g.at; // a line's place in its stack: when it was first laid, the nearest first of a frame's",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-memory-unfed",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    memory.bubbles = keep;",
+    "new": "    void keep;",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-ease-at-once",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "      const eased = Math.max(lift, was.lift - (dt > 0 ? Math.max(1, Math.floor(CREW_SAY_EASE * scale * dt)) : 0)); // a pixel a frame at the least: whole pixels",
+    "new": "      const eased = Math.max(lift, was.lift - Infinity); // a pixel a frame at the least: whole pixels",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-ease-through",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "      if (clear(eased)) lift = eased;\n      else if (clear(was.lift)) lift = was.lift;",
+    "new": "      lift = eased;",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-ease-unheld",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "      else if (clear(was.lift)) lift = was.lift;\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-top-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    if (lift > 0 && foot - lift - h < top) continue; // over the screen's top: not drawn",
+    "new": "",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-top-own-head-too",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    if (lift > 0 && foot - lift - h < top) continue; // over the screen's top: not drawn",
+    "new": "    if (foot - lift - h < top) continue; // over the screen's top: not drawn",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-draw-forgets",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
+    "new": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: null, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js",
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SAY-draw-off-the-top",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
+    "new": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: sayMemory, dt }); // CREW-SAY: laid out, never over each other",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js",
+      "test/systems/naval/livingcrew.test.js"
+    ]
+  },
+  {
+    "name": "SAY-world-dt-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "    drawCrewLines(points, { covered, scale: enhancedHudScale(), dt: gamePaused() ? 0 : dt });",
+    "new": "    drawCrewLines(points, { covered, scale: enhancedHudScale() });",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  },
+  {
+    "name": "SAY-world-who-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "name: name ? name.split(' ')[0] : null, who: key, kind: l.kind, distance: d });",
+    "new": "name: name ? name.split(' ')[0] : null, kind: l.kind, distance: d });",
+    "tests": [
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
+    ]
+  }
+]

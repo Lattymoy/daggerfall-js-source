@@ -1,0 +1,13 @@
+-- PVP-VILLAIN-KEEP (2026-10-29, the PvP rework; bible/11-Multiplayer/PvP-Rework.md PVP-VILLAIN-KEEP) - THE VILLAIN METER
+-- KEPT.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), before the Worker that reads
+-- it. SQLite has no ADD COLUMN IF NOT EXISTS, so a second run errors harmlessly.
+--
+-- `realm_characters.villainy`: the character's villain meter, 0..10,000 (src/systems/wild/villainLaw.js VILLAIN). A fall's
+-- signed points (`vp`) raise its killer's in the fall's own batch (server-account/src/villainy.js); a monster at its level,
+-- a quest and a raid lower it. The identity token signs it (`vl`), so a fresh relay reads it at the door. 0 for everyone
+-- today: the relay kept no meter before this.
+ALTER TABLE realm_characters ADD COLUMN villainy INTEGER NOT NULL DEFAULT 0;

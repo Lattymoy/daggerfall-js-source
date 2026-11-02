@@ -1,0 +1,72 @@
+[
+  {
+    "name": "SCALE4f2-badge-gone-guild",
+    "file": "server-account/src/guilds.js",
+    "old": "  const r = member !== undefined ? (member && member.gid != null ? member : null)",
+    "new": "  const r = member !== undefined ? (member ? member : null)",
+    "tests": [
+      "test/server/scale4f_guild.test.js"
+    ],
+    "note": "a guild's badge minted off a guild whose row is gone"
+  },
+  {
+    "name": "SCALE4f2-rank-unread",
+    "file": "server-account/src/guilds.js",
+    "old": "m.guild_id AS guild_id, m.rank AS rank, m.joined_at AS joined_at",
+    "new": "m.guild_id AS guild_id, m.joined_at AS joined_at",
+    "tests": [
+      "test/server/scale4f_guild.test.js"
+    ],
+    "note": "the guildmaster's seat title never signed - its rank not read"
+  },
+  {
+    "name": "SCALE4f2-joined-unread",
+    "file": "server-account/src/seatRibbons.js",
+    "old": "          .prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1')\n          .bind(member.guild_id, n, member.joined_at)",
+    "new": "          .prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? LIMIT 1')\n          .bind(member.guild_id, n)",
+    "tests": [
+      "test/server/scale4f_guild.test.js"
+    ],
+    "note": "a ribbon worn by a member who joined after the Turning that earned it"
+  },
+  {
+    "name": "SCALE4f2-season-unread",
+    "file": "server-account/src/seatRibbons.js",
+    "old": "          .prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1')\n          .bind(member.guild_id, n, member.joined_at)",
+    "new": "          .prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND at >= ? LIMIT 1')\n          .bind(member.guild_id, member.joined_at)",
+    "tests": [
+      "test/server/scale4f_guild.test.js"
+    ],
+    "note": "another Season's ribbon worn"
+  },
+  {
+    "name": "SCALE4f2-ribbon-gone-guild",
+    "file": "server-account/src/seatRibbons.js",
+    "old": "        member.gid != null &&\n        (await db",
+    "new": "        (await db",
+    "tests": [
+      "test/server/scale4f_guild.test.js"
+    ],
+    "note": "a ribbon off a guild whose row is gone"
+  },
+  {
+    "name": "SCALE4f2-heraldry-lost",
+    "file": "server-account/src/seatRibbons.js",
+    "old": "        ? { heraldry: member.heraldry }",
+    "new": "        ? { heraldry: null }",
+    "tests": [
+      "test/server/scale4f_guild.test.js"
+    ],
+    "note": "the guild's colours lost from the ribbon"
+  },
+  {
+    "name": "SCALE4f2-read-again",
+    "file": "server-account/src/index.js",
+    "old": "        const member = renownCharacterOk(body.character) && (seats || body.guild === true) ? await mintMemberOf(ctx, who.player.id, body.character) : undefined;",
+    "new": "        const member = undefined;",
+    "tests": [
+      "test/server/scale4f_guild.test.js"
+    ],
+    "note": "each of the three reads the membership for itself again"
+  }
+]

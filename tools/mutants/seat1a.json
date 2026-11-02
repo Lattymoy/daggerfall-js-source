@@ -1,0 +1,397 @@
+[
+  {
+    "name": "SEAT1a-report-bytes-reordered",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  JSON.stringify([seat.key, seat.name, seat.region, seat.tier, seat.pixel[0], seat.pixel[1]]);",
+    "new": "  JSON.stringify([seat.name, seat.key, seat.region, seat.tier, seat.pixel[0], seat.pixel[1]]);",
+    "tests": [
+      "test/net/seat1a_client.test.js",
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-name-one-longer",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  typeof n === 'string' && n.length >= 1 && n.length <= 48 && /^[\\x20-\\x7e]+$/.test(n) && n.trim() === n;",
+    "new": "  typeof n === 'string' && n.length >= 1 && n.length <= 49 && /^[\\x20-\\x7e]+$/.test(n) && n.trim() === n;",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-crown-any-name",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (\n    tier === 'crown' &&\n    (!Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) ||\n      name !== kingdomSeatName(CROWN_SEAT_REGIONS[region]))\n  )\n    return null; // WW7-3: a province's crown its capital's name",
+    "new": "  if (tier === 'crown' && !Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region)) return null; // WW7-3: a province's crown its capital's name",
+    "tests": [
+      "test/net/seat1a_client.test.js",
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-switch-open-by-default",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const seatsSwitchOf = (v) => (SEATS_SWITCH.includes(v) ? v : 'off');",
+    "new": "export const seatsSwitchOf = (v) => (SEATS_SWITCH.includes(v) ? v : 'on');",
+    "tests": [
+      "test/net/seat1a_client.test.js",
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-ignored-at-two",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const n = SEAT_WITNESS_UNMATCHED_MAX;",
+    "new": "  const n = SEAT_WITNESS_UNMATCHED_MAX - 1;",
+    "tests": [
+      "test/net/seat1a_client.test.js",
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-ignored-for-ever",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S && nowS < ts[i] + SEAT_WITNESS_IGNORED_S) {",
+    "new": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S) {",
+    "tests": [
+      "test/net/seat1a_client.test.js",
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-shared-dissent-counted",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if ((givers.get(`${r.key}\\n${r.report}`)?.size ?? 0) > 1) continue;",
+    "new": "    if ((givers.get(`${r.key}\\n${r.report}`)?.size ?? 0) > 99) continue;",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-arrival-unsaid-unheld",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return (holder ? `${seat.name}, held by ${guildWords(holder)}.` : `${seat.name}. Its Charter is unheld.`) + siege;",
+    "new": "  return (holder ? `${seat.name}, held by ${guildWords(holder)}.` : `${seat.name}.`) + siege;",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-march-one-metal",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const second = isMarch(seat.region)\n    ? MARCHES[seat.region].map((k) => KINGDOM_METALS[k])\n    : isFreeLand(seat.region)\n      ? [FREE_LAND_RING]\n      : null;",
+    "new": "  const second = isMarch(seat.region) ? [SEAT_RING_UNHELD] : isFreeLand(seat.region) ? [FREE_LAND_RING] : null;",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-week-an-hour-early",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SEAT_WEEK0_MS = ONLINE_EPOCH_MS + 6 * 24 * H + 18 * H;",
+    "new": "export const SEAT_WEEK0_MS = ONLINE_EPOCH_MS + 6 * 24 * H + 17 * H;",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-reckoning-late",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  ms - seatWeekStartMs(seatWeekOf(ms)) >= SEAT_WEEK_MS - SEAT_RECKONING_MS ? 'reckoning' : 'muster';",
+    "new": "  ms - seatWeekStartMs(seatWeekOf(ms)) > SEAT_WEEK_MS - SEAT_RECKONING_MS ? 'reckoning' : 'muster';",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-any-building-a-palace",
+    "file": "src/systems/town/townSeats.js",
+    "old": "export const hasPalace = (loc) =>\n  (loc?.exterior?.buildings ?? []).some((b) => b?.buildingType === BUILDING_TYPES.Palace);",
+    "new": "export const hasPalace = (loc) => (loc?.exterior?.buildings ?? []).some((b) => b?.buildingType != null);",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-crown-with-a-palace-a-palace",
+    "file": "src/systems/town/townSeats.js",
+    "old": "    tier: crown ? 'crown' : 'palace',",
+    "new": "    tier: hasPalace(loc) ? 'palace' : 'crown',",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-mod-rows-counted",
+    "file": "src/systems/town/townSeats.js",
+    "old": "    if (!loc || !isBase(loc)) continue;",
+    "new": "    if (!loc) continue;",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-key-signed",
+    "file": "src/systems/town/townSeats.js",
+    "old": "    key: loc.mapTableData.mapId >>> 0,",
+    "new": "    key: loc.mapTableData.mapId | 0,",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-young-witness",
+    "file": "server-account/src/townSeats.js",
+    "old": "export const witnessOf = (player, nowS) =>\n  Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS;",
+    "new": "export const witnessOf = (player, nowS) => Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS;",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-ignored-still-counted",
+    "file": "server-account/src/townSeats.js",
+    "old": "  if (ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };\n  const put = await db",
+    "new": "  const put = await db",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-list-unconfirmed",
+    "file": "server-account/src/townSeats.js",
+    "old": "      .filter((s) => factConfirmed(s.fact))",
+    "new": "      .filter((s) => s.fact.seat)",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-struck-witnessed-again",
+    "file": "server-account/src/townSeats.js",
+    "old": "  if (await struck(db, s.key)) return { error: 'seat-struck' };\n  if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };",
+    "new": "  if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-strike-anyones",
+    "file": "server-account/src/townSeats.js",
+    "old": "  if (!isDeveloper(dev, env)) return { error: 'not-developer' };\n  if (!seatKeyOk(key)) return { error: 'bad-seat' };",
+    "new": "  if (!seatKeyOk(key)) return { error: 'bad-seat' };",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-strike-unrecorded",
+    "file": "server-account/src/townSeats.js",
+    "old": "      SELECT ?1, ?2, 'strike', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`,",
+    "new": "      SELECT ?1, ?2, 'struck', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`,",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-audit-any-count",
+    "file": "server-account/src/townSeats.js",
+    "old": "    s.audit = (factConfirmed(s.fact) && s.agreeing.length === SEAT_WITNESSES_AUDIT) || s.fact.state === 'disputed';",
+    "new": "    s.audit = (factConfirmed(s.fact) && s.agreeing.length >= SEAT_WITNESSES_AUDIT) || s.fact.state === 'disputed';",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-list-switch-unasked",
+    "file": "server-account/src/townSeats.js",
+    "old": "  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n  const dev = isDeveloper(player, env);",
+    "new": "  const dev = isDeveloper(player, env);",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-witness-rate-one-more",
+    "file": "server-account/src/townSeats.js",
+    "old": "  if (await overRate({ db, nowS }, `seat-witness:${player.id}`, SEAT_WITNESS_REPORTS_HOUR, 3600))",
+    "new": "  if (await overRate({ db, nowS }, `seat-witness:${player.id}`, SEAT_WITNESS_REPORTS_HOUR + 1, 3600))",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-first-answer-replaced",
+    "file": "server-account/src/townSeats.js",
+    "old": "      \"INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)\",",
+    "new": "      \"INSERT OR REPLACE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)\",",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-kind-unadmitted",
+    "file": "server-account/migrations/0048_town_seats.sql",
+    "old": "CHECK (kind IN ('pixel', 'dungeon', 'hub', 'seat'))",
+    "new": "CHECK (kind IN ('pixel', 'dungeon', 'hub'))",
+    "tests": [
+      "test/net/seat1a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-book-no-cache",
+    "file": "src/net/townSeatBook.js",
+    "old": "    if (!force && nowMs() - at < SEAT_LIST_CACHE_MS && seatWeekOf(at) === seatWeekOf(nowMs()))",
+    "new": "    if (false && nowMs() - at < SEAT_LIST_CACHE_MS && seatWeekOf(at) === seatWeekOf(nowMs()))",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-book-no-session-held",
+    "file": "src/net/townSeatBook.js",
+    "old": "      at = r?.error === 'no-session' ? -Infinity : nowMs();",
+    "new": "      at = nowMs();",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-book-every-arrival",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (t[String(s.key)] === dayNow()) return false;\n      t[String(s.key)] = dayNow();",
+    "new": "      t[String(s.key)] = dayNow();",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-book-shut-reports",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (!s || open !== true) return false;",
+    "new": "      if (!s) return false;",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-map-no-seat",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "    ...seatMarkOf(seatAt(m.summary)),",
+    "new": "    ...seatMarkOf(null),",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-map-reach-ignores-the-ring",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + (m.hub ? HUB_CIRCLE_PAD : 0) + (m.seat ? SEAT_RING_PAD : 0);",
+    "new": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + (m.hub ? HUB_CIRCLE_PAD : 0) + 0;",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-map-no-second-ring",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  if (mark.second?.length) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-map-no-crown",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  if (mark.crown) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-map-ring-over-the-glyph",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
+    "new": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-held-map-no-seat",
+    "file": "src/ui/heldMap.js",
+    "old": "        seatAt: (s) => this.deps.seatAt?.(s) ?? null,",
+    "new": "        seatAt: () => null,",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-gate-town-side-wrong",
+    "file": "src/scenes/seatBanners.js",
+    "old": "  if ((centre[0] - cx) * ox + (centre[1] - cz) * oz < 0) {",
+    "new": "  if ((centre[0] - cx) * ox + (centre[1] - cz) * oz > 0) {",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-banners-past-eight",
+    "file": "src/scenes/seatBanners.js",
+    "old": "    if (a && out.length < SEAT_BANNERS_MAX) out.push(a);",
+    "new": "    if (a) out.push(a);",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-palace-any-record",
+    "file": "src/scenes/seatBanners.js",
+    "old": "    for (let i = 0; i < count; i++)\n      if (list[i]?.buildingType === BUILDING_TYPES.Palace) out.push(makeKey(b.x ?? 0, b.y ?? 0, i));",
+    "new": "    for (let i = 0; i < count; i++) if (list[i]?.buildingType != null) out.push(makeKey(b.x ?? 0, b.y ?? 0, i));",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1a-banners-while-shut",
+    "file": "src/scenes/seatBanners.js",
+    "old": "      const h = seat ? seatBannerOf(seat) : null; // SEAT1c: a held seat's in its holder's own colours",
+    "new": "      const h = seatBannerOf(seat ?? { region: 21 }); // SEAT1c: a held seat's in its holder's own colours",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ],
+    "note": "SEAT1c (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "SEAT1a-arrival-no-report",
+    "file": "src/scenes/world.js",
+    "old": "if (seat) { townTalk.say(seatArrivalLine(seat), 5); seatBook.witness(seat); }",
+    "new": "if (seat) { townTalk.say(seatArrivalLine(seat), 5); }",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ],
+    "note": "SEAT1c (PIN MOVED): re-aimed by content - the arrival names its holder."
+  },
+  {
+    "name": "SEAT1a-seat-drawn-shut",
+    "file": "src/scenes/world.js",
+    "old": "const seatHere = (mapId) => (seatBook?.open === true ? seatBook.dressed(seatAtMapId(townSeats, mapId)) : null);",
+    "new": "const seatHere = (mapId) => (seatBook ? seatBook.dressed(seatAtMapId(townSeats, mapId)) : null);",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ],
+    "note": "SEAT1c (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "SEAT1a-seat-banners-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    for (const b of seatBanners?.list() ?? []) all.push(b);",
+    "new": "    for (const b of []) all.push(b);",
+    "tests": [
+      "test/net/seat1a_client.test.js"
+    ]
+  }
+]

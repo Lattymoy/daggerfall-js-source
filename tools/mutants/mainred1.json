@@ -1,0 +1,42 @@
+[
+  {
+    "name": "MAINRED1-frame-rz-member-read",
+    "file": "server/src/index.js",
+    "old": "const p = this._ktPoseOf(b.pose), rz = V.players[b.sub]?.rzAt;",
+    "new": "const p = this._ktPoseOf(b.pose), rz = b.pose?.rz ?? V.players[b.sub]?.rzAt;",
+    "tests": [
+      "test/systems/raid2_raidsOnline.test.js"
+    ],
+    "note": "MAIN-RED (2026-10-26): a foes frame's rz read as a member - the tree pin must still see it"
+  },
+  {
+    "name": "MAINRED1-frame-rz-pattern-read",
+    "file": "server/src/index.js",
+    "old": "const p = this._ktPoseOf(b.pose), rz = V.players[b.sub]?.rzAt;",
+    "new": "const p = this._ktPoseOf(b.pose), { rz } = b.pose ?? {};",
+    "tests": [
+      "test/systems/raid2_raidsOnline.test.js"
+    ],
+    "note": "MAIN-RED (2026-10-26): a foes frame's rz taken by a pattern"
+  },
+  {
+    "name": "MAINRED1-frame-rk-literal-write",
+    "file": "server/src/index.js",
+    "old": "return { sub: b.sub, x: p.x, y: p.y, z: p.z, dead: p.dead && !(Number.isFinite(rz) && (b.pAt ?? b.since ?? 0) <= rz),",
+    "new": "return { sub: b.sub, rk: 0, x: p.x, y: p.y, z: p.z, dead: p.dead && !(Number.isFinite(rz) && (b.pAt ?? b.since ?? 0) <= rz),",
+    "tests": [
+      "test/systems/raid2_raidsOnline.test.js"
+    ],
+    "note": "MAIN-RED (2026-10-26): a literal that writes an rk, as the text sweep refused"
+  },
+  {
+    "name": "MAINRED1-frame-al-member-read",
+    "file": "server/src/index.js",
+    "old": "dead: p.dead && !(Number.isFinite(rz) && (b.pAt ?? b.since ?? 0) <= rz),",
+    "new": "dead: (p.dead || !!b.pose?.al) && !(Number.isFinite(rz) && (b.pAt ?? b.since ?? 0) <= rz),",
+    "tests": [
+      "test/systems/raid2_raidsOnline.test.js"
+    ],
+    "note": "MAIN-RED (2026-10-26): an ally's al read off a frame"
+  }
+]

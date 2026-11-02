@@ -1,0 +1,403 @@
+[
+  {
+    "name": "KNIGHT-HOUSE-crossed-deed-counted",
+    "file": "src/net/homeLaw.js",
+    "old": "    regionDeedsOf(houses, region).find(\n      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,\n    ) ?? null",
+    "new": "    regionDeedsOf(houses, region).find((d) => d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id) ?? null",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. A deed customs carried in read as one the realm gave: an offline house held from everyone online (HOME1 keeps it offline only)."
+  },
+  {
+    "name": "KNIGHT-HOUSE-key-unread",
+    "file": "src/net/homeLaw.js",
+    "old": "  return (\n    regionDeedsOf(houses, region).find(\n      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,\n    ) ?? null\n  );",
+    "new": "  return regionDeedsOf(houses, region).find((d) => !d.crossed && Number(d.mapId) >>> 0 === id) ?? null;",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. Any building of the town read as the deed's: every house next door unsellable to the knight, and held."
+  },
+  {
+    "name": "KNIGHT-HOUSE-map-id-signed",
+    "file": "src/net/homeLaw.js",
+    "old": "    regionDeedsOf(houses, region).find(\n      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,\n    ) ?? null",
+    "new": "    regionDeedsOf(houses, region).find((d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) === id) ??\n    null",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. The save's signed map id (MAPS.BSA reads it signed) compared to the door's unsigned one: a town past 2^31 never matches."
+  },
+  {
+    "name": "KNIGHT-HOUSE-town-unread",
+    "file": "src/net/homeLaw.js",
+    "old": "  return (\n    regionDeedsOf(houses, region).find(\n      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,\n    ) ?? null\n  );",
+    "new": "  return regionDeedsOf(houses, region).find((d) => !d.crossed && d.buildingKey === buildingKey) ?? null;",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. The same key in another town read as the deed's building."
+  },
+  {
+    "name": "KNIGHT-HOUSE-sleeping-deed-counted",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "return !!slot && deedStands(slot);",
+    "new": "return !!slot;",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A deed asleep in another layout (WD3 H1) names another building: that one kept from its buyers."
+  },
+  {
+    "name": "KNIGHT-HOUSE-own-deed-an-online-home",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "    if (row.mine && row.deed && typeof me === 'string' && row.character === me) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js",
+      "test/server/home1.test.js"
+    ],
+    "note": "A read made before the character was known names the knight's own deed row: the door took it for an online home (another scene, its things gone from view). ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the knight's own deed, by its character."
+  },
+  {
+    "name": "KNIGHT-HOUSE-client-blind-to-deed",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "deed: h.deed === true,",
+    "new": "deed: false,",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The registry drops the service's word: the own deed row read as an online home."
+  },
+  {
+    "name": "KNIGHT-HOUSE-no-deed-listed",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "      return realmDeedAt(houses, region, mapId, slot.buildingKey)\n        ? [{ region, mapId, buildingKey: slot.buildingKey }]\n        : [];",
+    "new": "      return realmDeedAt(houses, region, mapId, slot.buildingKey) ? [] : [];",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The boot holds nothing: a knight given a house before the hold existed stays exposed."
+  },
+  {
+    "name": "KNIGHT-HOUSE-hold-repeat-unsaid",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "if (r?.ok) return { ok: true, repeat: r.data?.repeat === true };",
+    "new": "if (r?.ok) return { ok: true, repeat: false };",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The registry hides the service's repeat."
+  },
+  {
+    "name": "KNIGHT-HOUSE-hold-route-misspelt",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/homes/deed', ",
+    "new": "post('/v1/homes/deeds', ",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The hold asks a route the service does not have."
+  },
+  {
+    "name": "KNIGHT-HOUSE-release-unmarked",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/homes/release', { mapId, buildingKey, deed: true })",
+    "new": "post('/v1/homes/release', { mapId, buildingKey })",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The deed's release asks the home's sale, which refuses it: the bank's sale of the deed left the building held from every buyer."
+  },
+  {
+    "name": "KNIGHT-HOUSE-market-owned-unread",
+    "file": "src/systems/banking.js",
+    "old": "    if (owned?.(b)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The market lists a building someone owns: the Seneschal hands on another knight's house or a player's home."
+  },
+  {
+    "name": "KNIGHT-HOUSE-market-host-none",
+    "file": "src/scenes/worldModes.js",
+    "old": "      owned: (bs) => houseOwnedAt({ townMapId: dir.mapId, regionIndex: dir.regionIndex }, bs.buildingKey) || !!host.onlineHomes?.homeAt(dir.mapId, bs.buildingKey),\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. The host never says who owns what: the law reads nothing."
+  },
+  {
+    "name": "KNIGHT-HOUSE-record-unread",
+    "file": "server-account/src/homes.js",
+    "old": "  if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null)) return { error: 'no-deed' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The hold trusts the client's word: any building held free, uncapped."
+  },
+  {
+    "name": "KNIGHT-HOUSE-deed-layout-unasked",
+    "file": "server-account/src/homes.js",
+    "old": "if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null))",
+    "new": "if (!deed)",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A deed given in one layout held in another: its key names a stranger's building there."
+  },
+  {
+    "name": "KNIGHT-HOUSE-hold-unwritten",
+    "file": "server-account/src/homes.js",
+    "old": "  await db.batch([accessOrphansCleared(db, mapId, buildingKey), deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS)]);   // AUDIT FB1029f A1\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The hold answers and writes nothing: the building stays claimable. AUDIT FB1029f (PIN MOVED): re-aimed by content."
+  },
+  {
+    "name": "KNIGHT-HOUSE-hold-a-bought-home",
+    "file": "server-account/src/homes.js",
+    "old": "SELECT ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ${TOWN_LAYOUT_SQL}, 1",
+    "new": "SELECT ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ${TOWN_LAYOUT_SQL}, 0",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The hold written as a home bought: counted by the cap, listed to its knight as an online home."
+  },
+  {
+    "name": "KNIGHT-HOUSE-cap-counts-deed",
+    "file": "server-account/src/homes.js",
+    "old": " AND deed = 0) < ?",
+    "new": ") < ?",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The deed costs one of the three homes a character may buy."
+  },
+  {
+    "name": "KNIGHT-HOUSE-own-deed-listed",
+    "file": "server-account/src/homes.js",
+    "old": "homes: results.filter((h) => !(h.deed === 1 && h.player === player.id && h.char_id === me)).map((h) => {",
+    "new": "homes: results.map((h) => {",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The knight's own answer lists the deed: an older build takes it for an online home and keeps its things under another scene."
+  },
+  {
+    "name": "KNIGHT-HOUSE-deed-unsaid",
+    "file": "server-account/src/homes.js",
+    "old": "        ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The town's answer never says a row is a deed: the client cannot know its own."
+  },
+  {
+    "name": "KNIGHT-HOUSE-release-any-row",
+    "file": "server-account/src/homes.js",
+    "old": "AND player = ? AND deed = 1').bind(mapId, buildingKey, player.id).run();",
+    "new": "AND player = ?').bind(mapId, buildingKey, player.id).run();",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A deed's release takes a home bought at a door, for nothing."
+  },
+  {
+    "name": "KNIGHT-HOUSE-release-arm-gone",
+    "file": "server-account/src/homes.js",
+    "old": "  if (deed === true) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The deed's release reaches the home's sale, which refuses a row no record paid for."
+  },
+  {
+    "name": "KNIGHT-HOUSE-hour-unread",
+    "file": "server-account/src/homes.js",
+    "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };\n  // THE RECORD HOLDS IT",
+    "new": "  // THE RECORD HOLDS IT",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "Holds count against no hour: a record read from R2 at every request, without end."
+  },
+  {
+    "name": "KNIGHT-HOUSE-town-layout-unasked",
+    "file": "server-account/src/homes.js",
+    "old": "  // a claim's order (AUDIT WD3 B8): another layout of the town refused before the hour counts it; the record read after it\n  const refused = await townLayoutRefusal(db, mapId, layout ?? null);\n  if (refused) return refused;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A hold in another layout of the town counted against the hour (AUDIT WD3 B8's order)."
+  },
+  {
+    "name": "KNIGHT-HOUSE-arena-cell-held",
+    "file": "server-account/src/homes.js",
+    "old": "  if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };\n  if (typeof character",
+    "new": "  if (typeof character",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A key of the arena's cell (no building since ARENA1) held."
+  },
+  {
+    "name": "KNIGHT-HOUSE-route-unwired",
+    "file": "server-account/src/index.js",
+    "old": "        if (path === '/v1/homes/deed') {\n",
+    "new": "        if (false) {\n",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The worker answers the hold with the entry's refusal."
+  },
+  {
+    "name": "KNIGHT-HOUSE-route-unlisted",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/homes/deed',\n  // PERMADEATH-HOUSES: a fallen realm character's home taken up by the living realm character of its line who carries it",
+    "new": "  // PERMADEATH-HOUSES: a fallen realm character's home taken up by the living realm character of its line who carries it",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The route set refuses the hold (404)."
+  },
+  {
+    "name": "KNIGHT-HOUSE-move-drops-deed",
+    "file": "server-account/src/homes.js",
+    "old": "'rent_due', 'look', 'layout', 'deed', 'ground']);",
+    "new": "'rent_due', 'look', 'layout', 'ground']);",
+    "tests": [
+      "test/net/arena4b_homes.test.js"
+    ],
+    "note": "An arena move carries the row without its `deed` - the pin over the table's columns says so."
+  },
+  {
+    "name": "KNIGHT-HOUSE-version-unmoved",
+    "file": "server-account/src/service.js",
+    "old": "export const ACCOUNT_VERSION = 'acct243';",
+    "new": "export const ACCOUNT_VERSION = 'acct76';",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "Re-aimed by content (THE MERGES OF MAIN INTO THE DWARVEN DRAGON'S BRANCH AT 566057d51, bd748f03c, c72b366b5 AND d9e485583): acct222, the Dwarven Dragon claim (acct213, acct216, acct217, acct218, acct219 then acct221 on its branch, renumbered past main's acct213 to acct221 at the merges). Re-aimed by content (the fourth merge of main into #1184, 2026-10-27): acct204 (acct198 on its branch, renumbered past main's acct198-acct203). Re-aimed by content (the third merge of main into #1184, 2026-10-27): acct198 (acct197 on its branch, renumbered past JEWEL-KIN and MASTER-THREE's acct197 on main), TESA with WORLD-WIDE folded in and the releases folded with it. JEWEL-KIN and MASTER-THREE (PIN MOVED): acct197 (a craft stamps the mint version its client says, 4 at most - jewellery leans to Hand-to-Hand and Critical Strike; the mastery slots 3/2/1; acct195 then acct196 on its branch, renumbered past LOCKPICK and WOVEN-PAYS at its merges). WOVEN-PAYS (PIN MOVED): acct196 (the first-time bonus of a cloth piece walled while the count of cloth bought with silver stands, its pattern made by the craft that paid it; acct195 on its branch, renumbered past LOCKPICK and AUDIT GATHER acct195 on main; migration 0177_woven_pays). LOCKPICK and AUDIT GATHER (PIN MOVED): acct195 (the item law knows the Lockpick; AUDIT GATHER F2, F3). NIRNROOT-SAGE (PIN MOVED): acct194 (NIRNROOT_SAGE_HANDLES grants Blob-Marley a title, its glyph and an aura). COPY-LIFT (PIN MOVED): acct193 (FIELD BUGS 2026-10-25i: the staff purge with keep keeps one of each copied piece and lifts its lock in the same batch; acct191 on its branch, renumbered past acct191 and acct192 on main at the merge). ECON-LEFT-OUT and ECON-WORTH (PIN MOVED): acct192 (the staff Economy keeps banned and trade-held characters out of its gold totals; acct186 on its branch, renumbered past main's acct186-acct191 at the merge; no migration). YARD-TOWN (PIN MOVED): acct191 (the yards of a town bound at the placement, refused as yard-town-full, every town built again at the bound; migration 0175; acct177 on its branch, renumbered past acct177-acct190 at its merges). VENDOR-LOST (PIN MOVED): acct191 (a gold buy asked again from the sequence before it, with a sale its id made, answered as that sale landed; no migration; acct177 on its branch, renumbered past acct177-acct190 at the merges). BROKER-RID (PIN MOVED): acct190 (AUDIT FB1024; acct182 on its branch, renumbered past main's acct182-acct189 at the merges), migration 0174. DAEDRIC-SMELT and DEEP-OPEN (PIN MOVED): acct189 (the Daedric smelt's ember spent from the account's purse; a dungeon nobody witnessed draws its whole deep table; acct182 on its branch, renumbered past STAFF-EVENT, AUDIT HIDDEN-UNCOUNTED, STAFF-EVENT BOSS, CLOTH-GEMS, DECOR-USE and PERK-TRIAL, AFFIX-LINES and REFORGE-REPLACE and FIRST-BUDGET at the merge). Re-aimed by content. FIRST-BUDGET (PIN MOVED): acct188 (each crafting track's first-make the share that brings it to Master in Smithing's crafts, 500 at the least; the potion maker the brew door at an alchemy station; acct182 on its branch, renumbered past STAFF-EVENT's acct182, AUDIT HIDDEN-UNCOUNTED's acct183, STAFF-EVENT BOSS's acct184, CLOTH-GEMS's acct185, DECOR-USE and PERK-TRIAL's acct186 and AFFIX-LINES and REFORGE-REPLACE's acct187 at the merge). AFFIX-LINES and REFORGE-REPLACE (PIN MOVED): acct187 (a line drawn over the lines, mint version 2 at the craft; the Reforge with Essence doubled for each reforge a piece has taken; item law 14; acct182 on its branch, renumbered past STAFF-EVENT's acct182, AUDIT HIDDEN-UNCOUNTED's acct183, STAFF-EVENT BOSS's acct184, CLOTH-GEMS's acct185 and DECOR-USE and PERK-TRIAL's acct186 at the merge). DECOR-USE and PERK-TRIAL (PIN MOVED): acct186 (the decor's cooking station and a profession choice's day of trial; migration 0173; acct182 on its branch, renumbered past STAFF-EVENT, AUDIT HIDDEN-UNCOUNTED, STAFF-EVENT BOSS and CLOTH-GEMS at the merge). CLOTH-GEMS (PIN MOVED): acct185 (the loom's Linen and Wool, AUDIT 32 S1 judged by the units, every gem's grade at the jeweller's bench; no migration; acct182 on its branch, renumbered past STAFF-EVENT, AUDIT HIDDEN-UNCOUNTED and STAFF-EVENT BOSS at the merge). AUDIT HIDDEN-UNCOUNTED (PIN MOVED): acct183 (a hidden staff member reads offline in their guild; acct182 on its branch, renumbered past STAFF-EVENT at the merge). Re-aimed by content (STAFF-EVENT): acct182 / world256, the staff event tool (renumbered past KETCH at the merge). KETCH (PIN MOVED): acct181 (the sky-ketch Mzunthar: /v1/ketch/claim, migration 0166, item law 13; acct180 on its branch, renumbered past FOE-KEEPS at the merge). Re-aimed by content (AUDIT FOE-KEEPS L3): acct180, FOE-KEEPS. STAFF-PANEL 0.2.3 (PIN MOVED): acct179 (acct177 on its branches, renumbered past ACCOUNT-HOMES and GUNS-UNFOUND at the fold), migrations 0164-0165. STAFF-PANEL 0.2.3 (PIN MOVED): acct178 (acct177 on its branches, renumbered past ACCOUNT-HOMES at the fold), migrations 0164-0165. LOST-SPOILS (PIN MOVED): acct173 (acct168 on its branch, renumbered past STAFF-PANEL1, CRAFT-PAYS, PISTOLET, AUDIT COLLECTIONS-II and SEA VENTURES at the merge), no migration. SEA VENTURES (PIN MOVED): acct172 (acct168 on its branch, then acct169, renumbered past STAFF-PANEL1, CRAFT-PAYS, PISTOLET and AUDIT COLLECTIONS-II at the merges). CRAFT-PAYS and CRAFT-WRITS (PIN MOVED): acct169 (acct168 and migration 0144 on its branch, renumbered past STAFF-PANEL1 at the merge). STAFF-PANEL1 (PIN MOVED): acct168, the staff panel sign-in (migration 0144). CAKE-CAP-SAID (PIN MOVED): acct167 (acct166 on its branch, renumbered past ESSENCE-LOOSE and SOUL-LAW at the merge). ESSENCE-LOOSE and SOUL-LAW (PIN MOVED): acct166, one release, and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143). LEAN-READS (PIN MOVED): acct164 (acct159, acct160, acct161, acct162 then acct163 on its branch, renumbered past QL12, WB14, JUNGLE-WOODS, NAME-WORDS and PURSE-MEND at the merges). PURSE-MEND and COMPANION-DROP (PIN MOVED): acct163 (acct162 on its branch, renumbered past NAME-WORDS at the merge). JUNGLE-WOODS (PIN MOVED): acct161 (acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges). QL12 (PIN MOVED): acct159. EG-PLAY (PIN MOVED): acct124 (acct116, acct118, acct119, acct121 then acct122 on its branch, renumbered past CRAFT-HOLD, YARD-SWEEP + HANDLE-EMAIL, SEAT-LEASE, GATHER-SPEED + MARKET-SPEED, D1-LOAD, BAL9, NAME-AS and HACKED-GOLD at the merges); HACKED-GOLD (PIN MOVED): acct123; NAME-AS (PIN MOVED): acct122; BAL9 (PIN MOVED): acct121. YARD-SWEEP + HANDLE-EMAIL (PIN MOVED): acct117, and the mutant is the version main left. CRAFT-HOLD (PIN MOVED, acct115 on its branch, renumbered past BR5 at the merge): acct116. BR5 (PIN MOVED, acct113 on its branch, renumbered past GUILD-SEEN's acct113 and GUILD3's acct114 at the merge): acct115. GUILD-SEEN (PIN MOVED): acct113. HOME-VOTE (PIN MOVED, acct109 and then acct110 on its branch, renumbered past PATRON-LOAD and PATRON-LOAD II at the merges): acct112. PATRON-LOAD II (PIN MOVED): acct110, migration 0107. PATRON-LOAD (PIN MOVED): acct109. TECH1 (PIN MOVED): acct108, the item law's version 2, after LW15's acct107. LW15 (PIN MOVED, past INT11-INT14's acct105 and SCALE4d's acct106 at the merges): acct107. SCALE4d (PIN MOVED): acct106. INT11-INT14 (PIN MOVED): acct105. INT7-INT10 (PIN MOVED, past the Chapters' acct103 at the merge): acct104. A deploy that did not happen looks like one that did. SERPENT1 (PIN MOVED, re-aimed by content at its merge of main): acct78. GLOBAL-MARKET (PIN MOVED): acct79. SHADOW-CLOAK (PIN MOVED at its merges of main, past SERPENT1 and GLOBAL-MARKET): acct80. SERAPH-WINGS (PIN MOVED): acct81. AUDIT ARENA-LADDER (PIN MOVED at its merges of main, past GLOBAL-MARKET, SHADOW-CLOAK and SERAPH-WINGS): acct82. CRYSTAL-FIST (PIN MOVED): acct83. SERPENT-SET / SILVER-FINDS (PIN MOVED at its merge of main, past CRYSTAL-FIST): acct84 - re-aimed by content. YARD-SHED (PIN MOVED, re-aimed by content): acct85. YARD-HEIGHT (PIN MOVED, re-aimed by content): acct86. LEGACY7 (PIN MOVED at its merges of main, past SERPENT-SET's acct84, YARD-SHED's acct85 and YARD-HEIGHT's acct86): acct87. STORM-SHED, STORM-SHED 2 and TEXT-F1 (PIN MOVED): acct88 to acct90. CAP-OFF (PIN MOVED, re-aimed by content): acct91. FOUNDER5 (PIN MOVED, re-aimed by content): acct92. SD9b (re-aimed by content at the merges past CAP-OFF and FOUNDER5): acct93. SCALE4a-c (PIN MOVED, re-aimed by content at the merge past SD9b's acct94): acct95. TAVERN CARDS (PIN MOVED): acct96. SERVER-POST and HOURS-FIRST (PIN MOVED, re-aimed by content at the merge past TAVERN CARDS' acct96): acct97. PERMADEATH-HOUSES (re-aimed by content): acct98. The Chapters (PIN MOVED, re-aimed by content at the merge past PERMADEATH-HOUSES' acct98): acct99. CARDS9 and CARDS10 (PIN MOVED, at the Chapters' merge of main): acct99. UNWITNESSED-ORE (PIN MOVED): acct102. The Chapters (CHAP1-CHAP7b, PIN MOVED, re-aimed by content past CARDS9 and CARDS10's acct99, INT1-INT6's acct100, BAG-CRAFT's acct101 and UNWITNESSED-ORE's acct102 at the merges): acct103. Re-aimed to acct112 at the merge past HOME-VOTE (acct111). GATHER-SPEED + MARKET-SPEED (PIN MOVED): acct119, the version moved on (acct118 on its branch, renumbered past SEAT-LEASE at the merge). NAME-AS (PIN MOVED): acct122 (acct121 on its branch, renumbered past BAL9 at the merge)."
+  },
+  {
+    "name": "KNIGHT-HOUSE-column-unadded",
+    "file": "server-account/migrations/0079_home_deed.sql",
+    "old": "ALTER TABLE homes ADD COLUMN deed INTEGER NOT NULL DEFAULT 0;",
+    "new": "SELECT 1;",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The service reads a column the database does not have."
+  },
+  {
+    "name": "KNIGHT-HOUSE-door-prices-own",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (realmDeedAt(playerEntity.houses, bd.regionIndex ?? 0, homeTownOf(bd), bd.buildingKey)) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "THE FIELD'S PLAQUE: \"Buy it: 554330 gold\" at the knight's own door."
+  },
+  {
+    "name": "KNIGHT-HOUSE-grant-unheld",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (host.holdRealmDeed && given) holdGrantedHouse(region, kept, given);   // HOUSES-3: the deed given, one of the region's three\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. The order's house never held: bought from under its knight."
+  },
+  {
+    "name": "KNIGHT-HOUSE-grant-before-layouts",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (host.homeLayoutsHeard?.() === false) { host.hearHomeLayouts?.(); return { rows: [{ text: accountRefusalText('home-layout'), center: true }] }; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A house given in a town not yet standing in the room's layout - its key another building to the room."
+  },
+  {
+    "name": "KNIGHT-HOUSE-gift-flag-kept",
+    "file": "src/scenes/worldModes.js",
+    "old": "      membership.flags = (membership.flags ?? 0) & ~HOUSE_FLAG_MASK;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A gift the service would not hold, given back without the order's flag: \"You have already received your house.\" and no house."
+  },
+  {
+    "name": "KNIGHT-HOUSE-gift-back-on-any",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (r?.ok || (r?.error !== 'home-taken' && r?.error !== 'home-layout')) return;",
+    "new": "if (r?.ok) return;",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A hold the network lost gives the gift back: the house of a knight offline for a moment taken away."
+  },
+  {
+    "name": "KNIGHT-HOUSE-bank-sells-held",
+    "file": "src/scenes/worldModes.js",
+    "old": ".then((r) => { if (r.ok || r.error === 'no-home') sell(); else townTalk?.say?.(accountRefusalText(r.error)); })",
+    "new": ".then(() => { sell(); })",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The deed sells though its hold stands: the gold paid and the building frozen from every buyer."
+  },
+  {
+    "name": "KNIGHT-HOUSE-bank-sale-unreleased",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (host.onlineHomes && owned && realmDeedAt(playerEntity.houses, region, slot?.mapId, owned.buildingKey)) {\n",
+    "new": "        if (false) {\n",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The bank sells the deed and never gives up its hold."
+  },
+  {
+    "name": "KNIGHT-HOUSE-boot-unheld",
+    "file": "src/scenes/world.js",
+    "old": "      void homesBoot.holdDeeds();   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed's town stands in the room's layout now - its hold names its building\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "A house given before the hold existed is never held: Arde's, as the field found it. ACCOUNT-HOMES (PIN MOVED, HOST-SPLIT): re-aimed by content - the holds are scenes/homesBootHost.js's, the host calls them."
+  },
+  {
+    "name": "KNIGHT-HOUSE-hold-before-save",
+    "file": "src/scenes/world.js",
+    "old": "if (!onlineHomes || !checkpointLanded(await onlineCheckpointLanded())) return { ok: false, error: 'offline' };",
+    "new": "if (!onlineHomes) return { ok: false, error: 'offline' };",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The hold asked before the record holds the deed: refused, and the grant's house unheld until the next boot."
+  },
+  {
+    "name": "KNIGHT-HOUSE-host-hook-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "    holdRealmDeed: onlineHomes ? (d) => holdGrantedDeed(d) : null,",
+    "new": "    holdRealmDeed: null,",
+    "tests": [
+      "test/systems/fb1004d_knight_house.test.js"
+    ],
+    "note": "The host never hands the Seneschal its hold."
+  }
+]

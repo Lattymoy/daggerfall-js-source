@@ -1,0 +1,101 @@
+[
+  {
+    "name": "ENDLESS-the-restock-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "      restockEndless(shelf.items, staged, shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);   // ENDLESS-STOCK",
+    "new": "      // ENDLESS-STOCK",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-the-keyed-list-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "    restockEndless(shelf.items, [it], shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);   // ENDLESS-STOCK: the keyed list's purchase, as the counter's (ENDLESS-ARROWS: its shop's quiver, the counter's shelf alone - AUDIT UPDATE E2)\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-the-bag-not-endless",
+    "file": "src/systems/shopStock.js",
+    "old": "  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks",
+    "new": "  (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-the-campfire-not-endless",
+    "file": "src/systems/shopStock.js",
+    "old": "export const isEndlessStock = (item) =>\n  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks",
+    "new": "export const isEndlessStock = (item) => isBagItem(item) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-every-row-endless",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (!isEndlessStock(it)) continue;\n    if (isRations(it)) {",
+    "new": "    if (isRations(it)) {",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-a-campfire-of-any-group",
+    "file": "src/systems/shopStock.js",
+    "old": "export const isEndlessStock = (item) =>\n  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks",
+    "new": "export const isEndlessStock = (item) => isBagItem(item) || isCampfireKit(item) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-the-bag-minted-for-a-campfire",
+    "file": "src/systems/shopStock.js",
+    "old": "    const fresh = isBagItem(it)",
+    "new": "    const fresh = true",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-the-buyers-record-put-back",
+    "file": "src/systems/shopStock.js",
+    "old": "      addItem(shelfItems, fresh);",
+    "new": "      addItem(shelfItems, it);",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-the-buy-back-open-online",
+    "file": "src/systems/shopStock.js",
+    "old": "  item.templateIndex !== BOAT_DEED_TEMPLATE &&\n  // AUDIT ENDLESS-STOCK F1/F2: online no shop buys back what never sells out - bought at a cheap shop and sold at a dear one\n  // (the online asking price is halved, the buy-back cap is not) it was gold for nothing, and a sold one made any shelf endless\n  !(isOnlinePage() && isEndlessStock(item));\n",
+    "new": "  item.templateIndex !== BOAT_DEED_TEMPLATE;\n\n// AUDIT ENDLESS-STOCK F1/F2: online no shop buys back what never sells out - bought at a cheap shop and sold at a dear one\n// (the online asking price is halved, the buy-back cap is not) it was gold for nothing, and a sold one made any shelf endless",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-the-buy-back-closed-offline",
+    "file": "src/systems/shopStock.js",
+    "old": "  !(isOnlinePage() && isEndlessStock(item));",
+    "new": "  !isEndlessStock(item);",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  },
+  {
+    "name": "ENDLESS-endless-offline",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (!isOnlinePage()) return n;",
+    "new": "  if (!isOnlinePage() && false) return n;",
+    "tests": [
+      "test/systems/fb1004_endless.test.js"
+    ]
+  }
+]

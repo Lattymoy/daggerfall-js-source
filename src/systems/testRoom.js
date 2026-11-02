@@ -1,0 +1,486 @@
+// THE TEST ROOM (TR1, 2026-08-31, Mac's ask: "a menu option that leads
+// to a sort of test environment where I can pick a prebuilt character
+// and loot armor, weapons, etc").
+//
+// ONE HOME for everything the room is made of: the prebuilt characters,
+// the armory they walk in with, and the seeding that turns a preset
+// into a live entity. The door (enhancedMenu's Test Room pane), the
+// route (main.js) and the boot (world.js) all read THIS module - a
+// second copy of a preset in any of them is how two rooms drift apart.
+//
+// WHAT THE ROOM IS NOT: a new scene. It boots the same streaming world
+// every other door boots, through the same headless-chargen seam
+// ?class= has used since AUDIT 17f - the room is a CHARACTER and a
+// PACK, not a place. That is deliberate: the point is to see the real
+// game's rigs (classic paperdoll + sprite weapons, and the Morrowind
+// arms/body when that data is attached) wearing real equipment through
+// the real equip table, and a bespoke scene would be testing itself.
+//
+// THE PRESETS exercise the identity axes the body pipelines branch on:
+// both sexes, human and elf and BOTH beast races (rule 6 picks the
+// skeleton by sex and beast; rules 1-3 pick body records by race;
+// playerBodyRows' face law reads faceIndex). The class picks the
+// starting kit and skills, which the room does not care about beyond
+// "a real character" - the armory below supersedes it.
+
+import { RACES } from './races.js';
+import { resurrectionSpell } from './resurrect.js';   // RESURRECT1: the sorceress carries one, to test with
+import { applyHeadlessChargen } from './chargenSession.js';
+import { addItem } from './inventory.js';
+import { equipItem } from './equip.js';
+import { mintCondition, templateByIndex, itemBaseValue, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { WEAPONS_ENUM, ARMOR_ENUM, createWeapon, ARROW_TEMPLATE } from '../combat/enemyEquipment.js';
+import { ARMOR_MATERIAL } from './armorMaterials.js';
+import { TRANSPORT_HORSE_TEMPLATE, hasHorse } from './inventorySession.js';   // TSR4: the mount is the pack's own question
+import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the pack, for the reader
+import { BOOK_ID_TITLES } from './booksData.js';
+import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder on for the session
+import { setModSetting } from './modSettings.js';   // FIELD BUGS 2026-09-29 (the sea) #5: the sea door turns Come Sail Away on
+import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, ARCANE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, socketMax, addTechniqueLine } from './loot/lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique; BAL9c: the arcane three
+import { TECHNIQUE_IDS, TECHNIQUES, GAUNTLETS_TEMPLATE } from '../combat/technique/techniqueRoster.js';   // TECH1: one piece a technique, to try them all
+import { AETHERIC_RECORDS, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole (RAID4b: and the raiding parties' three sets)
+import { mintHourlock, mintGilded, GILDED_RECORDS } from './gilded.js';   // GILDED1: the top rung's first record, to be seen and fired (its shot: arrows since GUNS-UNFOUND, below); GILDED2: and the world's two
+import { welkyndStone, varlaStone } from './ayleidStones.js';   // LOOT21: the Ayleid stones
+import { mintGem } from './gems.js';   // GEM2: the graded gems
+import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from './thunderlock.js';   // TSR-GUN: the port's own weapon, and the import IS its registration
+import { createPistolet, PISTOLET_TEMPLATE } from './pistolet.js';   // PISTOLET: the second gun, the same way
+
+/** The prebuilt characters. `race` is the DF race key (races.js RACES
+ *  spelling - mwRaceId derives the Morrowind id from it), `classIndex`
+ *  indexes CLASS_CAREERS (chargen.js), `faceIndex` is the classic
+ *  portrait pick the Morrowind head/hair law also reads. */
+export const TEST_PRESETS = Object.freeze([
+  { id: 'nord-warrior', label: 'Nord Warrior', race: 'Nord', gender: 'male', faceIndex: 0, classIndex: 16,
+    blurb: 'A plain human male in steel, with a longsword.' },
+  { id: 'breton-sorceress', label: 'Breton Sorceress', race: 'Breton', gender: 'female', faceIndex: 2, classIndex: 3,
+    blurb: 'Robes in the pack, and Fireball and Healing Bolt to cast.' },
+  { id: 'redguard-archer', label: 'Redguard Archer', race: 'Redguard', gender: 'female', faceIndex: 4, classIndex: 13,
+    blurb: 'Bows and a full quiver, with the arrow drawn on the string.' },
+  { id: 'darkelf-nightblade', label: 'Dark Elf Nightblade', race: 'DarkElf', gender: 'male', faceIndex: 1, classIndex: 5,
+    blurb: 'An elf with daggers and short blades.' },
+  { id: 'khajiit-monk', label: 'Khajiit Monk', race: 'Khajiit', gender: 'male', faceIndex: 3, classIndex: 12,
+    blurb: 'A beast race with its own skeleton and a tail.' },
+  { id: 'argonian-barbarian', label: 'Argonian Barbarian', race: 'Argonian', gender: 'female', faceIndex: 5, classIndex: 15,
+    blurb: 'The other beast race, female, with both kinds of axe.' },
+]);
+
+export const testPresetById = (id) => TEST_PRESETS.find((p) => p.id === id) ?? null;
+
+/** TSR4 (2026-09-03, Mac: "an option that spawns you into the outside
+ *  world with a mount to test"). The ride is a SPAWN, not a character:
+ *  the baseline preset, a horse already in the pack, the landing at the
+ *  location's EDGE (the fast-travel arrival law - outside the walls,
+ *  facing in), and the mode set through the one transport door. The
+ *  both skins show the CFA mount. One entry, so the pane, the route and
+ *  the boot all agree
+ *  what `test=ride` is. */
+export const TEST_RIDE = Object.freeze({
+  id: 'ride', label: 'Ride out', preset: 'nord-warrior',
+  blurb: 'The Nord Warrior on a horse, outside the town. Press T to dismount.',
+});
+
+/** LR3 (loot rarity): THE LOOT LADDER - a door that opens with one of
+ *  everything the ladder can mint in the pack: a Magic and a Rare of
+ *  each of ten base items, and every Legendary on a fitting base. The
+ *  switch is turned ON for the session at the door, so the colours,
+ *  the lines and the folds show; the Nord Warrior carries it. */
+export const TEST_LOOT = Object.freeze({
+  id: 'loot', label: 'The loot ladder', preset: 'nord-warrior',
+  blurb: 'The Nord Warrior with a Magic and a Rare of ten base items and every Legendary, all identified. Also one unidentified Rare and Legendary (how the top tiers look on the floor), one Exalted Legendary and the full Ruhn\'s Regalia. Turns Loot rarity on.',
+});
+
+/** FIELD BUGS 2026-09-29 (the sea) #5 (the Discord, through Mac: "Add a ship combat test menu option"): THE SEA
+ *  BATTLE. A spawn, as the ride is: the baseline preset landed on the open Bay south of Daggerfall - the map pixel
+ *  FIELD-CSA2 proved floats a Small Ship (test/systems/comeSailAway/field_csa2.test.js) - put at the helm of an armed Small Ship of their
+ *  own there, and a pirate brig launched on open water to stand in and engage (the naval host's own spawn door). Come
+ *  Sail Away and Naval Combat are turned on at the door (enableTestSea), as the loot door turns its ladder on. */
+export const TEST_SEA = Object.freeze({
+  id: 'sea', label: 'Sea battle', preset: 'nord-warrior',
+  pixel: Object.freeze({ x: 209, y: 216 }), hull: 2, foe: 'pirateBrig', range: 380,
+  blurb: 'The Nord Warrior at the helm of an armed Small Ship on the open Bay south of Daggerfall, with a pirate brig closing in. Look to a side, hold Attack to aim a broadside and release to fire. Brace when warned. Turns Come Sail Away and Naval Combat on.',
+});
+
+/** #5: what the sea door says - the fight begun, no sea to stand it on (Come Sail Away's boats unbuilt), no open water off her
+ *  bow for the pirate. */
+export const TEST_SEA_TEXT = Object.freeze({
+  begun: 'A pirate brig closes in. Look to a side and hold Attack to aim a broadside, then release to fire.',
+  refused: 'The sea battle needs Come Sail Away\'s boats, and they did not load.',
+  noRoom: 'No open water here for a pirate ship.',
+});
+
+/** The doors that start OUTDOORS - a spawn, not a character: never the classic start's dungeon (main.js's route). */
+export const testStartsOutdoors = (id) => id === TEST_RIDE.id || id === TEST_SEA.id;
+
+/** #5: the sea door's two switches - Come Sail Away (the world latches it once, at the load this door starts) and
+ *  Naval Combat - turned on, and left on, as the loot door leaves its ladder. */
+export function enableTestSea() {
+  setModSetting('come-sail-away', 'Enabled', true);
+  setPref('naval', true);
+}
+
+/** The one door for a `test=` id: a preset (ride false), the ride
+ *  entry (its preset, ride true), the loot ladder (loot true), the sea
+ *  battle (sea true), or null - an unknown id resolves to NOTHING so
+ *  the boot falls through to the wizard, never a guess. */
+export function testEntryById(id) {
+  if (id === TEST_RIDE.id) return { preset: testPresetById(TEST_RIDE.preset), ride: true };
+  if (id === TEST_SEA.id) return { preset: testPresetById(TEST_SEA.preset), ride: false, sea: true };
+  if (id === TEST_LOOT.id) return { preset: testPresetById(TEST_LOOT.preset), ride: false, loot: true };
+  const preset = testPresetById(id);
+  return preset ? { preset, ride: false } : null;
+}
+
+/** TSR4: put a horse in the pack, minted the way a shelf mints one (the
+ *  Stable's since MERCHANT-YARDS - systems/merchantYards.js yardStock) (shopStock's add: mintCondition over the template's
+ *  own name and base value) - so the T window, the travel card and the
+ *  pack all answer hasHorse the way they would for a bought one. Once:
+ *  a pack that already carries a horse is left alone. */
+export function seedTestMount(entity) {
+  if (hasHorse(entity.items)) return false;
+  const horse = mintCondition({
+    group: 'Transportation', templateIndex: TRANSPORT_HORSE_TEMPLATE,
+    name: templateByIndex(TRANSPORT_HORSE_TEMPLATE)?.name ?? 'Horse', flags: 0,
+  });
+  horse.value = itemBaseValue(horse);
+  addItem(entity.items, horse);
+  return true;
+}
+
+/**
+ * THE ARMORY. One of every weapon TYPE the game has (each maps to its
+ * own Morrowind animation class and attach bone - rule 8's whole
+ * column gets exercised), a material spread on the pieces where
+ * material picks a different Morrowind record (steel as the baseline,
+ * leather -> netch, chain -> imperial chain, ebony/daedric for the
+ * high rows), every armor SLOT including all four shield sizes, and a
+ * change of clothes per sex (robes drape, the reference's priority
+ * law hides the limbs under them). Arrows come in a real stack so the
+ * bow draws loaded.
+ *
+ * Data, not calls, so the pane can COUNT it and a pin can walk every
+ * row against ITEM_TEMPLATES without booting a world.
+ */
+export function testGearRows(gender) {
+  const female = gender === 'female';
+  const W = WEAPONS_ENUM; const A = ARMOR_ENUM; const M = ARMOR_MATERIAL;
+  const rows = [];
+  // Every weapon type once, in steel (weapon material 1).
+  for (const [name, t] of Object.entries(W)) rows.push({ kind: 'weapon', label: `Steel ${name}`, templateIndex: t, material: 1 });
+  // The material spread - each is a DIFFERENT Morrowind record.
+  rows.push({ kind: 'weapon', label: 'Iron Dagger', templateIndex: W.Dagger, material: 0 });
+  rows.push({ kind: 'weapon', label: 'Ebony Longsword', templateIndex: W.Longsword, material: 7 });
+  rows.push({ kind: 'weapon', label: 'Daedric Dai-Katana', templateIndex: W['Dai-Katana'], material: 9 });
+  rows.push({ kind: 'arrows', label: 'Arrows (60)', templateIndex: ARROW_TEMPLATE, stackCount: 60 });
+  // TSR-GUN (Mac, 2026-09-19: "Put this weapon and ammo inside the
+  // test characters"). The Dwarven Thunderlock is the ONE weapon the
+  // armory could not reach any other way: it is not in WEAPONS_ENUM
+  // (that enum is DFU's table and this weapon is the port's own), it
+  // is off the shops entirely and its find is the rarest roll in the
+  // game - so without a row here the only way to hold one is to be
+  // lucky. It rides with a stack of pellets for the same reason the
+  // bow rides with a quiver: a ranged weapon with no ammunition
+  // tests the refusal, not the weapon.
+  rows.push({ kind: 'thunderlock', label: 'Dwarven Thunderlock', templateIndex: THUNDERLOCK_TEMPLATE });
+  rows.push({ kind: 'pellets', label: 'Dwemer Pellets (30)', templateIndex: PELLET_TEMPLATE, stackCount: 30 });
+  // PISTOLET: two of them - one-handed, so the pair (one in each hand) is what wants testing, and the Pellets above feed both
+  rows.push({ kind: 'pistolet', label: 'Dwarven Pistolet', templateIndex: PISTOLET_TEMPLATE });
+  rows.push({ kind: 'pistolet', label: 'Dwarven Pistolet (a pair\'s second)', templateIndex: PISTOLET_TEMPLATE });
+  // The full steel suit - every armor slot.
+  for (const [name, t] of Object.entries(A)) rows.push({ kind: 'armor', label: `Steel ${name.replace(/_/g, ' ')}`, templateIndex: t, material: M.Steel });
+  // Material rows that change the Morrowind mapping.
+  rows.push({ kind: 'armor', label: 'Leather Cuirass', templateIndex: A.Cuirass, material: M.Leather });
+  rows.push({ kind: 'armor', label: 'Leather Gauntlets', templateIndex: A.Gauntlets, material: M.Leather });
+  rows.push({ kind: 'armor', label: 'Chain Cuirass', templateIndex: A.Cuirass, material: M.Chain });
+  rows.push({ kind: 'armor', label: 'Chain Greaves', templateIndex: A.Greaves, material: M.Chain });
+  rows.push({ kind: 'armor', label: 'Ebony Cuirass', templateIndex: A.Cuirass, material: M.Ebony });
+  rows.push({ kind: 'armor', label: 'Daedric Helm', templateIndex: A.Helm, material: M.Daedric });
+  // A change of clothes, the sex's own templates (itemTemplates rows).
+  const clothes = female
+    ? [[200, 'Plain Robes'], [184, 'Peasant Blouse'], [190, 'Casual Pants'], [186, 'Shoes'], [191, 'Casual Cloak'], [212, 'Long Skirt']]
+    : [[163, 'Plain Robes'], [165, 'Short Shirt'], [151, 'Casual Pants'], [147, 'Shoes'], [154, 'Casual Cloak'], [158, 'Short Tunic']];
+  for (const [t, label] of clothes) {
+    rows.push({ kind: 'clothing', label, templateIndex: t, group: female ? 'WomensClothing' : 'MensClothing' });
+  }
+  // EB3 (Mac, 2026-09-12: "For testing in the test character
+  // inventories. Give them books."): a shelf's worth, by the classic
+  // mapping's ids, so the reader - and the enhanced book over it - can
+  // be opened from the pack without a shelf or a shop. A short one, a
+  // long one, a title page in the large face, and one with a poem.
+  for (const id of TEST_BOOKS) rows.push({ kind: 'book', label: BOOK_ID_TITLES.get(id), templateIndex: BOOK_TEMPLATE, message: id });
+  return rows;
+}
+
+/** EB3: the test pack's books, by ID in the classic mapping
+ *  (booksData.js). */
+export const TEST_BOOKS = Object.freeze([28, 5, 1, 25]);   // Brief History of the Empire I; Ark'ay The God; A Tale of Kieran; Legal Basics
+
+/** A gear row to a real inventory item, through the SAME constructors
+ *  the game's own loot uses - createWeapon for weapons (condition and
+ *  damage minted there), the armor/clothing literal shapes the loot
+ *  factories mint, condition through mintCondition. */
+export function testItemOf(row) {
+  if (row.kind === 'weapon') return createWeapon(row.templateIndex, row.material);
+  if (row.kind === 'book') return createBook(row.message);   // EB3: ItemBuilder.CreateBook, the named path
+  if (row.kind === 'arrows') return { ...createWeapon(ARROW_TEMPLATE, 0), stackCount: row.stackCount };
+  // TSR-GUN: through the weapon's OWN constructors, the same two the
+  // find and the legendary mint with - a second literal here is how
+  // the test character's gun and the found one drift apart.
+  if (row.kind === 'thunderlock') return createThunderlock();
+  if (row.kind === 'pistolet') return createPistolet();
+  if (row.kind === 'pellets') return createPellets(row.stackCount);
+  if (row.kind === 'armor') {
+    // MAC-N1: through SetItem's value write - this armor was minted
+    // with a name and NO value, the corpse's shape exactly.
+    return mintCondition(setItemFields({
+      group: 'Armor', templateIndex: row.templateIndex, material: row.material,
+      name: row.label, flags: 0,
+    }));
+  }
+  return mintCondition({
+    group: row.group, templateIndex: row.templateIndex, dye: 0, variant: 0,
+    name: templateByIndex(row.templateIndex)?.name ?? row.label, flags: 0,
+  });
+}
+
+/** Fill the pack. Runs AFTER the class kit so the spellbook stays
+ *  first (AUDIT 17f's collection-order law); returns what it added so
+ *  the boot can say so. */
+export function seedTestGear(entity) {
+  const rows = testGearRows(entity.gender);
+  const added = [];
+  for (const row of rows) {
+    const item = testItemOf(row);
+    addItem(entity.items, item);
+    added.push(item);
+  }
+  return added;
+}
+
+/** TECH1: the piece each technique family's sampler rides in the room - one of the family's own templates. */
+export const TECHNIQUE_TEST_BASES = Object.freeze({
+  archery: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM['Long Bow'] ?? 130, material: 1 }),
+  longBlade: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM.Longsword, material: 1 }),
+  shortBlade: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM.Dagger, material: 1 }),
+  axe: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM['Battle Axe'] ?? 127, material: 1 }),
+  blunt: Object.freeze({ kind: 'weapon', templateIndex: WEAPONS_ENUM.Mace ?? 124, material: 1 }),
+  handToHand: Object.freeze({ kind: 'armor', label: 'Steel Gauntlets', templateIndex: GAUNTLETS_TEMPLATE, material: ARMOR_MATERIAL.Steel }),
+});
+
+/** LR3: the ladder's bases - ten items across the three groups the
+ *  ladder rolls, each minted the way the loot factories mint them. */
+/** GEM2: the graded gems the loot ladder's door lays beside the socketed bow - one of each grade the port adds. */
+export const TEST_GEMS = Object.freeze(['chipped-emerald', 'flawed-amber', 'flawless-ruby', 'perfect-diamond']);
+export const TEST_LOOT_BASES = Object.freeze([
+  { kind: 'weapon', label: 'Steel Longsword', templateIndex: WEAPONS_ENUM.Longsword, material: 1 },
+  { kind: 'weapon', label: 'Steel Dagger', templateIndex: WEAPONS_ENUM.Dagger, material: 1 },
+  { kind: 'weapon', label: 'Steel Battle Axe', templateIndex: WEAPONS_ENUM['Battle Axe'] ?? 127, material: 1 },
+  { kind: 'weapon', label: 'Steel Long Bow', templateIndex: WEAPONS_ENUM['Long Bow'] ?? 130, material: 1 },
+  { kind: 'armor', label: 'Steel Cuirass', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Steel },
+  { kind: 'armor', label: 'Steel Helm', templateIndex: ARMOR_ENUM.Helm, material: ARMOR_MATERIAL.Steel },
+  { kind: 'armor', label: 'Steel Boots', templateIndex: ARMOR_ENUM.Boots, material: ARMOR_MATERIAL.Steel },
+  { kind: 'armor', label: 'Steel Kite Shield', templateIndex: ARMOR_ENUM.Kite_Shield ?? 111, material: ARMOR_MATERIAL.Steel },
+  { kind: 'jewellery', label: 'Ring', templateIndex: 135, group: 'Jewellery' },
+  { kind: 'jewellery', label: 'Amulet', templateIndex: 133, group: 'Jewellery' },
+]);
+
+/** LR3: the loot ladder's pack - a Magic and a Rare of every base, then
+ *  every Legendary on the first base its record fits (a record with no
+ *  fitting base here mints on its own group's first template). Pure
+ *  over `rolls`; turns the switch on. Returns what it added.
+ *
+ *  LR6 (2026-09-15, Mac: "when I open the loot test character, nothing
+ *  on the character has rarity in the inventory"): THE SHOWCASE WAS
+ *  HIDING WHAT IT SHOWCASES, and it was DFU's own law doing it. A Rare
+ *  and a Legendary carry a real DFU enchantment, so `itemIsIdentified`
+ *  reads them as UNIDENTIFIED - and an unidentified item gives up its
+ *  name to the bare template (ItemHelper.cs:265-292, through
+ *  `itemInfo.itemNameParts`) and its affix lines with it. So twenty of
+ *  the thirty items this door minted read as `Longsword`, `Dagger`,
+ *  `Battle Axe` - indistinguishable from the forty-nine plain armory
+ *  pieces `seedTestGear` puts in the pack AHEAD of them, with nothing
+ *  but a name COLOUR between them. Wyrmbane, Nightwhisper and
+ *  Graveward were all in there, all called "Longsword".
+ *
+ *  That law is right for a real drop and this page does not touch it.
+ *  It is wrong for the ROOM, whose whole job is to show the ladder,
+ *  and whose own blurb had been promising the affix lines it hid. So
+ *  the ladder mints IDENTIFIED here - and then mints ONE unidentified
+ *  Rare and ONE unidentified Legendary beside it, because the
+ *  unidentified reading is half of what the room exists to show and
+ *  dropping it would trade one missing half for the other. */
+export function seedTestLoot(entity, rolls = Math.random) {
+  setPref('lootRarity', true);
+  const added = [];
+  const base = (row) => (row.kind === 'jewellery'
+    ? mintCondition({ group: 'Jewellery', templateIndex: row.templateIndex, name: templateByIndex(row.templateIndex)?.name ?? row.label, flags: 0 })
+    : testItemOf(row));
+  /** Into the pack. `identified` is LR6's arm: the flag DFU's own
+   *  `itemIsIdentified` reads, set so the room can be READ. It is
+   *  inert on a Magic - an unenchanted item is always identified - so
+   *  it may be set uniformly rather than by tier. */
+  const put = (it, { identified = true } = {}) => {
+    if (identified) it.isIdentified = true;
+    addItem(entity.items, it);
+    added.push(it);
+    return it;
+  };
+  /** One Legendary record, on the base its own `templates` allow. */
+  const legendaryItem = (rec) => {
+    const row = TEST_LOOT_BASES.find((r) => (r.group ?? (r.kind === 'weapon' ? 'Weapons' : 'Armor')) === rec.group && (!rec.templates || rec.templates.includes(r.templateIndex)))
+      ?? TEST_LOOT_BASES.find((r) => (r.group ?? (r.kind === 'weapon' ? 'Weapons' : 'Armor')) === rec.group);
+    const it = base(rec.templates && !rec.templates.includes(row.templateIndex) ? { ...row, templateIndex: rec.templates[0], label: templateByIndex(rec.templates[0])?.name ?? row.label } : row);
+    // the record is CHOSEN, not rolled: a one-record pool through the same door
+    return applyRarity(it, 'legendary', () => 0, [rec]);
+  };
+  for (const tier of ROLLED_TIERS.filter((t) => t !== 'legendary')) {
+    for (const row of TEST_LOOT_BASES) put(applyRarity(base(row), tier, rolls));
+  }
+  for (const rec of LEGENDARIES) put(legendaryItem(rec));
+  for (const rec of AETHERIC_RECORDS) put(mintAetheric(rec));   // SET6: the rung above, never rolled - the Warden's own set, all nine places; RAID4b: and the raids' three, a town's thanks; SERPENT-SET: and the Old Coil's own
+  // ...and the law itself, once each: what a Rare and a Legendary look
+  // like on the floor, before the Mages Guild has been paid.
+  put(applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls), { identified: false });
+  if (LEGENDARIES.length) put(legendaryItem(LEGENDARIES[0]), { identified: false });
+  // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): and one Exalted, known - its fourth pip and its extra line's band
+  if (LEGENDARIES.length) { const ex = legendaryItem(LEGENDARIES[0]); exaltLegendary(ex, rolls); put(ex); }
+  // LOOT14/LOOT15 (bible/06-Systems/Loot-II-Arc.md sections 6 and 7): THE WARDROBE - a Magic and a Rare of each of its
+  // bases, then each of the wardrobe's Legendaries on its first garment - after every draw the room made before
+  for (const t of TEST_WARDROBE_BASES) for (const tier of ['magic', 'rare']) put(applyRarity(testGarment(t), tier, rolls));
+  for (const rec of WARDROBE_LEGENDARIES) put(applyRarity(testGarment(rec.templates[0]), 'legendary', () => 0, [rec]));
+  // LOOT16 (bible/06-Systems/Loot-II-Arc.md section 8): a cursed Rare and a cursed Legendary, known - the temple's
+  // lifting tried at once - after every draw the room made before
+  { const r = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); cursePiece(r, rolls); put(r); }
+  if (LEGENDARIES.length) { const l = legendaryItem(LEGENDARIES[0]); cursePiece(l, rolls); put(l); }
+  // LOOT20 (section 12): a Rare with an empty socket and a Ruby to set in it, at the Mages Guild's Reforge
+  { const s = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); s.sockets = [SOCKET_EMPTY]; put(s); }   // GEM1: the socket list
+  put(mintCondition(setItemFields({ group: 'Gems', templateIndex: GEM_IDS.indexOf('ruby') })));
+  // LOOT21 (section 13): the two Ayleid stones, found at the deepest sources - here to be used
+  put(welkyndStone());
+  put(varlaStone());
+  // GILDED1 (bible/06-Systems/Gilded.md): THE HOURLOCK, the Gilded rung's first record - minted whole, as the Brass Remnant
+  // drops it - and a stack of its shot, so the toll can be heard; after every draw the room made before. GUNS-UNFOUND: a
+  // Dwarven Long Bow now, so its shot is arrows
+  put(mintHourlock());
+  put({ ...createWeapon(ARROW_TEMPLATE, 0), stackCount: 30 });
+  // GILDED2 (Gilded.md section 7): the gate's Dragonfire Oath and the serpent's Sunken Sovereign, minted whole as their
+  // bosses drop them - no draw taken, so every draw after them is what it was
+  for (const r of GILDED_RECORDS) if (r.id !== 'the-hourlock') put(mintGilded(r));
+  // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md): a Rare long bow with its size's three wells, empty, and four graded gems
+  // to set in them from the pack's card - after every draw the room made before
+  { const b = applyRarity(base(TEST_LOOT_BASES[3]), 'rare', rolls); b.sockets = Array(socketMax(b)).fill(SOCKET_EMPTY); put(b); }
+  for (const id of TEST_GEMS) put(/** @type {any} */ (mintGem(id)));
+  // TRUE-CURSE (01-Overview/bugs/Field-Bugs-2026-10-10.md): a damned Legendary weapon, known - its bite at every blow tried,
+  // and the temple's refusal; after every draw the room made before
+  { const d = LEGENDARIES.find((rec) => rec.group === 'Weapons'); if (d) { const it = legendaryItem(d); cursePiece(it, rolls, { damned: true }); put(it); } }
+  // TECH1 (bible/05-Combat/Weapon-Techniques.md): THE TECHNIQUES - one Rare a technique, on a piece of its family (a Long
+  // Bow's two, a Longsword's, a Dagger's, a Battle Axe's, a Mace's, the Gauntlets' for the bare hand), its line at the
+  // band's middle, so every one can be tried on its key; after every draw the room made before
+  for (const id of TECHNIQUE_IDS) {
+    const fam = TECHNIQUES[id].families[0];
+    const piece = TECHNIQUE_TEST_BASES[fam];
+    if (!piece) continue;
+    const it = applyRarity(testItemOf(piece), 'rare', rolls);
+    if (addTechniqueLine(it, () => 0.5, { id })) put(it);
+  }
+  // BAL9c (bible/05-Combat/Balance-Arc.md section 15): THE ARCANE THREE, each on the first base its record fits (the
+  // Amulet, the Ring, the Longsword) - chosen, not rolled, after every draw the room made before
+  for (const rec of ARCANE_LEGENDARIES) put(legendaryItem(rec));
+  return added;
+}
+/** LOOT14: the room's garments - a Formal Cloak and an Evening Gown, minted as a shelf mints clothing. */
+export const TEST_WARDROBE_BASES = Object.freeze([155, 195]);
+const testGarment = (templateIndex) => mintCondition({ group: templateIndex >= 182 ? 'WomensClothing' : 'MensClothing', templateIndex,
+  name: templateByIndex(templateIndex)?.name ?? 'Garment', flags: 0, variant: 0 });
+
+/** SPELLFX1 (2026-09-23): THE SORCERESS GETS MISSILES. The Mage set she
+ *  starts with has nothing that flies, and the co-op spell work needs
+ *  two things to throw at a friend in the test room: a FIREBALL (the
+ *  hostile missile - a peer must see it fly and it must pass through
+ *  them) and a HEALING BOLT (the friendly one - it must land on them
+ *  through ALLY-CAST's cast frame, a party mate). Fireball is SPELLS.STD's own record when the
+ *  loaded file has one by that name, and a made one otherwise; the bolt
+ *  is always made - Heal Health at range, the Balm's shape. Fixed
+ *  negative indices below the Healer's touch (-1000), so a re-apply
+ *  does not double them. */
+const TEST_MISSILE_EFFECT = (type, subType, lo, hi) => ({
+  type, subType,
+  durationBase: 0, durationMod: 0, durationPerLevel: 1,
+  chanceBase: 0, chanceMod: 0, chancePerLevel: 1,
+  magnitudeBaseLow: lo, magnitudeBaseHigh: hi, magnitudeLevelBase: 1, magnitudeLevelHigh: 2, magnitudePerLevel: 1,
+});
+export const TEST_FIREBALL_INDEX = -1001;
+export const TEST_HEAL_BOLT_INDEX = -1002;
+export function testMissileSpells(spellsByIndex = null) {
+  let fireball = null;
+  for (const sp of spellsByIndex?.values?.() ?? []) {
+    if (String(sp?.name ?? '').trim().toLowerCase() === 'fireball' && sp.rangeType >= 2) { fireball = sp; break; }
+  }
+  fireball ??= {
+    name: 'Fireball', element: 0, rangeType: 4, icon: 0, cost: 0, index: TEST_FIREBALL_INDEX, custom: true,
+    effects: [TEST_MISSILE_EFFECT(4, 0, 10, 20)],   // Damage Health, fire, a burst at range
+  };
+  const healBolt = {
+    name: 'Healing Bolt', element: 4, rangeType: 2, icon: 0, cost: 0, index: TEST_HEAL_BOLT_INDEX, custom: true,
+    effects: [TEST_MISSILE_EFFECT(10, 8, 5, 10)],   // Heal Health, a single target at range
+  };
+  return [fireball, healBolt];
+}
+export function addTestMissileSpells(entity, spellsByIndex = null) {
+  entity.spells ??= [];
+  // RESURRECT1 (2026-09-23): and a Resurrection, to raise a fallen party mate in the test room
+  for (const sp of [...testMissileSpells(spellsByIndex), resurrectionSpell()]) {
+    if (!entity.spells.some((k) => k === sp || (k?.index === sp.index && k?.name === sp.name))) entity.spells.push(sp);
+  }
+  return entity.spells;
+}
+
+/**
+ * A preset to a live character: the identity FIRST, because
+ * applyCharacter honors pre-seeded race/gender/faceIndex over its
+ * Breton-male defaults (`?? playerEntity.x` - chargen.js), THEN the
+ * same headless chargen ?class= boots through - one construction
+ * seam, not a third copy of it. The armory lands last, on top of the
+ * class kit.
+ */
+export async function applyTestCharacter(playerEntity, preset, { fetchBytes, spellsByIndex = null } = {}) {
+  playerEntity.race = preset.race;
+  playerEntity.raceId = RACES[preset.race] ?? 1;
+  playerEntity.gender = preset.gender;
+  playerEntity.faceIndex = preset.faceIndex | 0;
+  playerEntity.name = preset.label;
+  await applyHeadlessChargen(playerEntity, preset.classIndex, { fetchBytes, spellsByIndex });
+  playerEntity.testRoom = true;   // AUDIT SET D4: after the chargen, which builds the character afresh - the mark rides every save of it
+  if (preset.id === 'breton-sorceress') addTestMissileSpells(playerEntity, spellsByIndex);   // SPELLFX1: something that FLIES, to test with
+  const added = seedTestGear(playerEntity);
+  // Dress the baseline so the room opens with something ON: the steel
+  // suit's cuirass and a longsword in hand - through the real equip
+  // door, the same press the inventory window makes.
+  const cuirass = added.find((it) => it.group === 'Armor' && it.templateIndex === ARMOR_ENUM.Cuirass && it.material === ARMOR_MATERIAL.Steel);
+  const sword = added.find((it) => it.group === 'Weapons' && it.templateIndex === WEAPONS_ENUM.Longsword && it.material === 1);
+  if (cuirass) equipItem(playerEntity, cuirass);
+  if (sword) equipItem(playerEntity, sword);
+  return { added: added.length };
+}
+
+/**
+ * AUDIT SET D4: A TEST ROOM CHARACTER STAYS OFFLINE. The room is for looking - it hands its character every Legendary
+ * and Ruhn's Regalia whole (seedTestLoot), where online the Regalia is a gate boss's one-in-six drop. A boot that would
+ * bring a marked character online (`?online` with `?load`, by the Online pane or by any URL) is answered true here,
+ * and the boot drops `online` before anything reads it - AND (AUDIT FINAL F8) one the URL BUILDS: `?online&test=loot`
+ * (any Test Room entry) hands the armory to a character no save ever marked, straight into a live session.
+ * `snap()` is the boot's own pick of the save its load door restores (AUDIT FINAL F9: world.js bootSnap, main's MW-EARLY
+ * F3 one parse - the check asked the save a second time); without it, `loadSlot(key)` and `mostRecent()`, the save
+ * slots' own synchronous readers (systems/save/saveSlots.js).
+ * @param {URLSearchParams} params
+ * @param {{ snap?: () => any, loadSlot?: (key: number) => any, mostRecent?: () => ({ snap: any } | null) }} saves
+ */
+export function testRoomOnlineRefused(params, { snap: pick = null, loadSlot, mostRecent } = {}) {
+  if (!params?.has?.('online')) return false;
+  if (params.has('test') && testEntryById(params.get('test'))) return true;
+  if (!params.has('load')) return false;
+  let snap = null;
+  try { snap = pick ? pick() : params.has('loadkey') ? loadSlot(Number(params.get('loadkey'))) : (mostRecent()?.snap ?? null); } catch { snap = null; }
+  return snap?.testRoom === true;
+}
+/** What the refused boot says once the world stands. */
+export const TEST_ROOM_OFFLINE_TEXT = 'A Test Room character plays offline only. Its gear stays in the room.';

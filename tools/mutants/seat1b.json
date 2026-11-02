@@ -1,0 +1,510 @@
+[
+  {
+    "name": "SEAT1b-pledge-any-rank",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (!seatMay(Number(a.me.rank), 'pledge')) return { error: 'guild-rank' };",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-pledge-unconfirmed-seat",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (!seat) return { error: 'seat-unconfirmed' };\n  // DOMAIN3 (Domains law 1)",
+    "new": "  // DOMAIN3 (Domains law 1)",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the region law's check follows the confirmed seat's."
+  },
+  {
+    "name": "SEAT1b-pledge-reach-off-by-one",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "UNION SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3)) < ?7",
+    "new": "UNION SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3)) <= ?7",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-pledge-second-seat-a-region",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "    ON CONFLICT (week, guild_id, region) DO UPDATE SET key = excluded.key, set_by = excluded.set_by, at = excluded.at`)",
+    "new": "    ON CONFLICT (week, guild_id, region) DO NOTHING`)",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-pledge-in-the-reckoning",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (seatPhaseOf(nowS * 1000) !== 'muster') return { error: 'seat-reckoning' };",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-watch-anyones-receipt",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "    if (c.s !== player.id) { tally('not-yours'); continue; }",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-watch-any-week",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "    if (weekAt(c.i) !== week) { tally('old-week'); continue; }",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-watch-any-pixel",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "    const town = byPixel.get(`${c.x},${c.y}`);",
+    "new": "    const town = byPixel.get(`${c.x},${c.y}`) ?? [...seats.values()][0];",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the tick's seat is the town, its Charter read after it."
+  },
+  {
+    "name": "SEAT1b-watch-day-cap-off-by-one",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "AND day = ?7) < ?10`)",
+    "new": "AND day = ?7) <= ?10`)",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-watch-counted-twice",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "        SELECT ?1, ?2, ?3, ?4, ?5, 'watch', 1, ?6, ?7, ?8, ?9",
+    "new": "        SELECT ?1, ?2, ?3, ?4, ?5, 'watch', 1, ?6, ?7, ?8 || random(), ?9",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-watch-batch-unbounded",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "receipts.length > SEAT_WATCH_CLAIM_MAX) return { error: 'bad-watch' };",
+    "new": "receipts.length > 1000) return { error: 'bad-watch' };",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-new-member-counts",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "const seasoned = (m, nowS) => Number(m.joined_at) <= nowS - SEAT_MEMBER_WAIT_S;",
+    "new": "const seasoned = (m, nowS) => Number(m.joined_at) <= nowS;",
+    "tests": [
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-war-not-bound",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (!anyCharacter) return { why: me ? 'bound-elsewhere' : 'no-guild' };",
+    "new": "  if (!anyCharacter && !me) return { why: 'no-guild' };",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-war-receipt-through-the-character-only",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  return other ? { guild: bound, char: other.char_id } : { why: me ? 'bound-elsewhere' : 'no-guild' };",
+    "new": "  return { why: me ? 'bound-elsewhere' : 'no-guild' };",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-the-write-binds-nothing",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  'INSERT OR IGNORE INTO town_seat_binds (week, account, guild_id, char_id, at) VALUES (?, ?, ?, ?, ?)',",
+    "new": "  'SELECT ?, ?, ?, ?, ?',",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-gate-region-not-stored",
+    "file": "server-account/src/accounts.js",
+    "old": "nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "new": "nowS, null, embers, c.m",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ],
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. WB12d (re-aimed at its merge): the row's embers beside the region, and the rite's own row none."
+  },
+  {
+    "name": "SEAT1b-gate-agreement-two",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "if (b.n >= GATE_REGION_AGREE && !b.level) out.set(d, b.region);",
+    "new": "if (b.n >= 2 && !b.level) out.set(d, b.region);",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-gate-level-top-agrees",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "if (b.n >= GATE_REGION_AGREE && !b.level) out.set(d, b.region);",
+    "new": "if (b.n >= GATE_REGION_AGREE) out.set(d, b.region);",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-gate-any-week",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (weekAt(Math.floor(gateTimes(day).riseAt / 1000)) !== weekAt(nowS)) return { counted: false, why: 'old-week' };",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-renown-asked-not-credited",
+    "file": "server-account/src/index.js",
+    "old": "{ character: body.character, region: body.region, xp: r.credited });",
+    "new": "{ character: body.character, region: body.region, xp: body.xp });",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-homes-unbound-count",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "    const hs = homes.filter((h) => h.guild_id === g && binds.get(h.player) === g)",
+    "new": "    const hs = homes.filter((h) => h.guild_id === g)",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-homes-all-count",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "      .sort((x, y) => y.days - x.days).slice(0, HOMES_SEAT_MAX);",
+    "new": "      .sort((x, y) => y.days - x.days);",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-homes-new-members",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "AND m.joined_at <= ?`, [region ? seat.region : seat.key], [nowS - SEAT_MEMBER_WAIT_S]);",
+    "new": "AND m.joined_at <= ?`, [region ? seat.region : seat.key], [nowS]);",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the homes read by region where the region law rules."
+  },
+  {
+    "name": "SEAT1b-tribute-any-rank",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (!seatMay(Number(a.me.rank), 'tribute')) return { error: 'guild-rank' };",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tribute-past-the-room",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (marks / TRIBUTE_MARKS_PER_INFLUENCE > room) return { error: 'seat-tribute-cap' };",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tribute-pocketed",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "        SELECT 'guild', ?1, 'burn', NULL, 'tribute', ?2, ?3, ?4, ?5, ?6, ?7",
+    "new": "        SELECT 'guild', ?1, 'account', ?5, 'tribute', ?2, ?3, ?4, ?5, ?6, ?7",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tribute-repeat-burns",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (prior) return prior.kind === 'tribute' ? { ok: true, repeat: true } : { error: 'marks-rid' };\n  if (!marksOpenFor",
+    "new": "  if (!marksOpenFor",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tribute-odd-drakes",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "marks % TRIBUTE_MARKS_PER_INFLUENCE !== 0) return { error: 'bad-tribute' };",
+    "new": "false) return { error: 'bad-tribute' };",
+    "tests": [
+      "test/net/seat1b_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-law-account-cap-off",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o + b);",
+    "new": "  return w + g + r + h + m + o + b;",
+    "tests": [
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-law-gate-cap-off",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const g =\n    Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE) * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1); // SEASON1 part two: a Daedric Incursion's double, past the cap",
+    "new": "  const g = amountOf(gates) * GATE_INFLUENCE * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1); // SEASON1 part two: a Daedric Incursion's double, past the cap",
+    "tests": [
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-law-renown-cap-off",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const r = Math.min(RENOWN_WEEK_CAP, Math.floor(amountOf(renownXp) / RENOWN_XP_PER_INFLUENCE));",
+    "new": "  const r = Math.floor(amountOf(renownXp) / RENOWN_XP_PER_INFLUENCE);",
+    "tests": [
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-law-tribute-a-fifth-of-the-rest",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const cap = Math.floor((amountOf(others) * TRIBUTE_SHARE_MAX) / (1 - TRIBUTE_SHARE_MAX) + 1e-9);",
+    "new": "  const cap = Math.floor(amountOf(others) * TRIBUTE_SHARE_MAX + 1e-9);",
+    "tests": [
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-law-tribute-unbounded",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const tribute = Math.min(Math.floor(Math.max(0, tributeMarks) / TRIBUTE_MARKS_PER_INFLUENCE), tributeRoom(others));",
+    "new": "  const tribute = Math.floor(Math.max(0, tributeMarks) / TRIBUTE_MARKS_PER_INFLUENCE);",
+    "tests": [
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-law-home-days-from-purchase",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const homeDaysIn = (boughtAtS, weekStartS, nowS) =>\n  Math.max(0, Math.floor((nowS - Math.max(boughtAtS, weekStartS)) / 86400));",
+    "new": "export const homeDaysIn = (boughtAtS, weekStartS, nowS) => Math.max(0, Math.floor((nowS - boughtAtS) / 86400));",
+    "tests": [
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-law-officer-tributes",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SEAT_POWERS = Object.freeze({ pledge: Object.freeze([0, 1]), tribute: Object.freeze([0]) });",
+    "new": "export const SEAT_POWERS = Object.freeze({ pledge: Object.freeze([0, 1]), tribute: Object.freeze([0, 1]) });",
+    "tests": [
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-law-mine-lines-bound-elsewhere",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  else if (mine.bound && mine.bound !== mine.guild) out.push('Your account fights for another guild this week.');\n  else if (here?.key === seat.key)",
+    "new": "  else if (here?.key === seat.key)",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-receipt-version-shared",
+    "file": "src/net/watchReceipt.js",
+    "old": "export const WATCH_RECEIPT_V = 'k1';",
+    "new": "export const WATCH_RECEIPT_V = 'r1';",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-receipt-foreign-fields",
+    "file": "src/net/watchReceipt.js",
+    "old": "  if (\n    c.n !== undefined ||\n    c.k !== undefined ||\n    c.t !== undefined ||\n    c.o !== undefined ||\n    c.d !== undefined ||\n    c.b !== undefined ||\n    c.w !== undefined\n  )",
+    "new": "  if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.b !== undefined)",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-receipt-long-life",
+    "file": "src/net/watchReceipt.js",
+    "old": "  if (c.e <= c.i || c.e - c.i > WATCH_RECEIPT_TTL_S) return false;",
+    "new": "  if (c.e <= c.i) return false;",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-rhythm-standing-ticks",
+    "file": "src/net/watchReceipt.js",
+    "old": "export const watchDue = (w, now) => now - w.moved <= WATCH_MOVED_MS && now - w.at >= WATCH_TICK_MS;",
+    "new": "export const watchDue = (w, now) => now - w.at >= WATCH_TICK_MS;",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-relay-every-pose-ticks",
+    "file": "server/src/index.js",
+    "old": "    if (!watchDue(w, now)) return;",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-relay-off-map-mints",
+    "file": "server/src/index.js",
+    "old": "    if (!watchPixelOk(x, y)) return;   // AUDIT ETHER-OW C2-1: the Watch's ground, one home (its answers as they were)",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-relay-a-channel-ticks",
+    "file": "server/src/index.js",
+    "old": "    if (isCellRoom(a.key) && inCover(a, cellRoomOfWire(m.p.x, m.p.z)) && typeof met.sub === 'string' && met.sub) await this._watchTick(",
+    "new": "    if (typeof met.sub === 'string' && met.sub) await this._watchTick(",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
+  },
+  {
+    "name": "SEAT1b-client-a-halo-tick",
+    "file": "src/net/online.js",
+    "old": "      const w = primary && isCellRoom(room) ? readWatchReceipt(m.r) : null;",
+    "new": "      const w = readWatchReceipt(m.r);",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-book-keeps-another-account",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t))\n        return false;",
+    "new": "      if (!c || !c.signed || open === false || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-book-keeps-any-pixel",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t))\n        return false;",
+    "new": "      if (!c || !c.signed || open === false || c.s !== me() || (t != null && c.e <= t)) return false;",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-book-claims-every-frame",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (\n        !force &&\n        mine.length < SEAT_WATCH_CLAIM_MAX &&\n        (t == null ? nowMs() : t * 1000) - oldest < SEAT_WATCH_CLAIM_EVERY_MS\n      )\n        return null;",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-book-drops-on-no-answer",
+    "file": "src/net/townSeatBook.js",
+    "old": "      const settled = r?.ok || WATCH_SETTLED.includes(r?.error); // AUDIT-SEATS C10: a session run out keeps them",
+    "new": "      const settled = true; // AUDIT-SEATS C10: a session run out keeps them",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-book-tribute-new-id-each-ask",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (tributeAsk?.ask !== ask) tributeAsk = { ask, rid: rid() };",
+    "new": "      tributeAsk = { ask, rid: rid() };",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-book-standings-uncached",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (!force && kept && nowMs() - kept.at < SEAT_STANDINGS_CACHE_MS) return { data: kept.data, error: null };",
+    "new": "",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tab-shown-while-shut",
+    "file": "src/ui/noticeWindow.js",
+    "old": "  const seatShown = () => !!seatHost && seatHost.book?.open === true;",
+    "new": "  const seatShown = () => !!seatHost;",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tab-at-the-hall",
+    "file": "src/ui/noticeWindow.js",
+    "old": "  const seatHost = guildOnly ? null : (deps.seat ?? null);",
+    "new": "  const seatHost = deps.seat ?? null;",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tab-member-pledges",
+    "file": "src/ui/seatTab.js",
+    "old": "    if (seatMay(mine.rank, 'pledge') && data.phase === 'muster' && !here?.held) {",
+    "new": "    if (data.phase === 'muster' && !here?.held) {",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tab-pledge-in-the-reckoning",
+    "file": "src/ui/seatTab.js",
+    "old": "    if (seatMay(mine.rank, 'pledge') && data.phase === 'muster' && !here?.held) {",
+    "new": "    if (seatMay(mine.rank, 'pledge') && !here?.held) {",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT1b-tracker-one-region",
+    "file": "src/net/renownTracker.js",
+    "old": "      pend.set(k, (pend.get(k) ?? 0) + n);",
+    "new": "      pend.set(null, (pend.get(null) ?? 0) + n);",
+    "tests": [
+      "test/net/seat1b_client.test.js"
+    ]
+  }
+]

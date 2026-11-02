@@ -1,0 +1,17 @@
+[
+  {
+    "name": "REL9-1-the-build-legs-take-the-default-heap",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "      NODE_OPTIONS: --max-old-space-size=4096\n",
+    "new": "",
+    "tests": ["test/tooling/audit_install2.test.js"],
+    "note": "The Mac leg's vite build dies at V8's ~2GB default and no release is published - app-v0.1.8020 to the fix."
+  },
+  {
+    "name": "REL9-2-the-heap-is-the-mac-default-again",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "      NODE_OPTIONS: --max-old-space-size=4096\n",
+    "new": "      NODE_OPTIONS: --max-old-space-size=2048\n",
+    "tests": ["test/tooling/audit_install2.test.js"]
+  }
+]

@@ -1,0 +1,125 @@
+[
+  {
+    "name": "CAP-OFF-state-caps-harvests",
+    "file": "server-account/src/professions.js",
+    "old": "    caps: { stores: STORES_MAX, withdraw: WITHDRAW_MAX, highHides: HIGH_HIDES_PER_DAY },",
+    "new": "    caps: { harvests: 60, stores: STORES_MAX, withdraw: WITHDRAW_MAX, highHides: HIGH_HIDES_PER_DAY },",
+    "tests": [
+      "test/net/cap_off.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-svc-cap-said-again",
+    "file": "server-account/src/professions.js",
+    "old": "  // CAP-OFF: no day's cap to say - `prof-cap`, `prof-account-cap`, `prof-hunt-cap` and `prof-fish-cap` are said no more\n",
+    "new": "  if (((await todayOf(db, player.id, character, day))[profession] ?? 0) >= 60) return { error: 'prof-cap' };\n",
+    "tests": [
+      "test/net/cap_off.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-chip-cap-again",
+    "file": "src/scenes/gatherHost.js",
+    "old": "`${professionName(cp)} ${rank(cp)} - ${tally.n} today`",
+    "new": "`${professionName(cp)} ${rank(cp)} - ${tally.n} / 60 today`",
+    "tests": [
+      "test/net/cap_off.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-host-account-day-again",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (!plan?.ready || typeof book.closed !== 'function') return plan;\n",
+    "new": "    if (!plan?.ready || typeof book.closed !== 'function') return plan;\n    if (book.closed(`account:${plan.profession}`)) return { ...plan, ready: false, rest: '120 today across your characters' };\n",
+    "tests": [
+      "test/net/cap_off.test.js",
+      "test/systems/fb1001_audit.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-book-cap-reread-again",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;",
+    "new": "    if (r?.error === 'prof-cap' || r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;",
+    "tests": [
+      "test/net/fb1001_ground.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-book-fish-cap-again",
+    "file": "src/net/profBook.js",
+    "old": "    if (r?.error === 'prof-hunt-high') state.hunt",
+    "new": "    if (r?.error === 'prof-fish-cap') state.reread = true;\n    if (r?.error === 'prof-hunt-high') state.hunt",
+    "tests": [
+      "test/world/terrain/prof8_client.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-pages-harvests-of-sixty",
+    "file": "src/ui/professions/profPages.js",
+    "old": "'Today: {n, plural, one {# harvest} other {# harvests}}'",
+    "new": "'Today: {n} of 60 harvests'",
+    "tests": [
+      "test/net/cap_off.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-pages-harvest-plural-lost",
+    "file": "src/ui/professions/profPages.js",
+    "old": "{n, plural, one {# harvest} other {# harvests}}",
+    "new": "{n} harvests",
+    "tests": [
+      "test/net/cap_off.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-pages-hauls-of-forty",
+    "file": "src/ui/professions/profPages.js",
+    "old": "'Today: {hauls, plural, one {# haul} other {# hauls}} (shared by all your characters)'",
+    "new": "'Today: {hauls} of 40 hauls (shared by all your characters)'",
+    "tests": [
+      "test/net/cap_off.test.js",
+      "test/world/terrain/prof8_client.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-pages-hides-of-thirty",
+    "file": "src/ui/professions/profPages.js",
+    "old": "'Today: {hides, plural, one {# hide} other {# hides}}, ",
+    "new": "'Today: {hides} of 30 hides, ",
+    "tests": [
+      "test/net/cap_off.test.js",
+      "test/systems/prof7_client.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-timers-the-old-limits",
+    "file": "src/systems/eventTimers.js",
+    "old": "    `Gathering nodes come back. Daily limits reset for rare hides, silver and Court writs${src?.seatsOpen ? ', and the Watch' : ''}`,",
+    "new": "    `Gathering, hides, hauls, silver and Court writs${src?.seatsOpen ? ', and the Watch' : ''}`,",
+    "tests": [
+      "test/net/cap_off.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-text-the-sixty",
+    "file": "src/net/accountClient.js",
+    "old": "  'prof-cap': () => t('account.refusal.profCap', 'You have gathered all a day allows.'),",
+    "new": "  'prof-cap': () => t('account.refusal.profCap', 'You have gathered all a day allows (60).'),",
+    "tests": [
+      "test/net/cap_off.test.js"
+    ]
+  },
+  {
+    "name": "CAP-OFF-text-the-forty",
+    "file": "src/net/accountClient.js",
+    "old": "all the nets a day allows, across your characters.",
+    "new": "all the nets a day allows (40, across your characters).",
+    "tests": [
+      "test/net/cap_off.test.js",
+      "test/world/terrain/prof8_client.test.js"
+    ]
+  }
+]

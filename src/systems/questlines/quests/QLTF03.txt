@@ -1,0 +1,87 @@
+-- STAR8 (2026-10-20; bible/11-Multiplayer/Starfall.md section 7): THE THIRTEENTH OF FROSTFALL, step 3 of 4.
+-- Begun by the raven's letter while the Starfall runs (`needs: ['starfall']`). Witnessed (net/questlineClaims.js
+-- `stars3`, three j1 receipts newer than the first step's): three more fallen stars held (`ql act star-held 3`), and
+-- the raven brings Morwen's word and her purse where the player stands, so no journey ends in a walk to the coven.
+-- AUDIT STAR8 T2: and the Heart-Star, if it falls while the step runs (the Witches' Night's third star, about twice a
+-- Festival - systems/starfall/starfallNight.js): held, it is the step's own bonus (`ql act heart-star-held 1`, the
+-- receipt's act - net/starfall/starClaims.js), never its gate - the sheet's optional objective and its `heart` outcome,
+-- the greater pay and Morwen's ring. Lore: canon - Mephala, Queen of Oblivion (N0B00Y09.QRC), whose day the Festival is.
+-- The port's own: the web the covens weave of the stars they spin, each star held a strand it loses; the Heart-Star.
+Quest: QLTF03
+DisplayName: Three Stars
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          Morwen's raven has stopped coming, and the
+<ce>               covens are singing again.
+
+QuestComplete:  [1004]
+<ce>         In a pouch tied under the note: _gold_ gold, and
+<ce>                  one black feather.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Morwen of Glenmoril has read the spindle. Every
+ star the covens sing down is spun onto one like
+ it, and every star held until its thread burns is
+ a strand their web has lost. I am to hold three
+ more fallen stars on the Witches' Festival.
+
+Message:  1011
+%pcn,
+
+     The spindle has told me what it is for. Every
+ star they sing down is spun onto one like it, and
+ the web they are weaving is Mephala's. A star held
+ until its thread burns is a strand that web loses.
+
+     Hold three more. My raven will find you when
+ it is done.
+
+<ce>                   Morwen of Glenmoril
+
+Message:  1012
+<ce>         The raven, with a letter. It does not wait to be
+<ce>                          thanked.
+
+Message:  1013
+<ce>         The raven lands on your arm as the third thread
+<ce>          finishes burning. Tied to its leg is a note in
+<ce>                     Morwen's hand.
+<ce>
+<ce>         "Three strands gone. The web is torn, and the
+<ce>          covens know it. Come to me when you can."
+
+Message:  1014
+<ce>         The Heart-Star's thread burns through. Morwen
+<ce>                  will hear of this one.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 300 to 600
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_heart_ task:
+	ql act heart-star-held 1
+	say 1014
+
+_held_ task:
+	ql act star-held 3
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
