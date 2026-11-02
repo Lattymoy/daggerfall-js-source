@@ -175,3 +175,11 @@ test('UI-CALM II the walk polished (a player: "cheap letters, overlapping, dotte
   assert.match(firm, /if \(st\.status === 404\) return t\('firm\.readFail\.missing'/);
   assert.match(rd('src/net/firmament/firmamentBook.js'), /state\.status = Number\.isSafeInteger\(r\?\.status\) \? r\.status : null;/);
 });
+
+test('WHERE-TO-PLAY: a browser\'s Online asks Main servers or Private server first; the desktop app goes straight in', () => {
+  const src = readFileSync(new URL('../../../src/ui/enhanced/enhancedMenu.js', import.meta.url), 'utf8');
+  assert.match(src, /globalThis\.daggerShell \? \(\) => go\('online'\) : level\('where'\)/, 'the app\'s launcher already asked');
+  assert.match(src, /doorBtn\('online', t\('menu\.home\.mainServers', 'Main servers'\)[^\n]*go\('online'\)/, 'Main servers is the realm');
+  assert.match(src, /doorBtn\('private', t\('menu\.home\.private', 'Private server'\)[^\n]*level\('private'\)/);
+  assert.match(src, /doorBtn\('getapp', [^\n]*'\.\.\/#desktop', '_blank', 'noopener'/, 'private servers point to the desktop app\'s download');
+});
