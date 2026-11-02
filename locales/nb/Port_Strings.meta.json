@@ -399,6 +399,11 @@
   "tr": "54d1f5ef6d7d",
   "by": "claude-in-session"
  },
+ "account.field.invite": {
+  "en": "e91cf27d1adf",
+  "tr": "69eb871356ea",
+  "by": "claude-in-session"
+ },
  "account.field.oldPassword": {
   "en": "19dff4dad0a7",
   "tr": "f23a53dd9db2",
@@ -2342,6 +2347,11 @@
  "account.refusal.insurePiece": {
   "en": "f5f540ddc52a",
   "tr": "d6c9db6936fb",
+  "by": "claude-in-session"
+ },
+ "account.refusal.invite": {
+  "en": "8a18b2846971",
+  "tr": "1183d6ee8b47",
   "by": "claude-in-session"
  },
  "account.refusal.joined": {

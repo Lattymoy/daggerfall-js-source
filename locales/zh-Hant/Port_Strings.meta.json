@@ -4,6 +4,11 @@
   "tr": "96baa787fdd7",
   "by": "claude-in-session"
  },
+ "account.field.invite": {
+  "en": "e91cf27d1adf",
+  "tr": "9917f01d411e",
+  "by": "claude-in-session"
+ },
  "account.refusal.badText": {
   "en": "003919932dc4",
   "tr": "999531007317",
@@ -72,6 +77,11 @@
  "account.refusal.homeUnlisted": {
   "en": "8845fe7a3a8a",
   "tr": "51a4e6715c56",
+  "by": "claude-in-session"
+ },
+ "account.refusal.invite": {
+  "en": "8a18b2846971",
+  "tr": "cdef777c3c2c",
   "by": "claude-in-session"
  },
  "account.refusal.lineageInUse": {

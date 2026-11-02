@@ -299,6 +299,11 @@
   "tr": "36419f461d8c",
   "by": "claude-in-session"
  },
+ "account.field.invite": {
+  "en": "e91cf27d1adf",
+  "tr": "7b6063cef5cc",
+  "by": "claude-in-session"
+ },
  "account.field.oldPassword": {
   "en": "19dff4dad0a7",
   "tr": "19fc60880cc9",
@@ -607,6 +612,11 @@
  "account.refusal.homeUnlisted": {
   "en": "8845fe7a3a8a",
   "tr": "2f5f01181e29",
+  "by": "claude-in-session"
+ },
+ "account.refusal.invite": {
+  "en": "8a18b2846971",
+  "tr": "9602ff1fb76a",
   "by": "claude-in-session"
  },
  "account.refusal.lineageInUse": {

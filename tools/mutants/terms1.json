@@ -2,8 +2,8 @@
   {
     "name": "TERMS1-guest-route-unasked",
     "file": "server-account/src/index.js",
-    "old": "          if (refused) return no(refused.error, 400, origin);\n          const made = await createGuest(",
-    "new": "          const made = await createGuest(",
+    "old": "          if (refused) return no(refused.error, 400, origin);\n          const gated = signupCodeRefusal(",
+    "new": "          const gated = signupCodeRefusal(",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "TERMS1-guest-row-opened-bare",
     "file": "src/ui/accountFlow.js",
-    "old": "      const made = await ask(() => openGuest(io, null, ACCEPTED));",
-    "new": "      const made = await ask(() => openGuest(io, null));",
+    "old": "      const made = await ask(() => openGuest(io, null, ACCEPTED, v('invite')));",
+    "new": "      const made = await ask(() => openGuest(io, null, null, v('invite')));",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
