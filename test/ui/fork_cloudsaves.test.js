@@ -15,3 +15,4 @@ test('FORK-TASK-CLOUD-SAVES: FORK_FLAGS.ENABLE_CLOUD_SAVES is disabled and hides
   assert.match(menu, /function cloudForCard\(card\) \{\s*if \(!FORK_FLAGS\.ENABLE_CLOUD_SAVES\) return \{ state: 'off', when: null, why: null, actions: \[\] \};/);
   assert.match(menu, /function cloudOnlyGrid\(saves\) \{\s*if \(!FORK_FLAGS\.ENABLE_CLOUD_SAVES\) return null;/);
 });
+
