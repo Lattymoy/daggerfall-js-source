@@ -855,7 +855,8 @@ import { readAccount, buyInsignia, settleBrokerSale, adoptIdentity as adoptSessi
 import { ownNameAsAt } from '../systems/ownGlyphs.js';   // NAME-AS: when this device last chose the name its player wears (WB9g's aura at my own feet is scenes/auraHost.js's now)
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
 import { createFirmamentBook, setFirmamentBook } from '../net/firmament/firmamentBook.js';   // FIRM1: the Firmament - this device's tree and purses
-import { setFirmamentTree, setFirmamentOnline } from '../systems/firmamentLive.js';   // FIRM1: the tree in force, online alone
+import { setFirmamentTree, setFirmamentOnline, setFirmamentOffline } from '../systems/firmamentLive.js';   // FIRM1: the tree in force, online alone
+import { isOfflineFirmamentActive, createOfflineFirmamentBook, initOfflineRenown, onOfflineFoeKilled, onOfflineQuestEnded } from '../systems/offlineFirmament.js';
 import { starsFor } from '../net/firmament/firmamentLaw.js';   // FIRM1: the Stars a Renown level brings, said with it
 import { withoutFirmament } from '../systems/firmamentPowers.js';   // FIRM1: a strike or a spell at a player - a duel's, a siege's, the Wrothgarian zone's - is rolled with the sky off
 import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountWild, accountRenown, accountRoll, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds, accountLamp, accountFirmament, nameWhyText } from '../net/accountClient.js';   // NAME-AS: nameWhyText, why my character's name stood aside   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
@@ -1429,6 +1430,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _sharedClockHeard = false;   // AUDIT ONLINE2 F2: whether it has been - a receipt's life is the relay's, never this device's
   setSigilOnline(params.has('online'));   // SIGIL1: this session plays online - before any list is minted (a pile rolls at a dungeon's build)
   setFirmamentOnline(params.has('online'));   // FIRM1: and the Firmament is in force online alone
+  if (!params.has('online') && isOfflineFirmamentActive()) setFirmamentOffline(true);
   // SET3: THE SETS' VOICE - a power's line on the HUD (the default), and its sound: Unbroken's the parry's ring, the
   // Wrath's a fire cast (element 0), Eventide's a magic cast (element 4 - Chameleon's own, as its bundle carries)
   setSetsWearer(() => playerEntity);   // SET5: the classic tooltip's and a plaque's set lines read my worn sets
@@ -2201,7 +2203,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const bank = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT
         return { gold: () => totalGoldAmount(playerEntity) + Math.max(0, bank?.accountGold ?? 0), pay: (n) => payUndoable(playerEntity, n, bank), credit: (n) => addGold(playerEntity, n), region: () => region };
       } })
-    : null;
+    : (isOfflineFirmamentActive() ? createOfflineFirmamentBook({ entity: playerEntity, wallet: () => {
+        playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+        const region = _questRegionIndex() ?? 0;
+        const bank = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;
+        return { gold: () => totalGoldAmount(playerEntity) + Math.max(0, bank?.accountGold ?? 0), pay: (n) => payUndoable(playerEntity, n, bank), credit: (n) => addGold(playerEntity, n), region: () => region };
+      } }) : null);
   setFirmamentBook(firmBook);
   firmBook?.onChange((st) => setFirmamentTree(st.tree));
   // PROF5 (bible/06-Systems/Professions-Arc.md 26): the market's book - the Market tab's reads through a minute's cache,
@@ -19002,6 +19009,23 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const xp = renownQuestXp(playerEntity.level, renownNow);   // RENOWN3: the quest's level read against my Renown too
       renownTracker.earn(xp, villainQuestLowers());   // PVP-VILLAIN-KEEP: a quest done lowers the villain meter
       sigilDrinks(xp);   // SIGIL1
+    };
+  } else if (isOfflineFirmamentActive()) {
+    initOfflineRenown({
+      playerEntity,
+      firmBook,
+      say: (t) => townTalk?.say?.(t),
+    });
+    setRenownKillHandler((foe) => {
+      onOfflineFoeKilled(foe);
+    });
+    const paid = new Set();
+    renownQuestEnded = (q) => {
+      if (!q?.questSuccess) return;
+      const key = String(q.uid ?? q.questName ?? '');
+      if (!key || paid.has(key)) return;
+      paid.add(key);
+      onOfflineQuestEnded(playerEntity);
     };
   }
   // ACC4 (Mac: "time played to the icon profile"): THE WORLD IS WHERE

@@ -183,6 +183,7 @@ export const CATEGORIES = Object.freeze([
     ]),
     sec('character', 'Character & survival', [
       'feat:mod-oblivion-remaster-leveling',
+      'port:offlineFirmament',
       'feat:mod-project-legacy',
       'feat:mod-climates-calories',
       'feat:mod-roleplay-realism',

@@ -9,4 +9,5 @@ export const FORK_FLAGS = {
   ENABLE_ACCOUNT: false,
   ENABLE_ONLINE_PLAY: false,
   ENABLE_CLOUD_SAVES: false,
+  ENABLE_OFFLINE_FIRMAMENT: true,
 };

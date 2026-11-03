@@ -3296,7 +3296,10 @@ function portRowsGame({ pause = false } = {}) {
   };
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
-  return [row, techniqueMotionRow()];
+  const rows = [row, techniqueMotionRow()];
+  rows.push(prefRow('offlineFirmament', t('features.offlineFirmament.title', 'Firmament (Offline)'),
+    t('features.offlineFirmament.note', 'Enables the Firmament constellation passive tree and Renown progression while playing offline.')));
+  return rows;
 }
 /** RPT1026-CLIENT (a private report: allies' spells shook the view where they landed, and no setting could soften it): how much
  *  another player's spell shakes the view where it lands (scenes/hostMagic.js peerKickShare); Settings > Accessibility >

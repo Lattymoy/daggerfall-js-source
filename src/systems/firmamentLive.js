@@ -17,6 +17,7 @@ const NONE = Object.freeze({});
 let _tree = /** @type {{ start: string|null, keys: readonly string[] }} */ (EMPTY_TREE);
 let _stats = NONE;
 let _online = false;
+let _offline = false;
 let _mentorScale = 1;
 /** The combat channels at a scale, by scale - remade when the tree or the scale moves. */
 let _scaled = new Map();
@@ -57,6 +58,13 @@ export function setFirmamentOnline(on) {
       }
     }
 }
+/** The host's word: this page plays with offline Firmament in force. */
+export function setFirmamentOffline(on) {
+  const was = _offline;
+  _offline = !!on;
+  if (was !== _offline) tell();
+}
+export const isFirmamentOffline = () => _offline;
 /** MENTOR2: the host's word - the share the combat stars act at while I mentor (mentorMode.js mentorPowerScale), 1
  *  when I do not. The fold and the layer move at once (AUDIT UICALM-FIRM1 L1 L2: never a round late). */
 export function setFirmamentMentorScale(k) {
@@ -77,8 +85,8 @@ export function onFirmamentChange(fn) {
 
 /** The tree as the host last handed it in. */
 export const firmamentTree = () => _tree;
-/** Whether the tree is in force: online, with a sign chosen. */
-export const firmamentInForce = () => _online && !!_tree.start;
+/** Whether the tree is in force: online or offline firmament, with a sign chosen. */
+export const firmamentInForce = () => (_online || _offline) && !!_tree.start;
 /** Every channel's capped total while the tree is in force; none otherwise. */
 export const firmamentStats = () => (firmamentInForce() ? _stats : NONE);
 /** MENTOR2: every channel with the combat ones at scale `k` (mentorMode.js mentorPowerScale) - the tree's own at 1. */
@@ -115,7 +123,7 @@ export const firmActMult = (profession) => 1 + firmStat(`act.${profession}`) / 1
  * @returns {FirmamentStatus}
  */
 export function firmamentStatus({ read, dueling }) {
-  if (!_online) return 'seat';
+  if (!_online && !_offline) return 'seat';
   if (!_tree.start) return read ? 'no-sign' : 'unread';
   if (dueling) return 'duel'; // MENTOR2: the duel first - it puts the combat stars to sleep, mentoring only scales them
   if (_mentorScale < 1) return 'mentoring';
@@ -127,6 +135,7 @@ export function _resetFirmamentLiveForTests() {
   _tree = EMPTY_TREE;
   _stats = NONE;
   _online = false;
+  _offline = false;
   _mentorScale = 1;
   _scaled = new Map();
   _listeners.clear();
