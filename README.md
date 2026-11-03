@@ -1,31 +1,100 @@
-# DFO Online: open-source edition
+# Daggerfall Forever
 
-This is the source of DFO Online as it stood on 2026-11-02. It is released under the MIT License (`LICENSE`), with
-Daggerfall Unity's notice beside it. Work on DFO Online continues in a private repository.
+A fork of DFO focused on modular single-player experience. The aim is to integrate as much major DFU mods as possible and make their settings customizable.
 
-DFO Online is an independent, unofficial project. It is not affiliated with or endorsed by Bethesda Softworks or
-ZeniMax Media. The Elder Scrolls and Daggerfall are trademarks of ZeniMax Media Inc.
+---
 
-Play the live game at https://daggerfalljs.dev/.
+## Vision
+To make a single-player, client-based, modular and highly customizable version of DFO with:
+* Selected online features playable offline and toggleable in settings (firmament, gathering and crafting, player housing, 24/7 city infrastructure).
+* Selected online features disabled (world events, boss raids, shop, armory).
+* As much major, significant DFU mods integrated and toggleable, with settings, as possible.
 
-## The desktop app
+To allow players create their own custom-tailored experience in an easy and simple way.
 
-The desktop app's releases are published here, and installed copies update from them:
-https://github.com/Lattymoy/daggerfall-js-source/releases
+---
 
-## Reporting a bug
+## Why this vision
+DFO to me is actually still great, but I also don't like the MMOization and monetization focus of it.
 
-Open an issue here. Report an exploit or a security problem privately, as `SECURITY.md` says.
+Their initial direction (mod integration) was my dream game, but they diverted from it to something I don't enjoy. I still respect the developers and am grateful to them for providing a foundation.
 
-## Building this edition
+What I highly value is the ease of setting it up for actual play. In DFU I probably spent more time setting up and maintaining my modlist than playing it. Still an amazing experience, thank you Interkarma and modders! You did something legendary!
 
-Node 20.19+ or 22.12+.
+DFO team solved it by providing an easy to install package that you tweak to your heart's content for half an hour and then just play.
 
-- `npm ci`
-- `npm run dev`: the development server
-- `npm run build`: a production build
+DFO team also, in my point of view, delivered some truly great convenience and gameplay features:
+* An auto-updating client with a launcher
+* Easy localization
+* Tons of settings
+* Integration of beloved mods
+* Modernized gameplay and controls
+* Tamriel
+* Nice overworld travel (I'm already tired of it atm, but hey, it's toggleable!)
+* Cross-platform architecture
+* Optional usage of Morrowind assets
 
-The game reads your own copy of The Elder Scrolls II: Daggerfall (its `ARENA2` folder), which is never committed.
-`sh tools/fetch-data.sh <folder>` downloads the free release of it into that folder.
+I love Daggerfall. I love DFU more. I love modded DFU the most. But I am tired of maintaining modlists. And I don't need Daggerfall to be an online game. It's fun, but to me not worth the cost.
 
-This edition does not follow the live game, so its client may not connect to the live servers.
+And hey, I won't need monetization to sustain servers!
+
+I want to make something that will be — to me — an ultimate version of Daggerfall, at least for now. And will share my results with you.
+
+**Daggerfall is Forever. Your game, your rules. Open source, customizable, without any monetization and with — hopefully — beloved mods.**
+
+---
+
+## Open source
+Yes. Always.
+
+---
+
+## AI disclosure
+Yes. I understand that a lot of people won't like it.
+
+I'm a game developer, both professional and hobbyist. In my indie projects I use AI, but the old way: as a chat bot. Not agentic. I consult how to make this and that, show it the code, and ask to give me updates to my methods. That's my pipeline.
+
+But this is not my codebase and I don't know JavaScript. I mainly work with Unreal Engine, since 2012, so C++. I have a degree in Software Engineering, but to make it happen not in 20 years, yes, I am going to experiment with agentic development: Google Antigravity in this case.
+
+If that doesn't work for me, I'll switch back to my usual pipeline. But AI to me is an enabling tool — I won't be able to deliver my vision without using it in some form.
+
+---
+
+## Monetization
+Nope. Never. Not even donations.
+
+---
+
+## Who am I
+Name is Alex Uslavtsev. I live in Ukraine, so yes, the war. With its consequences and lack of predictability.
+
+I make my own games during the evenings and weekends, and have a small team as well. We did [Titans of the Past](https://store.steampowered.com/app/3098170/Titans_of_the_Past/) recently.
+
+I also was one of the leaders of a CIS-based project called FOnline — a Fallout 2-based MMO from early 2000s.
+
+Gamedev is my profession, hobby, and passion.
+
+My main background is Game Design and Producing. I took a managerial track and now am working as Head of Production at GSC Game World (S.T.A.L.K.E.R. 2).
+
+*In relation to this project I'm in no way, shape or form affiliated with GSC Game World.*
+
+My favorite games are DFU and Neverwinter Nights by BioWare (R.I.P. my dear).
+
+I have a cat named Raccoon:
+
+![Raccoon the cat](docs/images/raccoon.jpg)
+
+I love doing stuff much more than talking about it.
+
+---
+
+## Collaboration
+My idea is to make a foundation, then switch to collaboration with mod authors in the DFU community (in which I belong for years, but only as a silent reader): ask permission to integrate and consult if needed.
+
+Pull requests are welcome, but tbh I somehow don't have much experience with Git. Was mostly using Perforce and some SVN back in the day. But if you want to help, I'll appreciate it.
+
+---
+
+## What is already done
+* Launcher targets this repository.
+* Saves are in its own app data folder.
