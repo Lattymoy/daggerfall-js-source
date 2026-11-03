@@ -28,7 +28,7 @@
 // before a single dead link goes live.
 'use strict';
 
-const RELEASES_URL = 'https://github.com/Lattymoy/daggerfall-js-source/releases';
+const RELEASES_URL = 'https://github.com/Chuz13/daggerfall-forever/releases';
 
 /** The four files a player downloads, one per way to run the app. */
 const DOWNLOAD_FILES = Object.freeze({

@@ -1,14 +1,14 @@
 {
   "name": "daggerfall-js-app",
-  "productName": "DFO Online",
+  "productName": "Daggerfall Forever",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DFO Online - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
   "author": "Lattymoy",
   "homepage": "https://daggerfalljs.dev/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Lattymoy/daggerfall-js-source.git"
+    "url": "https://github.com/Chuz13/daggerfall-forever.git"
   },
   "main": "main.cjs",
   "scripts": {
@@ -22,8 +22,8 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "dev.daggerfalljs.app",
-    "productName": "DFO Online",
+    "appId": "dev.chuz13.daggerfallforever",
+    "productName": "Daggerfall Forever",
     "icon": "../public/icons/icon-512.png",
     "afterPack": "./afterPack.cjs",
     "artifactName": "DFO-Online-${os}-${arch}.${ext}",
@@ -33,8 +33,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "Lattymoy",
-        "repo": "daggerfall-js-source"
+        "owner": "Chuz13",
+        "repo": "daggerfall-forever"
       }
     ],
     "files": [
@@ -55,7 +55,7 @@
       ],
       "category": "Game"
     },
-    "win": {
+    "win": { "signAndEditExecutable": false,
       "target": [
         "nsis",
         "portable"

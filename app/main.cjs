@@ -53,7 +53,7 @@ const { backendLaunch, holdsVSync, watchBackend, backendOption, chooseBackend, r
 // rebrand is a name, not a migration. The folder keeps the name it was
 // created with, whatever the product is called on the outside.
 if (process.env.DAGGER_USER_DATA) app.setPath('userData', process.env.DAGGER_USER_DATA);
-else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall JavaScript'));
+else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall Forever'));
 
 // GPU-BACKEND (2026-10-26): Vulkan on Windows, the player's opt-in (`graphicsBackend`), held on the default while a
 // failure is on record. The guard reads the renderer once the first window is up and relaunches on the default when
@@ -487,10 +487,10 @@ function handleDagger(req) {
 // check's own request - asked beside it at launch, under its two gates -
 // and its answer is kept in news.json, so the panel is never empty while
 // the next one is asked for, or when GitHub does not answer.
-const RELEASES_LATEST_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/latest';
-const RELEASES_LIST_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases?per_page=20';
-const RELEASES_TAG_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/tags/';   // + the hosting pin's tag
-const RELEASES_PAGE = 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest';
+const RELEASES_LATEST_API = 'https://api.github.com/repos/Chuz13/daggerfall-forever/releases/latest';
+const RELEASES_LIST_API = 'https://api.github.com/repos/Chuz13/daggerfall-forever/releases?per_page=20';
+const RELEASES_TAG_API = 'https://api.github.com/repos/Chuz13/daggerfall-forever/releases/tags/';   // + the hosting pin's tag
+const RELEASES_PAGE = 'https://github.com/Chuz13/daggerfall-forever/releases/latest';
 const { isNewerRelease } = require('./lib/updateCheck.cjs');
 const { updateTransport } = require('./lib/autoUpdate.cjs');
 const { UNLOAD_ASK, leaves, restartAsk, reinstallAsk, installFailedAsk, goesAhead } = require('./lib/shellDialogs.cjs');
