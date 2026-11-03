@@ -1417,6 +1417,16 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'prefs', key: 'mwShoulderCam', initial: 'off', online: 'player', tiers: Object.freeze([
       tier('off', OFF), tier('right', () => t('features.mwShoulder.right', 'Right')), tier('left', () => t('features.mwShoulder.left', 'Left'))]) }),
   }),
+  // MW-FOE-BODIES: Mobs & Foes in Morrowind bodies
+  Object.freeze({
+    id: 'mw-foe-bodies',
+    group: 'world',
+    title: 'Morrowind Foes',
+    note: 'With the Morrowind body, monsters and humanoid foes get Morrowind bodies too, nearest first. Near shows up to 24; All shows up to 48 but costs more.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwFoeBodies', initial: 'near', online: 'player', tiers: Object.freeze([['off', 'Off'], ['near', 'Near'], ['all', 'All']]) }),
+  }),
   // MWNPC5b (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE PEOPLE IN
   // MORROWIND BODIES - the NPC lanes (characters/npcBodies.js) under ONE frame budget (MWNPC11, NPC_FRAME_TIERS): Off, the
   // classic sprites; Near, the nearest 24 a frame within a street's width, whoever they are; All, 48 across a square. The

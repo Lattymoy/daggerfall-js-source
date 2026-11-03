@@ -55,7 +55,7 @@ import { createGateHost } from './gateHost.js';   // WB11c: the Legion-Lord's ho
 import { createSpriteWarm } from './gateSpriteWarm.js';   // GATE-MIX: the night's bodies' sprites made ready as I come in
 import { EG_MIX, egDbGain } from '../../systems/eliteGates/egMix.js';   // GATE-MIX: the Spire's level for the peers' sounds, the court's too
 import { setPeerSoundScope, peerSoundScope } from '../../net/peer/peerFx.js';   // GATE-MIX: the peers' sounds' one scope
-import { createPopulationLane } from '../../characters/npcBodies.js'; import { creatureLook } from '../../characters/creatureBodies.js'; import { rosterActor } from '../../characters/rosterBodies.js';   // MWNPC10: the court's creatures in their Morrowind bodies
+import { createPopulationLane, foeBodiesOn } from '../../characters/npcBodies.js'; import { creatureLook } from '../../characters/creatureBodies.js'; import { rosterActor } from '../../characters/rosterBodies.js';   // MWNPC10: the court's creatures in their Morrowind bodies
 import { ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
 import { mobileBillboardSize, billboardSize } from '../../world/rmbFlats.js';
 
@@ -331,7 +331,7 @@ export function createGateCourt({
    *  heard and drawn, mine never: no blow of mine sent, none of his landed on me. */
   const watching = () => !!link.watching?.();
   let watchAskedAt = -Infinity;
-  const bodiesLane = createPopulationLane({ laneName: 'gate', renderer, ...(wantBodies ? { want: wantBodies } : {}), make: makeBodies });
+  const bodiesLane = createPopulationLane({ laneName: 'gate', renderer, want: wantBodies ?? foeBodiesOn, make: makeBodies });
   const bossRec = {};
   // SHADER-STALL (render/glProgram.js compiledPass): each of the court's passes is built the first frame it is wanted AND
   // its programs are done - started where it was built (the telegraph's with the court; the portal's as it rises; his

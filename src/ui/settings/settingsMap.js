@@ -229,6 +229,7 @@ export const CATEGORIES = Object.freeze([
       'feat:beast-helmets',
       'feat:mw-spell-effects',
       'feat:mw-body-motion',
+      'feat:mw-foe-bodies',
       'feat:mw-npc-bodies',
       'feat:mw-billboard-look',
       'feat:mw-model-detail',

@@ -314,7 +314,7 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/nav/navClient.js';   // ENHANCED AI 3b
 import { reachableFrom } from '../ai/nav/navmesh.js';   // LAIR-WALK: the floor a walk reaches from the way in (the port's own query, over the body's locate)
 import { getPref } from '../systems/uiPrefs.js';
-import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
+import { createHostFoeBodies, foeBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
 import { isBodyFoe, foeActor, foeFx, foeId, foeSeed, applyWireLook, drawBodiesUnderWindow } from '../characters/foeBodies.js';
 import { createPopulationLane } from '../characters/npcBodies.js'; import { personActor } from '../characters/peopleBodies.js';   // MWNPC8b: the dungeon's standing people   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied, corpseEntityName, mintCorpseMarker, corpseTextureOf } from './corpseMarker.js';
@@ -7714,7 +7714,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // object outlives the bake and every foe reads the same one.
     if (enhancedNav.world) enhancedNav.world.pathBudget = enhancedNav.world.budgetPerFrame;
     // MWNPC5b: the lane, this frame - none while it is not wanted (and the one standing let go)
-    const npcLane = npcBodiesOn() ? (_npcLane ??= createHostNpcBodies({ renderer, collider: () => collider })) : null;
+    const npcLane = foeBodiesOn() ? (_npcLane ??= createHostFoeBodies({ renderer, collider: () => collider })) : null;
     if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }
     _peerFrame++;   // WORLD3: the peers' feet are read once a frame
     // HOST-CLOCK (scenes/ownerCatchUp.js ownerFoes): THE FOES' STEP IS A CALL, as a street pool's update is - made once a

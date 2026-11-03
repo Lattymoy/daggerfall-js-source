@@ -35,6 +35,9 @@ Primary focus: Native desktop clients (Windows, macOS, Linux) prioritizing offli
    - Version bumps must synchronize across `app/package.json`, root `package.json`, and `scripts/updateLine.mjs`.
    - Git release tag format strictly follows `app-v<major>.<minor>.<patch>` (demanded by updater logic).
    - Version bumps only occur at milestone finalizations or upon direct command.
+   
+   
+   Also always add any new text in all languages currently present in the game. 
 
 ---
 
