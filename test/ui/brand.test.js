@@ -232,8 +232,8 @@ test('BR4: the logo is Mac’s transparent cut, and nothing blends it away - BR5
   // next logo: 1232 x 1034, 1.19:1, so every box below narrowed to its height.
   const png = readFileSync(join(root, 'src/assets/branding/dfo-online.png'));
   const ratio = png.readUInt32BE(16) / png.readUInt32BE(20);
-  // AUDIT BR5: the site's and the launcher's logo reserve the file's own size, so neither page moves as it loads
-  for (const page of ['index.html', 'app/launcher/index.html']) {
+  // AUDIT BR5: the site's logo reserves the file's own size, so it does not move as it loads
+  for (const page of ['index.html']) {
     assert.match(read(page), new RegExp(`dfo-online\\.png" alt="${NAME}" width="${png.readUInt32BE(16)}" height="${png.readUInt32BE(20)}"`), `${page}: the logo's own size`);
   }
   const door = (w) => w * 769 / 2112 * ratio, film = (w) => w * 850 / 2112 * ratio;
@@ -339,8 +339,8 @@ test('BR5: no surface still says Daggerfall Online - whole, split across a wordm
   }
   assert.equal(split, '', `a wordmark still spells the old name across two elements:\n${split}`);
   assert.match(read('src/ui/enhanced/enhancedChargen.js'), new RegExp(`brand\\.append\\(el\\('div', 'sub', '${NAME}'\\)\\);`), 'the new character\'s masthead');
-  // AUDIT BR5: the launcher wears the logo too, the game's own file, named by its alt
-  assert.ok(read('app/launcher/index.html').includes(`<h1 class="wordmark"><img src="dfo-online.png" alt="${NAME}" width="1232" height="1034"></h1>`), 'and the desktop launcher\'s');
+  // FORK: the desktop launcher wears the text brand mark
+  assert.ok(read('app/launcher/index.html').includes(`<h1 class="wordmark"><span class="brand-text">${NAME}</span></h1>`), 'and the desktop launcher\'s');
   assert.match(read('src/ui/screenshot.js'), /return `dfo-\$\{d\.getFullYear\(\)\}/, 'a screenshot is named for the product');
   assert.match(read('src/ui/shotsPane.js'), /a\.download = `dfo-shot-\$\{s\.id\}\.jpg`;/, 'and so is a saved loading shot');
   assert.match(read('server-account/src/patreon.js'), /<title>\$\{esc\(heading\)\} - DFO Online<\/title>/, 'and the Patreon link\'s page');
@@ -518,4 +518,12 @@ test('FORK-TASK2: FORK_FLAGS.TEXT_BRAND_MARK hides the DFO image mark in the mai
   assert.equal(imageMark.tag, 'img');
   assert.equal(imageMark.className, 'brand-logo');
   assert.equal(imageMark.alt, NAME);
+});
+
+test('FORK-TASK-LAUNCHER-BRAND: launcher renders text brand mark and removes external website/discord links', () => {
+  const html = read('app/launcher/index.html');
+  assert.ok(html.includes(`<h1 class="wordmark"><span class="brand-text">${NAME}</span></h1>`));
+  assert.doesNotMatch(html, /data-open="site"/);
+  assert.doesNotMatch(html, /data-open="discord"/);
+  assert.doesNotMatch(html, /daggerfalljs\.dev/);
 });

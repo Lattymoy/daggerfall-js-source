@@ -53,8 +53,10 @@ button { font: inherit; color: inherit; }
 .wordmark {
   margin: 0; font-family: 'Jacquard 12', serif; font-weight: 400; font-size: 58px; line-height: 0.9;
   text-shadow: 4px 4px 0 rgba(0,0,0,0.7);
+  color: #d8cfae;
 }
-.wordmark img { display: block; width: auto; height: 76px; }
+.wordmark img { display: none; width: auto; height: 76px; }
+.wordmark .brand-text { display: block; color: #d8cfae; letter-spacing: 0.02em; }
 .links { display: flex; gap: 18px; padding-bottom: 4px; }
 .rule { flex: none; display: flex; align-items: center; gap: 16px; margin: 12px 0 14px; }
 .rule::before, .rule::after { content: ''; flex: 1; height: 2px; background: #7d7460; opacity: 0.55; }
