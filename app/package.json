@@ -2,7 +2,7 @@
   "name": "daggerfall-js-app",
   "productName": "Daggerfall Forever",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Daggerfall Forever - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
   "author": "Lattymoy",
   "homepage": "https://daggerfalljs.dev/",
