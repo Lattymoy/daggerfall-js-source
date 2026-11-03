@@ -10,6 +10,10 @@ The goal: native desktop clients (Windows, macOS, Linux) focusing on offline gam
 3. PRESERVE ORIGINAL ENGINE LOGIC: Core Daggerfall engine mechanics and rendering must remain untouched unless explicitly targeted.
 4. QUALITY GATES: After every functional change, verify that build scripts (`npm run build`, `npm run check` or equivalent) pass without breaking the runtime.
 5. CODE STYLE: Follow the repository's existing TypeScript/JavaScript conventions (CommonJS vs ESM conventions in `app/` vs `src/`).
+6. Web version should be supported, but main focus is on built clients.
+7. We don't remove features from the code base. We disable what is not needed but keep it in the code.
+8. At some point in time we might decide to establish local servers so players still can play online. But not now.
+
 
 
 SECRET_VERIFICATION_CODE: RACCOON_42
