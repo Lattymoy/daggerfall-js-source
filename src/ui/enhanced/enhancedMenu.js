@@ -643,6 +643,7 @@ const cloudKeyOf = (save) => slotKeyOf(save);
  *  waits on it: the tiles are drawn with no cloud line and gain one
  *  when the answer lands. A signed-out or guest device never asks. */
 function ensureCloud() {
+  if (!FORK_FLAGS.ENABLE_CLOUD_SAVES) return;
   if (cloudAsked) return;
   cloudAsked = true;
   const io = cloudIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() });
@@ -667,6 +668,7 @@ function ensureCloud() {
  *  game BACK (Load), so a newer backup can be restored from it - ACC2c's
  *  own law for where a download lives (see `cloudOnlyGrid`). */
 function cloudFor(save, { restore = false } = {}) {
+  if (!FORK_FLAGS.ENABLE_CLOUD_SAVES) return { state: 'off', when: null, why: null, actions: [] };
   const slot = cloudKeyOf(save);
   const card = (cloudCards ?? []).find((c) => slotKeyOf(c) === slot) ?? null;
   const state = cloudStateOf({
@@ -816,6 +818,7 @@ function download(card) {
  *  asked here; the decision is still `cloudStateOf`'s, which takes
  *  `local: false` and keeps the two acts a download can be in. */
 function cloudForCard(card) {
+  if (!FORK_FLAGS.ENABLE_CLOUD_SAVES) return { state: 'off', when: null, why: null, actions: [] };
   const slot = slotKeyOf(card);
   const state = cloudStateOf({
     signedIn: true,   // a card only reaches this surface through a listing, which needs a session
@@ -899,6 +902,7 @@ function tileGrid(saves, forSave) {
  *  about what a player's own backup holds is arithmetic a pin must be
  *  able to drive. */
 function cloudOnlyGrid(saves) {
+  if (!FORK_FLAGS.ENABLE_CLOUD_SAVES) return null;
   const cards = cloudOnly(cloudCards, saves);
   if (!cards.length) return null;
   const box = el('div', 'svcloudonly');
