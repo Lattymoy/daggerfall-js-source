@@ -57,13 +57,12 @@ test('ONE-BOARD the rumour board nearest the town\'s middle (the siege field\'s 
   assert.equal(noticeBoardIndex(null), -1);
 });
 
-test('ONE-BOARD REVERTED the hosts (2026-10-07, Mac) - NOTICE-PANEL (2026-10-29, the owner: "remove the notice board prop from all cities", PIN MOVED): no board stands, so no press, no count over one, no mark on the town map and no pennant over one; the town panel is the one Notice Board of every settlement', () => {
+test('physical bulletin and bounty boards stand in town streets and are interactive', () => {
   const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /noticeBoardOf|noticeBoardIndex/, 'no one-board law in the host');
-  assert.doesNotMatch(w, /noticeCountPoints|noticeTownHere|townBoardMarks|townBoardRows|boardTargets/, 'the boards\' press, count, town and marks are gone');
-  assert.match(w, /const townPanel = createTownPanelHost\(\{/, 'the town panel instead');
-  assert.doesNotMatch(src('src/scenes/seatBanners.js'), /boardPennantAnchor|bounty\.has/, 'no pennant over a board');
-  assert.doesNotMatch(src('src/scenes/worldModes.js'), /NOTICE_BOARD_TEXT|BOUNTY_BOARD_TEXT/, 'and no plaque names one');
+  assert.doesNotMatch(w, /noticeCountPoints|noticeTownHere|townBoardMarks|townBoardRows/);
+  assert.match(w, /boardTargets/, 'the boards stand in the street');
+  assert.match(src('src/scenes/worldModes.js'), /NOTICE_BOARD_TEXT|BOUNTY_BOARD_TEXT/, 'plaque names boards');
 });
 
 test('BOARD-UI the Notices tab: the town\'s and the server\'s word under "News", then the players\' notes under their count; the tab names how many are new since this device last read the board (mutants: one grid; the count unsaid; the old notes counted; the read said twice)', async () => {

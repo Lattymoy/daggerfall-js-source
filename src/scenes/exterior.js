@@ -483,7 +483,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       for (const hf of HOLD_FLATS) archives.add(hf.archive);
     }
     for (const placed of b.layout.models) {
-      if (!isBulletinBoard(placed.modelIdNum)) modelIds.add(placed.modelIdNum);   // AUDIT FB1029g R6: no board stands, none is fetched
+      modelIds.add(placed.modelIdNum);
       // AUDIT 64 F14: a city gate swaps between BOTH variants at dawn
       // and dusk (DaggerfallCityGate.cs:29-34), so both meshes have to
       // be resident, climate-remapped and their archives fetched before
@@ -738,9 +738,6 @@ export async function bootExterior(canvas, renderer, params, status) {
       // departure; the 1:1 lane must not see it.
       if (placed.enhancedOnly && !isEnhanced()) continue;
       if (isHouseSign(placed, b, (id) => cpuModels.get(id)?.doors)) continue;   // HOUSE-SIGN: a shop's sign at a house's door does not stand
-      // NOTICE-PANEL: a town's board (RMBLayout's standalone 41739) does not stand. FLAGGED: the bench stands no town panel.
-      // It runs no account service and no rumour mill, the panel's two halves (scenes/townPanelHost.js)
-      if (isBulletinBoard(placed.modelIdNum)) continue;
       const mesh = gpuMeshes.get(placed.modelIdNum);
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);

@@ -517,6 +517,8 @@ const NO_INDIRECT_COLOR = new Float32Array(3);
 
 /** DUEL1: the line a door says to a duellist (the ring holds them - scenes/world.js duelHolds). */
 export const DUEL_DOOR_TEXT = 'You cannot leave the ring while you duel.';
+export const NOTICE_BOARD_TEXT = 'Notice Board';
+export const BOUNTY_BOARD_TEXT = 'Bounty Board';
 /** ROGUE-IMP: a quest foe stood on a building's marker has its feet this far above it - the pool's own walker lift
  *  (scenes/exteriorFoes.js spawnFoe), so a walker stands exactly where it did and a flyer hangs just clear of the floor. */
 export const INTERIOR_MARKER_FEET_LIFT = 0.1;
@@ -7186,7 +7188,9 @@ export function createWorldModes(host) {
       if (pn.textureArchive != null && !isNpcFlat(pn.textureArchive)) return;
       targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
     });
-    // NOTICE-PANEL: no town board stands in the street - the town panel under the compass is its press (scenes/townPanelHost.js)
+    // BOUNTY-BOARDS: physical bounty and notice boards in town streets
+    const boards = host.boardTargets?.() ?? [];
+    boards.forEach((b, i) => targets.push({ key: `board:${i}`, aabb: b.box ?? b.aabb ?? b, distance: RAY_DISTANCE, reach: STATIC_NPC_ACTIVATION_DISTANCE }));
     // SEARCH1 (systems/searchables.js): a graveyard's headstones - the streaming host's (scenes/world.js graveTargets);
     // the bench host stands none. The ray's distance, half a door's reach carried beside it - GRAVE-PARTY (FIELD BUGS
     // 2026-10-16): measured from the BODY to the stone's box (searchReachFor), as the dungeon's searchables are.
@@ -7487,6 +7491,10 @@ export function createWorldModes(host) {
       return _doorText;
     }
     if (typeof key !== 'string') return null;
+    if (key.startsWith('board:')) {
+      const b = (host.boardTargets?.() ?? [])[Number(key.split(':')[1])];
+      return { title: b?.isBounty ? BOUNTY_BOARD_TEXT : NOTICE_BOARD_TEXT };
+    }
     if (key.startsWith('grave:')) return { title: 'Grave' };   // SEARCH1
     if (key.startsWith('person:')) {                                       // .cs:325-393
       const pn = npcs[Number(key.split(':')[1])];
@@ -7726,6 +7734,10 @@ export function createWorldModes(host) {
     if (typeof key === 'string' && key.startsWith('person:')) {
       activateStaticNpc(npcs[Number(key.split(':')[1])]);
       return true;
+    }
+    if (typeof key === 'string' && key.startsWith('board:')) {
+      if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
+      return host.activateBoard?.(Number(key.split(':')[1])) ?? true;
     }
     if (typeof key === 'string' && key.startsWith('grave:')) {   // SEARCH1: a headstone - too far speaks the refusal
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }

@@ -608,10 +608,8 @@ export function createPixelBuild(host) {
           const local = multiply(originMatrix, placed.matrix);
           const cpu = cpuModels.get(placed.modelIdNum);
           const box = transformedAabb(archAabb(placed.modelIdNum, cpu.positions), local);
-          // NOTICE-PANEL (scenes/townPanelHost.js): a town's board (RMBLayout's standalone 41739) does not stand - the town
-          // panel under the compass is its press. Its place is kept, the very box a drawn model's is (AUDIT FB1029g R1: one
-          // reckoning, so the siege field's Market every machine lays never drifts from where a board stood)
-          if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }
+          // BOUNTY-BOARDS: a town's board (RMBLayout's standalone 41739) stands in the street and its place is kept in pixelBoards
+          if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); }
           const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table
           if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate
           if (WATER_SOURCE_MODELS.includes(placed.modelIdNum)) pixelSprings.push({ pos: [local[12], local[13], local[14]], dry: false });   // SURV3: a trough is a water source
@@ -1499,6 +1497,8 @@ export function createPixelBuild(host) {
       chapterHalls: pixelChapterHalls,   // CHAP7b (above)
       beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line
       meets: meets ?? null,   // ACROSS-EDGE: the meets its ground took - its ghost rows' at a restride
+      boards: pixelBoards,
+      bounty: pixelBoardSplit ?? (pixelBoards.length > 1 ? new Set([1]) : new Set()),
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season: pixelSeason,   // GR1: the placer reads the tiles and the season (PRECIP4: the pixel's)
       _snow: snowSeen,   // PRECIP4: the snow it was built under, every season it took (the sweep's - AUDIT PRECIP HOST-6)

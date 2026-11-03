@@ -757,6 +757,7 @@ import { createFaceLoader } from '../ui/partyPanel.js';   // LEGACY3: a member's
 import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } from '../systems/inventory.js';   // LEGACY1: the estate
 import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
 import { monthNames } from '../systems/gameDate.js';   // L10N3e: the month's name in the player's language, read when asked
+import { bulletinBoardRows } from '../systems/bulletinBoard.js';
 import { createBountyHost, bountyDungeonPixel } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
 import { standBountyDungeonPack } from './bountyDungeonPack.js';   // BOUNTY1: a bounty's pack underground, out of bootWorld (HOST-SPLIT)
 import { huntOnline } from './huntersMark.js';   // HUNTERS-MARK: the hunt's ledger, the bounty host's
@@ -28025,6 +28026,66 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return out;
     },
     activateGrave: (g, mode) => activateGrave(g, mode),   // SEARCH1
+    boardTargets: () => {
+      const out = [];
+      for (const p of built.values()) {
+        if (!p.boards?.length) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        const dfLoc = locationIndex.get(`${p.px},${p.py}`);
+        const bountySet = p.bounty ?? new Set();
+        p.boards.forEach((b, i) => {
+          out.push({
+            box: {
+              min: [b.box[0] + t[0], b.box[1] + t[1], b.box[2] + t[2]],
+              max: [b.box[3] + t[0], b.box[4] + t[1], b.box[5] + t[2]],
+            },
+            isBounty: bountySet.has(i),
+            px: p.px,
+            py: p.py,
+            name: dfLoc?.name ?? '',
+            mapId: dfLoc?.mapTableData?.mapId ?? null,
+          });
+        });
+      }
+      return out;
+    },
+    activateBoard: (idx) => {
+      const boards = [];
+      for (const p of built.values()) {
+        if (!p.boards?.length) continue;
+        const dfLoc = locationIndex.get(`${p.px},${p.py}`);
+        const bountySet = p.bounty ?? new Set();
+        p.boards.forEach((b, i) => {
+          boards.push({
+            isBounty: bountySet.has(i),
+            px: p.px,
+            py: p.py,
+            name: dfLoc?.name ?? '',
+            mapId: dfLoc?.mapTableData?.mapId ?? null,
+          });
+        });
+      }
+      const target = boards[idx];
+      if (!target) return false;
+      const town = { px: target.px, py: target.py, name: target.name, mapId: target.mapId };
+      if (target.isBounty) {
+        return bountyHost?.openBoard(town) ?? false;
+      }
+      const shownName = town.name;
+      const rows = bulletinBoardRows(shownName, rumorMill.getNewsOrRumorsForBulletinBoard(), tokenRows);
+      const notice = {
+        mapId: town.mapId,
+        px: town.px,
+        py: town.py,
+        name: town.name,
+        bountyLine: !!bountyHost,
+      };
+      if (openNoticeBoard(notice, rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === shownName)))) {
+        return true;
+      }
+      townTalk.showOverlay(new ChoiceWindow({ lines: rows.map((r) => r.text) }));
+      return true;
+    },
     lampClaim: _accountLamp ? () => _accountLamp.claim() : undefined,   // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp, the account's
     lampAccount: _accountLamp ? () => _accountLamp.account() : undefined,   // AUDIT FIVE-ASKS D2: whose it is - another sign-in asks afresh
     monumentTargets: () => lefay?.targets() ?? [],   // LEFAY1: the monuments, in the street's one ray
