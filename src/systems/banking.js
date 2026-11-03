@@ -40,7 +40,8 @@
 import { CRIMES } from './court.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';   // H1: the houses-for-sale filter
 import { isOnlinePage } from './online/onlineLane.js';   // EMPIRE-BANK: online, the Empire lends a tenth
-import { getPref } from './uiPrefs.js';
+import { getPref, addPrefListener } from './uiPrefs.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { FORK_FLAGS } from '../config/forkFlags.js';
 import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a deed keeps the layout its town was bought in
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit } from './inventory.js';
@@ -568,15 +569,101 @@ export function foldEmpireAccounts(snap) {
   const empire = accounts?.[EMPIRE_ACCOUNT_REGION];
   if (!empire || typeof empire !== 'object') return null;
   let gold = 0, branches = 0;
+  const split = snap?.bankUnifiedSplit && typeof snap.bankUnifiedSplit === 'object'
+    ? { ...snap.bankUnifiedSplit }
+    : {};
+  if (split[EMPIRE_ACCOUNT_REGION] === undefined && Number.isFinite(empire.accountGold) && empire.accountGold !== 0) {
+    split[EMPIRE_ACCOUNT_REGION] = empire.accountGold;
+  }
   accounts.forEach((a, i) => {
     if (i === EMPIRE_ACCOUNT_REGION || !a || typeof a !== 'object' || !Number.isFinite(a.accountGold) || a.accountGold === 0) return;
     empire.accountGold = (Number.isFinite(empire.accountGold) ? empire.accountGold : 0) + a.accountGold;
     gold += a.accountGold;
+    split[i] = (split[i] ?? 0) + a.accountGold;
     a.accountGold = 0;
     branches++;
   });
-  return branches > 0 ? { gold, branches } : null;
+  if (branches > 0) {
+    if (snap && typeof snap === 'object') snap.bankUnifiedSplit = split;
+    return { gold, branches };
+  }
+  return null;
 }
+
+/** THE UNFOLD: restores regional accounts from the unified Empire account according to
+ *  snap.bankUnifiedSplit, ensuring that the total gold across all regional accounts is exactly
+ *  equal to the gold currently in the Empire account. Zero gold lost, zero gold duplicated. */
+export function unfoldEmpireAccounts(snap) {
+  const accounts = Array.isArray(snap?.bankAccounts) ? snap.bankAccounts : null;
+  const empire = accounts?.[EMPIRE_ACCOUNT_REGION];
+  if (!empire || typeof empire !== 'object') return null;
+  const split = snap?.bankUnifiedSplit;
+  if (!split || typeof split !== 'object') return null;
+
+  const currentGold = Number.isFinite(empire.accountGold) ? empire.accountGold : 0;
+  const splitTotal = Object.values(split).reduce((s, v) => s + (Number.isFinite(v) && v > 0 ? v : 0), 0);
+
+  let restoredBranches = 0;
+  let totalRestored = 0;
+
+  if (currentGold <= 0 || splitTotal <= 0) {
+    accounts.forEach((a, i) => {
+      if (i !== EMPIRE_ACCOUNT_REGION && a && typeof a === 'object') {
+        a.accountGold = 0;
+      }
+    });
+  } else if (currentGold >= splitTotal) {
+    // Current gold covers or exceeds original split: restore every regional account in full.
+    // The surplus remains in the Empire account.
+    for (const [rStr, origGold] of Object.entries(split)) {
+      const r = Number(rStr);
+      if (r === EMPIRE_ACCOUNT_REGION || !accounts[r]) continue;
+      const amount = Math.max(0, Math.trunc(origGold));
+      if (amount > 0) {
+        accounts[r].accountGold = amount;
+        totalRestored += amount;
+        restoredBranches++;
+      }
+    }
+    empire.accountGold = currentGold - totalRestored;
+  } else {
+    // Player spent money while unified bank was active: distribute proportionally.
+    const ratio = currentGold / splitTotal;
+    let distributed = 0;
+    for (const [rStr, origGold] of Object.entries(split)) {
+      const r = Number(rStr);
+      if (r === EMPIRE_ACCOUNT_REGION || !accounts[r]) continue;
+      const amount = Math.max(0, Math.floor(origGold * ratio));
+      if (amount > 0) {
+        accounts[r].accountGold = amount;
+        distributed += amount;
+        restoredBranches++;
+      } else {
+        accounts[r].accountGold = 0;
+      }
+    }
+    empire.accountGold = currentGold - distributed;
+    totalRestored = distributed;
+  }
+
+  delete snap.bankUnifiedSplit;
+  return { unfolded: true, branches: restoredBranches, gold: totalRestored };
+}
+
+/** Synchronizes regional bank accounts with the current unifiedBank setting. */
+export function syncUnifiedBankAccounts(snap, active = isUnifiedBankActive()) {
+  if (!snap || !Array.isArray(snap.bankAccounts)) return null;
+  return active ? foldEmpireAccounts(snap) : unfoldEmpireAccounts(snap);
+}
+
+// React to mid-game toggle of unifiedBank in UI preferences
+addPrefListener((k, v) => {
+  if (k === 'unifiedBank') {
+    if (playerEntity && Array.isArray(playerEntity.bankAccounts)) {
+      syncUnifiedBankAccounts(playerEntity, !!v);
+    }
+  }
+});
 /** What the character is told when the fold moved gold in, once the world stands. */
 export function empireAccountLines(r) {
   if (!(r?.gold > 0)) return [];

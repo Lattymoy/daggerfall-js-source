@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import {
   createBankAccounts, EMPIRE_ACCOUNT_REGION, goldRegion,
   isUnifiedBankActive, depositGold, withdrawGold, accountTotal,
+  foldEmpireAccounts, unfoldEmpireAccounts, syncUnifiedBankAccounts,
 } from '../../src/systems/banking.js';
+import { playerEntity } from '../../src/characters/playerEntity.js';
+import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import {
   isCity247Active, isBuildingOpen, buildingHoursState, SHOP_STAFFING,
 } from '../../src/systems/buildingLocks.js';
@@ -106,4 +109,102 @@ test('CITY-247: city gate remains open at night when 24/7 city infrastructure is
 
   // Clean up
   setPref('city247', false);
+});
+
+test('UNIFIED-BANK: fold, unfold and proportional gold redistribution on toggle', () => {
+  const E = EMPIRE_ACCOUNT_REGION;
+  const accounts = createBankAccounts();
+  accounts[5].accountGold = 5000;
+  accounts[E].accountGold = 2000;
+  accounts[20].accountGold = 3000;
+
+  const snap = { bankAccounts: accounts };
+  const folded = foldEmpireAccounts(snap);
+  assert.deepEqual(folded, { gold: 8000, branches: 2 });
+  assert.equal(snap.bankAccounts[E].accountGold, 10000);
+  assert.equal(snap.bankAccounts[5].accountGold, 0);
+  assert.equal(snap.bankAccounts[20].accountGold, 0);
+  assert.deepEqual(snap.bankUnifiedSplit, { [E]: 2000, 5: 5000, 20: 3000 });
+
+  // Unfold without gold changes: exactly original balances are restored
+  const unfolded = unfoldEmpireAccounts(snap);
+  assert.equal(unfolded.branches, 2);
+  assert.equal(snap.bankAccounts[5].accountGold, 5000);
+  assert.equal(snap.bankAccounts[E].accountGold, 2000);
+  assert.equal(snap.bankAccounts[20].accountGold, 3000);
+  assert.equal(snap.bankUnifiedSplit, undefined);
+
+  // Fold again, then withdraw 4000 gold from unified account
+  foldEmpireAccounts(snap);
+  assert.equal(snap.bankAccounts[E].accountGold, 10000);
+  snap.bankAccounts[E].accountGold -= 4000; // 6000 remains (ratio 0.6)
+
+  // Unfold with less gold: proportional distribution, zero coins created or lost
+  unfoldEmpireAccounts(snap);
+  assert.equal(snap.bankAccounts[5].accountGold, 3000); // 5000 * 0.6
+  assert.equal(snap.bankAccounts[20].accountGold, 1800); // 3000 * 0.6
+  assert.equal(snap.bankAccounts[E].accountGold, 1200);  // 6000 - 3000 - 1800
+  const totalRemaining = snap.bankAccounts.reduce((s, a) => s + a.accountGold, 0);
+  assert.equal(totalRemaining, 6000);
+
+  // Fold again, then deposit 9000 gold into unified account (total 15000)
+  foldEmpireAccounts(snap);
+  assert.equal(snap.bankAccounts[E].accountGold, 6000);
+  snap.bankAccounts[E].accountGold += 9000; // 15000 total
+
+  // Unfold with surplus: original regional amounts restored, surplus stays in Empire capital
+  unfoldEmpireAccounts(snap);
+  assert.equal(snap.bankAccounts[5].accountGold, 3000);
+  assert.equal(snap.bankAccounts[20].accountGold, 1800);
+  assert.equal(snap.bankAccounts[E].accountGold, 15000 - 3000 - 1800); // 10200
+  const totalWithSurplus = snap.bankAccounts.reduce((s, a) => s + a.accountGold, 0);
+  assert.equal(totalWithSurplus, 15000);
+});
+
+test('UNIFIED-BANK: setPref mid-game synchronizes playerEntity bank accounts and persists in save/restore', () => {
+  const E = EMPIRE_ACCOUNT_REGION;
+  playerEntity.bankAccounts = createBankAccounts();
+  playerEntity.bankAccounts[5].accountGold = 4000;
+  playerEntity.bankAccounts[E].accountGold = 1000;
+  playerEntity.bankAccounts[30].accountGold = 5000;
+  delete playerEntity.bankUnifiedSplit;
+
+  setPref('unifiedBank', false);
+
+  // Toggle ON in settings mid-game
+  setPref('unifiedBank', true);
+  assert.equal(playerEntity.bankAccounts[E].accountGold, 10000);
+  assert.equal(playerEntity.bankAccounts[5].accountGold, 0);
+  assert.equal(playerEntity.bankAccounts[30].accountGold, 0);
+  assert.ok(playerEntity.bankUnifiedSplit);
+
+  // Save character snapshot
+  const snap = snapshotPlayer(playerEntity);
+  assert.equal(snap.bankAccounts[E].accountGold, 10000);
+  assert.deepEqual(snap.bankUnifiedSplit, { [E]: 1000, 5: 4000, 30: 5000 });
+
+  // Toggle OFF in settings while game is running
+  setPref('unifiedBank', false);
+  assert.equal(playerEntity.bankAccounts[5].accountGold, 4000);
+  assert.equal(playerEntity.bankAccounts[E].accountGold, 1000);
+  assert.equal(playerEntity.bankAccounts[30].accountGold, 5000);
+  assert.equal(playerEntity.bankUnifiedSplit, undefined);
+
+  // Restore player while setting is OFF: accounts restored to regional form
+  const restoredEntity = { isPlayer: true, race: 'Breton', items: [] };
+  restorePlayer(restoredEntity, snap);
+  assert.equal(restoredEntity.bankAccounts[5].accountGold, 4000);
+  assert.equal(restoredEntity.bankAccounts[E].accountGold, 1000);
+  assert.equal(restoredEntity.bankAccounts[30].accountGold, 5000);
+
+  // Restore player while setting is ON: accounts remain unified in Empire account
+  setPref('unifiedBank', true);
+  const restoredUnified = { isPlayer: true, race: 'Breton', items: [] };
+  restorePlayer(restoredUnified, snap);
+  assert.equal(restoredUnified.bankAccounts[E].accountGold, 10000);
+  assert.equal(restoredUnified.bankAccounts[5].accountGold, 0);
+  assert.equal(restoredUnified.bankAccounts[30].accountGold, 0);
+
+  // Clean up
+  setPref('unifiedBank', false);
 });

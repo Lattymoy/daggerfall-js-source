@@ -440,10 +440,21 @@ export function getPref(k) {
   if (_prefs === null) loadPrefs();
   return _prefs[k] ?? PREF_DEFAULTS[k];
 }
+const _prefListeners = new Set();
+export function addPrefListener(fn) {
+  _prefListeners.add(fn);
+  return () => _prefListeners.delete(fn);
+}
+
 export function setPref(k, v) {
   if (_prefs === null) loadPrefs();
+  const prev = _prefs[k];
   _prefs[k] = v;
-  return savePrefs();
+  const res = savePrefs();
+  for (const fn of _prefListeners) {
+    try { fn(k, v, prev); } catch { /* listener error ignored */ }
+  }
+  return res;
 } // SKIN-CARRY: the store's word comes back - a refused write is the caller's to carry another way
 export function isOpen(catId, group) {
   return !!getPref('open')[`${catId}:${group}`];
