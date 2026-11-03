@@ -324,3 +324,11 @@ test('GPU-BACKEND-LAUNCHER: the page - the box sends its choice by name, the not
   assert.match(js, /\$\('graphics'\)\.hidden = !g;/);
   assert.match(js, /document\.querySelector\('\[data-act="restart"\]'\)\.hidden = !g\.restart;/);
 });
+
+test('FORK-TASK-PLAY-DIRECT: play button in launcher directly dispatches play without opening where-to-play chooser', () => {
+  const js = rd('app/launcher/launcher.js');
+  // Does not intercept play button to show('choose')
+  assert.doesNotMatch(js, /act\?\.id === 'play' && .*show\('choose'\)/);
+  // Directly acts on data-act='play'
+  assert.match(js, /if \(act && !act\.disabled\) bridge\.act\(act\.dataset\.act/);
+});

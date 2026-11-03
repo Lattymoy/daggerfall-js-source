@@ -203,9 +203,7 @@
 
   document.addEventListener('click', (e) => {
     const act = e.target.closest('[data-act]');
-    // PLAY asks first - the main servers or a private server - unless a private server is already on
-    if (act?.id === 'play' && !act.disabled && !privateOn && lastView?.panel === 'news') { show('choose'); return; }
-    // Join carries the address typed beside it
+    // Play directly launches regular mode; Join carries the address typed beside it
     if (act && !act.disabled) bridge.act(act.dataset.act, act.dataset.act === 'private-join' ? $('private-address').value : undefined);
     const link = e.target.closest('[data-open]');
     if (link) bridge.act('open', link.dataset.open);
