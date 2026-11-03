@@ -1,0 +1,11 @@
+// Fork-level feature flags for Daggerfall Forever.
+// Original DFO online, store, armory, and account modules remain in the
+// codebase and are toggled via these flags (.agentrules #7 & #8).
+
+export const FORK_FLAGS = {
+  TEXT_BRAND_MARK: false,
+  ENABLE_ARMORY: true,
+  ENABLE_SHOP: true,
+  ENABLE_ACCOUNT: true,
+  ENABLE_ONLINE_PLAY: true,
+};

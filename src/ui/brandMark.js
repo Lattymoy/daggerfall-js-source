@@ -18,7 +18,7 @@ export const BRAND_LOGO_URL = new URL('../assets/branding/dfo-online.png', impor
 // centre line and the dragon hangs to its left. test/ui/brand.test.js measures it from the file, so the next logo
 // reddens there rather than in a layout. The launcher sets the mark at its left edge and is not moved.
 export const BRAND_LOGO_OPTICAL_SHIFT = 0.1;
-export const BRAND_LOGO_ALT = 'DFO Online';
+export const BRAND_LOGO_ALT = 'Daggerfall Forever';
 /** L10N4: the alt text a screen reader hears, in the player's language (BRAND_LOGO_ALT stays the English). */
 export const brandLogoAlt = () => t('menu.brand.alt', BRAND_LOGO_ALT);
 

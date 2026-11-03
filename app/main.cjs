@@ -970,7 +970,7 @@ async function checkForUpdatesViaUpdater() {
   tellBox({
     type: 'info',
     message: `You're up to date`,
-    detail: `DFO Online v${app.getVersion()} is the latest release.`,
+    detail: `Daggerfall Forever v${app.getVersion()} is the latest release.`,
   });
 }
 
@@ -1044,7 +1044,7 @@ async function checkForUpdates() {
     tellBox({
       type: 'info',
       message: `You're up to date`,
-      detail: `DFO Online v${app.getVersion()} is the latest release.`,
+      detail: `Daggerfall Forever v${app.getVersion()} is the latest release.`,
     });
     return;
   }
@@ -1224,7 +1224,7 @@ async function checkForUpdatesLoudly() {
   if (g === 'installer') return currentUpdateTransport() === 'updater' ? checkForUpdatesViaUpdater() : checkForUpdates();
   const stays = 'your saves, settings and ARENA2 path all stay where they are.';
   if (g === 'offline') tellBox({ type: 'warning', message: 'Could not check for updates', detail: `GitHub was unreachable. The releases page is ${RELEASES_PAGE}.` });
-  else if (g === 'current') tellBox({ type: 'info', message: `You're up to date`, detail: `DFO Online v${gameVersion()} is the latest release.` });
+  else if (g === 'current') tellBox({ type: 'info', message: `You're up to date`, detail: `Daggerfall Forever v${gameVersion()} is the latest release.` });
   else if (gameJob) tellBox({ type: 'info', message: `Version ${gameJob.version} is downloading`, detail: `You have v${gameVersion()}. Only the files that changed come down, and it plays the next time the game starts - ${stays}` });
   else if (updateReady?.game) tellBox({ type: 'info', message: `Version ${updateReady.version} is ready`, detail: `It plays the next time the game starts, or now from File > Restart to Update - ${stays}` });
   else tellBox({ type: 'info', message: `Updated to v${gameVersion()}`, detail: `Only the files that changed came down; Play runs it - ${stays}` });
@@ -1462,7 +1462,7 @@ async function createWindow({ onShown = null } = {}) {
     width: 1280,
     height: 800,
     backgroundColor: '#111111',
-    title: 'DFO Online',
+    title: 'Daggerfall Forever',
     show: !onShown,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -1624,7 +1624,7 @@ function openLauncherWindow() {
     fullscreenable: false,
     show: false,
     backgroundColor: '#0a0c11',
-    title: 'DFO Online',
+    title: 'Daggerfall Forever',
     webPreferences: {
       preload: path.join(__dirname, 'launcherPreload.cjs'),
       contextIsolation: true,

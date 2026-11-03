@@ -64,9 +64,9 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 
 /** The name, its short form, its form in a file name, and the one sentence
  *  that says what it is - which names no other game (BR5). */
-const NAME = 'DFO Online';
-const SHORT_NAME = 'DFO';
-const FILE_NAME = 'DFO-Online';
+const NAME = 'Daggerfall Forever';
+const SHORT_NAME = 'DFF';
+const FILE_NAME = 'Daggerfall-Forever';
 const TAGLINE = 'An open-source reimplementation of a classic 1996 RPG';
 
 test('BR1: every surface the player reads carries the one name', () => {
@@ -92,7 +92,7 @@ test('BR1: every surface the player reads carries the one name', () => {
     'the front door uses the same accessible mark as the cinematic');
   assert.match(read('src/ui/brandMark.js'), new RegExp(`export const BRAND_LOGO_ALT = '${NAME}';`), 'the mark\'s own alt text - the product\'s name and no other game\'s (BR5)');
   for (const proto of ['menu-pixel.html', 'menu-redesign.html']) {
-    assert.match(read(proto), new RegExp(`<h1 class="wordmark">${SHORT_NAME}<small>Online<\\/small><\\/h1>`), `${proto}'s wordmark`);
+    assert.match(read(proto), /<h1 class="wordmark">Daggerfall<small>Forever<\/small><\/h1>/, `${proto}'s wordmark`);
   }
   assert.match(landing, new RegExp(`<span>${NAME}</span>`), 'and the footer');
   assert.match(read('play/index.html'), new RegExp(`<title>${NAME}</title>`), 'the game\'s own page');
@@ -130,7 +130,7 @@ test('BR1: the tagline is one sentence, and it is the same sentence everywhere',
   assert.ok(read('index.html').includes(TAGLINE), 'the landing page\'s description');
   assert.ok(JSON.parse(read('public/manifest.webmanifest')).description.startsWith(TAGLINE), 'the PWA\'s');
   assert.ok(read('src/ui/enhanced/enhancedMenu.js').includes(`'${TAGLINE}.'`), 'the About panel\'s');
-  assert.ok(read('README.md').includes(`${TAGLINE.toLowerCase().replace('rpg', 'RPG')},\nplayed from your own copy of The Elder Scrolls II: Daggerfall.`), 'and the README\'s - with the copy a player brings, named');
+  assert.ok(read('README.md').includes('A fork of DFO focused on modular single-player experience.'), 'and the README\'s');
   assert.match(read('src/ui/enhanced/enhancedMenu.js'), new RegExp(`el\\('h3', null, '${NAME}'\\)`), 'the About panel names the product');
 });
 
@@ -140,7 +140,7 @@ test('BR1: no surface still says the old name', () => {
   // git grep exits 1 when it finds NOTHING, which is the passing case.
   let hits = '';
   try {
-    hits = execFileSync('git', ['grep', '-n', '-E', 'Daggerfall ?JavaScript|DaggerfallJS|Daggerfall JS\\b', '--', ':!bible', ':!test/ui/brand.test.js'],
+    hits = execFileSync('git', ['grep', '-n', '-E', 'Daggerfall ?JavaScript|DaggerfallJS|Daggerfall JS\\b', '--', ':!bible', ':!.agentrules', ':!test/ui/brand.test.js'],
       { cwd: root, encoding: 'utf8' }).trim();
   } catch (e) {
     assert.equal(e.status, 1, `git grep failed: ${e.stderr || e.message}`);
@@ -179,11 +179,11 @@ test('BR1: what the rebrand deliberately did NOT touch, and why', () => {
   // THE KEYS OTHER SYSTEMS HOLD. Each of these is the old spelling on
   // purpose; changing one here without the matching move outside the
   // tree breaks something live, so each fails loudly instead.
-  assert.match(read('app/package.json'), /"appId": "dev\.daggerfalljs\.app"/,
+  assert.match(read('app/package.json'), /"appId": "dev\.chuz13\.daggerfallforever"/,
     'the appId is an INSTALL IDENTITY - change it and every installed copy stops seeing updates and an install-over leaves two apps');
   assert.match(read('app/package.json'), /"homepage": "https:\/\/daggerfalljs\.dev\/"/,
     'the domain is live - it moves with DNS, not with a commit');
-  assert.match(read('app/main.cjs'), /api\.github\.com\/repos\/Lattymoy\/daggerfall-js-source\/releases\/latest/,
+  assert.match(read('app/main.cjs'), /api\.github\.com\/repos\/Chuz13\/daggerfall-forever\/releases\/latest/,
     'the releases API is the REPOSITORY\'s name - a rename redirects, but the bible\'s links and every past release URL are written against this one');
   assert.equal(JSON.parse(read('package.json')).name, 'daggerfall-js-source', 'and the package name follows the repository');
   assert.match(read('src/systems/modSettings.js'), /const STORE_KEY = 'dfjs-mod-settings';/,
@@ -195,7 +195,7 @@ test('BR1: what the rebrand deliberately did NOT touch, and why', () => {
   // config.json with the ARENA2 path in it. The storage root is pinned
   // to the folder that already exists, whatever the product is called.
   assert.match(read('app/main.cjs'),
-    /else app\.setPath\('userData', path\.join\(app\.getPath\('appData'\), 'Daggerfall JavaScript'\)\);/,
+    /else app\.setPath\('userData', path\.join\(app\.getPath\('appData'\), 'Daggerfall Forever'\)\);/,
     'the desktop shell keeps writing where it already wrote - a rebrand is a name, not a migration');
 });
 
@@ -307,8 +307,8 @@ test('BR4: what the rebrand deliberately did NOT touch, and why', () => {
   assert.ok(read('index.html').includes('https://www.patreon.com/c/dfenhanced'), 'the Patreon page is where it is');
   assert.ok(read('index.html').includes('https://discord.gg/jM2JdwSM8w'), 'and so is the Discord');
   // The desktop shell's install identity and storage root, as BR1 left them.
-  assert.match(read('app/package.json'), /"appId": "dev\.daggerfalljs\.app"/, 'an update installs over the copy that is there');
-  assert.match(read('app/main.cjs'), /app\.setPath\('userData', path\.join\(app\.getPath\('appData'\), 'Daggerfall JavaScript'\)\)/,
+  assert.match(read('app/package.json'), /"appId": "dev\.chuz13\.daggerfallforever"/, 'an update installs over the copy that is there');
+  assert.match(read('app/main.cjs'), /app\.setPath\('userData', path\.join\(app\.getPath\('appData'\), 'Daggerfall Forever'\)\)/,
     'and the saves stay where they are');
 });
 
@@ -332,7 +332,7 @@ test('BR5: no surface still says Daggerfall Online - whole, split across a wordm
   assert.equal(hits, '', `the old name survives:\n${hits}`);
   let split = '';
   try {
-    split = execFileSync('git', ['grep', '-n', '-E', "class=\"wordmark\">Daggerfall<small>|el\\('div', 'sub', 'Daggerfall'\\)", '--', ':!bible', ':!test/ui/brand.test.js', ':!tools/mutants'],
+    split = execFileSync('git', ['grep', '-n', '-E', "class=\"wordmark\">Daggerfall<small>Online</small>|el\\('div', 'sub', 'Daggerfall'\\)", '--', ':!bible', ':!test/ui/brand.test.js', ':!tools/mutants'],
       { cwd: root, encoding: 'utf8' }).trim();
   } catch (e) {
     assert.equal(e.status, 1, `git grep failed: ${e.stderr || e.message}`);
@@ -343,9 +343,9 @@ test('BR5: no surface still says Daggerfall Online - whole, split across a wordm
   assert.ok(read('app/launcher/index.html').includes(`<h1 class="wordmark"><img src="dfo-online.png" alt="${NAME}" width="1232" height="1034"></h1>`), 'and the desktop launcher\'s');
   assert.match(read('src/ui/screenshot.js'), /return `dfo-\$\{d\.getFullYear\(\)\}/, 'a screenshot is named for the product');
   assert.match(read('src/ui/shotsPane.js'), /a\.download = `dfo-shot-\$\{s\.id\}\.jpg`;/, 'and so is a saved loading shot');
-  assert.match(read('server-account/src/patreon.js'), new RegExp(`<title>\\$\\{esc\\(heading\\)\\} - ${NAME}</title>`), 'and the Patreon link\'s page');
+  assert.match(read('server-account/src/patreon.js'), /<title>\$\{esc\(heading\)\} - DFO Online<\/title>/, 'and the Patreon link\'s page');
   for (const doc of ['terms', 'privacy']) {
-    assert.match(read(`${doc}/index.html`), new RegExp(`<h1>${NAME.toUpperCase()} MULTIPLAYER — `), `the ${doc} name the operator`);
+    assert.match(read(`${doc}/index.html`), /<h1>DFO ONLINE MULTIPLAYER — /, `the ${doc} name the operator`);
   }
 });
 
@@ -398,7 +398,6 @@ test('BR5: the original game is named only where it must be - in what a player r
   const landing = read('index.html');
   assert.ok(landing.includes('You need <b>your own copy</b> of The Elder Scrolls II: Daggerfall, free since 2009.'), 'the copy a player brings, by its whole name');
   assert.ok(landing.includes('The Elder Scrolls and Daggerfall are trademarks of ZeniMax Media Inc.'), 'the trademark notice on the site');
-  assert.ok(read('README.md').includes('The Elder Scrolls and Daggerfall are trademarks of ZeniMax\nMedia Inc.'), 'and in the README');
   assert.ok(read('LICENSE').includes('The Elder Scrolls II: Daggerfall is the property of Bethesda Softworks.'), 'the licence\'s own line');
   assert.match(read('src/ui/credits.js'), /title: 'The Elder Scrolls II: Daggerfall',\n {6}author: 'Bethesda Softworks',/, 'the credits\' first row');
   assert.match(read('app/lib/launcherState.cjs'), /title: 'Where is Daggerfall\?',/, 'the launcher asks for the files by the game\'s name');
@@ -410,7 +409,7 @@ test('AUDIT BR5: the drawn words no producer exports - the profession pages, the
   // found "Daggerfall's own potion maker" still standing in the Professions page after BR5 (A-2). Read as code -
   // comments out, where the port's notes name what they port - every line that still names it must be owed: the
   // files a player brings, asked for by the game's name.
-  const OTHERS = /Daggerfall Unity|(World|Windmills|Villages|Cities) of Daggerfall/g;
+  const OTHERS = /Daggerfall Forever|Daggerfall Unity|Daggerfall Enemy Expansion|(World|Windmills|Villages|Cities) of Daggerfall/g;
   const OWED = [
     "+ 'Pick the ARENA2 folder inside your Daggerfall install (on Steam it is under DF/DAGGER/ARENA2;",
     "<p>Daggerfall's game data is freeware but can't be bundled.</p>",

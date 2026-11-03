@@ -187,7 +187,7 @@ function openDb() {
     // and on the title bar the status convention already uses.
     req.onblocked = () => {
       console.warn('[dataSource] database upgrade blocked - close other tabs running this game');
-      try { document.title = 'DFO Online - close other game tabs to continue'; } catch { /* no-DOM host */ }
+      try { document.title = 'Daggerfall Forever - close other game tabs to continue'; } catch { /* no-DOM host */ }
     };
   });
 }
@@ -1630,7 +1630,7 @@ export async function ensureArena2() {
     ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;display:flex;align-items:center;justify-content:center;z-index:10';
     ui.innerHTML = `
       <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px" id="dz">
-        <h2 style="margin-top:0">DFO Online</h2>
+        <h2 style="margin-top:0">Daggerfall Forever</h2>
         <p>Daggerfall's game data is freeware but can't be bundled.</p>
         <p>Select your <b>ARENA2</b> folder, or drop it here. It is stored
         in your browser, so you only pick it once.</p>

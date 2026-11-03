@@ -1,6 +1,6 @@
-# Support DFO Online
+# Support Daggerfall Forever
 
-DFO Online is free, open source, and developed independently.
+Daggerfall Forever is free, open source, and developed independently.
 
 Active development currently costs about **$600 per month** to sustain. That is the project's funding target.
 

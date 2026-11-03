@@ -4478,7 +4478,7 @@ function featureRow(f) {
 // ── ABOUT ────────────────────────────────────────────────────────
 function paneAbout(body) {
   const c = el('div', 'card');
-  c.append(el('h3', null, 'DFO Online'));   // the public name (BR1, BR4, BR5); project-dagger is the repo
+  c.append(el('h3', null, 'Daggerfall Forever'));   // the public name (BR1, BR4, BR5); project-dagger is the repo
   c.append(el('p', 'meta', t('menu.about.tagline', 'An open-source reimplementation of a classic 1996 RPG.')));
   c.append(stats([
     [t('menu.about.update', 'Update'), UPDATE ?? t('menu.about.devBuild', 'a development build')],   // REL8: the player's update number (scripts/updateNumber.mjs)
@@ -6259,7 +6259,7 @@ function renderInto() {
   // (onKey); this is the one a finger can see.
   const homeMark = el('button', 'brand-home');
   homeMark.type = 'button';
-  homeMark.setAttribute('aria-label', t('menu.home.homeAria', 'DFO Online — main menu'));
+  homeMark.setAttribute('aria-label', t('menu.home.homeAria', 'Daggerfall Forever — main menu'));
   homeMark.append(brandMark());
   homeMark.onclick = () => go('home');
   h1.append(homeMark);

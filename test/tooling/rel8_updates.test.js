@@ -14,11 +14,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { updateNumber, UPDATE_LINE_FILE, UPDATE_LINE_RE, UPDATE_RE, UPDATE_ENV } from '../../scripts/updateNumber.mjs';
 import { UPDATE_LINE } from '../../scripts/updateLine.mjs';
 import { tagSource } from '../../scripts/buildTag.mjs';
 
-const ROOT = new URL('../..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
 const require = createRequire(import.meta.url);
 const L = require('../../app/lib/launcherState.cjs');
@@ -78,7 +79,7 @@ test('REL8: a clone with no history says nothing rather than a wrong number (CI\
   assert.equal(r.at(), '0.0.2');
   const shallow = mkdtempSync(join(tmpdir(), 'rel8-shallow-'));
   t.after(() => rmSync(shallow, { recursive: true, force: true }));
-  execFileSync('git', ['clone', '-q', '--depth', '1', `file://${r.d}`, shallow], { stdio: 'ignore' });
+  execFileSync('git', ['clone', '-q', '--depth', '1', `file:///${r.d.replace(/\\/g, '/')}`, shallow], { stdio: 'ignore' });
   assert.equal(updateNumber({ cwd: shallow, env: {} }), null, 'depth 1: unknown');
   assert.equal(updateNumber({ cwd: shallow, env: { [UPDATE_ENV]: '0.0.2' } }), '0.0.2', 'told by the job that derived it');
   for (const bad of ['0.0', 'v0.0.2', '0.0.2;touch x', '0.0.2\n1', 'x']) assert.equal(updateNumber({ cwd: shallow, env: { [UPDATE_ENV]: bad } }), null, JSON.stringify(bad));
@@ -131,8 +132,8 @@ test('REL8: the game says it - the pause window\'s version line leads with the n
   const line = pause.match(/^ {4}const ver = [^;]+;/m)?.[0];
   assert.ok(line, 'the line');
   const ver = (UPDATE, BUILD_TAG) => new Function('UPDATE', 'BUILD_TAG', `${line}\nreturn ver;`)(UPDATE, BUILD_TAG);
-  assert.equal(ver('0.0.1', 'abcdef012345'), 'DFO Online 0.0.1 (abcdef012345)');
-  assert.equal(ver(null, 'abcdef012345'), 'DFO Online abcdef012345');
+  assert.equal(ver('0.0.1', 'abcdef012345'), 'Daggerfall Forever 0.0.1 (abcdef012345)');
+  assert.equal(ver(null, 'abcdef012345'), 'Daggerfall Forever abcdef012345');
   const menu = rd('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /\[t\('menu\.about\.update', 'Update'\), UPDATE \?\? t\('menu\.about\.devBuild', 'a development build'\)\],[^\n]*\n\s*\[t\('menu\.about\.build', 'Build'\), BUILD_TAG\],/);
 });

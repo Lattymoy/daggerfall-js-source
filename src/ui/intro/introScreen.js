@@ -112,7 +112,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   const win = doc.defaultView;
   const reduced = win.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
   const host = make(doc, 'section'); host.id = 'intro';
-  host.setAttribute('aria-label', t('menu.intro.aria', 'DFO Online introduction'));
+  host.setAttribute('aria-label', t('menu.intro.aria', 'Daggerfall Forever introduction'));
   const style = make(doc, 'style'); style.textContent = STYLE; host.append(style);
   injectEnhancedFonts(doc);   // FONT3: the film's words are the skin's face - ask for it now, not when the menu mounts
   const film = make(doc, 'div', 'intro-film');
@@ -139,7 +139,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   }
   const title = make(doc, 'div', 'intro-title');
   const logo = brandMark(doc); title.append(logo);
-  images.push(decodedImage(logo).then((ok) => { if (!ok) title.append(make(doc, 'h1', 'intro-title-fallback', 'DFO Online')); }));
+  images.push(decodedImage(logo).then((ok) => { if (!ok) title.append(make(doc, 'h1', 'intro-title-fallback', 'Daggerfall Forever')); }));
   const light = make(doc, 'div', 'intro-light');
   // INTRO4: the narrator - one line at a time, in the player's language (introCue.js INTRO_NARRATION)
   const narration = make(doc, 'div', 'intro-narration'); narration.setAttribute('aria-hidden', 'true');

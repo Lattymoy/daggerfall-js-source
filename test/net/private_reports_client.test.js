@@ -87,7 +87,7 @@ test('PRIVATE-REPORT the desk: words the law refuses are never asked; a lost ans
   assert.notEqual(mintReportRid(), mintReportRid());
   assert.deepEqual(reportContext({ update: '0.0.412', build: 'd9187c3049cb', desktop: true }), { update: '0.0.412', build: 'd9187c3049cb', app: 'desktop' });
   assert.deepEqual(reportContext({ update: null, build: 'dev', desktop: false }), { app: 'browser' }, 'a dev build sends what it knows');
-  assert.equal(reportBuildText({ update: '0.0.412', build: 'd9187c3049cb', app: 'desktop' }), 'DFO Online 0.0.412 (d9187c3049cb) desktop app');
+  assert.equal(reportBuildText({ update: '0.0.412', build: 'd9187c3049cb', app: 'desktop' }), 'Daggerfall Forever 0.0.412 (d9187c3049cb) desktop app');
   assert.equal(reportBuildText(null), 'an unknown build');
   assert.deepEqual(reportContextOf({ app: 'phone', build: 'XYZ', update: 'a b' }), null);
   assert.deepEqual(reportWordsOf({ kind: 'bug', subject: ' A\n title ', body: ' Ten chars!\r\n ' }), { kind: 'bug', subject: 'A title', body: 'Ten chars!' });
@@ -198,7 +198,7 @@ test('PRIVATE-REPORT THE FORM IN THE MAILBOX: a door under the post; the form - 
   assert.equal(all(w.root, 'pm-title')[0].textContent, 'Report privately');
   assert.equal(doc.activeElement, byKey(w.root, 'kind-exploit'), 'the focus on the first choice');
   assert.deepEqual(all(w.root, 'pr-kindname').map((n) => n.textContent), ['An exploit', 'A bug', 'Account or server security']);
-  assert.match(text(all(w.root, 'pr-sends')[0]), /^Sent with it: your username and this game's build \(DFO Online/);
+  assert.match(text(all(w.root, 'pr-sends')[0]), /^Sent with it: your username and this game's build \(Daggerfall Forever/);
 
   const subject = byKey(w.root, 'subject'), body = byKey(w.root, 'body');
   assert.equal(body.attrs['aria-describedby'], 'pr-count', 'the count describes the field, never names it (AUDIT PRIVATE-REPORT UI-11)');
@@ -311,7 +311,7 @@ test('PRIVATE-REPORT THE READER\'S INBOX IN THE MAILBOX: a door that counts the 
   await until(() => box.desk.opened.size === 1);
   w.draw();
   assert.equal(all(w.root, 'pm-body')[0].textContent, words.body);
-  assert.equal(all(w.root, 'pr-context')[0].textContent, 'Sent from DFO Online 0.0.412 (d9187c3049cb) in a browser');
+  assert.equal(all(w.root, 'pr-context')[0].textContent, 'Sent from Daggerfall Forever 0.0.412 (d9187c3049cb) in a browser');
   await annDesk.loadMine();
   assert.equal(myReportStateText(annDesk.mine[0]), 'Read by the developers', 'the reporter\'s one sign it was seen (AUDIT PRIVATE-REPORT TEST-12)');
   assert.deepEqual(['close-fixed', 'close-wontfix', 'close-duplicate'].map((k) => byKey(w.root, k)?.textContent), ['Fixed', 'Won\'t fix', 'Duplicate']);

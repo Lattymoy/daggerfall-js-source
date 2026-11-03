@@ -3,7 +3,7 @@
   "productName": "Daggerfall Forever",
   "private": true,
   "version": "0.2.0",
-  "description": "DFO Online - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
+  "description": "Daggerfall Forever - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
   "author": "Lattymoy",
   "homepage": "https://daggerfalljs.dev/",
   "repository": {
@@ -26,7 +26,7 @@
     "productName": "Daggerfall Forever",
     "icon": "../public/icons/icon-512.png",
     "afterPack": "./afterPack.cjs",
-    "artifactName": "DFO-Online-${os}-${arch}.${ext}",
+    "artifactName": "Daggerfall-Forever-${os}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },
@@ -62,13 +62,13 @@
       ]
     },
     "nsis": {
-      "artifactName": "DFO-Online-win-${arch}-setup.${ext}",
+      "artifactName": "Daggerfall-Forever-win-${arch}-setup.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false
     },
     "portable": {
-      "artifactName": "DFO-Online-win-${arch}-portable.${ext}"
+      "artifactName": "Daggerfall-Forever-win-${arch}-portable.${ext}"
     },
     "mac": {
       "target": [
@@ -76,9 +76,9 @@
       ],
       "category": "public.app-category.games",
       "extendInfo": {
-        "NSDownloadsFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
-        "NSDesktopFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
-        "NSDocumentsFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded."
+        "NSDownloadsFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
+        "NSDesktopFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
+        "NSDocumentsFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded."
       }
     },
     "asarUnpack": [

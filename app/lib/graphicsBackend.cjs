@@ -161,7 +161,7 @@ const BACKEND_NAMES = Object.freeze({ vulkan: 'Vulkan', metal: 'Metal', d3d9: 'D
 const backendFailedNotice = (backend) => ({
   type: 'warning',
   message: `${BACKEND_NAMES[backend] ?? backend} could not start on this graphics card`,
-  detail: 'DFO Online restarts on the default graphics backend, Direct3D 11. It tries again after a graphics driver update, or an app update that brings a new graphics engine.',
+  detail: 'Daggerfall Forever restarts on the default graphics backend, Direct3D 11. It tries again after a graphics driver update, or an app update that brings a new graphics engine.',
   buttons: ['Restart'],
   defaultId: 0,
   cancelId: 0,
@@ -171,8 +171,8 @@ const backendFailedNotice = (backend) => ({
  *  (dialog.showMessageBox options). The safe answer is the default: Enter, Escape and closing the box all go back. */
 const backendConfirmNotice = (backend, where = 'game') => ({
   type: 'question',
-  message: where === 'launcher' ? 'Can you see the DFO Online launcher?' : 'Can you see the game?',
-  detail: `You selected ${BACKEND_NAMES[backend] ?? backend}. If the window is blank, select Go back. With no answer in ${CONFIRM_TIMEOUT_MS / 1000} seconds, DFO Online restarts once on Direct3D 11.`,
+  message: where === 'launcher' ? 'Can you see the Daggerfall Forever launcher?' : 'Can you see the game?',
+  detail: `You selected ${BACKEND_NAMES[backend] ?? backend}. If the window is blank, select Go back. With no answer in ${CONFIRM_TIMEOUT_MS / 1000} seconds, Daggerfall Forever restarts once on Direct3D 11.`,
   buttons: [`Keep ${BACKEND_NAMES[backend] ?? backend}`, 'Go back'],
   defaultId: 1,
   cancelId: 1,

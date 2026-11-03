@@ -46,7 +46,7 @@ test('DA10: the launcher waits for Play on every launch - held only while an upd
   const started = run(played, { type: 'launching' });
   assert.equal(L.nextStep(started), 'wait');
   const sv = L.viewOf(started);
-  assert.equal(sv.status, 'Starting DFO Online');
+  assert.equal(sv.status, 'Starting Daggerfall Forever');
   assert.equal(sv.play.enabled, false, 'one press, one game');
   // "Play without updating" is Play past a download - when the game has files; otherwise it only lets the download run on
   const past = run(downloading, { type: 'play-now' });
@@ -161,7 +161,7 @@ test('DA10: the status bar says where the launcher stands - updated, up to date,
   assert.equal(v(run(fresh({ returning: true }), { type: 'check-none' }))[0], 'Updated to v0.1.4684');
   assert.equal(v(run(fresh(), { type: 'check-failed' }))[0], 'Could not check for updates');
   assert.equal(v(fresh({ checkEnabled: false }))[0], 'Update checks are off');
-  assert.equal(v(run(fresh(), { type: 'check-available', version: '0.1.4700' }, { type: 'play-now' }))[0], 'Starting DFO Online');
+  assert.equal(v(run(fresh(), { type: 'check-available', version: '0.1.4700' }, { type: 'play-now' }))[0], 'Starting Daggerfall Forever');
   assert.equal(L.justUpdated(fresh({ lastPlayed: '0.1.4700' })), false, 'a copy older than the one last played (a reinstall) was not "updated"');
   assert.equal(L.viewOf(fresh()).busy, true, 'the gem breathes while it works');
   assert.equal(L.viewOf(run(fresh(), { type: 'check-none' })).busy, false, 'and holds still when it waits on the player');

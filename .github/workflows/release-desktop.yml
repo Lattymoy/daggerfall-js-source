@@ -276,7 +276,7 @@ jobs:
             app/release/*.dmg
             app/release/latest*.yml
             app/release/*.blockmap
-            app/release/DFO-Online-game.*
+            app/release/Daggerfall-Forever-game.*
           if-no-files-found: error
           retention-days: ${{ needs.version.outputs.tag != '' && 1 || 14 }}
 
@@ -358,9 +358,9 @@ jobs:
           elif grep -q 'HTTP 404' prev-error.txt; then PREV=''
           else cat prev-error.txt >&2; exit 1
           fi
-          if [ -n "$PREV" ] && gh api "repos/$RELEASE_REPO/releases/tags/$PREV" --jq '.assets[].name' | grep -qx 'DFO-Online-game.json.gz'; then
-            gh release download "$PREV" --repo "$RELEASE_REPO" --pattern 'DFO-Online-game.json.gz' --dir previous
-            node scripts/desktopRelease.mjs delta previous/DFO-Online-game.json.gz release/DFO-Online-game.json.gz "$PREV"
+          if [ -n "$PREV" ] && gh api "repos/$RELEASE_REPO/releases/tags/$PREV" --jq '.assets[].name' | grep -qx 'Daggerfall-Forever-game.json.gz'; then
+            gh release download "$PREV" --repo "$RELEASE_REPO" --pattern 'Daggerfall-Forever-game.json.gz' --dir previous
+            node scripts/desktopRelease.mjs delta previous/Daggerfall-Forever-game.json.gz release/Daggerfall-Forever-game.json.gz "$PREV"
           else
             echo "no game on the release before (${PREV:-none}) - nothing to measure against"
           fi

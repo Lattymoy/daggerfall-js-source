@@ -31,12 +31,12 @@ test('REL2 every Windows target resolves to its OWN artifact name (derived over 
   const names = targets.map(nameOf);
   assert.equal(new Set(names).size, names.length, `each target its own name: ${names.join(' | ')}`);
   for (const t of targets) {
-    assert.match(nameOf(t), /^DFO-Online-win-\$\{arch\}-\w+\.\$\{ext\}$/, `${t}: the brand, the arch, a suffix that says which - no version (REL5: the name is a link that must not move; the number is the tag's)`);
+    assert.match(nameOf(t), /^Daggerfall-Forever-win-\$\{arch\}-\w+\.\$\{ext\}$/, `${t}: the brand, the arch, a suffix that says which - no version (REL5: the name is a link that must not move; the number is the tag's)`);
   }
   assert.match(nameOf('nsis'), /-setup\.\$\{ext\}$/, 'the installer says setup');
   assert.match(nameOf('portable'), /-portable\.\$\{ext\}$/, 'the portable says portable');
   // the other platforms keep the one name (the brand pin reads it)
-  assert.equal(b.artifactName, 'DFO-Online-${os}-${arch}.${ext}');   // BR4: the brand's own name; REL5: no version in it
+  assert.equal(b.artifactName, 'Daggerfall-Forever-${os}-${arch}.${ext}');   // BR4: the brand's own name; REL5: no version in it
 });
 
 test('REL2 the NSIS installer is the assisted kind and lets the player choose the directory, per user', () => {

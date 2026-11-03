@@ -453,7 +453,7 @@ export class PauseOptionsWindow {
     // PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG)
     // REL8: the player's update number first (scripts/updateNumber.mjs), the commit beside it for a report; a build
     // that cannot know its number (a dev serve, a shallow clone) says the commit alone, as before
-    const ver = UPDATE ? `DFO Online ${UPDATE} (${BUILD_TAG})` : `DFO Online ${BUILD_TAG}`; // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game
+    const ver = UPDATE ? `Daggerfall Forever ${UPDATE} (${BUILD_TAG})` : `Daggerfall Forever ${BUILD_TAG}`; // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game
     shadowText(renderer, font, ver, m, 320 - 2 - measureText(font.fnt, ver), 2, { color: [0.75, 0.75, 0.75, 1] });
     // the stacked box (exit confirm / note), the U23 shape: laid out
     // here where the font lives, hit-tested from the stored layout
