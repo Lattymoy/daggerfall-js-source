@@ -82,13 +82,13 @@ function fakeFlow(wardrobe, extra = {}) {
 }
 /** The Collections page, driven: drawn into a fresh root on every repaint, as the menu's render does - its kit the menu's
  *  own shape (a meter, the account's constructor). `made` counts the flows the page had built. */
-function page({ flow = null, player = { items: [] }, now = DURING } = {}) {
+function page({ flow = null, player = { items: [] }, now = DURING, enableAccount = true } = {}) {
   const box = { root: null, draws: 0, made: 0, changed: null };
   const draw = () => {
     box.draws++;
     box.root = el('div');
     const account = flow ? (onChange) => { box.made++; box.changed = onChange; return flow; } : undefined;
-    drawCollectionsPage(box.root, draw, { el, divider: (t) => el('h4', 'px-divider', t), meter: (n, m) => el('i', 'px-meter', `${n}/${m}`), player, doc, now: () => now, ...(account ? { account } : {}) });
+    drawCollectionsPage(box.root, draw, { el, divider: (t) => el('h4', 'px-divider', t), meter: (n, m) => el('i', 'px-meter', `${n}/${m}`), player, doc, now: () => now, enableAccount, ...(account ? { account } : {}) });
   };
   box.draw = draw;
   draw();
@@ -592,8 +592,9 @@ test('COLLECTIONS-II DRESSED BY THE KIT, AND ON THE PAGE: the filters and a "com
   assert.ok(themeRules.length >= 3 && themeRules.every((l) => l.split('{')[0].split(',').every((s) => s.trim().startsWith(':root[data-plus-theme="stone"] .px-sys .coll-'))), 'all of it Stone\'s');
   assert.deepEqual(themeRules.filter((l) => /background/.test(l)).map((l) => l.split('{')[0].trim()), [':root[data-plus-theme="stone"] .px-sys .coll-plate'], 'a ground on the plate alone');
   assert.deepEqual(Object.values(WARDROBE_PARTS), W.WARDROBE_KINDS, 'a part a kind, in the kinds\' order');
-  assert.deepEqual(collectionParts({ items: [] }).slice(0, 4).map(([id]) => id), Object.keys(WARDROBE_PARTS).filter((id) => id !== 'armory'));   // Aura Armory gated by FORK_FLAGS.ENABLE_ARMORY
-  assert.deepEqual(collectionParts({ items: [] }, { enableArmory: true }).slice(0, 5).map(([id]) => id), Object.keys(WARDROBE_PARTS));   // PIN MOVED (ARMORY): five wardrobe parts
+  assert.deepEqual(collectionParts({ items: [] }).slice(0, 1).map(([id]) => id), ['appearances']);   // Offline default: account wardrobe gated by FORK_FLAGS.ENABLE_ACCOUNT
+  assert.deepEqual(collectionParts({ items: [] }, { enableAccount: true }).slice(0, 4).map(([id]) => id), Object.keys(WARDROBE_PARTS).filter((id) => id !== 'armory'));   // Aura Armory gated by FORK_FLAGS.ENABLE_ARMORY
+  assert.deepEqual(collectionParts({ items: [] }, { enableArmory: true, enableAccount: true }).slice(0, 5).map(([id]) => id), Object.keys(WARDROBE_PARTS));   // PIN MOVED (ARMORY): five wardrobe parts
   // the sheet in the document, once
   const laid = [];
   globalThis.document = { getElementById: (id) => laid.find((x) => x.id === id) ?? null, createElement: () => ({ id: '', textContent: '' }), head: { appendChild: (x) => laid.push(x) } };

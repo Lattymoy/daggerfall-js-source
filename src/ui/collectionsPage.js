@@ -84,10 +84,14 @@ const partOfKind = (/** @type {string} */ kind) =>
 export const collectionsPageShown = (_player = null) => true;
 /** The parts shown now, in order: the wardrobe's four always, the codex while Loot rarity makes Legendaries, the cards
  *  while the character carries a Card Binder. */
-export const collectionParts = (player = null, { enableArmory = FORK_FLAGS.ENABLE_ARMORY } = {}) =>
-  COLLECTION_PARTS.filter(([id]) =>
-    id === 'armory' ? enableArmory : id === 'codex' ? lootRarityOn() : id === 'cards' ? cardsPartShown(player) : true,
-  );
+export const collectionParts = (
+  player = null,
+  { enableArmory = FORK_FLAGS.ENABLE_ARMORY, enableAccount = FORK_FLAGS.ENABLE_ACCOUNT } = {},
+) =>
+  COLLECTION_PARTS.filter(([id]) => {
+    if (!enableAccount && ['titles', 'auras', 'armory', 'icons', 'glyphs'].includes(id)) return false;
+    return id === 'armory' ? enableArmory : id === 'codex' ? lootRarityOn() : id === 'cards' ? cardsPartShown(player) : true;
+  });
 
 let _part = 'titles';
 let _picked = null; // the codex row opened whole
@@ -144,14 +148,18 @@ function ensureStyle(doc) {
 /**
  * The page into `detail`: the switch, then the chosen part.
  * @param {any} detail @param {() => void} rerender
- * @param {{el: Function, divider: Function, meter?: Function, player?: any, account?: (onChange: () => void) => any, doc?: any, now?: () => number}} kit
+ * @param {{el: Function, divider: Function, meter?: Function, player?: any, account?: (onChange: () => void) => any, doc?: any, now?: () => number, enableAccount?: boolean, enableArmory?: boolean}} kit
  *   COLLECTIONS-II: `account` the host's account-flow constructor (the wardrobe's read and its presses), `doc` and `now`
  *   a pin's own document and clock
  */
 export function drawCollectionsPage(detail, rerender, kit) {
   ensureStyle(typeof document === 'undefined' ? null : document);
-  const flow = wardrobeAccount(kit, rerender); // COLLECTIONS-II: the account's wardrobe, asked once a visit
-  const parts = collectionParts(kit.player ?? null);
+  const enableAccount = kit?.enableAccount ?? FORK_FLAGS.ENABLE_ACCOUNT;
+  const flow = enableAccount ? wardrobeAccount(kit, rerender) : null; // COLLECTIONS-II: the account's wardrobe, asked once a visit
+  const parts = collectionParts(kit.player ?? null, {
+    enableAccount,
+    ...(kit?.enableArmory !== undefined ? { enableArmory: kit.enableArmory } : {}),
+  });
   if (!parts.some(([id]) => id === _part)) _part = parts[0][0];
   detail.append(partTiles(kit, parts, wardrobeOfFlow(flow), rerender));
   const kind = WARDROBE_PARTS[/** @type {keyof typeof WARDROBE_PARTS} */ (_part)];
@@ -162,7 +170,7 @@ export function drawCollectionsPage(detail, rerender, kit) {
       disarmCardsPart();
     }
   };
-  if (kind) drawWardrobePart(detail, rerender, { ...kit, goTo }, kind, flow);
+  if (kind && enableAccount) drawWardrobePart(detail, rerender, { ...kit, goTo }, kind, flow);
   else if (_part === 'appearances')
     drawAppearancesPart(detail, rerender, kit); // APPEARANCES
   else if (_part === 'codex') drawCodexPart(detail, rerender, kit);

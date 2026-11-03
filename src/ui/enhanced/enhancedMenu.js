@@ -369,6 +369,7 @@ let hooks = {};
 // game. 'top' is the two doors (Online, Offline); 'offline' the offline doors (HOME_OFFLINE) and the way back. Every
 // visit opens on 'top'; a section an offline door opened backs out to 'offline', where its press was made.
 let homeLevel = 'top';
+if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) homeLevel = 'offline';
 /** AUDIT UICALM-FIRM1 L3 L1: the keyboard's place after a level changes - the door named, else the level's first. */
 function focusDoor(id) {
   globalThis.requestAnimationFrame?.(() => (app?.querySelector?.(`.px-menu .door-${id}`) ?? app?.querySelector?.('.px-menu .doorbtn'))?.focus?.());
@@ -1203,6 +1204,7 @@ function closeAccount() {
 const newAccountFlow = (onChange) => AccountFlow({ io: { fetch: (...a) => globalThis.fetch(...a), base: serviceBase(appStorage()) }, storage: appStorage(), onChange });
 function accountBody() {
   const host = el('div', 'acctmount');
+  if (!FORK_FLAGS.ENABLE_ACCOUNT) return host;
   const fresh = !acctFlow;
   if (fresh) acctFlow = newAccountFlow(() => acctPaint?.());
   // PROFILE-MENU: the card's plate wears the corner mark's portrait and says whose face it is - the same character
@@ -1274,12 +1276,19 @@ function portraitOf(save) {
 function profileMark() {
   const who = storedSession(appStorage());
   const save = profileCharacter();
-  return profileBadge(document, {
+  const b = profileBadge(document, {
     session: who,
     save,
     face: portraitOf(save),   // WITCH1: the icon worn, else the face
     onOpen: () => { accountOpen = true; render(); },
   });
+  if (!FORK_FLAGS.ENABLE_ACCOUNT) {
+    const nameEl = b.querySelector('.px-profilename');
+    if (nameEl && !who) nameEl.textContent = save?.name || t('skin.look', 'Look');
+    b.setAttribute('aria-label', save ? `Character: ${characterLine(save)}` : t('skin.look', 'Look'));
+    b.querySelector('.px-profilegem')?.remove?.();
+  }
+  return b;
 }
 
 /** SUPPORT1 (Mac, 2026-10-05: "add the patron/kofi ingame on the main menu as 2 icons"): THE ASKS, top-left of the
@@ -1310,6 +1319,24 @@ function accountWindow() {
   const body = el('div', 'px-body');
   body.append(accountBody());
   body.append(skinCard(document, { gender: () => playerEntity?.gender }).root);   // DISC23-B2 (Mac: "a choosable skin system in the menu player profile system itself"): who you are drawn as, beside who you are; LAYERED-GEAR: the character's own body, the one Layered Gearing first wears
+  if (!FORK_FLAGS.ENABLE_ACCOUNT) {
+    body.querySelector('.acctmount')?.remove?.();
+    const head = el('div', 'card');
+    head.style.display = 'flex';
+    head.style.justifyContent = 'space-between';
+    head.style.alignItems = 'center';
+    head.style.margin = '0 0 12px';
+    const title = el('span', 'fieldlabel', t('skin.look', 'Look'));
+    title.style.fontSize = '14px';
+    title.style.letterSpacing = '0.08em';
+    title.style.textTransform = 'uppercase';
+    title.style.color = '#f3cf86';
+    const closeBtn = el('button', 'act', t('account.card.act.close', 'Close'));
+    closeBtn.type = 'button';
+    closeBtn.onclick = closeAccount;
+    head.append(title, closeBtn);
+    body.prepend(head);
+  }
   win.append(body);
   return win;
 }
@@ -4745,6 +4772,7 @@ function renderHome() {
   // L10N1b: the language is asked first - the window waits while the
   // offer stands (found by tools/languageProbe.mjs: it covered the
   // offer, so a French player was asked in English before French).
+  if (!FORK_FLAGS.ENABLE_ACCOUNT) accountOffered = true;
   if (!offer && !accountOpen && !accountOffered && !signedIn()) { accountOffered = true; accountOpen = true; }
   if (accountOpen) {
     const acct = el('div', 'px-stage px-acctstage');
@@ -4796,6 +4824,7 @@ function doorBtn(id, label, sub, onClick) {
  * stands them in one column, the offline doors under the word Offline.
  */
 function drawDoors(menu) {
+  if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) homeLevel = 'offline';
   menu.dataset.level = homeLevel;
   const page = (cls, head) => {
     const p = el('section', `px-page ${cls}`);
@@ -4817,6 +4846,7 @@ function drawDoors(menu) {
     const more = page('px-page-more', t('menu.home.elsewhere', 'Elsewhere'));
     for (const label of HOME_OFFLINE.slice(3)) more.append(doorBtn(idOf(label), railLabel(label), '', () => go(idOf(label))));
     more.append(doorBtn('back', t('menu.home.back', 'Back'), '', level('top')));
+    if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) more.querySelector('.door-back')?.remove?.();
     return;
   }
   // a browser's Online asks where first, as the desktop launcher's PLAY does; private servers live in the app (a page
@@ -6557,6 +6587,7 @@ export function mountEnhancedMenu(host, {
   // Game the second row a thumb meets and Resume the first.
   section = 'home';
   homeLevel = 'top';   // UI-CALM: every visit asks which world first
+  if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) homeLevel = 'offline';
   pauseTab = 'system';
   // ...and THEN the caller's landing, if it named one. After the reset,
   // which is what keeps the reset the default rather than a thing this
