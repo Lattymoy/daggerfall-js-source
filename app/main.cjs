@@ -731,6 +731,9 @@ require('electron').autoUpdater.on('before-quit-for-update', () => {
   if (launcher?.win && !launcher.win.isDestroyed()) {
     try { launcher.win.destroy(); } catch {}
   }
+  if (process.platform === 'win32') {
+    setTimeout(() => { try { app.exit(0); } catch {} }, 100).unref?.();
+  }
 });
 app.on('before-quit', (e) => { if (holdQuit) { holdQuit = false; e.preventDefault(); } });
 

@@ -65,8 +65,7 @@
       "artifactName": "Daggerfall-Forever-win-${arch}-setup.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "perMachine": false,
-      "include": "installer.nsh"
+      "perMachine": false
     },
     "portable": {
       "artifactName": "Daggerfall-Forever-win-${arch}-portable.${ext}"
