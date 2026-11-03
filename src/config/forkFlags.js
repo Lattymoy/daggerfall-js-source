@@ -4,7 +4,7 @@
 
 export const FORK_FLAGS = {
   TEXT_BRAND_MARK: true,
-  ENABLE_ARMORY: true,
+  ENABLE_ARMORY: false,
   ENABLE_SHOP: true,
   ENABLE_ACCOUNT: true,
   ENABLE_ONLINE_PLAY: true,

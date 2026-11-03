@@ -108,7 +108,7 @@ test('AUDIT-STOREFRONT the stages wear the player\'s body: the window asks its `
     const effectPreview = async (_c, _s, _k, _cue, body) => { got.push(await body?.()); return { stop() {} }; };
     const wares = SHOP_WARES.filter((w) => w.alone).map((w) => row(w.id));
     for (const cat of ['auras', 'kills', 'armory']) {
-      const w = shopWindow(fakeDoc(), { flow: () => flowIn(wares), onClose() {}, keep: { cat }, focus: false, preview, effectPreview, wearer, reduced: true });
+      const w = shopWindow(fakeDoc(), { flow: () => flowIn(wares), onClose() {}, keep: { cat }, focus: false, preview, effectPreview, wearer, reduced: true, enableArmory: true });
       await new Promise((r) => setTimeout(r, 0));
       w.stop();
     }

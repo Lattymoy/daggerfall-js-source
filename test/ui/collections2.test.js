@@ -334,7 +334,7 @@ test('COLLECTIONS-II THE PAGE: six tiles, each its part\'s name over its count a
   const p = page({ flow, player: me });
   await settle();
   const tiles = cls(p.root, 'coll-part');
-  assert.deepEqual(tiles.map((b) => b.attrs['data-focus']), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'codex', 'cards', 'trophies', 'fish', 'tunes', 'annals'].map((id) => `coll-part-${id}`));   // PIN MOVED (ARMORY): the Aura Armory after the auras; PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part, first of the character's; PIN MOVED (MUSIC-BOX): the Tunes after the fish
+  assert.deepEqual(tiles.map((b) => b.attrs['data-focus']), ['titles', 'auras', 'icons', 'glyphs', 'appearances', 'codex', 'cards', 'trophies', 'fish', 'tunes', 'annals'].map((id) => `coll-part-${id}`));   // PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part, first of the character's; PIN MOVED (MUSIC-BOX): the Tunes after the fish; Aura Armory gated by FORK_FLAGS.ENABLE_ARMORY
   assert.equal(tiles[0].children[1].textContent, `3 / ${TITLES.length - 1}`);
   assert.equal(cls(tiles[0], 'px-meter')[0].textContent, `3/${TITLES.length - 1}`, 'the meter, held of all');
   assert.equal(tiles[0].attrs['aria-pressed'], 'true');
@@ -592,7 +592,8 @@ test('COLLECTIONS-II DRESSED BY THE KIT, AND ON THE PAGE: the filters and a "com
   assert.ok(themeRules.length >= 3 && themeRules.every((l) => l.split('{')[0].split(',').every((s) => s.trim().startsWith(':root[data-plus-theme="stone"] .px-sys .coll-'))), 'all of it Stone\'s');
   assert.deepEqual(themeRules.filter((l) => /background/.test(l)).map((l) => l.split('{')[0].trim()), [':root[data-plus-theme="stone"] .px-sys .coll-plate'], 'a ground on the plate alone');
   assert.deepEqual(Object.values(WARDROBE_PARTS), W.WARDROBE_KINDS, 'a part a kind, in the kinds\' order');
-  assert.deepEqual(collectionParts({ items: [] }).slice(0, 5).map(([id]) => id), Object.keys(WARDROBE_PARTS));   // PIN MOVED (ARMORY): five wardrobe parts
+  assert.deepEqual(collectionParts({ items: [] }).slice(0, 4).map(([id]) => id), Object.keys(WARDROBE_PARTS).filter((id) => id !== 'armory'));   // Aura Armory gated by FORK_FLAGS.ENABLE_ARMORY
+  assert.deepEqual(collectionParts({ items: [] }, { enableArmory: true }).slice(0, 5).map(([id]) => id), Object.keys(WARDROBE_PARTS));   // PIN MOVED (ARMORY): five wardrobe parts
   // the sheet in the document, once
   const laid = [];
   globalThis.document = { getElementById: (id) => laid.find((x) => x.id === id) ?? null, createElement: () => ({ id: '', textContent: '' }), head: { appendChild: (x) => laid.push(x) } };

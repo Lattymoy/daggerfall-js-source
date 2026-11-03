@@ -50,6 +50,7 @@ import {
   appearancesCount,
   LOOKS_PART_CSS,
 } from './collections/appearancesPart.js'; // APPEARANCES: the character's looks (bible/04-Characters/Wardrobe.md)
+import { FORK_FLAGS } from '../config/forkFlags.js';
 
 export const COLLECTION_PAGE_SECTIONS = Object.freeze([Object.freeze(['collections', 'Collections'])]);
 export const COLLECTION_PAGE_STYLE_ID = 'collections-page-css';
@@ -83,8 +84,10 @@ const partOfKind = (/** @type {string} */ kind) =>
 export const collectionsPageShown = (_player = null) => true;
 /** The parts shown now, in order: the wardrobe's four always, the codex while Loot rarity makes Legendaries, the cards
  *  while the character carries a Card Binder. */
-export const collectionParts = (player = null) =>
-  COLLECTION_PARTS.filter(([id]) => (id === 'codex' ? lootRarityOn() : id === 'cards' ? cardsPartShown(player) : true));
+export const collectionParts = (player = null, { enableArmory = FORK_FLAGS.ENABLE_ARMORY } = {}) =>
+  COLLECTION_PARTS.filter(([id]) =>
+    id === 'armory' ? enableArmory : id === 'codex' ? lootRarityOn() : id === 'cards' ? cardsPartShown(player) : true,
+  );
 
 let _part = 'titles';
 let _picked = null; // the codex row opened whole

@@ -167,7 +167,7 @@ test('SHOP: the window - a tab a section with its count, a panel a ware with its
   // PIN MOVED (PASS-PANELS): the Folios first, counting their items - no pass or booster sold for money, the Seasonal
   // Collector retired with them
   // PIN MOVED (AURUM-ONLY): the profile icons a section, sold for good
-  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), [`Folios${passItemsIn('s1').length}`, 'Kill Effects3', 'Portal Skins3', 'Mounts3', 'Name Visuals5', 'Profile Icons8', 'Auras1', 'Aura Armory6', 'Bundles3', 'Aurum4']);
+  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), [`Folios${passItemsIn('s1').length}`, 'Kill Effects3', 'Portal Skins3', 'Mounts3', 'Name Visuals5', 'Profile Icons8', 'Auras1', 'Bundles3', 'Aurum4']);
   assert.equal(all(w.root, 'sh-tab')[0].attrs['aria-selected'], 'true');
   assert.deepEqual(all(w.root, 'sh-price').map((p) => all(p, 'sh-pricen')[0]?.textContent), ['1,000'], 'the Folios sell for Aurum alone: the Gilded Folio\'s unlock (PIN MOVED, AUDIT-STOREFRONT III C9: its words for a screen reader beside it)');
   all(w.root, 'sh-tab')[4].click();
@@ -179,7 +179,7 @@ test('SHOP: the window - a tab a section with its count, a panel a ware with its
   assert.equal(buyG().textContent, 'Buy for 500 Aurum');
   buyG().click(); buyG().click();
   assert.deepEqual(bought, [['title:genesis', 500]], 'two presses: bought through the flow at its price');
-  all(w.root, 'sh-tab')[9].click();   // the packs: money's one door
+  all(w.root, 'sh-tab')[8].click();   // the packs: money's one door
   const buy = all(w.root, 'sh-buy')[0];
   assert.equal(buy.tag, 'a');
   assert.equal(buy.href, 'https://accounts.invalid/v1/shop/buy?t=500');
@@ -210,7 +210,7 @@ test('SHOP: The Eternal Set - its own panel first in the Aura Armory tab at 2,00
   const flow = flowIn(card(Object.fromEntries(ETERNAL.map((id) => [id, { held: true, buy: null }]))), { wardrobe: { titles: [], glyphs: [], auras: [], armory: null } });
   /** @type {unknown[]} */ const asked = [];
   flow.wearArmoryKit = (/** @type {unknown} */ kit) => { asked.push(kit); };
-  const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep: { cat: 'armory' }, focus: false, preview: async () => null });
+  const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep: { cat: 'armory' }, focus: false, preview: async () => null, enableArmory: true });
   assert.deepEqual(all(w.root, 'sh-name').map((n) => n.textContent), ['The Eternal Set', 'Eternal Halo', 'Eternal Sigil', 'Eternal Armlets', 'Eternal Greaves', 'Eternal Edge']);
   assert.deepEqual(all(w.root, 'sh-pricen').map((p) => p.textContent), ['2,000', '600', '600', '600', '600', '600']);   // PIN MOVED (AURUM-ONLY): $20 and $6
   assert.equal(all(w.root, 'sh-kind')[0].textContent, 'Aura Armory · a set of 5');
@@ -233,14 +233,14 @@ test('SHOP: the tab strip by keys - an arrow steps to the next category and wrap
   const strip = all(w.root, 'sh-tabs')[0], tabs = () => all(w.root, 'sh-tab');
   const key = (k) => { let stopped = false; for (const f of strip.listeners.keydown ?? []) f({ key: k, preventDefault() {}, stopPropagation() { stopped = true; } }); return stopped; };
   const open = () => tabs().findIndex((t) => t.attrs['aria-selected'] === 'true');
-  const first = [0, -1, -1, -1, -1, -1, -1, -1, -1, -1];   // PIN MOVED (STOREFRONT): nine sections; AURUM: ten, the packs'; PASS-PANELS: nine, no boosters; AURUM-ONLY: ten, the icons'
+  const first = [0, -1, -1, -1, -1, -1, -1, -1, -1];   // PIN MOVED (STOREFRONT): nine sections; AURUM: ten, the packs'; PASS-PANELS: nine, no boosters; AURUM-ONLY: ten, the icons'; Aura Armory gated by FORK_FLAGS.ENABLE_ARMORY
   assert.deepEqual(tabs().map((t) => t.tabIndex), first);
   assert.equal(key('ArrowRight'), true, 'the strip keeps its keys');
   assert.equal(open(), 1);
   assert.equal(doc.activeElement, tabs()[1], 'the focus on the tab opened');
-  key('End'); assert.equal(open(), 9);
+  key('End'); assert.equal(open(), 8);
   key('ArrowRight'); assert.equal(open(), 0, 'round from the last to the first');
-  key('ArrowLeft'); assert.equal(open(), 9);
+  key('ArrowLeft'); assert.equal(open(), 8);
   key('Home'); assert.equal(open(), 0);
   assert.equal(key('Enter'), false, 'any other key is the page\'s');
   assert.deepEqual(tabs().map((t) => t.tabIndex), first);

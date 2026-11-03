@@ -48,6 +48,7 @@ import { AURUM_DEEDS, aurumBonusOf } from '../../net/aurumLaw.js'; // AURUM: the
 import { aurumArtNode } from '../aurumArt.js';
 import { sharedClockOn, worldMinutes } from '../../systems/worldTick.js'; // AUDIT-STOREFRONT III B8: the shared clock's now
 import { wallMsForClassicMinutes } from '../../net/wire.js';
+import { FORK_FLAGS } from '../../config/forkFlags.js';
 
 /** Each section's tab, in the player's language. */
 export const SHOP_CATEGORY_TEXT = Object.freeze({
@@ -343,11 +344,11 @@ export const carouselTurns = (
 ) =>
   c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && !c.hidden && nowMs - c.since >= CAROUSEL_TURN_MS; // AUDIT-STOREFRONT II (lane E 16): never scrolled out of sight
 /** STOREFRONT: THE CAROUSEL'S PANELS - the card's featured wares in its order, each sold alone; none with no card. Pure. */
-export const shopCarouselOf = (/** @type {any} */ flow) =>
+export const shopCarouselOf = (/** @type {any} */ flow, { enableArmory = FORK_FLAGS.ENABLE_ARMORY } = {}) =>
   Array.isArray(flow?.shop?.featured)
     ? flow.shop.featured
         .map((/** @type {string} */ id) => shopWareById(id))
-        .filter((/** @type {any} */ w) => !!w && w.alone)
+        .filter((/** @type {any} */ w) => !!w && w.alone && (enableArmory || w.kind !== 'armory'))
     : [];
 /** STOREFRONT: A BUNDLE'S CONTENTS - each ware it gives with its name, kind, whether this account holds it, and (AUDIT-
  *  STOREFRONT S12) whether it holds part of it - a giver inside, a piece of a set - which its price takes off. Pure. */
@@ -368,9 +369,9 @@ export const shopBundleRows = (/** @type {any} */ flow, /** @type {{ gives: Read
 export const shopListed = (/** @type {any} */ flow, /** @type {any} */ w) => !!w?.alone && !!rowOf(flow, w.id);
 /** STOREFRONT: the sections the window shows - each with a ware the card lists (shopListed); PASS-PANELS: the Folios'
  *  always; AURUM: the day's deals after the Folios while Aurum is open to the account. Pure. */
-export function shopSections(/** @type {any} */ flow) {
+export function shopSections(/** @type {any} */ flow, { enableArmory = FORK_FLAGS.ENABLE_ARMORY } = {}) {
   const out = SHOP_CATEGORIES.filter(
-    (c) => c === 'pass' || SHOP_WARES.some((w) => w.category === c && shopListed(flow, w)),
+    (c) => (c !== 'armory' || enableArmory) && (c === 'pass' || SHOP_WARES.some((w) => w.category === c && shopListed(flow, w))),
   );
   if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');
   return out;
@@ -434,7 +435,7 @@ export function shopMark(/** @type {Document} */ doc, { onOpen, open = false }) 
  * @param {{ flow: () => any, onClose: () => void, keep?: { cat?: string, slide?: number, folio?: string|null, page?: number }, focus?: boolean, now?: () => number,
  *   preview?: (canvas: HTMLCanvasElement, aura: string|null, kit?: string|null, body?: (() => any)|null) => Promise<{ stop: () => void }|null>,
  *   effectPreview?: (canvas: HTMLCanvasElement, slot: string, key: string, cue: (slot: string, key: string|null) => void, body?: (() => any)|null) => Promise<{ stop: () => void }|null>,
- *   wearer?: (() => any)|null, reduced?: boolean }} o `wearer` the player's own body for the stages (the profile's, ui/profileBody.js) - asked once
+ *   wearer?: (() => any)|null, reduced?: boolean, enableArmory?: boolean }} o `wearer` the player's own body for the stages (the profile's, ui/profileBody.js) - asked once
  */
 export function shopWindow(
   doc,
@@ -448,8 +449,10 @@ export function shopWindow(
     wearer = null,
     now = () => Date.now(),
     reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches,
+    enableArmory = FORK_FLAGS.ENABLE_ARMORY,
   },
 ) {
+  const sectionsOf = (/** @type {any} */ fl) => shopSections(fl, { enableArmory });
   injectShopStyle(doc);
   const el = (/** @type {string} */ tag, /** @type {string|null} */ cls, /** @type {string|null} */ text = null) => {
     const n = doc.createElement(tag);
@@ -515,7 +518,7 @@ export function shopWindow(
   tabs.setAttribute('aria-label', t('shop.cats', 'Categories'));
   // the strip's keys (the WAI-ARIA tabs pattern): an arrow steps to the next section, Home and End to the first and last
   tabs.addEventListener?.('keydown', (/** @type {KeyboardEvent} */ e) => {
-    const list = shopSections(f()),
+    const list = sectionsOf(f()),
       i = list.indexOf(cat),
       n = list.length;
     const to =
@@ -568,9 +571,9 @@ export function shopWindow(
           .then(wearer)
           .catch(() => null))
     : null;
-  let cat = shopSections(f()).includes(/** @type {any} */ (keep.cat))
+  let cat = sectionsOf(f()).includes(/** @type {any} */ (keep.cat))
     ? /** @type {string} */ (keep.cat)
-    : (shopSections(f())[0] ?? SHOP_CATEGORIES[0]);
+    : (sectionsOf(f())[0] ?? SHOP_CATEGORIES[0]);
   /** @type {Array<{ stop: () => void }>} the panels' live previews, let go when the panels are drawn again */
   let live = [];
   let liveGen = 0; // a preview that lands after its panels were drawn again (or the window went) is let go at once
@@ -861,7 +864,7 @@ export function shopWindow(
       draw();
     },
     redraw: () => draw(),
-    canGetAurum: () => shopSections(f()).includes('aurum'),
+    canGetAurum: () => sectionsOf(f()).includes('aurum'),
     toAurum: () => pick('aurum'),
     wearPress: (/** @type {{ kind: string, key: string }} */ w, /** @type {boolean} */ worn) =>
       actFor(w, { state: 'held', worn }),
@@ -941,7 +944,9 @@ export function shopWindow(
   };
   /** The day's wares the card lists, in its order (each a daily ware once). */
   const dailyWares = (/** @type {any} */ fl) =>
-    (fl?.aurum?.daily?.wares ?? []).map((/** @type {any} */ r) => shopWareById(r.id)).filter(Boolean);
+    (fl?.aurum?.daily?.wares ?? [])
+      .map((/** @type {any} */ r) => shopWareById(r.id))
+      .filter((/** @type {any} */ w) => !!w && (enableArmory || w.kind !== 'armory'));
   /** A section's head (the day's wares', the Aurum's) and what it is drawn from - drawn again when the account read brings
    *  another. */
   const HEADS = /** @type {Record<string, { build: () => HTMLElement, key: (fl: any) => string }>} */ ({
@@ -979,7 +984,7 @@ export function shopWindow(
   const buildTabs = () => {
     tabs.textContent = '';
     tabOf.clear();
-    for (const c of shopSections(f())) {
+    for (const c of sectionsOf(f())) {
       const n = c === 'pass' ? passItemsIn(passShownSeason(f(), now()).id).length : waresOf(c, f()).length; // PASS-PANELS: its tracks' items
       const tb = /** @type {HTMLButtonElement} */ (el('button', 'sh-tab')); // AUDIT-STOREFRONT II (lane E 1): a tab, never the kit's press too
       tb.type = 'button';
@@ -1211,7 +1216,7 @@ export function shopWindow(
       if (f()?.busy) b.setAttribute('aria-disabled', 'true');
       return b;
     }
-    if (st.state === 'short' && shopSections(f()).includes('aurum'))
+    if (st.state === 'short' && sectionsOf(f()).includes('aurum'))
       return button('sh-getaurum', t('shop.daily.get', 'Get Aurum'), () => pick('aurum'));
     return null;
   };
@@ -1341,7 +1346,7 @@ export function shopWindow(
         d.contentsKey = key;
       }
     }
-    const key = `${st.state}:${st.worn ? 1 : 0}:${st.buy ?? ''}:${st.price}:${armed?.id === w.id ? 1 : 0}:${fl?.busy ? 1 : 0}:${shopSections(fl).includes('aurum') ? 1 : 0}:${buying === w.id ? 1 : 0}`;
+    const key = `${st.state}:${st.worn ? 1 : 0}:${st.buy ?? ''}:${st.price}:${armed?.id === w.id ? 1 : 0}:${fl?.busy ? 1 : 0}:${sectionsOf(fl).includes('aurum') ? 1 : 0}:${buying === w.id ? 1 : 0}`;
     if (d.actKey !== key) {
       const had = d.act && doc.activeElement === d.act;
       d.act?.remove?.();
@@ -1356,7 +1361,7 @@ export function shopWindow(
   const draw = () => {
     const fl = f();
     // the carousel's slides off the card: a new list (the card read again) begins again where it was, if it still can
-    const list = shopCarouselOf(fl),
+    const list = shopCarouselOf(fl, { enableArmory }),
       lk = list.map((w) => w.id).join(',');
     if (lk !== slidesKey) {
       slidesKey = lk;
@@ -1367,7 +1372,7 @@ export function shopWindow(
     }
     if (slideParts) drawPanel(slideParts.w, slideParts.parts, fl);
     carouselState();
-    const sections = shopSections(fl);
+    const sections = sectionsOf(fl);
     if (sections.join(',') !== [...tabOf.keys()].join(',')) {
       buildTabs();
       if (!sections.includes(cat)) {

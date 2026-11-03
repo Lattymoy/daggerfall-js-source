@@ -53,7 +53,8 @@ const flowIn = (extra = {}) => ({ stage: 'in', account: { handle: 'Aelwyn', kind
 const win = (flow, keep = {}) => shopWindow(fakeDoc(), { flow: () => flow, onClose() {}, keep, focus: false, now: () => Date.now(), preview: async () => null, effectPreview: async () => null });
 
 test('AURUM the sections: the day\'s deals after the pass while Aurum is open, with none or closed not shown; the Aurum\'s packs last; AURUM-ONLY (PIN MOVED) the icons a section of their own, sold for good (mutants: daily shown closed; daily first)', () => {
-  assert.deepEqual(shopSections(flowIn()), ['pass', 'daily', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'bundles', 'aurum']);   // PIN MOVED (PASS-PANELS): no boosters; PIN MOVED (AURUM-ONLY): the icons
+  assert.deepEqual(shopSections(flowIn()), ['pass', 'daily', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'bundles', 'aurum']);   // PIN MOVED (PASS-PANELS): no boosters; PIN MOVED (AURUM-ONLY): the icons; Aura Armory gated by FORK_FLAGS.ENABLE_ARMORY
+  assert.deepEqual(shopSections(flowIn(), { enableArmory: true }), ['pass', 'daily', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'bundles', 'aurum']);
   assert.ok(!shopSections(flowIn({ aurum: aurumCardOf({ open: false, balance: 0, daily: { until: 1, wares: WARES.map((id) => ({ id })) } }) })).includes('daily'), 'closed: never, its wares or not');
   assert.ok(!shopSections(flowIn({ aurum: null })).includes('daily'));
   const w = win(flowIn());

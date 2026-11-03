@@ -90,6 +90,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { statsHunt } from '../bounty/huntRank.js';   // HUNTERS-MARK (Bounty-Boards.md 12.3)
+import { FORK_FLAGS } from '../../config/forkFlags.js';
 import { statsVillainy } from '../pvpVillainBar.js';   // PVP-VILLAIN
 import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
@@ -1974,6 +1975,7 @@ function itemText(item, pool) {
 const normWords = (s) => String(s).toLowerCase().replace(/[\u2018\u2019]/g, "'");
 /** ORG2: every word of the query in the item's text. */
 function itemMatches(item, pool, q) {
+  if (!FORK_FLAGS.ENABLE_ARMORY && item === 'feat:armory-others') return false;
   const text = normWords(itemText(item, pool));
   return normWords(q).split(/\s+/).filter(Boolean).every((w) => text.includes(w));
 }
@@ -1984,6 +1986,7 @@ const drawsHere = (key, pause) => (pause ? tierOf(key) === 'live' : drawsFlat(ke
 /** ORG2: AN ITEM AS THE NODES IT DRAWS - none for a key a Features row owns (FT13), a key that folds (`fold`
  *  collects it), a port row this device does not have, or a row the filter leaves out. */
 function itemNodes(item, ctx) {
+  if (!FORK_FLAGS.ENABLE_ARMORY && item === 'feat:armory-others') return [];
   const { pool, pause, fold = null, any = false } = ctx;
   if (optFilter !== 'all') {
     if (optFilter === 'changed' ? !itemChanged(item, pool) : !itemKinds(item).includes(optFilter)) return [];
@@ -2048,7 +2051,7 @@ function tabCount(tab, ctx) {
   for (const s of tab.sections) {
     for (const item of s.items) {
       if (isSettingItem(item)) { if (!featureForControl('settings', item) && drawsHere(item, ctx.pause)) n++; }
-      else if (item.startsWith('feat:')) n++;
+      else if (item.startsWith('feat:')) { if (FORK_FLAGS.ENABLE_ARMORY || item !== 'feat:armory-others') n++; }
       else if (item.startsWith('port:')) { const r = ctx.pool.get(item.slice(5)); if (r && r.dataset.live !== '0') n++; }   // QREPAIR: a row greyed here is not one that works here
       else if (item === 'mods-index') n += FEATURES.filter((f) => f.kinds.includes('mod')).length;   // every mod has a row in the list
       else if (item === 'preset:graphics') n++;   // the preset is a choice of its own; the Overhauls door is not
@@ -2140,7 +2143,7 @@ function optionsToolbar(body, { pause = false } = {}) {
   bar.append(search);
   const chips = el('div', 'opt-filters');
   const pool = portPool({ pause });
-  const changed = CATEGORIES.reduce((n, t) => n + t.sections.reduce((m, s) => m + s.items.filter((i) => !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, pool)).length, 0), 0);
+  const changed = CATEGORIES.reduce((n, t) => n + t.sections.reduce((m, s) => m + s.items.filter((i) => (FORK_FLAGS.ENABLE_ARMORY || i !== 'feat:armory-others') && !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, pool)).length, 0), 0);
   for (const [id, label] of OPT_FILTERS) {
     const b = el('button', `chip${optFilter === id ? ' on' : ''}${id === 'all' || id === 'changed' ? '' : ` ${id}`}`, label);
     b.type = 'button';
@@ -2266,7 +2269,7 @@ function categoryCard({ pool = portPool(), pause = false } = {}) {
   const d = el('div', 'dcard');
   d.append(el('h3', null, cat.title));
   const ctx = { pool, pause };
-  const changed = cat.sections.reduce((n, s) => n + s.items.filter((i) => !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, ctx.pool)).length, 0);
+  const changed = cat.sections.reduce((n, s) => n + s.items.filter((i) => (FORK_FLAGS.ENABLE_ARMORY || i !== 'feat:armory-others') && !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, ctx.pool)).length, 0);
   d.append(el('p', 'status', t('menu.settings.tabStatus', '{n} options \u00b7 {changed} changed', { n: tabCount(cat, ctx), changed })));
   const b = el('button', 'act', t('menu.settings.restoreTab', 'Restore defaults'));
   b.onclick = () => ask(
