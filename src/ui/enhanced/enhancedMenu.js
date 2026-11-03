@@ -472,7 +472,7 @@ const shopFlowOf = () => {
 /** SHOP (the owner: "A new glyph panel alongside the timer and mailbox that will be used for our monetization shop"): THE
  *  GEM on the pause face, at the end of the row of marks `chain` - online or not, for the account is the shop's. */
 function shopGem(home, chain) {
-  if (getPref('shopHidden')) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }   // SHOP-HIDE: the player's own Hide the shop
+  if (!FORK_FLAGS.ENABLE_SHOP || getPref('shopHidden')) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }   // SHOP-HIDE: the player's own Hide the shop or fork flag
   const gem = shopMark(document, { open: shopOpen, onOpen: () => { shopOpen = true; shopFocusIn = true; shopReread(shopFlow); render(); } });   // SHOP-REREAD: this visit's read again
   home.append(gem);
   shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);
@@ -4734,7 +4734,7 @@ function renderHome() {
   home.append(profileMark());
   // SUPPORT1: the asks, top-left - the front door's alone; PX4 keeps the
   // pause face to its window, so they are not drawn over a game.
-  home.append(supportMarks());
+  if (FORK_FLAGS.ENABLE_SHOP) home.append(supportMarks());
   // L10N1b: the first-run language offer, in the top-left corner nothing else uses
   const offer = languageOffer();
   if (offer) home.append(offer);
