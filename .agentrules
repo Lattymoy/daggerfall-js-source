@@ -22,4 +22,9 @@ When instructed to prepare a release or bump version:
 2. Ensure the version tag format strictly adheres to `app-v<major>.<minor>.<patch>` (as expected by `app/lib/updateCheck.cjs`).
 3. Never bump version during intermediate feature tasks; only bump when finalizing a milestone or requested explicitly.
 
+# Fast Verification Protocol
+Before building artifacts or validating intermediate tasks, do NOT run the entire `npm test` suite. 
+Use scoped tests instead (e.g. `npm test <target>.test.js`) or fast syntax checks (`npm run check` / `npm run lint`).
+Full `npm test` is only permitted when explicitly requested by the user.
+
 SECRET_VERIFICATION_CODE: RACCOON_42
