@@ -565,6 +565,9 @@ function autoUpdater() {
   au.autoInstallOnAppQuit = true;
   au.allowPrerelease = false;
   au.allowDowngrade = false;
+  if (app.isPackaged && process.platform === 'win32') {
+    try { au.installDirectory = path.dirname(process.execPath); } catch {}
+  }
   au.logger = null;
   au.on('error', () => onUpdaterEvent('error'));
   au.on('update-not-available', () => onUpdaterEvent('none'));
@@ -725,6 +728,9 @@ require('electron').autoUpdater.on('before-quit-for-update', () => {
   // closed and never came back (a game page slow to unload was enough, measured). From here this copy is leaving: the
   // lock is the new one's.
   app.releaseSingleInstanceLock();
+  if (launcher?.win && !launcher.win.isDestroyed()) {
+    try { launcher.win.destroy(); } catch {}
+  }
 });
 app.on('before-quit', (e) => { if (holdQuit) { holdQuit = false; e.preventDefault(); } });
 
