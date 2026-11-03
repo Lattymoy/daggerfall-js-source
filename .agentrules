@@ -38,6 +38,8 @@ Primary focus: Native desktop clients (Windows, macOS, Linux) prioritizing offli
    
    
    Also always add any new text in all languages currently present in the game. 
+   
+   Don't tun npm test on your own without expicit request from "13".
 
 ---
 
