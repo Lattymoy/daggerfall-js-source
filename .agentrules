@@ -14,6 +14,12 @@ The goal: native desktop clients (Windows, macOS, Linux) focusing on offline gam
 7. We don't remove features from the code base. We disable what is not needed but keep it in the code.
 8. At some point in time we might decide to establish local servers so players still can play online. But not now.
 
-
+# Versioning & Release Protocol
+When instructed to prepare a release or bump version:
+1. Increment the patch/minor version synchronously across:
+   - `app/package.json` ("version")
+   - Root `package.json` ("version")
+2. Ensure the version tag format strictly adheres to `app-v<major>.<minor>.<patch>` (as expected by `app/lib/updateCheck.cjs`).
+3. Never bump version during intermediate feature tasks; only bump when finalizing a milestone or requested explicitly.
 
 SECRET_VERIFICATION_CODE: RACCOON_42

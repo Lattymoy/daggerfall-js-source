@@ -48,6 +48,7 @@ const STYLE = `${PIXELIFY_FIVE_FACE}
 /* BR5: the box keeps BR4's height - 86vw and 1240px x 850/2112 x 526/322 for the DFO mark's 1.63:1; BR6: x 1232/1034 for the dragon mark's 1.19:1 */
 .intro-title{position:absolute;left:50%;top:48%;width:min(41.2vw,595px);opacity:0;pointer-events:none;transform-origin:50% 50%;will-change:transform,opacity,filter}
 .intro-title .brand-logo{display:block;width:100%;height:auto;transform:translateX(-10%)}
+.intro-title .brand-text{display:block;font-family:'Jacquard 12',serif;font-size:clamp(44px,6.2vw,88px);line-height:1.05;text-align:center;color:#e5d5ab;text-shadow:0 4px 18px #000,4px 4px 0 rgba(0,0,0,.85)}
 .intro-title-fallback{font-size:clamp(28px,7vw,100px);text-align:center;margin:0;letter-spacing:.05em}
 .intro-light{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,#ebd3a025,transparent 58%)}
 /* INTRO4: the narrator's line, low in the frame over a soft dark of its own; the map's words over the continent */
@@ -92,6 +93,7 @@ const make = (doc, tag, cls, text) => {
 };
 
 async function decodedImage(image) {
+  if (typeof image?.decode !== 'function') return true;
   let timer;
   try {
     await Promise.race([image.decode(), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Image timed out')), 10000); })]);

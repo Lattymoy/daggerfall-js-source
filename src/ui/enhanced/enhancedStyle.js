@@ -2442,6 +2442,8 @@ ${badgeCss()}
    anything up any more - the file has no empty rows. BR6: the dragon
    mark's 1.19:1 spends that height at 769/2112 x 1232/1034 = 43.4%. */
 .brand-home .brand-logo { width: 43.4%; margin: 0 auto; }
+.px-wordmark .brand-text { display: block; font-size: clamp(48px, 7.5vw, 88px); line-height: 1.05; color: #d8cfae; }
+.brand-home .brand-text { display: block; font-family: 'Jacquard 12', var(--brand); font-size: 36px; line-height: 1.05; text-align: center; color: var(--bone); text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .brand-home { display: block; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
 .brand-home:focus-visible { outline: 2px solid var(--brass); outline-offset: 6px; }
 .shell .brand h1:has(.brand-logo) { line-height: 0; }

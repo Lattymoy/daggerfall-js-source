@@ -224,7 +224,11 @@ test('INTRO2: disposing during fetch prevents late audio and releases the loadin
 });
 
 test('INTRO2: the shared logo has accessible text and its exact natural aspect ratio', () => {
-  const logo = brandMark({ createElement: (tag) => ({ tag }) });
+  const textMark = brandMark({ createElement: (tag) => ({ tag }) });
+  assert.equal(textMark.tag, 'span');
+  assert.equal(textMark.className, 'brand-text');
+  assert.equal(textMark.textContent, 'Daggerfall Forever');
+  const logo = brandMark({ createElement: (tag) => ({ tag }) }, { textOnly: false });
   assert.equal(logo.tag, 'img'); assert.equal(logo.alt, 'Daggerfall Forever');   // BR5: the product's name alone - the mark names no other game
   // BR4: the element's size is the FILE's, read from its own IHDR - a new
   // logo dropped in without its dimensions reddens here, not in a layout

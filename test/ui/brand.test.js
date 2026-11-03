@@ -504,3 +504,18 @@ test('LOGO-CENTRE: the mark stands on its letters\' centre, not its box\'s - mea
   assert.ok(read('index.html').match(/\.wordmark img \{[^}]*\}/)[0].includes(`transform: ${back};`), 'the site\'s page');
   assert.doesNotMatch(read('app/launcher/launcher.css').match(/\.wordmark img \{[^}]*\}/)[0], /transform/, 'the launcher sets it at its left edge, where its box is what lines up');
 });
+
+test('FORK-TASK2: FORK_FLAGS.TEXT_BRAND_MARK hides the DFO image mark in the main menu and renders Daggerfall Forever as text while keeping the image path intact behind the flag', async () => {
+  const { FORK_FLAGS } = await import('../../src/config/forkFlags.js');
+  const { brandMark } = await import('../../src/ui/brandMark.js');
+  assert.equal(FORK_FLAGS.TEXT_BRAND_MARK, true, 'text brand mark flag is enabled');
+  const fakeDoc = { createElement: (tag) => ({ tag }) };
+  const activeMark = brandMark(fakeDoc);
+  assert.equal(activeMark.tag, 'span');
+  assert.equal(activeMark.className, 'brand-text');
+  assert.equal(activeMark.textContent, NAME);
+  const imageMark = brandMark(fakeDoc, { textOnly: false });
+  assert.equal(imageMark.tag, 'img');
+  assert.equal(imageMark.className, 'brand-logo');
+  assert.equal(imageMark.alt, NAME);
+});

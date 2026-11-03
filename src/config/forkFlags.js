@@ -3,7 +3,7 @@
 // codebase and are toggled via these flags (.agentrules #7 & #8).
 
 export const FORK_FLAGS = {
-  TEXT_BRAND_MARK: false,
+  TEXT_BRAND_MARK: true,
   ENABLE_ARMORY: true,
   ENABLE_SHOP: true,
   ENABLE_ACCOUNT: true,
