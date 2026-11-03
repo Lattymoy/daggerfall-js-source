@@ -66,7 +66,7 @@ Nope. Never. Not even donations.
 ---
 
 ## Who am I
-Name is Alex Uslavtsev. I live in Ukraine, so yes, the war. With its consequences and lack of predictability.
+Name is Alex Uslavtsev, nickname is simply "13". I live in Ukraine, so yes, the war. With its consequences and lack of predictability.
 
 I make my own games during the evenings and weekends, and have a small team as well. We did [Titans of the Past](https://store.steampowered.com/app/3098170/Titans_of_the_Past/) recently.
 
