@@ -250,6 +250,8 @@ export const CATEGORIES = Object.freeze([
     ]),
     sec('weather', 'Weather & ambience', ['feat:weather-events', 'feat:mod-better-ambience']),
     sec('towns', 'Towns & people', [
+      'port:unifiedBank',
+      'port:city247',
       'feat:living-world',
       'feat:mod-beautiful-villages',
       'feat:mod-beautiful-cities',

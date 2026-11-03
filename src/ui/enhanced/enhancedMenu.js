@@ -3299,6 +3299,10 @@ function portRowsGame({ pause = false } = {}) {
   const rows = [row, techniqueMotionRow()];
   rows.push(prefRow('offlineFirmament', t('features.offlineFirmament.title', 'Firmament (Offline)'),
     t('features.offlineFirmament.note', 'Enables the Firmament constellation passive tree and Renown progression while playing offline.')));
+  rows.push(prefRow('unifiedBank', t('features.unifiedBank.title', 'Unified Bank'),
+    t('features.unifiedBank.note', 'Access your deposited gold and bank accounts across all regional bank branches in Tamriel.')));
+  rows.push(prefRow('city247', t('features.city247.title', '24/7 City Infrastructure'),
+    t('features.city247.note', 'Keeps city gates, shops, guild halls, banks, and libraries open at all hours.')));
   return rows;
 }
 /** RPT1026-CLIENT (a private report: allies' spells shook the view where they landed, and no setting could soften it): how much

@@ -191,7 +191,7 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat, STAT_KEYS_ORDER, clampFatigue
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/rest/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, deedStands, regionDeedOf, allDeeds, regionHousesFull, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, deedStands, regionDeedOf, allDeeds, regionHousesFull, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion, isUnifiedBankActive } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
@@ -1415,6 +1415,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const loansForgiven = realmBoot ? forgiveLoans(bootSnapRead) : null;   // LOAN-AMNESTY: the Empire's amnesty, into the one parse before it is restored and before the join settles a loan (systems/banking.js)
   const releveled = realmBoot && bootSnapRead ? crossLeveling(bootSnapRead) : false;   // LEVEL-ONLINE-3: an Oblivion-levelling realm character onto Daggerfall's leveling, into the one parse before it is restored (systems/realmCustoms.js)
   const empireFolded = realmBoot ? foldEmpireAccounts(bootSnapRead) : null;   // EMPIRE-ACCOUNT: every branch's gold into the Empire's one account, before it is restored and before the join settles a loan (systems/banking.js)
+  const unifiedFolded = (!realmBoot && isUnifiedBankActive()) ? foldEmpireAccounts(bootSnapRead) : null;
   if (refuseOnlinePowerFlags(params).length) publishBootParams(params);   // REALM P0.1: ?shot, ?fly, ?nofoes and the rest - dropped online before anything below reads them
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
@@ -28175,6 +28176,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   for (const line of reclaimLines(realmGiven)) townTalk.say(line);   // RESTORE: what came back, said once the world stands
   for (const line of loanAmnestyLines(loansForgiven)) townTalk.say(line);   // LOAN-AMNESTY: said once the world stands
   for (const line of empireAccountLines(empireFolded)) townTalk.say(line);   // EMPIRE-ACCOUNT: said once the world stands
+  if (unifiedFolded) for (const line of empireAccountLines(unifiedFolded)) townTalk.say(line);
   // EOTB-IL: StartGameBehaviour.OnNewGame (the mod's handler, IL_0930) -
   // a boot that loaded nothing is a new game, wherever it starts
   if (!_loadedGame) mwViewNewGame((modes?.mode ?? 'exterior') !== 'exterior');

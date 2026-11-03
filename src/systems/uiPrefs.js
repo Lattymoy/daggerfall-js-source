@@ -59,6 +59,10 @@ export const PREF_DEFAULTS = Object.freeze({
   standingAll: true,
   // OFFLINE-FIRMAMENT: whether the Firmament passive star tree and Renown progression are active in offline single-player.
   offlineFirmament: true,
+  // UNIFIED-BANK: whether bank accounts are unified across all regions into a single global account.
+  unifiedBank: false,
+  // CITY-247: optional 24/7 city infrastructure keeping shops, guild halls, banks, and gates open day and night.
+  city247: false,
   // SHOP-HIDE (2026-10-30, the owner: "a settings toggle that disables the shop interface ingame. Off by default"): on, the
   // pause screen draws no shop gem and the shop's window never opens; the account's Aurum and what it holds are untouched.
   shopHidden: false,

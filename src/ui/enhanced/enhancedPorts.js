@@ -21,7 +21,7 @@ import { GUILD_RECTS, PANEL_X as GUILD_X, PANEL_Y as GUILD_Y, REFORGE_ROW, LIFT_
 import { COVEN_RECTS, COVEN_PANEL_X, COVEN_PANEL_Y } from '../covenWindow.js';
 import { BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y, MARKS_ENTRY } from '../bankWindow.js';
 import { MARKS_BANK, MARKS_COMBAT, MARKS_FAUCETS, marksText } from '../../net/marksLaw.js';   // MARKS1: the Bank's Marks, online; SILVER-WAYS: the day's combat cap; SILVER-FINDS: the finds' days
-import { TRANSACTION_TYPE, goldRegion, EMPIRE_ACCOUNT_REGION } from '../../systems/banking.js';   // EMPIRE-ACCOUNT: online, the one account
+import { TRANSACTION_TYPE, goldRegion, EMPIRE_ACCOUNT_REGION, isUnifiedBankActive } from '../../systems/banking.js';   // EMPIRE-ACCOUNT: online, the one account
 import { REGION_NAMES } from '../../formats/mapsFile.js';   // BANK-REGION: the account's region, by the index its row reads
 import { PURCHASE_RECTS, PURCHASE_PANEL_X, PURCHASE_PANEL_Y } from '../bankPurchaseWindow.js';
 import { TRANSPORT_MODES } from '../../systems/transport.js';
@@ -101,8 +101,8 @@ const bank = {
     const busy = w.transactionType !== TRANSACTION_TYPE.None;
     const btn = (name, label, extra = {}) => ({ label, act: press(name), disabled: busy || (w.enabled ? w.enabled(name) === false : false), ...extra });
     const city = w.hooks.cityName?.();
-    // EMPIRE-BANK: online, every bank is the Empire's - the branch's town beneath it
-    const empire = isOnlinePage();
+    // EMPIRE-BANK: online or unified, every bank is the Empire's - the branch's town beneath it
+    const empire = isUnifiedBankActive();
     // BANK-REGION (FIELD BUGS 2026-09-30b, Guppy in #support: "is it normal when u become a werewolf you loose the gold
     // in your bank"): the Empire is one name and one lender, but a deposit stays in its region's account (systems/
     // banking.js, THE STORE IS PER REGION), and nothing online said so - the teller in another region read "Account

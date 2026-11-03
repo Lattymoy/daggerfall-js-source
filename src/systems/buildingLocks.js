@@ -17,6 +17,13 @@ import { isShop } from './shopStock.js';
 import { HOLIDAYS } from './holidays.js';
 import { sharedClockOn } from './worldTick.js'; // OL4 (AUDIT ALL O1): the shared clock IS the reason for the shift, and every other online law keys on it
 import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { getPref } from './uiPrefs.js';
+import { FORK_FLAGS } from '../config/forkFlags.js';
+
+/** Whether 24/7 city infrastructure is active (shared clock online or offline optional setting). */
+export function isCity247Active() {
+  return sharedClockOn() || (!!FORK_FLAGS.ENABLE_CITY_INFRASTRUCTURE_247 && getPref('city247') === true);
+}
 
 /** Opening and closing hours by building type (PlayerActivate.cs:
  *  91-92), indexed by DFLocation.BuildingTypes 0..24. closeHours 25
@@ -262,7 +269,8 @@ export function buildingHoursState(
   // hall keeps its doors on the holiday because classic never shut them.
   const holidayClosed = shop && holidayId === HOLIDAYS.Suns_Rest;
   const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;
-  if (relieved && online && !classicOpen) {
+  const effectiveOnline = online || (isCity247Active() && !(arguments[1] && 'online' in arguments[1] && arguments[1].online === false));
+  if (relieved && effectiveOnline && !classicOpen) {
     return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };
   }
   return {
