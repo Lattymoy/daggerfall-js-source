@@ -883,6 +883,8 @@ import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/
 import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; AUDIT SEATS-3 D3: a board's Tithe (SEAT-HALL's and CROWN-HALL's halls: scenes/seatHallHost.js)
 import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
+import { createOfflineHomes, createOfflineDecor } from '../systems/offlineHomes.js';
+import { isOfflineHousingActive } from '../systems/uiPrefs.js';
 import { createHomesBoot } from './homesBootHost.js';   // KNIGHT-HOUSE's deed holds and ACCOUNT-HOMES' sweep, once a boot
 import { createTownPanelHost, panelTownOf } from './townPanelHost.js';   // NOTICE-PANEL: the town panel under the compass - the boards' presses, in any settlement
 import { clearVendorWaypoint, vendorWaypoint, vendorWaypointKey } from '../systems/vendorWaypoint.js';   // HOME-VENDOR: the trader's waypoint
@@ -1969,6 +1971,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // off `params`: `onlineOn` is declared far below, and a quest can be set up before it is. (Its door, `homesApi`, stands
   // above the data's read - BOOT-OVERLAP.)
   const onlineHomes = homesApi ? createOnlineHomes({ api: homesApi, character: () => characterIdOf(playerEntity), onWrote: () => legacyOnlineHomesRead(), onHomes: () => homesLearned() }) : null;   // QUEST-HOME: and a home learned of, a quest site not yet reached in it chosen again   // LEGACY7 part five: a home of mine bought, sold or changed - the line's to learn again
+  const offlineHomes = !homesApi ? createOfflineHomes({
+    player: () => playerEntity,
+    sceneCache: () => _sceneCache(),
+    townTalk,
+    onHomes: () => homesLearned(),
+    onWrote: () => homesLearned(),
+  }) : null;
+  const activeHomes = onlineHomes || (isOfflineHousingActive() ? offlineHomes : null);
   /** LEGACY7 part five: ONLINE, THE LINE'S HOUSES ARE ITS MEMBERS' ONLINE HOMES (Legacy-Arc 10b) - ACCOUNT-HOMES
    *  (2026-10-06): a home is its account's, every member's, so they are the account's rows of /v1/homes/mine (its homes
    *  and the deeds the realm gave its characters), each named by its town, and the line learns them WHOLE (heldHousesWhole:
@@ -15813,7 +15823,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // FB1020c STREETS-TAB: and the streets the travel key's window holds in a town (`travelTown`, spread at
   // toggleTravelMap's door) - one bag with the M key's
   const { toggleExteriorAutomap, travelTown } = createExteriorAutomapToggle({   // HOST-SPLIT: src/scenes/exteriorAutomapToggle.js
-    built, cam, cpuModels, getGpuMesh, locationIndex, maps, onlineHomes, player, playerTravelPixel,
+    built, cam, cpuModels, getGpuMesh, locationIndex, maps, onlineHomes: activeHomes, player, playerTravelPixel,
     questBuildingSource, state, townTalk, walkMode, weaponRig,
     get activeQuestIds() { return activeQuestIds; },
     get hudArt() { return hudArt; },
@@ -17237,7 +17247,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const { questWorld } = createQuestWorld({   // HOST-SPLIT: src/scenes/questWorld.js
     NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
     _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
-    homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
+    homeLayoutsOnline, maps, navalDeckBody, onlineHomes: onlineHomes || offlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
     playerTravelPixel, provinceQuestPlaces, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,   // AUDIT RELEASE R2-5: the places past the Bay (a province's region; START2's start lair among them)
     get _homeLayoutsApplied() { return _homeLayoutsApplied; },
     get _liveSharer() { return _liveSharer; },
@@ -27200,6 +27210,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // underfoot's Hearth Offerings stood at their doors, taken from and filled; the Wyrd Sisters' window; the finds' doors.
   // The dressing and the Sisters themselves are the build's (scenes/pixelBuild.js, world/witchesDecor.js)
   witches = createWitchesHost({ built, renderer, pipeline, onlineHomes, townTalk, state, player, saveSoon, chatNotice, mode: _mode, get online() { return online; } });
+  const _offlineDecor = createOfflineDecor();
+  const _activeHomeDecor = homeDecor || {
+    list: (...a) => isOfflineHousingActive() ? _offlineDecor.list(...a) : Promise.resolve({ ok: false }),
+    place: (...a) => isOfflineHousingActive() ? _offlineDecor.place(...a) : Promise.resolve({ ok: false }),
+    move: (...a) => isOfflineHousingActive() ? _offlineDecor.move(...a) : Promise.resolve({ ok: false }),
+    remove: (...a) => isOfflineHousingActive() ? _offlineDecor.remove(...a) : Promise.resolve({ ok: false }),
+    hidden: (...a) => isOfflineHousingActive() ? _offlineDecor.hidden(...a) : Promise.resolve({ ok: false }),
+    batch: (...a) => isOfflineHousingActive() ? _offlineDecor.batch(...a) : Promise.resolve({ ok: false }),
+    use: (...a) => isOfflineHousingActive() ? _offlineDecor.use(...a) : Promise.resolve({ ok: false }),
+  };
+  {
+  const homeDecor = _activeHomeDecor;
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
   // and read undefined rather than throw a TDZ ReferenceError. Every
@@ -27689,7 +27711,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),
     // HOME1: the online homes' registry (null offline), and my party's names as the relay signs them - a home its owner
     // opened to their party opens to a player whose party holds the owner (net/homeLaw.js homeMayEnter)
-    onlineHomes,
+    get onlineHomes() { return onlineHomes || (isOfflineHousingActive() ? offlineHomes : null); },
     homesApi,   // HOME-RENT: a home's rooms, through the service's own door (null offline)
     // GUILD1d: the playing character's guild, for its hall - whether a guildmaster may buy one at a house's door (asked
     // again, without waiting, when the guild book's look is old), the hall bought and opened through the book, and the
@@ -28148,6 +28170,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return { ...d, regionIndex: dfLoc.regionIndex, townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, townBlocks: homeTownBlocks(dfLoc), ...townTalk.doorTownOf(dfLoc, d) };   // HOME1: the town the DOOR is in keys its home, not the one under the player; HOME-PRICE: and its size prices it; IC-PROPS: and its own name, its book and its town's name - the door's town's, never the player's (a neighbouring slice of the Imperial City)
     },
   });
+  }
   wireOwnerClock([exteriorFoes, cityGuards], modes, () => online?.status === 'open' && online.othersHere > 0);   // OWNER-CLOCK (scenes/ownerCatchUp.js): while anyone else is in my room (on the street the 16-pixel cell, wider than the 3 pixels my foes frames are fanned across) the street's foes take my clamped frame in FOE-CATCHUP's steps - my player's pace, never past it - and every step of mine is marked on the clock my foes frames carry; HOST-CLOCK: the watch with them (its brains already ran on the street's clock), the mode machine's frames the catch-up's, and a building's and a dungeon's foes through the same page's catch-up from their own hosts
   // AT2: AMBIENT TEXT CLAIMS ITS HOST. The mod is one GameObject made
   // at load and never destroyed (systems/ambientText.js), so the slot
