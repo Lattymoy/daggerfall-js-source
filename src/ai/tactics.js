@@ -80,7 +80,7 @@ export const tacticsSwitchOn = () => getPref('enhancedAI') === true;
 
 /** Every number on one table. Metres, seconds, shares. */
 export const TACT = Object.freeze({
-  MELEE_TOKENS: 2,
+  MELEE_TOKENS: 6,
   RANGED_TOKENS: 2,
   ENGAGE_RANGE: 14, // a foe further than this from its target is pursuing, not fighting: the motor's own
   SHOOT_RANGE: 51.2, // ...a shooter's, DFU's own ranged band's far edge (MAX_RANGED_DISTANCE)
@@ -90,18 +90,18 @@ export const TACT = Object.freeze({
   STEP_SPEED: 0.7, // backing out, stepping to the ring
   SLOT_TURN: 0.15, // how far round the ring a waiting foe's slot drifts a second (radians)
   SWING: 0.7, // a blow plays out where it was struck before the foe backs out
-  RECOVER_MIN: 0.8, // the beat after a blow, out to the ring (seconds)
-  RECOVER_MAX: 1.6,
-  PATIENCE: 6, // a foe waiting this long goes in, tokens or not
-  HURT_SHARE: 0.25, // of its health lost inside HURT_WINDOW: it backs off
+  RECOVER_MIN: 0.3, // the beat after a blow, out to the ring (seconds)
+  RECOVER_MAX: 0.6,
+  PATIENCE: 2.5, // a foe waiting this long goes in, tokens or not
+  HURT_SHARE: 0.5, // of its health lost inside HURT_WINDOW: it backs off
   HURT_WINDOW: 3,
   BACKOFF: 2, // ...for this long
-  FLEE_SHARE: 0.2, // a coward below this share of its health runs
+  FLEE_SHARE: 0.1, // a coward below this share of its health runs
   FLEE_SECONDS: 8,
-  KITE_IN: 6, // a shooter with a token backs off a target inside DFU's own bow band's near edge (MIN_RANGED_DISTANCE)...
-  KITE_OUT: 7, // ...until it stands this far off (AUDIT TACT A1: past the band's edge, never jittering on it)
+  KITE_IN: 3, // a shooter with a token backs off a target inside DFU's own bow band's near edge (MIN_RANGED_DISTANCE)...
+  KITE_OUT: 4, // ...until it stands this far off (AUDIT TACT A1: past the band's edge, never jittering on it)
   KITE_CORNERED: 3, // a shooter whose step back meets a wall fights hand to hand this long (s)
-  KITE_MAX: 2, // FEEDBACK: one kiting burst lasts at most this long (s) - caught, it fights hand to hand...
+  KITE_MAX: 1, // FEEDBACK: one kiting burst lasts at most this long (s) - caught, it fights hand to hand...
   KITE_COOLDOWN: 8, // ...and it kites again only this long after its last burst ended (s)
   RECOVER_HOP: 0.4, // FEEDBACK: after its blow a holder backs out at most this long (s), then holds its ground
   BACKOFF_COOLDOWN: 10, // FEEDBACK: a hurt foe backs off at most once in this long (s)
