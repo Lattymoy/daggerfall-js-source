@@ -20,9 +20,12 @@
 
 export const SHOT_DB = 'dagger-shots';
 export const SHOT_STORE = 'shots';
-/** The most the gallery keeps. At FULL_EDGE and JPEG_Q a shot is about 150-400 KB, so a full gallery is tens of MB -
- *  well inside a browser's per-site quota, and a number a pane can page through. */
-export const GALLERY_MAX = 120;
+/** The most the gallery keeps. Unlimited (Infinity) by default: reads and stores as many screenshots
+ *  as exist in the folder or local storage. */
+export let GALLERY_MAX = Infinity;
+export function setGalleryMax(max) {
+  GALLERY_MAX = max;
+}
 /** The kept copy's long edge, in pixels. A loading screen is the window's size; past this the bytes buy nothing. */
 export const FULL_EDGE = 1920;
 export const THUMB_W = 320;
@@ -69,8 +72,8 @@ export function shotCaption(shot) {
 // key that answers "could not be kept" every press (AUDIT LOAD1 G4). A connection the browser closes under the tab
 // (site data cleared, a version change) is let go and opened again on the next ask.
 
-/** @typedef {{ id?: number, at: number, place: string, w: number, h: number, loading: boolean, blob: Blob, thumb: Blob }} ShotRecord */
-/** @typedef {{ put: (rec: ShotRecord) => Promise<number>, all: () => Promise<ShotRecord[]>, get: (id: number) => Promise<ShotRecord|null>, del: (id: number) => Promise<void>, count: () => Promise<number> }} GalleryBackend */
+/** @typedef {{ id?: number|string, name?: string, at: number, place: string, w: number, h: number, loading: boolean, blob: Blob, thumb: Blob }} ShotRecord */
+/** @typedef {{ put: (rec: ShotRecord) => Promise<number|string>, all: () => Promise<ShotRecord[]>, get: (id: number|string) => Promise<ShotRecord|null>, del: (id: number|string) => Promise<void>, count: () => Promise<number>, setLoading?: (id: number|string, on: boolean) => Promise<boolean> }} GalleryBackend */
 
 /** @returns {GalleryBackend} */
 export function memoryGalleryBackend() {
@@ -79,7 +82,7 @@ export function memoryGalleryBackend() {
   return {
     put: async (rec) => {
       const id = rec.id ?? next++;
-      if (id >= next) next = id + 1;
+      if (typeof id === 'number' && id >= next) next = id + 1;
       rows.set(id, { ...rec, id });
       return id;
     },
@@ -184,6 +187,98 @@ function resilientBackend(primary) {
   return { put: call('put'), all: call('all'), get: call('get'), del: call('del'), count: call('count') };
 }
 
+function mimeOf(name = '') {
+  const ext = String(name).split('.').pop()?.toLowerCase();
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'webp') return 'image/webp';
+  return 'image/png';
+}
+
+/** @returns {GalleryBackend|null} */
+function desktopGalleryBackend(sh = globalThis.daggerShell?.screenshots) {
+  if (!sh) return null;
+  return {
+    put: async (rec) => {
+      let bytes;
+      if (rec.blob) {
+        bytes = new Uint8Array(await rec.blob.arrayBuffer());
+      } else {
+        bytes = new Uint8Array(0);
+      }
+      const saved = sh.save(rec.name || (rec.id != null ? String(rec.id) : null), bytes, {
+        place: rec.place,
+        at: rec.at,
+        loading: rec.loading,
+      });
+      return saved.id;
+    },
+    all: async () => {
+      const list = sh.list?.() ?? [];
+      return list.map((item) => {
+        let _blob = null;
+        const rec = {
+          id: item.id,
+          name: item.name,
+          at: item.at,
+          place: item.place,
+          loading: item.loading !== false,
+          w: item.w || FULL_EDGE,
+          h: item.h || 1080,
+        };
+        Object.defineProperty(rec, 'blob', {
+          get() {
+            if (!_blob) {
+              const b = sh.read(item.name);
+              if (b) _blob = new Blob([b], { type: mimeOf(item.name) });
+            }
+            return _blob;
+          },
+          set(v) { _blob = v; },
+          enumerable: true,
+          configurable: true,
+        });
+        Object.defineProperty(rec, 'thumb', {
+          get() {
+            return this.blob;
+          },
+          set(v) {},
+          enumerable: true,
+          configurable: true,
+        });
+        return rec;
+      });
+    },
+    get: async (id) => {
+      const list = sh.list?.() ?? [];
+      const item = list.find((x) => x.id === id || x.name === id);
+      if (!item) return null;
+      const b = sh.read(item.name);
+      const blob = b ? new Blob([b], { type: mimeOf(item.name) }) : null;
+      return {
+        id: item.id,
+        name: item.name,
+        at: item.at,
+        place: item.place,
+        loading: item.loading !== false,
+        blob,
+        thumb: blob,
+        w: item.w || FULL_EDGE,
+        h: item.h || 1080,
+      };
+    },
+    del: async (id) => {
+      sh.delete?.(id);
+    },
+    count: async () => {
+      return (sh.list?.() ?? []).length;
+    },
+    setLoading: async (id, on) => {
+      sh.setLoading?.(id, on);
+      return true;
+    },
+  };
+}
+
 /** @type {GalleryBackend|null} */
 let _backend = null;
 /** The tests' second seam: an encode of their own where node has no canvas. */
@@ -198,6 +293,9 @@ export function setGalleryBackend(backend) {
 }
 function backend() {
   if (_backend) return _backend;
+  if (globalThis.daggerShell?.screenshots) {
+    return (_backend = desktopGalleryBackend(globalThis.daggerShell.screenshots));
+  }
   let idbb = null;
   try {
     idbb = idbGalleryBackend();
@@ -276,7 +374,7 @@ let _keeping = Promise.resolve(null);
 async function keepOne(image, { place = '', at = Date.now(), encode = null } = {}) {
   try {
     const b = backend();
-    if ((await b.count()) >= GALLERY_MAX) return 'full';
+    if (Number.isFinite(GALLERY_MAX) && (await b.count()) >= GALLERY_MAX) return 'full';
     let enc;
     const encodeWith = encode ?? _encode;
     if (encodeWith) enc = await encodeWith(image);
@@ -336,6 +434,11 @@ export async function deleteShot(id) {
 export async function setShotLoading(id, on) {
   try {
     const b = backend();
+    if (typeof b.setLoading === 'function') {
+      const ok = await b.setLoading(id, on);
+      changed();
+      return ok;
+    }
     const rec = await b.get(id);
     if (!rec) return false;
     await b.put({ ...rec, loading: !!on });
@@ -348,5 +451,12 @@ export async function setShotLoading(id, on) {
 
 /** The shot a loading screen stands on: a pick from the turn, or null with nothing in it. */
 export async function loadingShot(rand = Math.random) {
-  return pickLoadingShot(await listShots(), rand);
+  const shots = await listShots();
+  const picked = pickLoadingShot(shots, rand);
+  if (!picked) return null;
+  if (!picked.blob && picked.id != null) {
+    const full = await backend().get(picked.id);
+    if (full?.blob) picked.blob = full.blob;
+  }
+  return picked;
 }
