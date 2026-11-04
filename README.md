@@ -98,6 +98,15 @@ Pull requests are welcome, but tbh I somehow don't have much experience with Git
 ## What is already done
 * Launcher targets this repository.
 * Saves are in its own app data folder.
+* Removed monetization
+* Partially removed online-related parts of the game
+* The game is now purely offline (I'll look into coop later)
+* Unified Bank of the Empire
+* 'Reflex' (game speed) setting can be changed after character creation
+* 24/7 City Infrastructure
+* Much more Morrowing-related toggles
+* Unlimited Screenshots
+* Offline firmament
 
 ## FAQ
 
