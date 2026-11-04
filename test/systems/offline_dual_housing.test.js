@@ -27,6 +27,7 @@ import {
 } from '../../src/systems/banking.js';
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { HOME_CAP, homeSaleRefund } from '../../src/net/homeLaw.js';
+import { noteDecorGrants, decorMayRest } from '../../src/systems/decor/decorGrants.js';
 
 test.beforeEach(() => {
   _resetForTests();
@@ -222,4 +223,62 @@ test('OFFLINE-HOUSING: settlement quest system excludes houses from BOTH systems
   // offlineHomeStands still returns true for 301
   assert.equal(offlineHomeStands(888, 301), true);
   assert.equal(homes.homeStands(888, 301), true);
+});
+
+test('OFFLINE-HOUSING: decor door handles grants, use, batching, and revisions without crashing', async () => {
+  const homes = createOfflineHomes();
+  const decor = createOfflineDecor();
+
+  await homes.claim({ mapId: 777, buildingKey: 10, region: 1, price: 15000 });
+
+  // Place a storage chest piece and a regular chair
+  await decor.place({
+    mapId: 777,
+    buildingKey: 10,
+    piece: { id: 'chest1', storage: true, model: 41800, pos: [0, 0, 0] },
+  });
+  await decor.place({
+    mapId: 777,
+    buildingKey: 10,
+    piece: { id: 'chair1', model: 41101, pos: [2, 0, 2] },
+  });
+
+  // Verify list() returns rev and pieces
+  const listRes = await decor.list(777, 10);
+  assert.equal(listRes.ok, true);
+  assert.equal(listRes.data.pieces.length, 2);
+  assert.ok(Number.isSafeInteger(listRes.data.rev));
+
+  // Verify rev()
+  const revRes = await decor.rev(777, 10);
+  assert.equal(revRes.ok, true);
+  assert.equal(revRes.data.rev, listRes.data.rev);
+
+  // Verify use({ op: 'grants' }) returns populated data.storage and data.rest
+  const grantsRes = await decor.use({ mapId: 777, buildingKey: 10, op: 'grants' });
+  assert.equal(grantsRes.ok, true);
+  assert.ok(grantsRes.data);
+  assert.deepEqual(grantsRes.data.storage, ['chest1']);
+  assert.equal(grantsRes.data.rest, true);
+
+  // Verify noteDecorGrants integration does not throw
+  noteDecorGrants(decor, 777, 10, 'hero', null, playerEntity);
+  // Allow promise to resolve
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(decorMayRest(777, 10), true);
+
+  // Verify batch() updates pieces and increments revision
+  const batchRes = await decor.batch({
+    mapId: 777,
+    buildingKey: 10,
+    put: [{ id: 'table1', model: 41105, pos: [1, 0, 1] }],
+    drop: ['chair1'],
+  });
+  assert.equal(batchRes.ok, true);
+  assert.ok(batchRes.data.rev > listRes.data.rev);
+
+  const updatedList = await decor.list(777, 10);
+  assert.equal(updatedList.data.pieces.length, 2);
+  assert.ok(updatedList.data.pieces.some((p) => p.id === 'table1'));
+  assert.ok(!updatedList.data.pieces.some((p) => p.id === 'chair1'));
 });

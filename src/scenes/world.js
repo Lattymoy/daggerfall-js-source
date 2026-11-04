@@ -27221,12 +27221,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _offlineDecor = createOfflineDecor();
   const _activeHomeDecor = homeDecor || {
     list: (...a) => isOfflineHousingActive() ? _offlineDecor.list(...a) : Promise.resolve({ ok: false }),
+    rev: (...a) => isOfflineHousingActive() ? _offlineDecor.rev(...a) : Promise.resolve({ ok: false }),
     place: (...a) => isOfflineHousingActive() ? _offlineDecor.place(...a) : Promise.resolve({ ok: false }),
     move: (...a) => isOfflineHousingActive() ? _offlineDecor.move(...a) : Promise.resolve({ ok: false }),
     remove: (...a) => isOfflineHousingActive() ? _offlineDecor.remove(...a) : Promise.resolve({ ok: false }),
     hidden: (...a) => isOfflineHousingActive() ? _offlineDecor.hidden(...a) : Promise.resolve({ ok: false }),
     batch: (...a) => isOfflineHousingActive() ? _offlineDecor.batch(...a) : Promise.resolve({ ok: false }),
     use: (...a) => isOfflineHousingActive() ? _offlineDecor.use(...a) : Promise.resolve({ ok: false }),
+    yardCells: (...a) => isOfflineHousingActive() ? _offlineDecor.yardCells(...a) : Promise.resolve({ ok: false }),
   };
   {
   const homeDecor = _activeHomeDecor;

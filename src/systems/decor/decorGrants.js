@@ -44,7 +44,7 @@ export function noteDecorGrants(homeDecor, mapId, buildingKey, character, pool =
     (res) => {
       if (ask !== asked) return;
       asking = false;
-      if (!res?.ok) return;
+      if (!res?.ok || !res?.data) return;
       storage = new Set(res.data.storage ?? []);
       station = new Set(res.data.station ?? []);
       bin = new Set(res.data.bin ?? []);

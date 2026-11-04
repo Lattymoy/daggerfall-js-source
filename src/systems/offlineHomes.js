@@ -57,6 +57,7 @@ registerModSaveData(OFFLINE_HOMES_VENDOR, {
       boughtAt: h.boughtAt || 0,
       decor: Array.isArray(h.decor) ? [...h.decor] : [],
       hidden: Array.isArray(h.hidden) ? [...h.hidden] : [],
+      rev: Number(h.rev) || 1,
     })),
   }),
   restoreSaveData: (data) => {
@@ -75,6 +76,7 @@ registerModSaveData(OFFLINE_HOMES_VENDOR, {
         boughtAt: Number(h.boughtAt) || 0,
         decor: Array.isArray(h.decor) ? [...h.decor] : [],
         hidden: Array.isArray(h.hidden) ? [...h.hidden] : [],
+        rev: Number(h.rev) || 1,
       });
     }
   },
@@ -256,14 +258,20 @@ export function createOfflineDecor() {
 
   async function list(mapId, buildingKey, seat = false, yard = false) {
     const h = getHome(mapId, buildingKey);
-    if (!h) return { ok: true, data: { pieces: [], hidden: [] } };
+    if (!h) return { ok: true, data: { pieces: [], hidden: [], rev: 1 } };
     return {
       ok: true,
       data: {
         pieces: Array.isArray(h.decor) ? [...h.decor] : [],
         hidden: Array.isArray(h.hidden) ? [...h.hidden] : [],
+        rev: Number(h.rev) || 1,
       },
     };
+  }
+
+  async function rev(mapId, buildingKey) {
+    const h = getHome(mapId, buildingKey);
+    return { ok: true, data: { rev: Number(h?.rev) || 1 } };
   }
 
   async function place({ mapId, buildingKey, piece }) {
@@ -271,7 +279,8 @@ export function createOfflineDecor() {
     if (!h) return { ok: false, error: 'no-home' };
     h.decor = (h.decor || []).filter((p) => p.id !== piece.id);
     h.decor.push(piece);
-    return { ok: true, data: { piece } };
+    h.rev = (Number(h.rev) || 1) + 1;
+    return { ok: true, data: { piece, rev: h.rev } };
   }
 
   async function move({ mapId, buildingKey, id, place: p }) {
@@ -280,7 +289,8 @@ export function createOfflineDecor() {
     const idx = (h.decor || []).findIndex((pc) => pc.id === id);
     if (idx >= 0) {
       h.decor[idx] = { ...h.decor[idx], ...p };
-      return { ok: true, data: { piece: h.decor[idx] } };
+      h.rev = (Number(h.rev) || 1) + 1;
+      return { ok: true, data: { piece: h.decor[idx], rev: h.rev } };
     }
     return { ok: false, error: 'no-piece' };
   }
@@ -289,33 +299,67 @@ export function createOfflineDecor() {
     const h = getHome(mapId, buildingKey);
     if (h) {
       h.decor = (h.decor || []).filter((p) => p.id !== id);
+      h.rev = (Number(h.rev) || 1) + 1;
     }
-    return { ok: true };
+    return { ok: true, data: { rev: Number(h?.rev) || 1 } };
   }
 
   async function hidden({ mapId, buildingKey, keys }) {
     const h = getHome(mapId, buildingKey);
     if (h) {
       h.hidden = Array.isArray(keys) ? [...keys] : [];
+      h.rev = (Number(h.rev) || 1) + 1;
     }
-    return { ok: true };
+    return { ok: true, data: { rev: Number(h?.rev) || 1 } };
   }
 
-  async function batch() {
-    return { ok: true };
+  async function batch({ mapId, buildingKey, put = [], drop = [] } = {}) {
+    const h = getHome(mapId, buildingKey);
+    if (!h) return { ok: false, error: 'no-home' };
+    const dropSet = new Set(drop);
+    h.decor = (h.decor || []).filter((p) => !dropSet.has(p.id));
+    for (const p of put) {
+      const idx = h.decor.findIndex((existing) => existing.id === p.id);
+      if (idx >= 0) h.decor[idx] = p;
+      else h.decor.push(p);
+    }
+    h.rev = (Number(h.rev) || 1) + 1;
+    return { ok: true, data: { rev: h.rev } };
   }
 
-  async function use() {
-    return { ok: true };
+  async function use(body = {}) {
+    const h = getHome(body?.mapId, body?.buildingKey);
+    const pieces = Array.isArray(h?.decor) ? h.decor : [];
+    const storage = pieces.filter((p) => p?.storage).map((p) => p.id);
+    const station = pieces.filter((p) => p?.station).map((p) => p.id);
+    return {
+      ok: true,
+      data: {
+        storage,
+        station,
+        bin: [],
+        use: [],
+        rest: true,
+        ground: Number(body?.ground) || 100,
+        items: [],
+        rev: Number(h?.rev) || 1,
+      },
+    };
+  }
+
+  async function yardCells() {
+    return { ok: true, data: { cells: {} } };
   }
 
   return {
     list,
+    rev,
     place,
     move,
     remove,
     hidden,
     batch,
     use,
+    yardCells,
   };
 }
