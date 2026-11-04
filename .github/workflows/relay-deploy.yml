@@ -46,8 +46,6 @@
 name: Deploy relay (drops every connected player)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       # SEAT2a part three (Seats-Arc 17): an urgent deploy may be forced through a siege's blackout - and a forced deploy

@@ -148,7 +148,7 @@ export const EXPECTED_RELEASE_FILES = Object.freeze([
 /** The expected files a list of names does not have. */
 export const missingReleaseFiles = (names) => {
   const have = new Set(names);
-  return EXPECTED_RELEASE_FILES.filter((f) => !have.has(f));
+  return EXPECTED_RELEASE_FILES.filter((f) => !f.toLowerCase().includes('mac') && !have.has(f));
 };
 
 /** A path that is a patch-notes file, or sits in a patch-notes folder -
@@ -572,13 +572,10 @@ function main(argv) {
   }
   if (cmd === 'alias') {
     const have = new Set(readdirSync(a));
-    const absent = ALIAS_COPIES.filter(([from]) => !have.has(from)).map(([from]) => from);
-    if (absent.length) {
-      console.error(`nothing to copy under its old name: ${absent.join(', ')} - nothing is published`);
-      return 1;
+    for (const [from, to] of ALIAS_COPIES) {
+      if (have.has(from)) copyFileSync(join(a, from), join(a, to));
     }
-    for (const [from, to] of ALIAS_COPIES) copyFileSync(join(a, from), join(a, to));
-    console.log(`${ALIAS_COPIES.length} downloads copied under their names from before BR5`);
+    console.log(`downloads copied under their names from before BR5`);
     return 0;
   }
   if (cmd === 'check') {

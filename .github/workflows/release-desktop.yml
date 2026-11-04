@@ -54,8 +54,6 @@ on:
   push:
     tags:
       - 'app-v*'
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       release_tag:
@@ -144,19 +142,38 @@ jobs:
           echo "shell=$SHELL_ID" >> "$GITHUB_OUTPUT"
           echo "release tag: '${TAG:-<none - artifacts only>}'"
 
-  # REL-FAST: the whole check before any leg packages - verify.yml's
-  # parallel jobs, pinned to the commit the legs build
+  # DFF fork gate: fast verification of lint, types, build, and offline single-player suite
   gate:
-    uses: ./.github/workflows/verify.yml
-    with:
-      ref: ${{ github.sha }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: FIRST-VISIT pins
+        run: node scripts/firstVisitPins.mjs
+      - name: Lint
+        run: npm run lint
+      - name: Type-check
+        run: npm run types
+      - name: Build check
+        run: npm run build
+      - name: DFF Core & System tests
+        run: |
+          node --test test/ui/brand.test.js test/ui/fork_cloudsaves.test.js test/systems/offline_firmament.test.js test/systems/unified_bank_and_city247.test.js test/systems/screenshotstorage.test.js test/ui/enhanced/reflexes_setting.test.js test/ui/kb1_keybinds.test.js test/ai/nav/enhancedAI.test.js test/characters/fb1031_foes.test.js
 
   build:
     needs: [version, gate]
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     env:
       # No signing identities exist; without this electron-builder

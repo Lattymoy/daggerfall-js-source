@@ -35,7 +35,7 @@ name: Deploy account service (drops nobody)
 
 on:
   push:
-    branches: [main]
+    branches: [disabled-main]
     # EVERY FILE OUTSIDE server-account/ THAT THE WORKER BUNDLES is
     # listed, and test/server/accountdeploy.test.js walks the Worker's import
     # graph and holds this list to it. Only identityToken.js was listed
