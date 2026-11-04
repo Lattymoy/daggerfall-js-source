@@ -133,14 +133,9 @@ export const EXPECTED_RELEASE_FILES = Object.freeze([
   DOWNLOAD_FILES.winSetup,
   `${DOWNLOAD_FILES.winSetup}.blockmap`,
   DOWNLOAD_FILES.winPortable,
-  DOWNLOAD_FILES.mac,
-  `${DOWNLOAD_FILES.mac}.blockmap`,
   DOWNLOAD_FILES.linux,
   'latest.yml',
-  'latest-mac.yml',
   'latest-linux.yml',
-  ...ALIAS_COPIES.map(([, to]) => to),
-  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of
   GAME_FILES.manifest,
   GAME_FILES.pack,
 ]);
@@ -148,7 +143,7 @@ export const EXPECTED_RELEASE_FILES = Object.freeze([
 /** The expected files a list of names does not have. */
 export const missingReleaseFiles = (names) => {
   const have = new Set(names);
-  return EXPECTED_RELEASE_FILES.filter((f) => !f.toLowerCase().includes('mac') && !have.has(f));
+  return EXPECTED_RELEASE_FILES.filter((f) => !have.has(f));
 };
 
 /** A path that is a patch-notes file, or sits in a patch-notes folder -
