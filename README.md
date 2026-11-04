@@ -74,11 +74,11 @@ I also was one of the leaders of a CIS-based project called FOnline — a Fallou
 
 Gamedev is my profession, hobby, and passion.
 
-My main background is Game Design and Producing. I took a managerial track and now am working as Head of Production at GSC Game World (S.T.A.L.K.E.R. 2).
+My main background is Game Design and Producing. I took a leadership track and now am working for GSC Game World (S.T.A.L.K.E.R. 2).
 
 *In relation to this project I'm in no way, shape or form affiliated with GSC Game World.*
 
-My favorite games are DFU and Neverwinter Nights by BioWare (R.I.P. my dear).
+My favorite games are DFU, Neverwinter Nights by BioWare (R.I.P. my dear), and Tales of Maj'Eyal.
 
 I have a cat named Raccoon:
 
