@@ -3302,6 +3302,8 @@ function portRowsGame({ pause = false } = {}) {
   const rows = [row, techniqueMotionRow(), reflexesRow({ pause })];
   rows.push(prefRow('offlineFirmament', t('features.offlineFirmament.title', 'Firmament (Offline)'),
     t('features.offlineFirmament.note', 'Enables the Firmament constellation passive tree and Renown progression while playing offline.')));
+  rows.push(prefRow('offlineHousing', t('features.offlineHousing.title', 'Player Housing (Offline)'),
+    t('features.offlineHousing.note', 'Buy and sell homes at the front door across all towns and hamlets, as in online DFO. Off restores classic bank housing.')));
   rows.push(prefRow('unifiedBank', t('features.unifiedBank.title', 'Unified Bank'),
     t('features.unifiedBank.note', 'Access your deposited gold and bank accounts across all regional bank branches in Tamriel.')));
   rows.push(prefRow('city247', t('features.city247.title', '24/7 City Infrastructure'),

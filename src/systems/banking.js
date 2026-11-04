@@ -40,7 +40,7 @@
 import { CRIMES } from './court.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';   // H1: the houses-for-sale filter
 import { isOnlinePage } from './online/onlineLane.js';   // EMPIRE-BANK: online, the Empire lends a tenth
-import { getPref, addPrefListener } from './uiPrefs.js';
+import { getPref, addPrefListener, isOfflineHousingActive } from './uiPrefs.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { FORK_FLAGS } from '../config/forkFlags.js';
 import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a deed keeps the layout its town was bought in
@@ -261,9 +261,15 @@ export function dropDeed(houses, regionIndex, deed) {
  * @param {any} slot @param {?number} [mapId]
  */
 export const deedHeldIn = (slot, mapId = null) => mapId == null || !isMadePlaceId(mapId) || ((slot?.mapId ?? 0) >>> 0) === (Number(mapId) >>> 0);
+export const isDfuHouseOwned = (houses, regionIndex, buildingKey, mapId = null) => {
+  if (!(buildingKey > 0)) return false;
+  const deeds = (regionIndex != null && regionIndex >= 0) ? regionDeeds(houses, regionIndex) : allDeeds(houses);
+  return deeds.some((d) => d.buildingKey === buildingKey && deedStands(d) && deedHeldIn(d, mapId));
+};
 /** IsHouseOwned (:140-148) - AUDIT RELEASE R2-9: `mapId` the town asking (deedHeldIn). */
 export function isHouseOwned(houses, regionIndex, buildingKey, mapId = null) {
   if (!(buildingKey > 0)) return false;          // :142 - key 0 is "no building"
+  if (isOfflineHousingActive() && playerEntity && houses === playerEntity.houses) return false;
   return regionDeeds(houses, regionIndex).some((d) => d.buildingKey === buildingKey && deedStands(d) && deedHeldIn(d, mapId));   // HOUSES-3: any of the region's three
 }
 /**

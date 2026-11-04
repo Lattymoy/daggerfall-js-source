@@ -57,6 +57,8 @@ export const PREF_DEFAULTS = Object.freeze({
   // (systems/faction/factionStanding.js). STANDING-ON (2026-10-11, Mac: "should be on by default"): on - the shelf writes no
   // default (PREF1), so a player who never pressed the row moves with it, and one who pressed it off keeps their Off.
   standingAll: true,
+  // OFFLINE-HOUSING: whether DFO player housing is active in offline single-player mode.
+  offlineHousing: true,
   // OFFLINE-FIRMAMENT: whether the Firmament passive star tree and Renown progression are active in offline single-player.
   offlineFirmament: true,
   // UNIFIED-BANK: whether bank accounts are unified across all regions into a single global account.
@@ -472,6 +474,7 @@ export function resetPrefs() {
   _prefs = { ...PREF_DEFAULTS, open: {} };
   savePrefs();
 }
+export const isOfflineHousingActive = () => getPref('offlineHousing') !== false;
 export function _resetForTests() {
   _prefs = null;
 }
