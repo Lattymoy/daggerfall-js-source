@@ -4524,6 +4524,7 @@ function paneAbout(body) {
   c.append(el('h3', null, 'Daggerfall Forever'));   // the public name (BR1, BR4, BR5); project-dagger is the repo
   c.append(el('p', 'meta', t('menu.about.tagline', 'An open-source reimplementation of a classic 1996 RPG.')));
   c.append(stats([
+    [t('menu.about.maintainer', 'Maintainer'), 'Alex 13 Uslavtsev'],
     [t('menu.about.update', 'Update'), UPDATE ?? t('menu.about.devBuild', 'a development build')],   // REL8: the player's update number (scripts/updateNumber.mjs)
     [t('menu.about.build', 'Build'), BUILD_TAG],
     [t('menu.about.interface', 'Interface'), currentOption(OVERHAUL_PANELS.find((p) => p.id === 'ui'))?.name ?? SKIN_NAMES[uiSkin()]],   // PLUS1; MENU-TOGGLE: the UI Overhaul worn, by its card's name (GrimoireUI is the classic skin with a pack)

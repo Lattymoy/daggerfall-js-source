@@ -4,7 +4,7 @@
   "private": true,
   "version": "0.3.0",
   "description": "Daggerfall Forever - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
-  "author": "Lattymoy",
+  "author": "Alex 13 Uslavtsev",
   "homepage": "https://daggerfalljs.dev/",
   "repository": {
     "type": "git",
@@ -24,6 +24,7 @@
   "build": {
     "appId": "dev.chuz13.daggerfallforever",
     "productName": "Daggerfall Forever",
+    "copyright": "Copyright © 2026 13",
     "icon": "../public/icons/icon-512.png",
     "afterPack": "./afterPack.cjs",
     "artifactName": "Daggerfall-Forever-${os}-${arch}.${ext}",
@@ -50,12 +51,17 @@
       "!**/node_modules/sharp/**"
     ],
     "linux": {
+      "maintainer": "Alex 13 Uslavtsev",
+      "vendor": "13",
       "target": [
         "AppImage"
       ],
       "category": "Game"
     },
-    "win": { "signAndEditExecutable": false,
+    "win": {
+      "companyName": "13",
+      "legalTrademarks": "13",
+      "signAndEditExecutable": false,
       "target": [
         "nsis",
         "portable"
@@ -76,6 +82,8 @@
       ],
       "category": "public.app-category.games",
       "extendInfo": {
+        "NSHumanReadableCopyright": "Copyright © 2026 13",
+        "CFBundleGetInfoString": "Daggerfall Forever, Maintainer: Alex 13 Uslavtsev, © 2026 13",
         "NSDownloadsFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
         "NSDesktopFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
         "NSDocumentsFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded."

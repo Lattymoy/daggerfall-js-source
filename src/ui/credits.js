@@ -61,6 +61,17 @@ export const CREDITS = Object.freeze({
       link: 'https://github.com/Interkarma/daggerfall-unity',
     }),
     Object.freeze({
+      title: 'DFO',
+      author: 'Lattymoy',
+      get what() {
+        return t(
+          'credits.dfo.what',
+          'The engine and systems this project was forked from. Maintained for Daggerfall Forever by Alex 13 Uslavtsev.',
+        );
+      },
+      link: 'https://github.com/Lattymoy/daggerfall-js-source',
+    }),
+    Object.freeze({
       title: 'Silkscreen',
       version: '1.001',
       get author() {
