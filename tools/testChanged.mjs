@@ -20,7 +20,7 @@ import { join, dirname, relative, normalize, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { isMain } from './lib/isMain.mjs';
-import { testFiles, runTests, runnerFlags } from './testShards.mjs'; // FAST-SUITE: run as every list of tests is run - longest first, every core
+import { testFiles, runTests, runnerFlags, scopeOf } from './testShards.mjs'; // FAST-SUITE: run as every list of tests is run - longest first, every core
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -136,7 +136,8 @@ export function changedFiles(base = null, root = ROOT) {
 function main(argv) {
   const at = argv.indexOf('--base');
   const changed = changedFiles(at >= 0 ? argv[at + 1] : null);
-  const tests = testFiles();
+  const scope = scopeOf(argv);
+  const tests = testFiles(ROOT, { scope });
   const chosen = testsFor(changed, tests);
   const files = chosen === 'all' ? tests : chosen;
   if (argv.includes('--list')) {
