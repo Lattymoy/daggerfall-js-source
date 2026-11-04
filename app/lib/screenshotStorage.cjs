@@ -190,3 +190,4 @@ module.exports = {
   META_FILE,
   SCREENSHOTS_DIR,
 };
+

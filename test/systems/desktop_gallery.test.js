@@ -95,3 +95,4 @@ test('desktop gallery: integrates shotStore with shotGallery without limits', as
     rm(root);
   }
 });
+

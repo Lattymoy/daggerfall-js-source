@@ -92,3 +92,4 @@ test('screenshot store: writes, lists, reads, updates loading and deletes files'
     rm(root);
   }
 });
+
