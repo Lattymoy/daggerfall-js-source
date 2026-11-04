@@ -102,7 +102,7 @@ import { farFlatVisibleAt } from '../world/flatDistance.js';   // MAC1: the far 
 import { updateCityGate } from '../world/city/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { targetAimPoint, missileAimDirection, isLocalPlayerTarget, PLAYER_TARGET } from '../characters/enemy/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise); HCC: CollectThreats' `senses.Target == player`
 import { setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
-import { installConsoleProbe, registerCommand } from '../systems/consoleCommands.js';   // E3: the console's door; CSA-C: the mod's commands
+import { installConsoleProbe, registerCommand, setDebugSceneContext } from '../systems/consoleCommands.js';   // E3: the console's door; CSA-C: the mod's commands
 import { registerTravelMapConsoleCommands } from '../ui/travel/travelMapWindow.js';   // E3: TravelMapConsoleCommands
 // E3: ...and the person HOST the quest machine's away arm writes through.
 // It is not interior law - it is the StaticNPC GameObject's one act,
@@ -28297,6 +28297,65 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // __addGold. LypyL_GameConsole ships True, and the door's verbs
   // mint (Come Sail Away's giveboat and placeboat, a deed each).
   if (!params.has('online')) installConsoleProbe();
+  setDebugSceneContext({
+    setPlayerPos: (x, y, z) => {
+      if (typeof player?.spawn === 'function') player.spawn(x, y, z);
+      else if (player?.pos) { player.pos[0] = x; player.pos[1] = y; player.pos[2] = z; }
+    },
+    getPlayerPos: () => (player?.pos ? [...player.pos] : null),
+    killAllFoes: () => {
+      let count = 0;
+      if (exteriorFoes?.foes) {
+        for (const f of exteriorFoes.foes) {
+          if (!f.dead && (f.ai?.isHostile || f.entity?.team !== 'PlayerAlly') && !f.companion) {
+            exteriorFoes.damageFoe?.(f, 99999, null, null, { fromPlayer: true, bypassShield: true });
+            count++;
+          }
+        }
+      }
+      if (cityGuards?.guards) {
+        for (const g of cityGuards.guards) {
+          if (!g.dead && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly') {
+            cityGuards.hurtGuard?.(g, 99999, player.pos, null, { fromPlayer: true });
+            count++;
+          }
+        }
+      }
+      const dCtx = modes?.dungeonCtx;
+      if (dCtx?.foes) {
+        for (const f of dCtx.foes) {
+          if (!f.dead && (f.ai?.isHostile || f.entity?.team !== 'PlayerAlly') && !f.companion) {
+            dCtx.damageFoe?.(f, 99999, null, null, { fromPlayer: true, bypassShield: true });
+            count++;
+          }
+        }
+      }
+      const iFoes = modes?.interiorFoes;
+      if (iFoes?.foes) {
+        for (const f of iFoes.foes) {
+          if (!f.dead && (f.ai?.isHostile || f.entity?.team !== 'PlayerAlly') && !f.companion) {
+            iFoes.damageFoe?.(f, 99999, null, null, { fromPlayer: true, bypassShield: true });
+            count++;
+          }
+        }
+      }
+      return count;
+    },
+    tele2loc: async (name) => {
+      const places = staffTpPlaces({
+        locationIndex,
+        stood: _arenaTemplates ? arenaPixels()?.stood : null,
+        registry: worldPlaces,
+      });
+      const hit = findPlace(places, name);
+      if (!hit) return `Location "${name}" not found.`;
+      const pick = { pixel: { x: hit.px, y: hit.py }, name: hit.name };
+      hudFade.smashHUDToBlack();
+      const ok = await teleportTo(pick, { zoneFree: true });
+      if (!ok) hudFade.clearFade();
+      return ok ? `Teleported to ${hit.name} (${hit.px}, ${hit.py})` : `Failed to teleport to ${hit.name}`;
+    },
+  });
   createWorldShotProbes({   // HOST-SPLIT: src/scenes/worldShotProbes.js
     arrows, cam, exteriorFoes, installTownProbes, magic, mapDict, maps, modes, openTeleportMap, player, playerTicker,
     playerTravelPixel, shotMode, townTalk, walkMode, worldQuickLoad,

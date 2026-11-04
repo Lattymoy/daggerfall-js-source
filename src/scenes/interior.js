@@ -40,7 +40,7 @@ import { nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';   //
 import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
-import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { installConsoleProbe, setDebugSceneContext } from '../systems/consoleCommands.js';   // E3: the console's door
 import { swallowBrowserKey, actionsOf, keyboardLook, letGoOnBlur } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // AUDIT RETRO1 A8/C4: the lens and the world rect the other hosts take - the docked bar's, and retro mode's texture aspect and pillarbox
 import { hudShortcutKey } from '../ui/hud/hudShortcuts.js';   // AUDIT RETRO1 C4: DaggerfallHUD's shortcuts, Shift-F11 among them, as in the other hosts
@@ -316,6 +316,15 @@ export async function bootInterior(canvas, renderer, params, status) {
   // building's own automap registers the three map verbs from
   // interiorContext, so the door is not empty here.
   installConsoleProbe();
+  setDebugSceneContext({
+    setPlayerPos: (x, y, z) => {
+      cam.pos[0] = x;
+      cam.pos[1] = y;
+      cam.pos[2] = z;
+    },
+    getPlayerPos: () => [...cam.pos],
+    killAllFoes: () => 0,
+  });
   status(`${blockName}:${recordIndex} - ${ctx.drawList.length} draws`);
   console.log(
     `interior: ${ctx.drawList.length} models, ${ctx.dynamicDraws.length} action doors, ` +

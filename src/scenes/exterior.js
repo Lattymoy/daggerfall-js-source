@@ -308,7 +308,7 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass 
 import { stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // QX1/ROAD-D D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 import { createTownMapWindow, townMapDoorReady } from '../ui/town/townMapDoor.js';   // EM4: the skin fork
 import { WORLD_PER_PX } from '../ui/ink/inkTown.js';   // EM4: the town plan's own scale
-import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { installConsoleProbe, setDebugSceneContext } from '../systems/consoleCommands.js';   // E3: the console's door
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
 import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation, undiscoverBuilding, townBookId } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing; BAY-LEFT-MAPS (C7 = E2): the one key-maker (the Bay's own key here)
@@ -4846,6 +4846,33 @@ export async function bootExterior(canvas, renderer, params, status) {
   // static class in DFU and one module here.
   registerExteriorAutomapConsoleCommands({ isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior' });
   installConsoleProbe();
+  setDebugSceneContext({
+    setPlayerPos: (x, y, z) => {
+      if (typeof player?.spawn === 'function') player.spawn(x, y, z);
+      else if (player?.pos) { player.pos[0] = x; player.pos[1] = y; player.pos[2] = z; }
+    },
+    getPlayerPos: () => (player?.pos ? [...player.pos] : null),
+    killAllFoes: () => {
+      let count = 0;
+      if (exteriorFoes?.foes) {
+        for (const f of exteriorFoes.foes) {
+          if (!f.dead && (f.ai?.isHostile || f.entity?.team !== 'PlayerAlly') && !f.companion) {
+            exteriorFoes.damageFoe?.(f, 99999, null, null, { fromPlayer: true, bypassShield: true });
+            count++;
+          }
+        }
+      }
+      if (cityGuards?.guards) {
+        for (const g of cityGuards.guards) {
+          if (!g.dead && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly') {
+            cityGuards.hurtGuard?.(g, 99999, player.pos, null, { fromPlayer: true });
+            count++;
+          }
+        }
+      }
+      return count;
+    },
+  });
   if (shotMode) {
     window.__frame = window.__frame ?? 0;   // AUDIT 17e F37: the counter is now incremented, so seed it
     window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats

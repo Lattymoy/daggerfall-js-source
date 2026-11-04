@@ -41,6 +41,17 @@
 // :51-53) - the console is refused when the setting is off.
 
 import { getBool } from './settings/settings.js';
+import { staffPowers, setStaffPowers, playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { addGoldPieces } from './inventory.js';
+
+let _sceneContext = null;
+/** Register active scene debug context (player control, enemy pools, travel). */
+export function setDebugSceneContext(ctx) {
+  _sceneContext = ctx;
+}
+export function getDebugSceneContext() {
+  return _sceneContext;
+}
 
 /** ConsoleCommand's ctor (ConsoleCommand.cs:12-18): an empty or
  *  all-whitespace description/usage is replaced by the stand-in. */
@@ -183,6 +194,79 @@ function displayCommandDetails(commandName) {
 // registers here, with it.
 registerCommand(HELP_COMMAND.name, HELP_COMMAND.description, HELP_COMMAND.usage, HELP_COMMAND.execute);
 
+// Base debug commands for testing mods and quests
+registerCommand(
+  'tgm',
+  'Toggle God Mode (invulnerability)',
+  'tgm',
+  () => {
+    const current = staffPowers().god;
+    const next = !current;
+    setStaffPowers({ god: next });
+    if (next && playerEntity) {
+      playerEntity.health = playerEntity.maxHealth ?? playerEntity.health;
+    }
+    surfacePlayer?.();
+    return `God Mode: ${next ? 'ON' : 'OFF'}`;
+  }
+);
+
+registerCommand(
+  'killall',
+  'Kill all hostile mobs in scene',
+  'killall',
+  () => {
+    const ctx = getDebugSceneContext();
+    if (ctx?.killAllFoes) {
+      const count = ctx.killAllFoes();
+      return count > 0 ? `Killed ${count} hostile entities.` : 'No hostile entities found.';
+    }
+    return 'No active enemy pool found in current scene.';
+  }
+);
+
+registerCommand(
+  'addgold',
+  'Add gold to inventory',
+  'addgold <count>',
+  (args = []) => {
+    if (!args || !args.length) return 'Usage: addgold <count>';
+    const count = parseInt(args[0], 10);
+    if (Number.isNaN(count)) return 'Usage: addgold <count>';
+    addGoldPieces(playerEntity, count);
+    surfacePlayer?.();
+    return `Added ${count} gold. (Total: ${playerEntity.goldPieces ?? 0})`;
+  }
+);
+
+registerCommand(
+  'teleport',
+  'Teleport player to coordinates (x, y, z)',
+  'teleport <x> <y> <z>',
+  (args = []) => {
+    if (!args || args.length < 3) return 'Usage: teleport <x> <y> <z>';
+    const x = Number(args[0]), y = Number(args[1]), z = Number(args[2]);
+    if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(z)) return 'Usage: teleport <x> <y> <z>';
+    const ctx = getDebugSceneContext();
+    if (!ctx?.setPlayerPos) return 'Cannot teleport: player position setter unavailable in current scene.';
+    ctx.setPlayerPos(x, y, z);
+    return `Teleported to ${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}`;
+  }
+);
+
+registerCommand(
+  'tele2loc',
+  'Teleport player to named location',
+  'tele2loc <locationName>',
+  async (args = []) => {
+    if (!args || !args.length) return 'Usage: tele2loc <locationName>';
+    const locName = args.join(' ').trim();
+    const ctx = getDebugSceneContext();
+    if (!ctx?.tele2loc) return 'tele2loc is only available in world mode.';
+    return await ctx.tele2loc(locName);
+  }
+);
+
 /** ConsoleInputHistory (ConsoleInputHistory.cs), whole - the up/down
  *  walk with its go-to-entry bookkeeping, at ConsoleController's own
  *  capacity (`inputHistoryCapacity = 20`, :17). */
@@ -246,6 +330,17 @@ export function executeConsoleLine(input) {
   const args = parts.slice(1);
   consoleLog(`> ${input}`);
   const answer = executeConsoleCommand(command, args);
+  if (answer && typeof answer.then === 'function') {
+    consoleInputHistory.addNewInputEntry(input);
+    return answer.then((res) => {
+      consoleLog(res);
+      return res;
+    }).catch((err) => {
+      const msg = `Error: ${err?.message ?? err}`;
+      consoleLog(msg);
+      return msg;
+    });
+  }
   consoleLog(answer);
   consoleInputHistory.addNewInputEntry(input);
   return answer;
@@ -261,5 +356,8 @@ export function installConsoleProbe(target = globalThis) {
       ? executeConsoleLine(line)
       : 'the developer console is disabled (Enhancements/LypyL_GameConsole)';
   target.__console = door;
+  if (typeof window !== 'undefined') {
+    import('../ui/debugConsole.js').then((m) => m.installDebugConsole?.()).catch(() => {});
+  }
   return door;
 }
