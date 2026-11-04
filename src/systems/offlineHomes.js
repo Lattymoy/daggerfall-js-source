@@ -87,7 +87,6 @@ registerModSaveData(OFFLINE_HOMES_VENDOR, {
 export function createOfflineHomes({
   player = () => playerEntity,
   sceneCache = null,
-  townTalk = null,
   onHomes = null,
   onWrote = null,
 } = {}) {

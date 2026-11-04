@@ -1974,7 +1974,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const offlineHomes = !homesApi ? createOfflineHomes({
     player: () => playerEntity,
     sceneCache: () => _sceneCache(),
-    townTalk,
     onHomes: () => homesLearned(),
     onWrote: () => homesLearned(),
   }) : null;
