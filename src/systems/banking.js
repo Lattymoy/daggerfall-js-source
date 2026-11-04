@@ -552,9 +552,8 @@ const mustValidate = (accounts, regionIndex) => {
  *  Offline, Daggerfall's sixty-two accounts stand. The service pays a realm record the same way (net/realm/realmGoldLaw.js
  *  REALM_EMPIRE_ACCOUNT, pinned equal). */
 export const EMPIRE_ACCOUNT_REGION = 17;
-/** Whether unified banking across all regions is currently active (online or offline setting). */
-export const isUnifiedBankActive = () =>
-  isOnlinePage() || (!!FORK_FLAGS.ENABLE_UNIFIED_BANK && getPref('unifiedBank') === true);
+import { isUnifiedBankActive } from './bankingActive.js';
+export { isUnifiedBankActive };
 
 /** The index whose `accountGold` region `regionIndex`'s gold moves in: the Empire's online/unified, the region's own offline (or
  *  where a short table has no Empire account). */

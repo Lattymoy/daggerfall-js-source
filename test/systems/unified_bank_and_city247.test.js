@@ -8,9 +8,9 @@ import {
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import {
-  isCity247Active, isBuildingOpen, buildingHoursState, SHOP_STAFFING,
+  isCity247Active, isBuildingOpen, buildingHoursState, buildingIsUnlocked, SHOP_STAFFING,
 } from '../../src/systems/buildingLocks.js';
-import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
+import { BUILDING_TYPES, generateBuildingName, EMPIRE_BANK_OF } from '../../src/world/buildingNames.js';
 import { makeCityGate, updateCityGate } from '../../src/world/city/cityGate.js';
 import { CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../../src/world/rmbLayout.js';
 import { setPref, getPref } from '../../src/systems/uiPrefs.js';
@@ -22,10 +22,14 @@ test('UNIFIED-BANK: offline pref toggles between regional and Empire-wide unifie
   setPref('unifiedBank', false);
   assert.equal(isUnifiedBankActive(), false);
   assert.equal(goldRegion(accounts, r), r, 'regional bank when unifiedBank is false');
+  assert.equal(generateBuildingName(7, BUILDING_TYPES.Bank, { regionName: 'Daggerfall' }), 'The Bank of Daggerfall');
+  assert.equal(generateBuildingName(7, BUILDING_TYPES.Bank, { regionName: 'Wayrest' }), 'The Bank of Wayrest');
 
   setPref('unifiedBank', true);
   assert.equal(isUnifiedBankActive(), true);
   assert.equal(goldRegion(accounts, r), EMPIRE_ACCOUNT_REGION, 'Empire account 17 when unifiedBank is true');
+  assert.equal(generateBuildingName(7, BUILDING_TYPES.Bank, { regionName: 'Daggerfall' }), 'The Bank of the Empire');
+  assert.equal(generateBuildingName(7, BUILDING_TYPES.Bank, { regionName: 'Wayrest' }), 'The Bank of the Empire');
 
   // Test deposit into branch r goes into Empire account
   const player = {
@@ -53,14 +57,17 @@ test('CITY-247: optional 24/7 city infrastructure toggle keeps service buildings
   setPref('city247', false);
   assert.equal(isCity247Active(), false);
 
-  // At 23:00 (11 PM), Alchemist and Bank are normally closed offline
+  // At 23:00 (11 PM), Alchemist, Armorer and Bank are normally closed offline (both hours and exterior doors)
   const closedAlchemist = buildingHoursState(BUILDING_TYPES.Alchemist, { hour: 23 });
   assert.equal(closedAlchemist.open, false);
   assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23), false);
+  assert.equal(buildingIsUnlocked({ buildingType: BUILDING_TYPES.Alchemist }, { hour: 23 }), false);
+  assert.equal(buildingIsUnlocked({ buildingType: BUILDING_TYPES.Armorer }, { hour: 23 }), false);
 
   const closedBank = buildingHoursState(BUILDING_TYPES.Bank, { hour: 23 });
   assert.equal(closedBank.open, false);
   assert.equal(isBuildingOpen(BUILDING_TYPES.Bank, 23), false);
+  assert.equal(buildingIsUnlocked({ buildingType: BUILDING_TYPES.Bank }, { hour: 23 }), false);
 
   // Enable 24/7 city infrastructure
   setPref('city247', true);
@@ -70,16 +77,23 @@ test('CITY-247: optional 24/7 city infrastructure toggle keeps service buildings
   assert.equal(openAlchemist.open, true);
   assert.equal(openAlchemist.staffing, SHOP_STAFFING.ONLINE_SHIFT);
   assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23), true);
+  assert.equal(buildingIsUnlocked({ buildingType: BUILDING_TYPES.Alchemist }, { hour: 23 }), true);
+  assert.equal(buildingIsUnlocked({ buildingType: BUILDING_TYPES.Armorer }, { hour: 23 }), true);
 
   const openBank = buildingHoursState(BUILDING_TYPES.Bank, { hour: 23 });
   assert.equal(openBank.open, true);
   assert.equal(openBank.staffing, SHOP_STAFFING.ONLINE_SHIFT);
   assert.equal(isBuildingOpen(BUILDING_TYPES.Bank, 23), true);
+  assert.equal(buildingIsUnlocked({ buildingType: BUILDING_TYPES.Bank }, { hour: 23 }), true);
 
   const openGuild = buildingHoursState(BUILDING_TYPES.GuildHall, { hour: 3 });
   assert.equal(openGuild.open, true);
   assert.equal(openGuild.staffing, SHOP_STAFFING.ONLINE_SHIFT);
   assert.equal(isBuildingOpen(BUILDING_TYPES.GuildHall, 3), true);
+  assert.equal(buildingIsUnlocked({ buildingType: BUILDING_TYPES.GuildHall }, { hour: 3 }), true);
+
+  // Residences remain classic locked at night
+  assert.equal(buildingIsUnlocked({ buildingType: BUILDING_TYPES.House2 }, { hour: 23 }), false);
 
   // Clean up
   setPref('city247', false);
