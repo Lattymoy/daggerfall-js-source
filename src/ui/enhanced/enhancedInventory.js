@@ -88,6 +88,7 @@ import { fateColumn, fateKey, ensureFateStyle, FATE_FACE_BOX } from '../revenant
 import { SLOT_BOX, gridBox, wornBox, screenDpr } from '../iconFit.js';   // UI1: the fit law's boxes and the screen's ratio
 import { requestModelIconUrl } from '../modelIcon.js';   // DISC24-B
 import { modelIconUrl as modelIconUrlOf } from '../item/itemIconUrl.js';   // MW-D38, shared with the HUD's quickslots (QS3)
+import { playerBodyOn } from '../../characters/npcBodies.js';
 // U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
 // the classic window draws - and this reads its finished pixels rather
 // than re-deriving PaperDollRenderer's layer order for a second time.
@@ -2056,6 +2057,7 @@ let _unsubscribeFigure = null;
  *  drag repaints that one canvas on the animation frame instead of
  *  rebuilding anything. */
 function modelFigureImage() {
+  if (!playerBodyOn()) return null;
   const armMod = deps.fpArm;
   if (!armMod || typeof armMod.figure !== 'function') return null;
   const st = armMod.status?.();

@@ -34,6 +34,7 @@
 
 import { mwCamera, MW_UNITS_PER_METER, FOCAL_HEIGHT, PITCH_LIMIT, MAX_DISTANCE } from './mwCamera.js';
 import { fpArm } from '../combat/fpArm.js';
+import { playerBodyOn } from '../characters/npcBodies.js';
 import { eotbCamera } from './eyeOfTheBeholder/eotbCamera.js';
 import { eotbBody } from './eyeOfTheBeholder/eotbBody.js';
 import { eotbWagon } from './eyeOfTheBeholder/eotbWagon.js';
@@ -263,7 +264,7 @@ export function setEotbComeSailAway(mod) {
   });
 }
 export function eotbLane() {
-  if (fpArm.canThirdPerson()) return false; // the Morrowind body wins where it exists
+  if (mwCanThirdPerson()) return false; // the Morrowind body wins where it exists and is wanted
   try {
     if (!modSetting('eye-of-the-beholder', 'Enabled')) return false;
   } catch {
@@ -271,6 +272,9 @@ export function eotbLane() {
   } // not vendored: no lane
   return !!eotbBodyReady();
 }
+
+/** Whether the Morrowind body is wanted and built for third person. */
+export const mwCanThirdPerson = () => playerBodyOn() && fpArm.canThirdPerson();
 
 // MW-D30: the reference accumulates the frame's zoom presses and calls
 // zoom() ONCE per frame with their sum (actionbindings.lua:98-115 -
@@ -331,6 +335,11 @@ export function mwViewFrame({
   // camera keeps its own ladder, its own smoothing and its own
   // obstacle casts (EOTB2), and nothing of Morrowind's runs.
   if (eotbLane()) {
+    fpArm.setViewMode('first');
+    if (mwCamera.thirdPerson()) {
+      mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });
+      if (!eotbCamera.thirdPerson()) eotbCamera.toggleOffset(true);
+    }
     // AUDIT-EOTB F1/F3/F4: the frame's REAL state. `dt` is the host's
     // own clock and nothing else has it; the rest comes from the rigs
     // through the door above. Before this, every host passed neither -
@@ -396,6 +405,10 @@ export function mwViewFrame({
     mwIntoHead();
     pendingClicks = 0;
   }
+  if (eotbCamera.thirdPerson() && !mwCamera.thirdPerson()) {
+    eotbCamera.toggleOffset(false);
+    mwCamera.restore({ firstPerson: false, baseDistance: mwCamera.baseDistance() });
+  }
   const wasThird = mwCamera.thirdPerson();
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
@@ -451,7 +464,7 @@ export function mwViewWheel(deltaY) {
   // ladders read a click the same way round - negative is out of the
   // head - so nothing about the sign moves at the seam.
   if (eotbLane()) return eotbCamera.wheel(clicks);
-  if (mwCamera.mode() === 'first' && clicks < 0 && (!fpArm.canThirdPerson() || mounted)) return false; // RIDE-POV: no saddle to show
+  if (mwCamera.mode() === 'first' && clicks < 0 && (!mwCanThirdPerson() || mounted)) return false; // RIDE-POV: no saddle to show
   pendingClicks += clicks; // flushed once per frame (actionbindings.lua:113-114)
   return true;
 }
@@ -513,7 +526,7 @@ export function mwViewTogglePerspective() {
 export function mwViewCanTogglePerspective() {
   if (heldThird || heldFirst) return false; // SPYGLASS: nor while the glass holds the head
   if (eotbLane() || mwCamera.thirdPerson()) return true;
-  return !!fpArm.canThirdPerson() && !mounted;
+  return !!mwCanThirdPerson() && !mounted;
 }
 
 /**
@@ -537,7 +550,7 @@ export function mwViewHoldThird(on) {
       heldThird = { lane: 'eotb', changed: !was };
       return true;
     }
-    if (fpArm.canThirdPerson() && !mounted) {
+    if (mwCanThirdPerson() && !mounted) {
       const was = mwCamera.thirdPerson();
       if (!was) {
         mwCamera.restore({ firstPerson: false, baseDistance: mwCamera.baseDistance() });
@@ -583,7 +596,7 @@ export const mwViewHeldFirst = () => !!heldFirst;
 /** CANDLE-POV: is the camera out of the head now, on whichever body answers (the travel view's hold included)? The
  *  classic view has no third person. */
 export const mwViewThirdPerson = () =>
-  !!heldThird || (eotbLane() ? !!eotbCamera.thirdPerson() : fpArm.canThirdPerson() && mwCamera.thirdPerson());
+  !!heldThird || (eotbLane() ? !!eotbCamera.thirdPerson() : mwCanThirdPerson() && mwCamera.thirdPerson());
 /** TV1: is a body held out of the head for the travel view (the pins' read). */
 export const mwViewHeldThird = () => (heldThird ? heldThird.lane : undefined);
 /** AUDIT DEEP T1-10: did the hold take the body OUT of the head (it was in first person)? The view's rise and fall then
@@ -659,7 +672,7 @@ export function mwViewAttachHorse(renderer) {
 /** COATS3D: one frame of the player's own horse - stepped, and its seat made the body's saddle. Answers whether the
  *  body is astride it this frame. */
 function stepOwnHorse(horse, feet, yaw, dt) {
-  if (!horse || !horseRig?.ready() || !feet || !fpArm.canThirdPerson()) {
+  if (!horse || !horseRig?.ready() || !feet || !mwCanThirdPerson()) {
     dropOwnHorse();
     return false;
   }
@@ -701,7 +714,7 @@ function dropOwnHorse() {
  *  every horse stands as its billboard. The pool's and the road's horses (scenes/horseCartPool.js, world/road/roadTeams.js)
  *  ask it each frame. */
 export function mwViewHorseRig() {
-  return horseRig?.ready() && !eotbLane() && fpArm.canThirdPerson() ? horseRig : null;
+  return horseRig?.ready() && !eotbLane() && mwCanThirdPerson() ? horseRig : null;
 }
 
 /** COATS3D: the saddle the body sits this frame (`{ feet, seat, yaw, lean }`) for the hosts' camera() - or null, off a
@@ -856,7 +869,7 @@ export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw, viewYaw = y
     return drawn;
   } // AUDIT DEEP R-2: `face` - the travel view's basis for the quad; SERAPH-WINGS: the figure it drew kept for the aura on its back
   lastCamera = { proj, view, feet, yaw }; // COATS3D: the frame's camera, for the horse in first person (mwViewDrawSaddle)
-  if (!mwCamera.thirdPerson()) return false;
+  if (!mwCanThirdPerson() || !mwCamera.thirdPerson()) return false;
   // COATS3D: astride, the horse under the body - placed at the body's own feet and facing this draw, in its picture
   const grow = face?.grow > 1 ? face.grow : 1;
   const horse = saddled && ownHorse ? horseRig.picture(ownHorse, horseFeetUnder(feet, yaw, grow), yaw, grow) : null;
@@ -878,7 +891,7 @@ export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw, viewYaw = y
 /** SHADOW-CLOAK: the third-person Morrowind body's named bones where they stand this frame, in its own frame
  *  (fpArm.thirdBones) - or null: the sprite lane's body has no bones, and first person poses no third-person body. */
 export function mwViewBodyBones(names) {
-  if (eotbLane() || !mwCamera.thirdPerson()) return null;
+  if (eotbLane() || !mwCanThirdPerson() || !mwCamera.thirdPerson()) return null;
   return fpArm.thirdBones(names);
 }
 /** SERAPH-WINGS: the sprite lane's body as drawn this frame - { base, h } over its feet (player/eyeOfTheBeholder/eotbBody.js figure()) - or

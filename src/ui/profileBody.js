@@ -16,6 +16,7 @@ import {
 import { layeredGenderOf } from '../player/eyeOfTheBeholder/layeredArmor.js';
 import { STAGE_BONES, stageCameraOfBones } from '../render/characterStage.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
+import { playerBodyOn } from '../characters/npcBodies.js';
 
 /** The kinds of body a character can be shown as, in the order the stage prefers them: what the world draws first. */
 export const PROFILE_BODY_KINDS = Object.freeze(['mw', 'sprite']);
@@ -92,7 +93,7 @@ export function profileBodies({
     }
   };
   return {
-    kinds: () => PROFILE_BODY_KINDS.filter((k) => k !== 'mw' || !!arm?.canThirdPerson?.()),
+    kinds: () => PROFILE_BODY_KINDS.filter((k) => k !== 'mw' || (playerBodyOn() && !!arm?.canThirdPerson?.())),
     /** What a kind's body is drawn in now - a body asked in another look is asked again (the skin changed beside it). */
     lookKey(/** @type {string} */ kind) {
       if (kind === 'mw') return 'mw';
