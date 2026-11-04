@@ -19,6 +19,15 @@ export function isDebugConsoleOpen() {
   return _isOpen;
 }
 
+export function submitConsoleInput() {
+  if (!_inputEl) return;
+  const val = _inputEl.value.trim();
+  if (val) {
+    executeConsoleLine(val);
+    _inputEl.value = '';
+  }
+}
+
 function ensureDom() {
   if (_container || typeof document === 'undefined') return;
 
@@ -163,27 +172,62 @@ function ensureDom() {
 
   _inputEl.addEventListener('keydown', (e) => {
     // When inside input:
-    if (e.key === 'Enter') {
+    const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter';
+    if (isEnter) {
       e.preventDefault();
-      const val = _inputEl.value.trim();
-      if (val) {
-        executeConsoleLine(val);
-        _inputEl.value = '';
-      }
-    } else if (e.key === 'ArrowUp') {
+      e.stopPropagation();
+      submitConsoleInput();
+    } else if (e.key === 'ArrowUp' || e.code === 'ArrowUp') {
       e.preventDefault();
+      e.stopPropagation();
       const prev = consoleInputHistory.navigate(true);
       if (typeof prev === 'string') _inputEl.value = prev;
-    } else if (e.key === 'ArrowDown') {
+    } else if (e.key === 'ArrowDown' || e.code === 'ArrowDown') {
       e.preventDefault();
+      e.stopPropagation();
       const next = consoleInputHistory.navigate(false);
       if (typeof next === 'string') _inputEl.value = next;
     }
   });
 
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'button';
+  submitBtn.id = 'df-debug-submit';
+  submitBtn.textContent = '↵';
+  submitBtn.title = 'Execute (Enter)';
+  submitBtn.style.cssText = [
+    'background: rgba(72, 187, 120, 0.2)',
+    'border: 1px solid rgba(72, 187, 120, 0.5)',
+    'color: #68d391',
+    'cursor: pointer',
+    'font-size: 13px',
+    'font-weight: bold',
+    'line-height: 1',
+    'padding: 3px 8px',
+    'border-radius: 3px',
+    'user-select: none',
+  ].join(';');
+  submitBtn.addEventListener('mouseenter', () => { submitBtn.style.background = 'rgba(72, 187, 120, 0.35)'; });
+  submitBtn.addEventListener('mouseleave', () => { submitBtn.style.background = 'rgba(72, 187, 120, 0.2)'; });
+  submitBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    submitConsoleInput();
+    _inputEl?.focus();
+  });
+
   inputRow.appendChild(promptSpan);
   inputRow.appendChild(_inputEl);
+  inputRow.appendChild(submitBtn);
   _container.appendChild(inputRow);
+
+  // Stop events inside container from bubbling to window/canvas
+  _container.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+  });
+  _container.addEventListener('keyup', (e) => {
+    e.stopPropagation();
+  });
 
   // Clicking anywhere inside the terminal focuses the input
   _container.addEventListener('click', (e) => {
@@ -242,6 +286,7 @@ export function openDebugConsole() {
     window.dispatchEvent(new window.Event('blur'));
   }
 
+  _inputEl.focus();
   setTimeout(() => {
     _inputEl?.focus();
     _inputEl?.select();
@@ -285,12 +330,58 @@ export function installDebugConsole() {
     }
 
     if (_isOpen) {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' || e.code === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         closeDebugConsole();
         return;
       }
+
+      const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter';
+      if (isEnter) {
+        e.preventDefault();
+        e.stopPropagation();
+        submitConsoleInput();
+        _inputEl?.focus();
+        return;
+      }
+
+      const isUp = e.key === 'ArrowUp' || e.code === 'ArrowUp';
+      if (isUp) {
+        e.preventDefault();
+        e.stopPropagation();
+        const prev = consoleInputHistory.navigate(true);
+        if (typeof prev === 'string' && _inputEl) _inputEl.value = prev;
+        return;
+      }
+
+      const isDown = e.key === 'ArrowDown' || e.code === 'ArrowDown';
+      if (isDown) {
+        e.preventDefault();
+        e.stopPropagation();
+        const next = consoleInputHistory.navigate(false);
+        if (typeof next === 'string' && _inputEl) _inputEl.value = next;
+        return;
+      }
+
+      if (e.key === 'Tab' || e.code === 'Tab') {
+        e.preventDefault();
+        e.stopPropagation();
+        _inputEl?.focus();
+        return;
+      }
+
+      // If key is targeted at _inputEl, allow capture phase to proceed so text editing works!
+      if (e.target === _inputEl) {
+        return;
+      }
+
+      // If user typed while focused elsewhere inside the console, focus input
+      if (_container && _container.contains(/** @type {Node} */ (e.target))) {
+        _inputEl?.focus();
+        return;
+      }
+
       // While console is open, do not let gameplay keys propagate into scene/character controls
       e.stopPropagation();
     }

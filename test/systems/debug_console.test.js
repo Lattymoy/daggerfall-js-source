@@ -116,11 +116,12 @@ test('Debug Console: help lists all basic debug commands', () => {
 });
 
 test('Debug Console UI: toggle and state API', async () => {
-  const { isDebugConsoleOpen, toggleDebugConsole, openDebugConsole, closeDebugConsole } = await import('../../src/ui/debugConsole.js');
+  const { isDebugConsoleOpen, toggleDebugConsole, openDebugConsole, closeDebugConsole, submitConsoleInput } = await import('../../src/ui/debugConsole.js');
   assert.equal(typeof isDebugConsoleOpen, 'function');
   assert.equal(typeof toggleDebugConsole, 'function');
   assert.equal(typeof openDebugConsole, 'function');
   assert.equal(typeof closeDebugConsole, 'function');
+  assert.equal(typeof submitConsoleInput, 'function');
   assert.equal(isDebugConsoleOpen(), false);
 });
 
