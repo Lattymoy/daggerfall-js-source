@@ -116,9 +116,9 @@ test('QS2: the defaults are the number row, spent exactly once each, and free be
   // the Professions key - it shares the down arrow
   // MODE-WHEEL: and DFU's four mode keys and Sneak - the wheel and Crouch answer for them
   // SPYGLASS (PIN MOVED): nor the captain's glass - it shares K with the road's follow; SHOT-KINDS (PIN MOVED): nor the guns' load - the helm's button and the wheel choose it
-  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'QuickSwap', 'DebugOverlay', 'TravelView', 'WalkMode', 'BoatSailUp', 'Professions', 'Spyglass', 'ShotCycle', 'Decorate', 'SignatureTechnique'],   // PIN MOVED (TECH-KEY2: unbound)
+  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'QuickSwap', 'DebugOverlay', 'WalkMode', 'BoatSailUp', 'Professions', 'Spyglass', 'ShotCycle', 'Decorate', 'SignatureTechnique'],   // PIN MOVED (TECH-KEY2: unbound)
     'the actions without an owned key');
-  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 17);   // TECH-KEY2: the signature key unbound; Decorate unbound; SHOT-KINDS: the guns' load unbound; PADWALK: WalkMode ships unbound too; HELM-KEYS: BoatSailUp a share; CLASSIC-PAGES: the Professions key a share; SPYGLASS: the glass a share
+  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 16);   // TECH-KEY2: the signature key unbound; Decorate unbound; SHOT-KINDS: the guns' load unbound; PADWALK: WalkMode ships unbound too; HELM-KEYS: BoatSailUp a share; CLASSIC-PAGES: the Professions key a share; SPYGLASS: the glass a share
   // THE KEYS WERE FREE. DFU's own table is the rows above SOC5's, and none of
   // them is a digit - read off the table rather than asserted about it.
   const dfu = DEFAULT_BINDINGS.slice(0, DEFAULT_BINDINGS.findIndex(([, a]) => a === 'SocialInteract')).map(([c]) => c);   // MODE-WHEEL: DFU's rows are those before SOC5's (five ship unbound now)

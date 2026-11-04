@@ -64,10 +64,10 @@ test('KB1 laws 1 and 3: every action is in one Controls group or hidden, no defa
   // Mac's calls, as the table spells them
   assert.equal(shipped.get('Interact'), 'KeyE');
   assert.equal(shipped.get('AbortSpell'), 'Backquote');
-  assert.equal(shipped.get('HorseMount'), 'Comma');
-  assert.equal(shipped.get('HorseSummon'), 'Period');
+  assert.equal(shipped.get('HorseMount'), 'Period');
+  assert.equal(shipped.get('HorseSummon'), 'Comma');
   assert.equal(shipped.get('CenterView'), 'Home');
-  assert.equal(shipped.get('PrintScreen'), 'F8');
+  assert.equal(shipped.get('PrintScreen'), 'F11');
   assert.equal(shipped.get('FreeMouse'), 'KeyY');
   assert.equal(shipped.get('ActivateCursor'), 'Enter');
   assert.deepEqual(['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'].map((c) => actionForCode(defaults(), c)),
@@ -162,7 +162,7 @@ test('KB1 (Mac: "Enter = chat"): while a chat panel claims the key, Enter opens 
 
 // ── DFU'S DEAD ROWS, BUILT ─────────────────────────────────────────────
 
-test('KB1 (Mac: "build 2") + AUDIT KB1: PrintScreen takes a screenshot - F8 by default, wherever it is rebound, routed like every world action: never under a window, never from a text field, never on a repeat (mutants: the arm missing; the repeat routed)', () => {
+test('KB1 (Mac: "build 2") + AUDIT KB1: PrintScreen takes a screenshot - F11 by default, wherever it is rebound, routed like every world action: never under a window, never from a text field, never on a repeat (mutants: the arm missing; the repeat routed)', () => {
   const store = defaults();
   setBindings(store);
   const shots = [];
@@ -170,18 +170,18 @@ test('KB1 (Mac: "build 2") + AUDIT KB1: PrintScreen takes a screenshot - F8 by d
   try {
     const key = (code, extra = {}) => ({ code, key: code, repeat: false, target: { tagName: 'CANVAS' }, preventDefault() { this.prevented = true; }, ...extra });
     const world = { uiOverlayActive: false };
-    assert.equal(routeKey(key('F8'), world), true);
-    assert.equal(shots.length, 1, 'F8 shoots');
-    routeKey(key('F8', { target: { tagName: 'INPUT' } }), world);
-    assert.equal(routeKey(key('F8', { repeat: true }), world), true, 'a repeat is swallowed...');
+    assert.equal(routeKey(key('F11'), world), true);
+    assert.equal(shots.length, 1, 'F11 shoots');
+    routeKey(key('F11', { target: { tagName: 'INPUT' } }), world);
+    assert.equal(routeKey(key('F11', { repeat: true }), world), true, 'a repeat is swallowed...');
     assert.equal(shots.length, 1, '...and shoots nothing; nor does a field');
     const under = [];
-    routeKey(key('F8'), { uiOverlayActive: true, overlayIsNative: true, overlayInput: (c) => under.push(c) });
-    assert.deepEqual(under, ['F8'], 'a window up takes F8 (the automaps\' third background, AUDIT KB1)');
+    routeKey(key('F11'), { uiOverlayActive: true, overlayIsNative: true, overlayInput: (c) => under.push(c) });
+    assert.deepEqual(under, ['F11'], 'a window up takes F11');
     assert.equal(shots.length, 1, '...and no screenshot is taken under it');
     setBinding(store, 'F12', 'PrintScreen');
-    routeKey(key('F8'), world);
-    assert.equal(shots.length, 1, 'rebound, F8 no longer shoots');
+    routeKey(key('F11'), world);
+    assert.equal(shots.length, 1, 'rebound, F11 no longer shoots');
     routeKey(key('F12'), world);
     assert.equal(shots.length, 2, '...and the new key does');
     assert.match(screenshotName(new Date(2026, 8, 23, 14, 5, 9)), /^dfo-20260923-140509\.png$/);
@@ -254,8 +254,8 @@ test('KB1 law 6: a v1 file comes forward ONCE - the three moved DFU defaults let
   // a v1 file: DFU's old rows, written before the standard
   const v1 = createBindings();
   resetDefaults(v1);
-  for (const code of ['KeyE', 'Tab', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'KeyO', 'KeyG', 'KeyX', 'KeyB', 'NumpadAdd', 'KeyK', 'Comma', 'Period', 'Backquote']) v1.primary.delete(code);
-  v1.primary.set('KeyE', 'AbortSpell'); v1.primary.set('Backquote', 'ToggleConsole'); v1.primary.set('ControlLeft', 'Slide');
+  for (const code of ['KeyE', 'Tab', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'KeyO', 'KeyG', 'KeyX', 'KeyB', 'NumpadAdd', 'KeyK', 'Comma', 'Period', 'Backquote', 'ControlLeft']) v1.primary.delete(code);
+  v1.primary.set('KeyE', 'AbortSpell'); v1.primary.set('Backquote', 'ToggleConsole'); v1.primary.set('ControlLeft', 'Slide'); v1.primary.set('KeyC', 'Crouch');
   const file = serializeKeyBinds(v1);
   delete file.version;
   const s = createBindings();
@@ -269,7 +269,7 @@ test('KB1 law 6: a v1 file comes forward ONCE - the three moved DFU defaults let
   assert.equal(getBinding(s, 'Slide'), null);
   assert.equal(actionForCode(s, 'ControlLeft'), null, 'Left Ctrl is free');
   assert.equal(getBinding(s, 'QuickDial'), 'Tab');
-  assert.equal(getBinding(s, 'HorseMount'), 'Comma');
+  assert.equal(getBinding(s, 'HorseMount'), 'Period');
   assert.deepEqual(migrateKeyBinds(s, KEYBINDS_VERSION), { moved: [], kept: [], lost: [] }, 'a v2 file is never carried twice');
   // a player who had put Rest on E keeps it; Interact waits, rebindable
   const mine = createBindings();
@@ -293,7 +293,7 @@ test('KB1 law 6: a mod key the player SAVED is carried into the registry; a ship
       'handheld-torches': { 'Handling.ToggleLightInput': 'L', 'Handling.ManualDropInput': 'Tab', 'Throwing.ThrowTorchInput': 'None' },
       'eye-of-the-beholder': { 'Camera.SwitchShoulder': 'B' },
       'travel-options': { 'RoadsIntegration.FollowPathsKey': 6, 'RoadsIntegration.FollowPathsCustomKeyBind': 'ScrollLock' },   // a key no default holds (CSA-D gave Semicolon to Come Sail Away's lanterns, CSA-E End to its sails)
-      'horse-cart-and-cargo': { 'Hotkeys.QuickMountDismount': 'Keypad5' },
+      'horse-cart-and-cargo': { 'Hotkeys.QuickMountDismount': 'Keypad7' },
     }));
     const s = createBindings();
     resetDefaults(s);
@@ -307,7 +307,7 @@ test('KB1 law 6: a mod key the player SAVED is carried into the registry; a ship
     assert.ok(s.removedPrimary.has('TorchThrow'), '...and it is marked, so the autofill does not bring it back');
     assert.equal(getBinding(s, 'ShoulderSwitch'), 'KeyB', 'B was shipped - the default (also B) stands');
     assert.equal(getBinding(s, 'FollowPaths'), 'ScrollLock', 'past the six, the custom bind');
-    assert.equal(getBinding(s, 'HorseMount'), 'Numpad5');
+    assert.equal(getBinding(s, 'HorseMount'), 'Numpad7');
     assert.ok(moved.includes('TorchToggleLight on KeyL') && moved.includes('TorchThrow unbound'));
   } finally {
     _resetModSettings();
@@ -343,7 +343,7 @@ test('KB1 law 5, swept: no gameplay code reads a key the registry binds by its r
   const RESERVED = {
     'src/scenes/world.js': { Escape: 'the back-button latch the accelerator reads (DFU GetBackButton is the literal Escape)', AltLeft: 'preventDefault only - the browser menu steals focus on Alt', KeyH: 'Travel Options\' help, the travel panel\'s own key while it is up' },
     'src/scenes/exterior.js': { Escape: 'the back-button latch', AltLeft: 'preventDefault only' },
-    'src/scenes/poiEditorHost.js': { KeyZ: 'the POI editor\'s Ctrl+Z, its own undo while it is open (the world hears no key then; its flight reads the registry)', KeyY: 'its Ctrl+Y, the redo', KeyS: 'its Ctrl+S, the draft saved', KeyD: 'its Ctrl+D, a part duplicated' },
+    'src/scenes/poiEditorHost.js': { ControlLeft: 'the POI editor modifier', KeyZ: 'the POI editor\'s Ctrl+Z, its own undo while it is open (the world hears no key then; its flight reads the registry)', KeyY: 'its Ctrl+Y, the redo', KeyS: 'its Ctrl+S, the draft saved', KeyD: 'its Ctrl+D, a part duplicated' },
     'src/scenes/dungeon.js': { AltLeft: 'preventDefault only' },
     'src/scenes/townTalk.js': { KeyE: 'an open talk window\'s confirm alias - the window\'s key, while it is up' },
     'src/scenes/decor/decorTool.js': { Escape: 'the press that just closed the decorator\'s panel, not heard a second time as the pause', Tab: 'the decorator\'s own catalogue key while a piece is being placed - the window\'s key, while it is up (DECOR-ACCESS)' },

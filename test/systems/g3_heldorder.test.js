@@ -260,6 +260,7 @@ test('G3: heldModifier is the LAST HELD modifier, not every one of them and not 
 
 test('G3: the DISPATCH half reads the same latch - actionOf and routeKey, both ways round', () => {
   const b = createBindings(); resetDefaults(b);
+  setBinding(b, 'KeyI', 'Status', true);
   setBinding(b, comboCode('ShiftLeft', 'KeyI'), 'Inventory', true);
   setBinding(b, 'F6', 'Inventory', false);      // paired, so :1636 can bite
   setBindings(b);

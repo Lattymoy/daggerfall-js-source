@@ -255,7 +255,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['PageUp', 'FloatUp'],
   ['PageDown', 'FloatDown'],
   ['Space', 'Jump'],
-  ['KeyC', 'Crouch'],
+  ['ControlLeft', 'Crouch'],
   ['ShiftLeft', 'Run'],
   // PARTY-PING: Mouse2 is the ping's now (below). DFU's AutoRun stays a row; its default is F3.
   ['KeyR', 'Rest'],
@@ -269,22 +269,22 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['KeyZ', 'ReadyWeapon'],
   ['Mouse1', 'SwingWeapon'],
   ['KeyH', 'SwitchHand'],
-  ['KeyI', 'Status'],
-  ['F5', 'CharacterSheet'],
-  ['F6', 'Inventory'],
+  ['Numpad5', 'Status'],
+  ['KeyC', 'CharacterSheet'],
+  ['KeyI', 'Inventory'],
   ['Mouse0', 'ActivateCenterObject'],
   ['Enter', 'ActivateCursor'],
   ['Insert', 'LookUp'],
   ['Delete', 'LookDown'],
   ['Home', 'CenterView'],
-  // CROUCH-SNEAK: Sneak ships UNBOUND - Crouch (C) is the sneak now (player/motor.js); Left Alt is the mode wheel's
+  // CROUCH-SNEAK: Sneak ships UNBOUND - Crouch (Ctrl) is the sneak now (player/motor.js); Left Alt is the mode wheel's
   ['KeyL', 'LogBook'],
   ['KeyN', 'NoteBook'],
   ['KeyM', 'AutoMap'],
   ['KeyV', 'TravelMap'],
-  ['F8', 'PrintScreen'],
-  ['F9', 'QuickSave'],
-  ['F11', 'QuickLoad'],
+  ['F11', 'PrintScreen'],
+  ['F5', 'QuickSave'],
+  ['F9', 'QuickLoad'],
   // SOC5 (Mac: "by pressing F on their body"): the port's own row, past DFU's
   // table. KeyF is the key Mac named and SetupDefaults never spends - the one
   // free letter next to the movement hand. It rides in DEFAULT_BINDINGS rather
@@ -388,8 +388,8 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['KeyB', 'ShoulderSwitch'],
   ['NumpadAdd', 'AutoPerspective'],
   ['KeyK', 'FollowPaths'],
-  ['Comma', 'HorseMount'],
-  ['Period', 'HorseSummon'],
+  ['Period', 'HorseMount'],
+  ['Comma', 'HorseSummon'],
   ['F2', 'SaddlePanel'],   // UI-CALM: the saddle panel (Slash is the decorator's grid)
   ['F4', 'ShipHold'],   // CARGO-ANYWHERE: the ship's hold, from anywhere
   // CSA-D: the mod ships C (Crouch's) and Period (Horse Cart and Cargo's summon): one key, one action, so the port's
@@ -431,6 +431,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['F3', 'AutoRun'],
   // PVP-KEY: the key the flag always had. A file that already spends Caps Lock keeps it, and the flag waits for a key.
   ['CapsLock', 'PvpFlag'],
+  ['Slash', 'TravelView'],
 ]);
 
 /**

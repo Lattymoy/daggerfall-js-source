@@ -54,9 +54,9 @@ test('CROUCH-SNEAK: a crouch IS a sneak - the crouched-sneak speed, the stealth 
   assert.equal(m.isSneaking, true, 'a player who binds Sneak still has DFU\'s standing slow walk');
 });
 
-test('CROUCH-SNEAK + MODE-WHEEL defaults: Crouch keeps C and LB; Sneak and F1-F4 own no key; the wheel owns Left Alt, appended last and a port row; the touch corner offers no dead Sneak', () => {
+test('CROUCH-SNEAK + MODE-WHEEL defaults: Crouch has ControlLeft and LB; Sneak and F1-F4 own no key; the wheel owns Left Alt, appended last and a port row; the touch corner offers no dead Sneak', () => {
   const by = new Map(DEFAULT_BINDINGS.map(([c, a]) => [a, c]));
-  assert.equal(by.get('Crouch'), 'KeyC');
+  assert.equal(by.get('Crouch'), 'ControlLeft');
   for (const a of ['Sneak', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode']) assert.equal(by.get(a), undefined, `${a} ships unbound`);
   assert.equal(by.get(MODE_WHEEL_ACTION), 'AltLeft');
   assert.equal(ACTIONS.at(-10), MODE_WHEEL_ACTION,   // PIN MOVED (TECH-KEY2: SignatureTechnique appended last)   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last; PARTY-PING: the ping's; Decorate)   // PIN MOVED (PVP-KEY: PvpFlag appended last)

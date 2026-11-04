@@ -319,8 +319,8 @@ test('FIX-F: a key held under a modifier binds the COMBO', () => {
     // ...and a modifier pressed ALONE binds itself, never a combo of
     // itself (EVENT_MODIFIERS excludes its own two codes).
     keyBtn(view, 'Sneak').onclick();
-    doc.listeners[0].fn(keyEvent('ControlLeft', { ctrlKey: true }));   // KB1: Left Ctrl is free since Slide shipped unbound
-    assert.equal(currentDict(controlsStaging()).get('Sneak'), 'ControlLeft');
+    doc.listeners[0].fn(keyEvent('ControlRight', { ctrlKey: true }));
+    assert.equal(currentDict(controlsStaging()).get('Sneak'), 'ControlRight');
   });
 });
 

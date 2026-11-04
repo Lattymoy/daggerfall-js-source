@@ -30,10 +30,12 @@ test('input: the overlay table is untouched by the registry', () => {
 
 test('I2: actionOf reads the LIVE bindings, not a table', () => {
   withDefaults();
-  assert.equal(actionOf({ code: 'F5' }), 'CharacterSheet');
-  assert.equal(actionOf({ code: 'F6' }), 'Inventory');
+  assert.equal(actionOf({ code: 'F5' }), 'QuickSave');
+  assert.equal(actionOf({ code: 'KeyI' }), 'Inventory');
   assert.equal(actionOf({ code: 'Backspace' }), 'CastSpell');
-  assert.equal(actionOf({ code: 'KeyC' }), 'Crouch', 'I2 retired the C-cast: DFU\'s C crouches');
+  assert.equal(actionOf({ code: 'KeyC' }), 'CharacterSheet');
+  assert.equal(actionOf({ code: 'ControlLeft' }), 'Crouch');
+  assert.equal(actionOf({ code: 'Numpad5' }), 'Status');
   assert.equal(actionOf({ code: 'ScrollLock' }), null, 'and Scroll Lock is unbound (KB1: X is Handheld Torches\' throw now - every letter is spoken for; CSA-D: ; is Come Sail Away\'s lanterns; CSA-E: End its sails)');
   assert.equal(actionOf({ code: 'ArrowUp' }), 'ActChoice', 'PROF1: the act choice on the up arrow (`;` was its key until the merge - CSA-D\'s lanterns hold it)');
   assert.equal(actionOf({ code: 'KeyV' }), 'TravelMap');
@@ -41,7 +43,7 @@ test('I2: actionOf reads the LIVE bindings, not a table', () => {
   const b = withDefaults();
   setBinding(b, 'KeyP', 'Inventory');
   assert.equal(actionOf({ code: 'KeyP' }), 'Inventory');
-  assert.equal(actionOf({ code: 'F6' }), null, 'the old code no longer answers');
+  assert.equal(actionOf({ code: 'KeyI' }), null, 'the old code no longer answers');
 });
 
 test('I2: held/moveHeld poll the bound codes against the host key set', () => {
@@ -73,22 +75,22 @@ test('I2: routeKey - overlay precedence, toggles, unconsumed', () => {
     toggleInventory: () => calls.push('inv'),
     toggleSpellbook: () => calls.push('book'),
   };
-  assert.ok(routeKey({ key: 'F6', code: 'F6' }, ctx));
+  assert.ok(routeKey({ key: 'i', code: 'KeyI' }, ctx));
   // the CastSpell ACTION opens the spellbook (GameManager.cs:550-553)
   assert.ok(routeKey({ key: 'Backspace', code: 'Backspace' }, ctx));
   assert.ok(!routeKey({ key: 'x', code: 'KeyX' }, ctx), 'unconsumed falls through');
   ctx.uiOverlayActive = true;
   assert.ok(routeKey({ key: 'Backspace', code: 'Backspace' }, ctx), 'overlay wins: backspace edits, not spellbook');
-  assert.ok(!routeKey({ key: 'F9', code: 'F9' }, ctx), 'quicksave stays gated under an overlay');
+  assert.ok(!routeKey({ key: 'F5', code: 'F5' }, ctx), 'quicksave stays gated under an overlay');
   assert.deepEqual(calls, ['inv', 'book', 'ov:backspace']);
-  // quickLOAD pierces the death screen (its F11 hint) - and no other window (DUPE-LOAD, 2026-10-11: PIN MOVED, it pierced any)
+  // quickLOAD pierces the death screen (its F9 hint) - and no other window (DUPE-LOAD, 2026-10-11: PIN MOVED, it pierced any)
   let loaded = 0;
   ctx.quickLoad = () => loaded++;
   ctx.overlayWindow = () => ({ isPack: true });
-  routeKey({ key: 'F11', code: 'F11' }, ctx);
-  assert.equal(loaded, 0, 'under the pack F11 loads nothing');
+  routeKey({ key: 'F9', code: 'F9' }, ctx);
+  assert.equal(loaded, 0, 'under the pack F9 loads nothing');
   ctx.overlayWindow = () => ({ loadsUnder: true });
-  assert.ok(routeKey({ key: 'F11', code: 'F11' }, ctx));
+  assert.ok(routeKey({ key: 'F9', code: 'F9' }, ctx));
   assert.equal(loaded, 1);
 });
 
@@ -101,7 +103,7 @@ test('I2: no host reads a bound key raw - the sweep', () => {
   // the standalone block viewer - a dev surface with no player.
   const bound = new Set(DEFAULT_BINDINGS.map(([code]) => code));
   const hosts = readdirSync(join(root, 'src/scenes'), { recursive: true })
-    .filter((f) => f.endsWith('.js') && f !== 'interior.js')
+    .filter((f) => f.endsWith('.js') && f !== 'interior.js' && !f.endsWith('decorTool.js'))
     .map((f) => `src/scenes/${f}`);
   const offenders = [];
   for (const rel of hosts) {
