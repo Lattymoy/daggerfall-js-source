@@ -1464,6 +1464,36 @@
   "tr": "36f5d5a177e5",
   "by": "claude-in-session"
  },
+ "features.city247.effect": {
+  "en": "15ddce06b8cc",
+  "tr": "db72e9de4216",
+  "by": "human"
+ },
+ "features.city247.note": {
+  "en": "5f41fa1b3992",
+  "tr": "2ebc883ef53a",
+  "by": "human"
+ },
+ "features.city247.title": {
+  "en": "00f91363875a",
+  "tr": "582feb2452d1",
+  "by": "human"
+ },
+ "features.unifiedBank.effect": {
+  "en": "f3b8be3fe452",
+  "tr": "8571fe00c0fe",
+  "by": "human"
+ },
+ "features.unifiedBank.note": {
+  "en": "d17baaea597f",
+  "tr": "13a9e0b09b18",
+  "by": "human"
+ },
+ "features.unifiedBank.title": {
+  "en": "d496c77c171a",
+  "tr": "10f6b0887d45",
+  "by": "human"
+ },
  "features.realWindows.light": {
   "en": "33064adf0f79",
   "tr": "3431c228817a",
@@ -3402,6 +3432,46 @@
  "menu.realm.strandedRecover": {
   "en": "43a870077e3d",
   "tr": "79748ca1c6e5",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.average": {
+  "en": "15f86c051ecf",
+  "tr": "7cda072d452b",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.away": {
+  "en": "13f711a128dd",
+  "tr": "9410d9a2f844",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.high": {
+  "en": "b1a5954a483f",
+  "tr": "b096b3f5acd6",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.low": {
+  "en": "a124947cbd2d",
+  "tr": "b9ee259b7f6c",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.name": {
+  "en": "247276b252be",
+  "tr": "55b386417ff7",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.note": {
+  "en": "60e5c085d1d2",
+  "tr": "58867815317b",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.veryHigh": {
+  "en": "6797209b0586",
+  "tr": "c34687da2b52",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.veryLow": {
+  "en": "5c660b646175",
+  "tr": "db71a9ec61d9",
   "by": "claude-in-session"
  },
  "menu.settings.tip.vsyncVulkan": {
