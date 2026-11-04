@@ -55,9 +55,9 @@ const el = (tag, cls, text) => {
  *  hint that is a lie is worse than none). Online, Enter and F11 both
  *  RESPAWN (world.js D-ONLINE1), so one plate says so. BAL4: offline, a
  *  death Project Legacy will raise rises on Enter - F11 still loads. */
-export function deathKeys(hint, online, rises = false) {
+export function deathKeys(hint, online, rises = false, offlineRespawn = false) {
   if (online) return [{ key: 'Enter', word: t('death.key.rise', 'Rise now'), confirm: true }];
-  const keys = [{ key: 'Enter', word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End your tale'), confirm: true }];
+  const keys = [{ key: 'Enter', word: (rises || offlineRespawn) ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End your tale'), confirm: true }];
   if (/F11/i.test(String(hint ?? ''))) keys.push({ key: 'F11', word: t('death.key.load', 'Load last save') });
   return keys;
 }
@@ -67,6 +67,7 @@ function build(screen) {
   injectEnhancedFonts();
   injectDeathStyle();
   const online = isOnlinePage();
+  const respawns = online || screen.rises || screen.offlineRespawn;
   const root = el('div', 'dth');
   root.id = ENHANCED_DEATH_ID;
   root.setAttribute('role', 'alert');
@@ -79,11 +80,11 @@ function build(screen) {
   // mode"): a death that costs gold says so IN the line's place, in the line's own italic serif, rather than
   // under it in a second face. A death that costs nothing (no respawn - BAL4: an offline Legacy rise pays - or a purse under ten coins) keeps its words.
   const lossLine = screen.goldLoss > 0 ? (screen.goldLossLine || deathPenaltyLine(screen.goldLoss)) : '';
-  const line = el('p', `dth-line${lossLine ? ' dth-lossline' : ''}`, lossLine || (online || screen.rises
+  const line = el('p', `dth-line${lossLine ? ' dth-lossline' : ''}`, lossLine || (respawns
     ? t('death.lineOnline', 'Your body falls. The world is not done with you yet.')
     : t('death.line', 'Your tale ends here.')));
   const keys = el('div', 'dth-keys');
-  for (const k of deathKeys(screen.hint, online, !!screen.rises)) {
+  for (const k of deathKeys(screen.hint, online, !!screen.rises, !!screen.offlineRespawn)) {
     const b = el(k.confirm ? 'button' : 'span', 'dth-key');
     b.append(el('span', 'dth-cap', k.key), el('span', 'dth-word', k.word));
     // A phone has no Enter: the plate is the key, through the screen's
@@ -94,7 +95,7 @@ function build(screen) {
   // DEATH4: online, the count to the respawn - offline there is none,
   // the screen waits for the player.
   const count = el('p', 'dth-count');
-  count.style.display = online ? '' : 'none';
+  count.style.display = (online || screen.offlineRespawn) ? '' : 'none';
   // WILD1: a death in the open zone - its own block under the line (the killer's claim, what was left behind, the
   // wait), filled by the draw (the world host says so the frame after the screen goes up)
   const wild = el('div', 'dth-wild');

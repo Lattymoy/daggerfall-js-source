@@ -34,6 +34,7 @@ import { isEnhanced } from '../systems/uiSkin.js'; // DEATH2: the enhanced skin 
 import { drawEnhancedDeath, removeEnhancedDeath } from './enhanced/enhancedDeath.js';
 import { EYE_HEIGHT } from '../player/motor.js'; // DEATH3: the standing eye the fall starts from
 import { isOnlinePage } from '../systems/online/onlineLane.js'; // DEATH4: the online screen counts down, the offline one waits
+import { offlineRespawnOn } from '../systems/deathRespawn.js';
 import { stateDeathLoss, deathGoldLoss, deathPenaltyLine } from '../systems/deathPenalty.js'; // DEATH-PENALTY: the screen says what the respawn is about to take
 import { isCasual } from '../systems/legacy/casual.js'; // CASUAL-LIFE: a Casual death states no loss
 import { goldPiecesOf } from '../systems/inventory.js'; // DEATH-PENALTY: the purse the loss is read off
@@ -120,6 +121,7 @@ export class DeathScreen {
     hint = 'ENTER end   F11 load',
     online = undefined,
     rises = null,
+    offlineRespawn = undefined,
     penalty = true,
     wall = () => Date.now(),
   } = {}) {
@@ -150,11 +152,13 @@ export class DeathScreen {
     // onDeath runs first, playerEntity.js hearDeath); the fixed city and the standalone dungeon hand none, and never
     // rise. Read once, here: the screen says Rise where it said End the journey, and states the respawn's loss.
     this.rises = !this.online && !!rises?.();
+    const offlineWanted = offlineRespawn ?? offlineRespawnOn();
+    this.offlineRespawn = !this.online && !this.rises && !!offlineWanted;
     // DEATH-PENALTY (Mac: "and it should be shown in the death screen"): the gold the respawn will take,
     // read HERE, once - and STATED (systems/deathPenalty.js stateDeathLoss): the respawn takes exactly this, capped
     // at the purse, whatever the purse did while the player lay dead (AUDIT 28 B5: a mate's bounty clear pays the
     // dead too, and the respawn took its share of the bigger purse). A death with no respawn (the run ends) takes none.
-    const respawns = this.online || this.rises;
+    const respawns = this.online || this.rises || this.offlineRespawn;
     // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 24): a made level whose law exempts DEATH-PENALTY (the Spire's -
     // systems/madeLevel.js) hands `penalty: false`: the respawn takes nothing, so the screen states nothing
     // CASUAL-LIFE (bible/06-Systems/Legacy-Arc.md section 6): nor a Casual character's - its death costs nothing
@@ -202,7 +206,7 @@ export class DeathScreen {
     // classic OFFLINE: DFU's three seconds, untouched. AUDIT CONTRIB A5: online the hold is the screen's on EITHER skin -
     // the classic's three seconds respawned the player and cleared the body their party could raise (RESURRECT1,
     // PCORPSE3) before anyone could reach it; the wait is the body's minute whatever the skin draws.
-    if (!this.fall && !this.online) {
+    if (!this.fall && !this.online && !this.offlineRespawn) {
       this.sequence.tick(dt);
       return;
     }
@@ -216,7 +220,7 @@ export class DeathScreen {
     // below ten frames a second the open zone's two minutes outlasted it, the screen saying "RISING IN 15" while a
     // Resurrect was refused "fallen for good". Never behind the frames' own count either (a dt longer than the wall's).
     if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);
-    if (this.online && this.clock >= this.holdSeconds) {
+    if ((this.online || this.offlineRespawn) && this.clock >= this.holdSeconds) {
       this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1);
       return;
     }
@@ -244,11 +248,11 @@ export class DeathScreen {
   }
   /** DEATH-15: may Enter rise now? Offline always; online once the minimum has passed (a rejoin's served time counts). */
   get canRise() {
-    return !this.online || this.clock + (this.wild?.served ?? 0) >= DEATH_RISE_MIN_S;
+    return (!this.online && !this.offlineRespawn) || this.clock + (this.wild?.served ?? 0) >= DEATH_RISE_MIN_S;
   }
   /** DEATH4: whole seconds left before an online respawn, or null offline. */
   get respawnIn() {
-    if (!this.online) return null;
+    if (!this.online && !this.offlineRespawn) return null;
     return Math.max(0, Math.ceil(this.holdSeconds - this.clock));
   }
   input(action) {
@@ -283,7 +287,7 @@ export class DeathScreen {
       s,
       [0.9, 0.2, 0.15, 1],
     );
-    const hint = this.online
+    const hint = (this.online || this.offlineRespawn)
       ? !this.canRise
         ? t('death.risingInWild', 'RISING IN {n}', { n: this.respawnIn })
         : t('death.risingIn', 'RISING IN {n}   ENTER now', { n: this.respawnIn })

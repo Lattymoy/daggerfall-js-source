@@ -494,7 +494,7 @@ import { withIndoorFloor, indoorSceneY, keepIndoorFloor } from '../net/peer/indo
 import { createPeerRange, peerRangeOf } from '../net/peer/peerRange.js';   // PEER-RANGE: the others drawn out to the distance on the Other players card
 import { gateLandingFor, courtRing, courtArena, courtArenaAt, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gate/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
-import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
+import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText, rollOfflineRespawnHours, timePassedText, offlineRespawnOn } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { restorePlayer, resolvePendingSpells, restoreSessionState, dungeonPixelFor } from '../systems/save/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, capturePendingScreenshot, exitAutosaveNames, enumerateSaves, onSlotSaved, onSlotLoaded, slotLoaded } from '../systems/save/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
@@ -6194,7 +6194,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // online" a frame later; and not on the reset, which a fast F11
       // reaches before that frame. The reset reads this snapshot.
       _deathWasOnline = _onlineWorldSession();
-      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))), rises: () => legacyHost?.willRise() ?? false }));   // D1; D-ONLINE1: online play respawns instead of ending the run; LEGACY1: Project Legacy asked first; BAL4: and the screen knows a rise is coming (the respawn's loss stated)
+      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (legacyDeathReset() || ((_deathWasOnline || offlineRespawnOn()) ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))), rises: () => legacyHost?.willRise() ?? false, offlineRespawn: offlineRespawnOn() }));   // D1; D-ONLINE1: online play respawns instead of ending the run; LEGACY1: Project Legacy asked first; BAL4: and the screen knows a rise is coming (the respawn's loss stated); OFFLINE-RESPAWN: offline respawn option
       // RISE-STUCK (Ninilac: "fast travelling while playing online ...
       // climb a wall that was in the way and died"): A DEATH ENDS THE
       // JOURNEY - the mod's own "pauseTravel" message (TravelOptionsMod
@@ -13974,7 +13974,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!(playerEntity.health > 0)) { reviveForPlay(playerEntity); surfacePlayer(); }
       ohAbyss?.onRespawnerComplete();   // OH-D: the port's own respawn - a respawn anywhere but the bound abyss clears it, as the respawner's does
       if (diedInHour) { gateVeil?.flash('hourCast'); kind = 'hour'; }   // AUDIT SD II (L6 F4): the Hour's veil, and its own words; SD-LOOK: its face shattered
-      townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took
+      let timeLine = '';
+      if (!sharedClockOn()) {
+        const hoursPassed = rollOfflineRespawnHours();
+        setSyntheticTimeIncrease(true);
+        playerTicker.advance(hoursPassed * 60);
+        _lastEncMinutes = Math.floor(playerTicker.ownMinutes);
+        timeLine = timePassedText(hoursPassed);
+        try { worldQuickSave?.('AutoSave', { quiet: true }); } catch { /* quiet autosave */ }
+      }
+      townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), timeLine, took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took; OFFLINE-RESPAWN: time passed
     }).catch((e) => {
       // RISE-STUCK: A RISE THAT THREW STILL RISES. The heal ran first
       // (MAC-D3), so the player is alive; a screen left up here has its
@@ -27552,7 +27561,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // live online play, so the caller falls back to endRunToTitleMenu
     // exactly as it always did offline.
     duelHolds: () => duelEnemyNear(),   // DUEL1: a live duel holds its duellist - no door out of the ring
-    onlineRespawn: () => { if (legacyDeathReset()) return true; if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // LEGACY1: Project Legacy asked first, in a building and underground too   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
+    onlineRespawn: () => { if (legacyDeathReset()) return true; if (!((_deathWasOnline ?? _onlineWorldSession()) || offlineRespawnOn())) return false; respawnOnlinePlayer(); return true; },   // LEGACY1: Project Legacy asked first, in a building and underground too   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline; OFFLINE-RESPAWN
     exteriorSubmerged: () => !!dwPlayer?.submerged,   // DW-D: the sea's forged isPlayerSubmerged, for the router's avoid-death consult
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick

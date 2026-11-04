@@ -1987,6 +1987,14 @@ export const FEATURES = Object.freeze([
       ]),
     }),
   }),
+  Object.freeze({
+    id: 'offline-respawn',
+    group: 'character',
+    get title() { return t('features.offlineRespawn.title', 'Online-Style Respawn'); },
+    get note() { return t('features.offlineRespawn.note', 'When you die in single-player, wake at the nearest safe place (temple, town, graveyard or dungeon entrance) at half health and lose a tenth of your purse, instead of ending the game.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'offlineRespawn', initial: true, online: 'player' }),
+  }),
 ]);
 
 // ── RF4: the lanes, and what the stores derive ────────────────────

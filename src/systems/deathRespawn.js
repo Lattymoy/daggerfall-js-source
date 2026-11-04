@@ -26,6 +26,8 @@ import { cureAllOfKind } from './effects.js'; // DEATHLOOP1
 import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js'; // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
 import { sharedClockOn, worldMinutes, skipDeadMinutes } from './worldTick.js'; // DISC28-E: the dead live no minutes
 import { SD_REALM_TEXT } from '../world/superDungeon/sdRealm.js'; // AUDIT SD II (L6 F4): the Shattered Hour's own waking
+import { getPref } from './uiPrefs.js';
+import { t } from './textManager.js';
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
@@ -183,6 +185,32 @@ export const respawnHealth = (maxHealth) => {
   const m = Number.isFinite(maxHealth) ? maxHealth : 0;
   return Math.max(1, Math.floor(m * RESPAWN_HEALTH_FRACTION));
 };
+
+export const OFFLINE_RESPAWN_HOURS_MIN = 4;
+export const OFFLINE_RESPAWN_HOURS_MAX = 24;
+
+/**
+ * Returns a random integer number of hours between 4 and 24 (step: 1 hour)
+ * spent unconscious before waking up after offline respawn.
+ */
+export function rollOfflineRespawnHours(roll = Math.random) {
+  const r = typeof roll === 'function' ? roll() : Math.random();
+  const range = OFFLINE_RESPAWN_HOURS_MAX - OFFLINE_RESPAWN_HOURS_MIN + 1; // 21 (4..24 inclusive)
+  return OFFLINE_RESPAWN_HOURS_MIN + Math.min(range - 1, Math.max(0, Math.floor(r * range)));
+}
+
+/** Flavor line indicating hours passed while unconscious. */
+export function timePassedText(hours) {
+  if (!(hours > 0)) return '';
+  return t(
+    'death.timePassed',
+    '{hours, plural, one {# hour passed while you were unconscious.} other {# hours passed while you were unconscious.}}',
+    { hours },
+  );
+}
+
+/** Whether DFO-style online respawn is active in single-player offline mode. */
+export const offlineRespawnOn = () => getPref('offlineRespawn') !== false;
 
 // ONLINE-UNDERGROUND-LOAD1 (Lost, 2026-09-19: "online mode only saves the game if you close it - when closed in a
 // dungeon it should spawn you near a city, graveyard, temple etc when loading into an online game again").
