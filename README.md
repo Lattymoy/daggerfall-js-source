@@ -98,3 +98,38 @@ Pull requests are welcome, but tbh I somehow don't have much experience with Git
 ## What is already done
 * Launcher targets this repository.
 * Saves are in its own app data folder.
+
+## FAQ
+
+### Are my DFO saves safe?
+Yes! This version has its own save folder. Your DFO offline saves and, obviously, online progress are safe. You can play both versions at the same time.
+
+### Is it still an MMO?
+No.
+
+### Is it still multiplayer at all?
+At this moment, no. Only offline, single-player experience.
+
+I do not plan to support a persistent world, but will look into co-op / local servers after the single-player experience is stable. Probably by the end of 2027.
+
+### Monetization?
+No.
+
+### Discord?
+I plan to set up something very simple in Nov 2026.
+
+---
+
+## Roadmap
+
+Oh folks, I'm a gamedev producer, I know roadmaps shift. So this is a living one, with preliminary and rough estimations on when I'll deliver things. Things **WILL** change. But the focus won't.
+
+* **Firmament offline** — done
+* **Player housing like in online (toggleable)** — Nov 2026
+* **Make fast travel first-person by default (toggleable)** — Nov 2026
+* **Add emergent city quests and more wilderness encounters (if mod authors allow)** — Dec 2026
+* **Make gathering and crafting playable offline (toggleable)** — Jan 2027 *(heavy feature)*
+* **Family without Project Legacy** — Feb 2027
+* **Challengers (own system)** — Apr 2027  
+  Encounters with NPC heroes that have heard about your deeds and want to challenge you. Like Revenants, they have perks and traits. Depending on your skills and stats, outcomes of meetings might differ (peaceful, combat, fleeing, etc.).
+* **Continuous polishing & mod integration** *(with authors' consent, toggleable via settings)*
