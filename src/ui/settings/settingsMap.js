@@ -203,6 +203,7 @@ export const CATEGORIES = Object.freeze([
     sec('enemies', 'Enemies', [
       'feat:enhanced-ai',
       'Enhancements/EnhancedCombatAI',
+      'port:reflexes',
       'feat:mod-meanermonsters',
       'feat:mod-daggerfall-enemy-expansion',
       'feat:enemy-infighting',

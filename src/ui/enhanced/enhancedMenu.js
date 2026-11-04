@@ -2713,7 +2713,7 @@ function prefRow(key, name, note, { onChange = null, home = false } = {}) {
 
 /** A choice row: the button names the CURRENT tier and a click steps
  *  to the next, wrapping (PERF1). `tier` is its dot: 'restart' for a key the shell reads at launch (GPU-BACKEND). */
-function choiceRow(key, name, note, tiers, { home = false, read = null, write = null, tier = 'live' } = {}) {
+function choiceRow(key, name, note, tiers, { home = false, read = null, write = null, tier = 'live', disabled = false } = {}) {
   if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2
   // FT2: a condensed row reads the lane's live value and writes both stores
   const cur = String(read ? read() : getPref(key));
@@ -2723,15 +2723,18 @@ function choiceRow(key, name, note, tiers, { home = false, read = null, write = 
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
   main.append(el('div', 'row-note', note));
-  const step = () => { (write ?? ((v) => setPref(key, v)))(tiers[(at + 1) % tiers.length][0]); render(); };
-  main.onclick = step;
+  const step = () => { if (disabled) return; (write ?? ((v) => setPref(key, v)))(tiers[(at + 1) % tiers.length][0]); render(); };
+  if (!disabled) main.onclick = step;
+  else main.disabled = true;
   row.append(main);
   const ctl = el('div', 'ctl');
   const b = el('button', 'act rowact', tiers[at][1]);
-  b.onclick = step;
+  if (!disabled) b.onclick = step;
+  else b.disabled = true;
   if (onlineForcedPref(key) !== undefined) { lockOnline(b, main); b.textContent = t('menu.online.lockedTier', '{tier} (online)', { tier: tiers[at][1] }); }   // OL1: the outdoors row reads the lane's forced answer and names its tier under the lock
   ctl.append(b, el('span', `tier ${tier}`));
   row.append(ctl);
+  if (disabled && row.dataset) row.dataset.live = '0';
   return row;
 }
 
@@ -3296,7 +3299,7 @@ function portRowsGame({ pause = false } = {}) {
   };
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
-  const rows = [row, techniqueMotionRow()];
+  const rows = [row, techniqueMotionRow(), reflexesRow({ pause })];
   rows.push(prefRow('offlineFirmament', t('features.offlineFirmament.title', 'Firmament (Offline)'),
     t('features.offlineFirmament.note', 'Enables the Firmament constellation passive tree and Renown progression while playing offline.')));
   rows.push(prefRow('unifiedBank', t('features.unifiedBank.title', 'Unified Bank'),
@@ -3304,6 +3307,30 @@ function portRowsGame({ pause = false } = {}) {
   rows.push(prefRow('city247', t('features.city247.title', '24/7 City Infrastructure'),
     t('features.city247.note', 'Keeps city gates, shops, guild halls, banks, and libraries open at all hours.')));
   return rows;
+}
+/** REFLEXES: in-game reflex re-selection for the active character. Reads and writes playerEntity.reflexes directly. */
+function reflexesRow({ pause = false } = {}) {
+  const can = pause && !!playerEntity;
+  const tiers = [
+    [0, t('menu.reflexes.veryHigh', 'Very High')],
+    [1, t('menu.reflexes.high', 'High')],
+    [2, t('menu.reflexes.average', 'Average')],
+    [3, t('menu.reflexes.low', 'Low')],
+    [4, t('menu.reflexes.veryLow', 'Very Low')],
+  ];
+  const row = choiceRow('reflexes', t('menu.reflexes.name', 'Reflexes'),
+    can
+      ? t('menu.reflexes.note', 'Enemy attack speed and skill advancement rate for this character.')
+      : t('menu.reflexes.away', 'In a game: open Settings from the pause menu.'),
+    tiers,
+    {
+      read: () => playerEntity?.reflexes ?? 2,
+      write: (v) => { if (playerEntity) playerEntity.reflexes = Number(v); },
+      tier: 'live',
+      disabled: !can,
+    });
+  if (row?.dataset) row.dataset.opt = 'reflexes';
+  return row;
 }
 /** RPT1026-CLIENT (a private report: allies' spells shook the view where they landed, and no setting could soften it): how much
  *  another player's spell shakes the view where it lands (scenes/hostMagic.js peerKickShare); Settings > Accessibility >
