@@ -38,6 +38,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { frameRateSwitches } = require('./lib/frameRate.cjs');   // FPS-VSYNC: VSync off lifts Chromium's wait
 const { backendLaunch, holdsVSync, watchBackend, backendOption, chooseBackend, restartArgs } = require('./lib/graphicsBackend.cjs');   // GPU-BACKEND: the Vulkan opt-in and its guard
+const { getScreenshotsDir } = require('./lib/screenshotStorage.cjs');
 
 // DAGGER_USER_DATA points saves/config somewhere else - the probe's
 // door (tools/appShellProbe.mjs writes into a temp dir it can read
@@ -1337,6 +1338,13 @@ function openSavesFolder() {
   shell.openPath(dir);
 }
 
+/** File > Open Screenshots Folder. */
+function openScreenshotsFolder() {
+  const dir = getScreenshotsDir(app.getPath('userData'));
+  fs.mkdirSync(dir, { recursive: true });
+  shell.openPath(dir);
+}
+
 /** DA10: the update check's switch. The launcher's toggle and the File
  *  menu's checkbox are one setting (config.json updateCheck); turned on
  *  while the launcher is open, it checks now rather than next launch. */
@@ -1370,6 +1378,7 @@ function buildMenu() {
       label: 'File',
       submenu: [
         { label: 'Open Saves Folder', click: () => openSavesFolder() },
+        { label: 'Open Screenshots Folder', click: () => openScreenshotsFolder() },
         {
           label: 'Locate ARENA2 Folder...',
           click: async () => {
@@ -2008,6 +2017,7 @@ ipcMain.on('launcher:act', async (e, msg) => {
       break;
     }
     case 'open-saves': openSavesFolder(); break;
+    case 'open-screenshots': openScreenshotsFolder(); break;
     case 'set-update-check': setCheckOnLaunch(arg === true); break;
     case 'reinstall': await reinstallFromLauncher(); break;
     case 'set-backend': setBackendFromLauncher(arg); break;
@@ -2150,6 +2160,11 @@ ipcMain.on('dagger:private-server', (e) => { e.returnValue = priv ? { url: priv.
 // The preload asks for its storage root synchronously at page boot -
 // storage must exist before the first module reads a setting.
 ipcMain.on('dagger:user-data-path', (e) => { e.returnValue = app.getPath('userData'); });
+ipcMain.on('dagger:open-screenshots-folder', (e, targetPath) => {
+  const dir = targetPath || getScreenshotsDir(app.getPath('userData'));
+  fs.mkdirSync(dir, { recursive: true });
+  shell.openPath(dir);
+});
 // FPS-VSYNC (AUDIT 28e): whether this launch lifted Chromium's wait - the page paces its frames by the cap then
 // (src/systems/frameCap.js installFramePacer), since a held frame costs a whole refresh with the wait lifted
 ipcMain.on('dagger:frames-lifted', (e) => { e.returnValue = FRAME_SWITCHES.length > 0; });

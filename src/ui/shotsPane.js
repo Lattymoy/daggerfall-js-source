@@ -160,11 +160,15 @@ async function fill(root) {
 function topCard(root, count) {
   const c = el('div', 'card shots-top'); // no title of its own: the pane's head says Screenshots
   const key = shotKeyName();
+  const isDesktop = !!globalThis.daggerShell?.screenshots;
+  const whereText = isDesktop
+    ? `${count} saved on this device.`
+    : `${count} saved in this browser, never uploaded.`;
   c.append(
     el(
       'p',
       'meta',
-      `${count} of ${GALLERY_MAX} saved in this browser, never uploaded. ` +
+      `${whereText} ` +
         (key
           ? `Press ${key} in the world to take one.`
           : 'The Screenshot action has no key. Bind one under Settings, Controls.'),
@@ -184,18 +188,28 @@ function topCard(root, count) {
   const add = keyed(el('button', 'act', 'Add pictures\u2026'), 'add');
   add.type = 'button';
   add.onclick = () => pick.click();
-  const dl = getPref(SHOT_DOWNLOAD_PREF) !== false;
-  const sw = keyed(
-    el('button', `act${dl ? ' on' : ''}`, `Also save each shot as a file: ${dl ? 'On' : 'Off'}`),
-    'download',
-  );
-  sw.type = 'button';
-  sw.setAttribute('aria-pressed', String(dl));
-  sw.onclick = () => {
-    setPref(SHOT_DOWNLOAD_PREF, !dl);
-    fill(root);
-  };
-  row.append(add, sw, pick);
+  row.append(add);
+
+  if (isDesktop) {
+    const open = keyed(el('button', 'act', 'Open screenshots folder'), 'open-folder');
+    open.type = 'button';
+    open.onclick = () => globalThis.daggerShell?.screenshots?.openFolder?.();
+    row.append(open);
+  } else {
+    const dl = getPref(SHOT_DOWNLOAD_PREF) !== false;
+    const sw = keyed(
+      el('button', `act${dl ? ' on' : ''}`, `Also save each shot as a file: ${dl ? 'On' : 'Off'}`),
+      'download',
+    );
+    sw.type = 'button';
+    sw.setAttribute('aria-pressed', String(dl));
+    sw.onclick = () => {
+      setPref(SHOT_DOWNLOAD_PREF, !dl);
+      fill(root);
+    };
+    row.append(sw);
+  }
+  row.append(pick);
   c.append(row);
   return c;
 }
@@ -220,7 +234,7 @@ export async function addPictures(root, files) {
   }
   const words = [];
   if (unread) words.push(`${unread === 1 ? 'One picture' : `${unread} pictures`} could not be read.`);
-  if (full) words.push(`The gallery is full at ${GALLERY_MAX}. Delete some to add more.`);
+  if (full) words.push('The gallery is full. Delete some to add more.');
   if (words.length) say(root, words.join(' '));
   return { kept, unread, full };
 }
@@ -241,7 +255,7 @@ function emptyCard() {
       'p',
       null,
       key
-        ? `Press ${key} anywhere in the world. Up to ${GALLERY_MAX} shots are kept here and can be shown on loading screens.`
+        ? `Press ${key} anywhere in the world. Screenshots are kept here and can be shown on loading screens.`
         : 'Bind the Screenshot action under Settings, Controls, then take one anywhere in the world.',
     ),
   );
