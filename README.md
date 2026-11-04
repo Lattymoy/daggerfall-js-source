@@ -10,7 +10,7 @@ To make a single-player, client-based, modular and highly customizable version o
 * Selected online features disabled (world events, boss raids, shop, armory).
 * As much major, significant DFU mods integrated and toggleable, with settings, as possible.
 
-To allow players create their own custom-tailored experience in an easy and simple way.
+To allow players create their own custom-tailored experience in an easy and simple way. By default. this version will come pre-customized with the focus on immersion - but again, everything is customizable. 
 
 ---
 
