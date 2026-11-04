@@ -452,7 +452,11 @@ export function setPref(k, v) {
   _prefs[k] = v;
   const res = savePrefs();
   for (const fn of _prefListeners) {
-    try { fn(k, v, prev); } catch { /* listener error ignored */ }
+    try {
+      fn(k, v, prev);
+    } catch {
+      /* listener error ignored */
+    }
   }
   return res;
 } // SKIN-CARRY: the store's word comes back - a refused write is the caller's to carry another way
