@@ -22,6 +22,7 @@
 //
 // The populations' adapters (which actor wears what - MWNPC5 onward) fill the actor; this module never reads a host.
 import { PeerBodies, BODY_BUILD_GATE } from '../net/peer/peerBodies.js';
+import { fpArm } from '../combat/fpArm.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { morrowindDataCount, morrowindDataGeneration } from '../scenes/dataSource.js';
@@ -313,6 +314,16 @@ export function npcBodiesOn() {
  *  Features row, `mwFoeBodies` falling back to `mwNpcBodies`)? */
 export function foeBodiesOn() {
   return isEnhanced() && morrowindDataCount() > 0 && (getPref('mwFoeBodies') ?? getPref('mwNpcBodies')) !== 'off';
+}
+
+/** Is the player's 3D Morrowind body wanted - the enhanced skin, Morrowind data attached, and the toggle not false? */
+export function playerBodyOn() {
+  return isEnhanced() && (morrowindDataCount() > 0 || !!fpArm?.ready?.()) && getPref('mwPlayerBody') !== false;
+}
+
+/** Are Morrowind 3D item icons wanted - the enhanced skin, Morrowind data attached, and the toggle not false? */
+export function itemIconsOn() {
+  return isEnhanced() && morrowindDataCount() > 0 && getPref('mwItemIcons') !== false;
 }
 
 /** MWNPC5b: a host's lane - the gate, the data generation and the tier read as every host reads them. */

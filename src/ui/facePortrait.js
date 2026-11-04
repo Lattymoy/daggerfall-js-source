@@ -191,10 +191,10 @@ const heads = new Map();
 
 /** Face `i` of one race and gender: the Morrowind head where one is drawn, else `classic`. */
 async function headFace(raceKey, gender, scale, i, classic) {
-  const [{ morrowindDataCount, morrowindDataGeneration }, { portraitRenderer }] = await Promise.all([
-    import('../scenes/dataSource.js'), import('../render/portraitRenderer.js'),
+  const [{ morrowindDataCount, morrowindDataGeneration }, { portraitRenderer }, { playerBodyOn }] = await Promise.all([
+    import('../scenes/dataSource.js'), import('../render/portraitRenderer.js'), import('../characters/npcBodies.js'),
   ]);
-  if (!(morrowindDataCount() > 0) || !portraitRenderer() || !globalThis.document) return classic;
+  if (!playerBodyOn() || !(morrowindDataCount() > 0) || !portraitRenderer() || !globalThis.document) return classic;
   const key = `${raceKey}|${gender}|${scale}|${i}|${morrowindDataGeneration()}`;
   const have = heads.get(key);
   if (have?.canvas) return have.canvas;

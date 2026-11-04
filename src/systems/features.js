@@ -1417,6 +1417,26 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'prefs', key: 'mwShoulderCam', initial: 'off', online: 'player', tiers: Object.freeze([
       tier('off', OFF), tier('right', () => t('features.mwShoulder.right', 'Right')), tier('left', () => t('features.mwShoulder.left', 'Left'))]) }),
   }),
+  // MW-PLAYER-BODY: The player character in a 3D Morrowind body
+  Object.freeze({
+    id: 'mw-player-body',
+    group: 'world',
+    get title() { return t('features.mwPlayerBody.title', 'Morrowind Player Body'); },
+    get note() { return t('features.mwPlayerBody.note', 'With Morrowind data, your character is drawn in 3D: hands and weapons in first person, full body in third person, and a 3D figure in the inventory. Off keeps classic 2D sprites and the paperdoll.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwPlayerBody', initial: true, online: 'player' }),
+  }),
+  // MW-ITEM-ICONS: 3D rendered item icons in inventory and quickslots
+  Object.freeze({
+    id: 'mw-item-icons',
+    group: 'world',
+    get title() { return t('features.mwItemIcons.title', 'Morrowind Item Icons'); },
+    get note() { return t('features.mwItemIcons.note', 'With Morrowind data, items in your inventory and quickslots are shown as rendered 3D ground meshes. Off shows classic 2D item sprites.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwItemIcons', initial: true, online: 'player' }),
+  }),
   // MW-FOE-BODIES: Mobs & Foes in Morrowind bodies
   Object.freeze({
     id: 'mw-foe-bodies',
