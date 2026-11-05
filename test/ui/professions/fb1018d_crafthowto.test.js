@@ -228,7 +228,7 @@ test('CRAFT-HOWTO THE TUTORIAL: a Crafting page among Professions & Survival, af
   assert.match(src('src/ui/pauseDoor.js'), /if \(profPageAt\(hooks\.at\)\) \{\n {4}if \(!profPagesShown\(\)\) \{ hudText\(profPagesClosedLine\(\)\); return null; \}\n {4}\/\/ [^\n]*\n {4}if \(typeof document !== 'undefined'\) return enhancedPauseOverlay\(show, hooks\.at === 'professions' \? \{ \.\.\.hooks, at: professionsKeyAt\(\) \} : hooks\);/,
     'the key\'s page opens the tabbed window on either skin - where Holdings > Stores is');
   // AUDIT FB1018D L1-7: and the key's Controls row says the same - it opens the Professions page, the Stores a tab away
-  assert.equal(actionLabel('Professions'), 'Open your Professions page, or the Crafting page at a station (online)');   // PIN MOVED (AUDIT HORIZONTAL A7): at a station the key lands on the Crafting page, and its row says so
+  assert.equal(actionLabel('Professions'), 'Open your Professions page, or the Crafting page at a station');   // PIN MOVED (AUDIT HORIZONTAL A7): at a station the key lands on the Crafting page, and its row says so
 });
 
 test('CRAFT-HOWTO IN EVERY WHOLE LANGUAGE: the new words are drafted in each language the catalog holds whole, the Crafting page\'s last point naming the key it fills (the l10n gate holds the rest)', () => {

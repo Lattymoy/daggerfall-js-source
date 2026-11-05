@@ -71,7 +71,7 @@
 // a text field here would make every host's router treat the pane as
 // a typing surface.
 
-import { saveKeyBinds, resetDefaults, ACTION_GROUPS, actionLabel } from '../../systems/inputActions.js';
+import { saveKeyBinds, resetDefaults, ACTION_GROUPS, actionLabel, FORK_FLAGS } from '../../systems/inputActions.js';
 import { modSetting } from '../../systems/modSettings.js';   // KB1: a mod's group is drawn while the mod is on
 import { bindings, mouseCode, swingMode } from '../input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
 import {
@@ -105,7 +105,14 @@ const el = (t, cls, txt) => {
  *  actionLive). Off, its keys stay bound - switching it back on must not find them given away - and a bind onto one
  *  asks first, naming the mod. */
 export function shownGroups(isOn = modIsOn) {
-  return ACTION_GROUPS.filter((grp) => !grp.mod || isOn(grp.mod));
+  return ACTION_GROUPS
+    .filter((grp) => (!grp.mod || isOn(grp.mod)) && (FORK_FLAGS.ENABLE_ONLINE_PLAY || grp.title !== 'Online'))
+    .map((grp) => {
+      if (FORK_FLAGS.ENABLE_ONLINE_PLAY) return grp;
+      const rows = grp.rows.filter((r) => r.action !== 'PartyPing');
+      if (rows.length === grp.rows.length) return grp;
+      return { ...grp, rows };
+    });
 }
 function modIsOn(vendor) {
   try { return !!modSetting(vendor, 'Enabled'); } catch { return false; }

@@ -32,7 +32,10 @@
 // every existing index still means what it meant.
 
 import { t } from './textManager.js';
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
+
+export { FORK_FLAGS };
 import { storedModSetting, modSetting, modLatchedOn } from './modSettings.js';   // KB1: a player's own mod key, carried into the registry once; and whether its mod is on
 import { domCodeForKeyCode, KEYCODE_NONE } from './keyCodes.js';   // KB1: the mods' TextKeys are Unity KeyCode names
 
@@ -587,7 +590,7 @@ export const ACTION_GROUPS = Object.freeze([
     ['Hotbar9', 'Hotbar slot 9'], ['Hotbar10', 'Hotbar slot 10'],
   ]),
   g('Mouse', [
-    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],
+    ['ActivateCursor', 'Free the mouse'], ['FreeMouse', 'Free the mouse (press again to look)'],
     ['HoldFreeMouse', t('input.action.holdFreeMouse', 'Hold to free the mouse (release to look)')],
   ]),
   g('Online', [
@@ -596,7 +599,7 @@ export const ACTION_GROUPS = Object.freeze([
   ]),
   g('Professions', [
     ['ActChoice', 'Next action at a profession node'],   // PROF-MENU: the node's list is the plaque's - the key steps its light
-    ['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station (online)')],   // CLASSIC-PAGES: the pages on either skin; AUDIT HORIZONTAL A7: at a station it lands on the Crafting page (profPages.js professionsKeyAt), else the Professions page   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)
+    ['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station')],   // CLASSIC-PAGES: the pages on either skin; AUDIT HORIZONTAL A7: at a station it lands on the Crafting page (profPages.js professionsKeyAt), else the Professions page   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)
   ]),
   g('Game', [
     ['QuickSave', 'Quick save'], ['QuickLoad', 'Quick load'], ['PrintScreen', 'Screenshot'], ['DebugOverlay', 'Diagnostics readout'],

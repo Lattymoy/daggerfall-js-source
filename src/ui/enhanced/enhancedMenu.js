@@ -4786,6 +4786,7 @@ function renderHome() {
     for (const label of sections) {
       if (label === 'About' || label === 'Screenshots') continue;   // LOAD1: Screenshots stands in the foot, beside About
       if (label === 'Tutorials') continue;   // TUT1: the foot's left plaque (an eighth door ran the list past a 720-pixel screen)
+      if (label === 'Online' && !FORK_FLAGS.ENABLE_ONLINE_PLAY) continue;
       const id = idOf(label);
       menu.append(doorBtn(id, railLabel(label), '', RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id)));   // L10N1b
     }
@@ -4877,8 +4878,9 @@ function drawDoors(menu) {
     if (focused) globalThis.requestAnimationFrame?.(() => app?.querySelector?.('.px-menu .doorbtn')?.focus?.());
   };
   if (homeLevel === 'offline') {
-    const games = page('px-page-games', t('menu.home.offline', 'Offline'));
-    games.append(el('p', 'px-pagenote', t('menu.home.offlineSub', 'Your own game, kept on this device')));
+    const isOfflineOnly = !FORK_FLAGS.ENABLE_ONLINE_PLAY;
+    const games = page('px-page-games', isOfflineOnly ? null : t('menu.home.offline', 'Offline'));
+    if (!isOfflineOnly) games.append(el('p', 'px-pagenote', t('menu.home.offlineSub', 'Your own game, kept on this device')));
     for (const label of HOME_OFFLINE.slice(0, 3)) games.append(doorBtn(idOf(label), railLabel(label), '', () => go(idOf(label))));
     const more = page('px-page-more', t('menu.home.elsewhere', 'Elsewhere'));
     for (const label of HOME_OFFLINE.slice(3)) more.append(doorBtn(idOf(label), railLabel(label), '', () => go(idOf(label))));
@@ -6345,9 +6347,10 @@ function renderInto() {
   homeRow.onclick = () => go('home');
   rail.append(homeRow);
   for (const label of sections) {
+    if (label === 'Online' && !FORK_FLAGS.ENABLE_ONLINE_PLAY) continue;
     const id = idOf(label);
     // UI-CALM: on the enhanced front door's rail Offline's doors stand under their word, as they do on the door
-    if (sections === SECTIONS_BOOT && label === HOME_OFFLINE[0]) rail.append(el('span', 'railgroup', t('menu.home.offline', 'Offline')));
+    if (FORK_FLAGS.ENABLE_ONLINE_PLAY && sections === SECTIONS_BOOT && label === HOME_OFFLINE[0]) rail.append(el('span', 'railgroup', t('menu.home.offline', 'Offline')));
     const b = el('button', `railbtn${id === section ? ' on' : ''}`);
     b.append(el('span', 'rk', railLabel(label)));   // L10N1b
     // RAIL_ACTS: Resume resolves on the rail rather than opening a
