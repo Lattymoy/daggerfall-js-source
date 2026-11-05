@@ -139,3 +139,4 @@ test('LEGACY DYNASTY: voluntary mantle pass is allowed without requiring isElder
   assert.equal(r.outcome.kind, 'fall');
   assert.equal(host.family.pending != null, true);
 });
+
