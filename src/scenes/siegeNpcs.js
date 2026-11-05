@@ -19,7 +19,7 @@ import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js'; // HALT
 import { stateAnims, HURT_ANIMS, HURT_ANIM_SPEED, PRIMARY_ATTACK_ANIM_SPEED } from '../characters/mobile/mobileUnit.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { bossFrame } from '../world/gate/gateBoss.js';
-import { createPopulationLane } from '../characters/npcBodies.js';
+import { createPopulationLane, foeBodiesOn } from '../characters/npcBodies.js';
 import { rosterLook } from '../characters/foeBodies.js';
 import { rosterActor } from '../characters/rosterBodies.js'; // MWNPC10: the siege's fighters in their Morrowind bodies
 
@@ -107,7 +107,7 @@ export function createSiegeNpcs({
   const bodiesLane = createPopulationLane({
     laneName: 'siege',
     renderer,
-    ...(wantBodies ? { want: wantBodies } : {}),
+    want: wantBodies ?? foeBodiesOn,
     make: makeBodies,
   }); // MWNPC10 (section 15b)
   const bodies = new Map(),

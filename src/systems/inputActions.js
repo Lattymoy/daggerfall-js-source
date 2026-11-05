@@ -32,7 +32,10 @@
 // every existing index still means what it meant.
 
 import { t } from './textManager.js';
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
+
+export { FORK_FLAGS };
 import { storedModSetting, modSetting, modLatchedOn } from './modSettings.js';   // KB1: a player's own mod key, carried into the registry once; and whether its mod is on
 import { domCodeForKeyCode, KEYCODE_NONE } from './keyCodes.js';   // KB1: the mods' TextKeys are Unity KeyCode names
 
@@ -216,6 +219,8 @@ export const ACTIONS = Object.freeze([
   // PvP flag's key (scenes/pvpFlagHost.js). It was Caps Lock read raw, so a player who bound Caps Lock to another
   // action got both. Caps Lock is still its default. Appended, like every port action before it.
   'PvpFlag',
+  // HOLD-FREE-MOUSE: hold the key to free cursor, release to relock mouselook. Appended, like every port action.
+  'HoldFreeMouse',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -233,7 +238,7 @@ export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'Quick
   'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay',
   'BoatDisembark', 'BoatToggleLight', 'BoatToggleSail', 'BoatTrimRight', 'BoatTrimLeft', 'BoatTrimModifier',
   'BoatTimeScaleUp', 'BoatTimeScaleDown', 'BoatTimeScaleReset', 'TravelView', 'WalkMode', 'TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions',
-  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel', 'ShipHold', 'ShotCycle', 'PartyPing', 'Decorate', 'SignatureTechnique', 'PvpFlag']);   // TECH-KEY2   // PARTY-PING: the party's ping   // the decorator, unbound   // SHOT-KINDS: the guns' load   // CARGO-ANYWHERE: the ship's hold   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel', 'ShipHold', 'ShotCycle', 'PartyPing', 'Decorate', 'SignatureTechnique', 'PvpFlag', 'HoldFreeMouse']);   // HOLD-FREE-MOUSE   // PARTY-PING: the party's ping   // the decorator, unbound   // SHOT-KINDS: the guns' load   // CARGO-ANYWHERE: the ship's hold   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -255,7 +260,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['PageUp', 'FloatUp'],
   ['PageDown', 'FloatDown'],
   ['Space', 'Jump'],
-  ['KeyC', 'Crouch'],
+  ['ControlLeft', 'Crouch'],
   ['ShiftLeft', 'Run'],
   // PARTY-PING: Mouse2 is the ping's now (below). DFU's AutoRun stays a row; its default is F3.
   ['KeyR', 'Rest'],
@@ -269,32 +274,25 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['KeyZ', 'ReadyWeapon'],
   ['Mouse1', 'SwingWeapon'],
   ['KeyH', 'SwitchHand'],
-  ['KeyI', 'Status'],
-  ['F5', 'CharacterSheet'],
-  ['F6', 'Inventory'],
+  ['Numpad5', 'Status'],
+  ['KeyC', 'CharacterSheet'],
+  ['KeyI', 'Inventory'],
   ['Mouse0', 'ActivateCenterObject'],
   ['Enter', 'ActivateCursor'],
   ['Insert', 'LookUp'],
   ['Delete', 'LookDown'],
   ['Home', 'CenterView'],
-  // CROUCH-SNEAK: Sneak ships UNBOUND - Crouch (C) is the sneak now (player/motor.js); Left Alt is the mode wheel's
+  // CROUCH-SNEAK: Sneak ships UNBOUND - Crouch (Ctrl) is the sneak now (player/motor.js); Left Alt is the mode wheel's
   ['KeyL', 'LogBook'],
   ['KeyN', 'NoteBook'],
   ['KeyM', 'AutoMap'],
   ['KeyV', 'TravelMap'],
-  ['F8', 'PrintScreen'],
-  ['F9', 'QuickSave'],
-  ['F11', 'QuickLoad'],
-  // SOC5 (Mac: "by pressing F on their body"): the port's own row, past DFU's
-  // table. KeyF is the key Mac named and SetupDefaults never spends - the one
-  // free letter next to the movement hand. It rides in DEFAULT_BINDINGS rather
-  // than in any host, so a SAVED file from before this slice gains it without a
-  // reset: loadOrCreateBindings follows every load with resetDefaults(store,
-  // true), whose `testSetBinding` fills an action that is missing and touches
-  // nothing a player has already bound (KeyF included, if they put something
-  // there first). Rebindable like every other row - the enhanced controls
-  // window's ONLINE group.
-  ['KeyF', 'SocialInteract'],
+  ['F11', 'PrintScreen'],
+  ['F5', 'QuickSave'],
+  ['F9', 'QuickLoad'],
+  // HOLD-FREE-MOUSE: KeyF frees the mouse while held, and relocks mouselook on release.
+  // SocialInteract ships unbound - a player gives it a key in Controls if playing online.
+  ['KeyF', 'HoldFreeMouse'],
   // QUICK-LOOT B4: P takes the lot, J opens the container.
   //
   // Both were chosen by ELIMINATION, and it took two rounds. The first
@@ -388,8 +386,8 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['KeyB', 'ShoulderSwitch'],
   ['NumpadAdd', 'AutoPerspective'],
   ['KeyK', 'FollowPaths'],
-  ['Comma', 'HorseMount'],
-  ['Period', 'HorseSummon'],
+  ['Period', 'HorseMount'],
+  ['Comma', 'HorseSummon'],
   ['F2', 'SaddlePanel'],   // UI-CALM: the saddle panel (Slash is the decorator's grid)
   ['F4', 'ShipHold'],   // CARGO-ANYWHERE: the ship's hold, from anywhere
   // CSA-D: the mod ships C (Crouch's) and Period (Horse Cart and Cargo's summon): one key, one action, so the port's
@@ -431,6 +429,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['F3', 'AutoRun'],
   // PVP-KEY: the key the flag always had. A file that already spends Caps Lock keeps it, and the flag waits for a key.
   ['CapsLock', 'PvpFlag'],
+  ['Slash', 'TravelView'],
 ]);
 
 /**
@@ -591,7 +590,8 @@ export const ACTION_GROUPS = Object.freeze([
     ['Hotbar9', 'Hotbar slot 9'], ['Hotbar10', 'Hotbar slot 10'],
   ]),
   g('Mouse', [
-    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],
+    ['ActivateCursor', 'Free the mouse'], ['FreeMouse', 'Free the mouse (press again to look)'],
+    ['HoldFreeMouse', t('input.action.holdFreeMouse', 'Hold to free the mouse (release to look)')],
   ]),
   g('Online', [
     ['SocialInteract', 'Interact with player'],
@@ -599,7 +599,7 @@ export const ACTION_GROUPS = Object.freeze([
   ]),
   g('Professions', [
     ['ActChoice', 'Next action at a profession node'],   // PROF-MENU: the node's list is the plaque's - the key steps its light
-    ['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station (online)')],   // CLASSIC-PAGES: the pages on either skin; AUDIT HORIZONTAL A7: at a station it lands on the Crafting page (profPages.js professionsKeyAt), else the Professions page   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)
+    ['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station')],   // CLASSIC-PAGES: the pages on either skin; AUDIT HORIZONTAL A7: at a station it lands on the Crafting page (profPages.js professionsKeyAt), else the Professions page   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)
   ]),
   g('Game', [
     ['QuickSave', 'Quick save'], ['QuickLoad', 'Quick load'], ['PrintScreen', 'Screenshot'], ['DebugOverlay', 'Diagnostics readout'],

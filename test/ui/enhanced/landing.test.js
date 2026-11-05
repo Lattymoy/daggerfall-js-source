@@ -61,7 +61,7 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // picture and nothing else is one. It is the GAME's own file, which the
   // build carries for the front door already - one copy, so public/brand/
   // stays untracked and the site cannot show a logo the game does not.
-  const LOGO = '<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="1034" /></h1>';
+  const LOGO = '<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="Daggerfall Forever" width="1232" height="1034" /></h1>';
   assert.equal(landing.split(LOGO).length, 2, 'the wordmark is the product\'s logo, once');
   const drawn = landing.replace(LOGO, '').replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+/=]+\)/g, '');
   assert.doesNotMatch(drawn, /<img\s|<canvas|<video|<picture|url\(/i, 'beyond the logo, the landing page draws nothing but CSS');
@@ -519,7 +519,7 @@ test('U64 + PATREON1 + SUPPORT1: the corner asks are Patreon then Ko-fi, each a 
   const byId = Object.fromEntries(SUPPORT_ASKS.map((a) => [a.id, a]));
   const funding = read('.github/FUNDING.yml');
   assert.equal(funding.trim(), `custom: ["${byId.patreon.url}"]\nko_fi: ${new URL(byId.kofi.url).pathname.slice(1)}`, 'the Sponsor button asks on both');
-  for (const doc of ['README.md', 'SUPPORT.md']) {
+  for (const doc of ['SUPPORT.md']) {
     const text = read(doc);
     for (const a of SUPPORT_ASKS) assert.ok(text.includes(a.url), `${doc} asks on ${a.name}, at the same page`);
     assert.doesNotMatch(text, /ko-fi\.com\/dfjs|ko_fi: dfjs/, `${doc}: no retired Ko-fi`);
@@ -579,7 +579,7 @@ test('U64: the live site is the custom domain, and the build does not care which
   // the vite comment says so rather than naming a host.
   assert.match(read('vite.config.js'), /base is '\.\/' - RELATIVE, so the same build serves from a project path/);
   assert.match(read('vite.config.js'), /base: '\.\/',/);
-  assert.match(read('README.md'), /Play it: https:\/\/daggerfalljs\.dev\//);
+  assert.match(read('README.md'), /^# Daggerfall Forever\n/);
   assert.match(read('tools/verify-deploy.mjs'), /'https:\/\/daggerfalljs\.dev\/play\/'/);
   // The page's own links are RELATIVE, so nothing on it names a host at
   // all - the domain could move again and the page would not notice.

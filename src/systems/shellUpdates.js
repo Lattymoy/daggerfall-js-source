@@ -27,7 +27,7 @@ const versionOf = (info) =>
 /** The HUD line for an update the shell reports. */
 export function updateReadyText(info) {
   const v = versionOf(info);
-  const name = v ? `DFO Online ${v}` : 'A new version of DFO Online';
+  const name = v ? `Daggerfall Forever ${v}` : 'A new version of Daggerfall Forever';
   // DA13: "the next time you start" is true of both kinds of update - an installer's, installed at quit, and a version of
   // the game the shell's own channel brought, which the page loads at its next start
   return info?.manual

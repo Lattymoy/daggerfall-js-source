@@ -43,8 +43,8 @@ const GAME_CHANNEL = 1;
 
 /** The game's two files on every release (the downloads are app/lib/downloads.cjs's). */
 const GAME_FILES = Object.freeze({
-  manifest: 'DFO-Online-game.json.gz',
-  pack: 'DFO-Online-game.pack',
+  manifest: 'Daggerfall-Forever-game.json.gz',
+  pack: 'Daggerfall-Forever-game.pack',
 });
 
 /** The entry a copy loads - a manifest without it is no game. */

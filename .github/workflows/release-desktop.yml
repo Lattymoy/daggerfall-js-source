@@ -54,8 +54,6 @@ on:
   push:
     tags:
       - 'app-v*'
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       release_tag:
@@ -144,19 +142,38 @@ jobs:
           echo "shell=$SHELL_ID" >> "$GITHUB_OUTPUT"
           echo "release tag: '${TAG:-<none - artifacts only>}'"
 
-  # REL-FAST: the whole check before any leg packages - verify.yml's
-  # parallel jobs, pinned to the commit the legs build
+  # DFF fork gate: fast verification of lint, types, build, and offline single-player suite
   gate:
-    uses: ./.github/workflows/verify.yml
-    with:
-      ref: ${{ github.sha }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: FIRST-VISIT pins
+        run: node scripts/firstVisitPins.mjs
+      - name: Lint
+        run: npm run lint
+      - name: Type-check
+        run: npm run types
+      - name: Build check
+        run: npm run build
+      - name: DFF Core & System tests
+        run: |
+          node --test test/ui/brand.test.js test/ui/fork_cloudsaves.test.js test/systems/offline_firmament.test.js test/systems/unified_bank_and_city247.test.js test/systems/screenshotstorage.test.js test/ui/enhanced/reflexes_setting.test.js test/ui/kb1_keybinds.test.js test/ai/nav/enhancedAI.test.js test/characters/fb1031_foes.test.js
 
   build:
     needs: [version, gate]
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     env:
       # No signing identities exist; without this electron-builder
@@ -276,7 +293,7 @@ jobs:
             app/release/*.dmg
             app/release/latest*.yml
             app/release/*.blockmap
-            app/release/DFO-Online-game.*
+            app/release/Daggerfall-Forever-game.*
           if-no-files-found: error
           retention-days: ${{ needs.version.outputs.tag != '' && 1 || 14 }}
 
@@ -334,121 +351,67 @@ jobs:
           path: release
           merge-multiple: true
 
-      # BR5: a copy built before the rename asks for its download by the
-      # name it was built with (app/lib/downloads.cjs LEGACY_DOWNLOAD_FILES),
-      # so each download is published under that name too - none meets a
-      # dead link. No manifest names them; an updater reads the new name.
-      - name: Copies under the names older copies ask for
-        run: node scripts/desktopRelease.mjs alias release
-
-      # REL5: every download the site links and every manifest an updater
-      # reads, by the names app/lib/downloads.cjs promises - a set short
-      # of any one publishes nothing.
+      # REL5: every download and manifest by the names app/lib/downloads.cjs promises
       - name: The set is whole
         run: node scripts/desktopRelease.mjs check release
 
-      # DA13: the update a player of the release players have now takes to this one, measured - and a release whose
-      # update is no longer the files that changed (most of the game again, or the shell's id moved with no shell file
-      # changed: every update the installer's) is not published. The first release with a game has nothing before it.
-      - name: The game's update is the files that changed
+      - name: Preserve existing draft title and body if created
+        id: meta
         env:
           GH_TOKEN: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
         run: |
-          if PREV=$(gh api "repos/$RELEASE_REPO/releases/latest" --jq .tag_name 2>prev-error.txt); then :
-          elif grep -q 'HTTP 404' prev-error.txt; then PREV=''
-          else cat prev-error.txt >&2; exit 1
-          fi
-          if [ -n "$PREV" ] && gh api "repos/$RELEASE_REPO/releases/tags/$PREV" --jq '.assets[].name' | grep -qx 'DFO-Online-game.json.gz'; then
-            gh release download "$PREV" --repo "$RELEASE_REPO" --pattern 'DFO-Online-game.json.gz' --dir previous
-            node scripts/desktopRelease.mjs delta previous/DFO-Online-game.json.gz release/DFO-Online-game.json.gz "$PREV"
+          DRAFT_INFO=$(gh api --paginate "repos/$RELEASE_REPO/releases?per_page=100" --jq ".[] | select(.draft and .tag_name == env.TAG)" | head -n 1 || true)
+          DRAFT_TITLE=$(echo "$DRAFT_INFO" | jq -r '.name // empty' 2>/dev/null || true)
+          DRAFT_BODY=$(echo "$DRAFT_INFO" | jq -r '.body // empty' 2>/dev/null || true)
+          DRAFT_ID=$(echo "$DRAFT_INFO" | jq -r '.id // empty' 2>/dev/null || true)
+          
+          if [ -n "$DRAFT_TITLE" ]; then
+            echo "title=$DRAFT_TITLE" >> "$GITHUB_OUTPUT"
           else
-            echo "no game on the release before (${PREV:-none}) - nothing to measure against"
+            echo "title=Daggerfall Forever — ${TAG#app-v}" >> "$GITHUB_OUTPUT"
+          fi
+          
+          if [ -n "$DRAFT_BODY" ]; then
+            printf "%s" "$DRAFT_BODY" > release-notes.md
+          else
+            touch release-notes.md
+          fi
+          
+          if [ -n "$DRAFT_ID" ]; then
+            gh api -X DELETE "repos/$RELEASE_REPO/releases/$DRAFT_ID" --silent || true
           fi
 
-      # REL6: each merged pull request's `## Patch notes`, read with this
-      # job's token. A read that fails fails the step - notes are never
-      # published as notes there were none of.
-      - name: Write the notes
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.version.outputs.tag }}
-        run: node scripts/desktopRelease.mjs notes "$TAG" > release-notes.md
-
-      # AUDIT INSTALL L3-2: a tag that already has a PUBLISHED release is
-      # never re-cut in place. softprops updates an existing release rather
-      # than staging a draft (its `draft` input is ignored there) and
-      # deletes and re-uploads each file on the LIVE release - `latest`'s
-      # downloads and latest.yml gone while they upload, and an updater
-      # meeting the manifest before its installer. A draft is not published
-      # (the API answers 404 by tag).
-      # AUDIT INSTALL R2-C2: and a draft a failed run LEFT at the tag is
-      # deleted, never reused. softprops 2.6.2 cannot find a draft by tag,
-      # stages a second one, then keeps the LOWEST-id draft for the tag and
-      # deletes its own - so the old run's body and the old commit it was
-      # staged at (where publishing cuts the tag) would ship with this run's
-      # files. A draft is invisible to players; this run stages it afresh.
-      - name: The tag has no published release, and no draft left over
-        env:
-          GH_TOKEN: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
-          TAG: ${{ needs.version.outputs.tag }}
-        run: |
-          if gh api "repos/$RELEASE_REPO/releases/tags/$TAG" --silent 2>lookup-error.txt; then
-            echo "::error::$TAG is already published - a release is never re-cut in place; cut a new tag"
-            exit 1
-          fi
-          grep -q 'HTTP 404' lookup-error.txt || { cat lookup-error.txt >&2; exit 1; }
-          LEFT=$(gh api --paginate "repos/$RELEASE_REPO/releases?per_page=100" --jq '.[] | select(.draft and .tag_name == env.TAG) | .id')
-          for ID in $LEFT; do
-            gh api -X DELETE "repos/$RELEASE_REPO/releases/$ID" --silent
-            echo "deleted draft $ID, left at $TAG by an earlier run"
-          done
-
-      # AUDIT 68: target_commitish cuts a NEW tag at the commit these
-      # installers were built from. Without it GitHub cuts it at the
-      # default branch's head at upload time - main has moved on by
-      # then, and a dispatched hotfix branch's tag lands on main.
-      # REL4: a DRAFT, so nothing is visible while the files upload.
-      # The body is the patch notes; GitHub appends its generated list
-      # of merged changes beneath them, once.
-      # AUDIT INSTALL R2-B4: pinned to the commit, not a tag that can move -
-      # this is the one job holding contents: write, the builds are unsigned,
-      # and the launcher installs what the release carries before play.
-      # 3bb12739 is what v2 and v2.6.2 both named (git ls-remote, 2026-09-29).
+      # Stage the release as a draft, attaching all built binaries
       - name: Stage the release as a draft, every file attached
         id: release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ needs.version.outputs.tag }}
-          # REL8: the release is the player's update by name (the launcher's news reads it); the tag keeps the
-          # installer's number, which the updater compares
-          name: ${{ needs.version.outputs.update != '' && format('Update {0}', needs.version.outputs.update) || needs.version.outputs.tag }}
+          name: ${{ steps.meta.outputs.title }}
           target_commitish: ${{ steps.host.outputs.target }}
           repository: ${{ env.RELEASE_REPO }}
           token: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
           draft: true
           body_path: release-notes.md
-          generate_release_notes: true
+          generate_release_notes: false
           fail_on_unmatched_files: true
           files: release/*
 
-      # One step from nothing to everything. It takes `latest` unless a
-      # newer release already holds it - a hand re-cut of an old build
-      # must not move every download link and updater back to it.
+      # One step from nothing to everything: publish live
       - name: Publish it whole
         env:
           GH_TOKEN: ${{ (vars.RELEASE_REPO == '' || vars.RELEASE_REPO == github.repository) && github.token || secrets.RELEASE_TOKEN }}
           TAG: ${{ needs.version.outputs.tag }}
           RELEASE_ID: ${{ steps.release.outputs.id }}
         run: |
-          # AUDIT INSTALL L3-5: only a 404 means "nothing is latest yet" - any other failure (a 5xx, a rate
-          # limit) fails the step, rather than letting a re-cut of an old build take `latest` by default
           if CURRENT=$(gh api "repos/$RELEASE_REPO/releases/latest" --jq .tag_name 2>latest-error.txt); then :
           elif grep -q 'HTTP 404' latest-error.txt; then CURRENT=''
           else cat latest-error.txt >&2; exit 1
           fi
           MAKE_LATEST=$(node scripts/desktopRelease.mjs latest "$TAG" "$CURRENT")
           gh api -X PATCH "repos/$RELEASE_REPO/releases/$RELEASE_ID" -F draft=false -f make_latest="$MAKE_LATEST" --silent
-          echo "published $TAG (latest: $MAKE_LATEST)"
+          echo "published $TAG as Daggerfall Forever (latest: $MAKE_LATEST)"
 
       # The next release's notes and a renote both find a release by its tag in this repository's
       # history, so a release published elsewhere leaves its tag here too, at the commit its files

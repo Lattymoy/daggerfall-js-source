@@ -95,9 +95,9 @@ test('AUDIT BOUNTY1 B4: the relay pins say who moved it - BOUNTY1 + AUDIT 28 (wo
   }
 });
 
-test('AUDIT BOUNTY1 B5: the board\'s press rides the streaming host alone (NOTICE-PANEL, PIN MOVED: the town panel\'s Bounty Board, no board in the street); the fixed city and the standalone dungeon keep none', () => {
+test('AUDIT BOUNTY1 B5: the board\'s press rides the streaming host: physical boards stand in the street; the fixed city and the standalone dungeon keep none', () => {
   const m = read('src/scenes/worldModes.js');
-  assert.doesNotMatch(m, /openBountyBoard|BOUNTY_BOARD_TEXT|board:\$\{i\}/, 'no board in the street\'s ray, nor its plaque');
+  assert.match(m, /BOUNTY_BOARD_TEXT|board:\$\{i\}/, 'board in the street\'s ray and plaque');
   const w = read('src/scenes/world.js');
   assert.match(w, /openBounty: \(town\) => bountyHost\?\.openBoard\(town\) \?\? false,/, 'the streaming host hands the panel\'s press to the bounty host');
   assert.match(w, /bounty: \(\) => !!bountyHost,/, 'and offers it in every settlement where hunts are kept');

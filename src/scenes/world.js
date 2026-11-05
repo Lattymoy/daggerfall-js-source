@@ -12,6 +12,7 @@ import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlo
 import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // WW-C2: the open zone is Cyrodiil's
 import { createZoneHalls } from './zoneHallsHost.js';   // WW-C2: the zone's halls and their ground, out of bootWorld   // ZONE-GIANTS
 import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: PlayerGPS.ResetState, the jump core's
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
@@ -102,7 +103,7 @@ import { farFlatVisibleAt } from '../world/flatDistance.js';   // MAC1: the far 
 import { updateCityGate } from '../world/city/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { targetAimPoint, missileAimDirection, isLocalPlayerTarget, PLAYER_TARGET } from '../characters/enemy/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise); HCC: CollectThreats' `senses.Target == player`
 import { setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
-import { installConsoleProbe, registerCommand } from '../systems/consoleCommands.js';   // E3: the console's door; CSA-C: the mod's commands
+import { installConsoleProbe, registerCommand, setDebugSceneContext } from '../systems/consoleCommands.js';   // E3: the console's door; CSA-C: the mod's commands
 import { registerTravelMapConsoleCommands } from '../ui/travel/travelMapWindow.js';   // E3: TravelMapConsoleCommands
 // E3: ...and the person HOST the quest machine's away arm writes through.
 // It is not interior law - it is the StaticNPC GameObject's one act,
@@ -191,7 +192,7 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat, STAT_KEYS_ORDER, clampFatigue
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/rest/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, deedStands, regionDeedOf, allDeeds, regionHousesFull, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, deedStands, regionDeedOf, allDeeds, regionHousesFull, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, syncUnifiedBankAccounts, empireAccountLines, goldRegion, isUnifiedBankActive } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
@@ -494,7 +495,7 @@ import { withIndoorFloor, indoorSceneY, keepIndoorFloor } from '../net/peer/indo
 import { createPeerRange, peerRangeOf } from '../net/peer/peerRange.js';   // PEER-RANGE: the others drawn out to the distance on the Other players card
 import { gateLandingFor, courtRing, courtArena, courtArenaAt, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gate/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
-import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
+import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText, rollOfflineRespawnHours, timePassedText, offlineRespawnOn } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { restorePlayer, resolvePendingSpells, restoreSessionState, dungeonPixelFor } from '../systems/save/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, capturePendingScreenshot, exitAutosaveNames, enumerateSaves, onSlotSaved, onSlotLoaded, slotLoaded } from '../systems/save/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
@@ -757,6 +758,7 @@ import { createFaceLoader } from '../ui/partyPanel.js';   // LEGACY3: a member's
 import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } from '../systems/inventory.js';   // LEGACY1: the estate
 import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
 import { monthNames } from '../systems/gameDate.js';   // L10N3e: the month's name in the player's language, read when asked
+import { bulletinBoardRows } from '../systems/bulletinBoard.js';
 import { createBountyHost, bountyDungeonPixel } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
 import { standBountyDungeonPack } from './bountyDungeonPack.js';   // BOUNTY1: a bounty's pack underground, out of bootWorld (HOST-SPLIT)
 import { huntOnline } from './huntersMark.js';   // HUNTERS-MARK: the hunt's ledger, the bounty host's
@@ -855,7 +857,8 @@ import { readAccount, buyInsignia, settleBrokerSale, adoptIdentity as adoptSessi
 import { ownNameAsAt } from '../systems/ownGlyphs.js';   // NAME-AS: when this device last chose the name its player wears (WB9g's aura at my own feet is scenes/auraHost.js's now)
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
 import { createFirmamentBook, setFirmamentBook } from '../net/firmament/firmamentBook.js';   // FIRM1: the Firmament - this device's tree and purses
-import { setFirmamentTree, setFirmamentOnline } from '../systems/firmamentLive.js';   // FIRM1: the tree in force, online alone
+import { setFirmamentTree, setFirmamentOnline, setFirmamentOffline } from '../systems/firmamentLive.js';   // FIRM1: the tree in force, online alone
+import { isOfflineFirmamentActive, createOfflineFirmamentBook, initOfflineRenown, onOfflineFoeKilled, onOfflineQuestEnded } from '../systems/offlineFirmament.js';
 import { starsFor } from '../net/firmament/firmamentLaw.js';   // FIRM1: the Stars a Renown level brings, said with it
 import { withoutFirmament } from '../systems/firmamentPowers.js';   // FIRM1: a strike or a spell at a player - a duel's, a siege's, the Wrothgarian zone's - is rolled with the sky off
 import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountWild, accountRenown, accountRoll, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds, accountLamp, accountFirmament, nameWhyText } from '../net/accountClient.js';   // NAME-AS: nameWhyText, why my character's name stood aside   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
@@ -881,6 +884,8 @@ import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/
 import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; AUDIT SEATS-3 D3: a board's Tithe (SEAT-HALL's and CROWN-HALL's halls: scenes/seatHallHost.js)
 import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
+import { createOfflineHomes, createOfflineDecor, isOfflineHouseOwned } from '../systems/offlineHomes.js';
+import { isOfflineHousingActive } from '../systems/uiPrefs.js';
 import { createHomesBoot } from './homesBootHost.js';   // KNIGHT-HOUSE's deed holds and ACCOUNT-HOMES' sweep, once a boot
 import { createTownPanelHost, panelTownOf } from './townPanelHost.js';   // NOTICE-PANEL: the town panel under the compass - the boards' presses, in any settlement
 import { clearVendorWaypoint, vendorWaypoint, vendorWaypointKey } from '../systems/vendorWaypoint.js';   // HOME-VENDOR: the trader's waypoint
@@ -1414,6 +1419,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const loansForgiven = realmBoot ? forgiveLoans(bootSnapRead) : null;   // LOAN-AMNESTY: the Empire's amnesty, into the one parse before it is restored and before the join settles a loan (systems/banking.js)
   const releveled = realmBoot && bootSnapRead ? crossLeveling(bootSnapRead) : false;   // LEVEL-ONLINE-3: an Oblivion-levelling realm character onto Daggerfall's leveling, into the one parse before it is restored (systems/realmCustoms.js)
   const empireFolded = realmBoot ? foldEmpireAccounts(bootSnapRead) : null;   // EMPIRE-ACCOUNT: every branch's gold into the Empire's one account, before it is restored and before the join settles a loan (systems/banking.js)
+  const unifiedFolded = (!realmBoot && isUnifiedBankActive()) ? syncUnifiedBankAccounts(bootSnapRead ?? bootSnap?.(), true) : null;
   if (refuseOnlinePowerFlags(params).length) publishBootParams(params);   // REALM P0.1: ?shot, ?fly, ?nofoes and the rest - dropped online before anything below reads them
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
@@ -1429,6 +1435,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _sharedClockHeard = false;   // AUDIT ONLINE2 F2: whether it has been - a receipt's life is the relay's, never this device's
   setSigilOnline(params.has('online'));   // SIGIL1: this session plays online - before any list is minted (a pile rolls at a dungeon's build)
   setFirmamentOnline(params.has('online'));   // FIRM1: and the Firmament is in force online alone
+  if (!params.has('online') && isOfflineFirmamentActive()) setFirmamentOffline(true);
   // SET3: THE SETS' VOICE - a power's line on the HUD (the default), and its sound: Unbroken's the parry's ring, the
   // Wrath's a fire cast (element 0), Eventide's a magic cast (element 4 - Chameleon's own, as its bundle carries)
   setSetsWearer(() => playerEntity);   // SET5: the classic tooltip's and a plaque's set lines read my worn sets
@@ -1965,6 +1972,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // off `params`: `onlineOn` is declared far below, and a quest can be set up before it is. (Its door, `homesApi`, stands
   // above the data's read - BOOT-OVERLAP.)
   const onlineHomes = homesApi ? createOnlineHomes({ api: homesApi, character: () => characterIdOf(playerEntity), onWrote: () => legacyOnlineHomesRead(), onHomes: () => homesLearned() }) : null;   // QUEST-HOME: and a home learned of, a quest site not yet reached in it chosen again   // LEGACY7 part five: a home of mine bought, sold or changed - the line's to learn again
+  const offlineHomes = !homesApi ? createOfflineHomes({
+    player: () => playerEntity,
+    sceneCache: () => _sceneCache(),
+    onHomes: () => homesLearned(),
+    onWrote: () => homesLearned(),
+  }) : null;
+  const activeHomes = onlineHomes || (isOfflineHousingActive() ? offlineHomes : null);
+  const _offlineDecor = !homesApi ? createOfflineDecor() : null;
   /** LEGACY7 part five: ONLINE, THE LINE'S HOUSES ARE ITS MEMBERS' ONLINE HOMES (Legacy-Arc 10b) - ACCOUNT-HOMES
    *  (2026-10-06): a home is its account's, every member's, so they are the account's rows of /v1/homes/mine (its homes
    *  and the deeds the realm gave its characters), each named by its town, and the line learns them WHOLE (heldHousesWhole:
@@ -2201,7 +2216,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const bank = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;   // EMPIRE-ACCOUNT
         return { gold: () => totalGoldAmount(playerEntity) + Math.max(0, bank?.accountGold ?? 0), pay: (n) => payUndoable(playerEntity, n, bank), credit: (n) => addGold(playerEntity, n), region: () => region };
       } })
-    : null;
+    : (isOfflineFirmamentActive() ? createOfflineFirmamentBook({ entity: playerEntity, wallet: () => {
+        playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+        const region = _questRegionIndex() ?? 0;
+        const bank = playerEntity.bankAccounts[goldRegion(playerEntity.bankAccounts, region)] ?? null;
+        return { gold: () => totalGoldAmount(playerEntity) + Math.max(0, bank?.accountGold ?? 0), pay: (n) => payUndoable(playerEntity, n, bank), credit: (n) => addGold(playerEntity, n), region: () => region };
+      } }) : null);
   setFirmamentBook(firmBook);
   firmBook?.onChange((st) => setFirmamentTree(st.tree));
   // PROF5 (bible/06-Systems/Professions-Arc.md 26): the market's book - the Market tab's reads through a minute's cache,
@@ -3517,6 +3537,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         if (!b || !town) return null;
         // LEGACY-HOME: a house of Project Legacy's family holds the line and no one else - the one played's own included
         if (legacyHost?.isFamilyHouse({ mapId: b.townMapId ?? 0, buildingKey: b.buildingKey })) return { key: b.buildingKey, town, only: isFamilyRes };
+        if (isOfflineHousingActive() && isOfflineHouseOwned(b.townMapId ?? 0, b.buildingKey)) return null;
         return modes?.interiorCtx?.ownedRoom ? null : { key: b.buildingKey, town };   // AUDIT-E1: never a player's own room
       },
       collider: () => modes?.interiorCollider ?? null,
@@ -6175,7 +6196,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // online" a frame later; and not on the reset, which a fast F11
       // reaches before that frame. The reset reads this snapshot.
       _deathWasOnline = _onlineWorldSession();
-      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))), rises: () => legacyHost?.willRise() ?? false }));   // D1; D-ONLINE1: online play respawns instead of ending the run; LEGACY1: Project Legacy asked first; BAL4: and the screen knows a rise is coming (the respawn's loss stated)
+      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (legacyDeathReset() || ((_deathWasOnline || offlineRespawnOn()) ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))), rises: () => legacyHost?.willRise() ?? false, offlineRespawn: offlineRespawnOn() }));   // D1; D-ONLINE1: online play respawns instead of ending the run; LEGACY1: Project Legacy asked first; BAL4: and the screen knows a rise is coming (the respawn's loss stated); OFFLINE-RESPAWN: offline respawn option
       // RISE-STUCK (Ninilac: "fast travelling while playing online ...
       // climb a wall that was in the way and died"): A DEATH ENDS THE
       // JOURNEY - the mod's own "pauseTravel" message (TravelOptionsMod
@@ -11659,6 +11680,21 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     all.length = BANNERS_MAX;
     return all;
   };
+  const _offlineHousingRealmAct = async (o) => {
+    const undo = o?.reserve ? o.reserve() : null;
+    let r = null;
+    if (typeof o?.call === 'function') {
+      try { r = await o.call(null); } catch (e) { r = { ok: false, error: e?.message || 'call-failed' }; }
+    } else {
+      r = { ok: true };
+    }
+    if (r?.ok) {
+      try { o?.apply?.(r); } catch (e) { console.warn('[offline-housing] realmAct apply failed:', e); }
+    } else {
+      try { undo?.(); } catch {}
+    }
+    return r;
+  };
   const yards = homeDecor && onlineHomes ? createHomeYards({
     api: homeDecor, homes: onlineHomes, built: () => built, translation: (px, py) => state.pixelTranslation(px, py),
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
@@ -11681,7 +11717,29 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     look: { preview: (mapId, bk, look) => previewHomeLook(mapId, bk, look), season: () => season },   // HOME-LOOK
     heard: () => !homeLayoutsOnline || (_homeLayoutsApplied && !worldDataPacksMissing().length),   // WD3 (AUDIT WD3 R6, B1): the homes' towns' layouts, heard and standing
     now: () => Date.now(),
-  }) : null;
+  }) : (isOfflineHousingActive() && _offlineDecor && offlineHomes ? createHomeYards({
+    api: _offlineDecor, homes: offlineHomes, built: () => built, translation: (px, py) => state.pixelTranslation(px, py),
+    feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
+    outside: () => _mode() === 'exterior' && playerSpawned && !player.riding,
+    eye: () => cam.pos,
+    cull: (box) => yardCull(box),
+    range: () => getPref('yardRange'),
+    collider: () => collider, meshes: { getGpuMesh, cpuModels, hold: (kind, key) => pipeline.holdPlace?.(kind, key) ?? null }, renderer, getTexture, uploadRecord, uploadRecordFrame,
+    iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
+    scanDeps: () => decorScanDeps({ blocks, arch, getTexture }),
+    seasonal: () => (seasonsActive ? seasons : null),
+    trees: lowPolyTrees ? { door: lowPolyTrees, sway: (proto, share) => _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, share)), windfall: (proto, share) => _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, share)) } : null,
+    character: () => characterIdOf(playerEntity),
+    realm: () => _offlineHousingRealmAct,
+    wallet: (region) => homeYardWallet(playerEntity, region), regionOf: (y) => built.get(`${y.px},${y.py}`)?.homeRegion ?? 0,
+    doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null, canvas, touch: isTouchDevice(),
+    actionOf: (e) => actionOf(e, keys), locked: () => typeof document !== 'undefined' && document.pointerLockElement === canvas,
+    cursorOff: () => setCursorActive(false), stick: () => touch?.axes() ?? gamepad?.axes() ?? null,
+    say: (l) => townTalk.say(l), refusal: (w) => accountRefusalText(w), openSlot: (o) => townTalk.showOverlay(o),
+    look: { preview: (mapId, bk, look) => previewHomeLook(mapId, bk, look), season: () => season },
+    heard: () => true,
+    now: () => Date.now(),
+  }) : null);
   let _farmSyncT = 0;   // BOUNTY-FARM: the pool is brought in line twice a second
   /** SCALE4c: when the online lane last ran, for the letterbox's heartbeat part (the board's: townPanelHost.js boardTown). */
   let _mailFrameAt = -Infinity;
@@ -13955,7 +14013,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!(playerEntity.health > 0)) { reviveForPlay(playerEntity); surfacePlayer(); }
       ohAbyss?.onRespawnerComplete();   // OH-D: the port's own respawn - a respawn anywhere but the bound abyss clears it, as the respawner's does
       if (diedInHour) { gateVeil?.flash('hourCast'); kind = 'hour'; }   // AUDIT SD II (L6 F4): the Hour's veil, and its own words; SD-LOOK: its face shattered
-      townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took
+      let timeLine = '';
+      if (!sharedClockOn()) {
+        const hoursPassed = rollOfflineRespawnHours();
+        setSyntheticTimeIncrease(true);
+        playerTicker.advance(hoursPassed * 60);
+        _lastEncMinutes = Math.floor(playerTicker.ownMinutes);
+        timeLine = timePassedText(hoursPassed);
+        try { worldQuickSave?.('AutoSave', { quiet: true }); } catch { /* quiet autosave */ }
+      }
+      townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), timeLine, took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took; OFFLINE-RESPAWN: time passed
     }).catch((e) => {
       // RISE-STUCK: A RISE THAT THREW STILL RISES. The heal ran first
       // (MAC-D3), so the player is alive; a screen left up here has its
@@ -15804,7 +15871,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // FB1020c STREETS-TAB: and the streets the travel key's window holds in a town (`travelTown`, spread at
   // toggleTravelMap's door) - one bag with the M key's
   const { toggleExteriorAutomap, travelTown } = createExteriorAutomapToggle({   // HOST-SPLIT: src/scenes/exteriorAutomapToggle.js
-    built, cam, cpuModels, getGpuMesh, locationIndex, maps, onlineHomes, player, playerTravelPixel,
+    built, cam, cpuModels, getGpuMesh, locationIndex, maps, onlineHomes: activeHomes, player, playerTravelPixel,
     questBuildingSource, state, townTalk, walkMode, weaponRig,
     get activeQuestIds() { return activeQuestIds; },
     get hudArt() { return hudArt; },
@@ -17228,7 +17295,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const { questWorld } = createQuestWorld({   // HOST-SPLIT: src/scenes/questWorld.js
     NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
     _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
-    homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
+    homeLayoutsOnline, maps, navalDeckBody, onlineHomes: onlineHomes || offlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
     playerTravelPixel, provinceQuestPlaces, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,   // AUDIT RELEASE R2-5: the places past the Bay (a province's region; START2's start lair among them)
     get _homeLayoutsApplied() { return _homeLayoutsApplied; },
     get _liveSharer() { return _liveSharer; },
@@ -18923,7 +18990,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     character: () => characterIdOf(playerEntity),
     region: () => { const px = playerTravelPixel(); const r = maps.getRegionIndexAt(px.x, px.y); return Number.isSafeInteger(r) ? r : null; },   // SEAT1b: where the XP was earned - a pledged seat's region counts it (Seats-Arc 4.2)
     name: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : null),
-    earning: () => !!online && !seatOut() && _renownCapHour !== renownHour(),   // ONE-SEAT: a tab another took the seat from earns nothing - its character is not online. SCALE4h: nor does an hour the bound has spent - the service credits nothing in it, the sigils drink nothing and the bar draws no ghost (each as the page last heard it), so it is no longer reported every minute to be credited nothing
+    earning: () => !!online && !seatOut(),   // ONE-SEAT: a tab another took the seat from earns nothing; real-time hourly cap removed
     onAnswer: (data, sent) => {
       const a = renownAnswer(data, sent, renownSaid);   // AUDIT RENOWN1: one pure plan (net/renownTracker.js), pinned there
       renownXpAdopt(a.xp);   // RENOWN4: the track's total, for my bar
@@ -18931,19 +18998,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       renownAdopt(a.level);
       if (a.order) online?.sendRenownOrder?.(a.order, a.level);   // the rooms I am in hear it now - and again until each answers
       if (a.announce !== null) renownRose(a.announce);   // FIRM1: said as a level is
-      // AUDIT SCALE II C-3: THE CAP IS THE SENT HOUR'S. A report sent at 10:59:59.7 and answered capped at 11:00:00.3 spoke
-      // of hour 10 - stamped with the hour it ARRIVED in, it marked hour 11 spent, and `earning` then kept nothing for the
-      // whole of hour 11. A cap is kept only while the hour it was sent in is still the page's
-      if (a.capped) {
-        const hour = renownHour();
-        if (_renownSentHour === hour && _renownCapHour !== hour) { _renownCapHour = hour; tradeSay('You have earned the most Renown allowed this hour. Fighting still raises your skills.'); }
-      }
     },
     // AUDIT RENOWN1 UI-4: a refusal that ends reporting is SAID - the sentences were written and nothing ever showed them
     onStop: (error) => tradeSay(`${accountRefusalText(error)} This character is earning no Renown.`),
-    // SCALE4h: at the minute's pace only while the answer says what the page cannot - a rise, the hour's bound, a total or
+    // SCALE4h: at the minute's pace only while the answer says what the page cannot - a rise, a total or
     // a room not known; else every RENOWN_COALESCE_MS, what waits drawn as the bar's ghost
-    soon: () => renownReportSoon({ xp: renownXp, pending: renownTracker?.pending() ?? 0, capped: _renownCapHour === renownHour(), hourLeftMs: renownHourLeftMs(),
+    soon: () => renownReportSoon({ xp: renownXp, pending: renownTracker?.pending() ?? 0, capped: false, hourLeftMs: null,
       room: _renownRoom && _renownRoom.hour === renownHour() && _renownRoom.xp === renownXp ? _renownRoom.room : null }),
   }) : null;
   // CHAP1 (bible/11-Multiplayer/Chapters-Arc.md 3; Mac: "Server-owned"): THE ROLL - online, this realm character's
@@ -18975,12 +19035,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return seatRankAt(rollTracker.seats, faction, region);
   };
   // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
-  // rise to a new stage is said (systems/sigil/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
-  // the service keeps nothing, and the sigil drinks nothing either - as the page last heard it.
+  // rise to a new stage is said (systems/sigil/sigil.js drinkSigil: nothing while my Renown is unknown).
   // SET4: and so does every set piece I wear, each once - a rise said once a set, the weapon's own line unless its set
   // just said one (systems/sigil/sigilSets.js drinkWorn) - and a set that rose has its tiers' numbers folded at once.
   const sigilDrinks = (xp) => {
-    if (_renownCapHour === renownHour()) return;
     const held = (modes?.liveArm?.()?.rig ?? weaponRig).playerWeapon?.strikingWeapon ?? null;   // AUDIT SET D1: the MODE's rig - indoors and underground world.js's own is never readied, so the weapon I fought with there never drank
     const drank = drinkWorn(playerEntity, held, xp, itemLongName);
     for (const line of drank.lines) townTalk.say(line);
@@ -19002,6 +19060,23 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const xp = renownQuestXp(playerEntity.level, renownNow);   // RENOWN3: the quest's level read against my Renown too
       renownTracker.earn(xp, villainQuestLowers());   // PVP-VILLAIN-KEEP: a quest done lowers the villain meter
       sigilDrinks(xp);   // SIGIL1
+    };
+  } else if (isOfflineFirmamentActive()) {
+    initOfflineRenown({
+      playerEntity,
+      firmBook,
+      say: (t) => townTalk?.say?.(t),
+    });
+    setRenownKillHandler((foe) => {
+      onOfflineFoeKilled(foe);
+    });
+    const paid = new Set();
+    renownQuestEnded = (q) => {
+      if (!q?.questSuccess) return;
+      const key = String(q.uid ?? q.questName ?? '');
+      if (!key || paid.has(key)) return;
+      paid.add(key);
+      onOfflineQuestEnded(playerEntity);
     };
   }
   // ACC4 (Mac: "time played to the icon profile"): THE WORLD IS WHERE
@@ -27173,7 +27248,20 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL IN THE STREETS (scenes/witchesHost.js) - the town
   // underfoot's Hearth Offerings stood at their doors, taken from and filled; the Wyrd Sisters' window; the finds' doors.
   // The dressing and the Sisters themselves are the build's (scenes/pixelBuild.js, world/witchesDecor.js)
-  witches = createWitchesHost({ built, renderer, pipeline, onlineHomes, townTalk, state, player, saveSoon, chatNotice, mode: _mode, get online() { return online; } });
+  witches = FORK_FLAGS.ENABLE_SEASONAL_EVENTS ? createWitchesHost({ built, renderer, pipeline, onlineHomes, townTalk, state, player, saveSoon, chatNotice, mode: _mode, get online() { return online; } }) : null;
+  const _activeHomeDecor = homeDecor || {
+    list: (...a) => isOfflineHousingActive() ? _offlineDecor.list(...a) : Promise.resolve({ ok: false }),
+    rev: (...a) => isOfflineHousingActive() ? _offlineDecor.rev(...a) : Promise.resolve({ ok: false }),
+    place: (...a) => isOfflineHousingActive() ? _offlineDecor.place(...a) : Promise.resolve({ ok: false }),
+    move: (...a) => isOfflineHousingActive() ? _offlineDecor.move(...a) : Promise.resolve({ ok: false }),
+    remove: (...a) => isOfflineHousingActive() ? _offlineDecor.remove(...a) : Promise.resolve({ ok: false }),
+    hidden: (...a) => isOfflineHousingActive() ? _offlineDecor.hidden(...a) : Promise.resolve({ ok: false }),
+    batch: (...a) => isOfflineHousingActive() ? _offlineDecor.batch(...a) : Promise.resolve({ ok: false }),
+    use: (...a) => isOfflineHousingActive() ? _offlineDecor.use(...a) : Promise.resolve({ ok: false }),
+    yardCells: (...a) => isOfflineHousingActive() ? _offlineDecor.yardCells(...a) : Promise.resolve({ ok: false }),
+  };
+  {
+  const homeDecor = _activeHomeDecor;
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
   // and read undefined rather than throw a TDZ ReferenceError. Every
@@ -27504,7 +27592,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // live online play, so the caller falls back to endRunToTitleMenu
     // exactly as it always did offline.
     duelHolds: () => duelEnemyNear(),   // DUEL1: a live duel holds its duellist - no door out of the ring
-    onlineRespawn: () => { if (legacyDeathReset()) return true; if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // LEGACY1: Project Legacy asked first, in a building and underground too   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
+    onlineRespawn: () => { if (legacyDeathReset()) return true; if (!offlineRespawnOn()) { if (!(_deathWasOnline ?? _onlineWorldSession())) return false; } respawnOnlinePlayer(); return true; },   // LEGACY1: Project Legacy asked first, in a building and underground too   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline; OFFLINE-RESPAWN
     exteriorSubmerged: () => !!dwPlayer?.submerged,   // DW-D: the sea's forged isPlayerSubmerged, for the router's avoid-death consult
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
@@ -27663,7 +27751,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),
     // HOME1: the online homes' registry (null offline), and my party's names as the relay signs them - a home its owner
     // opened to their party opens to a player whose party holds the owner (net/homeLaw.js homeMayEnter)
-    onlineHomes,
+    get onlineHomes() { return onlineHomes || (isOfflineHousingActive() ? offlineHomes : null); },
     homesApi,   // HOME-RENT: a home's rooms, through the service's own door (null offline)
     // GUILD1d: the playing character's guild, for its hall - whether a guildmaster may buy one at a house's door (asked
     // again, without waiting, when the guild book's look is old), the hall bought and opened through the book, and the
@@ -28000,6 +28088,66 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return out;
     },
     activateGrave: (g, mode) => activateGrave(g, mode),   // SEARCH1
+    boardTargets: () => {
+      const out = [];
+      for (const p of built.values()) {
+        if (!p.boards?.length) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        const dfLoc = locationIndex.get(`${p.px},${p.py}`);
+        const bountySet = p.bounty ?? new Set();
+        p.boards.forEach((b, i) => {
+          out.push({
+            box: {
+              min: [b.box[0] + t[0], b.box[1] + t[1], b.box[2] + t[2]],
+              max: [b.box[3] + t[0], b.box[4] + t[1], b.box[5] + t[2]],
+            },
+            isBounty: bountySet.has(i),
+            px: p.px,
+            py: p.py,
+            name: dfLoc?.name ?? '',
+            mapId: dfLoc?.mapTableData?.mapId ?? null,
+          });
+        });
+      }
+      return out;
+    },
+    activateBoard: (idx) => {
+      const boards = [];
+      for (const p of built.values()) {
+        if (!p.boards?.length) continue;
+        const dfLoc = locationIndex.get(`${p.px},${p.py}`);
+        const bountySet = p.bounty ?? new Set();
+        p.boards.forEach((b, i) => {
+          boards.push({
+            isBounty: bountySet.has(i),
+            px: p.px,
+            py: p.py,
+            name: dfLoc?.name ?? '',
+            mapId: dfLoc?.mapTableData?.mapId ?? null,
+          });
+        });
+      }
+      const target = boards[idx];
+      if (!target) return false;
+      const town = { px: target.px, py: target.py, name: target.name, mapId: target.mapId };
+      if (target.isBounty) {
+        return bountyHost?.openBoard(town) ?? false;
+      }
+      const shownName = town.name;
+      const rows = bulletinBoardRows(shownName, rumorMill.getNewsOrRumorsForBulletinBoard(), tokenRows);
+      const notice = {
+        mapId: town.mapId,
+        px: town.px,
+        py: town.py,
+        name: town.name,
+        bountyLine: !!bountyHost,
+      };
+      if (openNoticeBoard(notice, rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === shownName)))) {
+        return true;
+      }
+      townTalk.showOverlay(new ChoiceWindow({ lines: rows.map((r) => r.text) }));
+      return true;
+    },
     lampClaim: _accountLamp ? () => _accountLamp.claim() : undefined,   // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp, the account's
     lampAccount: _accountLamp ? () => _accountLamp.account() : undefined,   // AUDIT FIVE-ASKS D2: whose it is - another sign-in asks afresh
     monumentTargets: () => lefay?.targets() ?? [],   // LEFAY1: the monuments, in the street's one ray
@@ -28062,6 +28210,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return { ...d, regionIndex: dfLoc.regionIndex, townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, townBlocks: homeTownBlocks(dfLoc), ...townTalk.doorTownOf(dfLoc, d) };   // HOME1: the town the DOOR is in keys its home, not the one under the player; HOME-PRICE: and its size prices it; IC-PROPS: and its own name, its book and its town's name - the door's town's, never the player's (a neighbouring slice of the Imperial City)
     },
   });
+  }
   wireOwnerClock([exteriorFoes, cityGuards], modes, () => online?.status === 'open' && online.othersHere > 0);   // OWNER-CLOCK (scenes/ownerCatchUp.js): while anyone else is in my room (on the street the 16-pixel cell, wider than the 3 pixels my foes frames are fanned across) the street's foes take my clamped frame in FOE-CATCHUP's steps - my player's pace, never past it - and every step of mine is marked on the clock my foes frames carry; HOST-CLOCK: the watch with them (its brains already ran on the street's clock), the mode machine's frames the catch-up's, and a building's and a dungeon's foes through the same page's catch-up from their own hosts
   // AT2: AMBIENT TEXT CLAIMS ITS HOST. The mod is one GameObject made
   // at load and never destroyed (systems/ambientText.js), so the slot
@@ -28151,6 +28300,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   for (const line of reclaimLines(realmGiven)) townTalk.say(line);   // RESTORE: what came back, said once the world stands
   for (const line of loanAmnestyLines(loansForgiven)) townTalk.say(line);   // LOAN-AMNESTY: said once the world stands
   for (const line of empireAccountLines(empireFolded)) townTalk.say(line);   // EMPIRE-ACCOUNT: said once the world stands
+  if (unifiedFolded) for (const line of empireAccountLines(unifiedFolded)) townTalk.say(line);
   // EOTB-IL: StartGameBehaviour.OnNewGame (the mod's handler, IL_0930) -
   // a boot that loaded nothing is a new game, wherever it starts
   if (!_loadedGame) mwViewNewGame((modes?.mode ?? 'exterior') !== 'exterior');
@@ -28178,6 +28328,97 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // __addGold. LypyL_GameConsole ships True, and the door's verbs
   // mint (Come Sail Away's giveboat and placeboat, a deed each).
   if (!params.has('online')) installConsoleProbe();
+  setDebugSceneContext({
+    setPlayerPos: (x, y, z) => {
+      if (typeof player?.spawn === 'function') player.spawn(x, y, z);
+      else if (player?.pos) { player.pos[0] = x; player.pos[1] = y; player.pos[2] = z; }
+    },
+    getPlayerPos: () => (player?.pos ? [...player.pos] : null),
+    killAllFoes: () => {
+      let count = 0;
+      if (exteriorFoes?.foes) {
+        for (const f of exteriorFoes.foes) {
+          if (!f.dead && (f.ai?.isHostile || f.entity?.team !== 'PlayerAlly') && !f.companion) {
+            exteriorFoes.damageFoe?.(f, 99999, null, null, { fromPlayer: true, bypassShield: true });
+            count++;
+          }
+        }
+      }
+      if (cityGuards?.guards) {
+        for (const g of cityGuards.guards) {
+          if (!g.dead && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly') {
+            cityGuards.hurtGuard?.(g, 99999, player.pos, null, { fromPlayer: true });
+            count++;
+          }
+        }
+      }
+      const dCtx = modes?.dungeonCtx;
+      if (dCtx?.foes) {
+        for (const f of dCtx.foes) {
+          if (!f.dead && (f.ai?.isHostile || f.entity?.team !== 'PlayerAlly') && !f.companion) {
+            dCtx.damageFoe?.(f, 99999, null, null, { fromPlayer: true, bypassShield: true });
+            count++;
+          }
+        }
+      }
+      const iFoes = modes?.interiorFoes;
+      if (iFoes?.foes) {
+        for (const f of iFoes.foes) {
+          if (!f.dead && (f.ai?.isHostile || f.entity?.team !== 'PlayerAlly') && !f.companion) {
+            iFoes.damageFoe?.(f, 99999, null, null, { fromPlayer: true, bypassShield: true });
+            count++;
+          }
+        }
+      }
+      return count;
+    },
+    tele2loc: async (name) => {
+      const places = staffTpPlaces({
+        locationIndex,
+        stood: _arenaTemplates ? arenaPixels()?.stood : null,
+        registry: worldPlaces,
+      });
+      const hit = findPlace(places, name);
+      if (!hit) return `Location "${name}" not found.`;
+      const pick = { pixel: { x: hit.px, y: hit.py }, name: hit.name };
+      hudFade.smashHUDToBlack();
+      const ok = await teleportTo(pick, { zoneFree: true });
+      if (!ok) hudFade.clearFade();
+      return ok ? `Teleported to ${hit.name} (${hit.px}, ${hit.py})` : `Failed to teleport to ${hit.name}`;
+    },
+    spawnFoe: async (mobileType, count = 1) => {
+      const p = player?.pos ? [...player.pos] : [0, 0, 0];
+      const yaw = cam?.yaw ?? 0;
+      const fwdX = Math.sin(yaw);
+      const fwdZ = Math.cos(yaw);
+      const rightX = Math.cos(yaw);
+      const rightZ = -Math.sin(yaw);
+      const dCtx = modes?.dungeonCtx;
+      const iFoes = modes?.interiorFoes;
+      let spawned = 0;
+      for (let i = 0; i < count; i++) {
+        const offsetDist = 2.5 + Math.floor(i / 3) * 1.5;
+        const offsetSide = ((i % 3) - 1) * 1.2;
+        const pos = [
+          p[0] + fwdX * offsetDist + rightX * offsetSide,
+          p[1],
+          p[2] + fwdZ * offsetDist + rightZ * offsetSide,
+        ];
+        const foeYaw = yaw + Math.PI;
+        if (modes?.mode === 'dungeon' && dCtx?.spawnFoe) {
+          await dCtx.spawnFoe(mobileType, pos, { yaw: foeYaw });
+          spawned++;
+        } else if (modes?.mode === 'interior' && iFoes?.spawnFoe) {
+          await iFoes.spawnFoe(mobileType, pos, { yaw: foeYaw, loose: true, feetGiven: true });
+          spawned++;
+        } else if (exteriorFoes?.spawnFoe) {
+          await exteriorFoes.spawnFoe(mobileType, pos, { yaw: foeYaw, loose: true, feetGiven: true });
+          spawned++;
+        }
+      }
+      return spawned;
+    },
+  });
   createWorldShotProbes({   // HOST-SPLIT: src/scenes/worldShotProbes.js
     arrows, cam, exteriorFoes, installTownProbes, magic, mapDict, maps, modes, openTeleportMap, player, playerTicker,
     playerTravelPixel, shotMode, townTalk, walkMode, worldQuickLoad,

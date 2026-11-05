@@ -18,7 +18,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { availableParallelism } from 'node:os';
-import { testFiles, readTimes, TIMES_FILE } from './testShards.mjs';
+import { testFiles, readTimes, TIMES_FILE, scopeOf } from './testShards.mjs';
 import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -44,7 +44,7 @@ export function mergeTimes(base, records, files) {
  *  tools/testTimes.json, written back; what it did, counted. */
 export function mergeDir(dir, root = ROOT) {
   const base = readTimes(root),
-    files = testFiles(root);
+    files = testFiles(root, { all: true });
   const records = readdirSync(dir, { recursive: true })
     .map((f) => String(f))
     .filter((f) => f.endsWith('.json'))
@@ -93,7 +93,7 @@ async function main(argv) {
   }
   const at = argv.indexOf('--jobs');
   const jobs = Math.max(1, at >= 0 ? Number(argv[at + 1]) || 1 : availableParallelism());
-  const files = testFiles();
+  const files = testFiles(ROOT, { scope: scopeOf(argv) });
   const times = {},
     failed = [];
   let next = 0,

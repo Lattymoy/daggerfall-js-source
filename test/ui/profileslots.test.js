@@ -83,7 +83,12 @@ test('PROFILE-SLOTS the section: a tile opens its picker; a choice pointed at is
   const bodies = { kinds: () => ['mw', 'sprite'], of: (/** @type {string} */ k) => Promise.resolve({ kind: k }) };
   const doc = slotsDoc();
   const entryOf = (/** @type {string} */ kind, /** @type {string} */ key) => ({ how: () => `Buy the ${key} (${kind}) from the shop.` });
-  const slots = characterSlots(doc, flow, { start: (canvas, o) => { started.push(o); return stage; }, bodies, entryOf, gap: 5, who: () => ({ name: 'Aelwyn', lv: 12 }) });
+  const defaultSlots = characterSlots(doc, flow, { bodies, entryOf, gap: 5, who: () => ({ name: 'Aelwyn', lv: 12 }) });
+  const defaultSec = defaultSlots.node();
+  assert.equal(defaultSec.all.filter((n) => n.tag === 'button' && n.className.startsWith('slottile')).length, 6, 'armory slots hidden by default when ENABLE_ARMORY is false');
+  assert.equal(defaultSlots.state().picked, 'plate', 'plate picked first when armory slots are hidden');
+  defaultSlots.dispose();
+  const slots = characterSlots(doc, flow, { start: (canvas, o) => { started.push(o); return stage; }, bodies, entryOf, gap: 5, who: () => ({ name: 'Aelwyn', lv: 12 }), enableArmory: true });
   const paint = () => { sec = slots.node(paint); };   // as the card repaints: the section built afresh round the one canvas
   let sec = slots.node(paint);
   assert.equal(started.length, 1, 'the stage started once, with the canvas');
@@ -246,7 +251,7 @@ test('PROFILE-SLOTS the stage\'s life on the card: a stage that stopped itself (
     const start = () => { const s = { up: true, kits: /** @type {any[]} */ ([]), bodies: /** @type {any[]} */ ([]), setKit(/** @type {any} */ k) { s.kits.push(k); }, setAura() {}, setBody(/** @type {any} */ b) { s.bodies.push(b); }, headAt: () => null, stop() { s.up = false; }, alive: () => s.up }; stages.push(s); return s; };
     let look = 'p6', asks = 0;
     const bodies = { kinds: () => ['sprite'], lookKey: () => look, of: () => Promise.resolve({ kind: 'sprite', n: ++asks }) };
-    const slots = characterSlots(slotsDoc(), flow, { start, bodies, entryOf: () => null });
+    const slots = characterSlots(slotsDoc(), flow, { start, bodies, entryOf: () => null, enableArmory: true });
     const paint = () => { sec = slots.node(paint); };   // as the card repaints
     let sec = slots.node(paint);
     frames(1);

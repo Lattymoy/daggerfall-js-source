@@ -436,7 +436,7 @@ test('GPU-BACKEND: a launch on Vulkan keeps VSync on - the resize freeze with VS
 
 // VULKAN-BLANK (#1379, 2026-10-30): "the interface is blank, but the buttons are still here" - the launcher and the game
 // drew nothing on Vulkan, every check above passed, and the switch back was in the game's own settings.
-const ASK_LAUNCHER = 'ask: Can you see the DFO Online launcher?';
+const ASK_LAUNCHER = 'ask: Can you see the Daggerfall Forever launcher?';
 const ASK_GAME = 'ask: Can you see the game?';
 const RELAUNCH = ['flush', 'unlock', 'relaunch', 'exit 0'];
 const LAUNCHER_WIN = { kind: 'launcher' }, GAME_WIN = { kind: 'game' };
@@ -526,7 +526,7 @@ test('VULKAN-BLANK: a failure while the box is up closes it and is the one relau
 
 test('VULKAN-BLANK: the box - one for the launcher, one for the game; Enter, Escape and closing it go back; Keep is a press (mutants: Keep the default; no cancel)', () => {
   const box = B.backendConfirmNotice('vulkan', 'launcher');
-  assert.equal(box.message, 'Can you see the DFO Online launcher?');
+  assert.equal(box.message, 'Can you see the Daggerfall Forever launcher?');
   assert.equal(B.backendConfirmNotice('vulkan', 'game').message, 'Can you see the game?');
   assert.deepEqual(box.buttons, ['Keep Vulkan', 'Go back']);
   assert.deepEqual([box.defaultId, box.cancelId], [1, 1]);

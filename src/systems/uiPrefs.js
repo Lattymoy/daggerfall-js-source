@@ -57,6 +57,14 @@ export const PREF_DEFAULTS = Object.freeze({
   // (systems/faction/factionStanding.js). STANDING-ON (2026-10-11, Mac: "should be on by default"): on - the shelf writes no
   // default (PREF1), so a player who never pressed the row moves with it, and one who pressed it off keeps their Off.
   standingAll: true,
+  // OFFLINE-HOUSING: whether DFO player housing is active in offline single-player mode.
+  offlineHousing: true,
+  // OFFLINE-FIRMAMENT: whether the Firmament passive star tree and Renown progression are active in offline single-player.
+  offlineFirmament: true,
+  // UNIFIED-BANK: whether bank accounts are unified across all regions into a single global account.
+  unifiedBank: false,
+  // CITY-247: optional 24/7 city infrastructure keeping shops, guild halls, banks, and gates open day and night.
+  city247: false,
   // SHOP-HIDE (2026-10-30, the owner: "a settings toggle that disables the shop interface ingame. Off by default"): on, the
   // pause screen draws no shop gem and the shop's window never opens; the account's Aurum and what it holds are untouched.
   shopHidden: false,
@@ -145,10 +153,6 @@ export const PREF_DEFAULTS = Object.freeze({
   dangerPalette: 'standard',
   telegraphFill: 1,
   reducedMotion: false,
-  // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
-  // hold A - systems/peerMenuBind.js). Online only.
-  peerMenuKey: null,
-  peerMenuPad: null,
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineServer: '',
@@ -434,10 +438,25 @@ export function getPref(k) {
   if (_prefs === null) loadPrefs();
   return _prefs[k] ?? PREF_DEFAULTS[k];
 }
+const _prefListeners = new Set();
+export function addPrefListener(fn) {
+  _prefListeners.add(fn);
+  return () => _prefListeners.delete(fn);
+}
+
 export function setPref(k, v) {
   if (_prefs === null) loadPrefs();
+  const prev = _prefs[k];
   _prefs[k] = v;
-  return savePrefs();
+  const res = savePrefs();
+  for (const fn of _prefListeners) {
+    try {
+      fn(k, v, prev);
+    } catch {
+      /* listener error ignored */
+    }
+  }
+  return res;
 } // SKIN-CARRY: the store's word comes back - a refused write is the caller's to carry another way
 export function isOpen(catId, group) {
   return !!getPref('open')[`${catId}:${group}`];
@@ -451,6 +470,7 @@ export function resetPrefs() {
   _prefs = { ...PREF_DEFAULTS, open: {} };
   savePrefs();
 }
+export const isOfflineHousingActive = () => getPref('offlineHousing') !== false;
 export function _resetForTests() {
   _prefs = null;
 }

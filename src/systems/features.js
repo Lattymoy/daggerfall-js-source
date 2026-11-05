@@ -1417,6 +1417,36 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({ store: 'prefs', key: 'mwShoulderCam', initial: 'off', online: 'player', tiers: Object.freeze([
       tier('off', OFF), tier('right', () => t('features.mwShoulder.right', 'Right')), tier('left', () => t('features.mwShoulder.left', 'Left'))]) }),
   }),
+  // MW-PLAYER-BODY: The player character in a 3D Morrowind body
+  Object.freeze({
+    id: 'mw-player-body',
+    group: 'world',
+    get title() { return t('features.mwPlayerBody.title', 'Morrowind Player Body'); },
+    get note() { return t('features.mwPlayerBody.note', 'With Morrowind data, your character is drawn in 3D: hands and weapons in first person, full body in third person, and a 3D figure in the inventory. Off keeps classic 2D sprites and the paperdoll.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwPlayerBody', initial: true, online: 'player' }),
+  }),
+  // MW-ITEM-ICONS: 3D rendered item icons in inventory and quickslots
+  Object.freeze({
+    id: 'mw-item-icons',
+    group: 'world',
+    get title() { return t('features.mwItemIcons.title', 'Morrowind Item Icons'); },
+    get note() { return t('features.mwItemIcons.note', 'With Morrowind data, items in your inventory and quickslots are shown as rendered 3D ground meshes. Off shows classic 2D item sprites.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwItemIcons', initial: true, online: 'player' }),
+  }),
+  // MW-FOE-BODIES: Mobs & Foes in Morrowind bodies
+  Object.freeze({
+    id: 'mw-foe-bodies',
+    group: 'world',
+    title: 'Morrowind Foes',
+    note: 'With the Morrowind body, monsters and humanoid foes get Morrowind bodies too, nearest first. Near shows up to 24; All shows up to 48 but costs more.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwFoeBodies', initial: 'near', online: 'player', tiers: Object.freeze([['off', 'Off'], ['near', 'Near'], ['all', 'All']]) }),
+  }),
   // MWNPC5b (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE PEOPLE IN
   // MORROWIND BODIES - the NPC lanes (characters/npcBodies.js) under ONE frame budget (MWNPC11, NPC_FRAME_TIERS): Off, the
   // classic sprites; Near, the nearest 24 a frame within a street's width, whoever they are; All, 48 across a square. The
@@ -1640,34 +1670,6 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({
       store: 'prefs', key: 'loadingScreen', initial: 'shots', online: 'player',   // ui/loadingScreen.js LOADING_PREF
       tiers: Object.freeze([['shots', 'Your screenshots'], ['art', 'Night sky'], ['off', 'Off']]),
-    }),
-  }),
-  // EVENTS1 (2026-10-23, the owner: "Instead of stuffing these in the chat menu, there must be a less obstructive and more
-  // detailed way to handle them"): THE EVENT BOARD - the shared events a player can still reach, at the HUD's left edge,
-  // and the news at its head that announces them and carries their lines (ui/eventBoard.js, bible/10-UI/Event-Board.md). On by default;
-  // off, the events' lines go back to the chat (systems/eventNotices.js). Every skin draws it (the lines left the chat on
-  // every skin). The player's own online.
-  Object.freeze({
-    id: 'event-board',
-    group: 'interface',
-    get title() { return t('features.eventBoard.title', 'Event board'); },
-    // AUDIT EVENTS1 W5: WB13b's rules (no dash aside, no rhythm of three), and the switch's truth (a raid's news goes back to
-    // the HUD's line, not the chat)
-    // EVENTS2: and what its chips do (a kind turned off leaves the board and its news, and is kept in the journal alone)
-    get note() { return t('features.eventBoard.note', 'A board at the left of the screen lists the world events you can still reach, with how far away each one '
-      + 'is and the time left. Their news opens at the top of the board and is kept in your journal. Turn an event off with its own button and '
-      + 'it leaves the board, its news kept in your journal alone. Off, the news goes back to the chat and the screen\'s message line.'); },
-    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
-    kinds: Object.freeze(['enhanced', 'classic']),
-    // EVENTS2 (the players on Discord: "Allow us to filter which events we want to show up in the event tracker", "I
-    // don't want all this crap cluttering up my interface"): EACH KIND A PART - a chip in the drawer, as the blood's
-    // three are, on in every kind by default and the player's own online. A kind turned off leaves the board and its
-    // news (systems/eventBoard.js eventBoardModel's `shown`, systems/eventNotices.js eventKindShown); the Timers window
-    // keeps the whole schedule.
-    control: Object.freeze({
-      store: 'prefs', key: 'eventBoard', initial: true, online: 'player',   // systems/eventNotices.js EVENT_BOARD_PREF
-      also: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ store: 'prefs', key: eventKindPref(kind), initial: true, online: 'player' }))),
-      parts: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ key: eventKindPref(kind), get label() { return EVENT_KINDS[kind].label; } }))),
     }),
   }),
   // GUIDE3 (2026-09-29, Mac: "...make it more accessible", then "This is your baby"): THE HERALD - a quest's news as
@@ -1956,6 +1958,14 @@ export const FEATURES = Object.freeze([
         Object.freeze({ key: 'naval-auto-repair', get label() { return t('features.navalCombat.autoRepair', 'Crew repairs on their own'); } }),
       ]),
     }),
+  }),
+  Object.freeze({
+    id: 'offline-respawn',
+    group: 'character',
+    get title() { return t('features.offlineRespawn.title', 'Online-Style Respawn'); },
+    get note() { return t('features.offlineRespawn.note', 'When you die in single-player, wake at the nearest safe place (temple, town, graveyard or dungeon entrance) at half health and lose a tenth of your purse, instead of ending the game.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'offlineRespawn', initial: true, online: 'player' }),
   }),
 ]);
 

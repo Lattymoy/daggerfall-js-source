@@ -160,9 +160,10 @@ test('DEATHLOOP1: endLethalDrains reports only what it actually removed', () => 
 test('F11 BELONGS TO THE GAME: the desktop shell claims no key the default bindings spend', async () => {
   const { DEFAULT_BINDINGS } = await import('../../src/systems/inputActions.js');
   const bound = new Map(DEFAULT_BINDINGS);
-  // The two that made the report: DFU's own SetupDefaults.
-  assert.equal(bound.get('F9'), 'QuickSave');
-  assert.equal(bound.get('F11'), 'QuickLoad');
+  // F5/F9/F11: QuickSave, QuickLoad, PrintScreen all belong to the game
+  assert.equal(bound.get('F5'), 'QuickSave');
+  assert.equal(bound.get('F9'), 'QuickLoad');
+  assert.equal(bound.get('F11'), 'PrintScreen');
 
   const main = readFileSync(new URL('../../app/main.cjs', import.meta.url), 'utf8');
 

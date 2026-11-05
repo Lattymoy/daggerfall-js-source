@@ -181,21 +181,21 @@ test('I4 + UXB1-S: the apply writes what the staged set says - two actions stage
   // apply writes it: nobody the staged picture keeps on the key is stolen from, whatever order the walk meets them in.
   const store = freshStore();
   const u = createUnsavedKeybinds(store);
-  setUnsavedBinding(u, 'MoveForwards', 'KeyI');   // KeyI is Status's default
+  setUnsavedBinding(u, 'MoveForwards', 'KeyI');   // KeyI is Inventory's default
   assert.equal(checkDuplicates(u).ok, true, 'a share: the gate lets it through');
   applyUnsavedKeybinds(store, u);
   assert.equal(getBinding(store, 'MoveForwards'), 'KeyI', 'the changed row has the key');
-  assert.equal(getBinding(store, 'Status'), 'KeyI', 'and the untouched one keeps it - one key, both actions');
-  assert.deepEqual(actionsForCode(store, 'KeyI'), ['Status', 'MoveForwards'], 'the holder first, the sharer beside it');
+  assert.equal(getBinding(store, 'Inventory'), 'KeyI', 'and the untouched one keeps it - one key, both actions');
+  assert.deepEqual(actionsForCode(store, 'KeyI'), ['Inventory', 'MoveForwards'], 'the holder first, the sharer beside it');
   assert.equal(actionForCode(store, 'KeyW'), null, 'MoveForwards let go of its old key');
   // ...and the replace answer (the holder staged elsewhere) still MOVES the key: the holder lets go of it
   const v = createUnsavedKeybinds(store);
   setUnsavedBinding(v, 'Rest', 'KeyI');
-  setUnsavedBinding(v, 'Status', null);
+  setUnsavedBinding(v, 'Inventory', null);
   setUnsavedBinding(v, 'MoveForwards', 'KeyW');
   applyUnsavedKeybinds(store, v);
-  assert.deepEqual(actionsForCode(store, 'KeyI'), ['Rest'], 'Status unbound and MoveForwards moved home: Rest alone');
-  assert.equal(store.removedPrimary.has('Status'), true, 'the emptied row is marked, as ever (AUDIT KB1 F4)');
+  assert.deepEqual(actionsForCode(store, 'KeyI'), ['Rest'], 'Inventory unbound and MoveForwards moved home: Rest alone');
+  assert.equal(store.removedPrimary.has('Inventory'), true, 'the emptied row is marked, as ever (AUDIT KB1 F4)');
 });
 
 test('I4: Default resets the live registry and re-stages from it', () => {

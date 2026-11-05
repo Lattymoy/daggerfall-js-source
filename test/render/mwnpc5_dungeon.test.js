@@ -123,10 +123,52 @@ test('MWNPC5b-c the switch: the Features row `mwNpcBodies` - Off, Near, All, the
   assert.ok(lane.includes("return isEnhanced() && morrowindDataCount() > 0 && getPref('mwNpcBodies') !== 'off';"), 'the lane wanted: the enhanced skin, the data, and not Off');
 });
 
+test('the foe switch: the Features row `mwFoeBodies` - Off, Near, All, the viewer\'s own, Near by default', () => {
+  const row = FEATURES.find((f) => f.id === 'mw-foe-bodies');
+  assert.ok(row, 'the foe row');
+  assert.deepEqual([row.group, row.kinds, row.control.store, row.control.key, row.control.initial, row.control.online], ['world', ['enhanced'], 'prefs', 'mwFoeBodies', NPC_BODIES_DEFAULT, 'player']);
+  assert.deepEqual(row.control.tiers.map(([v]) => v), Object.keys(NPC_BODY_TIERS), 'every tier the lane has, and no other');
+  assert.equal(FEATURE_PREF_DEFAULTS.mwFoeBodies, NPC_BODIES_DEFAULT);
+  const lane = rd('src/characters/npcBodies.js');
+  assert.ok(lane.includes("return isEnhanced() && morrowindDataCount() > 0 && (getPref('mwFoeBodies') ?? getPref('mwNpcBodies')) !== 'off';"), 'the foe lane wanted');
+});
+
+test('independent foe and NPC toggles: foes and peaceful NPCs switch between DF and Morrowind separately', async () => {
+  const { foeBodiesOn, npcBodiesOn } = await import('../../src/characters/npcBodies.js');
+  const { setPref, getPref } = await import('../../src/systems/uiPrefs.js');
+  const origFoe = getPref('mwFoeBodies');
+  const origNpc = getPref('mwNpcBodies');
+
+  try {
+    // Both on (e.g. Near)
+    setPref('mwFoeBodies', 'near');
+    setPref('mwNpcBodies', 'near');
+    assert.equal(getPref('mwFoeBodies'), 'near');
+    assert.equal(getPref('mwNpcBodies'), 'near');
+
+    // Desired user state: Mobs in Morrowind, peaceful NPCs classic DF
+    setPref('mwFoeBodies', 'near');
+    setPref('mwNpcBodies', 'off');
+    assert.equal(getPref('mwFoeBodies'), 'near');
+    assert.equal(getPref('mwNpcBodies'), 'off');
+    assert.equal(npcBodiesOn(), false, 'peaceful NPCs are DF sprites when mwNpcBodies is off');
+
+    // Reverse state: Mobs DF, peaceful NPCs in Morrowind
+    setPref('mwFoeBodies', 'off');
+    setPref('mwNpcBodies', 'all');
+    assert.equal(getPref('mwFoeBodies'), 'off');
+    assert.equal(getPref('mwNpcBodies'), 'all');
+    assert.equal(foeBodiesOn(), false, 'foes are DF sprites when mwFoeBodies is off');
+  } finally {
+    setPref('mwFoeBodies', origFoe);
+    setPref('mwNpcBodies', origNpc);
+  }
+});
+
 test('MWNPC5b-d the dungeon context by source: the lane a frame (none while unwanted, the old one let go), the class foes offered dressed, the dead from the kill, the sync before the cast-only, one bind, the veiled after the last flat, and the lane gone with the context', () => {
   const c = rd('src/scenes/dungeonContext.js');
   const at = (s) => { const i = c.indexOf(s); assert.ok(i > 0, `present: ${s.slice(0, 70)}`); return i; };
-  const lane = at('const npcLane = npcBodiesOn() ? (_npcLane ??= createHostNpcBodies({ renderer, collider: () => collider })) : null;');
+  const lane = at('const npcLane = foeBodiesOn() ? (_npcLane ??= createHostFoeBodies({ renderer, collider: () => collider })) : null;');
   at('if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }');
   const begin = at('npcLane?.begin();');
   const loop = at('    for (const f of foes) {\n      _fi++;\n      if (f.dead) continue;');

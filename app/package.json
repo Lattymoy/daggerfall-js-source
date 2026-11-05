@@ -1,14 +1,14 @@
 {
   "name": "daggerfall-js-app",
-  "productName": "DFO Online",
+  "productName": "Daggerfall Forever",
   "private": true,
-  "version": "0.1.0",
-  "description": "DFO Online - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
-  "author": "Lattymoy",
+  "version": "0.4.0",
+  "description": "Daggerfall Forever - the downloadable desktop shell. Loads the same dist/ the website deploys; adds ARENA2-from-disk and file-backed saves.",
+  "author": "Alex 13 Uslavtsev",
   "homepage": "https://daggerfalljs.dev/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Lattymoy/daggerfall-js-source.git"
+    "url": "https://github.com/Chuz13/daggerfall-forever.git"
   },
   "main": "main.cjs",
   "scripts": {
@@ -22,19 +22,20 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "dev.daggerfalljs.app",
-    "productName": "DFO Online",
+    "appId": "dev.chuz13.daggerfallforever",
+    "productName": "Daggerfall Forever",
+    "copyright": "Copyright © 2026 13",
     "icon": "../public/icons/icon-512.png",
     "afterPack": "./afterPack.cjs",
-    "artifactName": "DFO-Online-${os}-${arch}.${ext}",
+    "artifactName": "Daggerfall-Forever-${os}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },
     "publish": [
       {
         "provider": "github",
-        "owner": "Lattymoy",
-        "repo": "daggerfall-js-source"
+        "owner": "Chuz13",
+        "repo": "daggerfall-forever"
       }
     ],
     "files": [
@@ -50,25 +51,30 @@
       "!**/node_modules/sharp/**"
     ],
     "linux": {
+      "maintainer": "Alex 13 Uslavtsev",
+      "vendor": "13",
       "target": [
         "AppImage"
       ],
       "category": "Game"
     },
     "win": {
+      "publisherName": "13",
+      "legalTrademarks": "13",
+      "signAndEditExecutable": false,
       "target": [
         "nsis",
         "portable"
       ]
     },
     "nsis": {
-      "artifactName": "DFO-Online-win-${arch}-setup.${ext}",
+      "artifactName": "Daggerfall-Forever-win-${arch}-setup.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false
     },
     "portable": {
-      "artifactName": "DFO-Online-win-${arch}-portable.${ext}"
+      "artifactName": "Daggerfall-Forever-win-${arch}-portable.${ext}"
     },
     "mac": {
       "target": [
@@ -76,9 +82,11 @@
       ],
       "category": "public.app-category.games",
       "extendInfo": {
-        "NSDownloadsFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
-        "NSDesktopFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
-        "NSDocumentsFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded."
+        "NSHumanReadableCopyright": "Copyright © 2026 13",
+        "CFBundleGetInfoString": "Daggerfall Forever, Maintainer: Alex 13 Uslavtsev, © 2026 13",
+        "NSDownloadsFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
+        "NSDesktopFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
+        "NSDocumentsFolderUsageDescription": "Daggerfall Forever looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded."
       }
     },
     "asarUnpack": [

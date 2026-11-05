@@ -202,7 +202,7 @@ test('WAYPOINTS: the right-click menu - added where the map was pressed with its
   assert.equal(waypointMenuOpen(), true);
   let box = doc.body.children.find((c) => c.id === WAYPOINT_MENU_ID);
   const kinds = all(box).filter((n) => /wpm-kind\b/.test(n.className));
-  assert.deepEqual(kinds.map((k) => [k.textContent, k.disabled]), [['Personal', false], ['Party', true], ['Guild', false]], 'not in a party: no party waypoint');
+  assert.deepEqual(kinds.map((k) => [k.textContent, k.disabled]), [['Personal', false]], 'only personal waypoint in offline singleplayer');
   const name = all(box).find((n) => n.tag === 'input');
   assert.equal(name.value, 'Waypoint 1');
   name.value = 'Fishing spot';

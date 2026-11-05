@@ -397,13 +397,6 @@ export function tradeCost(
       resale.cost += Math.round((c * Math.min(w, now)) / now);
       resale.paid += paid;
     }
-    if (item[PATRON_COUNTER_MARK] !== true || !Number.isInteger(item[COUNTER_PAID_MARK])) return;
-    resale ??= { cost: 0, paid: 0 };
-    // AUDIT TOWN-ECON 2 PRICE-6: a piece worth more than it was bought at (a gem set, a hone, a reforge) - the cost of the
-    // part the counter sold alone is capped, the rest is the player's own work, haggled on its own
-    const was = item[COUNTER_VALUE_MARK];
-    resale.cost += Number.isInteger(was) && was < now && now > 0 ? Math.round((c * was) / now) : c;
-    resale.paid += item[COUNTER_PAID_MARK] * stack;
   };
   for (const item of staged) {
     const stack = item.stackCount ?? 1;

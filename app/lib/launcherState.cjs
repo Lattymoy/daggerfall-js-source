@@ -551,7 +551,7 @@ function setupView(st, platform) {
     const sv = st.saved;
     return {
       title: sv.unreadable ? 'Your Daggerfall folder cannot be reached' : 'Your Daggerfall folder is not whole',
-      detail: `DFO Online plays from ${sv.dir}, which ${sv.unreadable ? 'cannot be read right now - is its drive connected?'
+      detail: `Daggerfall Forever plays from ${sv.dir}, which ${sv.unreadable ? 'cannot be read right now - is its drive connected?'
         : sv.missing ? `has no ${sv.missing.join(', ')}.` : 'holds no Daggerfall files any more.'}${st.found.length ? ' Daggerfall is also here:' : ''}`,
       found,
       actions: [{ id: 'retry-saved', label: 'Try again', primary: !st.found.length }, { ...choose, primary: false }, skip],
@@ -560,7 +560,7 @@ function setupView(st, platform) {
   if (st.status === 'found') {
     return {
       title: st.found.length === 1 ? 'Found your Daggerfall files' : 'Found Daggerfall on this computer',
-      detail: 'DFO Online plays from the original game\'s ARENA2 folder. Nothing is copied or uploaded - it is read where it is.',
+      detail: 'Daggerfall Forever plays from the original game\'s ARENA2 folder. Nothing is copied or uploaded - it is read where it is.',
       found,
       actions: [choose, skip],
     };
@@ -572,14 +572,14 @@ function setupView(st, platform) {
     if (platform === 'darwin') {
       return {
         title: 'Where is Daggerfall?',
-        detail: `${still}DFO Online plays from the original game's ARENA2 folder. The Elder Scrolls II: Daggerfall has been free since 2009 - on a Mac, get DaggerfallGameFiles.zip, unpack it, and choose the arena2 folder inside.`,
+        detail: `${still}Daggerfall Forever plays from the original game's ARENA2 folder. The Elder Scrolls II: Daggerfall has been free since 2009 - on a Mac, get DaggerfallGameFiles.zip, unpack it, and choose the arena2 folder inside.`,
         found,
         actions: [choose, zip, skip],
       };
     }
     return {
       title: 'Where is Daggerfall?',
-      detail: `${still}DFO Online plays from the original game's ARENA2 folder. The Elder Scrolls II: Daggerfall has been free since 2009 - get it from Steam or GOG, then choose its ARENA2 folder.`,
+      detail: `${still}Daggerfall Forever plays from the original game's ARENA2 folder. The Elder Scrolls II: Daggerfall has been free since 2009 - get it from Steam or GOG, then choose its ARENA2 folder.`,
       found,
       actions: [choose, { id: 'open', arg: 'steam', label: 'Get it on Steam' }, { id: 'open', arg: 'gog', label: 'Get it on GOG' }, skip],
     };
@@ -649,16 +649,16 @@ function viewOf(s) {
   };
   if (v.panel === 'setup') v.setup = setupView(st, s.platform);
   if (s.launch) {
-    v.status = 'Starting DFO Online';
+    v.status = 'Starting Daggerfall Forever';
     v.busy = true;
   } else if (u.status === 'installing') {
     v.progress = { percent: 100, label: 'Downloaded' };
     if (!SETUP_DONE.has(st.status)) {
       v.status = `v${u.version} is ready to install`;
-      v.detail = 'It installs once your game files are set - then DFO Online reopens by itself.';
+      v.detail = 'It installs once your game files are set - then Daggerfall Forever reopens by itself.';
     } else {
       v.status = `Installing v${u.version}`;
-      v.detail = 'DFO Online closes and reopens by itself in a few seconds. Your saves, settings and game files stay where they are.';
+      v.detail = 'Daggerfall Forever closes and reopens by itself in a few seconds. Your saves, settings and game files stay where they are.';
       v.busy = true;
     }
   } else if (u.status === 'downloading') {

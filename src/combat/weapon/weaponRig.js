@@ -61,6 +61,7 @@ import { fieldOfView } from '../../ui/viewSettings.js';   // CLIMB-HANDS II: the
 // layer that either draws whole or does not draw at all - there is no
 // state in which both reach the screen, and none in which neither does.
 import { fpArm, hasAmmoFor } from '../fpArm.js';
+import { playerBodyOn } from '../../characters/npcBodies.js';
 import { ammoCountFor } from '../../systems/inventory.js';   // AUDIT 68 S27-ammoCount-dup: the quiver's count, from the spend law's own module
 import { getPref } from '../../systems/uiPrefs.js';   // MWA1: the arms switch
 import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData, morrowindDataCounted, countMorrowindArchives } from '../../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured; MW-EARLY: and counted
@@ -779,6 +780,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // while the person rebuilds after the turn back stand aside - never the person on a beast, nor the beast on a person
     const beast = !!entity && isTransformedLycanthrope(entity), wolf = !!fpArm.wolfStanding?.();
     fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);
+    if (!playerBodyOn()) fpArm.setStandIn?.(true);
   };
   bindArm();
   // LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement duel wielding perfectly"): a pair's right

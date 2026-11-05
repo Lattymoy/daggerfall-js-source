@@ -97,7 +97,7 @@ test('MWNPC6b the pool: a dead watchman offered dead from the kill, under the wa
 test('MWNPC6c by source: the live watchman offered dressed, his billboard reset at the offer; the three hosts draw the watch\'s bodies before its batches draw, and the veiled beside the foes\'', () => {
   const c = rd('src/scenes/cityGuards.js');
   assert.ok(c.includes("      g.batch.castOnly = false;   // MWNPC6: drawn until drawBodies says his body stands\n      if (npcLane && isClassFoe(g)) { npcLane.stand('watch', foeActor(g, g.id), g.batch.conceal ?? null, g.batch.hitFlash || 0, foeFx(g)); _npcStood.push(g); }\n      out.push(g.batch);"), 'the live offer');
-  assert.ok(c.includes('createHostNpcBodies({ renderer, collider: () => collider, tiers: WATCH_BODY_TIERS })'), 'under the watch\'s caps');
+  assert.ok(c.includes('createHostFoeBodies({ renderer, collider: () => collider, tiers: WATCH_BODY_TIERS })'), 'under the watch\'s caps');
   const sites = [
     ['src/scenes/world.js', 'livePersonBatches.push(...cityGuards.update(foeDt,', 'cityGuards.drawBodies(canvas, proj, view, mwv.eye, foeDt);', 'if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, bbUp);', 'cityGuards.drawVeiledBodies();'],
     ['src/scenes/worldModes.js', 'const _guardBatches = interiorGuards.update(foeDt,', 'interiorGuards.drawBodies(canvas, proj, view, mwv.eye, foeDt);', 'if (_guardBatches.length) renderer.drawBillboards(_guardBatches, camRight, UP_Y);', 'interiorGuards?.drawVeiledBodies();'],

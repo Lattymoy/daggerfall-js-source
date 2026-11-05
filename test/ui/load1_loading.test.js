@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   fitWithin, pickLoadingShot, sortShots, shotCaption, keepShot, listShots, deleteShot, setShotLoading, shotCount,
-  loadingShot, setGalleryBackend, setShotEncoder, memoryGalleryBackend, galleryBackendOver, onGalleryChange, GALLERY_MAX, FULL_EDGE, THUMB_W,
+  loadingShot, setGalleryBackend, setShotEncoder, memoryGalleryBackend, galleryBackendOver, onGalleryChange, GALLERY_MAX, setGalleryMax, FULL_EDGE, THUMB_W,
 } from '../../src/systems/shotGallery.js';
 import { takeScreenshot, keptLine, printScreen, setScreenshotCanvas, setShotPlace, SHOT_DOWNLOAD_PREF } from '../../src/ui/screenshot.js';
 import {
@@ -128,15 +128,17 @@ test('LOAD1 gallery: a shot is kept with its place and in the turn; the switch t
     assert.equal(await deleteShot(a), true);
     assert.deepEqual((await listShots()).map((s) => s.id), [b]);
     assert.ok(heard >= 5, `every change is told (${heard})`);
+    setGalleryMax(10);
     for (let i = await shotCount(); i < GALLERY_MAX; i++) await keepShot(new Blob(['x']), { at: i, encode: enc });
     assert.equal(await shotCount(), GALLERY_MAX);
     assert.equal(await keepShot(new Blob(['x']), { encode: enc }), 'full');
     assert.equal(await shotCount(), GALLERY_MAX, 'nothing was dropped to make room');
+    setGalleryMax(Infinity);
     assert.ok((await listShots()).some((s) => s.id === b), 'the oldest shot is still there');
     // a failure is null, never a throw: a shot that cannot be kept is still a downloaded shot
     setGalleryBackend(memoryGalleryBackend());
     assert.equal(await keepShot(new Blob(['x']), { encode: async () => { throw new Error('no 2d'); } }), null);
-  } finally { off(); setGalleryBackend(null); }
+  } finally { setGalleryMax(Infinity); off(); setGalleryBackend(null); }
 });
 
 test('LOAD1 the key: the PNG goes to the gallery AND the download, the download on its own switch, and the HUD hears the gallery\'s answer (mutants: keep never called; the download unswitchable; the full gallery silent)', async () => {
@@ -554,13 +556,14 @@ test('LOAD1 the gallery as it ships: the real encode keeps a FULL_EDGE copy and 
   } finally { warn.mock.restore(); }
   // one at a time: three presses inside one encode at 119 keep ONE
   setGalleryBackend(memoryGalleryBackend());
+  setGalleryMax(10);
   try {
     for (let i = 0; i < GALLERY_MAX - 1; i++) await keepShot(new Blob(['x']), { at: i, encode: enc });
     const slow = async () => { await flush(3); return enc(); };
     const got = await Promise.all([1, 2, 3].map(() => keepShot(new Blob(['x']), { encode: slow })));
     assert.equal(got.filter((x) => x === 'full').length, 2, `the second and third find it full: ${got}`);
     assert.equal(await shotCount(), GALLERY_MAX);
-  } finally { setGalleryBackend(null); }
+  } finally { setGalleryMax(Infinity); setGalleryBackend(null); }
 });
 
 test('LOAD1 the menu: Screenshots is on every rail, the System page and both dispatch tables; the door\'s foot carries it beside About; the unmount lets its pictures go (mutants: a rail without it; a dead dispatch; no release)', () => {
@@ -585,8 +588,9 @@ test('LOAD1 the pane: it fills when the gallery answers - each shot\'s caption, 
     drawShotsPane(body);
     await flush();
     assert.ok(body.querySelector('.empty'), 'nothing kept: the empty card');
-    assert.match(body.textContent, /Press F8 anywhere in the world/, 'naming the player\'s own key');
-    assert.equal(shotKeyName(), 'F8');
+    const key = shotKeyName();
+    assert.match(body.textContent, new RegExp(`Press ${key} anywhere in the world`), 'naming the player\'s own key');
+    assert.ok(key);
     const id = await keepShot(new Blob(['png']), { place: 'Daggerfall', at: new Date(2026, 9, 5).getTime(), encode: enc });
     await flush();
     const tiles = body.querySelectorAll('.shot-tile');

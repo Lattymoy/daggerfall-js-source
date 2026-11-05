@@ -45,6 +45,7 @@ export const LEGACY_CHOICE_TEXT = Object.freeze({
 /** Each answer's short tag on the Plus face. LEGACY-CHOICE: no lineage is the game's own death, tagged with the word the
  *  leveling question gives the game as it always was (LEVELING_FACE_TAGS) - not its title said twice. */
 export const LEGACY_MODEL_TAGS = Object.freeze({
+  [MODELS.dynasty]: 'No death cost',
   [MODELS.enduring]: 'Not permadeath',
   [MODELS.bloodline]: 'Permadeath',
   [NO_LINEAGE]: 'No death cost',
@@ -58,8 +59,31 @@ export const BLOODLINE_ONLINE_LINE = 'Online, a death is final on every device.'
  *  AUDIT LEGACY U7: the toll said is the one a death will charge - its Features tile's Legacy.Toll as it stands. AUDIT
  *  LEGACY B4/F1 shut Bloodline online while a permadeath had no authority there; LEGACY7 gave it one (the realm's
  *  tombstone, server-account/src/legacy.js), and it is open online, said so. */
-export function legacyModelOptions({ online = isOnlinePage(), tollShare = legacySettings().tollShare } = {}) {
+export function legacyModelOptions({
+  online = isOnlinePage(),
+  tollShare = legacySettings().tollShare,
+  includeDynasty = legacySettings().model === MODELS.dynasty,
+} = {}) {
   const pct = Math.round(tollShare * 100);
+  const dynasty = Object.freeze({
+    id: MODELS.dynasty,
+    title: 'Dynasty',
+    locked: false,
+    lockNote: null,
+    lines: Object.freeze(
+      online
+        ? [
+            'A family line without permadeath or lost years.',
+            'Death follows standard game rules (respawn).',
+            'Pass the mantle or switch characters at any time.',
+          ]
+        : [
+            'A family line without permadeath or lost years.',
+            'Death follows standard rules (respawn / load).',
+            'Pass the mantle or switch characters at any time.',
+          ],
+    ),
+  });
   // CASUAL-LIFE: online the two models say three lines each, so Casual's four fit the classic face's 200
   const casual = online
     ? [
@@ -120,6 +144,9 @@ export function legacyModelOptions({ online = isOnlinePage(), tollShare = legacy
       ),
     }),
   ];
+  if (includeDynasty) {
+    return Object.freeze(online ? [...casual, dynasty, models[1]] : [dynasty, ...models]);
+  }
   return Object.freeze([...casual, ...models]); // CASUAL-FIRST: Enter without reading costs nothing at all
 }
 

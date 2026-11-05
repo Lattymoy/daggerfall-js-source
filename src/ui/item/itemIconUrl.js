@@ -20,10 +20,12 @@
 // is turned into a PNG once however many times it is asked for.
 // MEM-AUDIT (2026-10-23): weakly - the rig's cache lets its ImageData go at a data generation or a new size, and an
 // entry its key outlived held the pixels and their PNG for the page's life
+import { itemIconsOn } from '../../characters/npcBodies.js';
+
 const _iconUrls = new WeakMap();
 
 export function modelIconUrl(item, size, armMod) {
-  if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
+  if (!itemIconsOn() || !armMod || typeof armMod.itemIcon !== 'function' || !item) return null;
   let img = null;
   try {
     img = armMod.itemIcon(item, { size });

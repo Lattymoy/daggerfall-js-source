@@ -56,7 +56,8 @@ const NOT_YET = ['bundles'];
 test('SHOP-UNTOLD: with no card - reading, offline, signed out - the window lists no ware, only the Folios; the card\'s sections are the drops out, a drop is listed once it lands (mutants: every ware listed with no card)', async () => {
   for (const fl of [null, { stage: 'loading' }, { stage: 'out' }, flowIn(null)]) assert.deepEqual(shopSections(fl), ['pass'], JSON.stringify(fl));
   const oct = await cardAt('2026-10-31');
-  assert.deepEqual(shopSections(flowIn(oct)), ['pass', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'aurum']);
+  assert.deepEqual(shopSections(flowIn(oct)), ['pass', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'aurum']);
+  assert.deepEqual(shopSections(flowIn(oct), { enableArmory: true }), ['pass', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'aurum']);
   const dec = await cardAt('2026-12-26');
   assert.deepEqual(NOT_YET.filter((c) => shopSections(flowIn(dec)).includes(c)), NOT_YET, 'out by Boxing Day');
 });

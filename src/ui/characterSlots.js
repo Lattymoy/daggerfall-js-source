@@ -26,6 +26,7 @@ import { effectName, effectLook, effectSlotName } from './effectText.js';
 import { effectEmblemNode } from './effectEmblems.js'; // AUDIT-STOREFRONT: each choice's emblem beside its name
 import { mountPreview } from './mountPreview.js';
 import { playPreviewSound } from './effectPreviewSound.js';
+import { FORK_FLAGS } from '../config/forkFlags.js';
 
 /** THE SLOTS, in the stage's two columns: the body's five down the left, head to foot; over the head, the weapon, the
  *  portrait and the aura at the feet down the right. */
@@ -100,7 +101,7 @@ export function slotsShown(/** @type {any} */ w, /** @type {{ slot: string, key:
  * memory (`keyedAs`), the plate's name and Renown (`who`) and its clearance in CSS px (`gap`, the world's NAME_GAP_PX).
  * @param {Document} doc @param {any} flow
  * @param {{ start?: ((canvas: any, o: any) => any)|null, bodies?: any, entryOf?: (kind: string, key: string) => any, glyphLabel?: Record<string, string>,
- *   keyedAs?: (n: any, key: string) => any, who?: () => { name?: string, lv?: number|null }, gap?: number }} [o]
+ *   keyedAs?: (n: any, key: string) => any, who?: () => { name?: string, lv?: number|null }, gap?: number, enableArmory?: boolean }} [o]
  */
 export function characterSlots(
   doc,
@@ -113,6 +114,7 @@ export function characterSlots(
     keyedAs = (n) => n,
     who = () => ({}),
     gap = 0,
+    enableArmory = FORK_FLAGS.ENABLE_ARMORY,
   } = {},
 ) {
   const el = (
@@ -125,7 +127,7 @@ export function characterSlots(
     if (txt != null) n.textContent = txt;
     return n;
   };
-  let picked = 'head';
+  let picked = enableArmory ? 'head' : 'plate';
   /** @type {{ slot: string, key: string|null }|null} */
   let trial = null;
   let kind = null;
@@ -621,7 +623,7 @@ export function characterSlots(
       const grid = el('div', 'slots-stage');
       const col = (/** @type {string} */ side) => {
         const c = el('div', cls('slots-col', side === 'left' ? 'slots-left' : 'slots-right'));
-        for (const s of CHARACTER_SLOTS.filter((x) => x.side === side)) c.append(tile(s));
+        for (const s of CHARACTER_SLOTS.filter((x) => x.side === side && (enableArmory || !x.armory))) c.append(tile(s));
         return c;
       };
       const mid = el('div', 'slots-mid'),

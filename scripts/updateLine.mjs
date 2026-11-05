@@ -8,4 +8,4 @@
 // To start a new line (0.1, 1.0), change the line below and nothing else on it: the merge that carries the change is
 // that line's .1. The line is FOUND by its diff (`git log -G`), so an edit to these comments moves nothing, and an
 // edit to the line itself - even its spacing - starts the count again.
-export const UPDATE_LINE = '0.0';
+export const UPDATE_LINE = '0.2';

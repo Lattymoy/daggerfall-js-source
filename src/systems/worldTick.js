@@ -156,7 +156,7 @@ import { seededRng } from './wind/wind.js';   // WORLD6b: the shared day's own g
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
 import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
 import { tickPlayerTorch } from './playerTorch.js';               // T1: EnablePlayerTorch.Update, on the REAL clock
-import { checkOverdueLoans, settleOverdueLoan, callInEmpireDebt, empireCallInLines, calculateMaxBankLoan, bankedGold, empireDrawLines } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17); REALM P0.3: the Empire's call at the join; EMPIRE-ACCOUNT: what it draws, said
+import { checkOverdueLoans, settleOverdueLoan, callInEmpireDebt, empireCallInLines, calculateMaxBankLoan, bankedGold, empireDrawLines, isUnifiedBankActive } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17); REALM P0.3: the Empire's call at the join; EMPIRE-ACCOUNT: what it draws, said
 import { isOnlinePage } from './online/onlineLane.js';   // EMPIRE-ACCOUNT: the Empire's draw is said online
 import { lowerRepForCrime, deductGold } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70); REALM P0.3: the call's purse
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
@@ -580,7 +580,7 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
 function settleSaid(entity, regionIndex, say) {
   const banked = bankedGold(entity.bankAccounts);
   const outcome = settleOverdueLoan(entity.bankAccounts, regionIndex, entity);
-  if (isOnlinePage()) for (const line of empireDrawLines(banked - bankedGold(entity.bankAccounts), REGION_NAMES[regionIndex] ?? '')) say(line, LOAN_REMINDER_HUD_DELAY);
+  if (isUnifiedBankActive()) for (const line of empireDrawLines(banked - bankedGold(entity.bankAccounts), REGION_NAMES[regionIndex] ?? '')) say(line, LOAN_REMINDER_HUD_DELAY);
   return outcome;
 }
 

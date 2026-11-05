@@ -171,13 +171,15 @@ export function ensureFamilyStyle(doc = typeof document === 'undefined' ? null :
 
 const RACE_WORDS = Object.freeze({ Breton: 'Breton', Redguard: 'Redguard', Nord: 'Nord', DarkElf: 'Dark Elf', HighElf: 'High Elf', WoodElf: 'Wood Elf', Khajiit: 'Khajiit', Argonian: 'Argonian' });
 export const raceWord = (race) => RACE_WORDS[race] ?? String(race ?? '');
-export const modelWord = (m) => (m === MODELS.bloodline ? 'Bloodline' : 'Enduring');
+export const modelWord = (m) => (m === MODELS.bloodline ? 'Bloodline' : m === MODELS.dynasty ? 'Dynasty' : 'Enduring');
 /** LEGACY-NAME: a house's title - "The House of Hlaalu", a seat's house "The House of Sentinel" (never "of of"), and
  *  "The House" while it has no name yet (founded where no town stands, its seat still to come). */
 export const houseTitle = (surname) => (houseWord(surname) ? `The House of ${houseWord(surname)}` : 'The House');
 export const modelLine = (m) => (m === MODELS.bloodline
   ? 'A Bloodline: every death is final. When one of the house falls, another of the blood carries on, or the line ends.'
-  : 'An Enduring line: a death is not the end, but it costs years. When a life’s span is spent, the mantle passes on.');
+  : m === MODELS.dynasty
+    ? 'A Dynasty: a family without permadeath or lost years. Death follows your standard game rules.'
+    : 'An Enduring line: a death is not the end, but it costs years. When a life’s span is spent, the mantle passes on.');
 
 /** The chips a person wears: played, dead (and at peace, or lying unclaimed), elder, heir, spouse. Pure. */
 export function personChips(family, p, livedNow) {
@@ -516,7 +518,7 @@ function personCard(el, family, p, livedNow, rerender, door) {
     acts.append(b);
     if (why && why !== 'none') card.append(el('p', 'fam-why', why));
   }
-  if (played && family.model === MODELS.enduring && isElder(p, livedNow) && _provider?.passMantle) {
+  if (played && (family.model === MODELS.dynasty || (family.model === MODELS.enduring && isElder(p, livedNow))) && _provider?.passMantle) {
     const armed = _armed === 'mantle';
     const b = el('button', `act${armed ? ' primary' : ''}`, armed ? 'Yes, pass the mantle' : 'Pass the mantle');
     b.setAttribute('data-focus', 'fam-act-mantle');   // AUDIT LEGACY II U6
@@ -592,7 +594,8 @@ export function familyGuide(model, tollShare) {
   const pct = (/** @type {number} */ f) => `${Math.round(f * 100)}%`;
   const enduring = `In an Enduring house a death is not the end, but it costs years: Arkay's toll takes ${pct(tollShare)} of your race's lifespan each time (vampires and werebeasts pay none). From ${pct(ELDER_SHARE)} of your lifespan you are an Elder, and once it is spent, your next death is final.`;
   const bloodline = 'In a Bloodline house every death is final.';
-  const death = model === MODELS.bloodline ? bloodline : model === MODELS.enduring ? enduring : `${enduring} ${bloodline} A house's model is chosen once, when its founder is made.`;
+  const dynasty = 'In a Dynastic house death follows your standard game rules — no permadeath and no lost years. You can pass the mantle whenever you choose.';
+  const death = model === MODELS.bloodline ? bloodline : model === MODELS.dynasty ? dynasty : model === MODELS.enduring ? enduring : `${enduring} ${bloodline} ${dynasty} A house's model is chosen once, when its founder is made.`;
   return [
     ['Your house', 'You belong to a family with a surname, a seat town and a family tree. Every member has their own face, age, stats and skills, and any grown, living member of the blood can be played.'],
     ['Death', death],

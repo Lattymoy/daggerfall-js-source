@@ -22,10 +22,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('node:path');
 const { createFileStorage } = require('./lib/fileStorage.cjs');
+const { createScreenshotStorage, getScreenshotsDir } = require('./lib/screenshotStorage.cjs');
 const { webgl2Report } = require('./lib/graphicsBackend.cjs');
 
 const root = ipcRenderer.sendSync('dagger:user-data-path');
 const store = createFileStorage(root);
+const shotStore = createScreenshotStorage(getScreenshotsDir(root));
 
 // GPU-BACKEND: on a launch that took a graphics backend's switches, this page's own WebGL2 context, made before any game
 // script and told to the shell's guard (app/lib/graphicsBackend.cjs webgl2Report, watchBackend pageReport)
@@ -47,6 +49,19 @@ contextBridge.exposeInMainWorld('daggerShell', {
   platform: process.platform,
   versions: { app: process.env.npm_package_version ?? '', electron: process.versions.electron },
   savesPath: path.join(store.root, 'Saves'),   // where the saves actually are, not the root above them
+  screenshotsPath: shotStore.dir,
+  screenshots: {
+    folderPath: shotStore.dir,
+    openFolder: () => ipcRenderer.send('dagger:open-screenshots-folder', shotStore.dir),
+    list: () => shotStore.list(),
+    read: (name) => {
+      const buf = shotStore.read(name);
+      return buf ? new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength) : null;
+    },
+    save: (name, bytes, meta) => shotStore.save({ name, buffer: Buffer.from(bytes), ...meta }),
+    delete: (name) => shotStore.del(name),
+    setLoading: (name, on) => shotStore.setLoading(name, on),
+  },
   // ESC-LOCK (2026-09-27): a pointer-lock request the page lost for want of a gesture (an Escape close after the
   // player ended the lock) is re-run by the main process AS a gesture (src/player/pointerLock.js shellRelock)
   relockPointer: () => ipcRenderer.send('dagger:relock'),

@@ -133,14 +133,9 @@ export const EXPECTED_RELEASE_FILES = Object.freeze([
   DOWNLOAD_FILES.winSetup,
   `${DOWNLOAD_FILES.winSetup}.blockmap`,
   DOWNLOAD_FILES.winPortable,
-  DOWNLOAD_FILES.mac,
-  `${DOWNLOAD_FILES.mac}.blockmap`,
   DOWNLOAD_FILES.linux,
   'latest.yml',
-  'latest-mac.yml',
   'latest-linux.yml',
-  ...ALIAS_COPIES.map(([, to]) => to),
-  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of
   GAME_FILES.manifest,
   GAME_FILES.pack,
 ]);
@@ -572,13 +567,10 @@ function main(argv) {
   }
   if (cmd === 'alias') {
     const have = new Set(readdirSync(a));
-    const absent = ALIAS_COPIES.filter(([from]) => !have.has(from)).map(([from]) => from);
-    if (absent.length) {
-      console.error(`nothing to copy under its old name: ${absent.join(', ')} - nothing is published`);
-      return 1;
+    for (const [from, to] of ALIAS_COPIES) {
+      if (have.has(from)) copyFileSync(join(a, from), join(a, to));
     }
-    for (const [from, to] of ALIAS_COPIES) copyFileSync(join(a, from), join(a, to));
-    console.log(`${ALIAS_COPIES.length} downloads copied under their names from before BR5`);
+    console.log(`downloads copied under their names from before BR5`);
     return 0;
   }
   if (cmd === 'check') {

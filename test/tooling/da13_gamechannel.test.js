@@ -22,6 +22,7 @@ import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import {
   EXPECTED_RELEASE_FILES, packGame, gameSeed, gameFilesOf, shellInputs, shellId, judgeDelta, MAX_UPDATE_SHARE,
 } from '../../scripts/desktopRelease.mjs';
@@ -381,7 +382,7 @@ test('DA13: which path a release takes - the channel for the same shell and gene
   assert.equal(G.routeFor({ seed, manifest: m, failed: ['0.1.10'] }).route, 'game');
   assert.equal(G.routeFor({ seed: null, manifest: m }).route, 'installer');
   // the release's game, as the release lists it - its own download links, and the pack's size
-  const base = 'https://github.com/Lattymoy/daggerfall-js-source/releases/download/app-v0.1.11/';
+  const base = 'https://github.com/Chuz13/daggerfall-forever/releases/download/app-v0.1.11/';
   const rel = { assets: [{ name: G.GAME_FILES.manifest, size: 9, browser_download_url: base + G.GAME_FILES.manifest }, { name: G.GAME_FILES.pack, size: 99, browser_download_url: base + G.GAME_FILES.pack }] };
   assert.deepEqual(G.gameAssetsOf(rel), { manifest: base + G.GAME_FILES.manifest, pack: base + G.GAME_FILES.pack, packSize: 99 });
   assert.equal(G.gameAssetsOf({ assets: rel.assets.slice(0, 1) }), null, 'a release with no pack carries no game');
@@ -431,7 +432,7 @@ test('DA13: the launcher - the game\'s download held before play like an install
   // and the game's HUD says what to do with one: it plays from the next start - true of the installer's update as well
   return import('../../src/systems/shellUpdates.js').then(({ updateReadyText }) => {
     assert.equal(updateReadyText({ version: '0.1.11', manual: false }),
-      'DFO Online 0.1.11 is ready. It runs the next time you start, or now from File > Restart to Update. Save first.');
+      'Daggerfall Forever 0.1.11 is ready. It runs the next time you start, or now from File > Restart to Update. Save first.');
     assert.doesNotMatch(updateReadyText({ version: '0.1.11', manual: false }), /installs/, 'nothing installs when the channel brought it');
   });
 });
@@ -530,10 +531,10 @@ test('DA13: the release pipeline - one shell id, the bundled game indexed in eve
   assert.ok(JSON.parse(rd('app/package.json')).build.files.includes('game-seed.json'), 'and electron-builder packs it into the shell');
   assert.match(rd('.gitignore'), /\napp\/game-seed\.json\n/, 'never committed');
   assert.match(build, /- name: Pack the game\n\s+if: needs\.version\.outputs\.tag != '' && matrix\.os == 'ubuntu-latest'\n\s+shell: bash\n[\s\S]*?run: node scripts\/desktopRelease\.mjs pack dist app\/release\n/, 'cut once, by one leg');
-  assert.match(build, /app\/release\/DFO-Online-game\.\*\n/, 'and handed on with the installers');
+  assert.match(build, /app\/release\/Daggerfall-Forever-game\.\*\n/, 'and handed on with the installers');
   const publish = wf.slice(wf.indexOf('\n  publish:\n'));
   const delta = publish.slice(publish.indexOf('- name: The game\'s update is the files that changed'), publish.indexOf('- name: Write the notes'));
-  assert.match(delta, /node scripts\/desktopRelease\.mjs delta previous\/DFO-Online-game\.json\.gz release\/DFO-Online-game\.json\.gz "\$PREV"/);
+  assert.match(delta, /node scripts\/desktopRelease\.mjs delta previous\/Daggerfall-Forever-game\.json\.gz release\/Daggerfall-Forever-game\.json\.gz "\$PREV"/);
   assert.ok(publish.indexOf('- name: The set is whole') < publish.indexOf('- name: The game\'s update is the files that changed')
     && publish.indexOf('- name: The game\'s update is the files that changed') < publish.indexOf('- name: Stage the release as a draft'), 'measured before anything is staged');
   // the judgement: most of the game again, or a shell id that moved with no shell file changed, fails the release
@@ -549,7 +550,7 @@ test('DA13: the release pipeline - one shell id, the bundled game indexed in eve
 });
 
 test('DA13: the release script\'s own commands, run - seed and pack from the environment\'s numbers, and delta exits 1 on a regressed update', () => {
-  const script = new URL('../../scripts/desktopRelease.mjs', import.meta.url).pathname;
+  const script = fileURLToPath(new URL('../../scripts/desktopRelease.mjs', import.meta.url));
   const node = (args, env = {}) => spawnSync(process.execPath, [script, ...args], { encoding: 'utf8', env: { ...process.env, ...env } });
   const root = tmp();
   try {

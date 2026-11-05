@@ -559,10 +559,8 @@ export function zoneMapLimits(mask, { paperW, paperH, legendW = ZONE_LEGEND_W })
  *  zone except from the Overworld map": the zone refuses a journey into or out of it (WILD3; TRAVEL-EVERYWHERE left that
  *  law the zone's) and its carriages have no town to run between (World-Wide.md, What stays). */
 export const ZONE_RULES = Object.freeze([
-  'Other players can attack you. Only your party and guild are shown on your maps here.',
   'Foes are four times as strong, elites and champions included.',
   'Two Greater Giants roam every reach, each shown on the map.',
-  "If another player kills you, nothing drops. They may take one uninsured worn piece, or gold. Insured gear is kept, but never a villain's.", // PVP-WORDS (PVP-REWARD): no bag drops; the killer's one roll
   'Travel here is slower: at most 20x in the wilds, 40x on the roads.',
 ]);
 /** AUDIT TESA II M5: THE ZONE MAP'S OWN WORDS past the Wrothgarian zone's - Cyrodiil's travel law, and what the map says
@@ -578,23 +576,21 @@ export const ZONE_MAP_TEXT = Object.freeze({
   offline: () =>
     t(
       'wild.legend.offline',
-      "You are offline, so no other player can reach you here. The zone's laws - stronger foes, more loot, what a player's kill takes - hold only online.",
+      'A wild and perilous province. Travel cautiously.',
     ),
   chipTipOffline: () =>
     t(
       'wild.map.chipTipOffline',
-      "{zone}: an open PvP zone online. Offline no other player is here, and its foes, its loot and a death are the land's own.",
+      '{zone}: a wild and perilous province.',
       { zone: WILD_NAME },
     ),
-  door: () => t('wild.map.door', 'Open the {zone} map, with its four rings and their loot', { zone: WILD_NAME }),
-  doorOffline: () => t('wild.map.doorOffline', 'Open the {zone} map, with its four rings', { zone: WILD_NAME }),
+  door: () => t('wild.map.door', 'Open the {zone} map', { zone: WILD_NAME }),
+  doorOffline: () => t('wild.map.doorOffline', 'Open the {zone} map', { zone: WILD_NAME }),
 });
 /** AUDIT TESA II M5: the legend's laws - online the zone's, its travel law Cyrodiil's; offline (`laws` false) the one line
  *  that says they hold only online. */
 export function zoneRules(laws = true) {
-  return laws
-    ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)]
-    : [ZONE_MAP_TEXT.offline()]; // ZONE-SAFE: the settlements' peace beside the first law
+  return [ZONE_RULES[0], ZONE_RULES[1], ZONE_MAP_TEXT.travel(), ZONE_RULES[2]];
 }
 
 /**
@@ -617,15 +613,15 @@ export function buildZoneLegend(
   root.addEventListener?.('pointerdown', (e) => e.stopPropagation?.());
   root.addEventListener?.('wheel', (e) => e.stopPropagation?.());
   const head = el('div', 'hmwild-head');
-  head.append(el('div', 'hmwild-kicker', 'Open PvP zone'), el('div', 'hmwild-title', WILD_NAME));
+  head.append(el('div', 'hmwild-title', WILD_NAME));
   root.append(head);
   // AUDIT TESA II M5: offline (`laws` false) no ring's loot holds - the rings are named, their bonus not said
   const where = el(
     'div',
     `hmwild-where${ring ? ' in' : ''}`,
     ring
-      ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)}${laws ? ` - ${wildRingBonus(ring)}` : ''}`
-      : 'You stand outside the zone',
+      ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)}`
+      : 'You stand outside the province',
   );
   root.append(where);
   const list = el('ol', 'hmwild-rings');
@@ -644,7 +640,7 @@ export function buildZoneLegend(
       'hmwild-depth',
       r === 1 ? 'the outer quarter' : r === WILD_RINGS ? 'the heart' : `${r === 2 ? 'second' : 'third'} quarter in`,
     );
-    li.append(sw, name, el('span', 'hmwild-bonus', laws ? wildRingBonus(r) : ''), depth);
+    li.append(sw, name, depth);
     list.append(li);
   }
   root.append(list);

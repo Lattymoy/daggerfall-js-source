@@ -17,6 +17,7 @@ import { standLooseFoe } from './hostEnchant.js';
 import { travelMapPickerData } from '../ui/travel/travelMapDoor.js';
 import { keptPlaces } from '../net/staffPlaces.js';   // WW6: the world's registry, as the boot keeps it
 import { capitalStreet } from './livingWorld/livingIndex.js';   // WW6: a capital one town (WW7-11)
+import { isOnlinePage } from '../systems/online/onlineLane.js';
 
 /** @param {any} host */
 export function createRaidHost(host) {
@@ -51,6 +52,7 @@ export function createRaidHost(host) {
     reputation: () => ({ player: playerEntity, store: _questStore() }),
     // RAID2: the online arm - who I am, the peers standing in the raided town (their feet in the same rect the watch
     // reads a foe's), the raid's puppets I may have struck, the raid's foes I took over, on the net's own clock
+    online: () => isOnlinePage() || !!host.online,
     selfId: () => host.online?.id ?? null,
     wallNow: () => performance.now(),
     peersInTown: () => (host.peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => p.id),   // FIELD-RAID-FT: no room open (a fast travel between the old cell's room and the new) is nobody in town, never a null walked - the crash Discord reported arriving in a raided town

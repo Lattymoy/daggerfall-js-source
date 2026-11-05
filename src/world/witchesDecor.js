@@ -27,6 +27,7 @@
 // BODIES) and keep through a season's re-skin as the block's flats do, and stands the Wyrd Sisters with the street's
 // people (scenes/witchesHost.js presses them). Standing only while the festival's days run (net/festivalLaw.js
 // FESTIVALS, by the device's calendar - decoration needs no service). Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { FESTIVAL_ARCHIVE, FESTIVAL_ART } from './festivalArt.js';
 import { festivalOpen } from '../net/festivalLaw.js';
 import { CLIMATES, REGION_RACES } from '../formats/mapsTables.js';
@@ -269,6 +270,7 @@ export function dryGround(blocks, origin) {
  * @param {DressedTown} town
  */
 export function witchesDressing(town) {
+  if (town?.enabled === false || (!town?.nowMs && !FORK_FLAGS.ENABLE_SEASONAL_EVENTS)) return null;
   const steps = dressTown(town);
   let r = steps.next();
   while (!r.done) r = steps.next();
@@ -279,6 +281,7 @@ export async function witchesDressingBreathing(
   /** @type {DressedTown} */ town,
   /** @type {() => Promise<unknown>} */ breathe,
 ) {
+  if (town?.enabled === false || (!town?.nowMs && !FORK_FLAGS.ENABLE_SEASONAL_EVENTS)) return null;
   const steps = dressTown(town);
   let r = steps.next();
   while (!r.done) {
@@ -289,14 +292,16 @@ export async function witchesDressingBreathing(
 }
 /**
  * @typedef {{ frames: Map<number, any>|null, taverns?: number[], temples?: number[], mapId?: number, climateIndex?: number|null,
- *   region?: number|null, floorY?: number, floorAt?: ?((x: number, z: number) => number), nowMs?: number,
+ *   region?: number|null, floorY?: number, floorAt?: ?((x: number, z: number) => number), nowMs?: number, enabled?: boolean,
  *   blocked?: (a: number[], b: number[]) => boolean, ground?: (x: number, z: number) => boolean, taken?: Iterable<ArrayLike<number>> }} DressedTown
  *   SOLITUDE-RELIEF: `floorAt` the street's height at a pixel-local point where a town's blocks stand at heights of their
  *   own (world/tamrielCapitals.js capitalBlockLift), else `floorY` everywhere.
  */
 /** The dressing, a building a step (witchesDressing runs it whole, witchesDressingBreathing breathes between). */
 function* dressTown(
-  /** @type {DressedTown} */ {
+  /** @type {DressedTown} */ town,
+) {
+  const {
     frames,
     taverns = [],
     temples = [],
@@ -309,9 +314,8 @@ function* dressTown(
     blocked = () => false,
     ground = () => true,
     taken = [],
-  },
-) {
-  if (!frames?.size || !festivalOpen(nowMs)) return null;
+  } = town;
+  if ((!town?.nowMs && !FORK_FLAGS.ENABLE_SEASONAL_EVENTS) || !frames?.size || !festivalOpen(nowMs)) return null;
   const floor = floorAt ?? (() => floorY);
   const kit = WITCH_KITS[witchCulture(climateIndex, region)];
   const S = WITCH_SPOTS;

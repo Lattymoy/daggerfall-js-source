@@ -119,15 +119,15 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
     '/v1/staff/chat-close', '/v1/staff/chats'].sort());
   // no secret to set anywhere: the config holds the lists and a public key, and nothing else of the panel's
   const toml = src('server-account/wrangler.toml');
-  assert.match(toml, /^OWNER_HANDLES = "Lattymoy,SirMcMobdon"$/m);
+  assert.match(toml, /^OWNER_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"$/m);
   // chief pasted the key his panel showed: that pair alone, and every key named a raw 32-byte Ed25519 public key
   assert.match(toml, /^OWNER_KEYS = "SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM"$/m);
   for (const k of ownerKeys({ OWNER_KEYS: toml.match(/^OWNER_KEYS = "([^"]*)"$/m)?.[1] }).values()) {
     await crypto.subtle.importKey('raw', Buffer.from(k, 'base64url'), { name: 'Ed25519' }, false, ['verify']);
   }
   // 
-  assert.match(toml, /^DEVELOPER_HANDLES = "[^"]*,SirMcMobdon,kpblca_1"$/m);
-  assert.match(toml, /^SHADOW_FANG_HANDLES = "SirMcMobdon"$/m);
+  assert.match(toml, /^DEVELOPER_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"$/m);
+  assert.match(toml, /^SHADOW_FANG_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"$/m);
 });
 
 test('STAFF-PANEL1: unconfigured is shut - with no owner key named, nobody can sign in', async () => {

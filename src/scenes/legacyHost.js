@@ -41,6 +41,7 @@ import { loadFamily, storeFamily, leaveBirth, readBirth, clearBirth, listFamilie
 import { takeRevived, stampRevived, dropRevived, revivedOf, REZ_HOLD_S } from '../systems/legacy/revived.js';   // REVIVE: a death taken back, whichever copy says so; REZ-BLOODLINE AUDIT R1: and a Resurrect's, the same way
 import { birthSearch } from '../systems/legacy/places.js';
 import { payToll, tollLine, ageOf, isElder, isSpent } from '../systems/legacy/age.js';
+import { offlineRespawnOn } from '../systems/deathRespawn.js';
 import { liveVampirism } from '../systems/racialLive.js';   // AGELESS-CURSE
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // AGELESS-CURSE
 import { legacySettings } from '../systems/legacy/settings.js';
@@ -69,7 +70,7 @@ export const BORN_REFLEXES = 2;
 
 /** The words. One home, so the windows and the HUD say one thing. */
 export const LEGACY_TEXT = Object.freeze({
-  founded: (sur, model) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} is founded as ${model === MODELS.bloodline ? 'a Bloodline, where every death is final' : 'an Enduring line, where a death costs years'}.`,   // LEGACY-NAME: named at its seat, or not yet
+  founded: (sur, model) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} is founded as ${model === MODELS.bloodline ? 'a Bloodline, where every death is final' : model === MODELS.dynasty ? 'a Dynasty, where death costs no years and permadeath never claims you' : 'an Enduring line, where a death costs years'}.`,   // LEGACY-NAME: named at its seat, or not yet
   seat: (loc) => `${loc} is your family's seat.`,
   // FAMILY-SEAT (FIELD BUGS 2026-10-07b): the seat moved where the one played stands (the House page)
   seatMoved: (loc) => `The house moves its seat: ${loc} is your family's seat.`,
@@ -184,6 +185,7 @@ export function mergeFamily(stored, saved, cid) {
 /**
  * @param {{
  *   entity:any, storage:() => any, tab:() => any, on:() => boolean, online:() => boolean,
+ *   offlineRespawn?:() => boolean,
  *   killer?:() => (string|null), atPlace?:(place:any) => boolean, openRemains?:(rec:any, items:any[]) => boolean, letGoRemains?:() => void,
  *   atRest?:() => boolean, askRest?:(name:string, yes:() => void) => boolean, takeItem?:(item:any) => void,
  *   carried?:() => any[], giveItems?:(items:any[]) => void,
@@ -550,7 +552,18 @@ export function createLegacyHost(deps) {
     // death taken back is known by its minute alone, revived.js: one at the same minute would be taken back with it)
     d.at = Math.max(d.at, ...revivedOf(p).map((at) => at + 1));
     const h = { familyId: family.id, personId: p.id, d, until: wallNow() + REZ_HOLD_MS, rise: null, toll: null, tollWas: 0, tollPaid: 0, remains: null, sky: 0, kept: null, ask: null, granted: null, unheard: null };
-    if (family.model === MODELS.enduring) {
+    if (family.model === MODELS.dynasty) {
+      const respawnActive = deps.online() || (deps.offlineRespawn ? deps.offlineRespawn() : offlineRespawnOn());
+      if (respawnActive) {
+        const paid = payToll({ ...p }, 0, p.lived, { dynasty: true });
+        h.rise = { kind: 'rise', line: tollLine(p.given, paid) };
+        h.toll = { share: 0, lived: p.lived, dynasty: true };
+      } else {
+        // DYNASTY SAFE-LOAD: under classic save/load mode, death is standard game over without recording permadeath
+        outcome = { kind: 'none' };
+        return outcome;
+      }
+    } else if (family.model === MODELS.enduring) {
       const cursed = !!(deps.entity && (liveVampirism(deps.entity) || liveLycanthropy(deps.entity)));   // AGELESS-CURSE: a vampire or a lycanthrope pays no toll
       const toll = { share: legacySettings().tollShare, lived: p.lived, ageless: cursed };
       const paid = payToll({ ...p }, toll.share, toll.lived, toll);   // asked of a copy first: a span already spent is a fall
@@ -1021,12 +1034,12 @@ export function createLegacyHost(deps) {
     return { ok: play(personOf(family, id), here ? placeHere() : null) };   // FB1012d SEAT-HOME: met at a home of the house's own (a farm), born there
   }
 
-  /** Why the played elder may not pass the mantle now, or null. */
+  /** Why the played member may not pass the mantle now, or null. */
   function mantleRefusal() {
     const p = current();
-    if (!family || past || !p || !deps.on() || family.model !== MODELS.enduring) return 'Only an Enduring house passes its mantle.';
+    if (!family || past || !p || !deps.on() || (family.model !== MODELS.enduring && family.model !== MODELS.dynasty)) return 'Only an Enduring or Dynastic house passes its mantle.';
     if (family.pending) return LEGACY_TEXT.pending;
-    if (!isElder(p, lived())) return `${p.given} is not yet an elder of the house.`;
+    if (family.model === MODELS.enduring && !isElder(p, lived())) return `${p.given} is not yet an elder of the house.`;
     if (deps.inFight()) return LEGACY_TEXT.fight;
     return null;
   }

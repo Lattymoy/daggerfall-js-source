@@ -38,6 +38,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { frameRateSwitches } = require('./lib/frameRate.cjs');   // FPS-VSYNC: VSync off lifts Chromium's wait
 const { backendLaunch, holdsVSync, watchBackend, backendOption, chooseBackend, restartArgs } = require('./lib/graphicsBackend.cjs');   // GPU-BACKEND: the Vulkan opt-in and its guard
+const { getScreenshotsDir } = require('./lib/screenshotStorage.cjs');
 
 // DAGGER_USER_DATA points saves/config somewhere else - the probe's
 // door (tools/appShellProbe.mjs writes into a temp dir it can read
@@ -53,7 +54,7 @@ const { backendLaunch, holdsVSync, watchBackend, backendOption, chooseBackend, r
 // rebrand is a name, not a migration. The folder keeps the name it was
 // created with, whatever the product is called on the outside.
 if (process.env.DAGGER_USER_DATA) app.setPath('userData', process.env.DAGGER_USER_DATA);
-else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall JavaScript'));
+else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall Forever'));
 
 // GPU-BACKEND (2026-10-26): Vulkan on Windows, the player's opt-in (`graphicsBackend`), held on the default while a
 // failure is on record. The guard reads the renderer once the first window is up and relaunches on the default when
@@ -487,10 +488,10 @@ function handleDagger(req) {
 // check's own request - asked beside it at launch, under its two gates -
 // and its answer is kept in news.json, so the panel is never empty while
 // the next one is asked for, or when GitHub does not answer.
-const RELEASES_LATEST_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/latest';
-const RELEASES_LIST_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases?per_page=20';
-const RELEASES_TAG_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/tags/';   // + the hosting pin's tag
-const RELEASES_PAGE = 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest';
+const RELEASES_LATEST_API = 'https://api.github.com/repos/Chuz13/daggerfall-forever/releases/latest';
+const RELEASES_LIST_API = 'https://api.github.com/repos/Chuz13/daggerfall-forever/releases?per_page=20';
+const RELEASES_TAG_API = 'https://api.github.com/repos/Chuz13/daggerfall-forever/releases/tags/';   // + the hosting pin's tag
+const RELEASES_PAGE = 'https://github.com/Chuz13/daggerfall-forever/releases/latest';
 const { isNewerRelease } = require('./lib/updateCheck.cjs');
 const { updateTransport } = require('./lib/autoUpdate.cjs');
 const { UNLOAD_ASK, leaves, restartAsk, reinstallAsk, installFailedAsk, goesAhead } = require('./lib/shellDialogs.cjs');
@@ -565,6 +566,9 @@ function autoUpdater() {
   au.autoInstallOnAppQuit = true;
   au.allowPrerelease = false;
   au.allowDowngrade = false;
+  if (app.isPackaged && process.platform === 'win32') {
+    try { au.installDirectory = path.dirname(process.execPath); } catch {}
+  }
   au.logger = null;
   au.on('error', () => onUpdaterEvent('error'));
   au.on('update-not-available', () => onUpdaterEvent('none'));
@@ -725,6 +729,12 @@ require('electron').autoUpdater.on('before-quit-for-update', () => {
   // closed and never came back (a game page slow to unload was enough, measured). From here this copy is leaving: the
   // lock is the new one's.
   app.releaseSingleInstanceLock();
+  if (launcher?.win && !launcher.win.isDestroyed()) {
+    try { launcher.win.destroy(); } catch {}
+  }
+  if (process.platform === 'win32') {
+    setTimeout(() => { try { app.exit(0); } catch {} }, 100).unref?.();
+  }
 });
 app.on('before-quit', (e) => { if (holdQuit) { holdQuit = false; e.preventDefault(); } });
 
@@ -970,7 +980,7 @@ async function checkForUpdatesViaUpdater() {
   tellBox({
     type: 'info',
     message: `You're up to date`,
-    detail: `DFO Online v${app.getVersion()} is the latest release.`,
+    detail: `Daggerfall Forever v${app.getVersion()} is the latest release.`,
   });
 }
 
@@ -1044,7 +1054,7 @@ async function checkForUpdates() {
     tellBox({
       type: 'info',
       message: `You're up to date`,
-      detail: `DFO Online v${app.getVersion()} is the latest release.`,
+      detail: `Daggerfall Forever v${app.getVersion()} is the latest release.`,
     });
     return;
   }
@@ -1224,7 +1234,7 @@ async function checkForUpdatesLoudly() {
   if (g === 'installer') return currentUpdateTransport() === 'updater' ? checkForUpdatesViaUpdater() : checkForUpdates();
   const stays = 'your saves, settings and ARENA2 path all stay where they are.';
   if (g === 'offline') tellBox({ type: 'warning', message: 'Could not check for updates', detail: `GitHub was unreachable. The releases page is ${RELEASES_PAGE}.` });
-  else if (g === 'current') tellBox({ type: 'info', message: `You're up to date`, detail: `DFO Online v${gameVersion()} is the latest release.` });
+  else if (g === 'current') tellBox({ type: 'info', message: `You're up to date`, detail: `Daggerfall Forever v${gameVersion()} is the latest release.` });
   else if (gameJob) tellBox({ type: 'info', message: `Version ${gameJob.version} is downloading`, detail: `You have v${gameVersion()}. Only the files that changed come down, and it plays the next time the game starts - ${stays}` });
   else if (updateReady?.game) tellBox({ type: 'info', message: `Version ${updateReady.version} is ready`, detail: `It plays the next time the game starts, or now from File > Restart to Update - ${stays}` });
   else tellBox({ type: 'info', message: `Updated to v${gameVersion()}`, detail: `Only the files that changed came down; Play runs it - ${stays}` });
@@ -1328,6 +1338,13 @@ function openSavesFolder() {
   shell.openPath(dir);
 }
 
+/** File > Open Screenshots Folder. */
+function openScreenshotsFolder() {
+  const dir = getScreenshotsDir(app.getPath('userData'));
+  fs.mkdirSync(dir, { recursive: true });
+  shell.openPath(dir);
+}
+
 /** DA10: the update check's switch. The launcher's toggle and the File
  *  menu's checkbox are one setting (config.json updateCheck); turned on
  *  while the launcher is open, it checks now rather than next launch. */
@@ -1361,6 +1378,7 @@ function buildMenu() {
       label: 'File',
       submenu: [
         { label: 'Open Saves Folder', click: () => openSavesFolder() },
+        { label: 'Open Screenshots Folder', click: () => openScreenshotsFolder() },
         {
           label: 'Locate ARENA2 Folder...',
           click: async () => {
@@ -1462,7 +1480,7 @@ async function createWindow({ onShown = null } = {}) {
     width: 1280,
     height: 800,
     backgroundColor: '#111111',
-    title: 'DFO Online',
+    title: 'Daggerfall Forever',
     show: !onShown,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -1624,7 +1642,7 @@ function openLauncherWindow() {
     fullscreenable: false,
     show: false,
     backgroundColor: '#0a0c11',
-    title: 'DFO Online',
+    title: 'Daggerfall Forever',
     webPreferences: {
       preload: path.join(__dirname, 'launcherPreload.cjs'),
       contextIsolation: true,
@@ -1999,6 +2017,7 @@ ipcMain.on('launcher:act', async (e, msg) => {
       break;
     }
     case 'open-saves': openSavesFolder(); break;
+    case 'open-screenshots': openScreenshotsFolder(); break;
     case 'set-update-check': setCheckOnLaunch(arg === true); break;
     case 'reinstall': await reinstallFromLauncher(); break;
     case 'set-backend': setBackendFromLauncher(arg); break;
@@ -2141,6 +2160,11 @@ ipcMain.on('dagger:private-server', (e) => { e.returnValue = priv ? { url: priv.
 // The preload asks for its storage root synchronously at page boot -
 // storage must exist before the first module reads a setting.
 ipcMain.on('dagger:user-data-path', (e) => { e.returnValue = app.getPath('userData'); });
+ipcMain.on('dagger:open-screenshots-folder', (e, targetPath) => {
+  const dir = targetPath || getScreenshotsDir(app.getPath('userData'));
+  fs.mkdirSync(dir, { recursive: true });
+  shell.openPath(dir);
+});
 // FPS-VSYNC (AUDIT 28e): whether this launch lifted Chromium's wait - the page paces its frames by the cap then
 // (src/systems/frameCap.js installFramePacer), since a held frame costs a whole refresh with the wait lifted
 ipcMain.on('dagger:frames-lifted', (e) => { e.returnValue = FRAME_SWITCHES.length > 0; });

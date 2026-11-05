@@ -164,28 +164,27 @@ test('the whole path: a SIGN rumour in the mill becomes the lines a board shows'
 // no host stands it now, and the town panel is the press.
 // ---------------------------------------------------------------
 
-test('NOTICE-PANEL the streaming world stands no board: the build keeps its place alone (the siege field\'s Market), the street\'s ray holds none, and the town panel\'s Notice Board reads the mill\'s sign', () => {
+test('physical bulletin and bounty boards stand in the streaming world: the build stands the model, the street\'s ray holds them', () => {
   const b = src('src/scenes/pixelBuild.js');
-  const at = b.indexOf('if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }');
+  const at = b.indexOf('if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); }');
   assert.ok(at > 0 && at < b.indexOf('const climateFree = isClimateFreeModel(placed.modelIdNum);'), 'caught before it is remapped, drawn or made solid');
   // PIN MOVED (AUDIT FB1029g R1): its place is the very box and matrix a drawn model's are - one reckoning, read once
-  assert.match(b, /if \(!gpu\) continue;\n\s*const local = multiply\(originMatrix, placed\.matrix\);\n\s*const cpu = cpuModels\.get\(placed\.modelIdNum\);\n\s*const box = transformedAabb\(archAabb\(placed\.modelIdNum, cpu\.positions\), local\);\n(\s*\/\/[^\n]*\n)*\s*if \(isBulletinBoard\(placed\.modelIdNum\)\) \{ pixelBoards\.push\(\{ box, local \}\); continue; \}/);
+  assert.match(b, /if \(!gpu\) continue;\n\s*const local = multiply\(originMatrix, placed\.matrix\);\n\s*const cpu = cpuModels\.get\(placed\.modelIdNum\);\n\s*const box = transformedAabb\(archAabb\(placed\.modelIdNum, cpu\.positions\), local\);\n(\s*\/\/[^\n]*\n)*\s*if \(isBulletinBoard\(placed\.modelIdNum\)\) \{ pixelBoards\.push\(\{ box, local \}\); \}/);
   assert.equal(b.match(/multiply\(originMatrix, placed\.matrix\)/g)?.length, 1, 'no second reckoning of a placed model\'s matrix');
-  assert.doesNotMatch(b, /boards: pixelBoards,   \/\/|BULLETIN_BOARD_MODEL_ID/, 'no list on the pixel, and no board of the build\'s own');
+  assert.match(b, /boards: pixelBoards,/, 'list on the pixel');
   const w = src('src/scenes/world.js');
-  assert.doesNotMatch(w, /boardTargets|bulletinBoardNews|openBountyBoard/, 'the street\'s host hands the ray no board');
+  assert.match(w, /boardTargets/, 'the street\'s host hands the ray the boards');
   assert.match(w, /news: \(\) => rumorMill\.getNewsOrRumorsForBulletinBoard\(\),/, 'TK-i\'s sign face, the panel\'s');
   assert.equal(/bulletin boards, the questor-post greeting\) mount\n  \/\/ with TK-v/.test(w), false, 'the stale "mount with TK-v" note stays rewritten');
   const m = src('src/scenes/worldModes.js');
-  assert.doesNotMatch(m, /activateBulletinBoard|boardTargets|key: `board:/, 'no board in the ray, nor its press');
+  assert.match(m, /boardTargets|key: `board:/, 'board in the ray and its press');
 });
 
-test('the probe exterior host stands no board either - FLAGGED: no account service and no mill, so no town panel', () => {
+test('the probe exterior host stands boards in the street', () => {
   const e = src('src/scenes/exterior.js');
   assert.ok(e.includes("import { isBulletinBoard, isCityGate,") && e.includes("} from '../world/rmbLayout.js';"));
-  assert.match(e, /if \(isBulletinBoard\(placed\.modelIdNum\)\) continue;/, 'skipped where the placement is stood');
-  assert.match(e, /if \(!isBulletinBoard\(placed\.modelIdNum\)\) modelIds\.add\(placed\.modelIdNum\);/, 'AUDIT FB1029g R6: and never fetched for it');
-  assert.match(src('tools/townSolidsSweep.mjs'), /&& !RMBRP_HILLS\[p\.id\] && !isBulletinBoard\(p\.id\)\);/, 'AUDIT FB1029g R6: the solids sweep counts no board as standing');
+  assert.doesNotMatch(e, /if \(isBulletinBoard\(placed\.modelIdNum\)\) continue;/, 'not skipped where the placement is stood');
+  assert.match(e, /modelIds\.add\(placed\.modelIdNum\);/, 'fetched for it');
   assert.doesNotMatch(e, /boardTargets|bulletinBoards|createTownPanelHost/);
   // and the CONTENT of the no-news arm, which the panel opens offline -
   // one centred row, the location's own name.

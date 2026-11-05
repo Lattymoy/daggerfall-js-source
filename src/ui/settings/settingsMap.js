@@ -183,7 +183,9 @@ export const CATEGORIES = Object.freeze([
     ]),
     sec('character', 'Character & survival', [
       'feat:mod-oblivion-remaster-leveling',
+      'port:offlineFirmament',
       'feat:mod-project-legacy',
+      'feat:offline-respawn',
       'feat:mod-climates-calories',
       'feat:mod-roleplay-realism',
     ]),
@@ -202,6 +204,7 @@ export const CATEGORIES = Object.freeze([
     sec('enemies', 'Enemies', [
       'feat:enhanced-ai',
       'Enhancements/EnhancedCombatAI',
+      'port:reflexes',
       'feat:mod-meanermonsters',
       'feat:mod-daggerfall-enemy-expansion',
       'feat:enemy-infighting',
@@ -222,12 +225,15 @@ export const CATEGORIES = Object.freeze([
       'Enhancements/BowLeftHandWithSwitching',
     ]),
     sec('morrowind', 'With Morrowind data', [
+      'feat:mw-player-body',
+      'feat:mw-item-icons',
       'feat:mod-weapon-sheathing',
       'feat:steel-helm',
       'feat:beast-footwear',
       'feat:beast-helmets',
       'feat:mw-spell-effects',
       'feat:mw-body-motion',
+      'feat:mw-foe-bodies',
       'feat:mw-npc-bodies',
       'feat:mw-billboard-look',
       'feat:mw-model-detail',
@@ -249,6 +255,9 @@ export const CATEGORIES = Object.freeze([
     ]),
     sec('weather', 'Weather & ambience', ['feat:weather-events', 'feat:mod-better-ambience']),
     sec('towns', 'Towns & people', [
+      'port:offlineHousing',
+      'port:unifiedBank',
+      'port:city247',
       'feat:living-world',
       'feat:mod-beautiful-villages',
       'feat:mod-beautiful-cities',

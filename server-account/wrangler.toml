@@ -161,12 +161,12 @@ ALLOWED_ORIGIN = "*"
 # the trade-freeze review's clear and roll back - and the staff panel's Admin role (server-account/src/staff.js), which is
 # this list. SHADOW_FANG_HANDLES still names them: that title, glyph and cloak stay theirs to wear.
 # STAFF-PANEL1 (2026-10-22): the account kpblca_1, with the same whole set.
-DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1"
+DEVELOPER_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"
 # STAFF-PANEL1 (2026-10-22, server-account/src/staff.js): THE STAFF PANEL'S OWNERS (read the audit
 # log) - staff who may also read the audit log of every staff sign-in and act, invite a staff member to enrol one more
 # extension (a new invite replaces the member's unspent one; keys stay) and cut one off (every key and session ended). A handle here that no role list names is no owner (staff.js isOwner). Comma-separated,
 # case-insensitive, read at every call.
-OWNER_HANDLES = "Lattymoy,SirMcMobdon"
+OWNER_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"
 # STAFF-PANEL1: AN OWNER'S FIRST WAY IN - `handle:publicKey`, comma-separated, the key raw Ed25519 in base64url. The owner's own
 # staff panel extension minted the pair on their computer and holds the private half; this half only checks its signature,
 # so it is safe in a public repository. It is that owner's first way in; every other staff member is invited from the
@@ -180,14 +180,14 @@ OWNER_KEYS = "SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM"
 # adds map makers who are not. An APPROVER decides what goes live (server-account/src/poi.js); nothing reaches a player
 # unapproved. Comma-separated handles, case-insensitive, read at every call - a handle taken off loses the door at once.
 BUILDER_HANDLES = ""
-APPROVER_HANDLES = "Lattymoy"
+APPROVER_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"
 # PRIVATE-REPORT (2026-10-17, Mac: "Can we add a private disclosure method for exploits/bugs with the client";
 # bible/06-Systems/Private-Reports.md): WHO READS THE PRIVATE REPORTS - the exploits, bugs and security holes players
 # send from the mailbox (/bug). Nobody else sees one: not a moderator, not a developer this list does not name, because
 # an exploit read by one more person is one more person who can use it before it is fixed. Comma-separated handles,
 # case-insensitive, read at every call - a handle taken off loses the inbox on its next request. Empty: the reports wait,
 # unread, until a handle is written here.
-REPORT_READER_HANDLES = "Lattymoy"
+REPORT_READER_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"
 # MOD1: THE MODERATORS - the blue shield beside the name, and /mute and
 # /unmute in chat. Comma-separated handles, case-insensitive, the same
 # as the line above; a developer may already moderate without being
@@ -197,7 +197,7 @@ REPORT_READER_HANDLES = "Lattymoy"
 # MOD2 (2026-10-02, Mac: "give tabbyvish the moderator title/glyph for
 # ingame"): the second, with the same shield and commands. MOD3 (same
 # day, Mac: "Also add Starempire42 as a moderator"): the third.
-MODERATOR_HANDLES = "Asynian,tabbyvish,Starempire42"
+MODERATOR_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"
 # SAFE1-SAFE8 (2026-10-17, Mac: "Lets do every single thing here. I want a full fledged future proof system";
 # bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY.
 #
@@ -228,7 +228,7 @@ CLAUDE_STAFF_HANDLE = "Claude"
 CLAUDE_STAFF_MODEL = "claude-sonnet-5-5"
 CLAUDE_STAFF_DAILY_MAX = "200"
 CLAUDE_STAFF_QUIET_MIN = "50"
-CLAUDE_ORDER_HANDLES = "SirMcMobdon,kpblca_1,Lattymoy"
+CLAUDE_ORDER_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"
 # SAFE8: THE MODERATORS' QUEUE IN DISCORD (src/discord.js). DISCORD_MOD_CHANNEL: the private channel's id the bot posts
 # each case to. DISCORD_PUBLIC_KEY: the Discord application's public key (hex - not a secret), which every press and
 # /mod is signed with. DISCORD_MODERATORS: "<discord user id>:<game handle>", comma-separated - a press is that
@@ -240,7 +240,7 @@ DISCORD_PUBLIC_KEY = "36e74945022f94ec7955a84ccccb270e63780100e558d30777742337b6
 # 2026-10-17 (Mac): the queue's channel and the application's public key set. The moderators' Discord ids, each
 # `<discord user id>:<in-game handle>` - the handle must also stand in MODERATOR_HANDLES or DEVELOPER_HANDLES, which
 # every press and /mod re-checks (discord.js actorOf); anyone not here is answered that only the game's moderators may act
-DISCORD_MODERATORS = "128705730965536768:Lattymoy"
+DISCORD_MODERATORS = ""
 # STAFF-PANEL5-FREEZE (2026-10-22; design doc "DFO Staff Panel: design", Freeze player): DISCORD_INVITE_URL - the
 # server's Discord invite the frozen player's Staff tab shows beside its Copy button (server-account/src/staffFreeze.js
 # discordInvite), so it changes without a game update. An https address; empty, the tab shows none.
@@ -318,7 +318,7 @@ HIEROPHANT_HANDLES = ""
 # for his account. A holo shadow cloak with red accents"): and the Holo
 # Shadow Cloak - the third list that grants an aura (titles.js TIER_AURA);
 # taking the handle off takes it too.
-SHADOW_FANG_HANDLES = "SirMcMobdon"
+SHADOW_FANG_HANDLES = "HidmigMoonraven,13,Alex13Uslavtsev,Chuz13"
 # MARKS1 (PROF0 20): Marks open by this switch - "off", "dev" (the DEVELOPER_HANDLES alone) or "on". Shipped at "dev":
 # the currency is struck and spent by the developers first, and opened to everyone by this one line.
 # SWITCH-ON (2026-09-29, Mac: "Fuck it lets switch everything on"): "on" - Marks are everyone's.

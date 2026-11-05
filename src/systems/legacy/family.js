@@ -33,9 +33,9 @@ export const LEGACY_VENDOR = 'ProjectLegacy';
 export const LEGACY_MOD = 'project-legacy';
 export const FAMILY_VERSION = 1;
 
-/** The two models (the arc's section 6). A family is founded under one and never changes it. */
-export const MODELS = Object.freeze({ bloodline: 'bloodline', enduring: 'enduring' });
-export const isModel = (m) => m === MODELS.bloodline || m === MODELS.enduring;
+/** The models (the arc's section 6). A family is founded under one and never changes it. */
+export const MODELS = Object.freeze({ bloodline: 'bloodline', enduring: 'enduring', dynasty: 'dynasty' });
+export const isModel = (m) => m === MODELS.bloodline || m === MODELS.enduring || m === MODELS.dynasty;
 
 /** LEGACY-CHOICE (2026-10-06, Mac: "a enhanced plus UI popup for online when creating a character. Perma Death, the
  *  regular option, or the option that skips the liniage system entirely"): THE THIRD ANSWER - a character who founds no

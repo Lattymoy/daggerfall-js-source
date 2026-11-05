@@ -43,6 +43,7 @@
 // only decides whether NIGHT is a thing this gate is told about, and it is
 // injectable so the law is testable without a clock.
 import { sharedClockOn } from '../../systems/worldTick.js'; // the one predicate every clock-derived online law reads (RESTX2, OL3, OL4, ECON1)
+import { isCity247Active } from '../../systems/buildingLocks.js';
 import { CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../rmbLayout.js';
 
 /**
@@ -73,7 +74,8 @@ export function updateCityGate(gate, night, { online = sharedClockOn() } = {}) {
   // ever notices: the wall stands for the whole session. So online the law is
   // stated on the MODEL, which is the thing that blocks, not on the flag:
   // this gate is open, and it is open now.
-  if (online) {
+  const activeOnline = online || isCity247Active();
+  if (activeOnline) {
     if (gate.isOpen && gate.modelId === CITY_GATE_OPEN_MODEL_ID) return false;
     gate.isOpen = true;
     gate.modelId = CITY_GATE_OPEN_MODEL_ID;

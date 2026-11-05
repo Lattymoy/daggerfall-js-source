@@ -113,7 +113,7 @@ import { setBatchDissolve } from '../systems/dissolve.js';   // DISSOLVE: burnt 
 import { createPortalSet } from './portalFx.js';   // COMPANION-PORTAL
 import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';
 import { STAR_CIRCLE_SHARE } from '../net/starfall/starfallLaw.js';   // STAR5: a master's circle's ward
-import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5c: the pool's foes in their Morrowind bodies
+import { createHostFoeBodies, foeBodiesOn } from '../characters/npcBodies.js';   // MWNPC5c: the pool's foes in their Morrowind bodies
 import { isBodyFoe, foeActor, foeFx, foeWireLook, applyWireLook, kitWire } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
 import { raidLeaderNameOf } from '../systems/raidKinds.js';   // RAID5: a raid's leader, by its party's word
 import { huntMarkSeen } from '../systems/hunt/namedMark.js';   // HUNTERS-MARK-II: a hunter's named mark, read off its record
@@ -248,9 +248,9 @@ export function carrySiteFoe(from, to) {
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
-  // MWNPC5c: the foes' Morrowind bodies - whether the lane is wanted (every host's gate, npcBodiesOn) and how one is
+  // MWNPC5c: the foes' Morrowind bodies - whether the lane is wanted (every host's gate, foeBodiesOn) and how one is
   // made (the hosts' own lane); a test hands its own
-  wantNpcBodies = npcBodiesOn, makeNpcBodies = null,
+  wantNpcBodies = foeBodiesOn, makeNpcBodies = null,
   // TIME1: the SKY's minute - the wilds' night (SOFTCAP5's share) is the sky's; `currentMinute` is the character's own
   // (the poison's anchor, the alert, the disease day). A host that hands none reads the one clock, as offline.
   skyMinute = null,
@@ -2103,7 +2103,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const out = [];
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
     // MWNPC5c: the lane, this frame - none while it is not wanted (and the one standing let go)
-    const npcLane = wantNpcBodies() ? (_npcLane ??= (makeNpcBodies ? makeNpcBodies() : createHostNpcBodies({ renderer, collider: () => collider }))) : null;
+    const npcLane = wantNpcBodies() ? (_npcLane ??= (makeNpcBodies ? makeNpcBodies() : createHostFoeBodies({ renderer, collider: () => collider }))) : null;
     if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }
     _npcStood.length = 0;
     npcLane?.begin();

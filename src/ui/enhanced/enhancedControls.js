@@ -71,8 +71,7 @@
 // a text field here would make every host's router treat the pane as
 // a typing surface.
 
-import { saveKeyBinds, resetDefaults, ACTION_GROUPS, actionLabel } from '../../systems/inputActions.js';
-import { peerMenuBindCard, discardPeerMenuCapture } from '../peerMenuBindCard.js';   // PEERMENU1
+import { saveKeyBinds, resetDefaults, ACTION_GROUPS, actionLabel, FORK_FLAGS } from '../../systems/inputActions.js';
 import { modSetting } from '../../systems/modSettings.js';   // KB1: a mod's group is drawn while the mod is on
 import { bindings, mouseCode, swingMode } from '../input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
 import {
@@ -106,7 +105,14 @@ const el = (t, cls, txt) => {
  *  actionLive). Off, its keys stay bound - switching it back on must not find them given away - and a bind onto one
  *  asks first, naming the mod. */
 export function shownGroups(isOn = modIsOn) {
-  return ACTION_GROUPS.filter((grp) => !grp.mod || isOn(grp.mod));
+  return ACTION_GROUPS
+    .filter((grp) => (!grp.mod || isOn(grp.mod)) && (FORK_FLAGS.ENABLE_ONLINE_PLAY || grp.title !== 'Online'))
+    .map((grp) => {
+      if (FORK_FLAGS.ENABLE_ONLINE_PLAY) return grp;
+      const rows = grp.rows.filter((r) => r.action !== 'PartyPing');
+      if (rows.length === grp.rows.length) return grp;
+      return { ...grp, rows };
+    });
 }
 function modIsOn(vendor) {
   try { return !!modSetting(vendor, 'Enabled'); } catch { return false; }
@@ -295,7 +301,6 @@ const act = (fn) => (...a) => { if (armed || prompt) return undefined; return fn
  */
 export function discardControlsStaging() {
   disarm();
-  discardPeerMenuCapture();   // PEERMENU1
   unsaved = null;
   dupes = { internal: new Set(), cross: new Set(), ok: true };
   prompt = null;
@@ -586,7 +591,6 @@ export function paneControls(body, { render = () => {} } = {}) {
 
   // KB1: the standard's groups, a mod's while it is on (shownGroups above).
   for (const grp of shownGroups()) group(body, grp.title, grp.rows.map((r) => [r.action, r.label]));
-  body.append(peerMenuBindCard(render));   // PEERMENU1: the player menu's press/hold bind (online only)
   body.append(fixedKeysCard());   // UXB1-F
   // TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" -
   // the one Continue sat 53 rows above the row they had just bound, and

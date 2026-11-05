@@ -101,8 +101,8 @@ async function boot() {
   // FB0930-TITLE: a boot's steps name themselves in the title, and a null step is the boot done - the bare name, so
   // the window does not say "loading the saved game" for the rest of the session.
   const status = (msg) => {
-    if (msg == null) { document.title = 'DFO Online'; return; }
-    document.title = `DFO Online - ${msg}`;
+    if (msg == null) { document.title = 'Daggerfall Forever'; return; }
+    document.title = `Daggerfall Forever - ${msg}`;
   };
   // Data gate: readers load user-supplied ARENA2 at runtime
   // (Port-Doctrine) - dev serves it via middleware, production asks

@@ -15,12 +15,14 @@ export const legacyOn = () => !!modSetting(LEGACY_MOD, 'Enabled');
 /** Every dial, resolved: what family.js's `settings` arguments take. */
 export function legacySettings() {
   const toll = Math.max(0, Math.min(TOLL_SHARES.length - 1, modSetting(LEGACY_MOD, 'Legacy.Toll') | 0));
+  const modelChoice = modSetting(LEGACY_MOD, 'Legacy.Model') | 0;
+  const model = modelChoice === 1 ? MODELS.bloodline : modelChoice === 2 ? MODELS.dynasty : MODELS.enduring;
   return {
     descendants: modSetting(LEGACY_MOD, 'Family.Descendants') | 0,
     maxSiblings: modSetting(LEGACY_MOD, 'Family.Max Siblings') | 0,
     siblingChance: modSetting(LEGACY_MOD, 'Family.Siblings Probability') | 0,
-    model: (modSetting(LEGACY_MOD, 'Legacy.Model') | 0) === 1 ? MODELS.bloodline : MODELS.enduring,
-    tollShare: TOLL_SHARES[toll],
+    model,
+    tollShare: model === MODELS.dynasty ? 0 : TOLL_SHARES[toll],
     heirloomChance: (modSetting(LEGACY_MOD, 'Legacy.Heirloom Chance') | 0) / 100,
     familyInWorld: !!modSetting(LEGACY_MOD, 'Legacy.Family In World'),
   };

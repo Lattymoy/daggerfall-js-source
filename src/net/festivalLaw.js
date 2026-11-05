@@ -16,6 +16,7 @@
 //
 // A leaf but for the holiday tables (systems/holidayTables.js, itself a leaf). Not a DFU member: DFU has no live events.
 // Ledger A (THE WITCHES' FESTIVAL).
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { HOLIDAYS, holidayDayOfYear } from '../systems/holidayTables.js';
 
 /** THE FESTIVALS, one a year: its id (the service's rows carry it), its first and its end instant (UTC ms; the end is
@@ -37,7 +38,7 @@ export const festivalAt = (/** @type {number} */ nowMs) =>
 export const festivalOpen = (/** @type {number} */ nowMs) => festivalAt(nowMs) != null;
 /** The festival open now or the next to come, or null when none is left. */
 export const festivalNext = (/** @type {number} */ nowMs) =>
-  festivalAt(nowMs) ?? FESTIVALS.find((f) => f.fromMs > nowMs) ?? null;
+  festivalAt(nowMs) ?? (FESTIVALS.find((f) => f.fromMs > nowMs) ?? null);
 
 /** THE NIGHTS THE DEAD WALK: the sky's Witches' Festival (13 Frostfall) and Tales and Tallows (3 Hearthfire), each kept
  *  in every region (holidayTables.js REGION_CELEBRATING_HOLIDAY's 0xFF). On either, a find gives twice. */

@@ -6514,9 +6514,9 @@ export const MOD_SETTINGS = Object.freeze({
       }),
       'Legacy.Model': Object.freeze({
         default: 0,
-        options: Object.freeze(['Enduring', 'Bloodline']),
+        options: Object.freeze(['Enduring', 'Bloodline', 'Dynasty']),
         description:
-          'The kind of family a character made before this mod gets. Enduring: a death costs years. Bloodline: a death is final.',
+          'The kind of family a character made before this mod gets. Enduring: a death costs years. Bloodline: a death is final. Dynasty: no death cost, no permadeath.',
       }),
       'Legacy.Toll': Object.freeze({
         default: 1,

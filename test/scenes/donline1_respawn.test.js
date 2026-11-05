@@ -62,13 +62,13 @@ test('D-ONLINE1: half health back, never none; one flavour line per kind, the pi
 
 test('D-ONLINE1 by source: the world host snapshots "was this death online" at the presenter, its reset respawns or ends the run by that snapshot, F11 does the same, the modal hosts ask through one door, and the respawn leaves any mode, lands on a start marker, restores half health and speaks', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /_deathWasOnline = _onlineWorldSession\(\);\s*\n\s*townTalk\.showOverlay\(new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset: \(\) => \(legacyDeathReset\(\) \|\| \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)\), rises: \(\) => legacyHost\?\.willRise\(\) \?\? false \}\)\);/, 'captured synchronously at the presenter, and read at the reset');   // PIN MOVED (BAL4): and the screen told of a Legacy rise
+  assert.match(w, /_deathWasOnline = _onlineWorldSession\(\);\s*\n\s*townTalk\.showOverlay\(new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset: \(\) => \(legacyDeathReset\(\) \|\| \(\(_deathWasOnline \|\| offlineRespawnOn\(\)\) \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)\), rises: \(\) => legacyHost\?\.willRise\(\) \?\? false, offlineRespawn: offlineRespawnOn\(\) \}\)\);/, 'captured synchronously at the presenter, and read at the reset');   // PIN MOVED (OFFLINE-RESPAWN): offline respawn enabled by default
   assert.match(w, /const _onlineWorldSession = \(\) => onlineOn \|\| !!\(online && online\.status === 'open' && \(isWorldRoom\(online\.room\) \|\| isCellRoom\(online\.room\)\)\);/, 'the predicate counts the open world\'s CELL room - a death outdoors is an online death');
   assert.match(w, /if \(_deathWasOnline == null\) _deathWasOnline = _onlineWorldSession\(\);[^\n]*\n(?:(?![^\n]*online\.leave\(\))[^\n]*\n)*?\s*if \(online\.room(?: && !_wildGhost)?\) \{ worldPublish\(now, true\); online\.leave\(\);/, 'the frame\'s backstop for the modal hosts\' deaths is taken BEFORE the leave clears the room (PCORPSE1\'s death pose between them, sent while the room is still joined; WILD1: the open zone\'s ghost keeps the cell while its body lies)');
   // AUDIT CONTRIB A4: through the death screen's own reset (Enter's path), whose onReset IS the respawn above - a
   // direct respawn under the screen left the fall tilting the view at the sky through the teleport
   assert.match(w, /if \(townTalk\.overlay instanceof DeathScreen && _deathWasOnline\) townTalk\.overlay\.input\('confirm'\);[^\n]*\n\s*else hudCtx\.quickLoad\(\);/, 'F11 on an online death respawns (through the reset); otherwise it quickloads as ever');
-  assert.match(w, /onlineRespawn: \(\) => \{ if \(legacyDeathReset\(\)\) return true; if \(!\(_deathWasOnline \?\? _onlineWorldSession\(\)\)\) return false; respawnOnlinePlayer\(\); return true; \},/, 'the host bag\'s door for the modal hosts');
+  assert.match(w, /onlineRespawn: \(\) => \{ if \(legacyDeathReset\(\)\) return true; if \(!\(\(_deathWasOnline \?\? _onlineWorldSession\(\)\) \|\| offlineRespawnOn\(\)\)\) return false; respawnOnlinePlayer\(\); return true; \},/, 'the host bag\'s door for the modal hosts');
   const ri = w.indexOf('function respawnOnlinePlayer() {');
   const fn = w.slice(ri, w.indexOf('\n  }\n', ri));
   assert.match(fn, /_deathWasOnline = null;/, 'armed fresh for the next death');
@@ -102,7 +102,8 @@ test('D-ONLINE1 by source: the world host snapshots "was this death online" at t
   assert.match(fn, /reviveForPlay\(playerEntity, \{ force: true \}\);\s*\n\s*surfacePlayer\(\);/, 'surfaced with it');
   // DEATH-PENALTY: the line may carry what the fall cost beside it (systems/deathPenalty.js deathPenaltyText)
   // PIN MOVED (RVN8: a revenant's theft rides the same box, after the price - bible/12-Enhanced-AI/Feud-Arc.md 19)
-  assert.match(fn, /townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\)(?:, deathPenaltyText\(goldLost\)(?:, took\?\.line)?\]\.filter\(Boolean\)|\])\)\);/, 'and the line stands where the death screen did');
+  // PIN MOVED (OFFLINE-RESPAWN: time passed notification)
+  assert.match(fn, /townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\)(?:, deathPenaltyText\(goldLost\)(?:, timeLine)?(?:, took\?\.line)?\]\.filter\(Boolean\)|\])\)\);/, 'and the line stands where the death screen did');
   // ...and one respawn at a time, or a death raised mid-flight starts
   // another teleport racing the first
   assert.match(fn, /if \(_respawning\) return;/, 'MAC-D3: re-entry is refused');

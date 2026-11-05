@@ -314,7 +314,7 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/nav/navClient.js';   // ENHANCED AI 3b
 import { reachableFrom } from '../ai/nav/navmesh.js';   // LAIR-WALK: the floor a walk reaches from the way in (the port's own query, over the body's locate)
 import { getPref } from '../systems/uiPrefs.js';
-import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
+import { createHostFoeBodies, foeBodiesOn } from '../characters/npcBodies.js';   // MWNPC5b: the foes in their Morrowind bodies
 import { isBodyFoe, foeActor, foeFx, foeId, foeSeed, applyWireLook, drawBodiesUnderWindow } from '../characters/foeBodies.js';
 import { createPopulationLane } from '../characters/npcBodies.js'; import { personActor } from '../characters/peopleBodies.js';   // MWNPC8b: the dungeon's standing people   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied, corpseEntityName, mintCorpseMarker, corpseTextureOf } from './corpseMarker.js';
@@ -364,6 +364,7 @@ import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a
 import { isAbyssMapId } from '../world/oceanHoles.js';   // PITS-WORLD: an Ocean Hole's abyss, the Bay's or one past it - never a hall's or an Abyss Dungeon's id
 import { dungeonIdentity } from './dungeonIdentity.js';   // AUDIT TAMRIEL-WIDE C3: the professions' name for a dungeon, past the Bay too
 import { standAurumCache } from './aurumCacheHost.js';   // AURUM-CACHES: today's Aurum coffer, where this dungeon holds one
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { bowShotAim, bowShotExtra } from '../ui/bowBloomRing.js';   // BOW-BLOOM: the player's bow shot inside its circle; BOW-FAST: its stacks
 
 
@@ -7713,7 +7714,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // object outlives the bake and every foe reads the same one.
     if (enhancedNav.world) enhancedNav.world.pathBudget = enhancedNav.world.budgetPerFrame;
     // MWNPC5b: the lane, this frame - none while it is not wanted (and the one standing let go)
-    const npcLane = npcBodiesOn() ? (_npcLane ??= createHostNpcBodies({ renderer, collider: () => collider })) : null;
+    const npcLane = foeBodiesOn() ? (_npcLane ??= createHostFoeBodies({ renderer, collider: () => collider })) : null;
     if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }
     _peerFrame++;   // WORLD3: the peers' feet are read once a frame
     // HOST-CLOCK (scenes/ownerCatchUp.js ownerFoes): THE FOES' STEP IS A CALL, as a street pool's update is - made once a
@@ -9390,6 +9391,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // intercept lives inside it, so a probe that killed a foe any
     // other way would be testing a path the game never takes.
     damageFoe,
+    spawnFoe: async (mobileType, pos, { gender = 'unspecified' } = {}) => {
+      return await buildFoeAt({ x: pos[0], y: pos[1], z: pos[2], mobileType, gender }, true, { feetGiven: true });
+    },
     // C10: the rig's clickAttack carries the sheathed gate the inline
     // version missed - a touch tap while sheathed no longer swings
     // (WeaponManager: no attack processing while sheathed).
@@ -10912,7 +10916,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     setFoeDead(f, true);
   }
   for (const [i, p] of lootPiles.entries()) if (p.stopKey && _deepCleared.has(p.stopKey) && !p.items.length) settleLootFlat(i);
-  const _aurumCache = standAurumCache(api, dfLocation, lootPiles, { meshes: deps });   // AURUM-CACHES: stood once the level and its piles are, beside one of them - CHEST3D: a model, through the pipeline's door
+  const _aurumCache = FORK_FLAGS.ENABLE_SHOP ? standAurumCache(api, dfLocation, lootPiles, { meshes: deps }) : null;
+  //  const _aurumCache = standAurumCache(api, dfLocation, lootPiles, { meshes: deps });
   // DELVE II (DLV2): THE DUNGEON'S ENCOUNTERS - the site law on the built collider, the fire plan's doors and fires, the
   // dungeon's own pile roll; its targets and plaque through the api's own doors (scenes/delve/delveHost.js)
   const delve = createDelveHost({ api, deps, location: dfLocation, blocks: dungeon.blocks, hearths: dungeonHearths, fires: dungeonFires, player: () => playerEntity, rollPile: rollPileItems, online: onlineRoom });

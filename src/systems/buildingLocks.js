@@ -17,6 +17,13 @@ import { isShop } from './shopStock.js';
 import { HOLIDAYS } from './holidays.js';
 import { sharedClockOn } from './worldTick.js'; // OL4 (AUDIT ALL O1): the shared clock IS the reason for the shift, and every other online law keys on it
 import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { getPref } from './uiPrefs.js';
+import { FORK_FLAGS } from '../config/forkFlags.js';
+
+/** Whether 24/7 city infrastructure is active (shared clock online or offline optional setting). */
+export function isCity247Active() {
+  return sharedClockOn() || (!!FORK_FLAGS.ENABLE_CITY_INFRASTRUCTURE_247 && getPref('city247') === true);
+}
 
 /** Opening and closing hours by building type (PlayerActivate.cs:
  *  91-92), indexed by DFLocation.BuildingTypes 0..24. closeHours 25
@@ -93,6 +100,7 @@ export function buildingIsUnlocked(
     ownsShip = false,
   } = {},
 ) {
+  const effectiveOnline = ('online' in (arguments[1] ?? {})) ? online : (online || isCity247Active());
   const type = building?.buildingType ?? BUILDING_TYPES.None;
   // Player owned house is always unlocked (:1262)
   if (isHouseOwned?.(building?.buildingKey) ?? false) return true;
@@ -105,7 +113,7 @@ export function buildingIsUnlocked(
     // took `isBuildingOpen(type, hour)` with no opts, so a caller that handed
     // buildingIsUnlocked an explicit `online` was silently ignored by this one
     // arm - harmless while guild halls had no relief, a lie the moment they do.
-    return (g?.hallAccessAnytime ?? false) || isBuildingOpen(type, hour, { online });
+    return (g?.hallAccessAnytime ?? false) || isBuildingOpen(type, hour, { online: effectiveOnline });
   }
   // TG/DB houses: a House2 with a faction is members-only (:1281-1285)
   if (type === BUILDING_TYPES.House2 && (building?.factionId ?? 0) !== 0) {
@@ -119,13 +127,13 @@ export function buildingIsUnlocked(
   // Stores close on the Suns Rest holiday (:1294-1302)
   if (isShop(type)) {
     // OL4: the effective shop schedule keeps the preserved classic answer beside it.
-    return buildingHoursState(type, { hour, holidayId, online }).open;
+    return buildingHoursState(type, { hour, holidayId, online: effectiveOnline }).open;
   }
   // Other structures - temples, taverns, palaces (:1304-1307)
   if (type <= BUILDING_TYPES.Palace && type >= 0) {
     // OL6: `online` THREADED, as OL5 threaded the guild arm - this arm holds the bank, the library and the palace, which
     // the relief now covers, and an explicit `online` handed to the ladder must reach them.
-    return isBuildingOpen(type, hour, { online });
+    return isBuildingOpen(type, hour, { online: effectiveOnline });
   }
   // Ships need ownership (:1308-1309); everything else stays locked -
   // DFU's `unlocked` starts false and no arm below Ship sets it
@@ -262,7 +270,8 @@ export function buildingHoursState(
   // hall keeps its doors on the holiday because classic never shut them.
   const holidayClosed = shop && holidayId === HOLIDAYS.Suns_Rest;
   const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;
-  if (relieved && online && !classicOpen) {
+  const effectiveOnline = ('online' in (arguments[1] ?? {})) ? online : (online || isCity247Active());
+  if (relieved && effectiveOnline && !classicOpen) {
     return { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT };
   }
   return {

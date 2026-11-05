@@ -88,7 +88,7 @@ export function companionCastable(spell) {
  *  fires on the spot, DFU's own instant cast. */
 export const ALLY_ARM_RADIUS = 10;
 /** ...and what the armed ready says under DFU's own "Press button to fire spell." - where the click will land. */
-export const ALLY_ARMED_LINE = 'Aim at a party member to cast it on them, or anywhere else to cast it on yourself.';
+export const ALLY_ARMED_LINE = '';
 /** COMPANION-KIT: ...and the same word with my companion near (scenes/hostMagic.js companionNear). */
 export const COMPANION_ARMED_LINE =
   'Aim at your companion to cast it on them, or anywhere else to cast it on yourself.';

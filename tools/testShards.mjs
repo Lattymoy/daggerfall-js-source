@@ -21,15 +21,27 @@ import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const TIMES_FILE = 'tools/testTimes.json';
+export const MULTIPLAYER_DIRS = ['test/net/', 'test/server/'];
 
-/** The suite's files - every `*.test.js` under test/, its folders' among them - sorted. */
-export function testFiles(root = ROOT) {
+export function scopeOf(argv = []) {
+  if (argv.includes('--all') || argv.includes('--scope=all')) return 'all';
+  if (argv.includes('--net') || argv.includes('--scope=net')) return 'net';
+  return 'sp';
+}
+
+/** The suite's files - every `*.test.js` under test/, its folders' among them - sorted.
+ *  By default (scope: 'sp') excludes multiplayer/server directories. Pass `{ all: true }` or `{ scope: 'all' }` for the whole suite.
+ */
+export function testFiles(root = ROOT, { all = false, scope = 'sp' } = {}) {
   // TIDY5: every test file under test/, its area's folder and its feature's (bible/01-Overview/Code-Map.md)
-  return readdirSync(join(root, 'test'), { recursive: true })
+  const files = readdirSync(join(root, 'test'), { recursive: true })
     .map((f) => f.split('\\').join('/'))
     .filter((f) => f.endsWith('.test.js'))
     .sort()
     .map((f) => `test/${f}`);
+  if (all || scope === 'all') return files;
+  if (scope === 'net') return files.filter((f) => MULTIPLAYER_DIRS.some((d) => f.startsWith(d)));
+  return files.filter((f) => !MULTIPLAYER_DIRS.some((d) => f.startsWith(d)));
 }
 
 /** The recorded times (file -> ms), or none. */
@@ -170,9 +182,10 @@ export const summaryReporters = (root = ROOT, tty = !!process.stdout.isTTY) => [
 export const runnerFlags = (argv) => argv.filter((a) => /^--test-[a-z-]+(=.*)?$/.test(a));
 
 function main(argv) {
+  const scope = scopeOf(argv);
   if (argv[0] === '--plan') {
     const n = Number(argv[1]) || 4;
-    const shards = shardsOf(testFiles(), n, readTimes());
+    const shards = shardsOf(testFiles(ROOT, { scope }), n, readTimes());
     shards.forEach((s, k) =>
       console.log(`shard ${k + 1}/${n}: ${s.files.length} files, ${(s.ms / 1000).toFixed(1)} s recorded`),
     );
@@ -180,11 +193,11 @@ function main(argv) {
   }
   const shard = parseShard(argv[0]);
   if (!shard) {
-    console.error('usage: node tools/testShards.mjs <i>/<n> [--list] [--record <times.json>] | --plan <n>');
+    console.error('usage: node tools/testShards.mjs <i>/<n> [--list] [--record <times.json>] [--all|--net] | --plan <n>');
     return 2;
   }
   const times = readTimes();
-  const { files } = shardsOf(testFiles(), shard.total, times)[shard.index - 1];
+  const { files } = shardsOf(testFiles(ROOT, { scope }), shard.total, times)[shard.index - 1];
   if (argv.includes('--list')) {
     for (const f of files) console.log(f);
     return 0;
@@ -196,7 +209,7 @@ function main(argv) {
     return 2;
   }
   console.log(
-    `shard ${shard.index}/${shard.total}: ${files.length} files (split by ${Object.keys(times).length} recorded times)`,
+    `shard ${shard.index}/${shard.total}: ${files.length} files (${scope}) (split by ${Object.keys(times).length} recorded times)`,
   );
   return runTests(files, { times, extra: runnerFlags(argv.slice(1)), record });
 }

@@ -91,7 +91,7 @@ import { lastHealthLost, lastHealthLostPercent } from '../ui/hud/hudVitals.js'; 
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { carriedWeight } from '../systems/inventory.js';   // F027 / E4: PlayerEntity.CarriedWeight, the gold counter's term and all
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
-import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { installConsoleProbe, setDebugSceneContext } from '../systems/consoleCommands.js';   // E3: the console's door
 import { createSwimMovement } from './deepWater/deepWatersSwimMove.js';   // DW-D: Iliac Puddle No More's swim movement - the dungeon's water too (IsAnySwimming)
 import { deepWatersOn, deepWatersSwimSettings } from './deepWater/deepWatersHost.js';
 import { loadGraceActive as dwLoadGraceActive } from '../world/deepWater/deepWaterRuntime.js';
@@ -637,6 +637,48 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // in DFU and every command registered anywhere is reachable from any
   // scene, which is exactly what a static class means.
   installConsoleProbe();
+  setDebugSceneContext({
+    setPlayerPos: (x, y, z) => {
+      if (typeof _motorRef?.spawn === 'function') _motorRef.spawn(x, y, z);
+      else if (player?.pos) { player.pos[0] = x; player.pos[1] = y; player.pos[2] = z; }
+    },
+    getPlayerPos: () => (player?.pos ? [...player.pos] : null),
+    killAllFoes: () => {
+      let count = 0;
+      if (ctx?.foes) {
+        for (const f of ctx.foes) {
+          if (!f.dead && (f.ai?.isHostile || f.entity?.team !== 'PlayerAlly') && !f.companion) {
+            ctx.damageFoe?.(f, 99999, null, null, { fromPlayer: true, bypassShield: true });
+            count++;
+          }
+        }
+      }
+      return count;
+    },
+    spawnFoe: async (mobileType, count = 1) => {
+      const p = player?.pos ? [...player.pos] : [0, 0, 0];
+      const yaw = cam?.yaw ?? 0;
+      const fwdX = Math.sin(yaw);
+      const fwdZ = Math.cos(yaw);
+      const rightX = Math.cos(yaw);
+      const rightZ = -Math.sin(yaw);
+      let spawned = 0;
+      for (let i = 0; i < count; i++) {
+        const offsetDist = 2.5 + Math.floor(i / 3) * 1.5;
+        const offsetSide = ((i % 3) - 1) * 1.2;
+        const pos = [
+          p[0] + fwdX * offsetDist + rightX * offsetSide,
+          p[1],
+          p[2] + fwdZ * offsetDist + rightZ * offsetSide,
+        ];
+        if (ctx?.spawnFoe) {
+          await ctx.spawnFoe(mobileType, pos, { yaw: yaw + Math.PI });
+          spawned++;
+        }
+      }
+      return spawned;
+    },
+  });
 
   if (shotMode) {
     // Probe hooks (parity with the world scene): displace the camera and

@@ -25,9 +25,9 @@ const STYLE_ID = 'dftown-panel-css';
 const KIT_ID = 'dftown-panel-kit';
 const T = FRAME_TONES;
 export const TOWN_PANEL_CSS = `
-.dftown-panel { display: none; flex-direction: column; align-items: stretch; width: min(300px, 70vw); padding: 0 0 8px;
+.dftown-panel { display: none !important; flex-direction: column; align-items: stretch; width: min(300px, 70vw); padding: 0 0 8px;
   ${PIXEL_FONT_CSS} color: #d8cfae; border-width: 2px; border-style: solid; transform-origin: top center; pointer-events: none; }
-.dftown-panel.on { display: flex; animation: dftown-drop 160ms ease-out; }
+.dftown-panel.on { display: none !important; animation: dftown-drop 160ms ease-out; }
 .dftown-panel.fixed { position: fixed; left: 50%; top: 52px; transform: translateX(-50%); z-index: 12; }
 .dftown-panel.fixed.on { animation: none; }
 .dftown-panel.fixed.at-compass { left: auto; top: auto; transform: none; transform-origin: bottom right; }

@@ -114,7 +114,7 @@ import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVis
 import { registerFoeDoor } from '../systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: Namira's reflection on a watchman through his own door
 import { foeHitFlash, setBatchHitFlash, setBatchGlint, prefersReducedMotion } from '../systems/hitFlash.js';   // HITFLASH1; TELL2: a wind-up's glint
 import { reportPlayerKill, killFxOf } from '../systems/playerKills.js';
-import { createHostNpcBodies, npcBodiesOn, WATCH_BODY_TIERS } from '../characters/npcBodies.js';   // MWNPC6: the watch in Morrowind bodies
+import { createHostFoeBodies, foeBodiesOn, WATCH_BODY_TIERS } from '../characters/npcBodies.js';   // MWNPC6: the watch in Morrowind bodies
 import { isClassFoe, foeActor, foeFx } from '../characters/foeBodies.js';   // SET2: my own kills, told
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
@@ -155,7 +155,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   levelBonus = null,   // SEAT1d (Seats-Arc 7.6): CURFEW - () => the levels a watchman is posted stronger (at night in a Curfew town)
   guardScale = null,   // ZONE-WATCH: () => how many times as strong a watchman is posted (the open zone's towns: ten)
   // MWNPC6: the watch's Morrowind bodies - whether the lane is wanted and how one is made; a test hands its own
-  wantNpcBodies = npcBodiesOn, makeNpcBodies = null,
+  wantNpcBodies = foeBodiesOn, makeNpcBodies = null,
   shake = null,   // AUDIT TELL H6: the host's camera kick (its player's maxShake), for my blow that staggers a watchman
   // GameObjectHelper.CreateEnemyCorpseMarker (:836-839) hands an
   // OUTSIDE corpse to StreamingWorld.TrackLooseObject, which stamps it
@@ -1413,7 +1413,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // (section 10c) on its own lane and its own caps (WATCH_BODY_TIERS): every watchman offered dressed as his
     // billboard, by his pool id (his wire number comes late); the dead from the kill until the corpse is collected;
     // drawBodies syncs, marks the cast-only and draws
-    const npcLane = wantNpcBodies() ? (_npcLane ??= (makeNpcBodies ? makeNpcBodies() : createHostNpcBodies({ renderer, collider: () => collider, tiers: WATCH_BODY_TIERS }))) : null;
+    const npcLane = wantNpcBodies() ? (_npcLane ??= (makeNpcBodies ? makeNpcBodies() : createHostFoeBodies({ renderer, collider: () => collider, tiers: WATCH_BODY_TIERS }))) : null;
     if (!npcLane && _npcLane) { _npcLane.destroy(); _npcLane = null; }
     _npcStood.length = 0;
     npcLane?.begin();

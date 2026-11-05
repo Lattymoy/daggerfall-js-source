@@ -195,7 +195,8 @@ import { enemyDisplayName } from '../characters/enemy/enemyBasics.js'; // STAFF-
 import { t } from './textManager.js'; // STAFF-EVENT: its lines in the player's language
 
 export const RAIDING_PARTIES_VENDOR = 'world-events-raiding-parties';
-export const raidingPartiesOn = () => modSetting(RAIDING_PARTIES_VENDOR, 'Enabled') === true;
+export const raidingPartiesOn = () =>
+  modSetting(RAIDING_PARTIES_VENDOR, 'Enabled') === true && (host().online ? host().online() : true);
 
 // ---- the mod's numbers ------------------------------------------------------
 /** `endMinute = startMinute + 120` [IL_0da1]. */

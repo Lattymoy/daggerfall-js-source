@@ -90,6 +90,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { statsHunt } from '../bounty/huntRank.js';   // HUNTERS-MARK (Bounty-Boards.md 12.3)
+import { FORK_FLAGS } from '../../config/forkFlags.js';
 import { statsVillainy } from '../pvpVillainBar.js';   // PVP-VILLAIN
 import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
@@ -368,6 +369,7 @@ let hooks = {};
 // game. 'top' is the two doors (Online, Offline); 'offline' the offline doors (HOME_OFFLINE) and the way back. Every
 // visit opens on 'top'; a section an offline door opened backs out to 'offline', where its press was made.
 let homeLevel = 'top';
+if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) homeLevel = 'offline';
 /** AUDIT UICALM-FIRM1 L3 L1: the keyboard's place after a level changes - the door named, else the level's first. */
 function focusDoor(id) {
   globalThis.requestAnimationFrame?.(() => (app?.querySelector?.(`.px-menu .door-${id}`) ?? app?.querySelector?.('.px-menu .doorbtn'))?.focus?.());
@@ -471,7 +473,7 @@ const shopFlowOf = () => {
 /** SHOP (the owner: "A new glyph panel alongside the timer and mailbox that will be used for our monetization shop"): THE
  *  GEM on the pause face, at the end of the row of marks `chain` - online or not, for the account is the shop's. */
 function shopGem(home, chain) {
-  if (getPref('shopHidden')) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }   // SHOP-HIDE: the player's own Hide the shop
+  if (!FORK_FLAGS.ENABLE_SHOP || getPref('shopHidden')) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }   // SHOP-HIDE: the player's own Hide the shop or fork flag
   const gem = shopMark(document, { open: shopOpen, onOpen: () => { shopOpen = true; shopFocusIn = true; shopReread(shopFlow); render(); } });   // SHOP-REREAD: this visit's read again
   home.append(gem);
   shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);
@@ -641,6 +643,7 @@ const cloudKeyOf = (save) => slotKeyOf(save);
  *  waits on it: the tiles are drawn with no cloud line and gain one
  *  when the answer lands. A signed-out or guest device never asks. */
 function ensureCloud() {
+  if (!FORK_FLAGS.ENABLE_CLOUD_SAVES) return;
   if (cloudAsked) return;
   cloudAsked = true;
   const io = cloudIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() });
@@ -665,6 +668,7 @@ function ensureCloud() {
  *  game BACK (Load), so a newer backup can be restored from it - ACC2c's
  *  own law for where a download lives (see `cloudOnlyGrid`). */
 function cloudFor(save, { restore = false } = {}) {
+  if (!FORK_FLAGS.ENABLE_CLOUD_SAVES) return { state: 'off', when: null, why: null, actions: [] };
   const slot = cloudKeyOf(save);
   const card = (cloudCards ?? []).find((c) => slotKeyOf(c) === slot) ?? null;
   const state = cloudStateOf({
@@ -814,6 +818,7 @@ function download(card) {
  *  asked here; the decision is still `cloudStateOf`'s, which takes
  *  `local: false` and keeps the two acts a download can be in. */
 function cloudForCard(card) {
+  if (!FORK_FLAGS.ENABLE_CLOUD_SAVES) return { state: 'off', when: null, why: null, actions: [] };
   const slot = slotKeyOf(card);
   const state = cloudStateOf({
     signedIn: true,   // a card only reaches this surface through a listing, which needs a session
@@ -897,6 +902,7 @@ function tileGrid(saves, forSave) {
  *  about what a player's own backup holds is arithmetic a pin must be
  *  able to drive. */
 function cloudOnlyGrid(saves) {
+  if (!FORK_FLAGS.ENABLE_CLOUD_SAVES) return null;
   const cards = cloudOnly(cloudCards, saves);
   if (!cards.length) return null;
   const box = el('div', 'svcloudonly');
@@ -1202,6 +1208,7 @@ function closeAccount() {
 const newAccountFlow = (onChange) => AccountFlow({ io: { fetch: (...a) => globalThis.fetch(...a), base: serviceBase(appStorage()) }, storage: appStorage(), onChange });
 function accountBody() {
   const host = el('div', 'acctmount');
+  if (!FORK_FLAGS.ENABLE_ACCOUNT) return host;
   const fresh = !acctFlow;
   if (fresh) acctFlow = newAccountFlow(() => acctPaint?.());
   // PROFILE-MENU: the card's plate wears the corner mark's portrait and says whose face it is - the same character
@@ -1273,12 +1280,19 @@ function portraitOf(save) {
 function profileMark() {
   const who = storedSession(appStorage());
   const save = profileCharacter();
-  return profileBadge(document, {
+  const b = profileBadge(document, {
     session: who,
     save,
     face: portraitOf(save),   // WITCH1: the icon worn, else the face
     onOpen: () => { accountOpen = true; render(); },
   });
+  if (!FORK_FLAGS.ENABLE_ACCOUNT) {
+    const nameEl = b.querySelector('.px-profilename');
+    if (nameEl && !who) nameEl.textContent = save?.name || t('skin.look', 'Look');
+    b.setAttribute('aria-label', save ? `Character: ${characterLine(save)}` : t('skin.look', 'Look'));
+    b.querySelector('.px-profilegem')?.remove?.();
+  }
+  return b;
 }
 
 /** SUPPORT1 (Mac, 2026-10-05: "add the patron/kofi ingame on the main menu as 2 icons"): THE ASKS, top-left of the
@@ -1309,6 +1323,24 @@ function accountWindow() {
   const body = el('div', 'px-body');
   body.append(accountBody());
   body.append(skinCard(document, { gender: () => playerEntity?.gender }).root);   // DISC23-B2 (Mac: "a choosable skin system in the menu player profile system itself"): who you are drawn as, beside who you are; LAYERED-GEAR: the character's own body, the one Layered Gearing first wears
+  if (!FORK_FLAGS.ENABLE_ACCOUNT) {
+    body.querySelector('.acctmount')?.remove?.();
+    const head = el('div', 'card');
+    head.style.display = 'flex';
+    head.style.justifyContent = 'space-between';
+    head.style.alignItems = 'center';
+    head.style.margin = '0 0 12px';
+    const title = el('span', 'fieldlabel', t('skin.look', 'Look'));
+    title.style.fontSize = '14px';
+    title.style.letterSpacing = '0.08em';
+    title.style.textTransform = 'uppercase';
+    title.style.color = '#f3cf86';
+    const closeBtn = el('button', 'act', t('account.card.act.close', 'Close'));
+    closeBtn.type = 'button';
+    closeBtn.onclick = closeAccount;
+    head.append(title, closeBtn);
+    body.prepend(head);
+  }
   win.append(body);
   return win;
 }
@@ -1415,7 +1447,6 @@ function paneOnline(body) {
   const foot = el('div', 'card svonlinefoot');
   // L10N4: ONE pattern, the sky's sentence an argument in it (skyDayWords is itself routed)
   foot.append(el('p', 'meta', t('menu.online.rules', 'Everyone plays their own save, and you can see and talk to each other anywhere. Dungeons and buildings are shared: enemies, doors, levers and opened chests are the same for everyone and stay that way. In towns and the wilds, everyone nearby sees the same monsters and can fight them, and they can hurt you too. {skyDay} The world\u2019s clock and sky run on real time. Resting, travel, jail and training don\u2019t move them, so a quest waiting for a time of day waits for the world\u2019s, and a lycanthrope\u2019s full moon lasts one night. Your character also has their own clock. It runs while you play and stops while you are logged off. Resting, travel, jail and training use it. Your wounds, spells, hunger, diseases, curses, guild ranks, rented rooms, loans and repairs run on it. Quest timers run on the world\u2019s clock while you play. Resting, waiting and traveling don\u2019t use up a quest\u2019s days, and time logged off never counts. A quest that only asks you to wait, like a letter or \u201ccome back in a few days\u201d, moves on after a couple of minutes of play. Rest at a fire, a tent or a bed: a night passes at once, at most once every 10 minutes of play, and party members within 15 meters sleep with you. Every enhancement is on for everyone, but your interface is your own. Most mods stay your choice online. A few are set for everyone: those that change the ground, monsters, loot or the rules. The Mods page marks each one.', { skyDay: skyDayWords() })));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door; QCLOCK-WORLD: the quests' clock; REST8: the short wait; REST9: the rest act and the party's night
-  foot.append(field(t('menu.online.relay', 'Relay'), 'onlineServer', DEFAULT_SERVER, 200));
   body.append(foot);
   body.append(onlineSyncCard());   // UXB1-E: under the rules it copies
 }
@@ -1974,6 +2005,7 @@ function itemText(item, pool) {
 const normWords = (s) => String(s).toLowerCase().replace(/[\u2018\u2019]/g, "'");
 /** ORG2: every word of the query in the item's text. */
 function itemMatches(item, pool, q) {
+  if (!FORK_FLAGS.ENABLE_ARMORY && item === 'feat:armory-others') return false;
   const text = normWords(itemText(item, pool));
   return normWords(q).split(/\s+/).filter(Boolean).every((w) => text.includes(w));
 }
@@ -1984,6 +2016,7 @@ const drawsHere = (key, pause) => (pause ? tierOf(key) === 'live' : drawsFlat(ke
 /** ORG2: AN ITEM AS THE NODES IT DRAWS - none for a key a Features row owns (FT13), a key that folds (`fold`
  *  collects it), a port row this device does not have, or a row the filter leaves out. */
 function itemNodes(item, ctx) {
+  if (!FORK_FLAGS.ENABLE_ARMORY && item === 'feat:armory-others') return [];
   const { pool, pause, fold = null, any = false } = ctx;
   if (optFilter !== 'all') {
     if (optFilter === 'changed' ? !itemChanged(item, pool) : !itemKinds(item).includes(optFilter)) return [];
@@ -2048,7 +2081,7 @@ function tabCount(tab, ctx) {
   for (const s of tab.sections) {
     for (const item of s.items) {
       if (isSettingItem(item)) { if (!featureForControl('settings', item) && drawsHere(item, ctx.pause)) n++; }
-      else if (item.startsWith('feat:')) n++;
+      else if (item.startsWith('feat:')) { if (FORK_FLAGS.ENABLE_ARMORY || item !== 'feat:armory-others') n++; }
       else if (item.startsWith('port:')) { const r = ctx.pool.get(item.slice(5)); if (r && r.dataset.live !== '0') n++; }   // QREPAIR: a row greyed here is not one that works here
       else if (item === 'mods-index') n += FEATURES.filter((f) => f.kinds.includes('mod')).length;   // every mod has a row in the list
       else if (item === 'preset:graphics') n++;   // the preset is a choice of its own; the Overhauls door is not
@@ -2140,7 +2173,7 @@ function optionsToolbar(body, { pause = false } = {}) {
   bar.append(search);
   const chips = el('div', 'opt-filters');
   const pool = portPool({ pause });
-  const changed = CATEGORIES.reduce((n, t) => n + t.sections.reduce((m, s) => m + s.items.filter((i) => !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, pool)).length, 0), 0);
+  const changed = CATEGORIES.reduce((n, t) => n + t.sections.reduce((m, s) => m + s.items.filter((i) => (FORK_FLAGS.ENABLE_ARMORY || i !== 'feat:armory-others') && !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, pool)).length, 0), 0);
   for (const [id, label] of OPT_FILTERS) {
     const b = el('button', `chip${optFilter === id ? ' on' : ''}${id === 'all' || id === 'changed' ? '' : ` ${id}`}`, label);
     b.type = 'button';
@@ -2266,7 +2299,7 @@ function categoryCard({ pool = portPool(), pause = false } = {}) {
   const d = el('div', 'dcard');
   d.append(el('h3', null, cat.title));
   const ctx = { pool, pause };
-  const changed = cat.sections.reduce((n, s) => n + s.items.filter((i) => !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, ctx.pool)).length, 0);
+  const changed = cat.sections.reduce((n, s) => n + s.items.filter((i) => (FORK_FLAGS.ENABLE_ARMORY || i !== 'feat:armory-others') && !(isSettingItem(i) && featureForControl('settings', i)) && itemChanged(i, ctx.pool)).length, 0);
   d.append(el('p', 'status', t('menu.settings.tabStatus', '{n} options \u00b7 {changed} changed', { n: tabCount(cat, ctx), changed })));
   const b = el('button', 'act', t('menu.settings.restoreTab', 'Restore defaults'));
   b.onclick = () => ask(
@@ -2679,7 +2712,7 @@ function prefRow(key, name, note, { onChange = null, home = false } = {}) {
 
 /** A choice row: the button names the CURRENT tier and a click steps
  *  to the next, wrapping (PERF1). `tier` is its dot: 'restart' for a key the shell reads at launch (GPU-BACKEND). */
-function choiceRow(key, name, note, tiers, { home = false, read = null, write = null, tier = 'live' } = {}) {
+function choiceRow(key, name, note, tiers, { home = false, read = null, write = null, tier = 'live', disabled = false } = {}) {
   if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2
   // FT2: a condensed row reads the lane's live value and writes both stores
   const cur = String(read ? read() : getPref(key));
@@ -2689,15 +2722,18 @@ function choiceRow(key, name, note, tiers, { home = false, read = null, write = 
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
   main.append(el('div', 'row-note', note));
-  const step = () => { (write ?? ((v) => setPref(key, v)))(tiers[(at + 1) % tiers.length][0]); render(); };
-  main.onclick = step;
+  const step = () => { if (disabled) return; (write ?? ((v) => setPref(key, v)))(tiers[(at + 1) % tiers.length][0]); render(); };
+  if (!disabled) main.onclick = step;
+  else main.disabled = true;
   row.append(main);
   const ctl = el('div', 'ctl');
   const b = el('button', 'act rowact', tiers[at][1]);
-  b.onclick = step;
+  if (!disabled) b.onclick = step;
+  else b.disabled = true;
   if (onlineForcedPref(key) !== undefined) { lockOnline(b, main); b.textContent = t('menu.online.lockedTier', '{tier} (online)', { tier: tiers[at][1] }); }   // OL1: the outdoors row reads the lane's forced answer and names its tier under the lock
   ctl.append(b, el('span', `tier ${tier}`));
   row.append(ctl);
+  if (disabled && row.dataset) row.dataset.live = '0';
   return row;
 }
 
@@ -3262,7 +3298,40 @@ function portRowsGame({ pause = false } = {}) {
   };
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
-  return [row, techniqueMotionRow()];
+  const rows = [row, techniqueMotionRow(), reflexesRow({ pause })];
+  rows.push(prefRow('offlineFirmament', t('features.offlineFirmament.title', 'Firmament (Offline)'),
+    t('features.offlineFirmament.note', 'Enables the Firmament constellation passive tree and Renown progression while playing offline.')));
+  rows.push(prefRow('offlineHousing', t('features.offlineHousing.title', 'Player Housing (Offline)'),
+    t('features.offlineHousing.note', 'Buy and sell homes at the front door across all towns and hamlets, as in online DFO. Off restores classic bank housing.')));
+  rows.push(prefRow('unifiedBank', t('features.unifiedBank.title', 'Unified Bank'),
+    t('features.unifiedBank.note', 'Access your deposited gold and bank accounts across all regional bank branches in Tamriel.')));
+  rows.push(prefRow('city247', t('features.city247.title', '24/7 City Infrastructure'),
+    t('features.city247.note', 'Keeps city gates, shops, guild halls, banks, and libraries open at all hours.')));
+  return rows;
+}
+/** REFLEXES: in-game reflex re-selection for the active character. Reads and writes playerEntity.reflexes directly. */
+function reflexesRow({ pause = false } = {}) {
+  const can = pause && !!playerEntity;
+  const tiers = [
+    [0, t('menu.reflexes.veryHigh', 'Very High')],
+    [1, t('menu.reflexes.high', 'High')],
+    [2, t('menu.reflexes.average', 'Average')],
+    [3, t('menu.reflexes.low', 'Low')],
+    [4, t('menu.reflexes.veryLow', 'Very Low')],
+  ];
+  const row = choiceRow('reflexes', t('menu.reflexes.name', 'Reflexes'),
+    can
+      ? t('menu.reflexes.note', 'Enemy attack speed and skill advancement rate for this character.')
+      : t('menu.reflexes.away', 'In a game: open Settings from the pause menu.'),
+    tiers,
+    {
+      read: () => playerEntity?.reflexes ?? 2,
+      write: (v) => { if (playerEntity) playerEntity.reflexes = Number(v); },
+      tier: 'live',
+      disabled: !can,
+    });
+  if (row?.dataset) row.dataset.opt = 'reflexes';
+  return row;
 }
 /** RPT1026-CLIENT (a private report: allies' spells shook the view where they landed, and no setting could soften it): how much
  *  another player's spell shakes the view where it lands (scenes/hostMagic.js peerKickShare); Settings > Accessibility >
@@ -3441,11 +3510,6 @@ function peerSpritesCard() {
   c.append(choiceRow('chatLang', t('menu.chat.lang', 'Language channel'),
     t('menu.chat.langNote', 'A chat tab for players who speak your language, wherever they are. /lang in the chat chooses it too.'),
     [['', t('menu.toggle.off', 'Off')], ...Object.entries(CHAT_LANGS).map(([code, name]) => [code, name])], { home: true }));
-  // CHAT-TRADE (2026-10-14, Mac: "New channels: Trading, LFG"): the two channels a player joins, beside the language's
-  c.append(prefRow('chatTrade', t('menu.chat.trade', 'Trade channel'),
-    t('menu.chat.tradeNote', 'A chat tab for buying, selling and swapping with players anywhere. /join trade in the chat joins it too.'), { home: true }));
-  c.append(prefRow('chatLfg', t('menu.chat.lfg', 'LFG channel'),
-    t('menu.chat.lfgNote', 'A chat tab for finding a group, or one more for yours. /join lfg in the chat joins it too.'), { home: true }));
   c.append(prefRow('chatChannelColours', t('menu.chat.colours', 'Chat colors by channel'),
     t('menu.chat.coloursNote', 'World white, Region green, Guild purple, Local gray, Party teal, Language rose, Trade gold, LFG blue.'), { home: true }));
   c.append(prefRow('chatPingSound', t('menu.chat.ping', 'Chime when someone @mentions you'),
@@ -3788,6 +3852,8 @@ const TILE_AFTER = Object.freeze({
   mwSteelHelm: rebuildMorrowindBody,   // MW-STEEL1: the steel helm's style, closed or open, on the standing body at once
   mwBeastFeet: rebuildMorrowindBody,   // BEAST-BOOTS: a beast's footwear and helmet, on the standing body at once
   mwBeastHelm: rebuildMorrowindBody,
+  mwPlayerBody: () => { render(); },
+  mwItemIcons: () => { render(); },
 });
 
 /**
@@ -4478,9 +4544,10 @@ function featureRow(f) {
 // ── ABOUT ────────────────────────────────────────────────────────
 function paneAbout(body) {
   const c = el('div', 'card');
-  c.append(el('h3', null, 'DFO Online'));   // the public name (BR1, BR4, BR5); project-dagger is the repo
+  c.append(el('h3', null, 'Daggerfall Forever'));   // the public name (BR1, BR4, BR5); project-dagger is the repo
   c.append(el('p', 'meta', t('menu.about.tagline', 'An open-source reimplementation of a classic 1996 RPG.')));
   c.append(stats([
+    [t('menu.about.maintainer', 'Maintainer'), 'Alex 13 Uslavtsev'],
     [t('menu.about.update', 'Update'), UPDATE ?? t('menu.about.devBuild', 'a development build')],   // REL8: the player's update number (scripts/updateNumber.mjs)
     [t('menu.about.build', 'Build'), BUILD_TAG],
     [t('menu.about.interface', 'Interface'), currentOption(OVERHAUL_PANELS.find((p) => p.id === 'ui'))?.name ?? SKIN_NAMES[uiSkin()]],   // PLUS1; MENU-TOGGLE: the UI Overhaul worn, by its card's name (GrimoireUI is the classic skin with a pack)
@@ -4719,6 +4786,7 @@ function renderHome() {
     for (const label of sections) {
       if (label === 'About' || label === 'Screenshots') continue;   // LOAD1: Screenshots stands in the foot, beside About
       if (label === 'Tutorials') continue;   // TUT1: the foot's left plaque (an eighth door ran the list past a 720-pixel screen)
+      if (label === 'Online' && !FORK_FLAGS.ENABLE_ONLINE_PLAY) continue;
       const id = idOf(label);
       menu.append(doorBtn(id, railLabel(label), '', RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id)));   // L10N1b
     }
@@ -4731,7 +4799,7 @@ function renderHome() {
   home.append(profileMark());
   // SUPPORT1: the asks, top-left - the front door's alone; PX4 keeps the
   // pause face to its window, so they are not drawn over a game.
-  home.append(supportMarks());
+  if (FORK_FLAGS.ENABLE_SHOP) home.append(supportMarks());
   // L10N1b: the first-run language offer, in the top-left corner nothing else uses
   const offer = languageOffer();
   if (offer) home.append(offer);
@@ -4742,6 +4810,7 @@ function renderHome() {
   // L10N1b: the language is asked first - the window waits while the
   // offer stands (found by tools/languageProbe.mjs: it covered the
   // offer, so a French player was asked in English before French).
+  if (!FORK_FLAGS.ENABLE_ACCOUNT) accountOffered = true;
   if (!offer && !accountOpen && !accountOffered && !signedIn()) { accountOffered = true; accountOpen = true; }
   if (accountOpen) {
     const acct = el('div', 'px-stage px-acctstage');
@@ -4793,6 +4862,7 @@ function doorBtn(id, label, sub, onClick) {
  * stands them in one column, the offline doors under the word Offline.
  */
 function drawDoors(menu) {
+  if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) homeLevel = 'offline';
   menu.dataset.level = homeLevel;
   const page = (cls, head) => {
     const p = el('section', `px-page ${cls}`);
@@ -4808,12 +4878,14 @@ function drawDoors(menu) {
     if (focused) globalThis.requestAnimationFrame?.(() => app?.querySelector?.('.px-menu .doorbtn')?.focus?.());
   };
   if (homeLevel === 'offline') {
-    const games = page('px-page-games', t('menu.home.offline', 'Offline'));
-    games.append(el('p', 'px-pagenote', t('menu.home.offlineSub', 'Your own game, kept on this device')));
+    const isOfflineOnly = !FORK_FLAGS.ENABLE_ONLINE_PLAY;
+    const games = page('px-page-games', isOfflineOnly ? null : t('menu.home.offline', 'Offline'));
+    if (!isOfflineOnly) games.append(el('p', 'px-pagenote', t('menu.home.offlineSub', 'Your own game, kept on this device')));
     for (const label of HOME_OFFLINE.slice(0, 3)) games.append(doorBtn(idOf(label), railLabel(label), '', () => go(idOf(label))));
     const more = page('px-page-more', t('menu.home.elsewhere', 'Elsewhere'));
     for (const label of HOME_OFFLINE.slice(3)) more.append(doorBtn(idOf(label), railLabel(label), '', () => go(idOf(label))));
     more.append(doorBtn('back', t('menu.home.back', 'Back'), '', level('top')));
+    if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) more.querySelector('.door-back')?.remove?.();
     return;
   }
   // a browser's Online asks where first, as the desktop launcher's PLAY does; private servers live in the app (a page
@@ -6259,7 +6331,7 @@ function renderInto() {
   // (onKey); this is the one a finger can see.
   const homeMark = el('button', 'brand-home');
   homeMark.type = 'button';
-  homeMark.setAttribute('aria-label', t('menu.home.homeAria', 'DFO Online — main menu'));
+  homeMark.setAttribute('aria-label', t('menu.home.homeAria', 'Daggerfall Forever — main menu'));
   homeMark.append(brandMark());
   homeMark.onclick = () => go('home');
   h1.append(homeMark);
@@ -6275,9 +6347,10 @@ function renderInto() {
   homeRow.onclick = () => go('home');
   rail.append(homeRow);
   for (const label of sections) {
+    if (label === 'Online' && !FORK_FLAGS.ENABLE_ONLINE_PLAY) continue;
     const id = idOf(label);
     // UI-CALM: on the enhanced front door's rail Offline's doors stand under their word, as they do on the door
-    if (sections === SECTIONS_BOOT && label === HOME_OFFLINE[0]) rail.append(el('span', 'railgroup', t('menu.home.offline', 'Offline')));
+    if (FORK_FLAGS.ENABLE_ONLINE_PLAY && sections === SECTIONS_BOOT && label === HOME_OFFLINE[0]) rail.append(el('span', 'railgroup', t('menu.home.offline', 'Offline')));
     const b = el('button', `railbtn${id === section ? ' on' : ''}`);
     b.append(el('span', 'rk', railLabel(label)));   // L10N1b
     // RAIL_ACTS: Resume resolves on the rail rather than opening a
@@ -6554,6 +6627,7 @@ export function mountEnhancedMenu(host, {
   // Game the second row a thumb meets and Resume the first.
   section = 'home';
   homeLevel = 'top';   // UI-CALM: every visit asks which world first
+  if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) homeLevel = 'offline';
   pauseTab = 'system';
   // ...and THEN the caller's landing, if it named one. After the reset,
   // which is what keeps the reset the default rather than a thing this

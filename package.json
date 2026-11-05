@@ -1,7 +1,8 @@
 {
   "name": "daggerfall-js-source",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.2.0",
+  "author": "Alex 13 Uslavtsev",
   "type": "module",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
@@ -11,6 +12,8 @@
     "build": "vite build && node scripts/privateRelay.mjs",
     "preview": "vite preview",
     "test": "node tools/testShards.mjs 1/1",
+    "test:all": "node tools/testShards.mjs 1/1 --all",
+    "test:net": "node tools/testShards.mjs 1/1 --net",
     "lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ src/ server/src/ server-account/src/ test/ tools/ scripts/ app/ *.config.js",
     "test:changed": "node tools/testChanged.mjs",
     "test:shard": "node tools/testShards.mjs",

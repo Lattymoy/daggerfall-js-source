@@ -5514,6 +5514,36 @@
   "tr": "2284b7f79596",
   "by": "claude-in-session"
  },
+ "features.city247.effect": {
+  "en": "15ddce06b8cc",
+  "tr": "0b8086152dd6",
+  "by": "human"
+ },
+ "features.city247.note": {
+  "en": "5f41fa1b3992",
+  "tr": "b6c7b1949aae",
+  "by": "human"
+ },
+ "features.city247.title": {
+  "en": "00f91363875a",
+  "tr": "54c4690d4432",
+  "by": "human"
+ },
+ "features.unifiedBank.effect": {
+  "en": "f3b8be3fe452",
+  "tr": "1bff7e06b8df",
+  "by": "human"
+ },
+ "features.unifiedBank.note": {
+  "en": "d17baaea597f",
+  "tr": "8cc7bd93f1d2",
+  "by": "human"
+ },
+ "features.unifiedBank.title": {
+  "en": "d496c77c171a",
+  "tr": "5bbc31a6df10",
+  "by": "human"
+ },
  "features.questHerald.note": {
   "en": "96aa445162b4",
   "tr": "5babb546464f",
@@ -5742,6 +5772,31 @@
  "features.weatherEvents.title": {
   "en": "56cd6216cfed",
   "tr": "1bd3b0c31356",
+  "by": "claude-in-session"
+ },
+ "features.wetWorld.full": {
+  "en": "10b28a8c1e44",
+  "tr": "10b28a8c1e44",
+  "by": "claude-in-session"
+ },
+ "features.wetWorld.note": {
+  "en": "e037f55b38a4",
+  "tr": "e037f55b38a4",
+  "by": "claude-in-session"
+ },
+ "features.wetWorld.off": {
+  "en": "e3de5ab0ca4c",
+  "tr": "e3de5ab0ca4c",
+  "by": "claude-in-session"
+ },
+ "features.wetWorld.title": {
+  "en": "0af5957ede42",
+  "tr": "0af5957ede42",
+  "by": "claude-in-session"
+ },
+ "features.wetWorld.wet": {
+  "en": "9429cfe23a19",
+  "tr": "9429cfe23a19",
   "by": "claude-in-session"
  },
  "features.wildernessCamps.note": {
@@ -7445,8 +7500,8 @@
   "by": "claude-in-session"
  },
  "menu.brand.alt": {
-  "en": "2c59b884ccf1",
-  "tr": "2c59b884ccf1",
+  "en": "741cf928f50b",
+  "tr": "741cf928f50b",
   "by": "claude-in-session"
  },
  "menu.chat.colours": {
@@ -7890,8 +7945,8 @@
   "by": "claude-in-session"
  },
  "menu.home.homeAria": {
-  "en": "c920f897c537",
-  "tr": "aee882e6baa7",
+  "en": "4d2657442e71",
+  "tr": "6be9c1d91344",
   "by": "claude-in-session"
  },
  "menu.home.mainServers": {
@@ -8060,8 +8115,8 @@
   "by": "claude-in-session"
  },
  "menu.intro.aria": {
-  "en": "a6cae2e21083",
-  "tr": "d1a5ccc0ae30",
+  "en": "a3245bb450a0",
+  "tr": "5eac5817d98b",
   "by": "claude-in-session"
  },
  "menu.intro.begin": {
@@ -9157,6 +9212,46 @@
  "menu.realm.undone": {
   "en": "59330dde370d",
   "tr": "f7ec00cd77b2",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.average": {
+  "en": "15f86c051ecf",
+  "tr": "d300009a540e",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.away": {
+  "en": "13f711a128dd",
+  "tr": "90eab28f3d18",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.high": {
+  "en": "b1a5954a483f",
+  "tr": "78dac8533411",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.low": {
+  "en": "a124947cbd2d",
+  "tr": "0115fbae0261",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.name": {
+  "en": "247276b252be",
+  "tr": "be75b53efa23",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.note": {
+  "en": "60e5c085d1d2",
+  "tr": "62ddaa92e68e",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.veryHigh": {
+  "en": "6797209b0586",
+  "tr": "8a202dd04bfa",
+  "by": "claude-in-session"
+ },
+ "menu.reflexes.veryLow": {
+  "en": "5c660b646175",
+  "tr": "e5e0bd419725",
   "by": "claude-in-session"
  },
  "menu.save.agoDays": {
@@ -16447,31 +16542,6 @@
  "wild.zone.enter": {
   "en": "d8ef5b322bf0",
   "tr": "6ba730826e5f",
-  "by": "claude-in-session"
- },
- "features.wetWorld.full": {
-  "en": "10b28a8c1e44",
-  "tr": "10b28a8c1e44",
-  "by": "claude-in-session"
- },
- "features.wetWorld.note": {
-  "en": "e037f55b38a4",
-  "tr": "e037f55b38a4",
-  "by": "claude-in-session"
- },
- "features.wetWorld.off": {
-  "en": "e3de5ab0ca4c",
-  "tr": "e3de5ab0ca4c",
-  "by": "claude-in-session"
- },
- "features.wetWorld.title": {
-  "en": "0af5957ede42",
-  "tr": "0af5957ede42",
-  "by": "claude-in-session"
- },
- "features.wetWorld.wet": {
-  "en": "9429cfe23a19",
-  "tr": "9429cfe23a19",
   "by": "claude-in-session"
  }
 }

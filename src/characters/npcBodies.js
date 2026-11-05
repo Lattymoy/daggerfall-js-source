@@ -22,6 +22,7 @@
 //
 // The populations' adapters (which actor wears what - MWNPC5 onward) fill the actor; this module never reads a host.
 import { PeerBodies, BODY_BUILD_GATE } from '../net/peer/peerBodies.js';
+import { fpArm } from '../combat/fpArm.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { morrowindDataCount, morrowindDataGeneration } from '../scenes/dataSource.js';
@@ -309,9 +310,30 @@ export function npcBodiesOn() {
   return isEnhanced() && morrowindDataCount() > 0 && getPref('mwNpcBodies') !== 'off';
 }
 
+/** Is the foe/mob lane wanted - the enhanced skin, Morrowind data attached, and the player's tier not Off (the
+ *  Features row, `mwFoeBodies` falling back to `mwNpcBodies`)? */
+export function foeBodiesOn() {
+  return isEnhanced() && morrowindDataCount() > 0 && (getPref('mwFoeBodies') ?? getPref('mwNpcBodies')) !== 'off';
+}
+
+/** Is the player's 3D Morrowind body wanted - the enhanced skin, Morrowind data attached, and the toggle not false? */
+export function playerBodyOn() {
+  return isEnhanced() && (morrowindDataCount() > 0 || !!fpArm?.ready?.()) && getPref('mwPlayerBody') !== false;
+}
+
+/** Are Morrowind 3D item icons wanted - the enhanced skin, Morrowind data attached, and the toggle not false? */
+export function itemIconsOn() {
+  return isEnhanced() && morrowindDataCount() > 0 && getPref('mwItemIcons') !== false;
+}
+
 /** MWNPC5b: a host's lane - the gate, the data generation and the tier read as every host reads them. */
 export function createHostNpcBodies({ renderer, collider = () => null, tiers = NPC_BODY_TIERS }) {   // MWNPC6: `tiers` a population's own caps (WATCH_BODY_TIERS)
   return createNpcBodies({ renderer, enabled: npcBodiesOn, generation: morrowindDataGeneration, tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider, tiers, budget: NPC_FRAME_BUDGET });   // MWNPC11: every host's lane on the one frame
+}
+
+/** A host's foe/mob lane - the gate, the data generation and the tier read for foes. */
+export function createHostFoeBodies({ renderer, collider = () => null, tiers = NPC_BODY_TIERS }) {
+  return createNpcBodies({ renderer, enabled: foeBodiesOn, generation: morrowindDataGeneration, tier: () => getPref('mwFoeBodies') ?? getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider, tiers, budget: NPC_FRAME_BUDGET });
 }
 
 /**
@@ -335,7 +357,7 @@ export function createPopulationLane({ laneName, renderer, collider = () => null
     frame() {
       ids.length = 0; batches.length = 0;
       if (!want()) { if (lane) { lane.destroy(); lane = null; } offered = false; return false; }
-      lane ??= make ? make() : createHostNpcBodies({ renderer, collider, tiers });
+      lane ??= make ? make() : (want === foeBodiesOn ? createHostFoeBodies({ renderer, collider, tiers }) : createHostNpcBodies({ renderer, collider, tiers }));
       lane.begin();
       offered = true;
       return true;

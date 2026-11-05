@@ -39,7 +39,7 @@ import { drawPixelGround } from './pixelGround.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { pageHas } from '../systems/pageQuery.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { loadingShot, shotCaption, GALLERY_MAX } from '../systems/shotGallery.js';
+import { loadingShot, shotCaption } from '../systems/shotGallery.js';
 
 export const LOADING_ID = 'enhanced-loading';
 /** The Features row's key (systems/features.js `loading-screen`): 'shots', 'art' or 'off'. */
@@ -60,7 +60,7 @@ export const HOLD_MAX_MS = 180_000;
 /** Lines for the corner when no screenshot stands there - each one a thing this game does, none naming a key (keys
  *  are the player's to rebind, and a tip naming the default would lie to anyone who did). */
 export const LOADING_TIPS = Object.freeze([
-  `Up to ${GALLERY_MAX} of your screenshots are kept under Screenshots in the menu, and can appear on this screen while the world loads.`,
+  'Your screenshots are kept under Screenshots in the menu, and can appear on this screen while the world loads.',
   'Banks keep your gold, write letters of credit for the road and lend to those in good standing.',
   'Members of the Mages Guild can make spells of their own at the guild’s spellmaker.',
   'Ask anyone in town where a place is, and they may mark it on your map.',

@@ -63,5 +63,5 @@ test('EMPIRE-BANK the loans: online the cap is a tenth - DFU\'s law and Roleplay
 test('EMPIRE-BANK the teller: online the Enhanced Plus bank is the Empire\'s, its town beneath (sweep)', () => {
   const P = src('src/ui/enhanced/enhancedPorts.js');
   assert.match(P, /title: empire \? `Bank of \$\{EMPIRE_BANK_OF\}` : city \? `Bank of \$\{city\}` : 'The Bank'/);
-  assert.match(P, /const empire = isOnlinePage\(\);/);
+  assert.match(P, /const empire = (?:isOnlinePage\(\)|isUnifiedBankActive\(\));/);
 });

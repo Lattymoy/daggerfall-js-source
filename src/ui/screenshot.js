@@ -108,7 +108,8 @@ export function takeScreenshot(
           return;
         }
         let name = null;
-        if (download) {
+        const wantDownload = download && !globalThis.daggerShell?.screenshots;
+        if (wantDownload) {
           const url = URL.createObjectURL(blob);
           const a = doc.createElement('a');
           a.href = url;
