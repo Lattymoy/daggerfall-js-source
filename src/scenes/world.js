@@ -1978,6 +1978,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     onWrote: () => homesLearned(),
   }) : null;
   const activeHomes = onlineHomes || (isOfflineHousingActive() ? offlineHomes : null);
+  const _offlineDecor = !homesApi ? createOfflineDecor() : null;
   /** LEGACY7 part five: ONLINE, THE LINE'S HOUSES ARE ITS MEMBERS' ONLINE HOMES (Legacy-Arc 10b) - ACCOUNT-HOMES
    *  (2026-10-06): a home is its account's, every member's, so they are the account's rows of /v1/homes/mine (its homes
    *  and the deeds the realm gave its characters), each named by its town, and the line learns them WHOLE (heldHousesWhole:
@@ -11699,7 +11700,29 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     look: { preview: (mapId, bk, look) => previewHomeLook(mapId, bk, look), season: () => season },   // HOME-LOOK
     heard: () => !homeLayoutsOnline || (_homeLayoutsApplied && !worldDataPacksMissing().length),   // WD3 (AUDIT WD3 R6, B1): the homes' towns' layouts, heard and standing
     now: () => Date.now(),
-  }) : null;
+  }) : (isOfflineHousingActive() && _offlineDecor && offlineHomes ? createHomeYards({
+    api: _offlineDecor, homes: offlineHomes, built: () => built, translation: (px, py) => state.pixelTranslation(px, py),
+    feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
+    outside: () => _mode() === 'exterior' && playerSpawned && !player.riding,
+    eye: () => cam.pos,
+    cull: (box) => yardCull(box),
+    range: () => getPref('yardRange'),
+    collider: () => collider, meshes: { getGpuMesh, cpuModels, hold: (kind, key) => pipeline.holdPlace?.(kind, key) ?? null }, renderer, getTexture, uploadRecord, uploadRecordFrame,
+    iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
+    scanDeps: () => decorScanDeps({ blocks, arch, getTexture }),
+    seasonal: () => (seasonsActive ? seasons : null),
+    trees: lowPolyTrees ? { door: lowPolyTrees, sway: (proto, share) => _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, share)), windfall: (proto, share) => _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, share)) } : null,
+    character: () => characterIdOf(playerEntity),
+    realm: () => null,
+    wallet: (region) => homeYardWallet(playerEntity, region), regionOf: (y) => built.get(`${y.px},${y.py}`)?.homeRegion ?? 0,
+    doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null, canvas, touch: isTouchDevice(),
+    actionOf: (e) => actionOf(e, keys), locked: () => typeof document !== 'undefined' && document.pointerLockElement === canvas,
+    cursorOff: () => setCursorActive(false), stick: () => touch?.axes() ?? gamepad?.axes() ?? null,
+    say: (l) => townTalk.say(l), refusal: (w) => accountRefusalText(w), openSlot: (o) => townTalk.showOverlay(o),
+    look: { preview: (mapId, bk, look) => previewHomeLook(mapId, bk, look), season: () => season },
+    heard: () => true,
+    now: () => Date.now(),
+  }) : null);
   let _farmSyncT = 0;   // BOUNTY-FARM: the pool is brought in line twice a second
   /** SCALE4c: when the online lane last ran, for the letterbox's heartbeat part (the board's: townPanelHost.js boardTown). */
   let _mailFrameAt = -Infinity;
@@ -27218,7 +27241,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // underfoot's Hearth Offerings stood at their doors, taken from and filled; the Wyrd Sisters' window; the finds' doors.
   // The dressing and the Sisters themselves are the build's (scenes/pixelBuild.js, world/witchesDecor.js)
   witches = createWitchesHost({ built, renderer, pipeline, onlineHomes, townTalk, state, player, saveSoon, chatNotice, mode: _mode, get online() { return online; } });
-  const _offlineDecor = createOfflineDecor();
   const _activeHomeDecor = homeDecor || {
     list: (...a) => isOfflineHousingActive() ? _offlineDecor.list(...a) : Promise.resolve({ ok: false }),
     rev: (...a) => isOfflineHousingActive() ? _offlineDecor.rev(...a) : Promise.resolve({ ok: false }),

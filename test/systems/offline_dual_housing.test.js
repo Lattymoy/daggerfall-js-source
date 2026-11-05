@@ -282,3 +282,82 @@ test('OFFLINE-HOUSING: decor door handles grants, use, batching, and revisions w
   assert.ok(updatedList.data.pieces.some((p) => p.id === 'table1'));
   assert.ok(!updatedList.data.pieces.some((p) => p.id === 'chair1'));
 });
+
+test('OFFLINE-HOUSING: exterior yard decor operations, isolation from interior, yardCells, and save round-trip', async () => {
+  const homes = createOfflineHomes();
+  const decor = createOfflineDecor();
+
+  // Building key 512 corresponds to yardCell 2 (512 / 256)
+  await homes.claim({ mapId: 555, buildingKey: 512, region: 2, price: 20000 });
+
+  // 1. Place interior piece and verify it does not appear in yard list
+  await decor.place({
+    mapId: 555,
+    buildingKey: 512,
+    piece: { id: 'bed1', model: 41100, pos: [0, 0, 0] },
+    yard: false,
+  });
+
+  // 2. Place exterior yard piece
+  const yardPlaceRes = await decor.place({
+    mapId: 555,
+    buildingKey: 512,
+    piece: { id: 'tree1', model: 41200, pos: [10, 0, 10] },
+    yard: true,
+  });
+  assert.equal(yardPlaceRes.ok, true);
+  assert.ok(yardPlaceRes.data.yardVer >= 1);
+
+  // 3. Verify separation: interior list vs yard list
+  const interiorList = await decor.list(555, 512, false, false);
+  assert.equal(interiorList.data.pieces.length, 1);
+  assert.equal(interiorList.data.pieces[0].id, 'bed1');
+
+  const yardList = await decor.list(555, 512, false, true);
+  assert.equal(yardList.data.pieces.length, 1);
+  assert.equal(yardList.data.pieces[0].id, 'tree1');
+
+  // 4. Batch update in yard
+  const batchRes = await decor.batch({
+    mapId: 555,
+    buildingKey: 512,
+    put: [{ id: 'bench1', model: 41205, pos: [12, 0, 10] }],
+    drop: [],
+    yard: true,
+  });
+  assert.equal(batchRes.ok, true);
+  assert.ok(batchRes.data.yardVer >= 2);
+
+  const yardListAfterBatch = await decor.list(555, 512, false, true);
+  assert.equal(yardListAfterBatch.data.pieces.length, 2);
+
+  // 5. yardCells sync query
+  const cell = Math.floor(512 / 256); // 2
+  const cellsRes = await decor.yardCells(555, [[cell, 0]]);
+  assert.equal(cellsRes.ok, true);
+  assert.equal(cellsRes.data.cells.length, 1);
+  assert.equal(cellsRes.data.cells[0].cell, 2);
+  assert.equal(cellsRes.data.cells[0].yards.length, 1);
+  assert.equal(cellsRes.data.cells[0].yards[0].buildingKey, 512);
+  assert.equal(cellsRes.data.cells[0].yards[0].pieces.length, 2);
+
+  // 6. Save data round-trip for yard decor
+  const savedRecords = modSaveRecords();
+  assert.ok(savedRecords[OFFLINE_HOMES_VENDOR]);
+
+  _resetForTests();
+  assert.equal(homes.homeAt(555, 512), null);
+
+  restoreModSaveRecords(savedRecords);
+  assert.ok(homes.homeAt(555, 512));
+
+  // Verify restored yard decor and interior decor
+  const restoredInterior = await decor.list(555, 512, false, false);
+  assert.equal(restoredInterior.data.pieces.length, 1);
+  assert.equal(restoredInterior.data.pieces[0].id, 'bed1');
+
+  const restoredYard = await decor.list(555, 512, false, true);
+  assert.equal(restoredYard.data.pieces.length, 2);
+  assert.ok(restoredYard.data.pieces.some((p) => p.id === 'tree1'));
+  assert.ok(restoredYard.data.pieces.some((p) => p.id === 'bench1'));
+});

@@ -9,6 +9,7 @@ import { homeSaleRefund, HOME_CAP } from '../net/homeLaw.js';
 import { decorSaleBack } from '../net/decorLaw.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { isDfuHouseOwned } from './banking.js';
+import { yardCellOf } from '../net/yardCellLaw.js';
 
 export const OFFLINE_HOMES_VENDOR = 'offlineHomes';
 
@@ -56,8 +57,10 @@ registerModSaveData(OFFLINE_HOMES_VENDOR, {
       entry: h.entry || 'only-me',
       boughtAt: h.boughtAt || 0,
       decor: Array.isArray(h.decor) ? [...h.decor] : [],
+      yardDecor: Array.isArray(h.yardDecor) ? [...h.yardDecor] : [],
       hidden: Array.isArray(h.hidden) ? [...h.hidden] : [],
       rev: Number(h.rev) || 1,
+      yardRev: Number(h.yardRev) || 1,
     })),
   }),
   restoreSaveData: (data) => {
@@ -75,8 +78,10 @@ registerModSaveData(OFFLINE_HOMES_VENDOR, {
         entry: typeof h.entry === 'string' ? h.entry : 'only-me',
         boughtAt: Number(h.boughtAt) || 0,
         decor: Array.isArray(h.decor) ? [...h.decor] : [],
+        yardDecor: Array.isArray(h.yardDecor) ? [...h.yardDecor] : [],
         hidden: Array.isArray(h.hidden) ? [...h.hidden] : [],
         rev: Number(h.rev) || 1,
+        yardRev: Number(h.yardRev) || 1,
       });
     }
   },
@@ -185,7 +190,10 @@ export function createOfflineHomes({
       entry: 'only-me',
       boughtAt: Date.now(),
       decor: [],
+      yardDecor: [],
       hidden: [],
+      rev: 1,
+      yardRev: 1,
     };
     _ownedHomes.set(homeKey(id, key), home);
     version++;
@@ -259,6 +267,16 @@ export function createOfflineDecor() {
   async function list(mapId, buildingKey, seat = false, yard = false) {
     const h = getHome(mapId, buildingKey);
     if (!h) return { ok: true, data: { pieces: [], hidden: [], rev: 1 } };
+    if (yard) {
+      return {
+        ok: true,
+        data: {
+          pieces: Array.isArray(h.yardDecor) ? [...h.yardDecor] : [],
+          hidden: [],
+          rev: Number(h.yardRev) || 1,
+        },
+      };
+    }
     return {
       ok: true,
       data: {
@@ -269,28 +287,51 @@ export function createOfflineDecor() {
     };
   }
 
-  async function rev(mapId, buildingKey) {
+  async function rev(mapId, buildingKey, seat = false, yard = false) {
     const h = getHome(mapId, buildingKey);
+    if (yard) {
+      return { ok: true, data: { rev: Number(h?.yardRev) || 1 } };
+    }
     return { ok: true, data: { rev: Number(h?.rev) || 1 } };
   }
 
-  async function place({ mapId, buildingKey, piece }) {
+  async function place({ mapId, buildingKey, piece, yard = false }) {
     const h = getHome(mapId, buildingKey);
     if (!h) return { ok: false, error: 'no-home' };
+    if (yard) {
+      h.yardDecor = (h.yardDecor || []).filter((p) => p.id !== piece.id);
+      h.yardDecor.push(piece);
+      h.yardRev = (Number(h.yardRev) || 1) + 1;
+      return { ok: true, data: { piece, rev: h.yardRev, yardVer: h.yardRev } };
+    }
     h.decor = (h.decor || []).filter((p) => p.id !== piece.id);
     h.decor.push(piece);
     h.rev = (Number(h.rev) || 1) + 1;
     return { ok: true, data: { piece, rev: h.rev } };
   }
 
-  async function move({ mapId, buildingKey, id, place: p }) {
+  async function move({ mapId, buildingKey, id, place: p, yard = false }) {
     const h = getHome(mapId, buildingKey);
     if (!h) return { ok: false, error: 'no-home' };
+    if (yard) {
+      const idx = (h.yardDecor || []).findIndex((pc) => pc.id === id);
+      if (idx >= 0) {
+        h.yardDecor[idx] = { ...h.yardDecor[idx], ...p };
+        h.yardRev = (Number(h.yardRev) || 1) + 1;
+        return { ok: true, data: { piece: h.yardDecor[idx], rev: h.yardRev, yardVer: h.yardRev } };
+      }
+    }
     const idx = (h.decor || []).findIndex((pc) => pc.id === id);
     if (idx >= 0) {
       h.decor[idx] = { ...h.decor[idx], ...p };
       h.rev = (Number(h.rev) || 1) + 1;
       return { ok: true, data: { piece: h.decor[idx], rev: h.rev } };
+    }
+    const yIdx = (h.yardDecor || []).findIndex((pc) => pc.id === id);
+    if (yIdx >= 0) {
+      h.yardDecor[yIdx] = { ...h.yardDecor[yIdx], ...p };
+      h.yardRev = (Number(h.yardRev) || 1) + 1;
+      return { ok: true, data: { piece: h.yardDecor[yIdx], rev: h.yardRev, yardVer: h.yardRev } };
     }
     return { ok: false, error: 'no-piece' };
   }
@@ -298,10 +339,18 @@ export function createOfflineDecor() {
   async function remove({ mapId, buildingKey, id }) {
     const h = getHome(mapId, buildingKey);
     if (h) {
-      h.decor = (h.decor || []).filter((p) => p.id !== id);
-      h.rev = (Number(h.rev) || 1) + 1;
+      const hadYard = (h.yardDecor || []).some((p) => p.id === id);
+      if (hadYard) {
+        h.yardDecor = h.yardDecor.filter((p) => p.id !== id);
+        h.yardRev = (Number(h.yardRev) || 1) + 1;
+      }
+      const hadDecor = (h.decor || []).some((p) => p.id === id);
+      if (hadDecor) {
+        h.decor = h.decor.filter((p) => p.id !== id);
+        h.rev = (Number(h.rev) || 1) + 1;
+      }
     }
-    return { ok: true, data: { rev: Number(h?.rev) || 1 } };
+    return { ok: true, data: { rev: Number(h?.rev) || 1, yardVer: Number(h?.yardRev) || 1 } };
   }
 
   async function hidden({ mapId, buildingKey, keys }) {
@@ -313,10 +362,20 @@ export function createOfflineDecor() {
     return { ok: true, data: { rev: Number(h?.rev) || 1 } };
   }
 
-  async function batch({ mapId, buildingKey, put = [], drop = [] } = {}) {
+  async function batch({ mapId, buildingKey, put = [], drop = [], yard = false } = {}) {
     const h = getHome(mapId, buildingKey);
     if (!h) return { ok: false, error: 'no-home' };
     const dropSet = new Set(drop);
+    if (yard) {
+      h.yardDecor = (h.yardDecor || []).filter((p) => !dropSet.has(p.id));
+      for (const p of put) {
+        const idx = h.yardDecor.findIndex((existing) => existing.id === p.id);
+        if (idx >= 0) h.yardDecor[idx] = p;
+        else h.yardDecor.push(p);
+      }
+      h.yardRev = (Number(h.yardRev) || 1) + 1;
+      return { ok: true, data: { rev: h.yardRev, yardVer: h.yardRev } };
+    }
     h.decor = (h.decor || []).filter((p) => !dropSet.has(p.id));
     for (const p of put) {
       const idx = h.decor.findIndex((existing) => existing.id === p.id);
@@ -347,8 +406,26 @@ export function createOfflineDecor() {
     };
   }
 
-  async function yardCells() {
-    return { ok: true, data: { cells: {} } };
+  async function yardCells(mapId, cells = []) {
+    const list = [];
+    for (const entry of cells) {
+      const cell = Array.isArray(entry) ? entry[0] : entry;
+      const yards = [];
+      let cellVer = 0;
+      for (const h of _ownedHomes.values()) {
+        if ((h.mapId >>> 0) === (Number(mapId) >>> 0) && yardCellOf(h.buildingKey) === cell) {
+          if (Array.isArray(h.yardDecor) && h.yardDecor.length > 0) {
+            yards.push({
+              buildingKey: h.buildingKey,
+              pieces: [...h.yardDecor],
+            });
+          }
+          cellVer = Math.max(cellVer, Number(h.yardRev) || 1);
+        }
+      }
+      list.push({ cell, ver: cellVer || 1, yards });
+    }
+    return { ok: true, data: { cells: list } };
   }
 
   return {
