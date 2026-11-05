@@ -69,7 +69,7 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
   // include a row this pin is not about.
   assert.deepEqual(ACTIONS.slice(45, 52), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
   assert.equal(ACTIONS[52], 'FreeMouse', 'and FREEMOUSE\'s appended past them');
-  assert.equal(ACTIONS.length, 97, 'PVP-KEY\'s PvpFlag (PIN MOVED) + TECH-KEY2\'s SignatureTechnique, unbound (PIN MOVED) + Decorate, unbound (PIN MOVED) + PARTY-PING\'s 1 (PartyPing - PIN MOVED) + SHOT-KINDS\' 1 (ShotCycle - PIN MOVED) + CARGO-ANYWHERE\'s 1 (ShipHold - PIN MOVED) + UI-CALM\'s 1 (SaddlePanel, last - PIN MOVED) + SPYGLASS\' 1 (Spyglass, last - PIN MOVED) + TECH1\'s 1 (WeaponTechnique) + MODE-WHEEL\'s 1 (ModeWheel) + LEGACY3\'s 1 (LegacyFamily, last) + CLASSIC-PAGES\'s 1 + DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1 + KB1\'s 17 (Interact, QuickDial, six hotbar slots, eight mod keys, DebugOverlay) + CSA-D\'s 2 (the helm\'s two keys) + CSA-E\'s 4 (the sails\' and the trim\'s) + CSA-G\'s 3 (the time scale\'s) + TV1\'s 1 (TravelView) + PADWALK\'s WalkMode + VIEW-TOGGLE\'s TogglePerspective + PROF1\'s 1 (ActChoice, after it) + HELM-KEYS\' 2 (more and less sail, last)');
+  assert.equal(ACTIONS.length, 98, 'HOLD-FREE-MOUSE: + HoldFreeMouse, last');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
@@ -116,12 +116,12 @@ test('QS2: the defaults are the number row, spent exactly once each, and free be
   // the Professions key - it shares the down arrow
   // MODE-WHEEL: and DFU's four mode keys and Sneak - the wheel and Crouch answer for them
   // SPYGLASS (PIN MOVED): nor the captain's glass - it shares K with the road's follow; SHOT-KINDS (PIN MOVED): nor the guns' load - the helm's button and the wheel choose it
-  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'QuickSwap', 'DebugOverlay', 'WalkMode', 'BoatSailUp', 'Professions', 'Spyglass', 'ShotCycle', 'Decorate', 'SignatureTechnique'],   // PIN MOVED (TECH-KEY2: unbound)
+  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'SocialInteract', 'QuickSwap', 'DebugOverlay', 'WalkMode', 'BoatSailUp', 'Professions', 'Spyglass', 'ShotCycle', 'Decorate', 'SignatureTechnique'],   // PIN MOVED (TECH-KEY2: unbound)
     'the actions without an owned key');
-  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 16);   // TECH-KEY2: the signature key unbound; Decorate unbound; SHOT-KINDS: the guns' load unbound; PADWALK: WalkMode ships unbound too; HELM-KEYS: BoatSailUp a share; CLASSIC-PAGES: the Professions key a share; SPYGLASS: the glass a share
+  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 17);   // HOLD-FREE-MOUSE: SocialInteract unbound; TECH-KEY2: the signature key unbound; Decorate unbound; SHOT-KINDS: the guns' load unbound; PADWALK: WalkMode ships unbound too; HELM-KEYS: BoatSailUp a share; CLASSIC-PAGES: the Professions key a share; SPYGLASS: the glass a share
   // THE KEYS WERE FREE. DFU's own table is the rows above SOC5's, and none of
   // them is a digit - read off the table rather than asserted about it.
-  const dfu = DEFAULT_BINDINGS.slice(0, DEFAULT_BINDINGS.findIndex(([, a]) => a === 'SocialInteract')).map(([c]) => c);   // MODE-WHEEL: DFU's rows are those before SOC5's (five ship unbound now)
+  const dfu = DEFAULT_BINDINGS.slice(0, DEFAULT_BINDINGS.findIndex(([, a]) => a === 'HoldFreeMouse')).map(([c]) => c);   // MODE-WHEEL: DFU's rows are those before SOC5's (five ship unbound now)
   for (const d of ['Digit1', 'Digit2', 'Digit3']) assert.ok(!dfu.includes(d), `SetupDefaults never spends ${d}`);
   // The port's own spending, named where it is spent, so a rename there fails
   // here (the same shape HT4's pin uses one file over).
@@ -151,7 +151,7 @@ test('QS2: a bindings blob written BEFORE this slice gains the three on the next
   assert.equal(actionForCode(fresh, 'Digit3'), 'QuickSpell');
   assert.equal(actionForCode(fresh, 'Digit4'), 'QuickOffHand');
   assert.equal(getBinding(fresh, 'Rest'), 'KeyR', 'and disturbs nothing else');
-  assert.equal(getBinding(fresh, 'SocialInteract'), 'KeyF', 'SOC5\'s row included');
+  assert.equal(getBinding(fresh, 'HoldFreeMouse'), 'KeyF', 'HOLD-FREE-MOUSE row included');
   // ...and a player who put Rest on 1 keeps Rest on 1; QuickUse1 simply waits.
   const mine = createBindings();
   loadKeyBinds(mine, file);

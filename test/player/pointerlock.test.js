@@ -57,3 +57,96 @@ test('PL1: the wire - the toggle gate reads the predicate, the input box stamps 
   assert.equal((at.match(/noteInputBoxClosed\(\);/g) ?? []).length, 0, 'the action box delegates the stamp');
   assert.match(at, /class ActionInputBox extends InputMessageBoxWindow/);
 });
+
+// ── HOLD_FREE_MOUSE: hold key to free, release to lock ──
+import { bindCursorToggle, HOLD_FREE_MOUSE_ACTION, cursorHeld, cursorActive, setCursorActive } from '../../src/player/pointerLock.js';
+
+test('HOLD_FREE_MOUSE: keydown frees cursor via hold, keyup relocks', () => {
+  noteInputBoxClosed(-Infinity);
+  let requested = 0;
+  let released = 0;
+  const canvas = {
+    requestPointerLock: () => {
+      requested++;
+      globalThis.document.pointerLockElement = canvas;
+      return Promise.resolve();
+    },
+  };
+  const listeners = {};
+  const origDoc = globalThis.document;
+  const origAdd = globalThis.addEventListener;
+  const origRem = globalThis.removeEventListener;
+
+  globalThis.document = {
+    pointerLockElement: canvas,
+    exitPointerLock: () => {
+      released++;
+      globalThis.document.pointerLockElement = null;
+    },
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  };
+  globalThis.addEventListener = (evt, fn) => { listeners[evt] = fn; };
+  globalThis.removeEventListener = (evt) => { delete listeners[evt]; };
+
+  try {
+    const unbind = bindCursorToggle(canvas, () => false, (e) => e.code === 'KeyF' ? [HOLD_FREE_MOUSE_ACTION] : []);
+    assert.equal(cursorHeld(), false);
+
+    // Keydown frees cursor
+    let prevented = false;
+    listeners.keydown({ code: 'KeyF', preventDefault: () => { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(cursorHeld(), true);
+    assert.ok(released > 0);
+
+    // Keyup restores look
+    prevented = false;
+    listeners.keyup({ code: 'KeyF', preventDefault: () => { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(cursorHeld(), false);
+    assert.ok(requested > 0);
+
+    unbind();
+  } finally {
+    globalThis.document = origDoc;
+    globalThis.addEventListener = origAdd;
+    globalThis.removeEventListener = origRem;
+  }
+});
+
+test('HOLD_FREE_MOUSE: does not relock on keyup if cursor was already toggled free', () => {
+  let requested = 0;
+  const canvas = {
+    requestPointerLock: () => { requested++; return Promise.resolve(); },
+  };
+  const listeners = {};
+  const origDoc = globalThis.document;
+  const origAdd = globalThis.addEventListener;
+  const origRem = globalThis.removeEventListener;
+
+  globalThis.document = {
+    pointerLockElement: null,
+    exitPointerLock: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  };
+  globalThis.addEventListener = (evt, fn) => { listeners[evt] = fn; };
+  globalThis.removeEventListener = (evt) => { delete listeners[evt]; };
+
+  try {
+    const unbind = bindCursorToggle(canvas, () => false, (e) => e.code === 'KeyF' ? [HOLD_FREE_MOUSE_ACTION] : []);
+    setCursorActive(true); // Player toggled cursor on beforehand
+
+    listeners.keydown({ code: 'KeyF', preventDefault: () => {} });
+    listeners.keyup({ code: 'KeyF', preventDefault: () => {} });
+
+    assert.equal(requested, 0, 'must not re-lock when cursorActive is true');
+    unbind();
+  } finally {
+    setCursorActive(false);
+    globalThis.document = origDoc;
+    globalThis.addEventListener = origAdd;
+    globalThis.removeEventListener = origRem;
+  }
+});

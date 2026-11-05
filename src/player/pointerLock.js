@@ -130,6 +130,8 @@ export function holdCursor() {
  *  who want a key that is ONLY the mouse. Named here because this is
  *  the one module that reads it. */
 export const FREE_MOUSE_ACTION = 'FreeMouse';
+/** HOLD-FREE-MOUSE: hold the key to free cursor, release to relock mouselook. */
+export const HOLD_FREE_MOUSE_ACTION = 'HoldFreeMouse';
 
 /** KB1 (Mac: "Enter = chat" online; "Y frees the cursor"): WHO OWNS ActivateCursor's KEY. Offline it is DFU's - Enter
  *  frees the mouse (PlayerMouseLook.cs:190). Online the chat panel opens on that same action (ui/chatPanel.js
@@ -173,6 +175,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   setCursorActive(false);
   _cursorHolds.clear(); // HERB-CURSOR: and an act's hold the last host never let go
   let lastRealEscape = -Infinity; // ESC-LOCK (1), below
+  let releaseKeyHold = null;
   const onKey = (e) => {
     // ESC-LOCK (1): a real Escape the browser DID hand the page is noted first, whatever is up - the loss that follows
     // it is then not delivered a second time. The browser's own unlock key, read raw on purpose (KB1's reservation).
@@ -197,6 +200,16 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     // on, in a new hat.
     const got = actionsOf(e);
     const acts = Array.isArray(got) ? got : got ? [got] : []; // UXB1-S (AUDIT UXB1 F9: named for what the hosts hand in)
+    if (acts.includes(HOLD_FREE_MOUSE_ACTION)) {
+      if (e.repeat || _cursorActive || releaseKeyHold) {
+        e.preventDefault();
+        return;
+      }
+      if (_cursorHolds.size || cursorToggleRefused()) return;
+      e.preventDefault();
+      releaseKeyHold = holdCursor();
+      return;
+    }
     if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return; // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
     e.preventDefault();
     // AUDIT HERB-CURSOR A2: never while an act holds the cursor free - the press changed nothing a player could see,
@@ -206,6 +219,26 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     // an input message box" (PlayerMouseLook.cs:192-196).
     if (cursorToggleRefused()) return;
     toggleCursorActive(canvas);
+  };
+  const onKeyUp = (e) => {
+    if (!releaseKeyHold) return;
+    if (isTextEntryTarget(e.target)) return;
+    const got = actionsOf(e);
+    const acts = Array.isArray(got) ? got : got ? [got] : [];
+    if (!acts.includes(HOLD_FREE_MOUSE_ACTION)) return;
+    e.preventDefault();
+    const off = releaseKeyHold;
+    releaseKeyHold = null;
+    const last = off();
+    if (last && !_cursorActive && !isWindowUp() && !overlayOpen()) {
+      requestLook(canvas);
+    }
+  };
+  const onBlur = () => {
+    if (releaseKeyHold) {
+      releaseKeyHold();
+      releaseKeyHold = null;
+    }
   };
   // PL2 (2026-09-12, Mac: "Pointer can detach from the game and you're
   // unable to click back in"). The hosts' keydown ladders are bubble
@@ -226,6 +259,8 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   // bubble listener can pop the window, so a press under a window is
   // the window's and only a press with nothing up is the toggle.
   addEventListener('keydown', onKey, true);
+  addEventListener('keyup', onKeyUp, true);
+  if (typeof window !== 'undefined') window.addEventListener?.('blur', onBlur);
   // ESC-LOCK (1): THE PRESS THE BROWSER ATE. The lock was held on this
   // canvas, it is gone, the page did not release it (releaseLook's
   // stamp), nothing is up to have taken it (a window, an enhanced
@@ -244,7 +279,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     lastTouch = nowMs();
   };
   const fingered = () => nowMs() - lastTouch < TOUCH_UNLOCK_MS;
-  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || !pageHasFocus();
+  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || releaseKeyHold !== null || !pageHasFocus();
   const onLockChange = () => {
     const now = typeof document !== 'undefined' && document.pointerLockElement === canvas;
     const lost = held && !now;
@@ -281,7 +316,13 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   };
   if (typeof document !== 'undefined') document.addEventListener?.('pointerdown', onDown, true);
   return () => {
+    if (releaseKeyHold) {
+      releaseKeyHold();
+      releaseKeyHold = null;
+    }
     removeEventListener('keydown', onKey, true);
+    removeEventListener('keyup', onKeyUp, true);
+    if (typeof window !== 'undefined') window.removeEventListener?.('blur', onBlur);
     if (pending) {
       clearTimeout(pending);
       pending = null;

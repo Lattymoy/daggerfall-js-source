@@ -88,6 +88,7 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     'Decorate',   // the decorator, unbound - a player gives it a key (PIN MOVED)
     'SignatureTechnique',   // TECH-KEY2: the martial path's key, unbound (PIN MOVED)
     'PvpFlag',   // PVP-KEY: the PvP flag's key, Caps Lock; appended last (PIN MOVED)
+    'HoldFreeMouse',   // HOLD-FREE-MOUSE: hold key to free cursor, release to relock mouselook
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -121,9 +122,8 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     'Insert=LookUp', 'Delete=LookDown', 'Home=CenterView',
     'KeyL=LogBook', 'KeyN=NoteBook', 'KeyM=AutoMap', 'KeyV=TravelMap',
     'F11=PrintScreen', 'F5=QuickSave', 'F9=QuickLoad',
-    // SOC5: the port's own row, past DFU's table - KeyF, which SetupDefaults
-    // never spends. The forty-four above are still DFU's, row for row.
-    'KeyF=SocialInteract',
+    // HOLD-FREE-MOUSE: KeyF frees the mouse while held, and relocks on release
+    'KeyF=HoldFreeMouse',
     // QUICK-LOOT B4: P and J, and they sit HERE because that is where
     // the table declares them - the two rows were chosen by elimination
     // against DFU's table, the port's own two keys and every vendored
@@ -189,9 +189,9 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   assert.equal(DEFAULT_BINDINGS.length, 81);   // PVP-KEY: plus the flag's Caps Lock (PIN MOVED); PARTY-PING: Mouse2 leaves AutoRun and the ping takes it, auto-run gains F3 (net +1); CARGO-ANYWHERE: plus the hold's (F4) - PIN MOVED; UI-CALM: plus the saddle panel's (F2); TECH1: plus the technique's (Mouse3); MODE-WHEEL: minus F1-F4 and Sneak's Alt, plus the wheel's; LEGACY3: plus the Family tab's; VIEW-TOGGLE: plus the view's toggle; PROF1: plus the act choice's; HELM-KEYS: plus less sail's
   assert.equal(bound.size, 81, 'no action is defaulted twice');   // PARTY-PING: the ping's own
   // TV1: one more appended after them, and unbound - the travel view's door is the map's.
-  assert.equal(ACTIONS.length, 97);   // PVP-KEY: + PvpFlag, last (PIN MOVED); TECH-KEY2: + SignatureTechnique, last, unbound (PIN MOVED); Decorate appended, unbound (PIN MOVED); PARTY-PING: + PartyPing (PIN MOVED); SHOT-KINDS: + ShotCycle (PIN MOVED); CARGO-ANYWHERE: + ShipHold (PIN MOVED); UI-CALM: + SaddlePanel, last (PIN MOVED); SPYGLASS: + Spyglass, last (PIN MOVED); TECH1: + WeaponTechnique; MODE-WHEEL: + ModeWheel, last; LEGACY3: + LegacyFamily, last; CLASSIC-PAGES: + Professions, last; PADWALK: + WalkMode, after them (main's indices are live); VIEW-TOGGLE: + TogglePerspective; PROF1: + ActChoice; HELM-KEYS: + BoatSailUp, BoatSailDown, last
+  assert.equal(ACTIONS.length, 98);   // HOLD-FREE-MOUSE: + HoldFreeMouse, last
   // PIN MOVED (SPYGLASS, 2026-10-11): the glass owns no key - it shares K with the road's follow
-  assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'QuickSwap', 'DebugOverlay', 'WalkMode', 'BoatSailUp', 'Professions', 'Spyglass', 'ShotCycle', 'Decorate', 'SignatureTechnique'], 'TECH-KEY2: the signature key ships unbound (PIN MOVED); the fourteen without an owned key, named - more sail\'s, the Professions key\'s and the glass\'s are default shares; MODE-WHEEL: the four modes and Sneak; Decorate ships unbound');
+  assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'SocialInteract', 'QuickSwap', 'DebugOverlay', 'WalkMode', 'BoatSailUp', 'Professions', 'Spyglass', 'ShotCycle', 'Decorate', 'SignatureTechnique'], 'HOLD-FREE-MOUSE: SocialInteract ships unbound; TECH-KEY2: the signature key ships unbound (PIN MOVED); the fifteen without an owned key, named - more sail\'s, the Professions key\'s and the glass\'s are default shares; MODE-WHEEL: the four modes and Sneak; Decorate ships unbound');
   assert.deepEqual(DEFAULT_SHARES, [['ArrowUp', 'BoatSailUp', 'ActChoice'], ['ArrowDown', 'Professions', 'BoatSailDown'], ['KeyK', 'Spyglass', 'FollowPaths']], 'HELM-KEYS: the default shares - onto their partners\' own keys; CLASSIC-PAGES: the Professions key beside less sail; SPYGLASS: the glass beside the road\'s follow');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
