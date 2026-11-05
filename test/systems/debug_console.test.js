@@ -115,6 +115,67 @@ test('Debug Console: help lists all basic debug commands', () => {
   assert.ok(tgmDetail.includes('Toggle God Mode'));
 });
 
+test('Debug Console: suicide/kill forces player death', () => {
+  playerEntity.health = 50;
+  setStaffPowers({ god: true });
+
+  const res = executeConsoleLine('kill');
+  assert.equal(res, 'Player killed.');
+  assert.equal(playerEntity.health, 0);
+  assert.equal(staffPowers().god, false);
+
+  const resSuicide = executeConsoleLine('suicide');
+  assert.equal(resSuicide, 'Player is already dead.');
+
+  playerEntity.health = 50;
+  const resKillme = executeConsoleLine('killme');
+  assert.equal(resKillme, 'Player killed.');
+  assert.equal(playerEntity.health, 0);
+});
+
+test('Debug Console: spawnfoe / spawn creates mobs by ID or name', async () => {
+  let spawnedMob = null;
+  let spawnedCount = 0;
+  setDebugSceneContext({
+    spawnFoe: async (mobileType, count) => {
+      spawnedMob = mobileType;
+      spawnedCount = count;
+      return count;
+    },
+  });
+
+  // By ID
+  const resId = await executeConsoleLine('spawnfoe 15');
+  assert.equal(spawnedMob, 15);
+  assert.equal(spawnedCount, 1);
+  assert.ok(resId.includes('SkeletalWarrior (ID: 15)'));
+
+  // By name
+  const resName = await executeConsoleLine('spawn rat 3');
+  assert.equal(spawnedMob, 0);
+  assert.equal(spawnedCount, 3);
+  assert.ok(resName.includes('3x Rat (ID: 0)'));
+
+  // By alias
+  const resAlias = await executeConsoleLine('spawn skeleton');
+  assert.equal(spawnedMob, 15);
+  assert.ok(resAlias.includes('SkeletalWarrior'));
+
+  // Invalid mob
+  const resInvalid = await executeConsoleLine('spawn unknown_creature');
+  assert.ok(resInvalid.includes('Unknown mob'));
+
+  // Missing args
+  const resMissing = await executeConsoleLine('spawnfoe');
+  assert.equal(resMissing, 'Usage: spawnfoe <id|name> [count]');
+
+  // spawnlist
+  const resList = executeConsoleLine('spawnlist');
+  assert.ok(resList.includes('Monsters (0..42):'));
+  assert.ok(resList.includes('SkeletalWarrior'));
+  assert.ok(resList.includes('Classes (128..146):'));
+});
+
 test('Debug Console UI: toggle and state API', async () => {
   const { isDebugConsoleOpen, toggleDebugConsole, openDebugConsole, closeDebugConsole, submitConsoleInput } = await import('../../src/ui/debugConsole.js');
   assert.equal(typeof isDebugConsoleOpen, 'function');

@@ -4872,6 +4872,29 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       return count;
     },
+    spawnFoe: async (mobileType, count = 1) => {
+      const p = player?.pos ? [...player.pos] : [0, 0, 0];
+      const yaw = cam?.yaw ?? 0;
+      const fwdX = Math.sin(yaw);
+      const fwdZ = Math.cos(yaw);
+      const rightX = Math.cos(yaw);
+      const rightZ = -Math.sin(yaw);
+      let spawned = 0;
+      for (let i = 0; i < count; i++) {
+        const offsetDist = 2.5 + Math.floor(i / 3) * 1.5;
+        const offsetSide = ((i % 3) - 1) * 1.2;
+        const pos = [
+          p[0] + fwdX * offsetDist + rightX * offsetSide,
+          p[1],
+          p[2] + fwdZ * offsetDist + rightZ * offsetSide,
+        ];
+        if (exteriorFoes?.spawnFoe) {
+          await exteriorFoes.spawnFoe(mobileType, pos, { yaw: yaw + Math.PI, loose: true, feetGiven: true });
+          spawned++;
+        }
+      }
+      return spawned;
+    },
   });
   if (shotMode) {
     window.__frame = window.__frame ?? 0;   // AUDIT 17e F37: the counter is now incremented, so seed it

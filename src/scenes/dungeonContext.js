@@ -9391,6 +9391,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // intercept lives inside it, so a probe that killed a foe any
     // other way would be testing a path the game never takes.
     damageFoe,
+    spawnFoe: async (mobileType, pos, { gender = 'unspecified' } = {}) => {
+      return await buildFoeAt({ x: pos[0], y: pos[1], z: pos[2], mobileType, gender }, true, { feetGiven: true });
+    },
     // C10: the rig's clickAttack carries the sheathed gate the inline
     // version missed - a touch tap while sheathed no longer swings
     // (WeaponManager: no attack processing while sheathed).

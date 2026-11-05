@@ -41,8 +41,9 @@
 // :51-53) - the console is refused when the setting is off.
 
 import { getBool } from './settings/settings.js';
-import { staffPowers, setStaffPowers, playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { staffPowers, setStaffPowers, playerEntity, surfacePlayer, forcePlayerDeath } from '../characters/playerEntity.js';
 import { addGoldPieces } from './inventory.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 
 let _sceneContext = null;
 /** Register active scene debug context (player control, enemy pools, travel). */
@@ -264,6 +265,108 @@ registerCommand(
     const ctx = getDebugSceneContext();
     if (!ctx?.tele2loc) return 'tele2loc is only available in world mode.';
     return await ctx.tele2loc(locName);
+  }
+);
+
+registerCommand(
+  'kill',
+  'Kill player character (suicide / self-kill)',
+  'kill',
+  () => {
+    setStaffPowers({ god: false });
+    const died = forcePlayerDeath(playerEntity);
+    return died ? 'Player killed.' : 'Player is already dead.';
+  }
+);
+
+registerCommand(
+  'suicide',
+  'Kill player character (suicide / self-kill)',
+  'suicide',
+  () => {
+    const cmd = getConsoleCommand('kill');
+    return cmd.callback();
+  }
+);
+
+registerCommand(
+  'killme',
+  'Kill player character (suicide / self-kill)',
+  'killme',
+  () => {
+    const cmd = getConsoleCommand('kill');
+    return cmd.callback();
+  }
+);
+
+/**
+ * Resolve enemy ID and canonical name from numeric ID or string name.
+ */
+export function resolveMobileType(arg) {
+  if (arg == null || arg === '') return null;
+  const num = parseInt(arg, 10);
+  if (!Number.isNaN(num)) {
+    const entry = Object.entries(MOBILE_TYPES).find(([, id]) => id === num);
+    if (entry) return { id: num, name: entry[0] };
+    if (num >= 0 && num <= 42) return { id: num, name: `Monster_${num}` };
+    if (num >= 128 && num <= 146) return { id: num, name: `Class_${num}` };
+    return null;
+  }
+  const clean = String(arg).toLowerCase().replace(/[\s_-]/g, '');
+  if (clean === 'skeleton') return { id: 15, name: 'SkeletalWarrior' };
+  if (clean === 'bear') return { id: 4, name: 'GrizzlyBear' };
+  if (clean === 'bat') return { id: 3, name: 'GiantBat' };
+  if (clean === 'tiger') return { id: 5, name: 'SabertoothTiger' };
+  if (clean === 'scorpion') return { id: 20, name: 'GiantScorpion' };
+  if (clean === 'guard') return { id: 146, name: 'Knight_CityWatch' };
+  for (const [name, id] of Object.entries(MOBILE_TYPES)) {
+    if (name.toLowerCase().replace(/[\s_-]/g, '') === clean) {
+      return { id, name };
+    }
+  }
+  return null;
+}
+
+registerCommand(
+  'spawnfoe',
+  'Spawn mob near player: spawnfoe <id|name> [count]',
+  'spawnfoe <id|name> [count]',
+  async (args = []) => {
+    if (!args || !args.length) return 'Usage: spawnfoe <id|name> [count]';
+    const mob = resolveMobileType(args[0]);
+    if (!mob) return `Unknown mob "${args[0]}". Use mobile ID (0..42, 128..146) or name (e.g. rat, skeleton, lich). Type 'spawnlist' for all IDs.`;
+    const count = args[1] ? Math.max(1, Math.min(20, parseInt(args[1], 10) || 1)) : 1;
+    const ctx = getDebugSceneContext();
+    if (!ctx?.spawnFoe) return 'Enemy spawning is unavailable in current scene.';
+    const spawned = await ctx.spawnFoe(mob.id, count);
+    return spawned > 0
+      ? `Spawned ${spawned}x ${mob.name} (ID: ${mob.id}) near player.`
+      : `Failed to spawn ${mob.name} (ID: ${mob.id}).`;
+  }
+);
+
+registerCommand(
+  'spawn',
+  'Spawn mob near player: spawn <id|name> [count]',
+  'spawn <id|name> [count]',
+  async (args = []) => {
+    const cmd = getConsoleCommand('spawnfoe');
+    return await cmd.callback(args);
+  }
+);
+
+registerCommand(
+  'spawnlist',
+  'List available mob IDs and names',
+  'spawnlist',
+  () => {
+    const monsters = [];
+    const classes = [];
+    for (const [name, id] of Object.entries(MOBILE_TYPES)) {
+      if (id <= 42) monsters.push(`${id}: ${name}`);
+      else if (id >= 128 && id <= 146) classes.push(`${id}: ${name}`);
+    }
+    return `<b>Monsters (0..42):</b>\n${monsters.join(', ')}\n\n<b>Classes (128..146):</b>\n${classes.join(', ')}`;
   }
 );
 

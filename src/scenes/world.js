@@ -28386,6 +28386,38 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!ok) hudFade.clearFade();
       return ok ? `Teleported to ${hit.name} (${hit.px}, ${hit.py})` : `Failed to teleport to ${hit.name}`;
     },
+    spawnFoe: async (mobileType, count = 1) => {
+      const p = player?.pos ? [...player.pos] : [0, 0, 0];
+      const yaw = cam?.yaw ?? 0;
+      const fwdX = Math.sin(yaw);
+      const fwdZ = Math.cos(yaw);
+      const rightX = Math.cos(yaw);
+      const rightZ = -Math.sin(yaw);
+      const dCtx = modes?.dungeonCtx;
+      const iFoes = modes?.interiorFoes;
+      let spawned = 0;
+      for (let i = 0; i < count; i++) {
+        const offsetDist = 2.5 + Math.floor(i / 3) * 1.5;
+        const offsetSide = ((i % 3) - 1) * 1.2;
+        const pos = [
+          p[0] + fwdX * offsetDist + rightX * offsetSide,
+          p[1],
+          p[2] + fwdZ * offsetDist + rightZ * offsetSide,
+        ];
+        const foeYaw = yaw + Math.PI;
+        if (modes?.mode === 'dungeon' && dCtx?.spawnFoe) {
+          await dCtx.spawnFoe(mobileType, pos, { yaw: foeYaw });
+          spawned++;
+        } else if (modes?.mode === 'interior' && iFoes?.spawnFoe) {
+          await iFoes.spawnFoe(mobileType, pos, { yaw: foeYaw, loose: true, feetGiven: true });
+          spawned++;
+        } else if (exteriorFoes?.spawnFoe) {
+          await exteriorFoes.spawnFoe(mobileType, pos, { yaw: foeYaw, loose: true, feetGiven: true });
+          spawned++;
+        }
+      }
+      return spawned;
+    },
   });
   createWorldShotProbes({   // HOST-SPLIT: src/scenes/worldShotProbes.js
     arrows, cam, exteriorFoes, installTownProbes, magic, mapDict, maps, modes, openTeleportMap, player, playerTicker,
