@@ -361,3 +361,173 @@ test('OFFLINE-HOUSING: exterior yard decor operations, isolation from interior, 
   assert.ok(restoredYard.data.pieces.some((p) => p.id === 'tree1'));
   assert.ok(restoredYard.data.pieces.some((p) => p.id === 'bench1'));
 });
+
+test('OFFLINE-HOUSING: chest storage, op:set, op:list, op:settle, and persistence across save/load', async () => {
+  const homes = createOfflineHomes();
+  const decor = createOfflineDecor();
+
+  await homes.claim({ mapId: 600, buildingKey: 15, region: 3, price: 10000 });
+
+  // 1. Place a storage chest piece
+  const placeRes = await decor.place({
+    mapId: 600,
+    buildingKey: 15,
+    piece: { id: 'chest_gold1', storage: true, model: 41800, pos: [0, 0, 0] },
+  });
+  assert.equal(placeRes.ok, true);
+
+  // 2. Set access mode on the chest
+  const setRes = await decor.use({
+    mapId: 600,
+    buildingKey: 15,
+    op: 'set',
+    id: 'chest_gold1',
+    mode: 'private',
+  });
+  assert.equal(setRes.ok, true);
+  assert.equal(setRes.data.mode, 'private');
+
+  // 3. Initial chest list should be empty
+  const listRes = await decor.use({
+    mapId: 600,
+    buildingKey: 15,
+    op: 'list',
+    id: 'chest_gold1',
+  });
+  assert.equal(listRes.ok, true);
+  assert.deepEqual(listRes.data.items, []);
+  assert.equal(listRes.data.master, true);
+
+  // 4. Settle: put items into chest
+  playerEntity.items = [
+    { uid: 'it_sword_1', name: 'Ebony Longsword', stackCount: 1 },
+    { uid: 'it_potion_1', name: 'Healing Potion', stackCount: 5 },
+  ];
+
+  const settlePutRes = await decor.use({
+    mapId: 600,
+    buildingKey: 15,
+    op: 'settle',
+    id: 'chest_gold1',
+    put: ['it_sword_1', 'it_potion_1'],
+    take: [],
+  });
+  assert.equal(settlePutRes.ok, true);
+
+  // Verify chest now holds the items
+  const listAfterPut = await decor.use({
+    mapId: 600,
+    buildingKey: 15,
+    op: 'list',
+    id: 'chest_gold1',
+  });
+  assert.equal(listAfterPut.ok, true);
+  assert.equal(listAfterPut.data.items.length, 2);
+  assert.equal(listAfterPut.data.items[0].name, 'Ebony Longsword');
+
+  // 5. Settle: partial cut & take
+  const settleTakeRes = await decor.use({
+    mapId: 600,
+    buildingKey: 15,
+    op: 'settle',
+    id: 'chest_gold1',
+    put: [],
+    take: ['it_sword_1'],
+    cut: [{ uid: 'it_potion_1', leave: 3 }],
+  });
+  assert.equal(settleTakeRes.ok, true);
+
+  const listAfterTake = await decor.use({
+    mapId: 600,
+    buildingKey: 15,
+    op: 'list',
+    id: 'chest_gold1',
+  });
+  assert.equal(listAfterTake.ok, true);
+  assert.equal(listAfterTake.data.items.length, 1);
+  assert.equal(listAfterTake.data.items[0].uid, 'it_potion_1');
+  assert.equal(listAfterTake.data.items[0].stackCount, 3);
+
+  // 6. Save & Load round-trip
+  const saved = modSaveRecords();
+  _resetForTests();
+  assert.equal(homes.homeAt(600, 15), null);
+
+  restoreModSaveRecords(saved);
+  assert.ok(homes.homeAt(600, 15));
+
+  const restoredList = await decor.use({
+    mapId: 600,
+    buildingKey: 15,
+    op: 'list',
+    id: 'chest_gold1',
+  });
+  assert.equal(restoredList.ok, true);
+  assert.equal(restoredList.data.items.length, 1);
+  assert.equal(restoredList.data.items[0].name, 'Healing Potion');
+  assert.equal(restoredList.data.items[0].stackCount, 3);
+});
+
+test('OFFLINE-HOUSING: exterior house look/painting and persistence across save/load', async () => {
+  const homes = createOfflineHomes();
+
+  await homes.claim({ mapId: 700, buildingKey: 25, region: 4, price: 18000 });
+
+  // Initially look is null (default town facade)
+  assert.equal(homes.homeAt(700, 25).look, null);
+
+  const initialHomes = homes.homesIn(700);
+  assert.equal(initialHomes.get(25).look, null);
+
+  // Paint the house exterior
+  const paintLook = {
+    walls: { set: 'village', climate: 'temperate' },
+    windows: { set: 'cityA', climate: 'temperate' },
+    roof: { climate: 'temperate', record: 1 },
+    door: { climate: 'temperate', record: 0 },
+  };
+
+  const setLookRes = await homes.setLook(700, 25, paintLook);
+  assert.equal(setLookRes.ok, true);
+  assert.ok(setLookRes.look);
+  assert.equal(setLookRes.look.walls.set, 'village');
+
+  // Verify homeAt and homesIn reflect the painted look
+  const homeAfterPaint = homes.homeAt(700, 25);
+  assert.ok(homeAfterPaint.look);
+  assert.equal(homeAfterPaint.look.walls.set, 'village');
+  assert.equal(homeAfterPaint.look.roof.record, 1);
+
+  const homesInAfterPaint = homes.homesIn(700);
+  assert.ok(homesInAfterPaint.get(25).look);
+  assert.equal(homesInAfterPaint.get(25).look.roof.record, 1);
+
+  // Save & Load round-trip preserves house look
+  const saved = modSaveRecords();
+  _resetForTests();
+  assert.equal(homes.homeAt(700, 25), null);
+
+  restoreModSaveRecords(saved);
+  assert.ok(homes.homeAt(700, 25));
+  assert.ok(homes.homeAt(700, 25).look);
+  assert.equal(homes.homeAt(700, 25).look.walls.set, 'village');
+  assert.equal(homes.homeAt(700, 25).look.roof.record, 1);
+});
+
+test('OFFLINE-HOUSING: NPC suppression in player-owned homes', async () => {
+  const homes = createOfflineHomes();
+
+  await homes.claim({ mapId: 800, buildingKey: 50, region: 2, price: 10000 });
+
+  // 1. When offline housing is active, isOfflineHouseOwned is true for owned house
+  setPref('offlineHousing', true);
+  assert.equal(isOfflineHouseOwned(800, 50), true);
+  assert.equal(isOfflineHouseOwned(800, 999), false);
+
+  // 2. When offline housing is disabled, isOfflineHouseOwned is false
+  setPref('offlineHousing', false);
+  assert.equal(isOfflineHouseOwned(800, 50), false);
+
+  setPref('offlineHousing', true);
+  assert.equal(isOfflineHouseOwned(800, 50), true);
+});

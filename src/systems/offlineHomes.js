@@ -5,7 +5,7 @@
 
 import { registerModSaveData } from './modSaveData.js';
 import { isOfflineHousingActive } from './uiPrefs.js';
-import { homeSaleRefund, HOME_CAP } from '../net/homeLaw.js';
+import { homeSaleRefund, HOME_CAP, homeLookOf } from '../net/homeLaw.js';
 import { decorSaleBack } from '../net/decorLaw.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { isDfuHouseOwned } from './banking.js';
@@ -56,9 +56,12 @@ registerModSaveData(OFFLINE_HOMES_VENDOR, {
       price: h.price,
       entry: h.entry || 'only-me',
       boughtAt: h.boughtAt || 0,
+      look: h.look || null,
       decor: Array.isArray(h.decor) ? [...h.decor] : [],
       yardDecor: Array.isArray(h.yardDecor) ? [...h.yardDecor] : [],
       hidden: Array.isArray(h.hidden) ? [...h.hidden] : [],
+      useModes: h.useModes ? { ...h.useModes } : {},
+      chests: h.chests ? JSON.parse(JSON.stringify(h.chests)) : {},
       rev: Number(h.rev) || 1,
       yardRev: Number(h.yardRev) || 1,
     })),
@@ -77,9 +80,12 @@ registerModSaveData(OFFLINE_HOMES_VENDOR, {
         price: Number(h.price) || 0,
         entry: typeof h.entry === 'string' ? h.entry : 'only-me',
         boughtAt: Number(h.boughtAt) || 0,
+        look: h.look ? homeLookOf(h.look) : null,
         decor: Array.isArray(h.decor) ? [...h.decor] : [],
         yardDecor: Array.isArray(h.yardDecor) ? [...h.yardDecor] : [],
         hidden: Array.isArray(h.hidden) ? [...h.hidden] : [],
+        useModes: (h.useModes && typeof h.useModes === 'object') ? { ...h.useModes } : {},
+        chests: (h.chests && typeof h.chests === 'object') ? JSON.parse(JSON.stringify(h.chests)) : {},
         rev: Number(h.rev) || 1,
         yardRev: Number(h.yardRev) || 1,
       });
@@ -126,7 +132,7 @@ export function createOfflineHomes({
       rentDue: 0,
       rent: null,
       tenant: null,
-      look: null,
+      look: h.look || null,
       guildmate: false,
       hall: null,
       member: false,
@@ -189,9 +195,12 @@ export function createOfflineHomes({
       price: Number(price) || 0,
       entry: 'only-me',
       boughtAt: Date.now(),
+      look: null,
       decor: [],
       yardDecor: [],
       hidden: [],
+      useModes: {},
+      chests: {},
       rev: 1,
       yardRev: 1,
     };
@@ -250,7 +259,19 @@ export function createOfflineHomes({
     hearHome: () => false,
     holdDeed: () => Promise.resolve({ ok: true }),
     releaseDeed: () => Promise.resolve({ ok: true }),
-    setLook: () => Promise.resolve({ ok: true }),
+    async setLook(mapId, buildingKey, look) {
+      const id = Number(mapId) >>> 0;
+      const key = Number(buildingKey);
+      const h = _ownedHomes.get(homeKey(id, key));
+      if (!h) return { ok: false, error: 'no-home' };
+      const next = look == null ? null : homeLookOf(look);
+      if (look != null && !next) return { ok: false, error: 'bad-look' };
+      h.look = next;
+      version++;
+      try { onHomes?.(); } catch {}
+      try { onWrote?.(id, key); } catch {}
+      return { ok: true, look: next };
+    },
     vote: () => Promise.resolve({ ok: true }),
     transfer: () => Promise.resolve({ ok: false, error: 'offline' }),
     version: () => version,
@@ -349,6 +370,8 @@ export function createOfflineDecor() {
         h.decor = h.decor.filter((p) => p.id !== id);
         h.rev = (Number(h.rev) || 1) + 1;
       }
+      if (h.useModes?.[id]) delete h.useModes[id];
+      if (h.chests?.[id]) delete h.chests[id];
     }
     return { ok: true, data: { rev: Number(h?.rev) || 1, yardVer: Number(h?.yardRev) || 1 } };
   }
@@ -388,18 +411,96 @@ export function createOfflineDecor() {
 
   async function use(body = {}) {
     const h = getHome(body?.mapId, body?.buildingKey);
+    const op = body?.op;
+
+    if (op === 'set') {
+      if (!h) return { ok: false, error: 'no-home' };
+      h.useModes = h.useModes || {};
+      const mode = typeof body.mode === 'string' ? body.mode : 'private';
+      if (body.id) {
+        if (mode === 'private') delete h.useModes[body.id];
+        else h.useModes[body.id] = mode;
+      }
+      h.rev = (Number(h.rev) || 1) + 1;
+      return { ok: true, data: { mode, id: body.id, rev: h.rev } };
+    }
+
+    if (op === 'hold' || op === 'release') {
+      return { ok: true };
+    }
+
+    if (op === 'ground') {
+      if (h) {
+        h.ground = Number(body.ground) || 100;
+        h.rev = (Number(h.rev) || 1) + 1;
+      }
+      return { ok: true, data: { ground: Number(body?.ground) || 100 } };
+    }
+
+    if (op === 'list') {
+      const chestId = body.id;
+      const items = (h?.chests && Array.isArray(h.chests[chestId])) ? h.chests[chestId] : [];
+      return {
+        ok: true,
+        data: {
+          items: items.map((it) => ({ ...it })),
+          master: true,
+        },
+      };
+    }
+
+    if (op === 'settle') {
+      if (!h) return { ok: false, error: 'no-home' };
+      h.chests = h.chests || {};
+      const chestId = body.id;
+      let list = Array.isArray(h.chests[chestId]) ? h.chests[chestId] : [];
+      const putting = Array.isArray(body.put) ? body.put : [];
+      const taking = Array.isArray(body.take) ? new Set(body.take) : new Set();
+      const cutting = Array.isArray(body.cut) ? body.cut : [];
+
+      list = list.filter((it) => !taking.has(it?.uid));
+
+      for (const cut of cutting) {
+        const idx = list.findIndex((it) => it?.uid === cut.uid);
+        if (idx >= 0 && Number.isInteger(cut.leave)) {
+          if (cut.leave <= 0) list.splice(idx, 1);
+          else list[idx] = { ...list[idx], stackCount: cut.leave };
+        }
+      }
+
+      const playerItems = playerEntity.items ?? [];
+      for (const uid of putting) {
+        const item = playerItems.find((it) => it?.uid === uid);
+        if (item) {
+          list.push(JSON.parse(JSON.stringify(item)));
+        }
+      }
+
+      h.chests[chestId] = list;
+      h.rev = (Number(h.rev) || 1) + 1;
+      return { ok: true, data: { rev: h.rev } };
+    }
+
+    if (op === 'vault') {
+      return { ok: false, error: 'no-guild' };
+    }
+
     const pieces = Array.isArray(h?.decor) ? h.decor : [];
     const storage = pieces.filter((p) => p?.storage).map((p) => p.id);
     const station = pieces.filter((p) => p?.station).map((p) => p.id);
+    const useModes = h?.useModes || {};
+    const use = Object.entries(useModes)
+      .filter(([_, mode]) => mode && mode !== 'private')
+      .map(([id, mode]) => ({ id, mode }));
     return {
       ok: true,
       data: {
         storage,
         station,
         bin: [],
-        use: [],
+        use,
         rest: true,
-        ground: Number(body?.ground) || 100,
+        ground: Number(h?.ground) || Number(body?.ground) || 100,
         items: [],
         rev: Number(h?.rev) || 1,
       },

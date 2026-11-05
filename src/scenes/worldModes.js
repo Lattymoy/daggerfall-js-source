@@ -388,6 +388,8 @@ import { crownRulerFactionId, crownRulerHere, crownHallPlan, CROWN_HALL_TEXT } f
 import { hallPlaquePlan, PLAQUE_MODEL, PLAQUE_BARE_MODEL } from '../world/arena/arenaPlaques.js';   // ARENA5: the Hall of Champions' plaque wall
 import { bannerKeyOf } from './hallBanners.js';   // CROWN-HALL: the throne room's cloth, keyed as the street's
 import { HOME_ENTRIES, homePriceOk, homeOnlinePrice, rentCost, rentDaysLeft } from '../net/homeLaw.js';   // HOME-PRICE: what a home costs online
+import { isOfflineHousingActive } from '../systems/uiPrefs.js';
+import { isOfflineHouseOwned } from '../systems/offlineHomes.js';
 import { homeListedPrice } from '../net/homeListingLaw.js';   // FOUNDATION F3: a row's price
 // HOME-RENT: a home's rooms, rented at its door and offered, priced and collected in its owner's decorator
 import {
@@ -524,6 +526,31 @@ export const BOUNTY_BOARD_TEXT = 'Bounty Board';
 export const INTERIOR_MARKER_FEET_LIFT = 0.1;
 
 export function createWorldModes(host) {
+  const _origRealmAct = host?.realmAct;
+  const _offlineHousingRealmAct = async (o) => {
+    const undo = o?.reserve ? o.reserve() : null;
+    let r = null;
+    if (typeof o?.call === 'function') {
+      try { r = await o.call(null); } catch (e) { r = { ok: false, error: e?.message || 'call-failed' }; }
+    } else {
+      r = { ok: true };
+    }
+    if (r?.ok) {
+      try { o?.apply?.(r); } catch (e) { console.warn('[offline-housing] realmAct apply failed:', e); }
+    } else {
+      try { undo?.(); } catch {}
+    }
+    return r;
+  };
+  if (host && !host.realmAct) {
+    Object.defineProperty(host, 'realmAct', {
+      get() {
+        return _origRealmAct || (isOfflineHousingActive() ? _offlineHousingRealmAct : null);
+      },
+      configurable: true,
+      enumerable: true,
+    });
+  }
   const _footsteps = new FootstepMachine();   // FS-slice: the modal stride (interior wood / dungeon stone + water)
   let _fsCtx = null;              // AUDIT DROPS E2: the stride's last ctx (built inline at the pickFootstepSet call)
   let _modeFootstepKind = 0;      // AUDIT DROPS E2: ...and its kind, for the pose (`footstepKind` below)
@@ -7515,7 +7542,7 @@ export function createWorldModes(host) {
   /** H1's IsHouseOwned for a building where it stands - DFU's (region, key) law; AUDIT CAPTAIN'S SEA P9: never a building
    *  of an isle's town (no house is sold past the Veil, and a Betony deed's key owned the same key in every isle town of
    *  region 19 - its residents gone, its cupboards the player's). */
-  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key, homeTownOf(b));   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; BAY-LEFT-B: and every place past the Bay's in its own town (banking.js deedHeldIn)
+  const houseOwnedAt = (b, key) => (!isEtherPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key, homeTownOf(b))) || (isOfflineHousingActive() && isOfflineHouseOwned(homeTownOf(b), key));   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; BAY-LEFT-B: and every place past the Bay's in its own town (banking.js deedHeldIn)
   /** The online home a building is, as this client last heard - null offline, for a building no player can own, or
    *  while its town is not known yet. */
   function homeOf(b) {
@@ -12303,7 +12330,7 @@ export function createWorldModes(host) {
       // and a private room. The answer is the build's own (`home`, latched as interiorHome; the private room's
       // restore), which this re-roll never asked: a rest by day in a House2-4 hall or home (open 6-18) stood its old
       // residents back up. DFU's own deed keeps UpdateNpcPresence's unasked ownership (B5, interiorPeople.js).
-      if (interiorHome || privateVisitRoom) return;
+      if (interiorHome || privateVisitRoom || (isOfflineHousingActive() && isOfflineHouseOwned(homeTownOf(interiorBuilding), interiorBuilding.buildingKey))) return;
       const hour = Math.floor((Math.floor(skyMinutes()) % 1440) / 60);   // TIME1: who is in is the sky's hour
       if (!updateNpcPresence(interiorBuilding?.buildingType ?? BUILDING_TYPES.None, {
         hour, insideOpenShop: !!interiorBuilding.insideOpenShop,

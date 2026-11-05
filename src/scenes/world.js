@@ -883,7 +883,7 @@ import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/
 import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; AUDIT SEATS-3 D3: a board's Tithe (SEAT-HALL's and CROWN-HALL's halls: scenes/seatHallHost.js)
 import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
-import { createOfflineHomes, createOfflineDecor } from '../systems/offlineHomes.js';
+import { createOfflineHomes, createOfflineDecor, isOfflineHouseOwned } from '../systems/offlineHomes.js';
 import { isOfflineHousingActive } from '../systems/uiPrefs.js';
 import { createHomesBoot } from './homesBootHost.js';   // KNIGHT-HOUSE's deed holds and ACCOUNT-HOMES' sweep, once a boot
 import { createTownPanelHost, panelTownOf } from './townPanelHost.js';   // NOTICE-PANEL: the town panel under the compass - the boards' presses, in any settlement
@@ -3536,6 +3536,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         if (!b || !town) return null;
         // LEGACY-HOME: a house of Project Legacy's family holds the line and no one else - the one played's own included
         if (legacyHost?.isFamilyHouse({ mapId: b.townMapId ?? 0, buildingKey: b.buildingKey })) return { key: b.buildingKey, town, only: isFamilyRes };
+        if (isOfflineHousingActive() && isOfflineHouseOwned(b.townMapId ?? 0, b.buildingKey)) return null;
         return modes?.interiorCtx?.ownedRoom ? null : { key: b.buildingKey, town };   // AUDIT-E1: never a player's own room
       },
       collider: () => modes?.interiorCollider ?? null,
@@ -11678,6 +11679,21 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     all.length = BANNERS_MAX;
     return all;
   };
+  const _offlineHousingRealmAct = async (o) => {
+    const undo = o?.reserve ? o.reserve() : null;
+    let r = null;
+    if (typeof o?.call === 'function') {
+      try { r = await o.call(null); } catch (e) { r = { ok: false, error: e?.message || 'call-failed' }; }
+    } else {
+      r = { ok: true };
+    }
+    if (r?.ok) {
+      try { o?.apply?.(r); } catch (e) { console.warn('[offline-housing] realmAct apply failed:', e); }
+    } else {
+      try { undo?.(); } catch {}
+    }
+    return r;
+  };
   const yards = homeDecor && onlineHomes ? createHomeYards({
     api: homeDecor, homes: onlineHomes, built: () => built, translation: (px, py) => state.pixelTranslation(px, py),
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
@@ -11713,7 +11729,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     seasonal: () => (seasonsActive ? seasons : null),
     trees: lowPolyTrees ? { door: lowPolyTrees, sway: (proto, share) => _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, share)), windfall: (proto, share) => _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, share)) } : null,
     character: () => characterIdOf(playerEntity),
-    realm: () => null,
+    realm: () => _offlineHousingRealmAct,
     wallet: (region) => homeYardWallet(playerEntity, region), regionOf: (y) => built.get(`${y.px},${y.py}`)?.homeRegion ?? 0,
     doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null, canvas, touch: isTouchDevice(),
     actionOf: (e) => actionOf(e, keys), locked: () => typeof document !== 'undefined' && document.pointerLockElement === canvas,
