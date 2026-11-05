@@ -53,7 +53,9 @@ export const isSpent = (person, lived) => ageOf(person, lived) >= spanOf(person?
  * (`final`); otherwise the toll is taken (mutating `person.toll`) and they rise - and if the toll spends the span, they
  * still rise this once (Arkay grants the last breath; the NEXT death is final), with `final` false and `spent` true.
  */
-export function payToll(person, share, lived, { ageless = false } = {}) {
+export function payToll(person, share, lived, { ageless = false, dynasty = false } = {}) {
+  // DYNASTY: a family founded without death penalties pays no toll and never expires by age
+  if (dynasty || share <= 0) return { final: false, years: 0, age: ageOf(person, lived), spent: false, dynasty: true };
   // AGELESS-CURSE (2026-10-09, the owner: "can you exclude vampires and werewolves of this please?"): the curse in the
   // blood - a vampire's, a werewolf's or a wereboar's - holds Arkay's hand: no years are taken and no span is spent; the
   // cursed always rise. Cured, the toll is theirs again from the next death.
@@ -65,7 +67,8 @@ export function payToll(person, share, lived, { ageless = false } = {}) {
 }
 
 /** The line the rise says about the toll. */
-export function tollLine(name, { years, age, spent, ageless = false }) {
+export function tollLine(name, { years = 0, age = 0, spent = false, ageless = false, dynasty = false } = {}) {
+  if (dynasty) return `${name} rises to carry on the family name.`;
   if (ageless) return `The curse in ${name}'s blood keeps Arkay at bay. No years are taken.`;
   const y = `${years} ${years === 1 ? 'year' : 'years'}`;
   if (spent) return `Arkay takes ${y} for the road back. ${name} is ${age}, and Arkay will not grant another.`;

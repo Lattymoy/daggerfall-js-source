@@ -479,7 +479,7 @@ test('LEGACY1: the save carries the family and a newer store copy wins at the lo
 
 test('LEGACY1: THE FOUR HOSTS - the street and the modal hosts all reset a death through Project Legacy first', () => {
   const src = hostText('src/scenes/world.js');
-  assert.match(src, /onReset: \(\) => \(legacyDeathReset\(\) \|\| \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)\)/);
+  assert.match(src, /onReset: \(\) => \(legacyDeathReset\(\) \|\| \(\(_deathWasOnline \|\| offlineRespawnOn\(\)\) \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)\)/);
   assert.match(src, /onlineRespawn: \(\) => \{ if \(legacyDeathReset\(\)\) return true;/);
   // the interior and the dungeon hosts reset through that one door
   assert.match(rd('src/scenes/worldModes.js'), /onReset: \(\) => \{ if \(!host\.onlineRespawn\?\.\(\)\) endRunToTitleMenu\(renderer\); \}/);
