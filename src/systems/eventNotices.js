@@ -30,6 +30,7 @@
 // THE SEAT: `seatEventBoard(source)` takes the host's Timers source (scenes/world.js timersSource - the one function
 // the pause face's Timers window reads) and answers it unchanged, so the host seats it where it makes it and grows no
 // line for it (HOST-SPLIT). Not a DFU member. Ledger A (EVENTS1).
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { getPref } from './uiPrefs.js';
 import { hudText } from './notify.js';
 import { isEnhanced } from './uiSkin.js';
@@ -56,6 +57,7 @@ let _log = null;
 /** Whether the board stands: the player's switch (on unless set off), and under Enhanced Plus its piece not put away in
  *  the HUD editor (a layout the classic skin does not wear). */
 export const eventBoardOn = () => {
+  if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) return false;
   try {
     if (getPref(EVENT_BOARD_PREF) === false) return false;
     return !(isEnhanced() && getPref('hudLayout')?.[EVENT_BOARD_PIECE]?.off === true);

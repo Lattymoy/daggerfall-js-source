@@ -303,14 +303,6 @@ function paint(n, f, sel = -1, stats = []) {
       c.textContent = `×${r.stack}`;
       row.append(c);
     }
-    // PARTY-LOOT: this player's own bonus says so - the rows without the tag are the room's, the same for everyone
-    if (r.mine) {
-      row.classList.add('mine');
-      const m = document.createElement('span');
-      m.className = 'wplaque-mine';
-      m.textContent = PLAQUE_MINE_TAG;
-      row.append(m);
-    }
     list.append(row);
   }
   if (f.rest > 0) {

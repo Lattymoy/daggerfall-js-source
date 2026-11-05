@@ -150,7 +150,7 @@ export function openWaypointMenu(o) {
   head.append(title, x);
   box.append(head);
   if (!adding)
-    box.append(el('div', 'wpm-sub', `${WAYPOINT_TEXT.kindWord[wp.kind]}${!wp.mine && wp.by ? ` · by ${wp.by}` : ''}`));
+    box.append(el('div', 'wpm-sub', WAYPOINT_TEXT.kindWord[wp.kind] || 'Personal'));
   // the name
   box.append(el('label', 'wpm-label', adding ? 'Name' : 'Rename'));
   const nameRow = el('div', 'wpm-row');
@@ -174,19 +174,10 @@ export function openWaypointMenu(o) {
   if (adding) {
     box.append(el('label', 'wpm-label', 'Kind'));
     const kinds = el('div', 'wpm-kinds');
-    for (const k of WAYPOINT_KINDS) {
+    for (const k of ['personal']) {
       const b = el('button', 'wpm-kind', WAYPOINT_TEXT[k]);
       b.type = 'button';
-      const allowed = k === 'personal' || o.canKind?.[k] !== false;
-      b.disabled = !allowed;
-      b.title =
-        k === 'personal'
-          ? 'Only you see it'
-          : !allowed
-            ? `You are not in a ${k}`
-            : !live
-              ? 'Saved here. You are offline, so share it later'
-              : `Your ${k} sees it`;
+      b.title = 'Only you see it';
       b.onclick = (e) => {
         e.preventDefault();
         kind = k;
@@ -273,11 +264,6 @@ export function openWaypointMenu(o) {
         closeWaypointMenu();
         if (w) o.onTravel(w);
       });
-    if (wp.mine && wp.kind !== 'personal') {
-      btn('Share again', '', () =>
-        say(shareWaypoint(wp.id) ? `Sent to your ${wp.kind}.` : `Could not reach your ${wp.kind} right now.`),
-      );
-    }
     btn('Remove', 'danger', () => {
       removeWaypoint(wp.id);
       closeWaypointMenu();

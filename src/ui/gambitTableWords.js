@@ -13,6 +13,7 @@
 // all. "Press", never "click": the table is a finger's too (CARDS-TOUCH).
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import {
   KG_COLS,
   KG_ROWS,
@@ -127,6 +128,7 @@ export const gambitWhat = () =>
  *  online (`online` - `{gold}`), its first two are another player's and that table's gold, never a regular's.
  *  @param {{gold?: boolean}|null} [online] */
 export function gambitGuide(online = null) {
+  if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) online = null;
   const [a, b, c] = GAMBIT_STAKE_MULTS;
   const first = online
     ? [
@@ -221,6 +223,7 @@ export function gambitGuide(online = null) {
 /** WORDS ON THIS TABLE (law 2): each term over its meaning. AUDIT KG II D9: at the board online (`online`), the words
  *  it prints too. @param {boolean} [online] */
 export function gambitWords(online = false) {
+  if (!FORK_FLAGS.ENABLE_ONLINE_PLAY) online = false;
   return [
     ...(online
       ? [

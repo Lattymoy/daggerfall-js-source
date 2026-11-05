@@ -699,9 +699,6 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // it answers that itself (ui/quest/questHerald.js). Its clock is the frame's
   // real seconds and stops under the HUD's hide gate - DFU's HUD does not
   // Update under a window (DaggerfallUI.cs:429-433).
-  // EVENTS1 (bible/10-UI/Event-Board.md): and the event board just before it, under the herald's own gate and clock, on
-  // every skin - the events' lines come to it instead of the chat, so the classic skin must show them too
-  drawEventBoard({ hidden: cursorActive || !hudRenderEnabled(), dt });
   drawQuestHerald({ hidden: cursorActive || !hudRenderEnabled(), dt });
   drawQuestTracker({ hidden: cursorActive || !hudRenderEnabled() });   // GUIDE4: the tracker's card, the same gate and the same hide door
   drawRevenantCards({ hidden: cursorActive || !hudRenderEnabled(), dt });   // REVENANT-CARD: the same gate, its clock the frame's - no card stands on the classic skin, so this is outside its gate as the herald is

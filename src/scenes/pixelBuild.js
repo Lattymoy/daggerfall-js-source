@@ -118,6 +118,7 @@ import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuild
 import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';
 import { TownPopulation } from '../systems/town/townPopulation.js';
 import { windfallResponse } from '../systems/windfall.js';
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { colliderBlocked, dryGround, witchesDressingBreathing } from '../world/witchesDecor.js';   // WITCH1: the Witches' Festival's dressing and its Wyrd Sisters
 import { wodRockUvs } from '../world/worldOfDaggerfall/wodRockUv.js';
 import { WodSpawner } from '../world/worldOfDaggerfall/wodSpawner.js';

@@ -12,6 +12,7 @@ import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlo
 import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // WW-C2: the open zone is Cyrodiil's
 import { createZoneHalls } from './zoneHallsHost.js';   // WW-C2: the zone's halls and their ground, out of bootWorld   // ZONE-GIANTS
 import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: PlayerGPS.ResetState, the jump core's
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
@@ -27256,7 +27257,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL IN THE STREETS (scenes/witchesHost.js) - the town
   // underfoot's Hearth Offerings stood at their doors, taken from and filled; the Wyrd Sisters' window; the finds' doors.
   // The dressing and the Sisters themselves are the build's (scenes/pixelBuild.js, world/witchesDecor.js)
-  witches = createWitchesHost({ built, renderer, pipeline, onlineHomes, townTalk, state, player, saveSoon, chatNotice, mode: _mode, get online() { return online; } });
+  witches = FORK_FLAGS.ENABLE_SEASONAL_EVENTS ? createWitchesHost({ built, renderer, pipeline, onlineHomes, townTalk, state, player, saveSoon, chatNotice, mode: _mode, get online() { return online; } }) : null;
   const _activeHomeDecor = homeDecor || {
     list: (...a) => isOfflineHousingActive() ? _offlineDecor.list(...a) : Promise.resolve({ ok: false }),
     rev: (...a) => isOfflineHousingActive() ? _offlineDecor.rev(...a) : Promise.resolve({ ok: false }),
@@ -27600,7 +27601,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // live online play, so the caller falls back to endRunToTitleMenu
     // exactly as it always did offline.
     duelHolds: () => duelEnemyNear(),   // DUEL1: a live duel holds its duellist - no door out of the ring
-    onlineRespawn: () => { if (legacyDeathReset()) return true; if (!((_deathWasOnline ?? _onlineWorldSession()) || offlineRespawnOn())) return false; respawnOnlinePlayer(); return true; },   // LEGACY1: Project Legacy asked first, in a building and underground too   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline; OFFLINE-RESPAWN
+    onlineRespawn: () => { if (legacyDeathReset()) return true; if (!offlineRespawnOn()) { if (!(_deathWasOnline ?? _onlineWorldSession())) return false; } respawnOnlinePlayer(); return true; },   // LEGACY1: Project Legacy asked first, in a building and underground too   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline; OFFLINE-RESPAWN
     exteriorSubmerged: () => !!dwPlayer?.submerged,   // DW-D: the sea's forged isPlayerSubmerged, for the router's avoid-death consult
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick

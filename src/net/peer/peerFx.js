@@ -34,7 +34,6 @@ import { peerMoving } from './peerClimb.js';
 import { KFX_FAR_M } from '../../render/killFx.js'; // the wire audit: a kill is told as far as my own screen draws one
 import { ARROW_FLIGHT_SPEED, MISSILE_LIFESPAN_S } from '../../systems/spellcast.js'; // the wire audit: a blow's farthest shaft
 import { TECHNIQUES } from '../../combat/technique/techniqueRoster.js';
-import { GAP_MAX_MS } from '../online.js'; // the wire audit: how long a kill rides
 
 export const HIT_CLIP_FIRST = 108; // soundClips SOUND.Hit1
 export const HIT_CLIP_LAST = 112; // Hit5
@@ -68,7 +67,7 @@ export const BLOW_PEER_M =
 /** A kill rides the poses said this long after it (s), then leaves them: the longest a listener waits for a moving peer's
  *  pose (net/online.js GAP_MAX_MS - the relay's far tier), so each hears it once. The receiver never replays one, and a
  *  pose at rest no longer carries a kill for the rest of the session. */
-export const KILL_FX_RIDE_S = GAP_MAX_MS / 1000;
+export const KILL_FX_RIDE_S = 1; // GAP_MAX_MS (1000) / 1000
 /** Is `a` within `m` metres of `b` (both the scene's) - no `b`, never. */
 const within = (
   /** @type {ArrayLike<number>} */ a,

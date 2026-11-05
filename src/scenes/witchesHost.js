@@ -37,6 +37,7 @@ import { FESTIVAL_ARCHIVE, FESTIVAL_ART } from '../world/festivalArt.js';
 import { billboardSize } from '../world/rmbFlats.js';
 import { flatBatchAabb } from '../render/frustum.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, presentNpcInfoText } from '../player/activate.js';
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { characterIdOf } from '../systems/characterId.js';
 import { itemLongName } from '../systems/item/itemInfo.js';
@@ -78,6 +79,16 @@ export const OFFERING_TEXT = Object.freeze({
  * @param {any} deps
  */
 export function createWitchesHost(deps) {
+  if (!FORK_FLAGS.ENABLE_SEASONAL_EVENTS) {
+    return {
+      targets: () => [],
+      hoverName: () => null,
+      frame: () => {},
+      shop: () => false,
+      activate: () => false,
+      destroy: () => {},
+    };
+  }
   const { built, renderer, pipeline, onlineHomes, townTalk, state, player, saveSoon } = deps;
   const room = () => deps.online ?? null;
   const online = () => { const o = room(); return !!o && o.status === 'open'; };

@@ -153,10 +153,6 @@ export const PREF_DEFAULTS = Object.freeze({
   dangerPalette: 'standard',
   telegraphFill: 1,
   reducedMotion: false,
-  // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
-  // hold A - systems/peerMenuBind.js). Online only.
-  peerMenuKey: null,
-  peerMenuPad: null,
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineServer: '',

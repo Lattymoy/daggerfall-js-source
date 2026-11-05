@@ -46,7 +46,6 @@ import { hotkeyHit } from '../systems/dialogShortcuts.js';   // ROAD-E2: the Dag
 import { VerticalScrollBar } from './verticalScrollBar.js';   // ROAD-E2: DFU's VerticalScrollBar, the picker's bar
 import { localizedStrings, localizedText, processGrammar, GrammarManager } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3g: the grammar and the hero's gender
 import { raceDisplayName } from '../systems/talk/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
-import { isOnlinePage } from '../systems/online/onlineLane.js';   // LEVEL-45: online, no biography
 
 export { MAX_STAT_VALUE };
 
@@ -293,9 +292,8 @@ export class ChargenFlow {
     // without a source the box opens EMPTY: a refusal with no reason
     // in it, which reads as a dead button.
     this.bonusPointsRows = () => bonusPointsRows();
-    // LEVEL-45 (2026-10-27): ONLINE THERE IS NO BIOGRAPHY - the class goes straight to
-    // the name, so no answer's skill, reputation, item or gold lands on a new online character. Injectable for the pins.
-    this.biographyOff = isOnlinePage();
+    // Biography and background are always available in offline single-player.
+    this.biographyOff = false;
     this.cursor = 0;          // the BIOGRAPHY screen's answer cursor
     // U16: StatsRollout and SkillsRollout are two INDEPENDENT DFU
     // components with a selection each. One shared cursor was fine

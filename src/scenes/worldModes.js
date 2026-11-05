@@ -21,6 +21,7 @@
 //      stay valid for the exit landing math.
 //   baseCollider() - the collider to restore on exit.
 
+import { FORK_FLAGS } from '../config/forkFlags.js';
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
 import { hallPiecePress } from './guildHallPress.js';   // GUILD-SHOP: a hall's board and its banker pressed
 import { markInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load is a ring over the hotbar, not the full screen
@@ -2632,7 +2633,7 @@ export function createWorldModes(host) {
   /** ARENA-FIX 2: A STOOD PERSON'S OFFICE - the arena gate's people (world/arena/arenaCity.js arenaGatePersonName: "The Herald
    *  of the Arena", "Red Banner Recruiter", ...) and the undercroft's (the Pit Master, the Keeper of the Hall), or null:
    *  the plaque, the Info click and the talk door ask it before StaticNPC.DisplayName, so the three never disagree. */
-  const officeName = (pn) => arenaGatePersonName(pn) ?? (pn?.arenaRole ? ARENA_TEXT.undercroft.names[pn.arenaRole] ?? null : null) ?? (pn?.lamp ? LAMP_TEXT.name() : null) ?? (pn?.witch ? vendorOffice() : null);   // ARENA-FIX 4: the undercroft's people with an office; LAMP-KEEPER II: a keeper standing as the lamp is the Lamp; WITCH1: a Wyrd Sister
+  const officeName = (pn) => arenaGatePersonName(pn) ?? (pn?.arenaRole ? ARENA_TEXT.undercroft.names[pn.arenaRole] ?? null : null) ?? (pn?.lamp ? LAMP_TEXT.name() : null) ?? (FORK_FLAGS.ENABLE_SEASONAL_EVENTS && pn?.witch ? vendorOffice() : null);   // ARENA-FIX 4: the undercroft's people with an office; LAMP-KEEPER II: a keeper standing as the lamp is the Lamp; WITCH1: a Wyrd Sister
   /** FIELD BUGS 2026-10-11g QUEST-NAME ("Quest NPCs are inactive": "not being able to interact with the quest NPCs"): a
    *  quest PERSON stand named on World Tooltips' plaque as the room's own people are. The mod asks its StaticNPC arm
    *  (Modded_HUDTooltipWindow.cs:325-393, `ret = npc.DisplayName`) before its quest-resource arm, and AddQuestNPC gives a
@@ -4356,7 +4357,7 @@ export function createWorldModes(host) {
     if (gateRole === 'bookmaker' && host.arenaBookmaker?.()) return;   // ARENA3: the bookmaker's stall (scenes/arena/arenaGate.js)
     // ARENA-FIX 4: THE FIGHTERS' HALL - the Pit Master offers the training pit, the Keeper of the Hall reads its wall
     if (!info && pn?.lamp) { lampChoice(pn); return; }   // LAMP-KEEPER II: the lamp's own words, its shop, and its title
-    if (!info && pn?.witch && host.witches?.shop()) return;   // WITCH1: a Wyrd Sister's window (scenes/witchesHost.js) - a host with none lets her talk
+    if (!info && FORK_FLAGS.ENABLE_SEASONAL_EVENTS && pn?.witch && host.witches?.shop()) return;   // WITCH1: a Wyrd Sister's window (scenes/witchesHost.js) - a host with none lets her talk
     if (!info && pn?.arenaRole === 'pitMaster') { pitMasterChoice(); return; }
     if (!info && pn?.arenaRole === 'hallKeeper' && host.arenaHall?.()) return;   // ARENA4b: online she reads the realm's wall (scenes/arena/arenaGate.js hall)
     if (!info && pn?.arenaRole === 'hallKeeper') { townTalk?.showOverlay?.(new ActionTextBox(hallOfChampions(playerEntity.arenaLadder, playerEntity.name || 'You', rosterGrandChampions(playerEntity.arenaLeague, Math.floor(worldMinutes()))))); return; }   // ARENA3: and the banners' Grand Champions this save has seen

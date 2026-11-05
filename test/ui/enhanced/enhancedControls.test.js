@@ -231,8 +231,8 @@ test('KB1: the pane draws the standard\'s groups - every action once, the two DF
       // PEERMENU1: the player menu's card wears the page's row too - its two binds (keyboard, controller) are the
       // port's own pref (systems/peerMenuBind.js), not a registry action, so they are counted apart
       const peerRows = find(view.body, 'ctl-peermenu').flatMap((c) => find(c, 'ctl-row'));
-      assert.equal(peerRows.length, 2, 'PEERMENU1: the player menu card carries its two binds, keyboard and controller');
-      assert.equal(find(view.body, 'ctl-row').length - peerRows.length, shown.length, 'a row for every action the shown groups hold');
+      assert.equal(peerRows.length, 0, 'PEERMENU1: player menu card removed in singleplayer');
+      assert.equal(find(view.body, 'ctl-row').length, shown.length, 'a row for every action the shown groups hold');
       for (const a of shown) assert.ok(keyBtn(view, a), `${a} needs a row`);
       for (const a of HIDDEN_ACTIONS) assert.ok(!keyBtn(view, a), `${a} is not drawn`);
       assert.ok(keyBtn(view, 'TorchDrop'), 'the torch mod on: its keys are on the page');
@@ -790,7 +790,7 @@ test('FIX-F: the pane wears the skin’s own classes and adds no face of its own
   const imports = [...src.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
   assert.ok(imports.includes('../../systems/controlsConfig.js'));
   assert.deepEqual(imports.sort(),
-    ['../../systems/controlsConfig.js', '../../systems/inputActions.js', '../../systems/modSettings.js', '../../systems/textDatabases.js', '../../systems/textManager.js', '../input.js', '../peerMenuBindCard.js'],   // PEERMENU1: the player menu's bind card - an enhanced-face card over its own pref, no classic canvas window; L10N3d: the text core, a leaf with no art; L10N3f: DFU's text databases, no art either
+    ['../../systems/controlsConfig.js', '../../systems/inputActions.js', '../../systems/modSettings.js', '../../systems/textDatabases.js', '../../systems/textManager.js', '../input.js'],
     'the enhanced pane drives the LAW modules and nothing else - dragging the '
     + 'classic canvas windows (controlsWindow/mouseControlsWindow/nativePanel) in '
     + 'would make the enhanced skin pay for art it never draws');

@@ -87,8 +87,8 @@ function fit(fnt, text, w) {
  *  window leaves above it in the same foot line (`above`; the panel's layout keeps its one foot line). */
 export function lootPanelLines(frame) {
   const rows = (frame?.rows ?? []).map(
-    (r) => (r.stack > 1 ? `${r.name} (${r.stack})` : r.name) + (r.mine ? ` - ${PLAQUE_MINE_TAG}` : ''),
-  ); // PARTY-LOOT: this player's own bonus says so
+    (r) => (r.stack > 1 ? `${r.name} (${r.stack})` : r.name),
+  );
   const above = frame?.above > 0 ? frame.above : 0;
   const more = above
     ? frame.rest > 0

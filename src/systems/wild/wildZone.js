@@ -742,20 +742,20 @@ export const WILD_TEXT = Object.freeze({
   get enter() {
     return t(
       'wild.zone.enter',
-      'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, they may take one uninsured worn piece, or gold.',
+      'You enter {zone}, an untamed and perilous province. Foes here are four times as strong.',
       { zone: WILD_NAME },
     );
   },
   leave: `You leave ${WILD_NAME}.`,
-  chip: 'Open PvP',
+  chip: 'Wild Province',
   get chipTip() {
     return t(
       'wild.zone.chipTip',
-      "{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). A player's kill may cost uninsured gear or gold.",
+      '{zone}: a wild and perilous province. Foes here are four times as strong.',
       { zone: WILD_NAME },
     );
   },
-  mapKey: 'Open PvP zone',
+  mapKey: 'Wild Province',
   // PVP-LINGER-RISE: my body fell while I was away
   deathAway: (/** @type {string | null | undefined} */ name) =>
     name
