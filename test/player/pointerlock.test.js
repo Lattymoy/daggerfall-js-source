@@ -91,20 +91,20 @@ test('HOLD_FREE_MOUSE: keydown frees cursor via hold, keyup relocks', () => {
 
   try {
     const unbind = bindCursorToggle(canvas, () => false, (e) => e.code === 'KeyF' ? [HOLD_FREE_MOUSE_ACTION] : []);
-    assert.equal(cursorHeld(), false);
+    assert.equal(cursorActive(), false);
 
-    // Keydown frees cursor
+    // Keydown frees cursor and activates cursorActive for UI/hotbar/decor
     let prevented = false;
     listeners.keydown({ code: 'KeyF', preventDefault: () => { prevented = true; } });
     assert.equal(prevented, true);
-    assert.equal(cursorHeld(), true);
+    assert.equal(cursorActive(), true);
     assert.ok(released > 0);
 
-    // Keyup restores look
+    // Keyup restores look and clears cursorActive
     prevented = false;
     listeners.keyup({ code: 'KeyF', preventDefault: () => { prevented = true; } });
     assert.equal(prevented, true);
-    assert.equal(cursorHeld(), false);
+    assert.equal(cursorActive(), false);
     assert.ok(requested > 0);
 
     unbind();
@@ -142,6 +142,48 @@ test('HOLD_FREE_MOUSE: does not relock on keyup if cursor was already toggled fr
     listeners.keyup({ code: 'KeyF', preventDefault: () => {} });
 
     assert.equal(requested, 0, 'must not re-lock when cursorActive is true');
+    unbind();
+  } finally {
+    setCursorActive(false);
+    globalThis.document = origDoc;
+    globalThis.addEventListener = origAdd;
+    globalThis.removeEventListener = origRem;
+  }
+});
+
+test('HOLD_FREE_MOUSE: does not relock on keyup if a window or overlay is up', () => {
+  let requested = 0;
+  const canvas = {
+    requestPointerLock: () => { requested++; return Promise.resolve(); },
+  };
+  const listeners = {};
+  const origDoc = globalThis.document;
+  const origAdd = globalThis.addEventListener;
+  const origRem = globalThis.removeEventListener;
+
+  globalThis.document = {
+    pointerLockElement: null,
+    exitPointerLock: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  };
+  globalThis.addEventListener = (evt, fn) => { listeners[evt] = fn; };
+  globalThis.removeEventListener = (evt) => { delete listeners[evt]; };
+
+  let windowUp = false;
+  try {
+    const unbind = bindCursorToggle(canvas, () => windowUp, (e) => e.code === 'KeyF' ? [HOLD_FREE_MOUSE_ACTION] : []);
+
+    listeners.keydown({ code: 'KeyF', preventDefault: () => {} });
+    assert.equal(cursorActive(), true);
+
+    // Window opens (e.g. Decorate browse or dialog) while holding
+    windowUp = true;
+
+    listeners.keyup({ code: 'KeyF', preventDefault: () => {} });
+    assert.equal(requested, 0, 'must not re-lock when window is up');
+    assert.equal(cursorActive(), false);
+
     unbind();
   } finally {
     setCursorActive(false);

@@ -175,7 +175,8 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   setCursorActive(false);
   _cursorHolds.clear(); // HERB-CURSOR: and an act's hold the last host never let go
   let lastRealEscape = -Infinity; // ESC-LOCK (1), below
-  let releaseKeyHold = null;
+  let keyHoldActive = false;
+  let wasCursorActiveBeforeHold = false;
   const onKey = (e) => {
     // ESC-LOCK (1): a real Escape the browser DID hand the page is noted first, whatever is up - the loss that follows
     // it is then not delivered a second time. The browser's own unlock key, read raw on purpose (KB1's reservation).
@@ -201,13 +202,18 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     const got = actionsOf(e);
     const acts = Array.isArray(got) ? got : got ? [got] : []; // UXB1-S (AUDIT UXB1 F9: named for what the hosts hand in)
     if (acts.includes(HOLD_FREE_MOUSE_ACTION)) {
-      if (e.repeat || _cursorActive || releaseKeyHold) {
+      if (e.repeat || keyHoldActive) {
         e.preventDefault();
         return;
       }
       if (_cursorHolds.size || cursorToggleRefused()) return;
       e.preventDefault();
-      releaseKeyHold = holdCursor();
+      keyHoldActive = true;
+      wasCursorActiveBeforeHold = _cursorActive;
+      if (!_cursorActive) {
+        setCursorActive(true);
+        releaseLook();
+      }
       return;
     }
     if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return; // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
@@ -217,27 +223,31 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     if (_cursorHolds.size) return;
     // PL1: "Don't allow activate cursor for 0.3 seconds after closing
     // an input message box" (PlayerMouseLook.cs:192-196).
+    wasCursorActiveBeforeHold = true;
     if (cursorToggleRefused()) return;
     toggleCursorActive(canvas);
   };
   const onKeyUp = (e) => {
-    if (!releaseKeyHold) return;
+    if (!keyHoldActive) return;
     if (isTextEntryTarget(e.target)) return;
     const got = actionsOf(e);
     const acts = Array.isArray(got) ? got : got ? [got] : [];
     if (!acts.includes(HOLD_FREE_MOUSE_ACTION)) return;
     e.preventDefault();
-    const off = releaseKeyHold;
-    releaseKeyHold = null;
-    const last = off();
-    if (last && !_cursorActive && !isWindowUp() && !overlayOpen()) {
-      requestLook(canvas);
+    keyHoldActive = false;
+    if (!wasCursorActiveBeforeHold) {
+      setCursorActive(false);
+      if (!isWindowUp() && !overlayOpen()) {
+        requestLook(canvas);
+      }
     }
   };
   const onBlur = () => {
-    if (releaseKeyHold) {
-      releaseKeyHold();
-      releaseKeyHold = null;
+    if (keyHoldActive) {
+      keyHoldActive = false;
+      if (!wasCursorActiveBeforeHold) {
+        setCursorActive(false);
+      }
     }
   };
   // PL2 (2026-09-12, Mac: "Pointer can detach from the game and you're
@@ -279,7 +289,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
     lastTouch = nowMs();
   };
   const fingered = () => nowMs() - lastTouch < TOUCH_UNLOCK_MS;
-  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || releaseKeyHold !== null || !pageHasFocus();
+  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || !pageHasFocus();
   const onLockChange = () => {
     const now = typeof document !== 'undefined' && document.pointerLockElement === canvas;
     const lost = held && !now;
@@ -316,9 +326,11 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   };
   if (typeof document !== 'undefined') document.addEventListener?.('pointerdown', onDown, true);
   return () => {
-    if (releaseKeyHold) {
-      releaseKeyHold();
-      releaseKeyHold = null;
+    if (keyHoldActive) {
+      keyHoldActive = false;
+      if (!wasCursorActiveBeforeHold) {
+        setCursorActive(false);
+      }
     }
     removeEventListener('keydown', onKey, true);
     removeEventListener('keyup', onKeyUp, true);
