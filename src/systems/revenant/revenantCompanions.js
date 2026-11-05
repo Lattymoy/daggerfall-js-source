@@ -222,7 +222,7 @@ export function callRefusal(r, now) {
   if (stateOf(r) === 'resting' && now < restUntil(r, now)) return 'Still recovering.';
   if (stateOf(r) === 'errand')
     return t('rvn.errand.callAbroad', 'Abroad, {left}.', {
-      left: errandLeftWords(errandUntil(r.companion.errand, now), now, sharedClockOn()),
+      left: errandLeftWords(errandUntil(r.companion.errand, now), now, false),
     }); // RVN-ERRAND
   if (wildHere() && revenantsWithYou().length >= WILD_REVENANTS_MAX) return zoneWord('revenantOne'); // PVPDUNGEONS - AUDIT SEA VENTURES C7: the ground's own words
   if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;
@@ -317,13 +317,13 @@ export function sendOnErrand(
   {
     now = Math.floor(ownMinutes()),
     seed = Math.floor(Math.random() * 0x100000000),
-    world = sharedClockOn() ? errandWorldNow() : NaN,
+    world = NaN,
   } = {},
 ) {
   const r = revenantRecord(_player, id);
   const why = errandRefusal(r, now);
   if (why) return why;
-  const e = newErrand(r, place, venture, now, seed, world); // OFFLINE-ROAD: online, its world's minute
+  const e = newErrand(r, place, venture, now, seed, world); // In-game time
   if (!e) return t('rvn.errand.no.such', 'It knows no such errand.');
   revenantCompanionUpdate(_player, id, (c) => {
     c.state = 'errand';
@@ -331,7 +331,7 @@ export function sendOnErrand(
     c.until = null;
     c.rested = false;
   });
-  _errandClock ??= { own: ownMinutes(), raised: raisedMinutes() }; // AUDIT RVN F1: the clock read from its first minute, a raise before the next wake charged as one
+  _errandClock ??= { own: ownMinutes(), raised: raisedMinutes() };
   forgetSwornMember(id);
   const p = errandPlace(place);
   const where = e.city ? t('rvn.errand.cityIn', '{city}, in {province}', { city: e.city, province: p?.name }) : p?.name;
@@ -340,7 +340,7 @@ export function sendOnErrand(
       as: 'errand',
       body: t('rvn.errand.setsOut', 'It sets out for {where}, {left}.', {
         where,
-        left: errandLeftWords(e.until, now, sharedClockOn()),
+        left: errandLeftWords(e.until, now, false),
       }),
     }),
   ); // its own leaving words, the errand's card
@@ -415,46 +415,17 @@ export function chargeErrands(
   now,
   { own = ownMinutes(), raised = raisedMinutes(), online = sharedClockOn(), world = errandWorldNow() } = {},
 ) {
-  let push = 0;
-  if (!_errandClock)
-    _errandClock = { own, raised }; // the session's first reading: nothing to charge yet
-  else {
-    if (Number.isFinite(own) && Number.isFinite(_errandClock.own)) {
-      _errandOwed += errandStep(
-        own - _errandClock.own,
-        raised >= _errandClock.raised ? raised - _errandClock.raised : 0,
-        online,
-      );
-      push = Math.floor(_errandOwed);
-      _errandOwed -= push;
-    }
-    _errandClock.own = own;
-    _errandClock.raised = raised; // nothing made a frame
-  }
-  const onWorld = online && Number.isFinite(world);
+  // In-game time progression: an errand's until is checked against the character's clock (now)
   for (const r of swornRevenants()) {
     if (stateOf(r) !== 'errand' || !r.companion.errand) continue;
     const e = r.companion.errand;
-    if (onWorld) {
-      // OFFLINE-ROAD: the world's time
-      // AUDIT FB1021 L3-2: an errand with no `due` takes its minutes left as the lived step leaves them - a raise across the
-      // first trusted wake (a rest's window open as the welcome lands) is pushed back, as it always was, never paid
-      const o = errandOnWorld(
-        Number.isInteger(e.due) ? e : { ...e, until: errandUntil(e, now - push) + push },
-        now,
-        world,
-      );
-      e.due = o.due;
-      if (o.until !== e.until) e.until = o.until;
-      continue;
-    }
-    const until = errandUntil(e, now - push) + push; // its minute pushed, then held to its days from now
+    const until = errandUntil(e, now);
     if (until !== e.until && Number.isInteger(until)) e.until = until;
   }
 }
 /** Where one abroad is, in the page's words. */
 export const abroadWords = (r, now) =>
-  stateOf(r) === 'errand' ? errandWords(r.companion.errand, now, sharedClockOn()) : null; // AUDIT FB1021 L3-5: online in real time
+  stateOf(r) === 'errand' ? errandWords(r.companion.errand, now, false) : null;
 
 // ── RVN-GEAR (bible/06-Systems/Revenants.md section 40): its kit, from the player's pack and back ──────────────
 /** The player's pieces a sworn one might wear (the page's list): in the pack, unworn by the player, of a slot it has. */

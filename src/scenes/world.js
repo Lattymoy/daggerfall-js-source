@@ -18990,7 +18990,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     character: () => characterIdOf(playerEntity),
     region: () => { const px = playerTravelPixel(); const r = maps.getRegionIndexAt(px.x, px.y); return Number.isSafeInteger(r) ? r : null; },   // SEAT1b: where the XP was earned - a pledged seat's region counts it (Seats-Arc 4.2)
     name: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : null),
-    earning: () => !!online && !seatOut() && _renownCapHour !== renownHour(),   // ONE-SEAT: a tab another took the seat from earns nothing - its character is not online. SCALE4h: nor does an hour the bound has spent - the service credits nothing in it, the sigils drink nothing and the bar draws no ghost (each as the page last heard it), so it is no longer reported every minute to be credited nothing
+    earning: () => !!online && !seatOut(),   // ONE-SEAT: a tab another took the seat from earns nothing; real-time hourly cap removed
     onAnswer: (data, sent) => {
       const a = renownAnswer(data, sent, renownSaid);   // AUDIT RENOWN1: one pure plan (net/renownTracker.js), pinned there
       renownXpAdopt(a.xp);   // RENOWN4: the track's total, for my bar
@@ -18998,19 +18998,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       renownAdopt(a.level);
       if (a.order) online?.sendRenownOrder?.(a.order, a.level);   // the rooms I am in hear it now - and again until each answers
       if (a.announce !== null) renownRose(a.announce);   // FIRM1: said as a level is
-      // AUDIT SCALE II C-3: THE CAP IS THE SENT HOUR'S. A report sent at 10:59:59.7 and answered capped at 11:00:00.3 spoke
-      // of hour 10 - stamped with the hour it ARRIVED in, it marked hour 11 spent, and `earning` then kept nothing for the
-      // whole of hour 11. A cap is kept only while the hour it was sent in is still the page's
-      if (a.capped) {
-        const hour = renownHour();
-        if (_renownSentHour === hour && _renownCapHour !== hour) { _renownCapHour = hour; tradeSay('You have earned the most Renown allowed this hour. Fighting still raises your skills.'); }
-      }
     },
     // AUDIT RENOWN1 UI-4: a refusal that ends reporting is SAID - the sentences were written and nothing ever showed them
     onStop: (error) => tradeSay(`${accountRefusalText(error)} This character is earning no Renown.`),
-    // SCALE4h: at the minute's pace only while the answer says what the page cannot - a rise, the hour's bound, a total or
+    // SCALE4h: at the minute's pace only while the answer says what the page cannot - a rise, a total or
     // a room not known; else every RENOWN_COALESCE_MS, what waits drawn as the bar's ghost
-    soon: () => renownReportSoon({ xp: renownXp, pending: renownTracker?.pending() ?? 0, capped: _renownCapHour === renownHour(), hourLeftMs: renownHourLeftMs(),
+    soon: () => renownReportSoon({ xp: renownXp, pending: renownTracker?.pending() ?? 0, capped: false, hourLeftMs: null,
       room: _renownRoom && _renownRoom.hour === renownHour() && _renownRoom.xp === renownXp ? _renownRoom.room : null }),
   }) : null;
   // CHAP1 (bible/11-Multiplayer/Chapters-Arc.md 3; Mac: "Server-owned"): THE ROLL - online, this realm character's
@@ -19042,12 +19035,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return seatRankAt(rollTracker.seats, faction, region);
   };
   // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
-  // rise to a new stage is said (systems/sigil/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
-  // the service keeps nothing, and the sigil drinks nothing either - as the page last heard it.
+  // rise to a new stage is said (systems/sigil/sigil.js drinkSigil: nothing while my Renown is unknown).
   // SET4: and so does every set piece I wear, each once - a rise said once a set, the weapon's own line unless its set
   // just said one (systems/sigil/sigilSets.js drinkWorn) - and a set that rose has its tiers' numbers folded at once.
   const sigilDrinks = (xp) => {
-    if (_renownCapHour === renownHour()) return;
     const held = (modes?.liveArm?.()?.rig ?? weaponRig).playerWeapon?.strikingWeapon ?? null;   // AUDIT SET D1: the MODE's rig - indoors and underground world.js's own is never readied, so the weapon I fought with there never drank
     const drank = drinkWorn(playerEntity, held, xp, itemLongName);
     for (const line of drank.lines) townTalk.say(line);

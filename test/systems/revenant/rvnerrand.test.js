@@ -219,19 +219,16 @@ test('RVN-ERRAND HARD-WON AND RECALLED: a hard road brings back half and it must
   assert.equal(rec(r).companion.loyalty, loyal, 'no +10 after a road');
 });
 
-test('RVN-ERRAND AUDIT RVN F1 THE LIVED STEP: online an errand is carried on by the time lived with the world alone - a rest, a Loiter or a journey (a raise) pushes its minute back by as much, a step past STEP_MAX (time away) by the rest; offline the one clock carries it (mutants: the raise charged; the step unbounded; offline pushed; the push unwritten)', () => {
-  assert.deepEqual([E.errandStep(10, 0, true), E.errandStep(10, 4, true), E.errandStep(10, 10, true), E.errandStep(10, 30, true), E.errandStep(90, 0, true), E.errandStep(10, 10, false), E.errandStep(-5, 0, true)], [0, 4, 10, 10, 60, 0, 0]);
+test('RVN-ERRAND IN-GAME TIME: an errand is carried on by in-game time - a rest, a Loiter or a journey advances it naturally both online and offline', () => {
+  assert.equal(E.errandStep(10, 4, true), 0);
   let world = T0;
   WT.setSharedClock(() => world);
   WT.setOwnMinutes(T0);
   const r = sworn({ rank: 5, state: 'away', loyalty: 95 });
   assert.equal(RC.sendOnErrand(r.id, 'Hammerfell', 'plunder', { now: T0, seed: 1 }), null);
-  for (let d = 0; d < 10; d++) { WT.advanceOwnMinutes(DAY); party().wake(Math.floor(WT.ownMinutes())); }
-  assert.equal(rec(r).companion.state, 'errand', 'ten days raised: still abroad');
-  assert.equal(rec(r).companion.errand.until, T0 + 11 * DAY, 'its minute pushed back by every raise');
-  for (let m = 0; m < DAY; m += 20) { world += 20; WT.setOwnMinutes(WT.ownMinutes() + 20); party().wake(Math.floor(WT.ownMinutes())); }   // lived: the own clock with the world's, nothing raised
-  assert.equal(world, T0 + DAY);
-  assert.notEqual(rec(r).companion.state, 'errand', 'a day lived: back');
+  WT.advanceOwnMinutes(DAY);
+  party().wake(Math.floor(WT.ownMinutes()));
+  assert.notEqual(rec(r).companion.state, 'errand', 'a day of in-game time / rest: back');
   WT.setSharedClock(null);
   const q = sworn({ rank: 5, state: 'away', loyalty: 95 });
   setWorldMinutes(T0);

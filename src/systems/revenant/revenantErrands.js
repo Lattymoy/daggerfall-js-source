@@ -251,7 +251,6 @@ export function newErrand(r, key, venture, now, seed, world = NaN) {
     until: Math.floor(now) + len,
     seed: s,
     sky: { ...sky },
-    ...(Number.isFinite(world) ? { due: Math.floor(world) + len } : {}),
   };
 }
 /** An errand read back (a save, the mirror): its place and venture known, its minutes whole and in order, its sky within
@@ -268,8 +267,7 @@ export function sanitizeErrand(e) {
     until: e.until,
     seed: Number.isInteger(e.seed) && e.seed >= 0 ? e.seed >>> 0 : 0,
     ...(sky ? { sky: { ...sky } } : {}),
-    ...(Number.isInteger(e.due) ? { due: e.due } : {}),
-  }; // OFFLINE-ROAD: its world's minute
+  };
 }
 /** When it is back - never more than its own road's days from `now` (an older clock under the record reads its days as
  *  more, as a rest's would - revenantCompanions.js restUntil, whose wake writes the clamp back: AUDIT RVN F5; AUDIT
@@ -286,9 +284,8 @@ export function errandUntil(e, now) {
  *  away are pushed (once it is heard the world's time carries it - errandOnWorld, OFFLINE-ROAD); offline nothing is
  *  (DFU's one clock). Never negative. */
 export function errandStep(own, raised, online) {
-  if (!online || !(own > 0)) return 0;
-  const lived = Math.min(Math.max(own - (raised > 0 ? raised : 0), 0), ERRAND.STEP_MAX);
-  return own - lived;
+  // In-game time progression: rest, wait and travel naturally advance errands
+  return 0;
 }
 
 /** AUDIT FB1021 L3-1: the event minutes a wake's world reading may run past the monotonic clock's (a frame's rounding,
@@ -317,11 +314,7 @@ export function errandWorldMinute(world, heard, perf) {
  *  days from the world's now (errandUntil's clamp, on the world's clock). Its `until`: as many minutes past `own` as the
  *  world has left to `due` - never before it set out. Answers both. Pure. */
 export function errandOnWorld(e, own, world) {
-  const p = errandPlace(e?.place),
-    w = Math.floor(world);
-  const most = p ? Math.round(roadDays(p, e.sky) * MINUTES_PER_DAY) : 0;
-  const due = Math.min(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)), w + most);
-  return { due, until: Math.max(e.at, Math.floor(own) + Math.max(0, due - w)) };
+  return { due: e?.until ?? 0, until: e?.until ?? 0 };
 }
 
 /** A material's tier (1 where none is known). */
@@ -442,31 +435,20 @@ export const ERRAND_REAL_HOURS_A_DAY = MINUTES_PER_DAY / (ONLINE_MINUTES_PER_MS 
 /** How long yet, in the page's words. AUDIT FB1021 L3-5: `real` (online) in real time - the road keeps it there, and the
  *  game's hours were the event clock's, a twelfth of the sky clock the HUD shows ("back in about 24 hours" was two real
  *  hours, and forty-eight on the HUD's clock). */
-export function errandLeftWords(until, now, real = false) {
-  if (real) {
-    const m = Math.max(1, Math.ceil(Math.max(0, until - now) / (ONLINE_MINUTES_PER_MS * 60_000)));
-    if (m < 60)
-      return t('rvn.errand.left.realMinutes', 'back in about {m, plural, one {# real minute} other {# real minutes}}', {
-        m,
-      });
-    return t('rvn.errand.left.realHours', 'back in about {h, plural, one {# real hour} other {# real hours}}', {
-      h: Math.round(m / 60),
-    });
-  }
+export function errandLeftWords(until, now, _real = false) {
   const h = Math.ceil(Math.max(0, until - now) / 60);
   if (h <= 1) return t('rvn.errand.left.hour', 'back within the hour');
   if (h < 48) return t('rvn.errand.left.hours', 'back in about {h} hours', { h });
   return t('rvn.errand.left.days', 'back in about {d} days', { d: Math.round(h / 24) });
 }
-/** Where it is, in the page's words - "In Solitude, Skyrim (Plunder) - back in about 9 hours" (`real`: online, in real
- *  time - AUDIT FB1021 L3-5). */
-export function errandWords(e, now, real = false) {
+/** Where it is, in the page's words - "In Solitude, Skyrim (Plunder) - back in about 9 hours". */
+export function errandWords(e, now, _real = false) {
   const p = errandPlace(e?.place);
   if (!p) return t('rvn.errand.abroad', 'Abroad');
   const where = e.city ? t('rvn.errand.cityOf', '{city}, {province}', { city: e.city, province: p.name }) : p.name;
   return t('rvn.errand.where', 'In {where} ({venture}), {left}', {
     where,
     venture: VENTURES[e.venture]?.label ?? e.venture,
-    left: errandLeftWords(errandUntil(e, now), now, real),
+    left: errandLeftWords(errandUntil(e, now), now, false),
   });
 }
